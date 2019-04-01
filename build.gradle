@@ -14,6 +14,9 @@ buildscript {
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
+    dependencies {
+        classpath 'org.owasp:dependency-check-gradle:4.0.2'
+    }
 }
 
 plugins {
@@ -28,6 +31,7 @@ plugins {
 }
 
 apply plugin: 'java'
+apply plugin: 'org.owasp.dependencycheck'
 sourceCompatibility=1.8
 targetCompatibility=1.8
 // Until JHipster supports JDK 9
