@@ -1,0 +1,11 @@
+version: '2'
+services:
+    hsadminng-postgresql:
+        image: postgres:10.4
+        # volumes:
+        #     - ~/volumes/jhipster/hsadminNg/postgresql/:/var/lib/postgresql/data/
+        environment:
+            - POSTGRES_USER=hsadminNg
+            - POSTGRES_PASSWORD=
+        ports:
+            - 5432:5432
