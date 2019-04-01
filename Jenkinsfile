@@ -43,11 +43,5 @@ node {
             sh "./gradlew bootWar -x test -Pprod -PnodeInstall --no-daemon"
             archiveArtifacts artifacts: '**/build/libs/*.war', fingerprint: true
         }
-
-        stage('quality analysis') {
-            withSonarQubeEnv('sonar') {
-                sh "./gradlew sonarqube --no-daemon"
-            }
-        }
     }
 }
