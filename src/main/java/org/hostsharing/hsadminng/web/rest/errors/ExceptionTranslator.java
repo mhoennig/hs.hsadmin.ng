@@ -3,11 +3,15 @@ package org.hostsharing.hsadminng.web.rest.errors;
 import org.hostsharing.hsadminng.web.rest.util.HeaderUtil;
 
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.zalando.problem.DefaultProblem;
 import org.zalando.problem.Problem;
@@ -22,6 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+
+import static org.hostsharing.hsadminng.web.rest.errors.ErrorConstants.*;
 
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures.
@@ -48,7 +54,7 @@ public class ExceptionTranslator implements ProblemHandling {
             return entity;
         }
         ProblemBuilder builder = Problem.builder()
-            .withType(Problem.DEFAULT_TYPE.equals(problem.getType()) ? ErrorConstants.DEFAULT_TYPE : problem.getType())
+            .withType(Problem.DEFAULT_TYPE.equals(problem.getType()) ? DEFAULT_TYPE : problem.getType())
             .withStatus(problem.getStatus())
             .withTitle(problem.getTitle())
             .with(PATH_KEY, request.getNativeRequest(HttpServletRequest.class).getRequestURI());
@@ -56,7 +62,7 @@ public class ExceptionTranslator implements ProblemHandling {
         if (problem instanceof ConstraintViolationProblem) {
             builder
                 .with(VIOLATIONS_KEY, ((ConstraintViolationProblem) problem).getViolations())
-                .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION);
+                .with(MESSAGE_KEY, ERR_VALIDATION);
         } else {
             builder
                 .withCause(((DefaultProblem) problem).getCause())
@@ -78,10 +84,10 @@ public class ExceptionTranslator implements ProblemHandling {
             .collect(Collectors.toList());
 
         Problem problem = Problem.builder()
-            .withType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE)
+            .withType(CONSTRAINT_VIOLATION_TYPE)
             .withTitle("Method argument not valid")
             .withStatus(defaultConstraintViolationStatus())
-            .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION)
+            .with(MESSAGE_KEY, ERR_VALIDATION)
             .with(FIELD_ERRORS_KEY, fieldErrors)
             .build();
         return create(ex, problem, request);
@@ -91,7 +97,7 @@ public class ExceptionTranslator implements ProblemHandling {
     public ResponseEntity<Problem> handleNoSuchElementException(NoSuchElementException ex, NativeWebRequest request) {
         Problem problem = Problem.builder()
             .withStatus(Status.NOT_FOUND)
-            .with(MESSAGE_KEY, ErrorConstants.ENTITY_NOT_FOUND_TYPE)
+            .with(MESSAGE_KEY, ENTITY_NOT_FOUND_TYPE)
             .build();
         return create(ex, problem, request);
     }
@@ -105,8 +111,20 @@ public class ExceptionTranslator implements ProblemHandling {
     public ResponseEntity<Problem> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
         Problem problem = Problem.builder()
             .withStatus(Status.CONFLICT)
-            .with(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE)
+            .with(MESSAGE_KEY, ERR_CONCURRENCY_FAILURE)
             .build();
         return create(ex, problem, request);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<Problem> processDataIntegrityViolationException(DataIntegrityViolationException exception, NativeWebRequest request) {
+        // UX_CUSTOMER_JHI_NUMBER_INDEX_5
+        Problem problem = Problem.builder()
+            .withStatus(Status.CONFLICT)
+            .with(MESSAGE_KEY, ERR_VALIDATION_DUPLICATE)
+            .build();
+        return create(exception, problem, request);
     }
 }
