@@ -4,11 +4,21 @@ entity Customer {
     prefix String required unique pattern(/[a-z][a-z0-9]+/),
 }
 
+filter Customer
+paginate Customer with infinite-scroll
+service Customer with serviceClass
+dto Customer with mapstruct
+
 entity Contact {
     firstName String required maxlength(80),
     lastName String required maxlength(80),
     email String required maxlength(80)
 }
+
+filter Contact
+paginate Contact with infinite-scroll
+service Contact with serviceClass
+dto Contact with mapstruct
 
 enum CustomerContactRole {
     CONTRACTUAL,
@@ -20,10 +30,16 @@ entity CustomerContact {
     role CustomerContactRole required
 }
 
+service CustomerContact with serviceClass
+dto CustomerContact with mapstruct
+
 entity Membership {
     sinceDate LocalDate required,
     untilDate LocalDate
 }
+
+service Membership with serviceClass
+dto Membership with mapstruct
 
 enum ShareAction {
     SUBSCRIPTION,
