@@ -19,6 +19,12 @@
             <th jhiSortBy="prefix"><span jhiTranslate="hsadminNgApp.customer.prefix">Prefix</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
+            <tr>
+                <th></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filterValue.number" (keyup)="filter($event)"></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filterValue.prefix" (keyup)="filter($event)"></th>
+                <th><button class="btn btn-primary float-left" (click)="resetFilter()">Reset Filter</button></th>
+            </tr>
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let customer of customers ;trackBy: trackId">

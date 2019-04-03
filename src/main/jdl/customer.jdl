@@ -14,7 +14,6 @@ entity Contact {
     email String required maxlength(80)
 }
 
-
 enum CustomerContactRole {
     CONTRACTUAL,
     TECHNICAL,
