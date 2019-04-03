@@ -8,6 +8,7 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { CustomerService } from './customer.service';
+import { TableFilter } from 'app/shared/util/tablefilter';
 
 @Component({
     selector: 'jhi-customer',
@@ -23,6 +24,7 @@ export class CustomerComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
+    filter: TableFilter<{ reference?: string; prefix?: string; name?: string; kind?: string }>;
 
     constructor(
         protected customerService: CustomerService,
@@ -39,11 +41,15 @@ export class CustomerComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
+        this.filter = new TableFilter({ reference: 'equals', prefix: 'contains', name: 'contains', kind: 'equals' }, 500, () => {
+            this.loadAll();
+        });
     }
 
     loadAll() {
         this.customerService
             .query({
+                ...this.filter.buildQueryCriteria(),
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -96,6 +102,8 @@ export class CustomerComponent implements OnInit, OnDestroy {
     protected paginateCustomers(data: ICustomer[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
+        this.page = 0;
+        this.customers = [];
         for (let i = 0; i < data.length; i++) {
             this.customers.push(data[i]);
         }
