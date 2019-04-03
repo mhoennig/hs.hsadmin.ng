@@ -55,7 +55,7 @@ export class CustomerComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        let criteria = {
+        const criteria = {
             ...(this.filterValue.number && { 'number.equals': this.filterValue.number }),
             ...(this.filterValue.prefix && { 'prefix.contains': this.filterValue.prefix })
         };
