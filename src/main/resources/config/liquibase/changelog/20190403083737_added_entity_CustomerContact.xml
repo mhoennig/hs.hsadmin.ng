@@ -37,5 +37,18 @@
         </createTable>
         
     </changeSet>
+
+    <changeSet id="20190403083737-2" author="mhoennig" context="sample-data">
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/sample-data/customer-contacts.csv"
+                  separator=";"
+                  tableName="customer_contact">
+            <column name="id" type="numeric"/>
+            <column name="customer" type="numeric"/>
+            <column name="role" type="string"/>
+            <column name="contact" type="numeric"/>
+        </loadData>
+    </changeSet>
+
     <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here, do not remove-->
 </databaseChangeLog>
