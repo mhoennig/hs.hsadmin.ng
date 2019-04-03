@@ -1,0 +1,6 @@
+{
+    "error": {
+        "sharesubscriptionpositivquantity": "Zeichnungen von Geschäftsanteilen erfordern eine positive Stückzahl",
+        "sharecancellationnegativequantity": "Kündigungen von Geschäftsanteilen erfordern eine negative Stückzahl"
+    }
+}

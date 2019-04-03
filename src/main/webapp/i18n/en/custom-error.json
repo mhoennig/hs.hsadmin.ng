@@ -1,0 +1,6 @@
+{
+    "error": {
+        "sharesubscriptionpositivquantity": "Share subscriptions require a positive quantity",
+        "sharecancellationnegativequantity": "Share cancellations require a negative quantity"
+    }
+}

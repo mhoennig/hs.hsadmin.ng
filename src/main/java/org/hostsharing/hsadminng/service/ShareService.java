@@ -1,9 +1,11 @@
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Share;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +42,12 @@ public class ShareService {
      */
     public ShareDTO save(ShareDTO shareDTO) {
         log.debug("Request to save Share : {}", shareDTO);
+        if((shareDTO.getAction() == ShareAction.SUBSCRIPTION) && (shareDTO.getQuantity() <= 0)) {
+            throw new BadRequestAlertException("Share subscriptions require a positive quantity", "share", "sharesubscriptionpositivquantity");
+        }
+        if((shareDTO.getAction() == ShareAction.CANCELLATION) && (shareDTO.getQuantity() >= 0)) {
+            throw new BadRequestAlertException("Share cancellations require a negative quantity", "share", "sharecancellationnegativequantity");
+        }
         Share share = shareMapper.toEntity(shareDTO);
         share = shareRepository.save(share);
         return shareMapper.toDto(share);
