@@ -1,0 +1,24 @@
+{
+    "hsadminNgApp": {
+        "contact": {
+            "home": {
+                "title": "Contacts",
+                "createLabel": "Contact erstellen",
+                "createOrEditLabel": "Contact erstellen oder bearbeiten"
+            },
+            "created": "Contact erstellt mit ID {{ param }}",
+            "updated": "Contact aktualisiert mit ID {{ param }}",
+            "deleted": "Contact gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Contact {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Contact"
+            },
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "email": "Email",
+            "role": "Role"
+        }
+    }
+}

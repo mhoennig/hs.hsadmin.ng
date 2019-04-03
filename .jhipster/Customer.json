@@ -1,0 +1,50 @@
+{
+    "name": "Customer",
+    "fields": [
+        {
+            "fieldName": "number",
+            "fieldType": "Integer",
+            "fieldValidateRules": [
+                "required",
+                "unique",
+                "min",
+                "max"
+            ],
+            "fieldValidateRulesMin": 10000,
+            "fieldValidateRulesMax": 99999
+        },
+        {
+            "fieldName": "prefix",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "required",
+                "unique",
+                "pattern"
+            ],
+            "fieldValidateRulesPattern": "[a-z][a-z0-9]+"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "membership",
+            "otherEntityRelationshipName": "customer",
+            "relationshipName": "membership"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "customerContact",
+            "otherEntityRelationshipName": "customer",
+            "relationshipName": "role"
+        }
+    ],
+    "changelogDate": "20190403083735",
+    "entityTableName": "customer",
+    "dto": "mapstruct",
+    "pagination": "infinite-scroll",
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": true,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

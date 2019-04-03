@@ -1,0 +1,24 @@
+{
+    "hsadminNgApp": {
+        "customer": {
+            "home": {
+                "title": "Customers",
+                "createLabel": "Customer erstellen",
+                "createOrEditLabel": "Customer erstellen oder bearbeiten"
+            },
+            "created": "Customer erstellt mit ID {{ param }}",
+            "updated": "Customer aktualisiert mit ID {{ param }}",
+            "deleted": "Customer gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Customer {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Customer"
+            },
+            "number": "Number",
+            "prefix": "Prefix",
+            "membership": "Membership",
+            "role": "Role"
+        }
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "name": "Membership",
+    "fields": [
+        {
+            "fieldName": "sinceDate",
+            "fieldType": "LocalDate",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "untilDate",
+            "fieldType": "LocalDate"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "share",
+            "otherEntityRelationshipName": "member",
+            "relationshipName": "share"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "asset",
+            "otherEntityRelationshipName": "member",
+            "relationshipName": "asset"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "customer",
+            "otherEntityRelationshipName": "membership",
+            "relationshipName": "customer",
+            "otherEntityField": "prefix"
+        }
+    ],
+    "changelogDate": "20190403083738",
+    "entityTableName": "membership",
+    "dto": "mapstruct",
+    "pagination": "infinite-scroll",
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": true,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

@@ -1,0 +1,10 @@
+{
+    "hsadminNgApp": {
+        "CustomerContactRole": {
+            "null": "",
+            "CONTRACTUAL": "CONTRACTUAL",
+            "TECHNICAL": "TECHNICAL",
+            "FINANCIAL": "FINANCIAL"
+        }
+    }
+}
