@@ -1,0 +1,45 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="share">
+            <h2><span jhiTranslate="hsadminNgApp.share.detail.title">Share</span> {{share.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="hsadminNgApp.share.date">Date</span></dt>
+                <dd>
+                    <span>{{share.date}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.action">Action</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'hsadminNgApp.ShareAction.' + share.action}}">{{share.action}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.quantity">Quantity</span></dt>
+                <dd>
+                    <span>{{share.quantity}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.comment">Comment</span></dt>
+                <dd>
+                    <span>{{share.comment}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.member">Member</span></dt>
+                <dd>
+                    <div *ngIf="share.memberId">
+                        <a [routerLink]="['/membership', share.memberId, 'view']">{{share.memberId}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/share', share.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

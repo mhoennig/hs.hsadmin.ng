@@ -1,0 +1,37 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="membership">
+            <h2><span jhiTranslate="hsadminNgApp.membership.detail.title">Membership</span> {{membership.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="hsadminNgApp.membership.sinceDate">Since Date</span></dt>
+                <dd>
+                    <span>{{membership.sinceDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.membership.untilDate">Until Date</span></dt>
+                <dd>
+                    <span>{{membership.untilDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span></dt>
+                <dd>
+                    <div *ngIf="membership.customerId">
+                        <a [routerLink]="['/customer', membership.customerId, 'view']">{{membership.customerPrefix}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/membership', membership.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

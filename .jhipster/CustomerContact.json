@@ -1,0 +1,40 @@
+{
+    "name": "CustomerContact",
+    "fields": [
+        {
+            "fieldName": "role",
+            "fieldType": "CustomerContactRole",
+            "fieldValues": "CONTRACTUAL,TECHNICAL,FINANCIAL",
+            "fieldValidateRules": [
+                "required"
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "contact",
+            "otherEntityRelationshipName": "role",
+            "relationshipValidateRules": "required",
+            "relationshipName": "contact",
+            "otherEntityField": "email"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "customer",
+            "otherEntityRelationshipName": "role",
+            "relationshipValidateRules": "required",
+            "relationshipName": "customer",
+            "otherEntityField": "prefix"
+        }
+    ],
+    "changelogDate": "20190403083737",
+    "entityTableName": "customer_contact",
+    "dto": "mapstruct",
+    "pagination": "infinite-scroll",
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": true,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

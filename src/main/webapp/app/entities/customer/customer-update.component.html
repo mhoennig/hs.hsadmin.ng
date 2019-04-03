@@ -1,0 +1,62 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-customer-heading" jhiTranslate="hsadminNgApp.customer.home.createOrEditLabel">Create or edit a Customer</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!customer.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="customer.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.number" for="field_number">Number</label>
+                    <input type="number" class="form-control" name="number" id="field_number"
+                        [(ngModel)]="customer.number" required min="10000" jhiMin="10000" max="99999" jhiMax="99999"/>
+                    <div [hidden]="!(editForm.controls.number?.dirty && editForm.controls.number?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.number?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.number?.errors?.min" jhiTranslate="entity.validation.min" [translateValues]="{ min: 10000 }">
+                            This field should be at least 10000.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.number?.errors?.max" jhiTranslate="entity.validation.max" [translateValues]="{ max: 99999 }">
+                            This field cannot be more than 99999.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.number?.errors?.number" jhiTranslate="entity.validation.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.prefix" for="field_prefix">Prefix</label>
+                    <input type="text" class="form-control" name="prefix" id="field_prefix"
+                        [(ngModel)]="customer.prefix" required pattern="[a-z][a-z0-9]+"/>
+                    <div [hidden]="!(editForm.controls.prefix?.dirty && editForm.controls.prefix?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.prefix?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.prefix?.errors?.pattern" jhiTranslate="entity.validation.pattern" [translateValues]="{ pattern: 'Prefix' }">
+                            This field should follow pattern for "Prefix".
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
