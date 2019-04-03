@@ -5,7 +5,9 @@ import HSAdmin from "./hsadmin.js"
 
 Vue.use(Router);
 
-const hsa = new HSAdmin();
+const hsa = new HSAdmin({
+    baseURL: `http://localhost:${process.env.VUE_APP_API_PORT || 8080}/api`,
+});
 const routeProps = (route) => {
     return Object.assign({}, route.params,{
         hsadmin: hsa
