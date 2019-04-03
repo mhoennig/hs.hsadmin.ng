@@ -33,5 +33,17 @@
         </createTable>
         
     </changeSet>
+
+    <changeSet id="20190402141612-2" author="mhoennig" context="sample-data">
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/sample-data/customers.csv"
+                  separator=";"
+                  tableName="customer">
+            <column name="id" type="numeric"/>
+            <column name="jhi_number" type="numeric"/>
+            <column name="prefix" type="string"/>
+        </loadData>
+    </changeSet>
+
     <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here, do not remove-->
 </databaseChangeLog>
