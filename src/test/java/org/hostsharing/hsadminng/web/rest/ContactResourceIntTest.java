@@ -9,7 +9,6 @@ import org.hostsharing.hsadminng.service.ContactService;
 import org.hostsharing.hsadminng.service.dto.ContactDTO;
 import org.hostsharing.hsadminng.service.mapper.ContactMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.ContactCriteria;
 import org.hostsharing.hsadminng.service.ContactQueryService;
 
 import org.junit.Before;
@@ -368,7 +367,7 @@ public class ContactResourceIntTest {
     @Transactional
     public void getAllContactsByRoleIsEqualToSomething() throws Exception {
         // Initialize the database
-        CustomerContact role = CustomerContactResourceIntTest.createEntity(em);
+        CustomerContact role = CustomerContactResourceIntTest.createDefaultEntity(em);
         em.persist(role);
         em.flush();
         contact.addRole(role);

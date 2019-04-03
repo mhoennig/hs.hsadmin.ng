@@ -48,10 +48,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CustomerResourceIntTest {
 
     private static final Integer DEFAULT_NUMBER = 10000;
-    private static final Integer UPDATED_NUMBER = 10001;
+    private static final Integer ANOTHER_NUMBER = 10001;
+    private static final Integer UPDATED_NUMBER = 10002;
 
-    private static final String DEFAULT_PREFIX = "lzv";
-    private static final String UPDATED_PREFIX = "zf";
+    private static final String DEFAULT_PREFIX = "def";
+    private static final String ANOTHER_PREFIX = "old";
+    private static final String UPDATED_PREFIX = "new";
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -97,7 +99,7 @@ public class CustomerResourceIntTest {
     }
 
     /**
-     * Create an entity for this test.
+     * Create an entity for tests.
      *
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
@@ -106,6 +108,19 @@ public class CustomerResourceIntTest {
         Customer customer = new Customer()
             .number(DEFAULT_NUMBER)
             .prefix(DEFAULT_PREFIX);
+        return customer;
+    }
+
+    /**
+     * Create another entity for tests.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static Customer createAnotherEntity(EntityManager em) {
+        Customer customer = new Customer()
+            .number(ANOTHER_NUMBER)
+            .prefix(ANOTHER_PREFIX);
         return customer;
     }
 
@@ -350,7 +365,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersByRoleIsEqualToSomething() throws Exception {
         // Initialize the database
-        CustomerContact role = CustomerContactResourceIntTest.createEntity(em);
+        CustomerContact role = CustomerContactResourceIntTest.createAnotherEntity(em);
         em.persist(role);
         em.flush();
         customer.addRole(role);

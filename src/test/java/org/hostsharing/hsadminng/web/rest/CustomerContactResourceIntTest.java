@@ -10,7 +10,6 @@ import org.hostsharing.hsadminng.service.CustomerContactService;
 import org.hostsharing.hsadminng.service.dto.CustomerContactDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerContactMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.CustomerContactCriteria;
 import org.hostsharing.hsadminng.service.CustomerContactQueryService;
 
 import org.junit.Before;
@@ -84,6 +83,7 @@ public class CustomerContactResourceIntTest {
 
     @Before
     public void setup() {
+
         MockitoAnnotations.initMocks(this);
         final CustomerContactResource customerContactResource = new CustomerContactResource(customerContactService, customerContactQueryService);
         this.restCustomerContactMockMvc = MockMvcBuilders.standaloneSetup(customerContactResource)
@@ -95,12 +95,12 @@ public class CustomerContactResourceIntTest {
     }
 
     /**
-     * Create an entity for this test.
+     * Create a CustomerContaact entity for the given Customer for testing purposes.
      *
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static CustomerContact createEntity(EntityManager em) {
+    public static CustomerContact crateEnitity(final EntityManager em, Customer customer) {
         CustomerContact customerContact = new CustomerContact()
             .role(DEFAULT_ROLE);
         // Add required entity
@@ -109,16 +109,35 @@ public class CustomerContactResourceIntTest {
         em.flush();
         customerContact.setContact(contact);
         // Add required entity
-        Customer customer = CustomerResourceIntTest.createEntity(em);
         em.persist(customer);
         em.flush();
         customerContact.setCustomer(customer);
         return customerContact;
     }
 
+    /**
+     * Create an arbitrary CustomerContact entity for tests.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static CustomerContact createDefaultEntity(EntityManager em) {
+        return crateEnitity(em, CustomerResourceIntTest.createEntity(em));
+    }
+
+    /**
+     * Create another arbitrary CustomerContact entity for this test.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static CustomerContact createAnotherEntity(EntityManager em) {
+        return crateEnitity(em, CustomerResourceIntTest.createAnotherEntity(em));
+    }
+
     @Before
     public void initTest() {
-        customerContact = createEntity(em);
+        customerContact = createDefaultEntity(em);
     }
 
     @Test
@@ -264,12 +283,11 @@ public class CustomerContactResourceIntTest {
         defaultCustomerContactShouldNotBeFound("contactId.equals=" + (contactId + 1));
     }
 
-
     @Test
     @Transactional
     public void getAllCustomerContactsByCustomerIsEqualToSomething() throws Exception {
         // Initialize the database
-        Customer customer = CustomerResourceIntTest.createEntity(em);
+        Customer customer = CustomerResourceIntTest.createAnotherEntity(em);
         em.persist(customer);
         em.flush();
         customerContact.setCustomer(customer);
