@@ -28,6 +28,16 @@ public class CustomerCriteria implements Serializable {
 
     private StringFilter prefix;
 
+    private StringFilter name;
+
+    private StringFilter contractualAddress;
+
+    private StringFilter contractualSalutation;
+
+    private StringFilter billingAddress;
+
+    private StringFilter billingSalutation;
+
     private LongFilter membershipId;
 
     private LongFilter roleId;
@@ -54,6 +64,46 @@ public class CustomerCriteria implements Serializable {
 
     public void setPrefix(StringFilter prefix) {
         this.prefix = prefix;
+    }
+
+    public StringFilter getName() {
+        return name;
+    }
+
+    public void setName(StringFilter name) {
+        this.name = name;
+    }
+
+    public StringFilter getContractualAddress() {
+        return contractualAddress;
+    }
+
+    public void setContractualAddress(StringFilter contractualAddress) {
+        this.contractualAddress = contractualAddress;
+    }
+
+    public StringFilter getContractualSalutation() {
+        return contractualSalutation;
+    }
+
+    public void setContractualSalutation(StringFilter contractualSalutation) {
+        this.contractualSalutation = contractualSalutation;
+    }
+
+    public StringFilter getBillingAddress() {
+        return billingAddress;
+    }
+
+    public void setBillingAddress(StringFilter billingAddress) {
+        this.billingAddress = billingAddress;
+    }
+
+    public StringFilter getBillingSalutation() {
+        return billingSalutation;
+    }
+
+    public void setBillingSalutation(StringFilter billingSalutation) {
+        this.billingSalutation = billingSalutation;
     }
 
     public LongFilter getMembershipId() {
@@ -86,6 +136,11 @@ public class CustomerCriteria implements Serializable {
             Objects.equals(id, that.id) &&
             Objects.equals(number, that.number) &&
             Objects.equals(prefix, that.prefix) &&
+            Objects.equals(name, that.name) &&
+            Objects.equals(contractualAddress, that.contractualAddress) &&
+            Objects.equals(contractualSalutation, that.contractualSalutation) &&
+            Objects.equals(billingAddress, that.billingAddress) &&
+            Objects.equals(billingSalutation, that.billingSalutation) &&
             Objects.equals(membershipId, that.membershipId) &&
             Objects.equals(roleId, that.roleId);
     }
@@ -96,6 +151,11 @@ public class CustomerCriteria implements Serializable {
         id,
         number,
         prefix,
+        name,
+        contractualAddress,
+        contractualSalutation,
+        billingAddress,
+        billingSalutation,
         membershipId,
         roleId
         );
@@ -107,6 +167,11 @@ public class CustomerCriteria implements Serializable {
                 (id != null ? "id=" + id + ", " : "") +
                 (number != null ? "number=" + number + ", " : "") +
                 (prefix != null ? "prefix=" + prefix + ", " : "") +
+                (name != null ? "name=" + name + ", " : "") +
+                (contractualAddress != null ? "contractualAddress=" + contractualAddress + ", " : "") +
+                (contractualSalutation != null ? "contractualSalutation=" + contractualSalutation + ", " : "") +
+                (billingAddress != null ? "billingAddress=" + billingAddress + ", " : "") +
+                (billingSalutation != null ? "billingSalutation=" + billingSalutation + ", " : "") +
                 (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
                 (roleId != null ? "roleId=" + roleId + ", " : "") +
             "}";
