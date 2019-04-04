@@ -95,6 +95,21 @@ public class CustomerQueryService extends QueryService<Customer> {
             if (criteria.getPrefix() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getPrefix(), Customer_.prefix));
             }
+            if (criteria.getName() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getName(), Customer_.name));
+            }
+            if (criteria.getContractualAddress() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getContractualAddress(), Customer_.contractualAddress));
+            }
+            if (criteria.getContractualSalutation() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getContractualSalutation(), Customer_.contractualSalutation));
+            }
+            if (criteria.getBillingAddress() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getBillingAddress(), Customer_.billingAddress));
+            }
+            if (criteria.getBillingSalutation() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getBillingSalutation(), Customer_.billingSalutation));
+            }
             if (criteria.getMembershipId() != null) {
                 specification = specification.and(buildSpecification(criteria.getMembershipId(),
                     root -> root.join(Customer_.memberships, JoinType.LEFT).get(Membership_.id)));

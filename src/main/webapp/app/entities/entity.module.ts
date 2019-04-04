@@ -27,6 +27,14 @@ import { RouterModule } from '@angular/router';
             {
                 path: 'asset',
                 loadChildren: './asset/asset.module#HsadminNgAssetModule'
+            },
+            {
+                path: 'customer',
+                loadChildren: './customer/customer.module#HsadminNgCustomerModule'
+            },
+            {
+                path: 'customer',
+                loadChildren: './customer/customer.module#HsadminNgCustomerModule'
             }
             /* jhipster-needle-add-entity-route - JHipster will add entity modules routes here */
         ])

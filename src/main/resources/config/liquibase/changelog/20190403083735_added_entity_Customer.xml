@@ -29,6 +29,26 @@
                 <constraints nullable="false" unique="true" uniqueConstraintName="ux_customer_prefix" />
             </column>
 
+            <column name="name" type="varchar(80)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="contractual_address" type="varchar(400)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="contractual_salutation" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="billing_address" type="varchar(400)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="billing_salutation" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
             <!-- jhipster-needle-liquibase-add-column - JHipster will add columns here, do not remove-->
         </createTable>
         

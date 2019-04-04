@@ -5,6 +5,11 @@ export interface ICustomer {
     id?: number;
     number?: number;
     prefix?: string;
+    name?: string;
+    contractualAddress?: string;
+    contractualSalutation?: string;
+    billingAddress?: string;
+    billingSalutation?: string;
     memberships?: IMembership[];
     roles?: ICustomerContact[];
 }
@@ -14,6 +19,11 @@ export class Customer implements ICustomer {
         public id?: number,
         public number?: number,
         public prefix?: string,
+        public name?: string,
+        public contractualAddress?: string,
+        public contractualSalutation?: string,
+        public billingAddress?: string,
+        public billingSalutation?: string,
         public memberships?: IMembership[],
         public roles?: ICustomerContact[]
     ) {}

@@ -36,6 +36,28 @@ public class Customer implements Serializable {
     @Column(name = "prefix", nullable = false, unique = true)
     private String prefix;
 
+    @NotNull
+    @Size(max = 80)
+    @Column(name = "name", length = 80, nullable = false)
+    private String name;
+
+    @NotNull
+    @Size(max = 400)
+    @Column(name = "contractual_address", length = 400, nullable = false)
+    private String contractualAddress;
+
+    @Size(max = 80)
+    @Column(name = "contractual_salutation", length = 80)
+    private String contractualSalutation;
+
+    @Size(max = 400)
+    @Column(name = "billing_address", length = 400)
+    private String billingAddress;
+
+    @Size(max = 80)
+    @Column(name = "billing_salutation", length = 80)
+    private String billingSalutation;
+
     @OneToMany(mappedBy = "customer")
     private Set<Membership> memberships = new HashSet<>();
     @OneToMany(mappedBy = "customer")
@@ -73,6 +95,71 @@ public class Customer implements Serializable {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Customer name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getContractualAddress() {
+        return contractualAddress;
+    }
+
+    public Customer contractualAddress(String contractualAddress) {
+        this.contractualAddress = contractualAddress;
+        return this;
+    }
+
+    public void setContractualAddress(String contractualAddress) {
+        this.contractualAddress = contractualAddress;
+    }
+
+    public String getContractualSalutation() {
+        return contractualSalutation;
+    }
+
+    public Customer contractualSalutation(String contractualSalutation) {
+        this.contractualSalutation = contractualSalutation;
+        return this;
+    }
+
+    public void setContractualSalutation(String contractualSalutation) {
+        this.contractualSalutation = contractualSalutation;
+    }
+
+    public String getBillingAddress() {
+        return billingAddress;
+    }
+
+    public Customer billingAddress(String billingAddress) {
+        this.billingAddress = billingAddress;
+        return this;
+    }
+
+    public void setBillingAddress(String billingAddress) {
+        this.billingAddress = billingAddress;
+    }
+
+    public String getBillingSalutation() {
+        return billingSalutation;
+    }
+
+    public Customer billingSalutation(String billingSalutation) {
+        this.billingSalutation = billingSalutation;
+        return this;
+    }
+
+    public void setBillingSalutation(String billingSalutation) {
+        this.billingSalutation = billingSalutation;
     }
 
     public Set<Membership> getMemberships() {
@@ -152,6 +239,11 @@ public class Customer implements Serializable {
             "id=" + getId() +
             ", number=" + getNumber() +
             ", prefix='" + getPrefix() + "'" +
+            ", name='" + getName() + "'" +
+            ", contractualAddress='" + getContractualAddress() + "'" +
+            ", contractualSalutation='" + getContractualSalutation() + "'" +
+            ", billingAddress='" + getBillingAddress() + "'" +
+            ", billingSalutation='" + getBillingSalutation() + "'" +
             "}";
     }
 }

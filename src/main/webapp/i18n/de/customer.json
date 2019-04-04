@@ -17,6 +17,11 @@
             },
             "number": "Number",
             "prefix": "Prefix",
+            "name": "Name",
+            "contractualAddress": "Contractual Address",
+            "contractualSalutation": "Contractual Salutation",
+            "billingAddress": "Billing Address",
+            "billingSalutation": "Billing Salutation",
             "membership": "Membership",
             "role": "Role"
         }

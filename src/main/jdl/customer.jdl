@@ -6,6 +6,11 @@ paginate all with  infinite-scroll
 entity Customer {
     number Integer required unique min(10000) max(99999),
     prefix String required unique pattern(/[a-z][a-z0-9]+/),
+    name String required maxlength(80),
+    contractualAddress String required maxlength(400),
+    contractualSalutation String maxlength(80),
+    billingAddress String maxlength(400),
+    billingSalutation String maxlength(80)
 }
 
 entity Contact {
@@ -13,7 +18,6 @@ entity Contact {
     lastName String required maxlength(80),
     email String required maxlength(80)
 }
-
 
 enum CustomerContactRole {
     CONTRACTUAL,
