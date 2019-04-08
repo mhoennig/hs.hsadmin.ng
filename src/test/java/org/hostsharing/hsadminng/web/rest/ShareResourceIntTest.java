@@ -1,17 +1,15 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
-import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.Share;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
+import org.hostsharing.hsadminng.service.ShareQueryService;
 import org.hostsharing.hsadminng.service.ShareService;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.ShareCriteria;
-import org.hostsharing.hsadminng.service.ShareQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,14 +30,12 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 /**
  * Test class for the ShareResource REST controller.
  *
@@ -55,11 +51,11 @@ public class ShareResourceIntTest {
     private static final ShareAction DEFAULT_ACTION = ShareAction.SUBSCRIPTION;
     private static final ShareAction UPDATED_ACTION = ShareAction.CANCELLATION;
 
-    private static final Integer DEFAULT_QUANTITY = 1;
-    private static final Integer UPDATED_QUANTITY = 2;
+    private static final Integer DEFAULT_QUANTITY = 2;
+    private static final Integer UPDATED_QUANTITY = 3;
 
-    private static final String DEFAULT_COMMENT = "AAAAAAAAAA";
-    private static final String UPDATED_COMMENT = "BBBBBBBBBB";
+    private static final String DEFAULT_COMMENT = "Some Comment";
+    private static final String UPDATED_COMMENT = "Updated Comment";
 
     @Autowired
     private ShareRepository shareRepository;
@@ -106,7 +102,7 @@ public class ShareResourceIntTest {
 
     /**
      * Create an entity for this test.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -239,7 +235,7 @@ public class ShareResourceIntTest {
             .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
             .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT.toString())));
     }
-    
+
     @Test
     @Transactional
     public void getShare() throws Exception {
@@ -264,10 +260,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where date equals to DEFAULT_DATE
-        defaultShareShouldBeFound("date.equals=" + DEFAULT_DATE);
+        shouldFindDefaultShare("date.equals=" + DEFAULT_DATE);
 
         // Get all the shareList where date equals to UPDATED_DATE
-        defaultShareShouldNotBeFound("date.equals=" + UPDATED_DATE);
+        shouldNotFindAnyShare("date.equals=" + UPDATED_DATE);
     }
 
     @Test
@@ -277,10 +273,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where date in DEFAULT_DATE or UPDATED_DATE
-        defaultShareShouldBeFound("date.in=" + DEFAULT_DATE + "," + UPDATED_DATE);
+        shouldFindDefaultShare("date.in=" + DEFAULT_DATE + "," + UPDATED_DATE);
 
         // Get all the shareList where date equals to UPDATED_DATE
-        defaultShareShouldNotBeFound("date.in=" + UPDATED_DATE);
+        shouldNotFindAnyShare("date.in=" + UPDATED_DATE);
     }
 
     @Test
@@ -290,10 +286,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where date is not null
-        defaultShareShouldBeFound("date.specified=true");
+        shouldFindDefaultShare("date.specified=true");
 
         // Get all the shareList where date is null
-        defaultShareShouldNotBeFound("date.specified=false");
+        shouldNotFindAnyShare("date.specified=false");
     }
 
     @Test
@@ -303,10 +299,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where date greater than or equals to DEFAULT_DATE
-        defaultShareShouldBeFound("date.greaterOrEqualThan=" + DEFAULT_DATE);
+        shouldFindDefaultShare("date.greaterOrEqualThan=" + DEFAULT_DATE);
 
         // Get all the shareList where date greater than or equals to UPDATED_DATE
-        defaultShareShouldNotBeFound("date.greaterOrEqualThan=" + UPDATED_DATE);
+        shouldNotFindAnyShare("date.greaterOrEqualThan=" + UPDATED_DATE);
     }
 
     @Test
@@ -316,10 +312,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where date less than or equals to DEFAULT_DATE
-        defaultShareShouldNotBeFound("date.lessThan=" + DEFAULT_DATE);
+        shouldNotFindAnyShare("date.lessThan=" + DEFAULT_DATE);
 
         // Get all the shareList where date less than or equals to UPDATED_DATE
-        defaultShareShouldBeFound("date.lessThan=" + UPDATED_DATE);
+        shouldFindDefaultShare("date.lessThan=" + UPDATED_DATE);
     }
 
 
@@ -330,10 +326,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where action equals to DEFAULT_ACTION
-        defaultShareShouldBeFound("action.equals=" + DEFAULT_ACTION);
+        shouldFindDefaultShare("action.equals=" + DEFAULT_ACTION);
 
         // Get all the shareList where action equals to UPDATED_ACTION
-        defaultShareShouldNotBeFound("action.equals=" + UPDATED_ACTION);
+        shouldNotFindAnyShare("action.equals=" + UPDATED_ACTION);
     }
 
     @Test
@@ -343,10 +339,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where action in DEFAULT_ACTION or UPDATED_ACTION
-        defaultShareShouldBeFound("action.in=" + DEFAULT_ACTION + "," + UPDATED_ACTION);
+        shouldFindDefaultShare("action.in=" + DEFAULT_ACTION + "," + UPDATED_ACTION);
 
         // Get all the shareList where action equals to UPDATED_ACTION
-        defaultShareShouldNotBeFound("action.in=" + UPDATED_ACTION);
+        shouldNotFindAnyShare("action.in=" + UPDATED_ACTION);
     }
 
     @Test
@@ -356,10 +352,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where action is not null
-        defaultShareShouldBeFound("action.specified=true");
+        shouldFindDefaultShare("action.specified=true");
 
         // Get all the shareList where action is null
-        defaultShareShouldNotBeFound("action.specified=false");
+        shouldNotFindAnyShare("action.specified=false");
     }
 
     @Test
@@ -369,10 +365,11 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where quantity equals to DEFAULT_QUANTITY
-        defaultShareShouldBeFound("quantity.equals=" + DEFAULT_QUANTITY);
+        shouldFindDefaultShare("quantity.equals=" + DEFAULT_QUANTITY);
 
-        // Get all the shareList where quantity equals to UPDATED_QUANTITY
-        defaultShareShouldNotBeFound("quantity.equals=" + UPDATED_QUANTITY);
+        // Get all the shareList where quantity is not in database
+        shouldNotFindAnyShare("quantity.equals=" + (DEFAULT_QUANTITY + 1));
+        shouldNotFindAnyShare("quantity.equals=" + (-DEFAULT_QUANTITY));
     }
 
     @Test
@@ -382,10 +379,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where quantity in DEFAULT_QUANTITY or UPDATED_QUANTITY
-        defaultShareShouldBeFound("quantity.in=" + DEFAULT_QUANTITY + "," + UPDATED_QUANTITY);
+        shouldFindDefaultShare("quantity.in=" + DEFAULT_QUANTITY + "," + (-DEFAULT_QUANTITY));
 
         // Get all the shareList where quantity equals to UPDATED_QUANTITY
-        defaultShareShouldNotBeFound("quantity.in=" + UPDATED_QUANTITY);
+        shouldNotFindAnyShare("quantity.in=" + (DEFAULT_QUANTITY + 1));
     }
 
     @Test
@@ -395,10 +392,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where quantity is not null
-        defaultShareShouldBeFound("quantity.specified=true");
+        shouldFindDefaultShare("quantity.specified=true");
 
         // Get all the shareList where quantity is null
-        defaultShareShouldNotBeFound("quantity.specified=false");
+        shouldNotFindAnyShare("quantity.specified=false");
     }
 
     @Test
@@ -408,10 +405,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where quantity greater than or equals to DEFAULT_QUANTITY
-        defaultShareShouldBeFound("quantity.greaterOrEqualThan=" + DEFAULT_QUANTITY);
+        shouldFindDefaultShare("quantity.greaterOrEqualThan=" + DEFAULT_QUANTITY);
 
-        // Get all the shareList where quantity greater than or equals to UPDATED_QUANTITY
-        defaultShareShouldNotBeFound("quantity.greaterOrEqualThan=" + UPDATED_QUANTITY);
+        // Get all the shareList where quantity greater than or equals to DEFAULT_QUANTITY+1
+        shouldNotFindAnyShare("quantity.greaterOrEqualThan=" + (DEFAULT_QUANTITY + 1));
     }
 
     @Test
@@ -421,10 +418,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where quantity less than or equals to DEFAULT_QUANTITY
-        defaultShareShouldNotBeFound("quantity.lessThan=" + DEFAULT_QUANTITY);
+        shouldNotFindAnyShare("quantity.lessThan=" + DEFAULT_QUANTITY);
 
-        // Get all the shareList where quantity less than or equals to UPDATED_QUANTITY
-        defaultShareShouldBeFound("quantity.lessThan=" + UPDATED_QUANTITY);
+        // Get all the shareList where quantity less than or equals to DEFAULT_QUANTITY-1
+        shouldFindDefaultShare("quantity.lessThan=" + (DEFAULT_QUANTITY + 1));
     }
 
 
@@ -435,10 +432,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where comment equals to DEFAULT_COMMENT
-        defaultShareShouldBeFound("comment.equals=" + DEFAULT_COMMENT);
+        shouldFindDefaultShare("comment.equals=" + DEFAULT_COMMENT);
 
         // Get all the shareList where comment equals to UPDATED_COMMENT
-        defaultShareShouldNotBeFound("comment.equals=" + UPDATED_COMMENT);
+        shouldNotFindAnyShare("comment.equals=" + UPDATED_COMMENT);
     }
 
     @Test
@@ -448,10 +445,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where comment in DEFAULT_COMMENT or UPDATED_COMMENT
-        defaultShareShouldBeFound("comment.in=" + DEFAULT_COMMENT + "," + UPDATED_COMMENT);
+        shouldFindDefaultShare("comment.in=" + DEFAULT_COMMENT + "," + UPDATED_COMMENT);
 
         // Get all the shareList where comment equals to UPDATED_COMMENT
-        defaultShareShouldNotBeFound("comment.in=" + UPDATED_COMMENT);
+        shouldNotFindAnyShare("comment.in=" + UPDATED_COMMENT);
     }
 
     @Test
@@ -461,10 +458,10 @@ public class ShareResourceIntTest {
         shareRepository.saveAndFlush(share);
 
         // Get all the shareList where comment is not null
-        defaultShareShouldBeFound("comment.specified=true");
+        shouldFindDefaultShare("comment.specified=true");
 
         // Get all the shareList where comment is null
-        defaultShareShouldNotBeFound("comment.specified=false");
+        shouldNotFindAnyShare("comment.specified=false");
     }
 
     @Test
@@ -479,16 +476,16 @@ public class ShareResourceIntTest {
         Long memberId = member.getId();
 
         // Get all the shareList where member equals to memberId
-        defaultShareShouldBeFound("memberId.equals=" + memberId);
+        shouldFindDefaultShare("memberId.equals=" + memberId);
 
         // Get all the shareList where member equals to memberId + 1
-        defaultShareShouldNotBeFound("memberId.equals=" + (memberId + 1));
+        shouldNotFindAnyShare("memberId.equals=" + (memberId + 1));
     }
 
     /**
      * Executes the search, and checks that the default entity is returned
      */
-    private void defaultShareShouldBeFound(String filter) throws Exception {
+    private void shouldFindDefaultShare(String filter) throws Exception {
         restShareMockMvc.perform(get("/api/shares?sort=id,desc&" + filter))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -508,7 +505,7 @@ public class ShareResourceIntTest {
     /**
      * Executes the search, and checks that the default entity is not returned
      */
-    private void defaultShareShouldNotBeFound(String filter) throws Exception {
+    private void shouldNotFindAnyShare(String filter) throws Exception {
         restShareMockMvc.perform(get("/api/shares?sort=id,desc&" + filter))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
@@ -553,16 +550,16 @@ public class ShareResourceIntTest {
         restShareMockMvc.perform(put("/api/shares")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
         // Validate the Share in the database
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeUpdate);
         Share testShare = shareList.get(shareList.size() - 1);
-        assertThat(testShare.getDate()).isEqualTo(UPDATED_DATE);
-        assertThat(testShare.getAction()).isEqualTo(UPDATED_ACTION);
-        assertThat(testShare.getQuantity()).isEqualTo(UPDATED_QUANTITY);
-        assertThat(testShare.getComment()).isEqualTo(UPDATED_COMMENT);
+        assertThat(testShare.getDate()).isEqualTo(DEFAULT_DATE);
+        assertThat(testShare.getAction()).isEqualTo(DEFAULT_ACTION);
+        assertThat(testShare.getQuantity()).isEqualTo(DEFAULT_QUANTITY);
+        assertThat(testShare.getComment()).isEqualTo(DEFAULT_COMMENT);
     }
 
     @Test
@@ -595,11 +592,11 @@ public class ShareResourceIntTest {
         // Delete the share
         restShareMockMvc.perform(delete("/api/shares/{id}", share.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the share is still in the database
         List<Share> shareList = shareRepository.findAll();
-        assertThat(shareList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(shareList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test

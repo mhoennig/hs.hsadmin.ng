@@ -2,15 +2,14 @@ package org.hostsharing.hsadminng.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
-
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 /**
  * A Share.
@@ -20,7 +19,9 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 public class Share implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
+    public static final String ENTITY_NAME = "share";
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")

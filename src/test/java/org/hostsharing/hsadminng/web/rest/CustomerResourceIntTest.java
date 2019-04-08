@@ -1,18 +1,15 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
 import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.CustomerContact;
+import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,10 +28,9 @@ import org.springframework.validation.Validator;
 import javax.persistence.EntityManager;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -55,11 +51,13 @@ public class CustomerResourceIntTest {
     private static final String ANOTHER_PREFIX = "old";
     private static final String UPDATED_PREFIX = "new";
 
-    private static final String DEFAULT_NAME = "AAAAAAAAAA";
-    private static final String UPDATED_NAME = "BBBBBBBBBB";
+    private static final String DEFAULT_NAME = "Default GmbH";
+    private static final String UPDATED_NAME = "Updated Default GmbH";
+    private static final String ANOTHER_NAME = "Another Corp.";
 
-    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "Default Address";
+    private static final String UPDATED_CONTRACTUAL_ADDRESS = "Updated Address";
+    private static final String ANOTHER_CONTRACTUAL_ADDRESS = "Another Address";
 
     private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
@@ -140,7 +138,9 @@ public class CustomerResourceIntTest {
     public static Customer createAnotherEntity(EntityManager em) {
         Customer customer = new Customer()
             .number(ANOTHER_NUMBER)
-            .prefix(ANOTHER_PREFIX);
+            .prefix(ANOTHER_PREFIX)
+            .name(ANOTHER_NAME)
+            .contractualAddress(ANOTHER_CONTRACTUAL_ADDRESS);
         return customer;
     }
 
