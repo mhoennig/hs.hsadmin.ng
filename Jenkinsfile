@@ -29,6 +29,16 @@ node {
             }
         }
 
+        stage('backend check') {
+            try {
+                sh "./gradlew check -PnodeInstall --no-daemon"
+            } catch (err) {
+                throw err
+            } finally {
+                archiveArtifacts artifacts: '**/build/reports/jacoco/test/html/', fingerprint: true
+            }
+        }
+
         stage('frontend tests') {
             try {
                 sh "./gradlew npm_run_test -PnodeInstall --no-daemon"
