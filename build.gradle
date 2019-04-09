@@ -31,6 +31,7 @@ plugins {
 }
 
 apply plugin: 'java'
+apply plugin: 'jacoco'
 apply plugin: 'org.owasp.dependencycheck'
 sourceCompatibility=1.8
 targetCompatibility=1.8
@@ -111,6 +112,75 @@ test {
     reports.html.enabled = false
 }
 
+// --- JaCoCo Code Coverage ---
+
+jacoco {
+    toolVersion = "0.8.3"
+}
+
+test.finalizedBy jacocoTestReport
+check.dependsOn jacocoTestCoverageVerification
+
+// Only for purely JHipster/MapStruct generated classes.
+// Please do NOT add any self coded classes!
+// Keep in mind, git will blame you ;-)
+def jhipsterGeneratedClassesWithDecentCoverage = [
+    'org.hostsharing.hsadminng.repository.CustomAuditEventRepository',
+    'org.hostsharing.hsadminng.service.ContactQueryService',
+    'org.hostsharing.hsadminng.service.UserService',
+    'org.hostsharing.hsadminng.service.CustomerContactQueryService'
+]
+
+// Only for purely JHipster/MapStruct generated classes.
+// Please do NOT add any self coded classes!
+// Keep in mind, git will blame you ;-)
+def jhipsterGeneratedClassesWithLowCoverage = [
+    'org.hostsharing.hsadminng.service.MailService',
+    'org.hostsharing.hsadminng.security.SecurityUtils',
+    'org.hostsharing.hsadminng.config.DefaultProfileUtil',
+    'org.hostsharing.hsadminng.config.WebConfigurer',
+    'org.hostsharing.hsadminng.web.rest.AccountResource',
+    'org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator',
+    'org.hostsharing.hsadminng.web.rest.errors.CustomParameterizedException',
+    'org.hostsharing.hsadminng.config.audit.AuditEventConverter',
+    'org.hostsharing.hsadminng.security.jwt.TokenProvider',
+    'org.hostsharing.hsadminng.aop.logging.LoggingAspect',
+    'org.hostsharing.hsadminng.HsadminNgApp',
+    '*.*QueryService',
+    '*.*Configuration',
+    '*MapperImpl',
+    '*Criteria',
+    '*_'
+]
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = 'CLASS'
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                // Increasing the threshold is fine, decreasing is not.
+                // Keep in mind, git will blame you ;-)
+                minimum = 0.95
+            }
+            excludes = jhipsterGeneratedClassesWithDecentCoverage + jhipsterGeneratedClassesWithLowCoverage
+        }
+
+        rule {
+            element = 'CLASS'
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.85
+            }
+            includes = jhipsterGeneratedClassesWithDecentCoverage
+        }
+    }
+}
+
+// --- Cucumber BDD Tests ---
+
 task cucumberTest(type: Test) {
     description = "Execute cucumber BDD tests."
     group = "verification"
@@ -132,6 +202,8 @@ task cucumberTestReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn cucumberTest
 }
+
+// ------------------------------
 
 apply from: 'gradle/docker.gradle'
 apply from: 'gradle/sonar.gradle'
