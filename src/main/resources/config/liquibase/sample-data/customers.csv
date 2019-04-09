@@ -1,7 +1,7 @@
-id;jhi_number;prefix
-1;10001;aaa
-2;10002;bbb
-3;10003;ccc
-4;10004;ddd
-5;10098;abc
-6;10099;bca
+id;jhi_number;prefix;name;contractual_address
+1;10001;aaa;AAA Corp.;'Ballustrade 13|91334 Erlangen'
+2;10002;bbb;BBB GmbH;'Irgendwo 0|11111 Berlin'
+3;10003;ccc;CCC AG;'Haus 15|26539 Baltrum'
+4;10004;ddd;DDD eG;'Industriestraße 98-102|n22999 Hamburg'
+5;10098;abc;ABC OHG;'An der Weide 13|30123 Hannover'
+6;10099;bca;Bert Cäsar Adelbert;'Egerstraße 53|44225 Dortmund'
