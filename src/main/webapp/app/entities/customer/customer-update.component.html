@@ -63,9 +63,10 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress" for="field_contractualAddress">Contractual Address</label>
-                    <input type="text" class="form-control" name="contractualAddress" id="field_contractualAddress"
-                        [(ngModel)]="customer.contractualAddress" required maxlength="400"/>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress"
+                           for="field_contractualAddress">Contractual Address X</label>
+                    <textarea class="form-control" name="contractualAddress" id="field_contractualAddress" rows="3"
+                              [(ngModel)]="customer.contractualAddress" required maxlength="400"></textarea>
                     <div [hidden]="!(editForm.controls.contractualAddress?.dirty && editForm.controls.contractualAddress?.invalid)">
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.contractualAddress?.errors?.required" jhiTranslate="entity.validation.required">
@@ -90,8 +91,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.billingAddress" for="field_billingAddress">Billing Address</label>
-                    <input type="text" class="form-control" name="billingAddress" id="field_billingAddress"
-                        [(ngModel)]="customer.billingAddress" maxlength="400"/>
+                    <textarea class="form-control" name="billingAddress" id="field_billingAddress" rows="3"
+                              [(ngModel)]="customer.billingAddress" maxlength="400"></textarea>
                     <div [hidden]="!(editForm.controls.billingAddress?.dirty && editForm.controls.billingAddress?.invalid)">
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.billingAddress?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 400 }">

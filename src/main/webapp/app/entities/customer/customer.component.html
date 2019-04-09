@@ -37,9 +37,9 @@
                 <td>{{customer.number}}</td>
                 <td>{{customer.prefix}}</td>
                 <td>{{customer.name}}</td>
-                <td>{{customer.contractualAddress}}</td>
+                <td>{{customer.contractualAddress | linebreaks:' | '}}</td>
                 <td>{{customer.contractualSalutation}}</td>
-                <td>{{customer.billingAddress}}</td>
+                <td>{{customer.billingAddress | linebreaks:' | '}}</td>
                 <td>{{customer.billingSalutation}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
