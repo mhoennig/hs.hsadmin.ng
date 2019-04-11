@@ -2,6 +2,7 @@
     "error": {
         "shareSubscriptionPositivQuantity": "Share subscriptions require a positive quantity",
         "shareCancellationNegativeQuantity": "Share cancellations require a negative quantity",
-        "shareTransactionImmutable": "Share transactions are immutable"
+        "shareTransactionImmutable": "Share transactions are immutable",
+        "membershipNotDeletable": "Membership cannot be deleted, instead set 'untilDate'"
     }
 }

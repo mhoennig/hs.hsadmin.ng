@@ -2,6 +2,7 @@
     "error": {
         "shareSubscriptionPositivQuantity": "Zeichnungen von Geschäftsanteilen erfordern eine positive Stückzahl",
         "shareCancellationNegativeQuantity": "Kündigungen von Geschäftsanteilen erfordern eine negative Stückzahl",
-        "shareTransactionImmutable": "Transaktionen mit Geschäftsanteilen sind unveränderlich"
+        "shareTransactionImmutable": "Transaktionen mit Geschäftsanteilen sind unveränderlich",
+        "membershipNotDeletable": "Mitgliedschaft kann nicht gelöscht werden, setze stattdessen das 'untilDate'"
     }
 }

@@ -32,7 +32,7 @@ public class ShareServiceUnitTest {
     private ShareRepository shareRepository;
 
     @Mock
-    private ShareMapper shareMapper; // = new ShareMapperImpl();
+    private ShareMapper shareMapper;
 
     @InjectMocks
     private ShareService shareService;

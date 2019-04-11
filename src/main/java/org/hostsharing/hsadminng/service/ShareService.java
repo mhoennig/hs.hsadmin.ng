@@ -85,7 +85,7 @@ public class ShareService {
     }
 
     /**
-     * Delete the share by id.
+     * Prevent deleting a share transaction by id via service call
      *
      * @param id the id of the entity
      */

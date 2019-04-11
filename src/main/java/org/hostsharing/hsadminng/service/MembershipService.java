@@ -4,9 +4,9 @@ import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -73,12 +73,12 @@ public class MembershipService {
     }
 
     /**
-     * Delete the membership by id.
+     * Prevent deleting a membership by id via service call.
      *
      * @param id the id of the entity
      */
     public void delete(Long id) {
         log.debug("Request to delete Membership : {}", id);
-        membershipRepository.deleteById(id);
+        throw new BadRequestAlertException("Membership cannot be deleted", Membership.ENTITY_NAME, "membershipNotDeletable");
     }
 }
