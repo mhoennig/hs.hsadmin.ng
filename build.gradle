@@ -60,22 +60,6 @@ dependencyManagement {
   }
 }
 
-pitest {
-    targetClasses = ['org.hostsharing.hsadminng.*']
-    excludedClasses = ['*IntTest']
-    threads = 4
-
-    // Do not set these limit even lower, they are already pretty bad values!
-    // 83%*73% means that only ~60% of the code properly covered by automated tests.
-    mutationThreshold = 73
-    coverageThreshold = 83
-
-    timeoutFactor = 3.0
-    outputFormats = ['XML', 'HTML']
-    timestampedReports = false
-    verbose = false
-}
-
 defaultTasks 'bootRun'
 
 group = 'org.hostsharing.hsadminng'
@@ -137,7 +121,6 @@ jacoco {
 
 test.finalizedBy jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
-check.dependsOn 'pitest'
 
 // Only for purely JHipster/MapStruct generated classes.
 // Please do NOT add any self coded classes!
@@ -219,6 +202,22 @@ task testReport(type: TestReport) {
 task cucumberTestReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn cucumberTest
+}
+
+// --- PiTest mutation testing ---
+
+pitest {
+    targetClasses = ['org.hostsharing.hsadminng.*']
+    threads = 4
+
+    // Do not set these limit even lower, they are already pretty bad values!
+    // 83%*73% means that only ~60% of the code properly covered by automated tests.
+    mutationThreshold = 73
+    coverageThreshold = 83
+
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+    verbose = false
 }
 
 // ------------------------------
