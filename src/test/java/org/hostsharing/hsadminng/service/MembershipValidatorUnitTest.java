@@ -27,17 +27,40 @@ public class MembershipValidatorUnitTest {
     private MembershipValidator membershipValidator;
 
     @Test
-    public void shouldRejectIfUntilDateIsNotAfterSinceDate() {
+    public void shouldValidateThatUntilDateIsAfterSinceDate() {
+
+        // JUnit 4 parameterized tests are quite ugly, that's why I do it this way
+        shouldAcceptValidUntilDate("2019-04-10", "2019-04-11");
+        shouldRejectInvalidUntilDate("2019-04-11", "2019-04-11");
+        shouldRejectInvalidUntilDate("2019-04-12", "2019-04-11");
+    }
+
+    private void shouldAcceptValidUntilDate(final String sinceDate, final String untilDate) {
+
         // given
         final MembershipDTO membershipDTO = new MembershipDTO();
-        membershipDTO.setSinceDate(LocalDate.parse("2019-04-11"));
-        membershipDTO.setUntilDate(LocalDate.parse("2019-04-11"));
+        membershipDTO.setSinceDate(LocalDate.parse(sinceDate));
+        membershipDTO.setUntilDate(LocalDate.parse(untilDate));
+
+        // when
+        final Throwable throwException = catchThrowableOfType(() -> membershipValidator.validate(membershipDTO), Throwable.class);
+
+        // then
+        assertThat(throwException).isNull();
+    }
+
+    private void shouldRejectInvalidUntilDate(final String sinceDate, final String untilDate) {
+
+        // given
+        final MembershipDTO membershipDTO = new MembershipDTO();
+        membershipDTO.setSinceDate(LocalDate.parse(sinceDate));
+        membershipDTO.setUntilDate(LocalDate.parse(untilDate));
 
         // when
         final Throwable throwException = catchThrowableOfType(() -> membershipValidator.validate(membershipDTO), BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isNotNull();
-
     }
+
 }
