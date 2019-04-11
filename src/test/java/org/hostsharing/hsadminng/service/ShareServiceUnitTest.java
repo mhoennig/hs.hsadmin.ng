@@ -55,7 +55,7 @@ public class ShareServiceUnitTest {
     }
 
     @Test
-    public void saveNotUpdateAnyExistingShareTransaction() {
+    public void saveShouldNotUpdateAnyExistingShareTransaction() {
         // given
         final ShareDTO givenShareDTO = givenShareDTO(anyNonNullId(), ShareAction.SUBSCRIPTION, anyPositiveNumber());
 

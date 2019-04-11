@@ -1,8 +1,10 @@
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
+
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * A DTO for the Membership entity.
@@ -16,10 +18,15 @@ public class MembershipDTO implements Serializable {
 
     private LocalDate untilDate;
 
-
     private Long customerId;
 
     private String customerPrefix;
+
+    public MembershipDTO with(
+        Consumer<MembershipDTO> builderFunction) {
+        builderFunction.accept(this);
+        return this;
+    }
 
     public Long getId() {
         return id;

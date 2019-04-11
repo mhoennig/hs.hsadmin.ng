@@ -23,11 +23,16 @@ public class MembershipService {
 
     private final Logger log = LoggerFactory.getLogger(MembershipService.class);
 
+    private final MembershipValidator membershipValidator;
+
     private final MembershipRepository membershipRepository;
 
     private final MembershipMapper membershipMapper;
 
-    public MembershipService(MembershipRepository membershipRepository, MembershipMapper membershipMapper) {
+    public MembershipService(final MembershipValidator membershipValidator,
+                             final MembershipRepository membershipRepository,
+                             final MembershipMapper membershipMapper) {
+        this.membershipValidator = membershipValidator;
         this.membershipRepository = membershipRepository;
         this.membershipMapper = membershipMapper;
     }
@@ -40,6 +45,9 @@ public class MembershipService {
      */
     public MembershipDTO save(MembershipDTO membershipDTO) {
         log.debug("Request to save Membership : {}", membershipDTO);
+
+        membershipValidator.validate(membershipDTO);
+
         Membership membership = membershipMapper.toEntity(membershipDTO);
         membership = membershipRepository.save(membership);
         return membershipMapper.toDto(membership);
