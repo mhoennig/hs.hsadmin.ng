@@ -1,19 +1,16 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
-import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Customer;
+import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
+import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
-import org.hostsharing.hsadminng.service.MembershipQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,10 +31,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -50,11 +46,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = HsadminNgApp.class)
 public class MembershipResourceIntTest {
 
-    private static final LocalDate DEFAULT_SINCE_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_SINCE_DATE = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_SINCE_DATE = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate UPDATED_SINCE_DATE = DEFAULT_SINCE_DATE.plusMonths(1);
 
-    private static final LocalDate DEFAULT_UNTIL_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_UNTIL_DATE = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_UNTIL_DATE = UPDATED_SINCE_DATE.plusDays(600).withMonth(12).withDayOfMonth(31);
+    private static final LocalDate UPDATED_UNTIL_DATE = DEFAULT_UNTIL_DATE.plusYears(1);
+    private static final LocalDate ANOTHER_QUERY_DATE = DEFAULT_UNTIL_DATE.plusMonths(2);
 
     @Autowired
     private MembershipRepository membershipRepository;
@@ -105,8 +102,10 @@ public class MembershipResourceIntTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static Membership createEntity(EntityManager em) {
+    public static Membership createEntity(final EntityManager em, final Customer customer) {
+        em.persist(customer);
         Membership membership = new Membership()
+            .customer(customer)
             .sinceDate(DEFAULT_SINCE_DATE)
             .untilDate(DEFAULT_UNTIL_DATE);
         return membership;
@@ -114,7 +113,7 @@ public class MembershipResourceIntTest {
 
     @Before
     public void initTest() {
-        membership = createEntity(em);
+        membership = createEntity(em, CustomerResourceIntTest.createEntity(em));
     }
 
     @Test
@@ -282,7 +281,7 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldBeFound("untilDate.equals=" + DEFAULT_UNTIL_DATE);
 
         // Get all the membershipList where untilDate equals to UPDATED_UNTIL_DATE
-        defaultMembershipShouldNotBeFound("untilDate.equals=" + UPDATED_UNTIL_DATE);
+        defaultMembershipShouldNotBeFound("untilDate.equals=" + asString(UPDATED_UNTIL_DATE));
     }
 
     @Test
@@ -292,10 +291,10 @@ public class MembershipResourceIntTest {
         membershipRepository.saveAndFlush(membership);
 
         // Get all the membershipList where untilDate in DEFAULT_UNTIL_DATE or UPDATED_UNTIL_DATE
-        defaultMembershipShouldBeFound("untilDate.in=" + DEFAULT_UNTIL_DATE + "," + UPDATED_UNTIL_DATE);
+        defaultMembershipShouldBeFound("untilDate.in=" + DEFAULT_UNTIL_DATE + "," + ANOTHER_QUERY_DATE);
 
         // Get all the membershipList where untilDate equals to UPDATED_UNTIL_DATE
-        defaultMembershipShouldNotBeFound("untilDate.in=" + UPDATED_UNTIL_DATE);
+        defaultMembershipShouldNotBeFound("untilDate.in=" + asString(UPDATED_UNTIL_DATE));
     }
 
     @Test
@@ -321,7 +320,7 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldBeFound("untilDate.greaterOrEqualThan=" + DEFAULT_UNTIL_DATE);
 
         // Get all the membershipList where untilDate greater than or equals to UPDATED_UNTIL_DATE
-        defaultMembershipShouldNotBeFound("untilDate.greaterOrEqualThan=" + UPDATED_UNTIL_DATE);
+        defaultMembershipShouldNotBeFound("untilDate.greaterOrEqualThan=" + asString(UPDATED_UNTIL_DATE));
     }
 
     @Test
@@ -334,7 +333,7 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldNotBeFound("untilDate.lessThan=" + DEFAULT_UNTIL_DATE);
 
         // Get all the membershipList where untilDate less than or equals to UPDATED_UNTIL_DATE
-        defaultMembershipShouldBeFound("untilDate.lessThan=" + UPDATED_UNTIL_DATE);
+        defaultMembershipShouldBeFound("untilDate.lessThan=" + asString(UPDATED_UNTIL_DATE));
     }
 
 
@@ -342,11 +341,11 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByShareIsEqualToSomething() throws Exception {
         // Initialize the database
-        Share share = ShareResourceIntTest.createEntity(em);
+        Share share = ShareResourceIntTest.createEntity(em, membership);
         em.persist(share);
         em.flush();
         membership.addShare(share);
-        membershipRepository.saveAndFlush(membership);
+        membershipRepository.flush();
         Long shareId = share.getId();
 
         // Get all the membershipList where share equals to shareId
@@ -361,11 +360,11 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByAssetIsEqualToSomething() throws Exception {
         // Initialize the database
-        Asset asset = AssetResourceIntTest.createEntity(em);
+        Asset asset = AssetResourceIntTest.createEntity(em, membership);
         em.persist(asset);
         em.flush();
         membership.addAsset(asset);
-        membershipRepository.saveAndFlush(membership);
+        membershipRepository.flush();
         Long assetId = asset.getId();
 
         // Get all the membershipList where asset equals to assetId
@@ -380,7 +379,7 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByCustomerIsEqualToSomething() throws Exception {
         // Initialize the database
-        Customer customer = CustomerResourceIntTest.createEntity(em);
+        Customer customer = CustomerResourceIntTest.createAnotherEntity(em);
         em.persist(customer);
         em.flush();
         membership.setCustomer(customer);
@@ -498,11 +497,11 @@ public class MembershipResourceIntTest {
         // Delete the membership
         restMembershipMockMvc.perform(delete("/api/memberships/{id}", membership.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the database is unchanged empty
         List<Membership> membershipList = membershipRepository.findAll();
-        assertThat(membershipList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(membershipList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test
@@ -541,5 +540,9 @@ public class MembershipResourceIntTest {
     public void testEntityFromId() {
         assertThat(membershipMapper.fromId(42L).getId()).isEqualTo(42);
         assertThat(membershipMapper.fromId(null)).isNull();
+    }
+
+    private String asString(LocalDate updatedUntilDate) {
+        return updatedUntilDate == null ? "" : updatedUntilDate.toString();
     }
 }

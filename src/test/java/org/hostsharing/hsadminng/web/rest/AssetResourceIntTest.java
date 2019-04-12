@@ -1,17 +1,15 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
+import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.AssetCriteria;
-import org.hostsharing.hsadminng.service.AssetQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,14 +31,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 /**
  * Test class for the AssetResource REST controller.
  *
@@ -111,8 +106,10 @@ public class AssetResourceIntTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static Asset createEntity(EntityManager em) {
+    public static Asset createEntity(EntityManager em, Membership membership) {
+        em.persist(membership);
         Asset asset = new Asset()
+            .member(membership)
             .date(DEFAULT_DATE)
             .action(DEFAULT_ACTION)
             .amount(DEFAULT_AMOUNT)
@@ -122,7 +119,7 @@ public class AssetResourceIntTest {
 
     @Before
     public void initTest() {
-        asset = createEntity(em);
+        asset = createEntity(em, MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createEntity(em)));
     }
 
     @Test
@@ -445,7 +442,7 @@ public class AssetResourceIntTest {
     @Transactional
     public void getAllAssetsByMemberIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership member = MembershipResourceIntTest.createEntity(em);
+        Membership member = MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createAnotherEntity(em));
         em.persist(member);
         em.flush();
         asset.setMember(member);

@@ -1,10 +1,13 @@
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
+
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Objects;
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 
 /**
  * A DTO for the Asset entity.
@@ -25,7 +28,7 @@ public class AssetDTO implements Serializable {
     @Size(max = 160)
     private String comment;
 
-
+    @NotNull
     private Long memberId;
 
     public Long getId() {

@@ -36,8 +36,11 @@ public class Membership implements Serializable {
 
     @OneToMany(mappedBy = "member")
     private Set<Share> shares = new HashSet<>();
+
     @OneToMany(mappedBy = "member")
     private Set<Asset> assets = new HashSet<>();
+
+    @NotNull
     @ManyToOne
     @JsonIgnoreProperties("memberships")
     private Customer customer;

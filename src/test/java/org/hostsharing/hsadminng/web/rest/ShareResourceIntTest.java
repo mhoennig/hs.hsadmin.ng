@@ -106,8 +106,10 @@ public class ShareResourceIntTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static Share createEntity(EntityManager em) {
+    public static Share createEntity(final EntityManager em, final Membership membership) {
+        em.persist(membership);
         Share share = new Share()
+            .member(membership)
             .date(DEFAULT_DATE)
             .action(DEFAULT_ACTION)
             .quantity(DEFAULT_QUANTITY)
@@ -117,7 +119,7 @@ public class ShareResourceIntTest {
 
     @Before
     public void initTest() {
-        share = createEntity(em);
+        share = createEntity(em, MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createEntity(em)));
     }
 
     @Test
@@ -468,7 +470,7 @@ public class ShareResourceIntTest {
     @Transactional
     public void getAllSharesByMemberIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership member = MembershipResourceIntTest.createEntity(em);
+        Membership member = MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createAnotherEntity(em));
         em.persist(member);
         em.flush();
         share.setMember(member);

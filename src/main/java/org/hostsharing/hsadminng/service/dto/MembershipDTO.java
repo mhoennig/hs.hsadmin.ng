@@ -18,6 +18,7 @@ public class MembershipDTO implements Serializable {
 
     private LocalDate untilDate;
 
+    @NotNull
     private Long customerId;
 
     private String customerPrefix;

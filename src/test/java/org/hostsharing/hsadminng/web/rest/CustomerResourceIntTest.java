@@ -614,7 +614,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em);
+        Membership membership = MembershipResourceIntTest.createEntity(em, customer);
         em.persist(membership);
         em.flush();
         customer.addMembership(membership);

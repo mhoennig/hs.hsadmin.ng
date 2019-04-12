@@ -44,6 +44,7 @@ public class Share implements Serializable {
     @Column(name = "jhi_comment", length = 160)
     private String comment;
 
+    @NotNull
     @ManyToOne
     @JsonIgnoreProperties("shares")
     private Membership member;

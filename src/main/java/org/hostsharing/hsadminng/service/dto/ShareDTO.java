@@ -1,9 +1,12 @@
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
-import java.io.Serializable;
-import java.util.Objects;
+
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * A DTO for the Share entity.
@@ -24,7 +27,7 @@ public class ShareDTO implements Serializable {
     @Size(max = 160)
     private String comment;
 
-
+    @NotNull
     private Long memberId;
 
     public Long getId() {

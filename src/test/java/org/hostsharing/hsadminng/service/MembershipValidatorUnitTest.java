@@ -1,8 +1,10 @@
 package org.hostsharing.hsadminng.service;
 
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -11,9 +13,12 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.time.LocalDate;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 
 public class MembershipValidatorUnitTest {
 
@@ -26,41 +31,92 @@ public class MembershipValidatorUnitTest {
     @InjectMocks
     private MembershipValidator membershipValidator;
 
+    @Before
+    public void initMocks() {
+        given(membershipRepository.hasUncancelledMembershipForCustomer(anyLong())).willReturn(false);
+    }
+
     @Test
-    public void shouldValidateThatUntilDateIsAfterSinceDate() {
-
-        // JUnit 4 parameterized tests are quite ugly, that's why I do it this way
-        shouldAcceptValidUntilDate("2019-04-10", "2019-04-11");
-        shouldRejectInvalidUntilDate("2019-04-11", "2019-04-11");
-        shouldRejectInvalidUntilDate("2019-04-12", "2019-04-11");
+    public void shouldAcceptNewMembershipIfUntilDateAfterSinceDate() {
+        new GivenMembershipValidationTestCase()
+            .withNewMembershipForCustomer(1L).since("2019-04-11").until("2019-04-12")
+            .when((MembershipDTO membershipDto) -> membershipValidator.validate(membershipDto))
+            .thenActualException().isNull();
     }
 
-    private void shouldAcceptValidUntilDate(final String sinceDate, final String untilDate) {
-
-        // given
-        final MembershipDTO membershipDTO = new MembershipDTO();
-        membershipDTO.setSinceDate(LocalDate.parse(sinceDate));
-        membershipDTO.setUntilDate(LocalDate.parse(untilDate));
-
-        // when
-        final Throwable throwException = catchThrowableOfType(() -> membershipValidator.validate(membershipDTO), Throwable.class);
-
-        // then
-        assertThat(throwException).isNull();
+    @Test
+    public void shouldRejectNewMembershipIfUntilDateEqualToSinceDate() {
+        new GivenMembershipValidationTestCase()
+            .withNewMembershipForCustomer(1L).since("2019-04-11").until("2019-04-11")
+            .when((MembershipDTO membershipDto) -> membershipValidator.validate(membershipDto))
+            .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
+            "Invalid untilDate", "membership", "untilDateMustBeAfterSinceDate"));
     }
 
-    private void shouldRejectInvalidUntilDate(final String sinceDate, final String untilDate) {
-
-        // given
-        final MembershipDTO membershipDTO = new MembershipDTO();
-        membershipDTO.setSinceDate(LocalDate.parse(sinceDate));
-        membershipDTO.setUntilDate(LocalDate.parse(untilDate));
-
-        // when
-        final Throwable throwException = catchThrowableOfType(() -> membershipValidator.validate(membershipDTO), BadRequestAlertException.class);
-
-        // then
-        assertThat(throwException).isNotNull();
+    @Test
+    public void shouldRejectNewMembershipIfUntilDateAfterSinceDate() {
+        new GivenMembershipValidationTestCase()
+            .withNewMembershipForCustomer(1L).since("2019-04-12").until("2019-04-11")
+            .when((MembershipDTO membershipDto) -> membershipValidator.validate(membershipDto))
+            .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
+            "Invalid untilDate", "membership", "untilDateMustBeAfterSinceDate"));
     }
 
+    @Test
+    public void shouldAcceptNewUncancelledMembershipIfNoUncancelledMembershipExistsForSameCustomer() {
+        new GivenMembershipValidationTestCase()
+            .withUncancelledMembershipForCustomer(1L, false)
+            .withNewMembershipForCustomer(1L).since("2019-04-12")
+            .when((MembershipDTO membershipDto) -> membershipValidator.validate(membershipDto))
+            .thenActualException().isNull();
+    }
+
+    @Test
+    public void shouldRejectNewMembershipIfAnyUncancelledMembershipExistsForSameCustomer() {
+
+        new GivenMembershipValidationTestCase()
+            .withUncancelledMembershipForCustomer(1L, true)
+            .withNewMembershipForCustomer(1L).since("2019-04-12")
+            .when((MembershipDTO membershipDto) -> membershipValidator.validate(membershipDto))
+            .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
+            "Another uncancelled membership exists", "membership", "anotherUncancelledMembershipExists"));
+    }
+
+    // -- only test fixture below ---
+
+    private class GivenMembershipValidationTestCase {
+
+        private final MembershipDTO membershipDto = new MembershipDTO();
+        private BadRequestAlertException actualException;
+
+        GivenMembershipValidationTestCase withUncancelledMembershipForCustomer(final long customerId, final boolean hasUncancelledMembership) {
+            given(membershipRepository.hasUncancelledMembershipForCustomer(customerId)).willReturn(hasUncancelledMembership);
+            return this;
+        }
+
+        GivenMembershipValidationTestCase withNewMembershipForCustomer(long customerId) {
+            membershipDto.setCustomerId(1L);
+            return this;
+        }
+
+
+        GivenMembershipValidationTestCase since(final String sinceDate) {
+            membershipDto.setSinceDate(LocalDate.parse(sinceDate));
+            return this;
+        }
+
+        public GivenMembershipValidationTestCase until(final String untilDate) {
+            membershipDto.setUntilDate(LocalDate.parse(untilDate));
+            return this;
+        }
+
+        GivenMembershipValidationTestCase when(final Consumer<MembershipDTO> statement) {
+            actualException = catchThrowableOfType(() -> membershipValidator.validate(membershipDto), BadRequestAlertException.class);
+            return this;
+        }
+
+        public AbstractThrowableAssert<?, ? extends Throwable> thenActualException() {
+            return assertThat(actualException);
+        }
+    }
 }

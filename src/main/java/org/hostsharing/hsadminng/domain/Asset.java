@@ -2,16 +2,15 @@ package org.hostsharing.hsadminng.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
-
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 
 /**
  * A Asset.
@@ -44,6 +43,7 @@ public class Asset implements Serializable {
     @Column(name = "jhi_comment", length = 160)
     private String comment;
 
+    @NotNull
     @ManyToOne
     @JsonIgnoreProperties("assets")
     private Membership member;
