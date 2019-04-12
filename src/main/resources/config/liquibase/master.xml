@@ -21,5 +21,6 @@
     <include file="config/liquibase/changelog/sample-data-Customer.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/sample-data-Contact.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/sample-data-CustomerContact.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/sample-data-Membership.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
