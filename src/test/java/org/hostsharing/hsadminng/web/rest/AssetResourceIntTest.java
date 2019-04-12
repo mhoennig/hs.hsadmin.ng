@@ -114,6 +114,11 @@ public class AssetResourceIntTest {
             .action(DEFAULT_ACTION)
             .amount(DEFAULT_AMOUNT)
             .comment(DEFAULT_COMMENT);
+        // Add required entity
+        Membership membership = MembershipResourceIntTest.createEntity(em);
+        em.persist(membership);
+        em.flush();
+        asset.setMember(membership);
         return asset;
     }
 

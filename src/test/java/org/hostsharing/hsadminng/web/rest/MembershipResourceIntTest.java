@@ -108,6 +108,11 @@ public class MembershipResourceIntTest {
             .customer(customer)
             .sinceDate(DEFAULT_SINCE_DATE)
             .untilDate(DEFAULT_UNTIL_DATE);
+        // Add required entity
+        Customer customer = CustomerResourceIntTest.createEntity(em);
+        em.persist(customer);
+        em.flush();
+        membership.setCustomer(customer);
         return membership;
     }
 
