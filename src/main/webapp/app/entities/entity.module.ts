@@ -1,4 +1,4 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 @NgModule({
@@ -15,6 +15,22 @@ import { RouterModule } from '@angular/router';
             {
                 path: 'customer-contact',
                 loadChildren: './customer-contact/customer-contact.module#HsadminNgCustomerContactModule'
+            },
+            {
+                path: 'membership',
+                loadChildren: './membership/membership.module#HsadminNgMembershipModule'
+            },
+            {
+                path: 'share',
+                loadChildren: './share/share.module#HsadminNgShareModule'
+            },
+            {
+                path: 'asset',
+                loadChildren: './asset/asset.module#HsadminNgAssetModule'
+            },
+            {
+                path: 'customer',
+                loadChildren: './customer/customer.module#HsadminNgCustomerModule'
             },
             {
                 path: 'membership',

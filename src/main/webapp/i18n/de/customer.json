@@ -17,8 +17,13 @@
             },
             "number": "Number",
             "prefix": "Prefix",
-            "membership": "Membership",
-            "role": "Role"
+            "name": "Name",
+            "contractualAddress": "Contractual Address",
+            "contractualSalutation": "Contractual Salutation",
+            "billingAddress": "Billing Address",
+            "billingSalutation": "Billing Salutation",
+            "role": "Role",
+            "membership": "Membership"
         }
     }
 }

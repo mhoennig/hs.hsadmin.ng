@@ -1,12 +1,17 @@
-import { IMembership } from 'app/shared/model/membership.model';
 import { ICustomerContact } from 'app/shared/model/customer-contact.model';
+import { IMembership } from 'app/shared/model/membership.model';
 
 export interface ICustomer {
     id?: number;
     number?: number;
     prefix?: string;
-    memberships?: IMembership[];
+    name?: string;
+    contractualAddress?: string;
+    contractualSalutation?: string;
+    billingAddress?: string;
+    billingSalutation?: string;
     roles?: ICustomerContact[];
+    memberships?: IMembership[];
 }
 
 export class Customer implements ICustomer {
@@ -14,7 +19,12 @@ export class Customer implements ICustomer {
         public id?: number,
         public number?: number,
         public prefix?: string,
-        public memberships?: IMembership[],
-        public roles?: ICustomerContact[]
+        public name?: string,
+        public contractualAddress?: string,
+        public contractualSalutation?: string,
+        public billingAddress?: string,
+        public billingSalutation?: string,
+        public roles?: ICustomerContact[],
+        public memberships?: IMembership[]
     ) {}
 }

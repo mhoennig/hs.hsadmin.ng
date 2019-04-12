@@ -37,6 +37,7 @@
             "relationshipType": "many-to-one",
             "otherEntityName": "membership",
             "otherEntityRelationshipName": "share",
+            "relationshipValidateRules": "required",
             "relationshipName": "member",
             "otherEntityField": "id"
         }

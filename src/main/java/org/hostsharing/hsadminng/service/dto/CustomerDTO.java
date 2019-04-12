@@ -19,6 +19,23 @@ public class CustomerDTO implements Serializable {
     @Pattern(regexp = "[a-z][a-z0-9]+")
     private String prefix;
 
+    @NotNull
+    @Size(max = 80)
+    private String name;
+
+    @NotNull
+    @Size(max = 400)
+    private String contractualAddress;
+
+    @Size(max = 80)
+    private String contractualSalutation;
+
+    @Size(max = 400)
+    private String billingAddress;
+
+    @Size(max = 80)
+    private String billingSalutation;
+
 
     public Long getId() {
         return id;
@@ -42,6 +59,46 @@ public class CustomerDTO implements Serializable {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getContractualAddress() {
+        return contractualAddress;
+    }
+
+    public void setContractualAddress(String contractualAddress) {
+        this.contractualAddress = contractualAddress;
+    }
+
+    public String getContractualSalutation() {
+        return contractualSalutation;
+    }
+
+    public void setContractualSalutation(String contractualSalutation) {
+        this.contractualSalutation = contractualSalutation;
+    }
+
+    public String getBillingAddress() {
+        return billingAddress;
+    }
+
+    public void setBillingAddress(String billingAddress) {
+        this.billingAddress = billingAddress;
+    }
+
+    public String getBillingSalutation() {
+        return billingSalutation;
+    }
+
+    public void setBillingSalutation(String billingSalutation) {
+        this.billingSalutation = billingSalutation;
     }
 
     @Override
@@ -71,6 +128,11 @@ public class CustomerDTO implements Serializable {
             "id=" + getId() +
             ", number=" + getNumber() +
             ", prefix='" + getPrefix() + "'" +
+            ", name='" + getName() + "'" +
+            ", contractualAddress='" + getContractualAddress() + "'" +
+            ", contractualSalutation='" + getContractualSalutation() + "'" +
+            ", billingAddress='" + getBillingAddress() + "'" +
+            ", billingSalutation='" + getBillingSalutation() + "'" +
             "}";
     }
 }

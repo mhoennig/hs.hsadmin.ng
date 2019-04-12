@@ -22,20 +22,62 @@
                 "pattern"
             ],
             "fieldValidateRulesPattern": "[a-z][a-z0-9]+"
+        },
+        {
+            "fieldName": "name",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "required",
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
+            "fieldName": "contractualAddress",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "required",
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 400
+        },
+        {
+            "fieldName": "contractualSalutation",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
+            "fieldName": "billingAddress",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 400
+        },
+        {
+            "fieldName": "billingSalutation",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
         }
     ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "otherEntityName": "membership",
-            "otherEntityRelationshipName": "customer",
-            "relationshipName": "membership"
-        },
-        {
-            "relationshipType": "one-to-many",
             "otherEntityName": "customerContact",
             "otherEntityRelationshipName": "customer",
             "relationshipName": "role"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "membership",
+            "otherEntityRelationshipName": "customer",
+            "relationshipName": "membership"
         }
     ],
     "changelogDate": "20190403083735",

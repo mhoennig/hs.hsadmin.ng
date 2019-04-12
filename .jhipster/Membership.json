@@ -30,6 +30,7 @@
             "relationshipType": "many-to-one",
             "otherEntityName": "customer",
             "otherEntityRelationshipName": "membership",
+            "relationshipValidateRules": "required",
             "relationshipName": "customer",
             "otherEntityField": "prefix"
         }

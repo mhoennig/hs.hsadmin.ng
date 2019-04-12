@@ -1,17 +1,15 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
-import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.Share;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
+import org.hostsharing.hsadminng.service.ShareQueryService;
 import org.hostsharing.hsadminng.service.ShareService;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.ShareCriteria;
-import org.hostsharing.hsadminng.service.ShareQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,14 +30,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 /**
  * Test class for the ShareResource REST controller.
  *
@@ -116,6 +111,11 @@ public class ShareResourceIntTest {
             .action(DEFAULT_ACTION)
             .quantity(DEFAULT_QUANTITY)
             .comment(DEFAULT_COMMENT);
+        // Add required entity
+        Membership membership = MembershipResourceIntTest.createEntity(em);
+        em.persist(membership);
+        em.flush();
+        share.setMember(membership);
         return share;
     }
 

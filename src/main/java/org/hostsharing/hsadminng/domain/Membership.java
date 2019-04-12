@@ -1,17 +1,15 @@
 package org.hostsharing.hsadminng.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A Membership.
@@ -38,7 +36,8 @@ public class Membership implements Serializable {
     private Set<Share> shares = new HashSet<>();
     @OneToMany(mappedBy = "member")
     private Set<Asset> assets = new HashSet<>();
-    @ManyToOne
+    @ManyToOne(optional = false)
+    @NotNull
     @JsonIgnoreProperties("memberships")
     private Customer customer;
 
