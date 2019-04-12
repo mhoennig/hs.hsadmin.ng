@@ -18,6 +18,8 @@ public class MembershipValidator {
             throw new BadRequestAlertException("Invalid untilDate", Membership.ENTITY_NAME, "untilDateMustBeAfterSinceDate");
         }
 
+        // It's known that this validation can cause a race condition if two memberships of the same customer are saved at
+        // same time (overlapping transactions). This is ignored in this case because it's too unlikely to be worth the effort.
         if (membershipRepository.hasUncancelledMembershipForCustomer(membershipDTO.getCustomerId())) {
             throw new BadRequestAlertException("Another uncancelled membership exists", Membership.ENTITY_NAME, "anotherUncancelledMembershipExists");
         }
