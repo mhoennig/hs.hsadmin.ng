@@ -211,8 +211,8 @@ pitest {
     threads = 4
 
     // Do not set these limit even lower, they are already pretty bad values!
-    // 83%*73% means that only ~60% of the code properly covered by automated tests.
-    mutationThreshold = 73
+    // 83%*78% means that only ~66% of the code is properly covered by automated tests.
+    mutationThreshold = 78
     coverageThreshold = 83
 
     outputFormats = ['XML', 'HTML']

@@ -1,14 +1,12 @@
 package org.hostsharing.hsadminng.service.dto;
 
-import java.io.Serializable;
-import java.util.Objects;
-import io.github.jhipster.service.filter.BooleanFilter;
-import io.github.jhipster.service.filter.DoubleFilter;
 import io.github.jhipster.service.filter.Filter;
-import io.github.jhipster.service.filter.FloatFilter;
 import io.github.jhipster.service.filter.IntegerFilter;
 import io.github.jhipster.service.filter.LongFilter;
 import io.github.jhipster.service.filter.StringFilter;
+
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Criteria class for the Customer entity. This class is used in CustomerResource to
@@ -38,9 +36,9 @@ public class CustomerCriteria implements Serializable {
 
     private StringFilter billingSalutation;
 
-    private LongFilter membershipId;
-
     private LongFilter roleId;
+
+    private LongFilter membershipId;
 
     public LongFilter getId() {
         return id;
@@ -106,20 +104,20 @@ public class CustomerCriteria implements Serializable {
         this.billingSalutation = billingSalutation;
     }
 
-    public LongFilter getMembershipId() {
-        return membershipId;
-    }
-
-    public void setMembershipId(LongFilter membershipId) {
-        this.membershipId = membershipId;
-    }
-
     public LongFilter getRoleId() {
         return roleId;
     }
 
     public void setRoleId(LongFilter roleId) {
         this.roleId = roleId;
+    }
+
+    public LongFilter getMembershipId() {
+        return membershipId;
+    }
+
+    public void setMembershipId(LongFilter membershipId) {
+        this.membershipId = membershipId;
     }
 
 
@@ -141,8 +139,8 @@ public class CustomerCriteria implements Serializable {
             Objects.equals(contractualSalutation, that.contractualSalutation) &&
             Objects.equals(billingAddress, that.billingAddress) &&
             Objects.equals(billingSalutation, that.billingSalutation) &&
-            Objects.equals(membershipId, that.membershipId) &&
-            Objects.equals(roleId, that.roleId);
+                Objects.equals(roleId, that.roleId) &&
+                Objects.equals(membershipId, that.membershipId);
     }
 
     @Override
@@ -156,8 +154,8 @@ public class CustomerCriteria implements Serializable {
         contractualSalutation,
         billingAddress,
         billingSalutation,
-        membershipId,
-        roleId
+            roleId,
+            membershipId
         );
     }
 
@@ -172,8 +170,8 @@ public class CustomerCriteria implements Serializable {
                 (contractualSalutation != null ? "contractualSalutation=" + contractualSalutation + ", " : "") +
                 (billingAddress != null ? "billingAddress=" + billingAddress + ", " : "") +
                 (billingSalutation != null ? "billingSalutation=" + billingSalutation + ", " : "") +
-                (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
                 (roleId != null ? "roleId=" + roleId + ", " : "") +
+            (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
             "}";
     }
 

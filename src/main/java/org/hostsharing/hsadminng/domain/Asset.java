@@ -44,7 +44,7 @@ public class Asset implements Serializable {
     private String comment;
 
     @NotNull
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("assets")
     private Membership member;
 

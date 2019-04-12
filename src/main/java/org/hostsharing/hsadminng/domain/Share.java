@@ -45,7 +45,7 @@ public class Share implements Serializable {
     private String comment;
 
     @NotNull
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("shares")
     private Membership member;
 

@@ -1,9 +1,14 @@
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
-
-import javax.persistence.criteria.JoinType;
-
+import io.github.jhipster.service.QueryService;
+import org.hostsharing.hsadminng.domain.Customer;
+import org.hostsharing.hsadminng.domain.CustomerContact_;
+import org.hostsharing.hsadminng.domain.Customer_;
+import org.hostsharing.hsadminng.domain.Membership_;
+import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
+import org.hostsharing.hsadminng.service.dto.CustomerDTO;
+import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,14 +17,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
-
-import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.CustomerRepository;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
-import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
+import javax.persistence.criteria.JoinType;
+import java.util.List;
 
 /**
  * Service for executing complex queries for Customer entities in the database.
@@ -110,13 +109,13 @@ public class CustomerQueryService extends QueryService<Customer> {
             if (criteria.getBillingSalutation() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getBillingSalutation(), Customer_.billingSalutation));
             }
-            if (criteria.getMembershipId() != null) {
-                specification = specification.and(buildSpecification(criteria.getMembershipId(),
-                    root -> root.join(Customer_.memberships, JoinType.LEFT).get(Membership_.id)));
-            }
             if (criteria.getRoleId() != null) {
                 specification = specification.and(buildSpecification(criteria.getRoleId(),
                     root -> root.join(Customer_.roles, JoinType.LEFT).get(CustomerContact_.id)));
+            }
+            if (criteria.getMembershipId() != null) {
+                specification = specification.and(buildSpecification(criteria.getMembershipId(),
+                    root -> root.join(Customer_.memberships, JoinType.LEFT).get(Membership_.id)));
             }
         }
         return specification;

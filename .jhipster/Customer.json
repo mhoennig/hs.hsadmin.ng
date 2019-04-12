@@ -69,15 +69,15 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "otherEntityName": "membership",
-            "otherEntityRelationshipName": "customer",
-            "relationshipName": "membership"
-        },
-        {
-            "relationshipType": "one-to-many",
             "otherEntityName": "customerContact",
             "otherEntityRelationshipName": "customer",
             "relationshipName": "role"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "membership",
+            "otherEntityRelationshipName": "customer",
+            "relationshipName": "membership"
         }
     ],
     "changelogDate": "20190403083735",

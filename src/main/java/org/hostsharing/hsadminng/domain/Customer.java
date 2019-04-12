@@ -1,15 +1,12 @@
 package org.hostsharing.hsadminng.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
 import javax.validation.constraints.*;
-
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A Customer.
@@ -59,9 +56,11 @@ public class Customer implements Serializable {
     private String billingSalutation;
 
     @OneToMany(mappedBy = "customer")
-    private Set<Membership> memberships = new HashSet<>();
-    @OneToMany(mappedBy = "customer")
     private Set<CustomerContact> roles = new HashSet<>();
+
+    @OneToMany(mappedBy = "customer")
+    private Set<Membership> memberships = new HashSet<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -162,31 +161,6 @@ public class Customer implements Serializable {
         this.billingSalutation = billingSalutation;
     }
 
-    public Set<Membership> getMemberships() {
-        return memberships;
-    }
-
-    public Customer memberships(Set<Membership> memberships) {
-        this.memberships = memberships;
-        return this;
-    }
-
-    public Customer addMembership(Membership membership) {
-        this.memberships.add(membership);
-        membership.setCustomer(this);
-        return this;
-    }
-
-    public Customer removeMembership(Membership membership) {
-        this.memberships.remove(membership);
-        membership.setCustomer(null);
-        return this;
-    }
-
-    public void setMemberships(Set<Membership> memberships) {
-        this.memberships = memberships;
-    }
-
     public Set<CustomerContact> getRoles() {
         return roles;
     }
@@ -210,6 +184,31 @@ public class Customer implements Serializable {
 
     public void setRoles(Set<CustomerContact> customerContacts) {
         this.roles = customerContacts;
+    }
+
+    public Set<Membership> getMemberships() {
+        return memberships;
+    }
+
+    public Customer memberships(Set<Membership> memberships) {
+        this.memberships = memberships;
+        return this;
+    }
+
+    public Customer addMembership(Membership membership) {
+        this.memberships.add(membership);
+        membership.setCustomer(this);
+        return this;
+    }
+
+    public Customer removeMembership(Membership membership) {
+        this.memberships.remove(membership);
+        membership.setCustomer(null);
+        return this;
+    }
+
+    public void setMemberships(Set<Membership> memberships) {
+        this.memberships = memberships;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

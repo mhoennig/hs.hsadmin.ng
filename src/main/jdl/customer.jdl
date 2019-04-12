@@ -63,13 +63,10 @@ entity Asset {
 }
 
 relationship OneToMany {
-  Customer to Membership{customer(prefix)},
-  Membership to Share{member},
-  Membership to Asset{member}
-}
-
-relationship ManyToOne {
-  CustomerContact{contact(email) required} to Contact{role},
-  CustomerContact{customer(prefix) required} to Customer{role}
+  Contact{role} to CustomerContact{contact(email) required},
+  Customer{role} to CustomerContact{customer(prefix) required},
+  Customer to Membership{customer(prefix) required},
+  Membership to Share{member required},
+  Membership to Asset{member required}
 }
 

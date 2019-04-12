@@ -22,8 +22,8 @@
             "contractualSalutation": "Contractual Salutation",
             "billingAddress": "Billing Address",
             "billingSalutation": "Billing Salutation",
-            "membership": "Membership",
-            "role": "Role"
+            "role": "Role",
+            "membership": "Membership"
         }
     }
 }

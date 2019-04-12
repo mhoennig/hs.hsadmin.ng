@@ -67,10 +67,17 @@
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.share.member" for="field_member">Member</label>
-                    <select class="form-control" id="field_member" name="member" [(ngModel)]="share.memberId" >
-                        <option [ngValue]="null"></option>
+                    <select class="form-control" id="field_member" name="member" [(ngModel)]="share.memberId" required>
+                        <option *ngIf="!editForm.value.member" [ngValue]="null" selected></option>
                         <option [ngValue]="membershipOption.id" *ngFor="let membershipOption of memberships; trackBy: trackMembershipById">{{membershipOption.id}}</option>
                     </select>
+                </div>
+                <div [hidden]="!(editForm.controls.member?.dirty && editForm.controls.member?.invalid)">
+                    <small class="form-text text-danger"
+                           [hidden]="!editForm.controls.member?.errors?.required"
+                           jhiTranslate="entity.validation.required">
+                        This field is required.
+                    </small>
                 </div>
             </div>
             <div>

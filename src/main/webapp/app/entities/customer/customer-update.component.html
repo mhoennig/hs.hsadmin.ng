@@ -64,7 +64,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress"
-                           for="field_contractualAddress">Contractual Address X</label>
+                           for="field_contractualAddress">Contractual Address</label>
                     <textarea class="form-control" name="contractualAddress" id="field_contractualAddress" rows="3"
                               [(ngModel)]="customer.contractualAddress" required maxlength="400"></textarea>
                     <div [hidden]="!(editForm.controls.contractualAddress?.dirty && editForm.controls.contractualAddress?.invalid)">

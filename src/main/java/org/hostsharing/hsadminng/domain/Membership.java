@@ -41,7 +41,7 @@ public class Membership implements Serializable {
     private Set<Asset> assets = new HashSet<>();
 
     @NotNull
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("memberships")
     private Customer customer;
 
