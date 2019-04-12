@@ -119,7 +119,7 @@ public class ShareResourceIntTest {
 
     @Before
     public void initTest() {
-        share = createEntity(em, MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createEntity(em)));
+        share = createEntity(em, MembershipResourceIntTest.createEntity(em));
     }
 
     @Test
@@ -470,7 +470,7 @@ public class ShareResourceIntTest {
     @Transactional
     public void getAllSharesByMemberIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership member = MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createAnotherEntity(em));
+        Membership member = MembershipResourceIntTest.createEntity(em);
         em.persist(member);
         em.flush();
         share.setMember(member);

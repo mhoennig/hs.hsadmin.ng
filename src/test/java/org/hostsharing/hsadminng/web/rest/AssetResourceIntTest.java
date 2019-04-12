@@ -106,10 +106,8 @@ public class AssetResourceIntTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static Asset createEntity(EntityManager em, Membership membership) {
-        em.persist(membership);
+    public static Asset createEntity(EntityManager em) {
         Asset asset = new Asset()
-            .member(membership)
             .date(DEFAULT_DATE)
             .action(DEFAULT_ACTION)
             .amount(DEFAULT_AMOUNT)
@@ -124,7 +122,7 @@ public class AssetResourceIntTest {
 
     @Before
     public void initTest() {
-        asset = createEntity(em, MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createEntity(em)));
+        asset = createEntity(em);
     }
 
     @Test
@@ -447,7 +445,7 @@ public class AssetResourceIntTest {
     @Transactional
     public void getAllAssetsByMemberIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership member = MembershipResourceIntTest.createEntity(em, CustomerResourceIntTest.createAnotherEntity(em));
+        Membership member = MembershipResourceIntTest.createEntity(em);
         em.persist(member);
         em.flush();
         asset.setMember(member);

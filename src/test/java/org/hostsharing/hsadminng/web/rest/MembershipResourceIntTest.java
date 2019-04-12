@@ -102,14 +102,12 @@ public class MembershipResourceIntTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static Membership createEntity(final EntityManager em, final Customer customer) {
-        em.persist(customer);
+    public static Membership createEntity(final EntityManager em) {
         Membership membership = new Membership()
-            .customer(customer)
             .sinceDate(DEFAULT_SINCE_DATE)
             .untilDate(DEFAULT_UNTIL_DATE);
         // Add required entity
-        Customer customer = CustomerResourceIntTest.createEntity(em);
+        Customer customer = CustomerResourceIntTest.createAnotherEntity(em);
         em.persist(customer);
         em.flush();
         membership.setCustomer(customer);
@@ -118,7 +116,7 @@ public class MembershipResourceIntTest {
 
     @Before
     public void initTest() {
-        membership = createEntity(em, CustomerResourceIntTest.createEntity(em));
+        membership = createEntity(em);
     }
 
     @Test
@@ -365,11 +363,11 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByAssetIsEqualToSomething() throws Exception {
         // Initialize the database
-        Asset asset = AssetResourceIntTest.createEntity(em, membership);
+        Asset asset = AssetResourceIntTest.createEntity(em);
+        membership.addAsset(asset);
+        em.persist(membership);
         em.persist(asset);
         em.flush();
-        membership.addAsset(asset);
-        membershipRepository.flush();
         Long assetId = asset.getId();
 
         // Get all the membershipList where asset equals to assetId

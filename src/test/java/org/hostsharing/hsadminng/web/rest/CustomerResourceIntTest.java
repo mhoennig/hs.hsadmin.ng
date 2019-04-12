@@ -44,20 +44,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CustomerResourceIntTest {
 
     private static final Integer DEFAULT_NUMBER = 10000;
-    private static final Integer ANOTHER_NUMBER = 10001;
-    private static final Integer UPDATED_NUMBER = 10002;
+    private static final Integer UPDATED_NUMBER = 10001;
+    private static final Integer OTHER_NUMBER_BASE = 11000;
 
     private static final String DEFAULT_PREFIX = "def";
-    private static final String ANOTHER_PREFIX = "old";
     private static final String UPDATED_PREFIX = "new";
+    private static final String OTHER_PREFIX_BASE = "o";
 
     private static final String DEFAULT_NAME = "Default GmbH";
     private static final String UPDATED_NAME = "Updated Default GmbH";
-    private static final String ANOTHER_NAME = "Another Corp.";
+    private static final String OTHER_NAME_BASE = "Other Corp.";
 
     private static final String DEFAULT_CONTRACTUAL_ADDRESS = "Default Address";
     private static final String UPDATED_CONTRACTUAL_ADDRESS = "Updated Address";
-    private static final String ANOTHER_CONTRACTUAL_ADDRESS = "Another Address";
+    private static final String OTHER_CONTRACTUAL_ADDRESS_BASE = "Other Street ";
 
     private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
@@ -67,6 +67,8 @@ public class CustomerResourceIntTest {
 
     private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
+
+    private static int otherCounter = 0;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -137,10 +139,11 @@ public class CustomerResourceIntTest {
      */
     public static Customer createAnotherEntity(EntityManager em) {
         Customer customer = new Customer()
-            .number(ANOTHER_NUMBER)
-            .prefix(ANOTHER_PREFIX)
-            .name(ANOTHER_NAME)
-            .contractualAddress(ANOTHER_CONTRACTUAL_ADDRESS);
+            .number(OTHER_NUMBER_BASE + otherCounter)
+            .prefix(OTHER_PREFIX_BASE + String.format("%02d", otherCounter))
+            .name(OTHER_NAME_BASE + otherCounter)
+            .contractualAddress(OTHER_CONTRACTUAL_ADDRESS_BASE + otherCounter);
+        ++otherCounter;
         return customer;
     }
 
@@ -614,7 +617,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em, customer);
+        Membership membership = MembershipResourceIntTest.createEntity(em);
         em.persist(membership);
         em.flush();
         customer.addMembership(membership);
