@@ -208,7 +208,7 @@ task cucumberTestReport(type: TestReport) {
 
 pitest {
     targetClasses = ['org.hostsharing.hsadminng.*']
-    threads = 4
+    threads = 2
 
     // Do not set these limit even lower, they are already pretty bad values!
     // 83%*78% means that only ~66% of the code is properly covered by automated tests.
