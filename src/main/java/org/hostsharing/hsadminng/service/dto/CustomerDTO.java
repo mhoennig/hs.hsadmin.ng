@@ -25,17 +25,24 @@ public class CustomerDTO implements Serializable {
 
     @NotNull
     @Size(max = 400)
+    // visible by >=contractual contact
+    // changeable by >=supporter
     private String contractualAddress;
 
     @Size(max = 80)
+    // visible by >=contractual contact
+    // changeable by >=supporter
     private String contractualSalutation;
 
     @Size(max = 400)
+    // visible by >=contractual contact | >=billing contact
+    // changeable by >=contractual contact
     private String billingAddress;
 
     @Size(max = 80)
+    // visible by >=contractual contact | >=billing contact
+    // changeable by >=contractual contact
     private String billingSalutation;
-
 
     public Long getId() {
         return id;
