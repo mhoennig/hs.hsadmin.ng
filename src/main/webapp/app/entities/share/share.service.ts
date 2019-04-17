@@ -51,14 +51,16 @@ export class ShareService {
 
     protected convertDateFromClient(share: IShare): IShare {
         const copy: IShare = Object.assign({}, share, {
-            date: share.date != null && share.date.isValid() ? share.date.format(DATE_FORMAT) : null
+            documentDate: share.documentDate != null && share.documentDate.isValid() ? share.documentDate.format(DATE_FORMAT) : null,
+            valueDate: share.valueDate != null && share.valueDate.isValid() ? share.valueDate.format(DATE_FORMAT) : null
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.date = res.body.date != null ? moment(res.body.date) : null;
+            res.body.documentDate = res.body.documentDate != null ? moment(res.body.documentDate) : null;
+            res.body.valueDate = res.body.valueDate != null ? moment(res.body.valueDate) : null;
         }
         return res;
     }
@@ -66,7 +68,8 @@ export class ShareService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((share: IShare) => {
-                share.date = share.date != null ? moment(share.date) : null;
+                share.documentDate = share.documentDate != null ? moment(share.documentDate) : null;
+                share.valueDate = share.valueDate != null ? moment(share.valueDate) : null;
             });
         }
         return res;

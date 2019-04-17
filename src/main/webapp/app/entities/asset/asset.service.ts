@@ -51,14 +51,16 @@ export class AssetService {
 
     protected convertDateFromClient(asset: IAsset): IAsset {
         const copy: IAsset = Object.assign({}, asset, {
-            date: asset.date != null && asset.date.isValid() ? asset.date.format(DATE_FORMAT) : null
+            documentDate: asset.documentDate != null && asset.documentDate.isValid() ? asset.documentDate.format(DATE_FORMAT) : null,
+            valueDate: asset.valueDate != null && asset.valueDate.isValid() ? asset.valueDate.format(DATE_FORMAT) : null
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.date = res.body.date != null ? moment(res.body.date) : null;
+            res.body.documentDate = res.body.documentDate != null ? moment(res.body.documentDate) : null;
+            res.body.valueDate = res.body.valueDate != null ? moment(res.body.valueDate) : null;
         }
         return res;
     }
@@ -66,7 +68,8 @@ export class AssetService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((asset: IAsset) => {
-                asset.date = asset.date != null ? moment(asset.date) : null;
+                asset.documentDate = asset.documentDate != null ? moment(asset.documentDate) : null;
+                asset.valueDate = asset.valueDate != null ? moment(asset.valueDate) : null;
             });
         }
         return res;

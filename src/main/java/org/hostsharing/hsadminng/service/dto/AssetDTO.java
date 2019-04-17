@@ -14,7 +14,10 @@ public class AssetDTO implements Serializable {
     private Long id;
 
     @NotNull
-    private LocalDate date;
+    private LocalDate documentDate;
+
+    @NotNull
+    private LocalDate valueDate;
 
     @NotNull
     private AssetAction action;
@@ -23,10 +26,12 @@ public class AssetDTO implements Serializable {
     private BigDecimal amount;
 
     @Size(max = 160)
-    private String comment;
+    private String remark;
 
 
-    private Long memberId;
+    private Long membershipId;
+
+    private String membershipDocumentDate;
 
     public Long getId() {
         return id;
@@ -36,12 +41,20 @@ public class AssetDTO implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
+    }
+
+    public LocalDate getValueDate() {
+        return valueDate;
+    }
+
+    public void setValueDate(LocalDate valueDate) {
+        this.valueDate = valueDate;
     }
 
     public AssetAction getAction() {
@@ -60,20 +73,28 @@ public class AssetDTO implements Serializable {
         this.amount = amount;
     }
 
-    public String getComment() {
-        return comment;
+    public String getRemark() {
+        return remark;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
-    public Long getMemberId() {
-        return memberId;
+    public Long getMembershipId() {
+        return membershipId;
     }
 
-    public void setMemberId(Long membershipId) {
-        this.memberId = membershipId;
+    public void setMembershipId(Long membershipId) {
+        this.membershipId = membershipId;
+    }
+
+    public String getMembershipDocumentDate() {
+        return membershipDocumentDate;
+    }
+
+    public void setMembershipDocumentDate(String membershipDocumentDate) {
+        this.membershipDocumentDate = membershipDocumentDate;
     }
 
     @Override
@@ -101,11 +122,13 @@ public class AssetDTO implements Serializable {
     public String toString() {
         return "AssetDTO{" +
             "id=" + getId() +
-            ", date='" + getDate() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
+            ", valueDate='" + getValueDate() + "'" +
             ", action='" + getAction() + "'" +
             ", amount=" + getAmount() +
-            ", comment='" + getComment() + "'" +
-            ", member=" + getMemberId() +
+            ", remark='" + getRemark() + "'" +
+            ", membership=" + getMembershipId() +
+            ", membership='" + getMembershipDocumentDate() + "'" +
             "}";
     }
 }

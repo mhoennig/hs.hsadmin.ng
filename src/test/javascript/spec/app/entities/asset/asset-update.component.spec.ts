@@ -1,7 +1,7 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { HsadminNgTestModule } from '../../../test.module';
 import { AssetUpdateComponent } from 'app/entities/asset/asset-update.component';

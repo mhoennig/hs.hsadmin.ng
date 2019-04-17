@@ -1,15 +1,17 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
+
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
-import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
+import org.hostsharing.hsadminng.service.dto.AssetCriteria;
+import org.hostsharing.hsadminng.service.AssetQueryService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,11 +33,14 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
+
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 /**
  * Test class for the AssetResource REST controller.
  *
@@ -45,8 +50,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = HsadminNgApp.class)
 public class AssetResourceIntTest {
 
-    private static final LocalDate DEFAULT_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_DATE = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
+
+    private static final LocalDate DEFAULT_VALUE_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_VALUE_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final AssetAction DEFAULT_ACTION = AssetAction.PAYMENT;
     private static final AssetAction UPDATED_ACTION = AssetAction.HANDOVER;
@@ -54,8 +62,8 @@ public class AssetResourceIntTest {
     private static final BigDecimal DEFAULT_AMOUNT = new BigDecimal(1);
     private static final BigDecimal UPDATED_AMOUNT = new BigDecimal(2);
 
-    private static final String DEFAULT_COMMENT = "AAAAAAAAAA";
-    private static final String UPDATED_COMMENT = "BBBBBBBBBB";
+    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
+    private static final String UPDATED_REMARK = "BBBBBBBBBB";
 
     @Autowired
     private AssetRepository assetRepository;
@@ -108,15 +116,16 @@ public class AssetResourceIntTest {
      */
     public static Asset createEntity(EntityManager em) {
         Asset asset = new Asset()
-            .date(DEFAULT_DATE)
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .valueDate(DEFAULT_VALUE_DATE)
             .action(DEFAULT_ACTION)
             .amount(DEFAULT_AMOUNT)
-            .comment(DEFAULT_COMMENT);
+            .remark(DEFAULT_REMARK);
         // Add required entity
         Membership membership = MembershipResourceIntTest.createEntity(em);
         em.persist(membership);
         em.flush();
-        asset.setMember(membership);
+        asset.setMembership(membership);
         return asset;
     }
 
@@ -141,10 +150,11 @@ public class AssetResourceIntTest {
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeCreate + 1);
         Asset testAsset = assetList.get(assetList.size() - 1);
-        assertThat(testAsset.getDate()).isEqualTo(DEFAULT_DATE);
+        assertThat(testAsset.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
+        assertThat(testAsset.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
         assertThat(testAsset.getAction()).isEqualTo(DEFAULT_ACTION);
         assertThat(testAsset.getAmount()).isEqualTo(DEFAULT_AMOUNT);
-        assertThat(testAsset.getComment()).isEqualTo(DEFAULT_COMMENT);
+        assertThat(testAsset.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -169,10 +179,29 @@ public class AssetResourceIntTest {
 
     @Test
     @Transactional
-    public void checkDateIsRequired() throws Exception {
+    public void checkDocumentDateIsRequired() throws Exception {
         int databaseSizeBeforeTest = assetRepository.findAll().size();
         // set the field null
-        asset.setDate(null);
+        asset.setDocumentDate(null);
+
+        // Create the Asset, which fails.
+        AssetDTO assetDTO = assetMapper.toDto(asset);
+
+        restAssetMockMvc.perform(post("/api/assets")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+            .andExpect(status().isBadRequest());
+
+        List<Asset> assetList = assetRepository.findAll();
+        assertThat(assetList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
+    public void checkValueDateIsRequired() throws Exception {
+        int databaseSizeBeforeTest = assetRepository.findAll().size();
+        // set the field null
+        asset.setValueDate(null);
 
         // Create the Asset, which fails.
         AssetDTO assetDTO = assetMapper.toDto(asset);
@@ -235,10 +264,11 @@ public class AssetResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(asset.getId().intValue())))
-            .andExpect(jsonPath("$.[*].date").value(hasItem(DEFAULT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
             .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
             .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT.toString())));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -252,75 +282,142 @@ public class AssetResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(asset.getId().intValue()))
-            .andExpect(jsonPath("$.date").value(DEFAULT_DATE.toString()))
+            .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
+            .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
             .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
             .andExpect(jsonPath("$.amount").value(DEFAULT_AMOUNT.intValue()))
-            .andExpect(jsonPath("$.comment").value(DEFAULT_COMMENT.toString()));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByDateIsEqualToSomething() throws Exception {
+    public void getAllAssetsByDocumentDateIsEqualToSomething() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where date equals to DEFAULT_DATE
-        defaultAssetShouldBeFound("date.equals=" + DEFAULT_DATE);
+        // Get all the assetList where documentDate equals to DEFAULT_DOCUMENT_DATE
+        defaultAssetShouldBeFound("documentDate.equals=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the assetList where date equals to UPDATED_DATE
-        defaultAssetShouldNotBeFound("date.equals=" + UPDATED_DATE);
+        // Get all the assetList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultAssetShouldNotBeFound("documentDate.equals=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByDateIsInShouldWork() throws Exception {
+    public void getAllAssetsByDocumentDateIsInShouldWork() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where date in DEFAULT_DATE or UPDATED_DATE
-        defaultAssetShouldBeFound("date.in=" + DEFAULT_DATE + "," + UPDATED_DATE);
+        // Get all the assetList where documentDate in DEFAULT_DOCUMENT_DATE or UPDATED_DOCUMENT_DATE
+        defaultAssetShouldBeFound("documentDate.in=" + DEFAULT_DOCUMENT_DATE + "," + UPDATED_DOCUMENT_DATE);
 
-        // Get all the assetList where date equals to UPDATED_DATE
-        defaultAssetShouldNotBeFound("date.in=" + UPDATED_DATE);
+        // Get all the assetList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultAssetShouldNotBeFound("documentDate.in=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByDateIsNullOrNotNull() throws Exception {
+    public void getAllAssetsByDocumentDateIsNullOrNotNull() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where date is not null
-        defaultAssetShouldBeFound("date.specified=true");
+        // Get all the assetList where documentDate is not null
+        defaultAssetShouldBeFound("documentDate.specified=true");
 
-        // Get all the assetList where date is null
-        defaultAssetShouldNotBeFound("date.specified=false");
+        // Get all the assetList where documentDate is null
+        defaultAssetShouldNotBeFound("documentDate.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByDateIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllAssetsByDocumentDateIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where date greater than or equals to DEFAULT_DATE
-        defaultAssetShouldBeFound("date.greaterOrEqualThan=" + DEFAULT_DATE);
+        // Get all the assetList where documentDate greater than or equals to DEFAULT_DOCUMENT_DATE
+        defaultAssetShouldBeFound("documentDate.greaterOrEqualThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the assetList where date greater than or equals to UPDATED_DATE
-        defaultAssetShouldNotBeFound("date.greaterOrEqualThan=" + UPDATED_DATE);
+        // Get all the assetList where documentDate greater than or equals to UPDATED_DOCUMENT_DATE
+        defaultAssetShouldNotBeFound("documentDate.greaterOrEqualThan=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByDateIsLessThanSomething() throws Exception {
+    public void getAllAssetsByDocumentDateIsLessThanSomething() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where date less than or equals to DEFAULT_DATE
-        defaultAssetShouldNotBeFound("date.lessThan=" + DEFAULT_DATE);
+        // Get all the assetList where documentDate less than or equals to DEFAULT_DOCUMENT_DATE
+        defaultAssetShouldNotBeFound("documentDate.lessThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the assetList where date less than or equals to UPDATED_DATE
-        defaultAssetShouldBeFound("date.lessThan=" + UPDATED_DATE);
+        // Get all the assetList where documentDate less than or equals to UPDATED_DOCUMENT_DATE
+        defaultAssetShouldBeFound("documentDate.lessThan=" + UPDATED_DOCUMENT_DATE);
+    }
+
+
+    @Test
+    @Transactional
+    public void getAllAssetsByValueDateIsEqualToSomething() throws Exception {
+        // Initialize the database
+        assetRepository.saveAndFlush(asset);
+
+        // Get all the assetList where valueDate equals to DEFAULT_VALUE_DATE
+        defaultAssetShouldBeFound("valueDate.equals=" + DEFAULT_VALUE_DATE);
+
+        // Get all the assetList where valueDate equals to UPDATED_VALUE_DATE
+        defaultAssetShouldNotBeFound("valueDate.equals=" + UPDATED_VALUE_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllAssetsByValueDateIsInShouldWork() throws Exception {
+        // Initialize the database
+        assetRepository.saveAndFlush(asset);
+
+        // Get all the assetList where valueDate in DEFAULT_VALUE_DATE or UPDATED_VALUE_DATE
+        defaultAssetShouldBeFound("valueDate.in=" + DEFAULT_VALUE_DATE + "," + UPDATED_VALUE_DATE);
+
+        // Get all the assetList where valueDate equals to UPDATED_VALUE_DATE
+        defaultAssetShouldNotBeFound("valueDate.in=" + UPDATED_VALUE_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllAssetsByValueDateIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        assetRepository.saveAndFlush(asset);
+
+        // Get all the assetList where valueDate is not null
+        defaultAssetShouldBeFound("valueDate.specified=true");
+
+        // Get all the assetList where valueDate is null
+        defaultAssetShouldNotBeFound("valueDate.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllAssetsByValueDateIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        assetRepository.saveAndFlush(asset);
+
+        // Get all the assetList where valueDate greater than or equals to DEFAULT_VALUE_DATE
+        defaultAssetShouldBeFound("valueDate.greaterOrEqualThan=" + DEFAULT_VALUE_DATE);
+
+        // Get all the assetList where valueDate greater than or equals to UPDATED_VALUE_DATE
+        defaultAssetShouldNotBeFound("valueDate.greaterOrEqualThan=" + UPDATED_VALUE_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllAssetsByValueDateIsLessThanSomething() throws Exception {
+        // Initialize the database
+        assetRepository.saveAndFlush(asset);
+
+        // Get all the assetList where valueDate less than or equals to DEFAULT_VALUE_DATE
+        defaultAssetShouldNotBeFound("valueDate.lessThan=" + DEFAULT_VALUE_DATE);
+
+        // Get all the assetList where valueDate less than or equals to UPDATED_VALUE_DATE
+        defaultAssetShouldBeFound("valueDate.lessThan=" + UPDATED_VALUE_DATE);
     }
 
 
@@ -404,59 +501,59 @@ public class AssetResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllAssetsByCommentIsEqualToSomething() throws Exception {
+    public void getAllAssetsByRemarkIsEqualToSomething() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where comment equals to DEFAULT_COMMENT
-        defaultAssetShouldBeFound("comment.equals=" + DEFAULT_COMMENT);
+        // Get all the assetList where remark equals to DEFAULT_REMARK
+        defaultAssetShouldBeFound("remark.equals=" + DEFAULT_REMARK);
 
-        // Get all the assetList where comment equals to UPDATED_COMMENT
-        defaultAssetShouldNotBeFound("comment.equals=" + UPDATED_COMMENT);
+        // Get all the assetList where remark equals to UPDATED_REMARK
+        defaultAssetShouldNotBeFound("remark.equals=" + UPDATED_REMARK);
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByCommentIsInShouldWork() throws Exception {
+    public void getAllAssetsByRemarkIsInShouldWork() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where comment in DEFAULT_COMMENT or UPDATED_COMMENT
-        defaultAssetShouldBeFound("comment.in=" + DEFAULT_COMMENT + "," + UPDATED_COMMENT);
+        // Get all the assetList where remark in DEFAULT_REMARK or UPDATED_REMARK
+        defaultAssetShouldBeFound("remark.in=" + DEFAULT_REMARK + "," + UPDATED_REMARK);
 
-        // Get all the assetList where comment equals to UPDATED_COMMENT
-        defaultAssetShouldNotBeFound("comment.in=" + UPDATED_COMMENT);
+        // Get all the assetList where remark equals to UPDATED_REMARK
+        defaultAssetShouldNotBeFound("remark.in=" + UPDATED_REMARK);
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByCommentIsNullOrNotNull() throws Exception {
+    public void getAllAssetsByRemarkIsNullOrNotNull() throws Exception {
         // Initialize the database
         assetRepository.saveAndFlush(asset);
 
-        // Get all the assetList where comment is not null
-        defaultAssetShouldBeFound("comment.specified=true");
+        // Get all the assetList where remark is not null
+        defaultAssetShouldBeFound("remark.specified=true");
 
-        // Get all the assetList where comment is null
-        defaultAssetShouldNotBeFound("comment.specified=false");
+        // Get all the assetList where remark is null
+        defaultAssetShouldNotBeFound("remark.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllAssetsByMemberIsEqualToSomething() throws Exception {
+    public void getAllAssetsByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership member = MembershipResourceIntTest.createEntity(em);
-        em.persist(member);
+        Membership membership = MembershipResourceIntTest.createEntity(em);
+        em.persist(membership);
         em.flush();
-        asset.setMember(member);
+        asset.setMembership(membership);
         assetRepository.saveAndFlush(asset);
-        Long memberId = member.getId();
+        Long membershipId = membership.getId();
 
-        // Get all the assetList where member equals to memberId
-        defaultAssetShouldBeFound("memberId.equals=" + memberId);
+        // Get all the assetList where membership equals to membershipId
+        defaultAssetShouldBeFound("membershipId.equals=" + membershipId);
 
-        // Get all the assetList where member equals to memberId + 1
-        defaultAssetShouldNotBeFound("memberId.equals=" + (memberId + 1));
+        // Get all the assetList where membership equals to membershipId + 1
+        defaultAssetShouldNotBeFound("membershipId.equals=" + (membershipId + 1));
     }
 
     /**
@@ -467,10 +564,11 @@ public class AssetResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(asset.getId().intValue())))
-            .andExpect(jsonPath("$.[*].date").value(hasItem(DEFAULT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
             .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
             .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT)));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restAssetMockMvc.perform(get("/api/assets/count?sort=id,desc&" + filter))
@@ -518,10 +616,11 @@ public class AssetResourceIntTest {
         // Disconnect from session so that the updates on updatedAsset are not directly saved in db
         em.detach(updatedAsset);
         updatedAsset
-            .date(UPDATED_DATE)
+            .documentDate(UPDATED_DOCUMENT_DATE)
+            .valueDate(UPDATED_VALUE_DATE)
             .action(UPDATED_ACTION)
             .amount(UPDATED_AMOUNT)
-            .comment(UPDATED_COMMENT);
+            .remark(UPDATED_REMARK);
         AssetDTO assetDTO = assetMapper.toDto(updatedAsset);
 
         restAssetMockMvc.perform(put("/api/assets")
@@ -533,10 +632,11 @@ public class AssetResourceIntTest {
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeUpdate);
         Asset testAsset = assetList.get(assetList.size() - 1);
-        assertThat(testAsset.getDate()).isEqualTo(UPDATED_DATE);
+        assertThat(testAsset.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
+        assertThat(testAsset.getValueDate()).isEqualTo(UPDATED_VALUE_DATE);
         assertThat(testAsset.getAction()).isEqualTo(UPDATED_ACTION);
         assertThat(testAsset.getAmount()).isEqualTo(UPDATED_AMOUNT);
-        assertThat(testAsset.getComment()).isEqualTo(UPDATED_COMMENT);
+        assertThat(testAsset.getRemark()).isEqualTo(UPDATED_REMARK);
     }
 
     @Test

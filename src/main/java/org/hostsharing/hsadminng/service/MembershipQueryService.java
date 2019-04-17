@@ -89,11 +89,17 @@ public class MembershipQueryService extends QueryService<Membership> {
             if (criteria.getId() != null) {
                 specification = specification.and(buildSpecification(criteria.getId(), Membership_.id));
             }
-            if (criteria.getSinceDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getSinceDate(), Membership_.sinceDate));
+            if (criteria.getDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getDocumentDate(), Membership_.documentDate));
             }
-            if (criteria.getUntilDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getUntilDate(), Membership_.untilDate));
+            if (criteria.getMemberFrom() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getMemberFrom(), Membership_.memberFrom));
+            }
+            if (criteria.getMemberUntil() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getMemberUntil(), Membership_.memberUntil));
+            }
+            if (criteria.getRemark() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRemark(), Membership_.remark));
             }
             if (criteria.getShareId() != null) {
                 specification = specification.and(buildSpecification(criteria.getShareId(),

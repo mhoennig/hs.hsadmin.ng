@@ -2,7 +2,7 @@
     "name": "Customer",
     "fields": [
         {
-            "fieldName": "number",
+            "fieldName": "reference",
             "fieldType": "Integer",
             "fieldValidateRules": [
                 "required",
@@ -18,9 +18,11 @@
             "fieldType": "String",
             "fieldValidateRules": [
                 "required",
+                "maxlength",
                 "unique",
                 "pattern"
             ],
+            "fieldValidateRulesMaxlength": 3,
             "fieldValidateRulesPattern": "[a-z][a-z0-9]+"
         },
         {
@@ -28,6 +30,14 @@
             "fieldType": "String",
             "fieldValidateRules": [
                 "required",
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
+            "fieldName": "contractualSalutation",
+            "fieldType": "String",
+            "fieldValidateRules": [
                 "maxlength"
             ],
             "fieldValidateRulesMaxlength": 80
@@ -42,7 +52,7 @@
             "fieldValidateRulesMaxlength": 400
         },
         {
-            "fieldName": "contractualSalutation",
+            "fieldName": "billingSalutation",
             "fieldType": "String",
             "fieldValidateRules": [
                 "maxlength"
@@ -58,26 +68,26 @@
             "fieldValidateRulesMaxlength": 400
         },
         {
-            "fieldName": "billingSalutation",
+            "fieldName": "remark",
             "fieldType": "String",
             "fieldValidateRules": [
                 "maxlength"
             ],
-            "fieldValidateRulesMaxlength": 80
+            "fieldValidateRulesMaxlength": 160
         }
     ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "otherEntityName": "customerContact",
-            "otherEntityRelationshipName": "customer",
-            "relationshipName": "role"
-        },
-        {
-            "relationshipType": "one-to-many",
             "otherEntityName": "membership",
             "otherEntityRelationshipName": "customer",
             "relationshipName": "membership"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "sepaMandate",
+            "otherEntityRelationshipName": "customer",
+            "relationshipName": "sepamandate"
         }
     ],
     "changelogDate": "20190403083735",

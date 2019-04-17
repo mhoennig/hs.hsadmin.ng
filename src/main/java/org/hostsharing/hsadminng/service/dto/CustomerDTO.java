@@ -13,9 +13,10 @@ public class CustomerDTO implements Serializable {
     @NotNull
     @Min(value = 10000)
     @Max(value = 99999)
-    private Integer number;
+    private Integer reference;
 
     @NotNull
+    @Size(max = 3)
     @Pattern(regexp = "[a-z][a-z0-9]+")
     private String prefix;
 
@@ -23,18 +24,21 @@ public class CustomerDTO implements Serializable {
     @Size(max = 80)
     private String name;
 
+    @Size(max = 80)
+    private String contractualSalutation;
+
     @NotNull
     @Size(max = 400)
     private String contractualAddress;
 
     @Size(max = 80)
-    private String contractualSalutation;
+    private String billingSalutation;
 
     @Size(max = 400)
     private String billingAddress;
 
-    @Size(max = 80)
-    private String billingSalutation;
+    @Size(max = 160)
+    private String remark;
 
 
     public Long getId() {
@@ -45,12 +49,12 @@ public class CustomerDTO implements Serializable {
         this.id = id;
     }
 
-    public Integer getNumber() {
-        return number;
+    public Integer getReference() {
+        return reference;
     }
 
-    public void setNumber(Integer number) {
-        this.number = number;
+    public void setReference(Integer reference) {
+        this.reference = reference;
     }
 
     public String getPrefix() {
@@ -69,6 +73,14 @@ public class CustomerDTO implements Serializable {
         this.name = name;
     }
 
+    public String getContractualSalutation() {
+        return contractualSalutation;
+    }
+
+    public void setContractualSalutation(String contractualSalutation) {
+        this.contractualSalutation = contractualSalutation;
+    }
+
     public String getContractualAddress() {
         return contractualAddress;
     }
@@ -77,12 +89,12 @@ public class CustomerDTO implements Serializable {
         this.contractualAddress = contractualAddress;
     }
 
-    public String getContractualSalutation() {
-        return contractualSalutation;
+    public String getBillingSalutation() {
+        return billingSalutation;
     }
 
-    public void setContractualSalutation(String contractualSalutation) {
-        this.contractualSalutation = contractualSalutation;
+    public void setBillingSalutation(String billingSalutation) {
+        this.billingSalutation = billingSalutation;
     }
 
     public String getBillingAddress() {
@@ -93,12 +105,12 @@ public class CustomerDTO implements Serializable {
         this.billingAddress = billingAddress;
     }
 
-    public String getBillingSalutation() {
-        return billingSalutation;
+    public String getRemark() {
+        return remark;
     }
 
-    public void setBillingSalutation(String billingSalutation) {
-        this.billingSalutation = billingSalutation;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     @Override
@@ -126,13 +138,14 @@ public class CustomerDTO implements Serializable {
     public String toString() {
         return "CustomerDTO{" +
             "id=" + getId() +
-            ", number=" + getNumber() +
+            ", reference=" + getReference() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
-            ", contractualAddress='" + getContractualAddress() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
-            ", billingAddress='" + getBillingAddress() + "'" +
+            ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +
+            ", billingAddress='" + getBillingAddress() + "'" +
+            ", remark='" + getRemark() + "'" +
             "}";
     }
 }

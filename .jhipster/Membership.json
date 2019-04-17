@@ -2,28 +2,43 @@
     "name": "Membership",
     "fields": [
         {
-            "fieldName": "sinceDate",
+            "fieldName": "documentDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
             ]
         },
         {
-            "fieldName": "untilDate",
+            "fieldName": "memberFrom",
+            "fieldType": "LocalDate",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "memberUntil",
             "fieldType": "LocalDate"
+        },
+        {
+            "fieldName": "remark",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 160
         }
     ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
             "otherEntityName": "share",
-            "otherEntityRelationshipName": "member",
+            "otherEntityRelationshipName": "membership",
             "relationshipName": "share"
         },
         {
             "relationshipType": "one-to-many",
             "otherEntityName": "asset",
-            "otherEntityRelationshipName": "member",
+            "otherEntityRelationshipName": "membership",
             "relationshipName": "asset"
         },
         {

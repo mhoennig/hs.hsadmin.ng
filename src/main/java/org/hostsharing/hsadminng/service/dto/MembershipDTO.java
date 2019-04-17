@@ -12,9 +12,15 @@ public class MembershipDTO implements Serializable {
     private Long id;
 
     @NotNull
-    private LocalDate sinceDate;
+    private LocalDate documentDate;
 
-    private LocalDate untilDate;
+    @NotNull
+    private LocalDate memberFrom;
+
+    private LocalDate memberUntil;
+
+    @Size(max = 160)
+    private String remark;
 
 
     private Long customerId;
@@ -29,20 +35,36 @@ public class MembershipDTO implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getSinceDate() {
-        return sinceDate;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public void setSinceDate(LocalDate sinceDate) {
-        this.sinceDate = sinceDate;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
     }
 
-    public LocalDate getUntilDate() {
-        return untilDate;
+    public LocalDate getMemberFrom() {
+        return memberFrom;
     }
 
-    public void setUntilDate(LocalDate untilDate) {
-        this.untilDate = untilDate;
+    public void setMemberFrom(LocalDate memberFrom) {
+        this.memberFrom = memberFrom;
+    }
+
+    public LocalDate getMemberUntil() {
+        return memberUntil;
+    }
+
+    public void setMemberUntil(LocalDate memberUntil) {
+        this.memberUntil = memberUntil;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Long getCustomerId() {
@@ -86,8 +108,10 @@ public class MembershipDTO implements Serializable {
     public String toString() {
         return "MembershipDTO{" +
             "id=" + getId() +
-            ", sinceDate='" + getSinceDate() + "'" +
-            ", untilDate='" + getUntilDate() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
+            ", memberFrom='" + getMemberFrom() + "'" +
+            ", memberUntil='" + getMemberUntil() + "'" +
+            ", remark='" + getRemark() + "'" +
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +
             "}";

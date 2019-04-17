@@ -13,6 +13,7 @@
                 "membership": "Membership",
                 "share": "Share",
                 "asset": "Asset",
+                "sepaMandate": "Sepa Mandate",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {

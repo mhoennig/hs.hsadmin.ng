@@ -32,15 +32,17 @@ public class AssetCriteria implements Serializable {
 
     private LongFilter id;
 
-    private LocalDateFilter date;
+    private LocalDateFilter documentDate;
+
+    private LocalDateFilter valueDate;
 
     private AssetActionFilter action;
 
     private BigDecimalFilter amount;
 
-    private StringFilter comment;
+    private StringFilter remark;
 
-    private LongFilter memberId;
+    private LongFilter membershipId;
 
     public LongFilter getId() {
         return id;
@@ -50,12 +52,20 @@ public class AssetCriteria implements Serializable {
         this.id = id;
     }
 
-    public LocalDateFilter getDate() {
-        return date;
+    public LocalDateFilter getDocumentDate() {
+        return documentDate;
     }
 
-    public void setDate(LocalDateFilter date) {
-        this.date = date;
+    public void setDocumentDate(LocalDateFilter documentDate) {
+        this.documentDate = documentDate;
+    }
+
+    public LocalDateFilter getValueDate() {
+        return valueDate;
+    }
+
+    public void setValueDate(LocalDateFilter valueDate) {
+        this.valueDate = valueDate;
     }
 
     public AssetActionFilter getAction() {
@@ -74,20 +84,20 @@ public class AssetCriteria implements Serializable {
         this.amount = amount;
     }
 
-    public StringFilter getComment() {
-        return comment;
+    public StringFilter getRemark() {
+        return remark;
     }
 
-    public void setComment(StringFilter comment) {
-        this.comment = comment;
+    public void setRemark(StringFilter remark) {
+        this.remark = remark;
     }
 
-    public LongFilter getMemberId() {
-        return memberId;
+    public LongFilter getMembershipId() {
+        return membershipId;
     }
 
-    public void setMemberId(LongFilter memberId) {
-        this.memberId = memberId;
+    public void setMembershipId(LongFilter membershipId) {
+        this.membershipId = membershipId;
     }
 
 
@@ -102,22 +112,24 @@ public class AssetCriteria implements Serializable {
         final AssetCriteria that = (AssetCriteria) o;
         return
             Objects.equals(id, that.id) &&
-            Objects.equals(date, that.date) &&
+            Objects.equals(documentDate, that.documentDate) &&
+            Objects.equals(valueDate, that.valueDate) &&
             Objects.equals(action, that.action) &&
             Objects.equals(amount, that.amount) &&
-            Objects.equals(comment, that.comment) &&
-            Objects.equals(memberId, that.memberId);
+            Objects.equals(remark, that.remark) &&
+            Objects.equals(membershipId, that.membershipId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
         id,
-        date,
+        documentDate,
+        valueDate,
         action,
         amount,
-        comment,
-        memberId
+        remark,
+        membershipId
         );
     }
 
@@ -125,11 +137,12 @@ public class AssetCriteria implements Serializable {
     public String toString() {
         return "AssetCriteria{" +
                 (id != null ? "id=" + id + ", " : "") +
-                (date != null ? "date=" + date + ", " : "") +
+                (documentDate != null ? "documentDate=" + documentDate + ", " : "") +
+                (valueDate != null ? "valueDate=" + valueDate + ", " : "") +
                 (action != null ? "action=" + action + ", " : "") +
                 (amount != null ? "amount=" + amount + ", " : "") +
-                (comment != null ? "comment=" + comment + ", " : "") +
-                (memberId != null ? "memberId=" + memberId + ", " : "") +
+                (remark != null ? "remark=" + remark + ", " : "") +
+                (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
             "}";
     }
 

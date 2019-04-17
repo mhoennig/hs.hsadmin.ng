@@ -15,37 +15,28 @@
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="number"><span jhiTranslate="hsadminNgApp.customer.number">Number</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.customer.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="prefix"><span jhiTranslate="hsadminNgApp.customer.prefix">Prefix</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="contractualAddress"><span jhiTranslate="hsadminNgApp.customer.contractualAddress">Contractual Address</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="contractualSalutation"><span jhiTranslate="hsadminNgApp.customer.contractualSalutation">Contractual Salutation</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="billingAddress"><span
-                    jhiTranslate="hsadminNgApp.customer.billingAddress">Billing Address</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="billingSalutation"><span jhiTranslate="hsadminNgApp.customer.billingSalutation">Billing Salutation</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
+            <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="contractualSalutation"><span jhiTranslate="hsadminNgApp.customer.contractualSalutation">Contractual Salutation</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="contractualAddress"><span jhiTranslate="hsadminNgApp.customer.contractualAddress">Contractual Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="billingSalutation"><span jhiTranslate="hsadminNgApp.customer.billingSalutation">Billing Salutation</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="billingAddress"><span jhiTranslate="hsadminNgApp.customer.billingAddress">Billing Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.customer.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let customer of customers ;trackBy: trackId">
                 <td><a [routerLink]="['/customer', customer.id, 'view' ]">{{customer.id}}</a></td>
-                <td>{{customer.number}}</td>
+                <td>{{customer.reference}}</td>
                 <td>{{customer.prefix}}</td>
                 <td>{{customer.name}}</td>
-                <td>{{customer.contractualAddress}}</td>
                 <td>{{customer.contractualSalutation}}</td>
-                <td>{{customer.billingAddress}}</td>
+                <td>{{customer.contractualAddress}}</td>
                 <td>{{customer.billingSalutation}}</td>
+                <td>{{customer.billingAddress}}</td>
+                <td>{{customer.remark}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

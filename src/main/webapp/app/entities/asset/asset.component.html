@@ -15,24 +15,26 @@
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="date"><span jhiTranslate="hsadminNgApp.asset.date">Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.asset.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="valueDate"><span jhiTranslate="hsadminNgApp.asset.valueDate">Value Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.asset.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="amount"><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.asset.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="memberId"><span jhiTranslate="hsadminNgApp.asset.member">Member</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.asset.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="membershipDocumentDate"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let asset of assets ;trackBy: trackId">
                 <td><a [routerLink]="['/asset', asset.id, 'view' ]">{{asset.id}}</a></td>
-                <td>{{asset.date | date:'mediumDate'}}</td>
+                <td>{{asset.documentDate | date:'mediumDate'}}</td>
+                <td>{{asset.valueDate | date:'mediumDate'}}</td>
                 <td jhiTranslate="{{'hsadminNgApp.AssetAction.' + asset.action}}">{{asset.action}}</td>
                 <td>{{asset.amount}}</td>
-                <td>{{asset.comment}}</td>
+                <td>{{asset.remark}}</td>
                 <td>
-                    <div *ngIf="asset.memberId">
-                        <a [routerLink]="['../membership', asset.memberId , 'view' ]" >{{asset.memberId}}</a>
+                    <div *ngIf="asset.membershipId">
+                        <a [routerLink]="['../membership', asset.membershipId , 'view' ]" >{{asset.membershipDocumentDate}}</a>
                     </div>
                 </td>
                 <td class="text-right">
