@@ -39,7 +39,7 @@ public class ShareCriteria implements Serializable {
 
     private StringFilter comment;
 
-    private LongFilter memberId;
+    private LongFilter membershipId;
 
     public LongFilter getId() {
         return id;
@@ -81,12 +81,12 @@ public class ShareCriteria implements Serializable {
         this.comment = comment;
     }
 
-    public LongFilter getMemberId() {
-        return memberId;
+    public LongFilter getMembershipId() {
+        return membershipId;
     }
 
-    public void setMemberId(LongFilter memberId) {
-        this.memberId = memberId;
+    public void setMembershipId(LongFilter membershipId) {
+        this.membershipId = membershipId;
     }
 
 
@@ -105,7 +105,7 @@ public class ShareCriteria implements Serializable {
             Objects.equals(action, that.action) &&
             Objects.equals(quantity, that.quantity) &&
             Objects.equals(comment, that.comment) &&
-            Objects.equals(memberId, that.memberId);
+            Objects.equals(membershipId, that.membershipId);
     }
 
     @Override
@@ -116,7 +116,7 @@ public class ShareCriteria implements Serializable {
         action,
         quantity,
         comment,
-        memberId
+        membershipId
         );
     }
 
@@ -128,7 +128,7 @@ public class ShareCriteria implements Serializable {
                 (action != null ? "action=" + action + ", " : "") +
                 (quantity != null ? "quantity=" + quantity + ", " : "") +
                 (comment != null ? "comment=" + comment + ", " : "") +
-                (memberId != null ? "memberId=" + memberId + ", " : "") +
+                (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
             "}";
     }
 

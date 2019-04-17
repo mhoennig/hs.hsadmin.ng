@@ -33,6 +33,14 @@
             "fieldValidateRulesMaxlength": 80
         },
         {
+            "fieldName": "contractualSalutation",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
             "fieldName": "contractualAddress",
             "fieldType": "String",
             "fieldValidateRules": [
@@ -42,7 +50,7 @@
             "fieldValidateRulesMaxlength": 400
         },
         {
-            "fieldName": "contractualSalutation",
+            "fieldName": "billingSalutation",
             "fieldType": "String",
             "fieldValidateRules": [
                 "maxlength"
@@ -56,31 +64,23 @@
                 "maxlength"
             ],
             "fieldValidateRulesMaxlength": 400
-        },
-        {
-            "fieldName": "billingSalutation",
-            "fieldType": "String",
-            "fieldValidateRules": [
-                "maxlength"
-            ],
-            "fieldValidateRulesMaxlength": 80
         }
     ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "otherEntityName": "customerContact",
-            "otherEntityRelationshipName": "customer",
-            "relationshipName": "role"
-        },
-        {
-            "relationshipType": "one-to-many",
             "otherEntityName": "membership",
             "otherEntityRelationshipName": "customer",
             "relationshipName": "membership"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "sepaMandate",
+            "otherEntityRelationshipName": "customer",
+            "relationshipName": "sepamandate"
         }
     ],
-    "changelogDate": "20190403083735",
+    "changelogDate": "20190418073043",
     "entityTableName": "customer",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

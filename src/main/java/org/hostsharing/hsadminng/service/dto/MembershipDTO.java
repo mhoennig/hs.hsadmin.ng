@@ -12,9 +12,12 @@ public class MembershipDTO implements Serializable {
     private Long id;
 
     @NotNull
-    private LocalDate sinceDate;
+    private LocalDate from;
 
-    private LocalDate untilDate;
+    private LocalDate to;
+
+    @Size(max = 160)
+    private String comment;
 
 
     private Long customerId;
@@ -29,20 +32,28 @@ public class MembershipDTO implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getSinceDate() {
-        return sinceDate;
+    public LocalDate getFrom() {
+        return from;
     }
 
-    public void setSinceDate(LocalDate sinceDate) {
-        this.sinceDate = sinceDate;
+    public void setFrom(LocalDate from) {
+        this.from = from;
     }
 
-    public LocalDate getUntilDate() {
-        return untilDate;
+    public LocalDate getTo() {
+        return to;
     }
 
-    public void setUntilDate(LocalDate untilDate) {
-        this.untilDate = untilDate;
+    public void setTo(LocalDate to) {
+        this.to = to;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public Long getCustomerId() {
@@ -86,8 +97,9 @@ public class MembershipDTO implements Serializable {
     public String toString() {
         return "MembershipDTO{" +
             "id=" + getId() +
-            ", sinceDate='" + getSinceDate() + "'" +
-            ", untilDate='" + getUntilDate() + "'" +
+            ", from='" + getFrom() + "'" +
+            ", to='" + getTo() + "'" +
+            ", comment='" + getComment() + "'" +
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +
             "}";

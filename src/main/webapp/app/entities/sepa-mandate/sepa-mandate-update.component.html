@@ -1,0 +1,147 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-sepa-mandate-heading" jhiTranslate="hsadminNgApp.sepaMandate.home.createOrEditLabel">Create or edit a Sepa Mandate</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!sepaMandate.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="sepaMandate.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.reference" for="field_reference">Reference</label>
+                    <input type="text" class="form-control" name="reference" id="field_reference"
+                        [(ngModel)]="sepaMandate.reference" required maxlength="40"/>
+                    <div [hidden]="!(editForm.controls.reference?.dirty && editForm.controls.reference?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.reference?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.reference?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 40 }">
+                        This field cannot be longer than 40 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.iban" for="field_iban">Iban</label>
+                    <input type="text" class="form-control" name="iban" id="field_iban"
+                        [(ngModel)]="sepaMandate.iban" maxlength="34"/>
+                    <div [hidden]="!(editForm.controls.iban?.dirty && editForm.controls.iban?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.iban?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 34 }">
+                        This field cannot be longer than 34 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.bic" for="field_bic">Bic</label>
+                    <input type="text" class="form-control" name="bic" id="field_bic"
+                        [(ngModel)]="sepaMandate.bic" maxlength="11"/>
+                    <div [hidden]="!(editForm.controls.bic?.dirty && editForm.controls.bic?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.bic?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 11 }">
+                        This field cannot be longer than 11 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.created" for="field_created">Created</label>
+                    <div class="input-group">
+                        <input id="field_created" type="text" class="form-control" name="created" ngbDatepicker  #createdDp="ngbDatepicker" [(ngModel)]="sepaMandate.created"
+                        required/>
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="createdDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                    <div [hidden]="!(editForm.controls.created?.dirty && editForm.controls.created?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.created?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validFrom" for="field_validFrom">Valid From</label>
+                    <div class="input-group">
+                        <input id="field_validFrom" type="text" class="form-control" name="validFrom" ngbDatepicker  #validFromDp="ngbDatepicker" [(ngModel)]="sepaMandate.validFrom"
+                        required/>
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="validFromDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                    <div [hidden]="!(editForm.controls.validFrom?.dirty && editForm.controls.validFrom?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.validFrom?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validTo" for="field_validTo">Valid To</label>
+                    <div class="input-group">
+                        <input id="field_validTo" type="text" class="form-control" name="validTo" ngbDatepicker  #validToDp="ngbDatepicker" [(ngModel)]="sepaMandate.validTo"
+                        />
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="validToDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.lastUsed" for="field_lastUsed">Last Used</label>
+                    <div class="input-group">
+                        <input id="field_lastUsed" type="text" class="form-control" name="lastUsed" ngbDatepicker  #lastUsedDp="ngbDatepicker" [(ngModel)]="sepaMandate.lastUsed"
+                        />
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="lastUsedDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.cancelled" for="field_cancelled">Cancelled</label>
+                    <div class="input-group">
+                        <input id="field_cancelled" type="text" class="form-control" name="cancelled" ngbDatepicker  #cancelledDp="ngbDatepicker" [(ngModel)]="sepaMandate.cancelled"
+                        />
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="cancelledDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.comment" for="field_comment">Comment</label>
+                    <input type="text" class="form-control" name="comment" id="field_comment"
+                        [(ngModel)]="sepaMandate.comment" maxlength="160"/>
+                    <div [hidden]="!(editForm.controls.comment?.dirty && editForm.controls.comment?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.comment?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">
+                        This field cannot be longer than 160 characters.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.customer" for="field_customer">Customer</label>
+                    <select class="form-control" id="field_customer" name="customer" [(ngModel)]="sepaMandate.customerId"  required>
+                        <option *ngIf="!editForm.value.customer" [ngValue]="null" selected></option>
+                        <option [ngValue]="customerOption.id" *ngFor="let customerOption of customers; trackBy: trackCustomerById">{{customerOption.prefix}}</option>
+                    </select>
+                </div>
+                <div [hidden]="!(editForm.controls.customer?.dirty && editForm.controls.customer?.invalid)">
+                    <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.customer?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                    </small>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

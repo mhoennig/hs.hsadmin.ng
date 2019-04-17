@@ -17,22 +17,11 @@
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="number"><span jhiTranslate="hsadminNgApp.customer.number">Number</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="prefix"><span jhiTranslate="hsadminNgApp.customer.prefix">Prefix</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="contractualAddress"><span jhiTranslate="hsadminNgApp.customer.contractualAddress">Contractual Address</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="contractualSalutation"><span jhiTranslate="hsadminNgApp.customer.contractualSalutation">Contractual Salutation</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="billingAddress"><span
-                    jhiTranslate="hsadminNgApp.customer.billingAddress">Billing Address</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
-                <th jhiSortBy="billingSalutation"><span jhiTranslate="hsadminNgApp.customer.billingSalutation">Billing Salutation</span>
-                    <fa-icon [icon]="'sort'"></fa-icon>
-                </th>
+            <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="contractualSalutation"><span jhiTranslate="hsadminNgApp.customer.contractualSalutation">Contractual Salutation</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="contractualAddress"><span jhiTranslate="hsadminNgApp.customer.contractualAddress">Contractual Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="billingSalutation"><span jhiTranslate="hsadminNgApp.customer.billingSalutation">Billing Salutation</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="billingAddress"><span jhiTranslate="hsadminNgApp.customer.billingAddress">Billing Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
@@ -42,10 +31,10 @@
                 <td>{{customer.number}}</td>
                 <td>{{customer.prefix}}</td>
                 <td>{{customer.name}}</td>
-                <td>{{customer.contractualAddress}}</td>
                 <td>{{customer.contractualSalutation}}</td>
-                <td>{{customer.billingAddress}}</td>
+                <td>{{customer.contractualAddress}}</td>
                 <td>{{customer.billingSalutation}}</td>
+                <td>{{customer.billingAddress}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

@@ -101,9 +101,9 @@ public class ShareQueryService extends QueryService<Share> {
             if (criteria.getComment() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getComment(), Share_.comment));
             }
-            if (criteria.getMemberId() != null) {
-                specification = specification.and(buildSpecification(criteria.getMemberId(),
-                    root -> root.join(Share_.member, JoinType.LEFT).get(Membership_.id)));
+            if (criteria.getMembershipId() != null) {
+                specification = specification.and(buildSpecification(criteria.getMembershipId(),
+                    root -> root.join(Share_.membership, JoinType.LEFT).get(Membership_.id)));
             }
         }
         return specification;

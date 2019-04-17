@@ -18,12 +18,12 @@
             "number": "Number",
             "prefix": "Prefix",
             "name": "Name",
-            "contractualAddress": "Contractual Address",
             "contractualSalutation": "Contractual Salutation",
-            "billingAddress": "Billing Address",
+            "contractualAddress": "Contractual Address",
             "billingSalutation": "Billing Salutation",
-            "role": "Role",
-            "membership": "Membership"
+            "billingAddress": "Billing Address",
+            "membership": "Membership",
+            "sepamandate": "Sepamandate"
         }
     }
 }

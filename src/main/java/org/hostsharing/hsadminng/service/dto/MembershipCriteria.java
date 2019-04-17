@@ -25,9 +25,11 @@ public class MembershipCriteria implements Serializable {
 
     private LongFilter id;
 
-    private LocalDateFilter sinceDate;
+    private LocalDateFilter from;
 
-    private LocalDateFilter untilDate;
+    private LocalDateFilter to;
+
+    private StringFilter comment;
 
     private LongFilter shareId;
 
@@ -43,20 +45,28 @@ public class MembershipCriteria implements Serializable {
         this.id = id;
     }
 
-    public LocalDateFilter getSinceDate() {
-        return sinceDate;
+    public LocalDateFilter getFrom() {
+        return from;
     }
 
-    public void setSinceDate(LocalDateFilter sinceDate) {
-        this.sinceDate = sinceDate;
+    public void setFrom(LocalDateFilter from) {
+        this.from = from;
     }
 
-    public LocalDateFilter getUntilDate() {
-        return untilDate;
+    public LocalDateFilter getTo() {
+        return to;
     }
 
-    public void setUntilDate(LocalDateFilter untilDate) {
-        this.untilDate = untilDate;
+    public void setTo(LocalDateFilter to) {
+        this.to = to;
+    }
+
+    public StringFilter getComment() {
+        return comment;
+    }
+
+    public void setComment(StringFilter comment) {
+        this.comment = comment;
     }
 
     public LongFilter getShareId() {
@@ -95,8 +105,9 @@ public class MembershipCriteria implements Serializable {
         final MembershipCriteria that = (MembershipCriteria) o;
         return
             Objects.equals(id, that.id) &&
-            Objects.equals(sinceDate, that.sinceDate) &&
-            Objects.equals(untilDate, that.untilDate) &&
+            Objects.equals(from, that.from) &&
+            Objects.equals(to, that.to) &&
+            Objects.equals(comment, that.comment) &&
             Objects.equals(shareId, that.shareId) &&
             Objects.equals(assetId, that.assetId) &&
             Objects.equals(customerId, that.customerId);
@@ -106,8 +117,9 @@ public class MembershipCriteria implements Serializable {
     public int hashCode() {
         return Objects.hash(
         id,
-        sinceDate,
-        untilDate,
+        from,
+        to,
+        comment,
         shareId,
         assetId,
         customerId
@@ -118,8 +130,9 @@ public class MembershipCriteria implements Serializable {
     public String toString() {
         return "MembershipCriteria{" +
                 (id != null ? "id=" + id + ", " : "") +
-                (sinceDate != null ? "sinceDate=" + sinceDate + ", " : "") +
-                (untilDate != null ? "untilDate=" + untilDate + ", " : "") +
+                (from != null ? "from=" + from + ", " : "") +
+                (to != null ? "to=" + to + ", " : "") +
+                (comment != null ? "comment=" + comment + ", " : "") +
                 (shareId != null ? "shareId=" + shareId + ", " : "") +
                 (assetId != null ? "assetId=" + assetId + ", " : "") +
                 (customerId != null ? "customerId=" + customerId + ", " : "") +

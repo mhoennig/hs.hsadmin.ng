@@ -1,15 +1,18 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
+
 import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.domain.CustomerContact;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
+import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
+import org.hostsharing.hsadminng.service.CustomerQueryService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,9 +31,10 @@ import org.springframework.validation.Validator;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,23 +50,23 @@ public class CustomerResourceIntTest {
     private static final Integer DEFAULT_NUMBER = 10000;
     private static final Integer UPDATED_NUMBER = 10001;
 
-    private static final String DEFAULT_PREFIX = "lzv";
-    private static final String UPDATED_PREFIX = "zf";
+    private static final String DEFAULT_PREFIX = "nf";
+    private static final String UPDATED_PREFIX = "m2";
 
     private static final String DEFAULT_NAME = "AAAAAAAAAA";
     private static final String UPDATED_NAME = "BBBBBBBBBB";
 
-    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_ADDRESS = "BBBBBBBBBB";
-
     private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
 
-    private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "AAAAAAAAAA";
+    private static final String UPDATED_CONTRACTUAL_ADDRESS = "BBBBBBBBBB";
 
     private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
+
+    private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
+    private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -118,10 +122,10 @@ public class CustomerResourceIntTest {
             .number(DEFAULT_NUMBER)
             .prefix(DEFAULT_PREFIX)
             .name(DEFAULT_NAME)
-            .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
             .contractualSalutation(DEFAULT_CONTRACTUAL_SALUTATION)
-            .billingAddress(DEFAULT_BILLING_ADDRESS)
-            .billingSalutation(DEFAULT_BILLING_SALUTATION);
+            .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
+            .billingSalutation(DEFAULT_BILLING_SALUTATION)
+            .billingAddress(DEFAULT_BILLING_ADDRESS);
         return customer;
     }
 
@@ -149,10 +153,10 @@ public class CustomerResourceIntTest {
         assertThat(testCustomer.getNumber()).isEqualTo(DEFAULT_NUMBER);
         assertThat(testCustomer.getPrefix()).isEqualTo(DEFAULT_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(DEFAULT_NAME);
-        assertThat(testCustomer.getContractualAddress()).isEqualTo(DEFAULT_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getContractualSalutation()).isEqualTo(DEFAULT_CONTRACTUAL_SALUTATION);
-        assertThat(testCustomer.getBillingAddress()).isEqualTo(DEFAULT_BILLING_ADDRESS);
+        assertThat(testCustomer.getContractualAddress()).isEqualTo(DEFAULT_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getBillingSalutation()).isEqualTo(DEFAULT_BILLING_SALUTATION);
+        assertThat(testCustomer.getBillingAddress()).isEqualTo(DEFAULT_BILLING_ADDRESS);
     }
 
     @Test
@@ -265,10 +269,10 @@ public class CustomerResourceIntTest {
             .andExpect(jsonPath("$.[*].number").value(hasItem(DEFAULT_NUMBER)))
             .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX.toString())))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS.toString())))
             .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION.toString())))
-            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS.toString())))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION.toString())));
+            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS.toString())))
+            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION.toString())))
+            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS.toString())));
     }
     
     @Test
@@ -285,10 +289,10 @@ public class CustomerResourceIntTest {
             .andExpect(jsonPath("$.number").value(DEFAULT_NUMBER))
             .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX.toString()))
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME.toString()))
-            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS.toString()))
             .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION.toString()))
-            .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS.toString()))
-            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION.toString()));
+            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS.toString()))
+            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION.toString()))
+            .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS.toString()));
     }
 
     @Test
@@ -437,45 +441,6 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByContractualAddressIsEqualToSomething() throws Exception {
-        // Initialize the database
-        customerRepository.saveAndFlush(customer);
-
-        // Get all the customerList where contractualAddress equals to DEFAULT_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.equals=" + DEFAULT_CONTRACTUAL_ADDRESS);
-
-        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldNotBeFound("contractualAddress.equals=" + UPDATED_CONTRACTUAL_ADDRESS);
-    }
-
-    @Test
-    @Transactional
-    public void getAllCustomersByContractualAddressIsInShouldWork() throws Exception {
-        // Initialize the database
-        customerRepository.saveAndFlush(customer);
-
-        // Get all the customerList where contractualAddress in DEFAULT_CONTRACTUAL_ADDRESS or UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
-
-        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldNotBeFound("contractualAddress.in=" + UPDATED_CONTRACTUAL_ADDRESS);
-    }
-
-    @Test
-    @Transactional
-    public void getAllCustomersByContractualAddressIsNullOrNotNull() throws Exception {
-        // Initialize the database
-        customerRepository.saveAndFlush(customer);
-
-        // Get all the customerList where contractualAddress is not null
-        defaultCustomerShouldBeFound("contractualAddress.specified=true");
-
-        // Get all the customerList where contractualAddress is null
-        defaultCustomerShouldNotBeFound("contractualAddress.specified=false");
-    }
-
-    @Test
-    @Transactional
     public void getAllCustomersByContractualSalutationIsEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
@@ -515,41 +480,41 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByBillingAddressIsEqualToSomething() throws Exception {
+    public void getAllCustomersByContractualAddressIsEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where billingAddress equals to DEFAULT_BILLING_ADDRESS
-        defaultCustomerShouldBeFound("billingAddress.equals=" + DEFAULT_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress equals to DEFAULT_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldBeFound("contractualAddress.equals=" + DEFAULT_CONTRACTUAL_ADDRESS);
 
-        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
-        defaultCustomerShouldNotBeFound("billingAddress.equals=" + UPDATED_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldNotBeFound("contractualAddress.equals=" + UPDATED_CONTRACTUAL_ADDRESS);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByBillingAddressIsInShouldWork() throws Exception {
+    public void getAllCustomersByContractualAddressIsInShouldWork() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where billingAddress in DEFAULT_BILLING_ADDRESS or UPDATED_BILLING_ADDRESS
-        defaultCustomerShouldBeFound("billingAddress.in=" + DEFAULT_BILLING_ADDRESS + "," + UPDATED_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress in DEFAULT_CONTRACTUAL_ADDRESS or UPDATED_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldBeFound("contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
 
-        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
-        defaultCustomerShouldNotBeFound("billingAddress.in=" + UPDATED_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldNotBeFound("contractualAddress.in=" + UPDATED_CONTRACTUAL_ADDRESS);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByBillingAddressIsNullOrNotNull() throws Exception {
+    public void getAllCustomersByContractualAddressIsNullOrNotNull() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where billingAddress is not null
-        defaultCustomerShouldBeFound("billingAddress.specified=true");
+        // Get all the customerList where contractualAddress is not null
+        defaultCustomerShouldBeFound("contractualAddress.specified=true");
 
-        // Get all the customerList where billingAddress is null
-        defaultCustomerShouldNotBeFound("billingAddress.specified=false");
+        // Get all the customerList where contractualAddress is null
+        defaultCustomerShouldNotBeFound("contractualAddress.specified=false");
     }
 
     @Test
@@ -593,22 +558,42 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByRoleIsEqualToSomething() throws Exception {
+    public void getAllCustomersByBillingAddressIsEqualToSomething() throws Exception {
         // Initialize the database
-        CustomerContact role = CustomerContactResourceIntTest.createEntity(em);
-        em.persist(role);
-        em.flush();
-        customer.addRole(role);
         customerRepository.saveAndFlush(customer);
-        Long roleId = role.getId();
 
-        // Get all the customerList where role equals to roleId
-        defaultCustomerShouldBeFound("roleId.equals=" + roleId);
+        // Get all the customerList where billingAddress equals to DEFAULT_BILLING_ADDRESS
+        defaultCustomerShouldBeFound("billingAddress.equals=" + DEFAULT_BILLING_ADDRESS);
 
-        // Get all the customerList where role equals to roleId + 1
-        defaultCustomerShouldNotBeFound("roleId.equals=" + (roleId + 1));
+        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldNotBeFound("billingAddress.equals=" + UPDATED_BILLING_ADDRESS);
     }
 
+    @Test
+    @Transactional
+    public void getAllCustomersByBillingAddressIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where billingAddress in DEFAULT_BILLING_ADDRESS or UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldBeFound("billingAddress.in=" + DEFAULT_BILLING_ADDRESS + "," + UPDATED_BILLING_ADDRESS);
+
+        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldNotBeFound("billingAddress.in=" + UPDATED_BILLING_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBillingAddressIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where billingAddress is not null
+        defaultCustomerShouldBeFound("billingAddress.specified=true");
+
+        // Get all the customerList where billingAddress is null
+        defaultCustomerShouldNotBeFound("billingAddress.specified=false");
+    }
 
     @Test
     @Transactional
@@ -628,6 +613,25 @@ public class CustomerResourceIntTest {
         defaultCustomerShouldNotBeFound("membershipId.equals=" + (membershipId + 1));
     }
 
+
+    @Test
+    @Transactional
+    public void getAllCustomersBySepamandateIsEqualToSomething() throws Exception {
+        // Initialize the database
+        SepaMandate sepamandate = SepaMandateResourceIntTest.createEntity(em);
+        em.persist(sepamandate);
+        em.flush();
+        customer.addSepamandate(sepamandate);
+        customerRepository.saveAndFlush(customer);
+        Long sepamandateId = sepamandate.getId();
+
+        // Get all the customerList where sepamandate equals to sepamandateId
+        defaultCustomerShouldBeFound("sepamandateId.equals=" + sepamandateId);
+
+        // Get all the customerList where sepamandate equals to sepamandateId + 1
+        defaultCustomerShouldNotBeFound("sepamandateId.equals=" + (sepamandateId + 1));
+    }
+
     /**
      * Executes the search, and checks that the default entity is returned
      */
@@ -639,10 +643,10 @@ public class CustomerResourceIntTest {
             .andExpect(jsonPath("$.[*].number").value(hasItem(DEFAULT_NUMBER)))
             .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
             .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
-            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)));
+            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
+            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
+            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)));
 
         // Check, that the count call also returns 1
         restCustomerMockMvc.perform(get("/api/customers/count?sort=id,desc&" + filter))
@@ -693,10 +697,10 @@ public class CustomerResourceIntTest {
             .number(UPDATED_NUMBER)
             .prefix(UPDATED_PREFIX)
             .name(UPDATED_NAME)
-            .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
             .contractualSalutation(UPDATED_CONTRACTUAL_SALUTATION)
-            .billingAddress(UPDATED_BILLING_ADDRESS)
-            .billingSalutation(UPDATED_BILLING_SALUTATION);
+            .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
+            .billingSalutation(UPDATED_BILLING_SALUTATION)
+            .billingAddress(UPDATED_BILLING_ADDRESS);
         CustomerDTO customerDTO = customerMapper.toDto(updatedCustomer);
 
         restCustomerMockMvc.perform(put("/api/customers")
@@ -711,10 +715,10 @@ public class CustomerResourceIntTest {
         assertThat(testCustomer.getNumber()).isEqualTo(UPDATED_NUMBER);
         assertThat(testCustomer.getPrefix()).isEqualTo(UPDATED_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(UPDATED_NAME);
-        assertThat(testCustomer.getContractualAddress()).isEqualTo(UPDATED_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getContractualSalutation()).isEqualTo(UPDATED_CONTRACTUAL_SALUTATION);
-        assertThat(testCustomer.getBillingAddress()).isEqualTo(UPDATED_BILLING_ADDRESS);
+        assertThat(testCustomer.getContractualAddress()).isEqualTo(UPDATED_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getBillingSalutation()).isEqualTo(UPDATED_BILLING_SALUTATION);
+        assertThat(testCustomer.getBillingAddress()).isEqualTo(UPDATED_BILLING_ADDRESS);
     }
 
     @Test

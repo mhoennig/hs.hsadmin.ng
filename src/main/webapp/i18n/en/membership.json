@@ -15,8 +15,9 @@
             "detail": {
                 "title": "Membership"
             },
-            "sinceDate": "Since Date",
-            "untilDate": "Until Date",
+            "from": "From",
+            "to": "To",
+            "comment": "Comment",
             "share": "Share",
             "asset": "Asset",
             "customer": "Customer"

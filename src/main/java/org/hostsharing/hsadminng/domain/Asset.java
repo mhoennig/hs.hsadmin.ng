@@ -2,15 +2,16 @@ package org.hostsharing.hsadminng.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 
 /**
  * A Asset.
@@ -46,7 +47,7 @@ public class Asset implements Serializable {
     @ManyToOne(optional = false)
     @NotNull
     @JsonIgnoreProperties("assets")
-    private Membership member;
+    private Membership membership;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -109,17 +110,17 @@ public class Asset implements Serializable {
         this.comment = comment;
     }
 
-    public Membership getMember() {
-        return member;
+    public Membership getMembership() {
+        return membership;
     }
 
-    public Asset member(Membership membership) {
-        this.member = membership;
+    public Asset membership(Membership membership) {
+        this.membership = membership;
         return this;
     }
 
-    public void setMember(Membership membership) {
-        this.member = membership;
+    public void setMembership(Membership membership) {
+        this.membership = membership;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

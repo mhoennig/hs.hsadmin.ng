@@ -19,7 +19,7 @@
             "action": "Action",
             "amount": "Amount",
             "comment": "Comment",
-            "member": "Member"
+            "membership": "Membership"
         }
     }
 }

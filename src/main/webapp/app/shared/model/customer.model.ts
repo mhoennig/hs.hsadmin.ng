@@ -1,17 +1,17 @@
-import { ICustomerContact } from 'app/shared/model/customer-contact.model';
 import { IMembership } from 'app/shared/model/membership.model';
+import { ISepaMandate } from 'app/shared/model/sepa-mandate.model';
 
 export interface ICustomer {
     id?: number;
     number?: number;
     prefix?: string;
     name?: string;
-    contractualAddress?: string;
     contractualSalutation?: string;
-    billingAddress?: string;
+    contractualAddress?: string;
     billingSalutation?: string;
-    roles?: ICustomerContact[];
+    billingAddress?: string;
     memberships?: IMembership[];
+    sepamandates?: ISepaMandate[];
 }
 
 export class Customer implements ICustomer {
@@ -20,11 +20,11 @@ export class Customer implements ICustomer {
         public number?: number,
         public prefix?: string,
         public name?: string,
-        public contractualAddress?: string,
         public contractualSalutation?: string,
-        public billingAddress?: string,
+        public contractualAddress?: string,
         public billingSalutation?: string,
-        public roles?: ICustomerContact[],
-        public memberships?: IMembership[]
+        public billingAddress?: string,
+        public memberships?: IMembership[],
+        public sepamandates?: ISepaMandate[]
     ) {}
 }

@@ -1,0 +1,65 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="sepaMandate">
+            <h2><span jhiTranslate="hsadminNgApp.sepaMandate.detail.title">Sepa Mandate</span> {{sepaMandate.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.reference">Reference</span></dt>
+                <dd>
+                    <span>{{sepaMandate.reference}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.iban">Iban</span></dt>
+                <dd>
+                    <span>{{sepaMandate.iban}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.bic">Bic</span></dt>
+                <dd>
+                    <span>{{sepaMandate.bic}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.created">Created</span></dt>
+                <dd>
+                    <span>{{sepaMandate.created}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.validFrom">Valid From</span></dt>
+                <dd>
+                    <span>{{sepaMandate.validFrom}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.validTo">Valid To</span></dt>
+                <dd>
+                    <span>{{sepaMandate.validTo}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.lastUsed">Last Used</span></dt>
+                <dd>
+                    <span>{{sepaMandate.lastUsed}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.cancelled">Cancelled</span></dt>
+                <dd>
+                    <span>{{sepaMandate.cancelled}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.comment">Comment</span></dt>
+                <dd>
+                    <span>{{sepaMandate.comment}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.sepaMandate.customer">Customer</span></dt>
+                <dd>
+                    <div *ngIf="sepaMandate.customerId">
+                        <a [routerLink]="['/customer', sepaMandate.customerId, 'view']">{{sepaMandate.customerPrefix}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/sepa-mandate', sepaMandate.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

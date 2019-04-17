@@ -40,7 +40,7 @@ public class AssetCriteria implements Serializable {
 
     private StringFilter comment;
 
-    private LongFilter memberId;
+    private LongFilter membershipId;
 
     public LongFilter getId() {
         return id;
@@ -82,12 +82,12 @@ public class AssetCriteria implements Serializable {
         this.comment = comment;
     }
 
-    public LongFilter getMemberId() {
-        return memberId;
+    public LongFilter getMembershipId() {
+        return membershipId;
     }
 
-    public void setMemberId(LongFilter memberId) {
-        this.memberId = memberId;
+    public void setMembershipId(LongFilter membershipId) {
+        this.membershipId = membershipId;
     }
 
 
@@ -106,7 +106,7 @@ public class AssetCriteria implements Serializable {
             Objects.equals(action, that.action) &&
             Objects.equals(amount, that.amount) &&
             Objects.equals(comment, that.comment) &&
-            Objects.equals(memberId, that.memberId);
+            Objects.equals(membershipId, that.membershipId);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class AssetCriteria implements Serializable {
         action,
         amount,
         comment,
-        memberId
+        membershipId
         );
     }
 
@@ -129,7 +129,7 @@ public class AssetCriteria implements Serializable {
                 (action != null ? "action=" + action + ", " : "") +
                 (amount != null ? "amount=" + amount + ", " : "") +
                 (comment != null ? "comment=" + comment + ", " : "") +
-                (memberId != null ? "memberId=" + memberId + ", " : "") +
+                (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
             "}";
     }
 

@@ -25,7 +25,9 @@ public class ShareDTO implements Serializable {
     private String comment;
 
 
-    private Long memberId;
+    private Long membershipId;
+
+    private String membershipFrom;
 
     public Long getId() {
         return id;
@@ -67,12 +69,20 @@ public class ShareDTO implements Serializable {
         this.comment = comment;
     }
 
-    public Long getMemberId() {
-        return memberId;
+    public Long getMembershipId() {
+        return membershipId;
     }
 
-    public void setMemberId(Long membershipId) {
-        this.memberId = membershipId;
+    public void setMembershipId(Long membershipId) {
+        this.membershipId = membershipId;
+    }
+
+    public String getMembershipFrom() {
+        return membershipFrom;
+    }
+
+    public void setMembershipFrom(String membershipFrom) {
+        this.membershipFrom = membershipFrom;
     }
 
     @Override
@@ -104,7 +114,8 @@ public class ShareDTO implements Serializable {
             ", action='" + getAction() + "'" +
             ", quantity=" + getQuantity() +
             ", comment='" + getComment() + "'" +
-            ", member=" + getMemberId() +
+            ", membership=" + getMembershipId() +
+            ", membership='" + getMembershipFrom() + "'" +
             "}";
     }
 }

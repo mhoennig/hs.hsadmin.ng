@@ -19,7 +19,7 @@
             <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.share.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="quantity"><span jhiTranslate="hsadminNgApp.share.quantity">Quantity</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.share.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="memberId"><span jhiTranslate="hsadminNgApp.share.member">Member</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="membershipFrom"><span jhiTranslate="hsadminNgApp.share.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
@@ -31,8 +31,8 @@
                 <td>{{share.quantity}}</td>
                 <td>{{share.comment}}</td>
                 <td>
-                    <div *ngIf="share.memberId">
-                        <a [routerLink]="['../membership', share.memberId , 'view' ]" >{{share.memberId}}</a>
+                    <div *ngIf="share.membershipId">
+                        <a [routerLink]="['../membership', share.membershipId , 'view' ]" >{{share.membershipFrom}}</a>
                     </div>
                 </td>
                 <td class="text-right">
