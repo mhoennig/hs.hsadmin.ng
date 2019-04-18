@@ -2,7 +2,6 @@ package org.hostsharing.hsadminng.service.dto;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -56,10 +55,6 @@ public class CustomerDTO implements Serializable {
     @Size(max = 400)
     @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.CONTRACTUAL_CONTACT)
     private String contractualAddress;
-
-    @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.CONTRACTUAL_CONTACT, read = Role.ANY_CUSTOMER_CONTACT)
-    private String contractualSalutation;
 
     @Size(max = 80)
     @AccessFor(init = Role.ADMIN, update = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = Role.CONTRACTUAL_CONTACT)
@@ -182,10 +177,10 @@ public class CustomerDTO implements Serializable {
     }
 
     @JsonComponent
-    public static class CustomerJsonSerializer extends JsonSerializer<CustomerDTO> {
+    public static class JsonSerializerWithAccessFilter extends JsonSerializer<Object> {
 
         @Override
-        public void serialize(CustomerDTO dto, JsonGenerator jsonGenerator,
+        public void serialize(Object dto, JsonGenerator jsonGenerator,
                               SerializerProvider serializerProvider) throws IOException {
 
             jsonGenerator.writeStartObject();
@@ -196,7 +191,7 @@ public class CustomerDTO implements Serializable {
             jsonGenerator.writeEndObject();
         }
 
-        private void toJSon(CustomerDTO dto, JsonGenerator jsonGenerator, Field prop) throws IOException {
+        private void toJSon(Object dto, JsonGenerator jsonGenerator, Field prop) throws IOException {
             if (getLoginUserRole().isAllowedToRead(prop)) {
                 final String fieldName = prop.getName();
                 if (Integer.class.isAssignableFrom(prop.getType()) || int.class.isAssignableFrom(prop.getType())) {
@@ -211,7 +206,7 @@ public class CustomerDTO implements Serializable {
             }
         }
 
-        private Object get(CustomerDTO dto, Field field) {
+        private Object get(Object dto, Field field) {
             try {
                 field.setAccessible(true);
                 return field.get(dto);
@@ -239,20 +234,20 @@ public class CustomerDTO implements Serializable {
 
         @Override
         public CustomerDTO deserialize(JsonParser jsonParser,
-                                       DeserializationContext deserializationContext) throws IOException,
-            JsonProcessingException {
+                                       DeserializationContext deserializationContext) throws IOException {
 
             TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
 
             CustomerDTO dto = new CustomerDTO();
             dto.setId(((IntNode) treeNode.get("id")).asLong());
-            dto.setNumber(((IntNode) treeNode.get("number")).asInt());
+            dto.setReference(((IntNode) treeNode.get("reference")).asInt());
             dto.setPrefix(((TextNode) treeNode.get("prefix")).asText());
             dto.setName(((TextNode) treeNode.get("name")).asText());
             dto.setContractualAddress(((TextNode) treeNode.get("contractualAddress")).asText());
             dto.setContractualSalutation(((TextNode) treeNode.get("contractualSalutation")).asText());
             dto.setBillingAddress(((TextNode) treeNode.get("billingAddress")).asText());
             dto.setBillingSalutation(((TextNode) treeNode.get("billingSalutation")).asText());
+            dto.setRemark(((TextNode) treeNode.get("remark")).asText());
 
             return dto;
         }

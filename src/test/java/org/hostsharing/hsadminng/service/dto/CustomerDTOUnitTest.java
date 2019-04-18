@@ -41,6 +41,7 @@ public class CustomerDTOUnitTest {
         given.setContractualSalutation(null);
         given.setBillingAddress(null);
         given.setBillingSalutation(null);
+        given.setRemark(null);
         assertEquals(createExpectedJSon(given), actual);
     }
 
@@ -55,13 +56,13 @@ public class CustomerDTOUnitTest {
         String actual = objectMapper.writeValueAsString(given);
 
         // then
-        assertEquals(createExpectedJSon(given), actual);
+        assertThat(actual).isEqualTo(createExpectedJSon(given));
     }
 
     @Test
     public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
-        String json = "{\"id\":1234,\"number\":10001,\"prefix\":\"abc\",\"name\":\"Mein Name\",\"contractualAddress\":\"Eine Adresse\",\"contractualSalutation\":\"Hallo\",\"billingAddress\":\"Noch eine Adresse\",\"billingSalutation\":\"Moin\"}";
+        String json = "{\"id\":1234,\"reference\":10001,\"prefix\":\"abc\",\"name\":\"Mein Name\",\"contractualAddress\":\"Eine Adresse\",\"contractualSalutation\":\"Hallo\",\"billingAddress\":\"Noch eine Adresse\",\"billingSalutation\":\"Moin\",\"remark\":\"Eine Bemerkung\"}";
         givenLoginUserWithRole("CONTRACTUAL_CONTACT");
 
         // when
@@ -70,26 +71,28 @@ public class CustomerDTOUnitTest {
         // then
         CustomerDTO expected = new CustomerDTO();
         expected.setId(1234L);
-        expected.setNumber(10001);
+        expected.setReference(10001);
         expected.setPrefix("abc");
         expected.setName("Mein Name");
         expected.setContractualAddress(null); // not allowed
         expected.setContractualSalutation("Hallo");
         expected.setBillingAddress("Noch eine Adresse");
         expected.setBillingSalutation("Moin");
+        expected.setRemark("Eine Bemerkung");
         assertEquals(actual, expected);
     }
 
     private String createExpectedJSon(CustomerDTO dto) {
         String json = // the fields in alphanumeric order:
             toJSonFieldDefinitionIfPresent("id", dto.getId()) +
-                toJSonFieldDefinitionIfPresent("number", dto.getNumber()) +
+                toJSonFieldDefinitionIfPresent("reference", dto.getReference()) +
                 toJSonFieldDefinitionIfPresent("prefix", dto.getPrefix()) +
                 toJSonFieldDefinitionIfPresent("name", dto.getName()) +
-                toJSonFieldDefinitionIfPresent("contractualAddress", dto.getContractualAddress()) +
                 toJSonFieldDefinitionIfPresent("contractualSalutation", dto.getContractualSalutation()) +
+                toJSonFieldDefinitionIfPresent("contractualAddress", dto.getContractualAddress()) +
+                toJSonFieldDefinitionIfPresent("billingSalutation", dto.getBillingSalutation()) +
                 toJSonFieldDefinitionIfPresent("billingAddress", dto.getBillingAddress()) +
-                toJSonFieldDefinitionIfPresent("billingSalutation", dto.getBillingSalutation());
+                toJSonFieldDefinitionIfPresent("remark", dto.getRemark()) ;
         return "{" + json.substring(0, json.length() - 1) + "}";
     }
 
@@ -108,14 +111,14 @@ public class CustomerDTOUnitTest {
     private CustomerDTO createSomeCustomerDTO() {
         CustomerDTO given = new CustomerDTO();
         given.setId(1234L);
-        given.setNumber(10001);
+        given.setReference(10001);
         given.setPrefix("abc");
         given.setName("Mein Name");
         given.setContractualAddress("Eine Adresse");
         given.setContractualSalutation("Hallo");
         given.setBillingAddress("Noch eine Adresse");
         given.setBillingSalutation("Moin");
-        givenLoginUserWithRole("admin");
+        given.setRemark("Eine Bemerkung");
         return given;
     }
 
