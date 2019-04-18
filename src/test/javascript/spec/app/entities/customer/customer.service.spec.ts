@@ -1,9 +1,11 @@
 /* tslint:disable max-line-length */
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed, getTestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { map, take } from 'rxjs/operators';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { take, map } from 'rxjs/operators';
 import { CustomerService } from 'app/entities/customer/customer.service';
-import { Customer, ICustomer } from 'app/shared/model/customer.model';
+import { ICustomer, Customer } from 'app/shared/model/customer.model';
 
 describe('Service Tests', () => {
     describe('Customer Service', () => {
@@ -19,7 +21,7 @@ describe('Service Tests', () => {
             service = injector.get(CustomerService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new Customer(0, 0, 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA');
+            elemDefault = new Customer(0, 0, 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA');
         });
 
         describe('Service methods', async () => {
@@ -53,13 +55,14 @@ describe('Service Tests', () => {
             it('should update a Customer', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        number: 1,
+                        reference: 1,
                         prefix: 'BBBBBB',
                         name: 'BBBBBB',
-                        contractualAddress: 'BBBBBB',
                         contractualSalutation: 'BBBBBB',
+                        contractualAddress: 'BBBBBB',
+                        billingSalutation: 'BBBBBB',
                         billingAddress: 'BBBBBB',
-                        billingSalutation: 'BBBBBB'
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
@@ -76,13 +79,14 @@ describe('Service Tests', () => {
             it('should return a list of Customer', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        number: 1,
+                        reference: 1,
                         prefix: 'BBBBBB',
                         name: 'BBBBBB',
-                        contractualAddress: 'BBBBBB',
                         contractualSalutation: 'BBBBBB',
+                        contractualAddress: 'BBBBBB',
+                        billingSalutation: 'BBBBBB',
                         billingAddress: 'BBBBBB',
-                        billingSalutation: 'BBBBBB'
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );

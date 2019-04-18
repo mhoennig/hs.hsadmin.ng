@@ -1,15 +1,18 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
+
 import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.domain.CustomerContact;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
+import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
+import org.hostsharing.hsadminng.service.CustomerQueryService;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,9 +31,10 @@ import org.springframework.validation.Validator;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -43,32 +47,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = HsadminNgApp.class)
 public class CustomerResourceIntTest {
 
-    private static final Integer DEFAULT_NUMBER = 10000;
-    private static final Integer UPDATED_NUMBER = 10001;
-    private static final Integer OTHER_NUMBER_BASE = 11000;
+    private static final Integer DEFAULT_REFERENCE = 10000;
+    private static final Integer UPDATED_REFERENCE = 10001;
 
-    private static final String DEFAULT_PREFIX = "def";
-    private static final String UPDATED_PREFIX = "new";
-    private static final String OTHER_PREFIX_BASE = "o";
+    private static final String DEFAULT_PREFIX = "hu";
+    private static final String UPDATED_PREFIX = "umj";
 
-    private static final String DEFAULT_NAME = "Default GmbH";
-    private static final String UPDATED_NAME = "Updated Default GmbH";
-    private static final String OTHER_NAME_BASE = "Other Corp.";
-
-    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "Default Address";
-    private static final String UPDATED_CONTRACTUAL_ADDRESS = "Updated Address";
-    private static final String OTHER_CONTRACTUAL_ADDRESS_BASE = "Other Street ";
+    private static final String DEFAULT_NAME = "AAAAAAAAAA";
+    private static final String UPDATED_NAME = "BBBBBBBBBB";
 
     private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
 
-    private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "AAAAAAAAAA";
+    private static final String UPDATED_CONTRACTUAL_ADDRESS = "BBBBBBBBBB";
 
     private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
 
-    private static int otherCounter = 0;
+    private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
+    private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
+
+    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
+    private static final String UPDATED_REMARK = "BBBBBBBBBB";
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -114,36 +115,21 @@ public class CustomerResourceIntTest {
     }
 
     /**
-     * Create an entity for tests.
+     * Create an entity for this test.
      *
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
     public static Customer createEntity(EntityManager em) {
         Customer customer = new Customer()
-            .number(DEFAULT_NUMBER)
+            .reference(DEFAULT_REFERENCE)
             .prefix(DEFAULT_PREFIX)
             .name(DEFAULT_NAME)
-            .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
             .contractualSalutation(DEFAULT_CONTRACTUAL_SALUTATION)
+            .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
+            .billingSalutation(DEFAULT_BILLING_SALUTATION)
             .billingAddress(DEFAULT_BILLING_ADDRESS)
-            .billingSalutation(DEFAULT_BILLING_SALUTATION);
-        return customer;
-    }
-
-    /**
-     * Create another entity for tests.
-     *
-     * This is a static method, as tests for other entities might also need it,
-     * if they test an entity which requires the current entity.
-     */
-    public static Customer createAnotherEntity(EntityManager em) {
-        Customer customer = new Customer()
-            .number(OTHER_NUMBER_BASE + otherCounter)
-            .prefix(OTHER_PREFIX_BASE + String.format("%02d", otherCounter))
-            .name(OTHER_NAME_BASE + otherCounter)
-            .contractualAddress(OTHER_CONTRACTUAL_ADDRESS_BASE + otherCounter);
-        ++otherCounter;
+            .remark(DEFAULT_REMARK);
         return customer;
     }
 
@@ -168,13 +154,14 @@ public class CustomerResourceIntTest {
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeCreate + 1);
         Customer testCustomer = customerList.get(customerList.size() - 1);
-        assertThat(testCustomer.getNumber()).isEqualTo(DEFAULT_NUMBER);
+        assertThat(testCustomer.getReference()).isEqualTo(DEFAULT_REFERENCE);
         assertThat(testCustomer.getPrefix()).isEqualTo(DEFAULT_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(DEFAULT_NAME);
-        assertThat(testCustomer.getContractualAddress()).isEqualTo(DEFAULT_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getContractualSalutation()).isEqualTo(DEFAULT_CONTRACTUAL_SALUTATION);
-        assertThat(testCustomer.getBillingAddress()).isEqualTo(DEFAULT_BILLING_ADDRESS);
+        assertThat(testCustomer.getContractualAddress()).isEqualTo(DEFAULT_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getBillingSalutation()).isEqualTo(DEFAULT_BILLING_SALUTATION);
+        assertThat(testCustomer.getBillingAddress()).isEqualTo(DEFAULT_BILLING_ADDRESS);
+        assertThat(testCustomer.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -199,10 +186,10 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void checkNumberIsRequired() throws Exception {
+    public void checkReferenceIsRequired() throws Exception {
         int databaseSizeBeforeTest = customerRepository.findAll().size();
         // set the field null
-        customer.setNumber(null);
+        customer.setReference(null);
 
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
@@ -284,13 +271,14 @@ public class CustomerResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
-            .andExpect(jsonPath("$.[*].number").value(hasItem(DEFAULT_NUMBER)))
+            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
             .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX.toString())))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS.toString())))
             .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION.toString())))
+            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS.toString())))
+            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION.toString())))
             .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS.toString())))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION.toString())));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -304,78 +292,79 @@ public class CustomerResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(customer.getId().intValue()))
-            .andExpect(jsonPath("$.number").value(DEFAULT_NUMBER))
+            .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE))
             .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX.toString()))
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME.toString()))
-            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS.toString()))
             .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION.toString()))
+            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS.toString()))
+            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION.toString()))
             .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS.toString()))
-            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION.toString()));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByNumberIsEqualToSomething() throws Exception {
+    public void getAllCustomersByReferenceIsEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where number equals to DEFAULT_NUMBER
-        defaultCustomerShouldBeFound("number.equals=" + DEFAULT_NUMBER);
+        // Get all the customerList where reference equals to DEFAULT_REFERENCE
+        defaultCustomerShouldBeFound("reference.equals=" + DEFAULT_REFERENCE);
 
-        // Get all the customerList where number equals to UPDATED_NUMBER
-        defaultCustomerShouldNotBeFound("number.equals=" + UPDATED_NUMBER);
+        // Get all the customerList where reference equals to UPDATED_REFERENCE
+        defaultCustomerShouldNotBeFound("reference.equals=" + UPDATED_REFERENCE);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByNumberIsInShouldWork() throws Exception {
+    public void getAllCustomersByReferenceIsInShouldWork() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where number in DEFAULT_NUMBER or UPDATED_NUMBER
-        defaultCustomerShouldBeFound("number.in=" + DEFAULT_NUMBER + "," + UPDATED_NUMBER);
+        // Get all the customerList where reference in DEFAULT_REFERENCE or UPDATED_REFERENCE
+        defaultCustomerShouldBeFound("reference.in=" + DEFAULT_REFERENCE + "," + UPDATED_REFERENCE);
 
-        // Get all the customerList where number equals to UPDATED_NUMBER
-        defaultCustomerShouldNotBeFound("number.in=" + UPDATED_NUMBER);
+        // Get all the customerList where reference equals to UPDATED_REFERENCE
+        defaultCustomerShouldNotBeFound("reference.in=" + UPDATED_REFERENCE);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByNumberIsNullOrNotNull() throws Exception {
+    public void getAllCustomersByReferenceIsNullOrNotNull() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where number is not null
-        defaultCustomerShouldBeFound("number.specified=true");
+        // Get all the customerList where reference is not null
+        defaultCustomerShouldBeFound("reference.specified=true");
 
-        // Get all the customerList where number is null
-        defaultCustomerShouldNotBeFound("number.specified=false");
+        // Get all the customerList where reference is null
+        defaultCustomerShouldNotBeFound("reference.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByNumberIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllCustomersByReferenceIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where number greater than or equals to DEFAULT_NUMBER
-        defaultCustomerShouldBeFound("number.greaterOrEqualThan=" + DEFAULT_NUMBER);
+        // Get all the customerList where reference greater than or equals to DEFAULT_REFERENCE
+        defaultCustomerShouldBeFound("reference.greaterOrEqualThan=" + DEFAULT_REFERENCE);
 
-        // Get all the customerList where number greater than or equals to (DEFAULT_NUMBER + 1)
-        defaultCustomerShouldNotBeFound("number.greaterOrEqualThan=" + (DEFAULT_NUMBER + 1));
+        // Get all the customerList where reference greater than or equals to (DEFAULT_REFERENCE + 1)
+        defaultCustomerShouldNotBeFound("reference.greaterOrEqualThan=" + (DEFAULT_REFERENCE + 1));
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByNumberIsLessThanSomething() throws Exception {
+    public void getAllCustomersByReferenceIsLessThanSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where number less than or equals to DEFAULT_NUMBER
-        defaultCustomerShouldNotBeFound("number.lessThan=" + DEFAULT_NUMBER);
+        // Get all the customerList where reference less than or equals to DEFAULT_REFERENCE
+        defaultCustomerShouldNotBeFound("reference.lessThan=" + DEFAULT_REFERENCE);
 
-        // Get all the customerList where number less than or equals to (DEFAULT_NUMBER + 1)
-        defaultCustomerShouldBeFound("number.lessThan=" + (DEFAULT_NUMBER + 1));
+        // Get all the customerList where reference less than or equals to (DEFAULT_REFERENCE + 1)
+        defaultCustomerShouldBeFound("reference.lessThan=" + (DEFAULT_REFERENCE + 1));
     }
 
 
@@ -459,45 +448,6 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByContractualAddressIsEqualToSomething() throws Exception {
-        // Initialize the database
-        customerRepository.saveAndFlush(customer);
-
-        // Get all the customerList where contractualAddress equals to DEFAULT_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.equals=" + DEFAULT_CONTRACTUAL_ADDRESS);
-
-        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldNotBeFound("contractualAddress.equals=" + UPDATED_CONTRACTUAL_ADDRESS);
-    }
-
-    @Test
-    @Transactional
-    public void getAllCustomersByContractualAddressIsInShouldWork() throws Exception {
-        // Initialize the database
-        customerRepository.saveAndFlush(customer);
-
-        // Get all the customerList where contractualAddress in DEFAULT_CONTRACTUAL_ADDRESS or UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
-
-        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldNotBeFound("contractualAddress.in=" + UPDATED_CONTRACTUAL_ADDRESS);
-    }
-
-    @Test
-    @Transactional
-    public void getAllCustomersByContractualAddressIsNullOrNotNull() throws Exception {
-        // Initialize the database
-        customerRepository.saveAndFlush(customer);
-
-        // Get all the customerList where contractualAddress is not null
-        defaultCustomerShouldBeFound("contractualAddress.specified=true");
-
-        // Get all the customerList where contractualAddress is null
-        defaultCustomerShouldNotBeFound("contractualAddress.specified=false");
-    }
-
-    @Test
-    @Transactional
     public void getAllCustomersByContractualSalutationIsEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
@@ -537,41 +487,41 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByBillingAddressIsEqualToSomething() throws Exception {
+    public void getAllCustomersByContractualAddressIsEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where billingAddress equals to DEFAULT_BILLING_ADDRESS
-        defaultCustomerShouldBeFound("billingAddress.equals=" + DEFAULT_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress equals to DEFAULT_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldBeFound("contractualAddress.equals=" + DEFAULT_CONTRACTUAL_ADDRESS);
 
-        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
-        defaultCustomerShouldNotBeFound("billingAddress.equals=" + UPDATED_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldNotBeFound("contractualAddress.equals=" + UPDATED_CONTRACTUAL_ADDRESS);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByBillingAddressIsInShouldWork() throws Exception {
+    public void getAllCustomersByContractualAddressIsInShouldWork() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where billingAddress in DEFAULT_BILLING_ADDRESS or UPDATED_BILLING_ADDRESS
-        defaultCustomerShouldBeFound("billingAddress.in=" + DEFAULT_BILLING_ADDRESS + "," + UPDATED_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress in DEFAULT_CONTRACTUAL_ADDRESS or UPDATED_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldBeFound("contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
 
-        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
-        defaultCustomerShouldNotBeFound("billingAddress.in=" + UPDATED_BILLING_ADDRESS);
+        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
+        defaultCustomerShouldNotBeFound("contractualAddress.in=" + UPDATED_CONTRACTUAL_ADDRESS);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByBillingAddressIsNullOrNotNull() throws Exception {
+    public void getAllCustomersByContractualAddressIsNullOrNotNull() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where billingAddress is not null
-        defaultCustomerShouldBeFound("billingAddress.specified=true");
+        // Get all the customerList where contractualAddress is not null
+        defaultCustomerShouldBeFound("contractualAddress.specified=true");
 
-        // Get all the customerList where billingAddress is null
-        defaultCustomerShouldNotBeFound("billingAddress.specified=false");
+        // Get all the customerList where contractualAddress is null
+        defaultCustomerShouldNotBeFound("contractualAddress.specified=false");
     }
 
     @Test
@@ -615,6 +565,84 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
+    public void getAllCustomersByBillingAddressIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where billingAddress equals to DEFAULT_BILLING_ADDRESS
+        defaultCustomerShouldBeFound("billingAddress.equals=" + DEFAULT_BILLING_ADDRESS);
+
+        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldNotBeFound("billingAddress.equals=" + UPDATED_BILLING_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBillingAddressIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where billingAddress in DEFAULT_BILLING_ADDRESS or UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldBeFound("billingAddress.in=" + DEFAULT_BILLING_ADDRESS + "," + UPDATED_BILLING_ADDRESS);
+
+        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldNotBeFound("billingAddress.in=" + UPDATED_BILLING_ADDRESS);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBillingAddressIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where billingAddress is not null
+        defaultCustomerShouldBeFound("billingAddress.specified=true");
+
+        // Get all the customerList where billingAddress is null
+        defaultCustomerShouldNotBeFound("billingAddress.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRemarkIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where remark equals to DEFAULT_REMARK
+        defaultCustomerShouldBeFound("remark.equals=" + DEFAULT_REMARK);
+
+        // Get all the customerList where remark equals to UPDATED_REMARK
+        defaultCustomerShouldNotBeFound("remark.equals=" + UPDATED_REMARK);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRemarkIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where remark in DEFAULT_REMARK or UPDATED_REMARK
+        defaultCustomerShouldBeFound("remark.in=" + DEFAULT_REMARK + "," + UPDATED_REMARK);
+
+        // Get all the customerList where remark equals to UPDATED_REMARK
+        defaultCustomerShouldNotBeFound("remark.in=" + UPDATED_REMARK);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRemarkIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where remark is not null
+        defaultCustomerShouldBeFound("remark.specified=true");
+
+        // Get all the customerList where remark is null
+        defaultCustomerShouldNotBeFound("remark.specified=false");
+    }
+
+    @Test
+    @Transactional
     public void getAllCustomersByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
         Membership membership = MembershipResourceIntTest.createEntity(em);
@@ -634,20 +662,20 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByRoleIsEqualToSomething() throws Exception {
+    public void getAllCustomersBySepamandateIsEqualToSomething() throws Exception {
         // Initialize the database
-        CustomerContact role = CustomerContactResourceIntTest.createAnotherEntity(em);
-        em.persist(role);
+        SepaMandate sepamandate = SepaMandateResourceIntTest.createEntity(em);
+        em.persist(sepamandate);
         em.flush();
-        customer.addRole(role);
+        customer.addSepamandate(sepamandate);
         customerRepository.saveAndFlush(customer);
-        Long roleId = role.getId();
+        Long sepamandateId = sepamandate.getId();
 
-        // Get all the customerList where role equals to roleId
-        defaultCustomerShouldBeFound("roleId.equals=" + roleId);
+        // Get all the customerList where sepamandate equals to sepamandateId
+        defaultCustomerShouldBeFound("sepamandateId.equals=" + sepamandateId);
 
-        // Get all the customerList where role equals to roleId + 1
-        defaultCustomerShouldNotBeFound("roleId.equals=" + (roleId + 1));
+        // Get all the customerList where sepamandate equals to sepamandateId + 1
+        defaultCustomerShouldNotBeFound("sepamandateId.equals=" + (sepamandateId + 1));
     }
 
     /**
@@ -658,13 +686,14 @@ public class CustomerResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
-            .andExpect(jsonPath("$.[*].number").value(hasItem(DEFAULT_NUMBER)))
+            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
             .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
             .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
+            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
+            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
             .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restCustomerMockMvc.perform(get("/api/customers/count?sort=id,desc&" + filter))
@@ -712,13 +741,14 @@ public class CustomerResourceIntTest {
         // Disconnect from session so that the updates on updatedCustomer are not directly saved in db
         em.detach(updatedCustomer);
         updatedCustomer
-            .number(UPDATED_NUMBER)
+            .reference(UPDATED_REFERENCE)
             .prefix(UPDATED_PREFIX)
             .name(UPDATED_NAME)
-            .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
             .contractualSalutation(UPDATED_CONTRACTUAL_SALUTATION)
+            .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
+            .billingSalutation(UPDATED_BILLING_SALUTATION)
             .billingAddress(UPDATED_BILLING_ADDRESS)
-            .billingSalutation(UPDATED_BILLING_SALUTATION);
+            .remark(UPDATED_REMARK);
         CustomerDTO customerDTO = customerMapper.toDto(updatedCustomer);
 
         restCustomerMockMvc.perform(put("/api/customers")
@@ -730,13 +760,14 @@ public class CustomerResourceIntTest {
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeUpdate);
         Customer testCustomer = customerList.get(customerList.size() - 1);
-        assertThat(testCustomer.getNumber()).isEqualTo(UPDATED_NUMBER);
+        assertThat(testCustomer.getReference()).isEqualTo(UPDATED_REFERENCE);
         assertThat(testCustomer.getPrefix()).isEqualTo(UPDATED_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(UPDATED_NAME);
-        assertThat(testCustomer.getContractualAddress()).isEqualTo(UPDATED_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getContractualSalutation()).isEqualTo(UPDATED_CONTRACTUAL_SALUTATION);
-        assertThat(testCustomer.getBillingAddress()).isEqualTo(UPDATED_BILLING_ADDRESS);
+        assertThat(testCustomer.getContractualAddress()).isEqualTo(UPDATED_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getBillingSalutation()).isEqualTo(UPDATED_BILLING_SALUTATION);
+        assertThat(testCustomer.getBillingAddress()).isEqualTo(UPDATED_BILLING_ADDRESS);
+        assertThat(testCustomer.getRemark()).isEqualTo(UPDATED_REMARK);
     }
 
     @Test

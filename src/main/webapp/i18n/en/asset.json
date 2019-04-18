@@ -15,11 +15,12 @@
             "detail": {
                 "title": "Asset"
             },
-            "date": "Date",
+            "documentDate": "Document Date",
+            "valueDate": "Value Date",
             "action": "Action",
             "amount": "Amount",
-            "comment": "Comment",
-            "member": "Member"
+            "remark": "Remark",
+            "membership": "Membership"
         }
     }
 }

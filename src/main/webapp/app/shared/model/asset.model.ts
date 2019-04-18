@@ -11,20 +11,24 @@ export const enum AssetAction {
 
 export interface IAsset {
     id?: number;
-    date?: Moment;
+    documentDate?: Moment;
+    valueDate?: Moment;
     action?: AssetAction;
     amount?: number;
-    comment?: string;
-    memberId?: number;
+    remark?: string;
+    membershipDocumentDate?: string;
+    membershipId?: number;
 }
 
 export class Asset implements IAsset {
     constructor(
         public id?: number,
-        public date?: Moment,
+        public documentDate?: Moment,
+        public valueDate?: Moment,
         public action?: AssetAction,
         public amount?: number,
-        public comment?: string,
-        public memberId?: number
+        public remark?: string,
+        public membershipDocumentDate?: string,
+        public membershipId?: number
     ) {}
 }

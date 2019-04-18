@@ -8,11 +8,10 @@
             "entities": {
                 "main": "Entitäten",
                 "customer": "Customer",
-                "contact": "Contact",
-                "customerContact": "Customer Contact",
                 "membership": "Membership",
                 "share": "Share",
                 "asset": "Asset",
+                "sepaMandate": "Sepa Mandate",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {

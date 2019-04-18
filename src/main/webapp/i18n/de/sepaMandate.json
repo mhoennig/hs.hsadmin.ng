@@ -1,0 +1,30 @@
+{
+    "hsadminNgApp": {
+        "sepaMandate": {
+            "home": {
+                "title": "Sepa Mandates",
+                "createLabel": "Sepa Mandate erstellen",
+                "createOrEditLabel": "Sepa Mandate erstellen oder bearbeiten"
+            },
+            "created": "Sepa Mandate erstellt mit ID {{ param }}",
+            "updated": "Sepa Mandate aktualisiert mit ID {{ param }}",
+            "deleted": "Sepa Mandate gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Sepa Mandate {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Sepa Mandate"
+            },
+            "reference": "Reference",
+            "iban": "Iban",
+            "bic": "Bic",
+            "documentDate": "Document Date",
+            "validFrom": "Valid From",
+            "validUntil": "Valid Until",
+            "lastUsed": "Last Used",
+            "cancellationDate": "Cancellation Date",
+            "remark": "Remark",
+            "customer": "Customer"
+        }
+    }
+}

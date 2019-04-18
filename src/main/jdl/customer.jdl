@@ -1,37 +1,24 @@
 filter all
 dto all with mapstruct
 service all with serviceClass
-paginate all with  infinite-scroll
+paginate all with infinite-scroll
 
 entity Customer {
-    number Integer required unique min(10000) max(99999),
-    prefix String required unique pattern(/[a-z][a-z0-9]+/),
+    reference Integer required unique min(10000) max(99999),
+    prefix String required maxlength(3) unique pattern(/[a-z][a-z0-9]+/),
     name String required maxlength(80),
-    contractualAddress String required maxlength(400),
     contractualSalutation String maxlength(80),
+    contractualAddress String required maxlength(400),
+    billingSalutation String maxlength(80),
     billingAddress String maxlength(400),
-    billingSalutation String maxlength(80)
-}
-
-entity Contact {
-    firstName String required maxlength(80),
-    lastName String required maxlength(80),
-    email String required maxlength(80)
-}
-
-enum CustomerContactRole {
-    CONTRACTUAL,
-    TECHNICAL,
-    FINANCIAL
-}
-
-entity CustomerContact {
-    role CustomerContactRole required
+    remark String maxlength(160)
 }
 
 entity Membership {
-    sinceDate LocalDate required,
-    untilDate LocalDate
+    documentDate LocalDate required,
+    memberFrom LocalDate required,
+    memberUntil LocalDate,
+    remark String maxlength(160)
 }
 
 enum ShareAction {
@@ -40,10 +27,11 @@ enum ShareAction {
 }
 
 entity Share {
-    date LocalDate required,
+    documentDate LocalDate required,
+    valueDate LocalDate required,
     action ShareAction required,
     quantity Integer required,
-    comment String maxlength(160)
+    remark String maxlength(160)
 }
 
 enum AssetAction {
@@ -56,17 +44,28 @@ enum AssetAction {
 }
 
 entity Asset {
-    date LocalDate required,
+    documentDate LocalDate required,
+    valueDate LocalDate required,
     action AssetAction required,
     amount BigDecimal required,
-    comment String maxlength(160)
+    remark String maxlength(160)
+}
+
+entity SepaMandate {
+    reference String maxlength(40) unique required,
+    iban String maxlength(34),
+    bic String maxlength(11),
+    documentDate LocalDate required,
+    validFrom LocalDate required,
+    validUntil LocalDate,
+    lastUsed LocalDate,
+    cancellationDate LocalDate,
+    remark String maxlength(160)
 }
 
 relationship OneToMany {
-  Contact{role} to CustomerContact{contact(email) required},
-  Customer{role} to CustomerContact{customer(prefix) required},
-  Customer to Membership{customer(prefix) required},
-  Membership to Share{member required},
-  Membership to Asset{member required}
+    Customer{membership} to Membership{customer(prefix) required},
+    Customer{sepamandate} to SepaMandate{customer(prefix) required},
+    Membership{share} to Share{membership(documentDate) required},
+    Membership{asset} to Asset{membership(documentDate) required}
 }
-

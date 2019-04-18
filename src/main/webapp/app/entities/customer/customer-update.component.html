@@ -10,24 +10,24 @@
                         [(ngModel)]="customer.id" readonly />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.number" for="field_number">Number</label>
-                    <input type="number" class="form-control" name="number" id="field_number"
-                        [(ngModel)]="customer.number" required min="10000" jhiMin="10000" max="99999" jhiMax="99999"/>
-                    <div [hidden]="!(editForm.controls.number?.dirty && editForm.controls.number?.invalid)">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.reference" for="field_reference">Reference</label>
+                    <input type="number" class="form-control" name="reference" id="field_reference"
+                        [(ngModel)]="customer.reference" required min="10000" jhiMin="10000" max="99999" jhiMax="99999"/>
+                    <div [hidden]="!(editForm.controls.reference?.dirty && editForm.controls.reference?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.number?.errors?.required" jhiTranslate="entity.validation.required">
+                        [hidden]="!editForm.controls.reference?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
                         </small>
                         <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.number?.errors?.min" jhiTranslate="entity.validation.min" [translateValues]="{ min: 10000 }">
+                            [hidden]="!editForm.controls.reference?.errors?.min" jhiTranslate="entity.validation.min" [translateValues]="{ min: 10000 }">
                             This field should be at least 10000.
                         </small>
                         <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.number?.errors?.max" jhiTranslate="entity.validation.max" [translateValues]="{ max: 99999 }">
+                            [hidden]="!editForm.controls.reference?.errors?.max" jhiTranslate="entity.validation.max" [translateValues]="{ max: 99999 }">
                             This field cannot be more than 99999.
                         </small>
                         <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.number?.errors?.number" jhiTranslate="entity.validation.number">
+                            [hidden]="!editForm.controls.reference?.errors?.number" jhiTranslate="entity.validation.number">
                             This field should be a number.
                         </small>
                     </div>
@@ -35,11 +35,15 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.prefix" for="field_prefix">Prefix</label>
                     <input type="text" class="form-control" name="prefix" id="field_prefix"
-                        [(ngModel)]="customer.prefix" required pattern="[a-z][a-z0-9]+"/>
+                        [(ngModel)]="customer.prefix" required maxlength="3" pattern="[a-z][a-z0-9]+"/>
                     <div [hidden]="!(editForm.controls.prefix?.dirty && editForm.controls.prefix?.invalid)">
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.prefix?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.prefix?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 3 }">
+                        This field cannot be longer than 3 characters.
                         </small>
                         <small class="form-text text-danger"
                             [hidden]="!editForm.controls.prefix?.errors?.pattern" jhiTranslate="entity.validation.pattern" [translateValues]="{ pattern: 'Prefix' }">
@@ -63,10 +67,20 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress"
-                           for="field_contractualAddress">Contractual Address</label>
-                    <textarea class="form-control" name="contractualAddress" id="field_contractualAddress" rows="3"
-                              [(ngModel)]="customer.contractualAddress" required maxlength="400"></textarea>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualSalutation" for="field_contractualSalutation">Contractual Salutation</label>
+                    <input type="text" class="form-control" name="contractualSalutation" id="field_contractualSalutation"
+                        [(ngModel)]="customer.contractualSalutation" maxlength="80"/>
+                    <div [hidden]="!(editForm.controls.contractualSalutation?.dirty && editForm.controls.contractualSalutation?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.contractualSalutation?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
+                        This field cannot be longer than 80 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress" for="field_contractualAddress">Contractual Address</label>
+                    <input type="text" class="form-control" name="contractualAddress" id="field_contractualAddress"
+                        [(ngModel)]="customer.contractualAddress" required maxlength="400"/>
                     <div [hidden]="!(editForm.controls.contractualAddress?.dirty && editForm.controls.contractualAddress?.invalid)">
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.contractualAddress?.errors?.required" jhiTranslate="entity.validation.required">
@@ -79,20 +93,20 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualSalutation" for="field_contractualSalutation">Contractual Salutation</label>
-                    <input type="text" class="form-control" name="contractualSalutation" id="field_contractualSalutation"
-                        [(ngModel)]="customer.contractualSalutation" maxlength="80"/>
-                    <div [hidden]="!(editForm.controls.contractualSalutation?.dirty && editForm.controls.contractualSalutation?.invalid)">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.billingSalutation" for="field_billingSalutation">Billing Salutation</label>
+                    <input type="text" class="form-control" name="billingSalutation" id="field_billingSalutation"
+                        [(ngModel)]="customer.billingSalutation" maxlength="80"/>
+                    <div [hidden]="!(editForm.controls.billingSalutation?.dirty && editForm.controls.billingSalutation?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.contractualSalutation?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
+                        [hidden]="!editForm.controls.billingSalutation?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
                         This field cannot be longer than 80 characters.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.billingAddress" for="field_billingAddress">Billing Address</label>
-                    <textarea class="form-control" name="billingAddress" id="field_billingAddress" rows="3"
-                              [(ngModel)]="customer.billingAddress" maxlength="400"></textarea>
+                    <input type="text" class="form-control" name="billingAddress" id="field_billingAddress"
+                        [(ngModel)]="customer.billingAddress" maxlength="400"/>
                     <div [hidden]="!(editForm.controls.billingAddress?.dirty && editForm.controls.billingAddress?.invalid)">
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.billingAddress?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 400 }">
@@ -101,13 +115,13 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.billingSalutation" for="field_billingSalutation">Billing Salutation</label>
-                    <input type="text" class="form-control" name="billingSalutation" id="field_billingSalutation"
-                        [(ngModel)]="customer.billingSalutation" maxlength="80"/>
-                    <div [hidden]="!(editForm.controls.billingSalutation?.dirty && editForm.controls.billingSalutation?.invalid)">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.remark" for="field_remark">Remark</label>
+                    <input type="text" class="form-control" name="remark" id="field_remark"
+                        [(ngModel)]="customer.remark" maxlength="160"/>
+                    <div [hidden]="!(editForm.controls.remark?.dirty && editForm.controls.remark?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.billingSalutation?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
-                        This field cannot be longer than 80 characters.
+                        [hidden]="!editForm.controls.remark?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">
+                        This field cannot be longer than 160 characters.
                         </small>
                     </div>
                 </div>

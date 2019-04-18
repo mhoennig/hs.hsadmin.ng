@@ -11,8 +11,8 @@
                   tableName="membership">
             <column name="id" type="numeric"/>
             <column name="customer" type="numeric"/>
-            <column name="since_date" type="date"/>
-            <column name="until_date" type="date"/>
+            <column name="jhi_from" type="date"/>
+            <column name="jhi_to" type="date"/>
         </loadData>
     </changeSet>
 

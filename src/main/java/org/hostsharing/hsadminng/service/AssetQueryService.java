@@ -89,8 +89,11 @@ public class AssetQueryService extends QueryService<Asset> {
             if (criteria.getId() != null) {
                 specification = specification.and(buildSpecification(criteria.getId(), Asset_.id));
             }
-            if (criteria.getDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getDate(), Asset_.date));
+            if (criteria.getDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getDocumentDate(), Asset_.documentDate));
+            }
+            if (criteria.getValueDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getValueDate(), Asset_.valueDate));
             }
             if (criteria.getAction() != null) {
                 specification = specification.and(buildSpecification(criteria.getAction(), Asset_.action));
@@ -98,12 +101,12 @@ public class AssetQueryService extends QueryService<Asset> {
             if (criteria.getAmount() != null) {
                 specification = specification.and(buildRangeSpecification(criteria.getAmount(), Asset_.amount));
             }
-            if (criteria.getComment() != null) {
-                specification = specification.and(buildStringSpecification(criteria.getComment(), Asset_.comment));
+            if (criteria.getRemark() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRemark(), Asset_.remark));
             }
-            if (criteria.getMemberId() != null) {
-                specification = specification.and(buildSpecification(criteria.getMemberId(),
-                    root -> root.join(Asset_.member, JoinType.LEFT).get(Membership_.id)));
+            if (criteria.getMembershipId() != null) {
+                specification = specification.and(buildSpecification(criteria.getMembershipId(),
+                    root -> root.join(Asset_.membership, JoinType.LEFT).get(Membership_.id)));
             }
         }
         return specification;
