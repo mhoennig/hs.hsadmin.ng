@@ -27,26 +27,42 @@ public class CustomerDTOUnitTest {
     private ObjectMapper objectMapper;
 
     @Test
-    public void testSerializationAsCustomer() throws JsonProcessingException {
+    public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
         CustomerDTO given = createSomeCustomerDTO();
-        givenLoginUser("customer");
+        givenLoginUserWithRole("ANY_CUSTOMER_USER");
 
         // when
         String actual = objectMapper.writeValueAsString(given);
 
         // then
         given.setContractualAddress(null);
-        //given.setContractualSalutation(null);
+        given.setContractualSalutation(null);
+        given.setBillingAddress(null);
+        given.setBillingSalutation(null);
         assertEquals(createExpectedJSon(given), actual);
     }
 
     @Test
-    public void testDeserializeAsCustomer() throws IOException {
+    public void testSerializationAsSupporter() throws JsonProcessingException {
+
+        // given
+        CustomerDTO given = createSomeCustomerDTO();
+        givenLoginUserWithRole("SUPPORTER");
+
+        // when
+        String actual = objectMapper.writeValueAsString(given);
+
+        // then
+        assertEquals(createExpectedJSon(given), actual);
+    }
+
+    @Test
+    public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
         String json = "{\"id\":1234,\"number\":10001,\"prefix\":\"abc\",\"name\":\"Mein Name\",\"contractualAddress\":\"Eine Adresse\",\"contractualSalutation\":\"Hallo\",\"billingAddress\":\"Noch eine Adresse\",\"billingSalutation\":\"Moin\"}";
-        givenLoginUser("customer");
+        givenLoginUserWithRole("CONTRACTUAL_CONTACT");
 
         // when
         CustomerDTO actual = objectMapper.readValue(json, CustomerDTO.class);
@@ -66,14 +82,14 @@ public class CustomerDTOUnitTest {
 
     private String createExpectedJSon(CustomerDTO dto) {
         String json = // the fields in alphanumeric order:
-            toJSonFieldDefinitionIfPresent("billingAddress", dto.getBillingAddress()) +
-                toJSonFieldDefinitionIfPresent("billingSalutation", dto.getBillingSalutation()) +
+            toJSonFieldDefinitionIfPresent("id", dto.getId()) +
+                toJSonFieldDefinitionIfPresent("number", dto.getNumber()) +
+                toJSonFieldDefinitionIfPresent("prefix", dto.getPrefix()) +
+                toJSonFieldDefinitionIfPresent("name", dto.getName()) +
                 toJSonFieldDefinitionIfPresent("contractualAddress", dto.getContractualAddress()) +
                 toJSonFieldDefinitionIfPresent("contractualSalutation", dto.getContractualSalutation()) +
-                toJSonFieldDefinitionIfPresent("id", dto.getId()) +
-                toJSonFieldDefinitionIfPresent("name", dto.getName()) +
-                toJSonFieldDefinitionIfPresent("number", dto.getNumber()) +
-                toJSonFieldDefinitionIfPresent("prefix", dto.getPrefix());
+                toJSonFieldDefinitionIfPresent("billingAddress", dto.getBillingAddress()) +
+                toJSonFieldDefinitionIfPresent("billingSalutation", dto.getBillingSalutation());
         return "{" + json.substring(0, json.length() - 1) + "}";
     }
 
@@ -99,11 +115,11 @@ public class CustomerDTOUnitTest {
         given.setContractualSalutation("Hallo");
         given.setBillingAddress("Noch eine Adresse");
         given.setBillingSalutation("Moin");
-        givenLoginUser("admin");
+        givenLoginUserWithRole("admin");
         return given;
     }
 
-    private void givenLoginUser(String userName) {
+    private void givenLoginUserWithRole(String userName) {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(userName, userName));
         SecurityContextHolder.setContext(securityContext);
