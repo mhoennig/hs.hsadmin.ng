@@ -1,0 +1,9 @@
+{
+    "hsadminNgApp": {
+        "ShareAction": {
+            "null": "",
+            "SUBSCRIPTION": "SUBSCRIPTION",
+            "CANCELLATION": "CANCELLATION"
+        }
+    }
+}

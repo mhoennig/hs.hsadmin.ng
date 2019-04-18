@@ -1,0 +1,49 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="asset">
+            <h2><span jhiTranslate="hsadminNgApp.asset.detail.title">Asset</span> {{asset.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="hsadminNgApp.asset.documentDate">Document Date</span></dt>
+                <dd>
+                    <span>{{asset.documentDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.asset.valueDate">Value Date</span></dt>
+                <dd>
+                    <span>{{asset.valueDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.asset.action">Action</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'hsadminNgApp.AssetAction.' + asset.action}}">{{asset.action}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span></dt>
+                <dd>
+                    <span>{{asset.amount}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.asset.remark">Remark</span></dt>
+                <dd>
+                    <span>{{asset.remark}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span></dt>
+                <dd>
+                    <div *ngIf="asset.membershipId">
+                        <a [routerLink]="['/membership', asset.membershipId, 'view']">{{asset.membershipDocumentDate}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/asset', asset.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

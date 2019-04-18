@@ -1,0 +1,26 @@
+{
+    "hsadminNgApp": {
+        "asset": {
+            "home": {
+                "title": "Assets",
+                "createLabel": "Asset erstellen",
+                "createOrEditLabel": "Asset erstellen oder bearbeiten"
+            },
+            "created": "Asset erstellt mit ID {{ param }}",
+            "updated": "Asset aktualisiert mit ID {{ param }}",
+            "deleted": "Asset gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Asset {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Asset"
+            },
+            "documentDate": "Document Date",
+            "valueDate": "Value Date",
+            "action": "Action",
+            "amount": "Amount",
+            "remark": "Remark",
+            "membership": "Membership"
+        }
+    }
+}

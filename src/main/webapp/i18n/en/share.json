@@ -1,0 +1,26 @@
+{
+    "hsadminNgApp": {
+        "share": {
+            "home": {
+                "title": "Shares",
+                "createLabel": "Create a new Share",
+                "createOrEditLabel": "Create or edit a Share"
+            },
+            "created": "A new Share is created with identifier {{ param }}",
+            "updated": "A Share is updated with identifier {{ param }}",
+            "deleted": "A Share is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Share {{ id }}?"
+            },
+            "detail": {
+                "title": "Share"
+            },
+            "documentDate": "Document Date",
+            "valueDate": "Value Date",
+            "action": "Action",
+            "quantity": "Quantity",
+            "remark": "Remark",
+            "membership": "Membership"
+        }
+    }
+}

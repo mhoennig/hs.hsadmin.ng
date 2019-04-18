@@ -1,0 +1,27 @@
+{
+    "hsadminNgApp": {
+        "membership": {
+            "home": {
+                "title": "Memberships",
+                "createLabel": "Membership erstellen",
+                "createOrEditLabel": "Membership erstellen oder bearbeiten"
+            },
+            "created": "Membership erstellt mit ID {{ param }}",
+            "updated": "Membership aktualisiert mit ID {{ param }}",
+            "deleted": "Membership gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Membership {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Membership"
+            },
+            "documentDate": "Document Date",
+            "memberFrom": "Member From",
+            "memberUntil": "Member Until",
+            "remark": "Remark",
+            "share": "Share",
+            "asset": "Asset",
+            "customer": "Customer"
+        }
+    }
+}
