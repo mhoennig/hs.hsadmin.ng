@@ -14,7 +14,7 @@ public class MembershipValidator {
     private MembershipRepository membershipRepository;
 
     public void validate(final MembershipDTO membershipDTO) {
-        if (membershipDTO.getTo() != null && !membershipDTO.getTo().isAfter(membershipDTO.getFrom())) {
+        if (membershipDTO.getMemberUntil() != null && !membershipDTO.getMemberUntil().isAfter(membershipDTO.getMemberFrom())) {
             throw new BadRequestAlertException("Invalid untilDate", Membership.ENTITY_NAME, "untilDateMustBeAfterSinceDate");
         }
 

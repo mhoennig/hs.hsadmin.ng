@@ -14,10 +14,10 @@
     <property name="floatType" value="float" dbms="mysql, oracle, mssql"/>
 
     <!--
-        Added the entity Asset.
+        Added the entity Share.
     -->
-    <changeSet id="20190418073046-1" author="jhipster">
-        <createTable tableName="asset">
+    <changeSet id="20190418143052-1" author="jhipster">
+        <createTable tableName="share">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -33,7 +33,7 @@
                 <constraints nullable="false" />
             </column>
 
-            <column name="amount" type="decimal(10,2)">
+            <column name="quantity" type="integer">
                 <constraints nullable="false" />
             </column>
 

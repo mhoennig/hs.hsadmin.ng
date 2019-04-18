@@ -69,7 +69,7 @@ public class MembershipRepositoryIntTest {
     private Customer createCustomer() {
         final Customer customer = new Customer();
         customer.setPrefix(RandomStringUtils.randomAlphabetic(3).toLowerCase());
-        customer.setNumber(RandomUtils.nextInt(10001, 19999));
+        customer.setReference(RandomUtils.nextInt(10001, 19999));
         customer.setName(RandomStringUtils.randomAlphabetic(10));
         customer.setContractualAddress(RandomStringUtils.randomAlphabetic(10));
         customerRepository.save(customer);
@@ -80,9 +80,9 @@ public class MembershipRepositoryIntTest {
         final Customer customer = createCustomer();
         final Membership membership = new Membership();
         membership.setCustomer(customer);
-        membership.setTo(LocalDate.parse(from));
+        membership.setMemberUntil(LocalDate.parse(from));
         if (to != null) {
-            membership.setFrom(LocalDate.parse(to));
+            membership.setMemberFrom(LocalDate.parse(to));
         }
         membershipRepository.save(membership);
         return customer;

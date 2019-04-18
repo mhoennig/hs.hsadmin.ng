@@ -50,8 +50,8 @@ public class CustomerResourceIntTest {
     private static final Integer DEFAULT_REFERENCE = 10000;
     private static final Integer UPDATED_REFERENCE = 10001;
 
-    private static final String DEFAULT_PREFIX = "nf";
-    private static final String UPDATED_PREFIX = "m2";
+    private static final String DEFAULT_PREFIX = "hu";
+    private static final String UPDATED_PREFIX = "umj";
 
     private static final String DEFAULT_NAME = "AAAAAAAAAA";
     private static final String UPDATED_NAME = "BBBBBBBBBB";
@@ -64,12 +64,6 @@ public class CustomerResourceIntTest {
 
     private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
     private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
-    private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
-
-    @Autowired
-    private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
 
     private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
     private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
@@ -77,6 +71,7 @@ public class CustomerResourceIntTest {
     private static final String DEFAULT_REMARK = "AAAAAAAAAA";
     private static final String UPDATED_REMARK = "BBBBBBBBBB";
 
+    @Autowired
     private CustomerRepository customerRepository;
 
     @Autowired
@@ -570,41 +565,41 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllCustomersByContractualAddressIsEqualToSomething() throws Exception {
+    public void getAllCustomersByBillingAddressIsEqualToSomething() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where contractualAddress equals to DEFAULT_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.equals=" + DEFAULT_CONTRACTUAL_ADDRESS);
+        // Get all the customerList where billingAddress equals to DEFAULT_BILLING_ADDRESS
+        defaultCustomerShouldBeFound("billingAddress.equals=" + DEFAULT_BILLING_ADDRESS);
 
-        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldNotBeFound("contractualAddress.equals=" + UPDATED_CONTRACTUAL_ADDRESS);
+        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldNotBeFound("billingAddress.equals=" + UPDATED_BILLING_ADDRESS);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByContractualAddressIsInShouldWork() throws Exception {
+    public void getAllCustomersByBillingAddressIsInShouldWork() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where contractualAddress in DEFAULT_CONTRACTUAL_ADDRESS or UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
+        // Get all the customerList where billingAddress in DEFAULT_BILLING_ADDRESS or UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldBeFound("billingAddress.in=" + DEFAULT_BILLING_ADDRESS + "," + UPDATED_BILLING_ADDRESS);
 
-        // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldNotBeFound("contractualAddress.in=" + UPDATED_CONTRACTUAL_ADDRESS);
+        // Get all the customerList where billingAddress equals to UPDATED_BILLING_ADDRESS
+        defaultCustomerShouldNotBeFound("billingAddress.in=" + UPDATED_BILLING_ADDRESS);
     }
 
     @Test
     @Transactional
-    public void getAllCustomersByContractualAddressIsNullOrNotNull() throws Exception {
+    public void getAllCustomersByBillingAddressIsNullOrNotNull() throws Exception {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where contractualAddress is not null
-        defaultCustomerShouldBeFound("contractualAddress.specified=true");
+        // Get all the customerList where billingAddress is not null
+        defaultCustomerShouldBeFound("billingAddress.specified=true");
 
-        // Get all the customerList where contractualAddress is null
-        defaultCustomerShouldNotBeFound("contractualAddress.specified=false");
+        // Get all the customerList where billingAddress is null
+        defaultCustomerShouldNotBeFound("billingAddress.specified=false");
     }
 
     @Test

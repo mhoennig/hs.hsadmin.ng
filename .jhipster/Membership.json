@@ -50,7 +50,7 @@
             "otherEntityField": "prefix"
         }
     ],
-    "changelogDate": "20190403083738",
+    "changelogDate": "20190418143051",
     "entityTableName": "membership",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

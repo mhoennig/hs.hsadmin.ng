@@ -30,15 +30,23 @@ public class Membership implements Serializable {
     private Long id;
 
     @NotNull
-    @Column(name = "since_date", nullable = false)
-    private LocalDate sinceDate;
+    @Column(name = "document_date", nullable = false)
+    private LocalDate documentDate;
 
-    @Column(name = "until_date")
-    private LocalDate untilDate;
+    @NotNull
+    @Column(name = "member_from", nullable = false)
+    private LocalDate memberFrom;
 
-    @OneToMany(mappedBy = "member")
+    @Column(name = "member_until")
+    private LocalDate memberUntil;
+
+    @Size(max = 160)
+    @Column(name = "remark", length = 160)
+    private String remark;
+
+    @OneToMany(mappedBy = "membership")
     private Set<Share> shares = new HashSet<>();
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "membership")
     private Set<Asset> assets = new HashSet<>();
     @ManyToOne(optional = false)
     @NotNull
@@ -54,30 +62,56 @@ public class Membership implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getSinceDate() {
-        return sinceDate;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public Membership sinceDate(LocalDate sinceDate) {
-        this.sinceDate = sinceDate;
+    public Membership documentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
         return this;
     }
 
-    public void setSinceDate(LocalDate sinceDate) {
-        this.sinceDate = sinceDate;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
     }
 
-    public LocalDate getUntilDate() {
-        return untilDate;
+    public LocalDate getMemberFrom() {
+        return memberFrom;
     }
 
-    public Membership untilDate(LocalDate untilDate) {
-        this.untilDate = untilDate;
+    public Membership memberFrom(LocalDate memberFrom) {
+        this.memberFrom = memberFrom;
         return this;
     }
 
-    public void setUntilDate(LocalDate untilDate) {
-        this.untilDate = untilDate;
+    public void setMemberFrom(LocalDate memberFrom) {
+        this.memberFrom = memberFrom;
+    }
+
+    public LocalDate getMemberUntil() {
+        return memberUntil;
+    }
+
+    public Membership memberUntil(LocalDate memberUntil) {
+        this.memberUntil = memberUntil;
+        return this;
+    }
+
+    public void setMemberUntil(LocalDate memberUntil) {
+        this.memberUntil = memberUntil;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public Membership remark(String remark) {
+        this.remark = remark;
+        return this;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Set<Share> getShares() {
@@ -168,8 +202,10 @@ public class Membership implements Serializable {
     public String toString() {
         return "Membership{" +
             "id=" + getId() +
-            ", sinceDate='" + getSinceDate() + "'" +
-            ", untilDate='" + getUntilDate() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
+            ", memberFrom='" + getMemberFrom() + "'" +
+            ", memberUntil='" + getMemberUntil() + "'" +
+            ", remark='" + getRemark() + "'" +
             "}";
     }
 }
