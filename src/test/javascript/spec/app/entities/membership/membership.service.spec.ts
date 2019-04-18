@@ -25,15 +25,16 @@ describe('Service Tests', () => {
             httpMock = injector.get(HttpTestingController);
             currentDate = moment();
 
-            elemDefault = new Membership(0, currentDate, currentDate, 'AAAAAAA');
+            elemDefault = new Membership(0, currentDate, currentDate, currentDate, 'AAAAAAA');
         });
 
         describe('Service methods', async () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        from: currentDate.format(DATE_FORMAT),
-                        to: currentDate.format(DATE_FORMAT)
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        memberFrom: currentDate.format(DATE_FORMAT),
+                        memberUntil: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
@@ -50,15 +51,17 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        from: currentDate.format(DATE_FORMAT),
-                        to: currentDate.format(DATE_FORMAT)
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        memberFrom: currentDate.format(DATE_FORMAT),
+                        memberUntil: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        from: currentDate,
-                        to: currentDate
+                        documentDate: currentDate,
+                        memberFrom: currentDate,
+                        memberUntil: currentDate
                     },
                     returnedFromService
                 );
@@ -73,17 +76,19 @@ describe('Service Tests', () => {
             it('should update a Membership', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        from: currentDate.format(DATE_FORMAT),
-                        to: currentDate.format(DATE_FORMAT),
-                        comment: 'BBBBBB'
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        memberFrom: currentDate.format(DATE_FORMAT),
+                        memberUntil: currentDate.format(DATE_FORMAT),
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
 
                 const expected = Object.assign(
                     {
-                        from: currentDate,
-                        to: currentDate
+                        documentDate: currentDate,
+                        memberFrom: currentDate,
+                        memberUntil: currentDate
                     },
                     returnedFromService
                 );
@@ -98,16 +103,18 @@ describe('Service Tests', () => {
             it('should return a list of Membership', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        from: currentDate.format(DATE_FORMAT),
-                        to: currentDate.format(DATE_FORMAT),
-                        comment: 'BBBBBB'
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        memberFrom: currentDate.format(DATE_FORMAT),
+                        memberUntil: currentDate.format(DATE_FORMAT),
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        from: currentDate,
-                        to: currentDate
+                        documentDate: currentDate,
+                        memberFrom: currentDate,
+                        memberUntil: currentDate
                     },
                     returnedFromService
                 );

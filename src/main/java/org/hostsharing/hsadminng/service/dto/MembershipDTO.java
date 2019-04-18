@@ -1,11 +1,8 @@
 package org.hostsharing.hsadminng.service.dto;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.time.LocalDate;
+import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * A DTO for the Membership entity.
@@ -15,14 +12,17 @@ public class MembershipDTO implements Serializable {
     private Long id;
 
     @NotNull
-    private LocalDate from;
-
-    private LocalDate to;
-
-    @Size(max = 160)
-    private String comment;
+    private LocalDate documentDate;
 
     @NotNull
+    private LocalDate memberFrom;
+
+    private LocalDate memberUntil;
+
+    @Size(max = 160)
+    private String remark;
+
+
     private Long customerId;
 
     private String customerPrefix;
@@ -41,28 +41,36 @@ public class MembershipDTO implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getFrom() {
-        return from;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public void setFrom(LocalDate from) {
-        this.from = from;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
     }
 
-    public LocalDate getTo() {
-        return to;
+    public LocalDate getMemberFrom() {
+        return memberFrom;
     }
 
-    public void setTo(LocalDate to) {
-        this.to = to;
+    public void setMemberFrom(LocalDate memberFrom) {
+        this.memberFrom = memberFrom;
     }
 
-    public String getComment() {
-        return comment;
+    public LocalDate getMemberUntil() {
+        return memberUntil;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setMemberUntil(LocalDate memberUntil) {
+        this.memberUntil = memberUntil;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Long getCustomerId() {
@@ -106,9 +114,10 @@ public class MembershipDTO implements Serializable {
     public String toString() {
         return "MembershipDTO{" +
             "id=" + getId() +
-            ", from='" + getFrom() + "'" +
-            ", to='" + getTo() + "'" +
-            ", comment='" + getComment() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
+            ", memberFrom='" + getMemberFrom() + "'" +
+            ", memberUntil='" + getMemberUntil() + "'" +
+            ", remark='" + getRemark() + "'" +
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +
             "}";

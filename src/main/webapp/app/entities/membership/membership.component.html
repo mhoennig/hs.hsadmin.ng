@@ -15,9 +15,10 @@
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="from"><span jhiTranslate="hsadminNgApp.membership.from">From</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="to"><span jhiTranslate="hsadminNgApp.membership.to">To</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.membership.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.membership.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="memberFrom"><span jhiTranslate="hsadminNgApp.membership.memberFrom">Member From</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="memberUntil"><span jhiTranslate="hsadminNgApp.membership.memberUntil">Member Until</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.membership.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="customerPrefix"><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
@@ -25,9 +26,10 @@
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let membership of memberships ;trackBy: trackId">
                 <td><a [routerLink]="['/membership', membership.id, 'view' ]">{{membership.id}}</a></td>
-                <td>{{membership.from | date:'mediumDate'}}</td>
-                <td>{{membership.to | date:'mediumDate'}}</td>
-                <td>{{membership.comment}}</td>
+                <td>{{membership.documentDate | date:'mediumDate'}}</td>
+                <td>{{membership.memberFrom | date:'mediumDate'}}</td>
+                <td>{{membership.memberUntil | date:'mediumDate'}}</td>
+                <td>{{membership.remark}}</td>
                 <td>
                     <div *ngIf="membership.customerId">
                         <a [routerLink]="['../customer', membership.customerId , 'view' ]" >{{membership.customerPrefix}}</a>

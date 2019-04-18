@@ -28,12 +28,13 @@ public class Customer implements Serializable {
     @NotNull
     @Min(value = 10000)
     @Max(value = 99999)
-    @Column(name = "jhi_number", nullable = false, unique = true)
-    private Integer number;
+    @Column(name = "reference", nullable = false, unique = true)
+    private Integer reference;
 
     @NotNull
+    @Size(max = 3)
     @Pattern(regexp = "[a-z][a-z0-9]+")
-    @Column(name = "prefix", nullable = false, unique = true)
+    @Column(name = "prefix", length = 3, nullable = false, unique = true)
     private String prefix;
 
     @NotNull
@@ -58,12 +59,14 @@ public class Customer implements Serializable {
     @Column(name = "billing_address", length = 400)
     private String billingAddress;
 
+    @Size(max = 160)
+    @Column(name = "remark", length = 160)
+    private String remark;
+
     @OneToMany(mappedBy = "customer")
     private Set<Membership> memberships = new HashSet<>();
-
     @OneToMany(mappedBy = "customer")
     private Set<SepaMandate> sepamandates = new HashSet<>();
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -73,17 +76,17 @@ public class Customer implements Serializable {
         this.id = id;
     }
 
-    public Integer getNumber() {
-        return number;
+    public Integer getReference() {
+        return reference;
     }
 
-    public Customer number(Integer number) {
-        this.number = number;
+    public Customer reference(Integer reference) {
+        this.reference = reference;
         return this;
     }
 
-    public void setNumber(Integer number) {
-        this.number = number;
+    public void setReference(Integer reference) {
+        this.reference = reference;
     }
 
     public String getPrefix() {
@@ -164,6 +167,19 @@ public class Customer implements Serializable {
         this.billingAddress = billingAddress;
     }
 
+    public String getRemark() {
+        return remark;
+    }
+
+    public Customer remark(String remark) {
+        this.remark = remark;
+        return this;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
     public Set<Membership> getMemberships() {
         return memberships;
     }
@@ -239,13 +255,14 @@ public class Customer implements Serializable {
     public String toString() {
         return "Customer{" +
             "id=" + getId() +
-            ", number=" + getNumber() +
+            ", reference=" + getReference() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
             ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +
             ", billingAddress='" + getBillingAddress() + "'" +
+            ", remark='" + getRemark() + "'" +
             "}";
     }
 }

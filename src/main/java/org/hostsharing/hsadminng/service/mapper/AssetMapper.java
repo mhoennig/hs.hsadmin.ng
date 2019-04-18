@@ -12,7 +12,7 @@ import org.mapstruct.*;
 public interface AssetMapper extends EntityMapper<AssetDTO, Asset> {
 
     @Mapping(source = "membership.id", target = "membershipId")
-    @Mapping(source = "membership.from", target = "membershipFrom")
+    @Mapping(source = "membership.documentDate", target = "membershipDocumentDate")
     AssetDTO toDto(Asset asset);
 
     @Mapping(source = "membershipId", target = "membership")

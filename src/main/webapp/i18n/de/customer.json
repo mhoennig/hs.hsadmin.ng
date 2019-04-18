@@ -15,13 +15,14 @@
             "detail": {
                 "title": "Customer"
             },
-            "number": "Number",
+            "reference": "Reference",
             "prefix": "Prefix",
             "name": "Name",
             "contractualSalutation": "Contractual Salutation",
             "contractualAddress": "Contractual Address",
             "billingSalutation": "Billing Salutation",
             "billingAddress": "Billing Address",
+            "remark": "Remark",
             "membership": "Membership",
             "sepamandate": "Sepamandate"
         }

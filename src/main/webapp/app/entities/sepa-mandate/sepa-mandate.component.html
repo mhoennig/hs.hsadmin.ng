@@ -18,12 +18,12 @@
             <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.sepaMandate.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="iban"><span jhiTranslate="hsadminNgApp.sepaMandate.iban">Iban</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="bic"><span jhiTranslate="hsadminNgApp.sepaMandate.bic">Bic</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="created"><span jhiTranslate="hsadminNgApp.sepaMandate.created">Created</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="validFrom"><span jhiTranslate="hsadminNgApp.sepaMandate.validFrom">Valid From</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="validTo"><span jhiTranslate="hsadminNgApp.sepaMandate.validTo">Valid To</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="validUntil"><span jhiTranslate="hsadminNgApp.sepaMandate.validUntil">Valid Until</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="lastUsed"><span jhiTranslate="hsadminNgApp.sepaMandate.lastUsed">Last Used</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="cancelled"><span jhiTranslate="hsadminNgApp.sepaMandate.cancelled">Cancelled</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.sepaMandate.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="cancellationDate"><span jhiTranslate="hsadminNgApp.sepaMandate.cancellationDate">Cancellation Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.sepaMandate.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="customerPrefix"><span jhiTranslate="hsadminNgApp.sepaMandate.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
@@ -34,12 +34,12 @@
                 <td>{{sepaMandate.reference}}</td>
                 <td>{{sepaMandate.iban}}</td>
                 <td>{{sepaMandate.bic}}</td>
-                <td>{{sepaMandate.created | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.documentDate | date:'mediumDate'}}</td>
                 <td>{{sepaMandate.validFrom | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.validTo | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.validUntil | date:'mediumDate'}}</td>
                 <td>{{sepaMandate.lastUsed | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.cancelled | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.comment}}</td>
+                <td>{{sepaMandate.cancellationDate | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.remark}}</td>
                 <td>
                     <div *ngIf="sepaMandate.customerId">
                         <a [routerLink]="['../customer', sepaMandate.customerId , 'view' ]" >{{sepaMandate.customerPrefix}}</a>

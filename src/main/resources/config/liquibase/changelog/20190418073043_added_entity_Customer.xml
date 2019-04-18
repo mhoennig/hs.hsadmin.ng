@@ -16,16 +16,16 @@
     <!--
         Added the entity Customer.
     -->
-    <changeSet id="20190418073043-1" author="jhipster">
+    <changeSet id="20190403083735-1" author="jhipster">
         <createTable tableName="customer">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="jhi_number" type="integer">
-                <constraints nullable="false" unique="true" uniqueConstraintName="ux_customer_jhi_number" />
+            <column name="reference" type="integer">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_customer_reference" />
             </column>
 
-            <column name="prefix" type="varchar(255)">
+            <column name="prefix" type="varchar(3)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="ux_customer_prefix" />
             </column>
 
@@ -46,6 +46,10 @@
             </column>
 
             <column name="billing_address" type="varchar(400)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="remark" type="varchar(160)">
                 <constraints nullable="true" />
             </column>
 

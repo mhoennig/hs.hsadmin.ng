@@ -25,11 +25,13 @@ public class MembershipCriteria implements Serializable {
 
     private LongFilter id;
 
-    private LocalDateFilter from;
+    private LocalDateFilter documentDate;
 
-    private LocalDateFilter to;
+    private LocalDateFilter memberFrom;
 
-    private StringFilter comment;
+    private LocalDateFilter memberUntil;
+
+    private StringFilter remark;
 
     private LongFilter shareId;
 
@@ -45,28 +47,36 @@ public class MembershipCriteria implements Serializable {
         this.id = id;
     }
 
-    public LocalDateFilter getFrom() {
-        return from;
+    public LocalDateFilter getDocumentDate() {
+        return documentDate;
     }
 
-    public void setFrom(LocalDateFilter from) {
-        this.from = from;
+    public void setDocumentDate(LocalDateFilter documentDate) {
+        this.documentDate = documentDate;
     }
 
-    public LocalDateFilter getTo() {
-        return to;
+    public LocalDateFilter getMemberFrom() {
+        return memberFrom;
     }
 
-    public void setTo(LocalDateFilter to) {
-        this.to = to;
+    public void setMemberFrom(LocalDateFilter memberFrom) {
+        this.memberFrom = memberFrom;
     }
 
-    public StringFilter getComment() {
-        return comment;
+    public LocalDateFilter getMemberUntil() {
+        return memberUntil;
     }
 
-    public void setComment(StringFilter comment) {
-        this.comment = comment;
+    public void setMemberUntil(LocalDateFilter memberUntil) {
+        this.memberUntil = memberUntil;
+    }
+
+    public StringFilter getRemark() {
+        return remark;
+    }
+
+    public void setRemark(StringFilter remark) {
+        this.remark = remark;
     }
 
     public LongFilter getShareId() {
@@ -105,9 +115,10 @@ public class MembershipCriteria implements Serializable {
         final MembershipCriteria that = (MembershipCriteria) o;
         return
             Objects.equals(id, that.id) &&
-            Objects.equals(from, that.from) &&
-            Objects.equals(to, that.to) &&
-            Objects.equals(comment, that.comment) &&
+            Objects.equals(documentDate, that.documentDate) &&
+            Objects.equals(memberFrom, that.memberFrom) &&
+            Objects.equals(memberUntil, that.memberUntil) &&
+            Objects.equals(remark, that.remark) &&
             Objects.equals(shareId, that.shareId) &&
             Objects.equals(assetId, that.assetId) &&
             Objects.equals(customerId, that.customerId);
@@ -117,9 +128,10 @@ public class MembershipCriteria implements Serializable {
     public int hashCode() {
         return Objects.hash(
         id,
-        from,
-        to,
-        comment,
+        documentDate,
+        memberFrom,
+        memberUntil,
+        remark,
         shareId,
         assetId,
         customerId
@@ -130,9 +142,10 @@ public class MembershipCriteria implements Serializable {
     public String toString() {
         return "MembershipCriteria{" +
                 (id != null ? "id=" + id + ", " : "") +
-                (from != null ? "from=" + from + ", " : "") +
-                (to != null ? "to=" + to + ", " : "") +
-                (comment != null ? "comment=" + comment + ", " : "") +
+                (documentDate != null ? "documentDate=" + documentDate + ", " : "") +
+                (memberFrom != null ? "memberFrom=" + memberFrom + ", " : "") +
+                (memberUntil != null ? "memberUntil=" + memberUntil + ", " : "") +
+                (remark != null ? "remark=" + remark + ", " : "") +
                 (shareId != null ? "shareId=" + shareId + ", " : "") +
                 (assetId != null ? "assetId=" + assetId + ", " : "") +
                 (customerId != null ? "customerId=" + customerId + ", " : "") +

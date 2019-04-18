@@ -7,22 +7,24 @@ export const enum ShareAction {
 
 export interface IShare {
     id?: number;
-    date?: Moment;
+    documentDate?: Moment;
+    valueDate?: Moment;
     action?: ShareAction;
     quantity?: number;
-    comment?: string;
-    membershipFrom?: string;
+    remark?: string;
+    membershipDocumentDate?: string;
     membershipId?: number;
 }
 
 export class Share implements IShare {
     constructor(
         public id?: number,
-        public date?: Moment,
+        public documentDate?: Moment,
+        public valueDate?: Moment,
         public action?: ShareAction,
         public quantity?: number,
-        public comment?: string,
-        public membershipFrom?: string,
+        public remark?: string,
+        public membershipDocumentDate?: string,
         public membershipId?: number
     ) {}
 }

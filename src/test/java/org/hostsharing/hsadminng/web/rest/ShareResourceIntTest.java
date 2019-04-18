@@ -49,8 +49,11 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 @SpringBootTest(classes = HsadminNgApp.class)
 public class ShareResourceIntTest {
 
-    private static final LocalDate DEFAULT_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_DATE = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
+
+    private static final LocalDate DEFAULT_VALUE_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_VALUE_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final ShareAction DEFAULT_ACTION = ShareAction.SUBSCRIPTION;
     private static final ShareAction UPDATED_ACTION = ShareAction.CANCELLATION;
@@ -58,8 +61,8 @@ public class ShareResourceIntTest {
     private static final Integer DEFAULT_QUANTITY = 1;
     private static final Integer UPDATED_QUANTITY = 2;
 
-    private static final String DEFAULT_COMMENT = "AAAAAAAAAA";
-    private static final String UPDATED_COMMENT = "BBBBBBBBBB";
+    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
+    private static final String UPDATED_REMARK = "BBBBBBBBBB";
 
     @Autowired
     private ShareRepository shareRepository;
@@ -112,10 +115,11 @@ public class ShareResourceIntTest {
      */
     public static Share createEntity(EntityManager em) {
         Share share = new Share()
-            .date(DEFAULT_DATE)
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .valueDate(DEFAULT_VALUE_DATE)
             .action(DEFAULT_ACTION)
             .quantity(DEFAULT_QUANTITY)
-            .comment(DEFAULT_COMMENT);
+            .remark(DEFAULT_REMARK);
         // Add required entity
         Membership membership = MembershipResourceIntTest.createEntity(em);
         em.persist(membership);
@@ -145,10 +149,11 @@ public class ShareResourceIntTest {
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeCreate + 1);
         Share testShare = shareList.get(shareList.size() - 1);
-        assertThat(testShare.getDate()).isEqualTo(DEFAULT_DATE);
+        assertThat(testShare.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
+        assertThat(testShare.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
         assertThat(testShare.getAction()).isEqualTo(DEFAULT_ACTION);
         assertThat(testShare.getQuantity()).isEqualTo(DEFAULT_QUANTITY);
-        assertThat(testShare.getComment()).isEqualTo(DEFAULT_COMMENT);
+        assertThat(testShare.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -173,10 +178,29 @@ public class ShareResourceIntTest {
 
     @Test
     @Transactional
-    public void checkDateIsRequired() throws Exception {
+    public void checkDocumentDateIsRequired() throws Exception {
         int databaseSizeBeforeTest = shareRepository.findAll().size();
         // set the field null
-        share.setDate(null);
+        share.setDocumentDate(null);
+
+        // Create the Share, which fails.
+        ShareDTO shareDTO = shareMapper.toDto(share);
+
+        restShareMockMvc.perform(post("/api/shares")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+            .andExpect(status().isBadRequest());
+
+        List<Share> shareList = shareRepository.findAll();
+        assertThat(shareList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
+    public void checkValueDateIsRequired() throws Exception {
+        int databaseSizeBeforeTest = shareRepository.findAll().size();
+        // set the field null
+        share.setValueDate(null);
 
         // Create the Share, which fails.
         ShareDTO shareDTO = shareMapper.toDto(share);
@@ -239,10 +263,11 @@ public class ShareResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(share.getId().intValue())))
-            .andExpect(jsonPath("$.[*].date").value(hasItem(DEFAULT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
             .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
             .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT.toString())));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -256,75 +281,142 @@ public class ShareResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(share.getId().intValue()))
-            .andExpect(jsonPath("$.date").value(DEFAULT_DATE.toString()))
+            .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
+            .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
             .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
             .andExpect(jsonPath("$.quantity").value(DEFAULT_QUANTITY))
-            .andExpect(jsonPath("$.comment").value(DEFAULT_COMMENT.toString()));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
     @Transactional
-    public void getAllSharesByDateIsEqualToSomething() throws Exception {
+    public void getAllSharesByDocumentDateIsEqualToSomething() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where date equals to DEFAULT_DATE
-        defaultShareShouldBeFound("date.equals=" + DEFAULT_DATE);
+        // Get all the shareList where documentDate equals to DEFAULT_DOCUMENT_DATE
+        defaultShareShouldBeFound("documentDate.equals=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the shareList where date equals to UPDATED_DATE
-        defaultShareShouldNotBeFound("date.equals=" + UPDATED_DATE);
+        // Get all the shareList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultShareShouldNotBeFound("documentDate.equals=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSharesByDateIsInShouldWork() throws Exception {
+    public void getAllSharesByDocumentDateIsInShouldWork() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where date in DEFAULT_DATE or UPDATED_DATE
-        defaultShareShouldBeFound("date.in=" + DEFAULT_DATE + "," + UPDATED_DATE);
+        // Get all the shareList where documentDate in DEFAULT_DOCUMENT_DATE or UPDATED_DOCUMENT_DATE
+        defaultShareShouldBeFound("documentDate.in=" + DEFAULT_DOCUMENT_DATE + "," + UPDATED_DOCUMENT_DATE);
 
-        // Get all the shareList where date equals to UPDATED_DATE
-        defaultShareShouldNotBeFound("date.in=" + UPDATED_DATE);
+        // Get all the shareList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultShareShouldNotBeFound("documentDate.in=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSharesByDateIsNullOrNotNull() throws Exception {
+    public void getAllSharesByDocumentDateIsNullOrNotNull() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where date is not null
-        defaultShareShouldBeFound("date.specified=true");
+        // Get all the shareList where documentDate is not null
+        defaultShareShouldBeFound("documentDate.specified=true");
 
-        // Get all the shareList where date is null
-        defaultShareShouldNotBeFound("date.specified=false");
+        // Get all the shareList where documentDate is null
+        defaultShareShouldNotBeFound("documentDate.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllSharesByDateIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllSharesByDocumentDateIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where date greater than or equals to DEFAULT_DATE
-        defaultShareShouldBeFound("date.greaterOrEqualThan=" + DEFAULT_DATE);
+        // Get all the shareList where documentDate greater than or equals to DEFAULT_DOCUMENT_DATE
+        defaultShareShouldBeFound("documentDate.greaterOrEqualThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the shareList where date greater than or equals to UPDATED_DATE
-        defaultShareShouldNotBeFound("date.greaterOrEqualThan=" + UPDATED_DATE);
+        // Get all the shareList where documentDate greater than or equals to UPDATED_DOCUMENT_DATE
+        defaultShareShouldNotBeFound("documentDate.greaterOrEqualThan=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSharesByDateIsLessThanSomething() throws Exception {
+    public void getAllSharesByDocumentDateIsLessThanSomething() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where date less than or equals to DEFAULT_DATE
-        defaultShareShouldNotBeFound("date.lessThan=" + DEFAULT_DATE);
+        // Get all the shareList where documentDate less than or equals to DEFAULT_DOCUMENT_DATE
+        defaultShareShouldNotBeFound("documentDate.lessThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the shareList where date less than or equals to UPDATED_DATE
-        defaultShareShouldBeFound("date.lessThan=" + UPDATED_DATE);
+        // Get all the shareList where documentDate less than or equals to UPDATED_DOCUMENT_DATE
+        defaultShareShouldBeFound("documentDate.lessThan=" + UPDATED_DOCUMENT_DATE);
+    }
+
+
+    @Test
+    @Transactional
+    public void getAllSharesByValueDateIsEqualToSomething() throws Exception {
+        // Initialize the database
+        shareRepository.saveAndFlush(share);
+
+        // Get all the shareList where valueDate equals to DEFAULT_VALUE_DATE
+        defaultShareShouldBeFound("valueDate.equals=" + DEFAULT_VALUE_DATE);
+
+        // Get all the shareList where valueDate equals to UPDATED_VALUE_DATE
+        defaultShareShouldNotBeFound("valueDate.equals=" + UPDATED_VALUE_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllSharesByValueDateIsInShouldWork() throws Exception {
+        // Initialize the database
+        shareRepository.saveAndFlush(share);
+
+        // Get all the shareList where valueDate in DEFAULT_VALUE_DATE or UPDATED_VALUE_DATE
+        defaultShareShouldBeFound("valueDate.in=" + DEFAULT_VALUE_DATE + "," + UPDATED_VALUE_DATE);
+
+        // Get all the shareList where valueDate equals to UPDATED_VALUE_DATE
+        defaultShareShouldNotBeFound("valueDate.in=" + UPDATED_VALUE_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllSharesByValueDateIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        shareRepository.saveAndFlush(share);
+
+        // Get all the shareList where valueDate is not null
+        defaultShareShouldBeFound("valueDate.specified=true");
+
+        // Get all the shareList where valueDate is null
+        defaultShareShouldNotBeFound("valueDate.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllSharesByValueDateIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        shareRepository.saveAndFlush(share);
+
+        // Get all the shareList where valueDate greater than or equals to DEFAULT_VALUE_DATE
+        defaultShareShouldBeFound("valueDate.greaterOrEqualThan=" + DEFAULT_VALUE_DATE);
+
+        // Get all the shareList where valueDate greater than or equals to UPDATED_VALUE_DATE
+        defaultShareShouldNotBeFound("valueDate.greaterOrEqualThan=" + UPDATED_VALUE_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllSharesByValueDateIsLessThanSomething() throws Exception {
+        // Initialize the database
+        shareRepository.saveAndFlush(share);
+
+        // Get all the shareList where valueDate less than or equals to DEFAULT_VALUE_DATE
+        defaultShareShouldNotBeFound("valueDate.lessThan=" + DEFAULT_VALUE_DATE);
+
+        // Get all the shareList where valueDate less than or equals to UPDATED_VALUE_DATE
+        defaultShareShouldBeFound("valueDate.lessThan=" + UPDATED_VALUE_DATE);
     }
 
 
@@ -435,41 +527,41 @@ public class ShareResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllSharesByCommentIsEqualToSomething() throws Exception {
+    public void getAllSharesByRemarkIsEqualToSomething() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where comment equals to DEFAULT_COMMENT
-        defaultShareShouldBeFound("comment.equals=" + DEFAULT_COMMENT);
+        // Get all the shareList where remark equals to DEFAULT_REMARK
+        defaultShareShouldBeFound("remark.equals=" + DEFAULT_REMARK);
 
-        // Get all the shareList where comment equals to UPDATED_COMMENT
-        defaultShareShouldNotBeFound("comment.equals=" + UPDATED_COMMENT);
+        // Get all the shareList where remark equals to UPDATED_REMARK
+        defaultShareShouldNotBeFound("remark.equals=" + UPDATED_REMARK);
     }
 
     @Test
     @Transactional
-    public void getAllSharesByCommentIsInShouldWork() throws Exception {
+    public void getAllSharesByRemarkIsInShouldWork() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where comment in DEFAULT_COMMENT or UPDATED_COMMENT
-        defaultShareShouldBeFound("comment.in=" + DEFAULT_COMMENT + "," + UPDATED_COMMENT);
+        // Get all the shareList where remark in DEFAULT_REMARK or UPDATED_REMARK
+        defaultShareShouldBeFound("remark.in=" + DEFAULT_REMARK + "," + UPDATED_REMARK);
 
-        // Get all the shareList where comment equals to UPDATED_COMMENT
-        defaultShareShouldNotBeFound("comment.in=" + UPDATED_COMMENT);
+        // Get all the shareList where remark equals to UPDATED_REMARK
+        defaultShareShouldNotBeFound("remark.in=" + UPDATED_REMARK);
     }
 
     @Test
     @Transactional
-    public void getAllSharesByCommentIsNullOrNotNull() throws Exception {
+    public void getAllSharesByRemarkIsNullOrNotNull() throws Exception {
         // Initialize the database
         shareRepository.saveAndFlush(share);
 
-        // Get all the shareList where comment is not null
-        defaultShareShouldBeFound("comment.specified=true");
+        // Get all the shareList where remark is not null
+        defaultShareShouldBeFound("remark.specified=true");
 
-        // Get all the shareList where comment is null
-        defaultShareShouldNotBeFound("comment.specified=false");
+        // Get all the shareList where remark is null
+        defaultShareShouldNotBeFound("remark.specified=false");
     }
 
     @Test
@@ -498,10 +590,11 @@ public class ShareResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(share.getId().intValue())))
-            .andExpect(jsonPath("$.[*].date").value(hasItem(DEFAULT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
             .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
             .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT)));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restShareMockMvc.perform(get("/api/shares/count?sort=id,desc&" + filter))
@@ -549,10 +642,11 @@ public class ShareResourceIntTest {
         // Disconnect from session so that the updates on updatedShare are not directly saved in db
         em.detach(updatedShare);
         updatedShare
-            .date(UPDATED_DATE)
+            .documentDate(UPDATED_DOCUMENT_DATE)
+            .valueDate(UPDATED_VALUE_DATE)
             .action(UPDATED_ACTION)
             .quantity(UPDATED_QUANTITY)
-            .comment(UPDATED_COMMENT);
+            .remark(UPDATED_REMARK);
         ShareDTO shareDTO = shareMapper.toDto(updatedShare);
 
         restShareMockMvc.perform(put("/api/shares")
@@ -564,10 +658,11 @@ public class ShareResourceIntTest {
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeUpdate);
         Share testShare = shareList.get(shareList.size() - 1);
-        assertThat(testShare.getDate()).isEqualTo(UPDATED_DATE);
+        assertThat(testShare.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
+        assertThat(testShare.getValueDate()).isEqualTo(UPDATED_VALUE_DATE);
         assertThat(testShare.getAction()).isEqualTo(UPDATED_ACTION);
         assertThat(testShare.getQuantity()).isEqualTo(UPDATED_QUANTITY);
-        assertThat(testShare.getComment()).isEqualTo(UPDATED_COMMENT);
+        assertThat(testShare.getRemark()).isEqualTo(UPDATED_REMARK);
     }
 
     @Test

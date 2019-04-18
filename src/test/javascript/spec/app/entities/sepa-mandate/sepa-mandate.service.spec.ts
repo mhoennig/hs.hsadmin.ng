@@ -43,11 +43,11 @@ describe('Service Tests', () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        created: currentDate.format(DATE_FORMAT),
+                        documentDate: currentDate.format(DATE_FORMAT),
                         validFrom: currentDate.format(DATE_FORMAT),
-                        validTo: currentDate.format(DATE_FORMAT),
+                        validUntil: currentDate.format(DATE_FORMAT),
                         lastUsed: currentDate.format(DATE_FORMAT),
-                        cancelled: currentDate.format(DATE_FORMAT)
+                        cancellationDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
@@ -64,21 +64,21 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        created: currentDate.format(DATE_FORMAT),
+                        documentDate: currentDate.format(DATE_FORMAT),
                         validFrom: currentDate.format(DATE_FORMAT),
-                        validTo: currentDate.format(DATE_FORMAT),
+                        validUntil: currentDate.format(DATE_FORMAT),
                         lastUsed: currentDate.format(DATE_FORMAT),
-                        cancelled: currentDate.format(DATE_FORMAT)
+                        cancellationDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        created: currentDate,
+                        documentDate: currentDate,
                         validFrom: currentDate,
-                        validTo: currentDate,
+                        validUntil: currentDate,
                         lastUsed: currentDate,
-                        cancelled: currentDate
+                        cancellationDate: currentDate
                     },
                     returnedFromService
                 );
@@ -96,23 +96,23 @@ describe('Service Tests', () => {
                         reference: 'BBBBBB',
                         iban: 'BBBBBB',
                         bic: 'BBBBBB',
-                        created: currentDate.format(DATE_FORMAT),
+                        documentDate: currentDate.format(DATE_FORMAT),
                         validFrom: currentDate.format(DATE_FORMAT),
-                        validTo: currentDate.format(DATE_FORMAT),
+                        validUntil: currentDate.format(DATE_FORMAT),
                         lastUsed: currentDate.format(DATE_FORMAT),
-                        cancelled: currentDate.format(DATE_FORMAT),
-                        comment: 'BBBBBB'
+                        cancellationDate: currentDate.format(DATE_FORMAT),
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
 
                 const expected = Object.assign(
                     {
-                        created: currentDate,
+                        documentDate: currentDate,
                         validFrom: currentDate,
-                        validTo: currentDate,
+                        validUntil: currentDate,
                         lastUsed: currentDate,
-                        cancelled: currentDate
+                        cancellationDate: currentDate
                     },
                     returnedFromService
                 );
@@ -130,22 +130,22 @@ describe('Service Tests', () => {
                         reference: 'BBBBBB',
                         iban: 'BBBBBB',
                         bic: 'BBBBBB',
-                        created: currentDate.format(DATE_FORMAT),
+                        documentDate: currentDate.format(DATE_FORMAT),
                         validFrom: currentDate.format(DATE_FORMAT),
-                        validTo: currentDate.format(DATE_FORMAT),
+                        validUntil: currentDate.format(DATE_FORMAT),
                         lastUsed: currentDate.format(DATE_FORMAT),
-                        cancelled: currentDate.format(DATE_FORMAT),
-                        comment: 'BBBBBB'
+                        cancellationDate: currentDate.format(DATE_FORMAT),
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        created: currentDate,
+                        documentDate: currentDate,
                         validFrom: currentDate,
-                        validTo: currentDate,
+                        validUntil: currentDate,
                         lastUsed: currentDate,
-                        cancelled: currentDate
+                        cancellationDate: currentDate
                     },
                     returnedFromService
                 );

@@ -29,8 +29,12 @@ public class Share implements Serializable {
     private Long id;
 
     @NotNull
-    @Column(name = "jhi_date", nullable = false)
-    private LocalDate date;
+    @Column(name = "document_date", nullable = false)
+    private LocalDate documentDate;
+
+    @NotNull
+    @Column(name = "value_date", nullable = false)
+    private LocalDate valueDate;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -42,8 +46,8 @@ public class Share implements Serializable {
     private Integer quantity;
 
     @Size(max = 160)
-    @Column(name = "jhi_comment", length = 160)
-    private String comment;
+    @Column(name = "remark", length = 160)
+    private String remark;
 
     @NotNull
     @ManyToOne(optional = false)
@@ -59,17 +63,30 @@ public class Share implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public Share date(LocalDate date) {
-        this.date = date;
+    public Share documentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
         return this;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
+    }
+
+    public LocalDate getValueDate() {
+        return valueDate;
+    }
+
+    public Share valueDate(LocalDate valueDate) {
+        this.valueDate = valueDate;
+        return this;
+    }
+
+    public void setValueDate(LocalDate valueDate) {
+        this.valueDate = valueDate;
     }
 
     public ShareAction getAction() {
@@ -98,17 +115,17 @@ public class Share implements Serializable {
         this.quantity = quantity;
     }
 
-    public String getComment() {
-        return comment;
+    public String getRemark() {
+        return remark;
     }
 
-    public Share comment(String comment) {
-        this.comment = comment;
+    public Share remark(String remark) {
+        this.remark = remark;
         return this;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Membership getMembership() {
@@ -149,10 +166,11 @@ public class Share implements Serializable {
     public String toString() {
         return "Share{" +
             "id=" + getId() +
-            ", date='" + getDate() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
+            ", valueDate='" + getValueDate() + "'" +
             ", action='" + getAction() + "'" +
             ", quantity=" + getQuantity() +
-            ", comment='" + getComment() + "'" +
+            ", remark='" + getRemark() + "'" +
             "}";
     }
 }

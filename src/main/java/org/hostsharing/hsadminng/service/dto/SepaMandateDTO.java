@@ -22,19 +22,19 @@ public class SepaMandateDTO implements Serializable {
     private String bic;
 
     @NotNull
-    private LocalDate created;
+    private LocalDate documentDate;
 
     @NotNull
     private LocalDate validFrom;
 
-    private LocalDate validTo;
+    private LocalDate validUntil;
 
     private LocalDate lastUsed;
 
-    private LocalDate cancelled;
+    private LocalDate cancellationDate;
 
     @Size(max = 160)
-    private String comment;
+    private String remark;
 
 
     private Long customerId;
@@ -73,12 +73,12 @@ public class SepaMandateDTO implements Serializable {
         this.bic = bic;
     }
 
-    public LocalDate getCreated() {
-        return created;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public void setCreated(LocalDate created) {
-        this.created = created;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
     }
 
     public LocalDate getValidFrom() {
@@ -89,12 +89,12 @@ public class SepaMandateDTO implements Serializable {
         this.validFrom = validFrom;
     }
 
-    public LocalDate getValidTo() {
-        return validTo;
+    public LocalDate getValidUntil() {
+        return validUntil;
     }
 
-    public void setValidTo(LocalDate validTo) {
-        this.validTo = validTo;
+    public void setValidUntil(LocalDate validUntil) {
+        this.validUntil = validUntil;
     }
 
     public LocalDate getLastUsed() {
@@ -105,20 +105,20 @@ public class SepaMandateDTO implements Serializable {
         this.lastUsed = lastUsed;
     }
 
-    public LocalDate getCancelled() {
-        return cancelled;
+    public LocalDate getCancellationDate() {
+        return cancellationDate;
     }
 
-    public void setCancelled(LocalDate cancelled) {
-        this.cancelled = cancelled;
+    public void setCancellationDate(LocalDate cancellationDate) {
+        this.cancellationDate = cancellationDate;
     }
 
-    public String getComment() {
-        return comment;
+    public String getRemark() {
+        return remark;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Long getCustomerId() {
@@ -165,12 +165,12 @@ public class SepaMandateDTO implements Serializable {
             ", reference='" + getReference() + "'" +
             ", iban='" + getIban() + "'" +
             ", bic='" + getBic() + "'" +
-            ", created='" + getCreated() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
             ", validFrom='" + getValidFrom() + "'" +
-            ", validTo='" + getValidTo() + "'" +
+            ", validUntil='" + getValidUntil() + "'" +
             ", lastUsed='" + getLastUsed() + "'" +
-            ", cancelled='" + getCancelled() + "'" +
-            ", comment='" + getComment() + "'" +
+            ", cancellationDate='" + getCancellationDate() + "'" +
+            ", remark='" + getRemark() + "'" +
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +
             "}";

@@ -30,22 +30,16 @@ public class Membership implements Serializable {
     private Long id;
 
     @NotNull
-    @Column(name = "jhi_from", nullable = false)
-    private LocalDate from;
+    @Column(name = "since_date", nullable = false)
+    private LocalDate sinceDate;
 
-    @Column(name = "jhi_to")
-    private LocalDate to;
+    @Column(name = "until_date")
+    private LocalDate untilDate;
 
-    @Size(max = 160)
-    @Column(name = "jhi_comment", length = 160)
-    private String comment;
-
-    @OneToMany(mappedBy = "membership")
+    @OneToMany(mappedBy = "member")
     private Set<Share> shares = new HashSet<>();
-
-    @OneToMany(mappedBy = "membership")
+    @OneToMany(mappedBy = "member")
     private Set<Asset> assets = new HashSet<>();
-
     @ManyToOne(optional = false)
     @NotNull
     @JsonIgnoreProperties("memberships")
@@ -60,43 +54,30 @@ public class Membership implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getFrom() {
-        return from;
+    public LocalDate getSinceDate() {
+        return sinceDate;
     }
 
-    public Membership from(LocalDate from) {
-        this.from = from;
+    public Membership sinceDate(LocalDate sinceDate) {
+        this.sinceDate = sinceDate;
         return this;
     }
 
-    public void setFrom(LocalDate from) {
-        this.from = from;
+    public void setSinceDate(LocalDate sinceDate) {
+        this.sinceDate = sinceDate;
     }
 
-    public LocalDate getTo() {
-        return to;
+    public LocalDate getUntilDate() {
+        return untilDate;
     }
 
-    public Membership to(LocalDate to) {
-        this.to = to;
+    public Membership untilDate(LocalDate untilDate) {
+        this.untilDate = untilDate;
         return this;
     }
 
-    public void setTo(LocalDate to) {
-        this.to = to;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public Membership comment(String comment) {
-        this.comment = comment;
-        return this;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setUntilDate(LocalDate untilDate) {
+        this.untilDate = untilDate;
     }
 
     public Set<Share> getShares() {
@@ -187,9 +168,8 @@ public class Membership implements Serializable {
     public String toString() {
         return "Membership{" +
             "id=" + getId() +
-            ", from='" + getFrom() + "'" +
-            ", to='" + getTo() + "'" +
-            ", comment='" + getComment() + "'" +
+            ", sinceDate='" + getSinceDate() + "'" +
+            ", untilDate='" + getUntilDate() + "'" +
             "}";
     }
 }

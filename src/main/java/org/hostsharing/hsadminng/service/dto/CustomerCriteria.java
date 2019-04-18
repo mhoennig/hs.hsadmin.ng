@@ -2,7 +2,10 @@ package org.hostsharing.hsadminng.service.dto;
 
 import java.io.Serializable;
 import java.util.Objects;
+import io.github.jhipster.service.filter.BooleanFilter;
+import io.github.jhipster.service.filter.DoubleFilter;
 import io.github.jhipster.service.filter.Filter;
+import io.github.jhipster.service.filter.FloatFilter;
 import io.github.jhipster.service.filter.IntegerFilter;
 import io.github.jhipster.service.filter.LongFilter;
 import io.github.jhipster.service.filter.StringFilter;
@@ -21,7 +24,7 @@ public class CustomerCriteria implements Serializable {
 
     private LongFilter id;
 
-    private IntegerFilter number;
+    private IntegerFilter reference;
 
     private StringFilter prefix;
 
@@ -35,6 +38,8 @@ public class CustomerCriteria implements Serializable {
 
     private StringFilter billingAddress;
 
+    private StringFilter remark;
+
     private LongFilter membershipId;
 
     private LongFilter sepamandateId;
@@ -47,12 +52,12 @@ public class CustomerCriteria implements Serializable {
         this.id = id;
     }
 
-    public IntegerFilter getNumber() {
-        return number;
+    public IntegerFilter getReference() {
+        return reference;
     }
 
-    public void setNumber(IntegerFilter number) {
-        this.number = number;
+    public void setReference(IntegerFilter reference) {
+        this.reference = reference;
     }
 
     public StringFilter getPrefix() {
@@ -103,6 +108,14 @@ public class CustomerCriteria implements Serializable {
         this.billingAddress = billingAddress;
     }
 
+    public StringFilter getRemark() {
+        return remark;
+    }
+
+    public void setRemark(StringFilter remark) {
+        this.remark = remark;
+    }
+
     public LongFilter getMembershipId() {
         return membershipId;
     }
@@ -131,13 +144,14 @@ public class CustomerCriteria implements Serializable {
         final CustomerCriteria that = (CustomerCriteria) o;
         return
             Objects.equals(id, that.id) &&
-            Objects.equals(number, that.number) &&
+            Objects.equals(reference, that.reference) &&
             Objects.equals(prefix, that.prefix) &&
             Objects.equals(name, that.name) &&
             Objects.equals(contractualSalutation, that.contractualSalutation) &&
             Objects.equals(contractualAddress, that.contractualAddress) &&
             Objects.equals(billingSalutation, that.billingSalutation) &&
             Objects.equals(billingAddress, that.billingAddress) &&
+            Objects.equals(remark, that.remark) &&
             Objects.equals(membershipId, that.membershipId) &&
             Objects.equals(sepamandateId, that.sepamandateId);
     }
@@ -146,13 +160,14 @@ public class CustomerCriteria implements Serializable {
     public int hashCode() {
         return Objects.hash(
         id,
-        number,
+        reference,
         prefix,
         name,
         contractualSalutation,
         contractualAddress,
         billingSalutation,
         billingAddress,
+        remark,
         membershipId,
         sepamandateId
         );
@@ -162,13 +177,14 @@ public class CustomerCriteria implements Serializable {
     public String toString() {
         return "CustomerCriteria{" +
                 (id != null ? "id=" + id + ", " : "") +
-                (number != null ? "number=" + number + ", " : "") +
+                (reference != null ? "reference=" + reference + ", " : "") +
                 (prefix != null ? "prefix=" + prefix + ", " : "") +
                 (name != null ? "name=" + name + ", " : "") +
                 (contractualSalutation != null ? "contractualSalutation=" + contractualSalutation + ", " : "") +
                 (contractualAddress != null ? "contractualAddress=" + contractualAddress + ", " : "") +
                 (billingSalutation != null ? "billingSalutation=" + billingSalutation + ", " : "") +
                 (billingAddress != null ? "billingAddress=" + billingAddress + ", " : "") +
+                (remark != null ? "remark=" + remark + ", " : "") +
                 (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
                 (sepamandateId != null ? "sepamandateId=" + sepamandateId + ", " : "") +
             "}";

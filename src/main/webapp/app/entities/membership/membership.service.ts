@@ -51,16 +51,20 @@ export class MembershipService {
 
     protected convertDateFromClient(membership: IMembership): IMembership {
         const copy: IMembership = Object.assign({}, membership, {
-            from: membership.from != null && membership.from.isValid() ? membership.from.format(DATE_FORMAT) : null,
-            to: membership.to != null && membership.to.isValid() ? membership.to.format(DATE_FORMAT) : null
+            documentDate:
+                membership.documentDate != null && membership.documentDate.isValid() ? membership.documentDate.format(DATE_FORMAT) : null,
+            memberFrom: membership.memberFrom != null && membership.memberFrom.isValid() ? membership.memberFrom.format(DATE_FORMAT) : null,
+            memberUntil:
+                membership.memberUntil != null && membership.memberUntil.isValid() ? membership.memberUntil.format(DATE_FORMAT) : null
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.from = res.body.from != null ? moment(res.body.from) : null;
-            res.body.to = res.body.to != null ? moment(res.body.to) : null;
+            res.body.documentDate = res.body.documentDate != null ? moment(res.body.documentDate) : null;
+            res.body.memberFrom = res.body.memberFrom != null ? moment(res.body.memberFrom) : null;
+            res.body.memberUntil = res.body.memberUntil != null ? moment(res.body.memberUntil) : null;
         }
         return res;
     }
@@ -68,8 +72,9 @@ export class MembershipService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((membership: IMembership) => {
-                membership.from = membership.from != null ? moment(membership.from) : null;
-                membership.to = membership.to != null ? moment(membership.to) : null;
+                membership.documentDate = membership.documentDate != null ? moment(membership.documentDate) : null;
+                membership.memberFrom = membership.memberFrom != null ? moment(membership.memberFrom) : null;
+                membership.memberUntil = membership.memberUntil != null ? moment(membership.memberUntil) : null;
             });
         }
         return res;

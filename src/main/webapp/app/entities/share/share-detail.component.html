@@ -5,9 +5,13 @@
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
-                <dt><span jhiTranslate="hsadminNgApp.share.date">Date</span></dt>
+                <dt><span jhiTranslate="hsadminNgApp.share.documentDate">Document Date</span></dt>
                 <dd>
-                    <span>{{share.date}}</span>
+                    <span>{{share.documentDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.valueDate">Value Date</span></dt>
+                <dd>
+                    <span>{{share.valueDate}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.share.action">Action</span></dt>
                 <dd>
@@ -17,14 +21,14 @@
                 <dd>
                     <span>{{share.quantity}}</span>
                 </dd>
-                <dt><span jhiTranslate="hsadminNgApp.share.comment">Comment</span></dt>
+                <dt><span jhiTranslate="hsadminNgApp.share.remark">Remark</span></dt>
                 <dd>
-                    <span>{{share.comment}}</span>
+                    <span>{{share.remark}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.share.membership">Membership</span></dt>
                 <dd>
                     <div *ngIf="share.membershipId">
-                        <a [routerLink]="['/membership', share.membershipId, 'view']">{{share.membershipFrom}}</a>
+                        <a [routerLink]="['/membership', share.membershipId, 'view']">{{share.membershipDocumentDate}}</a>
                     </div>
                 </dd>
             </dl>

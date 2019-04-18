@@ -19,7 +19,8 @@ export class AssetUpdateComponent implements OnInit {
     isSaving: boolean;
 
     memberships: IMembership[];
-    dateDp: any;
+    documentDateDp: any;
+    valueDateDp: any;
 
     constructor(
         protected jhiAlertService: JhiAlertService,

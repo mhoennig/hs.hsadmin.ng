@@ -28,7 +28,7 @@
             "fieldValidateRulesMaxlength": 11
         },
         {
-            "fieldName": "created",
+            "fieldName": "documentDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
@@ -42,7 +42,7 @@
             ]
         },
         {
-            "fieldName": "validTo",
+            "fieldName": "validUntil",
             "fieldType": "LocalDate"
         },
         {
@@ -50,11 +50,11 @@
             "fieldType": "LocalDate"
         },
         {
-            "fieldName": "cancelled",
+            "fieldName": "cancellationDate",
             "fieldType": "LocalDate"
         },
         {
-            "fieldName": "comment",
+            "fieldName": "remark",
             "fieldType": "String",
             "fieldValidateRules": [
                 "maxlength"
@@ -72,7 +72,7 @@
             "otherEntityField": "prefix"
         }
     ],
-    "changelogDate": "20190418073047",
+    "changelogDate": "20190418100951",
     "entityTableName": "sepa_mandate",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

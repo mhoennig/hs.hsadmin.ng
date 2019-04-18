@@ -15,10 +15,11 @@
             "detail": {
                 "title": "Share"
             },
-            "date": "Date",
+            "documentDate": "Document Date",
+            "valueDate": "Value Date",
             "action": "Action",
             "quantity": "Quantity",
-            "comment": "Comment",
+            "remark": "Remark",
             "membership": "Membership"
         }
     }

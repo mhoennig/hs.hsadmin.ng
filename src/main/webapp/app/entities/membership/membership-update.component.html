@@ -10,38 +10,54 @@
                         [(ngModel)]="membership.id" readonly />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.from" for="field_from">From</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.documentDate" for="field_documentDate">Document Date</label>
                     <div class="input-group">
-                        <input id="field_from" type="text" class="form-control" name="from" ngbDatepicker  #fromDp="ngbDatepicker" [(ngModel)]="membership.from"
+                        <input id="field_documentDate" type="text" class="form-control" name="documentDate" ngbDatepicker  #documentDateDp="ngbDatepicker" [(ngModel)]="membership.documentDate"
                         required/>
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="fromDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="documentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
-                    <div [hidden]="!(editForm.controls.from?.dirty && editForm.controls.from?.invalid)">
+                    <div [hidden]="!(editForm.controls.documentDate?.dirty && editForm.controls.documentDate?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.from?.errors?.required" jhiTranslate="entity.validation.required">
+                        [hidden]="!editForm.controls.documentDate?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.to" for="field_to">To</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.memberFrom" for="field_memberFrom">Member From</label>
                     <div class="input-group">
-                        <input id="field_to" type="text" class="form-control" name="to" ngbDatepicker  #toDp="ngbDatepicker" [(ngModel)]="membership.to"
+                        <input id="field_memberFrom" type="text" class="form-control" name="memberFrom" ngbDatepicker  #memberFromDp="ngbDatepicker" [(ngModel)]="membership.memberFrom"
+                        required/>
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="memberFromDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                    <div [hidden]="!(editForm.controls.memberFrom?.dirty && editForm.controls.memberFrom?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.memberFrom?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.memberUntil" for="field_memberUntil">Member Until</label>
+                    <div class="input-group">
+                        <input id="field_memberUntil" type="text" class="form-control" name="memberUntil" ngbDatepicker  #memberUntilDp="ngbDatepicker" [(ngModel)]="membership.memberUntil"
                         />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="toDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="memberUntilDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.comment" for="field_comment">Comment</label>
-                    <input type="text" class="form-control" name="comment" id="field_comment"
-                        [(ngModel)]="membership.comment" maxlength="160"/>
-                    <div [hidden]="!(editForm.controls.comment?.dirty && editForm.controls.comment?.invalid)">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.remark" for="field_remark">Remark</label>
+                    <input type="text" class="form-control" name="remark" id="field_remark"
+                        [(ngModel)]="membership.remark" maxlength="160"/>
+                    <div [hidden]="!(editForm.controls.remark?.dirty && editForm.controls.remark?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.comment?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">
+                        [hidden]="!editForm.controls.remark?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">
                         This field cannot be longer than 160 characters.
                         </small>
                     </div>

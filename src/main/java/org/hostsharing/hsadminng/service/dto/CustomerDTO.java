@@ -13,9 +13,10 @@ public class CustomerDTO implements Serializable {
     @NotNull
     @Min(value = 10000)
     @Max(value = 99999)
-    private Integer number;
+    private Integer reference;
 
     @NotNull
+    @Size(max = 3)
     @Pattern(regexp = "[a-z][a-z0-9]+")
     private String prefix;
 
@@ -36,6 +37,9 @@ public class CustomerDTO implements Serializable {
     @Size(max = 400)
     private String billingAddress;
 
+    @Size(max = 160)
+    private String remark;
+
 
     public Long getId() {
         return id;
@@ -45,12 +49,12 @@ public class CustomerDTO implements Serializable {
         this.id = id;
     }
 
-    public Integer getNumber() {
-        return number;
+    public Integer getReference() {
+        return reference;
     }
 
-    public void setNumber(Integer number) {
-        this.number = number;
+    public void setReference(Integer reference) {
+        this.reference = reference;
     }
 
     public String getPrefix() {
@@ -101,6 +105,14 @@ public class CustomerDTO implements Serializable {
         this.billingAddress = billingAddress;
     }
 
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -126,13 +138,14 @@ public class CustomerDTO implements Serializable {
     public String toString() {
         return "CustomerDTO{" +
             "id=" + getId() +
-            ", number=" + getNumber() +
+            ", reference=" + getReference() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
             ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +
             ", billingAddress='" + getBillingAddress() + "'" +
+            ", remark='" + getRemark() + "'" +
             "}";
     }
 }

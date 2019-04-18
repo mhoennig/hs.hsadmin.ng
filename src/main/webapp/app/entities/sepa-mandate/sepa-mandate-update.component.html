@@ -47,17 +47,17 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.created" for="field_created">Created</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.documentDate" for="field_documentDate">Document Date</label>
                     <div class="input-group">
-                        <input id="field_created" type="text" class="form-control" name="created" ngbDatepicker  #createdDp="ngbDatepicker" [(ngModel)]="sepaMandate.created"
+                        <input id="field_documentDate" type="text" class="form-control" name="documentDate" ngbDatepicker  #documentDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.documentDate"
                         required/>
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="createdDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="documentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
-                    <div [hidden]="!(editForm.controls.created?.dirty && editForm.controls.created?.invalid)">
+                    <div [hidden]="!(editForm.controls.documentDate?.dirty && editForm.controls.documentDate?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.created?.errors?.required" jhiTranslate="entity.validation.required">
+                        [hidden]="!editForm.controls.documentDate?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
                         </small>
                     </div>
@@ -79,12 +79,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validTo" for="field_validTo">Valid To</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validUntil" for="field_validUntil">Valid Until</label>
                     <div class="input-group">
-                        <input id="field_validTo" type="text" class="form-control" name="validTo" ngbDatepicker  #validToDp="ngbDatepicker" [(ngModel)]="sepaMandate.validTo"
+                        <input id="field_validUntil" type="text" class="form-control" name="validUntil" ngbDatepicker  #validUntilDp="ngbDatepicker" [(ngModel)]="sepaMandate.validUntil"
                         />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="validToDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="validUntilDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
                 </div>
@@ -99,22 +99,22 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.cancelled" for="field_cancelled">Cancelled</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.cancellationDate" for="field_cancellationDate">Cancellation Date</label>
                     <div class="input-group">
-                        <input id="field_cancelled" type="text" class="form-control" name="cancelled" ngbDatepicker  #cancelledDp="ngbDatepicker" [(ngModel)]="sepaMandate.cancelled"
+                        <input id="field_cancellationDate" type="text" class="form-control" name="cancellationDate" ngbDatepicker  #cancellationDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.cancellationDate"
                         />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="cancelledDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="cancellationDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.comment" for="field_comment">Comment</label>
-                    <input type="text" class="form-control" name="comment" id="field_comment"
-                        [(ngModel)]="sepaMandate.comment" maxlength="160"/>
-                    <div [hidden]="!(editForm.controls.comment?.dirty && editForm.controls.comment?.invalid)">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.remark" for="field_remark">Remark</label>
+                    <input type="text" class="form-control" name="remark" id="field_remark"
+                        [(ngModel)]="sepaMandate.remark" maxlength="160"/>
+                    <div [hidden]="!(editForm.controls.remark?.dirty && editForm.controls.remark?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.comment?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">
+                        [hidden]="!editForm.controls.remark?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">
                         This field cannot be longer than 160 characters.
                         </small>
                     </div>

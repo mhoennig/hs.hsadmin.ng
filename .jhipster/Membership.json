@@ -2,18 +2,25 @@
     "name": "Membership",
     "fields": [
         {
-            "fieldName": "from",
+            "fieldName": "documentDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
             ]
         },
         {
-            "fieldName": "to",
+            "fieldName": "memberFrom",
+            "fieldType": "LocalDate",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "memberUntil",
             "fieldType": "LocalDate"
         },
         {
-            "fieldName": "comment",
+            "fieldName": "remark",
             "fieldType": "String",
             "fieldValidateRules": [
                 "maxlength"
@@ -43,7 +50,7 @@
             "otherEntityField": "prefix"
         }
     ],
-    "changelogDate": "20190418073044",
+    "changelogDate": "20190403083738",
     "entityTableName": "membership",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

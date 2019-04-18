@@ -31,13 +31,15 @@ public class ShareCriteria implements Serializable {
 
     private LongFilter id;
 
-    private LocalDateFilter date;
+    private LocalDateFilter documentDate;
+
+    private LocalDateFilter valueDate;
 
     private ShareActionFilter action;
 
     private IntegerFilter quantity;
 
-    private StringFilter comment;
+    private StringFilter remark;
 
     private LongFilter membershipId;
 
@@ -49,12 +51,20 @@ public class ShareCriteria implements Serializable {
         this.id = id;
     }
 
-    public LocalDateFilter getDate() {
-        return date;
+    public LocalDateFilter getDocumentDate() {
+        return documentDate;
     }
 
-    public void setDate(LocalDateFilter date) {
-        this.date = date;
+    public void setDocumentDate(LocalDateFilter documentDate) {
+        this.documentDate = documentDate;
+    }
+
+    public LocalDateFilter getValueDate() {
+        return valueDate;
+    }
+
+    public void setValueDate(LocalDateFilter valueDate) {
+        this.valueDate = valueDate;
     }
 
     public ShareActionFilter getAction() {
@@ -73,12 +83,12 @@ public class ShareCriteria implements Serializable {
         this.quantity = quantity;
     }
 
-    public StringFilter getComment() {
-        return comment;
+    public StringFilter getRemark() {
+        return remark;
     }
 
-    public void setComment(StringFilter comment) {
-        this.comment = comment;
+    public void setRemark(StringFilter remark) {
+        this.remark = remark;
     }
 
     public LongFilter getMembershipId() {
@@ -101,10 +111,11 @@ public class ShareCriteria implements Serializable {
         final ShareCriteria that = (ShareCriteria) o;
         return
             Objects.equals(id, that.id) &&
-            Objects.equals(date, that.date) &&
+            Objects.equals(documentDate, that.documentDate) &&
+            Objects.equals(valueDate, that.valueDate) &&
             Objects.equals(action, that.action) &&
             Objects.equals(quantity, that.quantity) &&
-            Objects.equals(comment, that.comment) &&
+            Objects.equals(remark, that.remark) &&
             Objects.equals(membershipId, that.membershipId);
     }
 
@@ -112,10 +123,11 @@ public class ShareCriteria implements Serializable {
     public int hashCode() {
         return Objects.hash(
         id,
-        date,
+        documentDate,
+        valueDate,
         action,
         quantity,
-        comment,
+        remark,
         membershipId
         );
     }
@@ -124,10 +136,11 @@ public class ShareCriteria implements Serializable {
     public String toString() {
         return "ShareCriteria{" +
                 (id != null ? "id=" + id + ", " : "") +
-                (date != null ? "date=" + date + ", " : "") +
+                (documentDate != null ? "documentDate=" + documentDate + ", " : "") +
+                (valueDate != null ? "valueDate=" + valueDate + ", " : "") +
                 (action != null ? "action=" + action + ", " : "") +
                 (quantity != null ? "quantity=" + quantity + ", " : "") +
-                (comment != null ? "comment=" + comment + ", " : "") +
+                (remark != null ? "remark=" + remark + ", " : "") +
                 (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
             "}";
     }

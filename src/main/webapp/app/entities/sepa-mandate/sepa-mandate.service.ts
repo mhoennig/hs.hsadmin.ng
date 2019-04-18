@@ -51,22 +51,29 @@ export class SepaMandateService {
 
     protected convertDateFromClient(sepaMandate: ISepaMandate): ISepaMandate {
         const copy: ISepaMandate = Object.assign({}, sepaMandate, {
-            created: sepaMandate.created != null && sepaMandate.created.isValid() ? sepaMandate.created.format(DATE_FORMAT) : null,
+            documentDate:
+                sepaMandate.documentDate != null && sepaMandate.documentDate.isValid()
+                    ? sepaMandate.documentDate.format(DATE_FORMAT)
+                    : null,
             validFrom: sepaMandate.validFrom != null && sepaMandate.validFrom.isValid() ? sepaMandate.validFrom.format(DATE_FORMAT) : null,
-            validTo: sepaMandate.validTo != null && sepaMandate.validTo.isValid() ? sepaMandate.validTo.format(DATE_FORMAT) : null,
+            validUntil:
+                sepaMandate.validUntil != null && sepaMandate.validUntil.isValid() ? sepaMandate.validUntil.format(DATE_FORMAT) : null,
             lastUsed: sepaMandate.lastUsed != null && sepaMandate.lastUsed.isValid() ? sepaMandate.lastUsed.format(DATE_FORMAT) : null,
-            cancelled: sepaMandate.cancelled != null && sepaMandate.cancelled.isValid() ? sepaMandate.cancelled.format(DATE_FORMAT) : null
+            cancellationDate:
+                sepaMandate.cancellationDate != null && sepaMandate.cancellationDate.isValid()
+                    ? sepaMandate.cancellationDate.format(DATE_FORMAT)
+                    : null
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.created = res.body.created != null ? moment(res.body.created) : null;
+            res.body.documentDate = res.body.documentDate != null ? moment(res.body.documentDate) : null;
             res.body.validFrom = res.body.validFrom != null ? moment(res.body.validFrom) : null;
-            res.body.validTo = res.body.validTo != null ? moment(res.body.validTo) : null;
+            res.body.validUntil = res.body.validUntil != null ? moment(res.body.validUntil) : null;
             res.body.lastUsed = res.body.lastUsed != null ? moment(res.body.lastUsed) : null;
-            res.body.cancelled = res.body.cancelled != null ? moment(res.body.cancelled) : null;
+            res.body.cancellationDate = res.body.cancellationDate != null ? moment(res.body.cancellationDate) : null;
         }
         return res;
     }
@@ -74,11 +81,11 @@ export class SepaMandateService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((sepaMandate: ISepaMandate) => {
-                sepaMandate.created = sepaMandate.created != null ? moment(sepaMandate.created) : null;
+                sepaMandate.documentDate = sepaMandate.documentDate != null ? moment(sepaMandate.documentDate) : null;
                 sepaMandate.validFrom = sepaMandate.validFrom != null ? moment(sepaMandate.validFrom) : null;
-                sepaMandate.validTo = sepaMandate.validTo != null ? moment(sepaMandate.validTo) : null;
+                sepaMandate.validUntil = sepaMandate.validUntil != null ? moment(sepaMandate.validUntil) : null;
                 sepaMandate.lastUsed = sepaMandate.lastUsed != null ? moment(sepaMandate.lastUsed) : null;
-                sepaMandate.cancelled = sepaMandate.cancelled != null ? moment(sepaMandate.cancelled) : null;
+                sepaMandate.cancellationDate = sepaMandate.cancellationDate != null ? moment(sepaMandate.cancellationDate) : null;
             });
         }
         return res;

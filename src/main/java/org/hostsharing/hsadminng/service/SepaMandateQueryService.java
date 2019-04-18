@@ -98,23 +98,23 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
             if (criteria.getBic() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getBic(), SepaMandate_.bic));
             }
-            if (criteria.getCreated() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getCreated(), SepaMandate_.created));
+            if (criteria.getDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getDocumentDate(), SepaMandate_.documentDate));
             }
             if (criteria.getValidFrom() != null) {
                 specification = specification.and(buildRangeSpecification(criteria.getValidFrom(), SepaMandate_.validFrom));
             }
-            if (criteria.getValidTo() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidTo(), SepaMandate_.validTo));
+            if (criteria.getValidUntil() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getValidUntil(), SepaMandate_.validUntil));
             }
             if (criteria.getLastUsed() != null) {
                 specification = specification.and(buildRangeSpecification(criteria.getLastUsed(), SepaMandate_.lastUsed));
             }
-            if (criteria.getCancelled() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getCancelled(), SepaMandate_.cancelled));
+            if (criteria.getCancellationDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getCancellationDate(), SepaMandate_.cancellationDate));
             }
-            if (criteria.getComment() != null) {
-                specification = specification.and(buildStringSpecification(criteria.getComment(), SepaMandate_.comment));
+            if (criteria.getRemark() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRemark(), SepaMandate_.remark));
             }
             if (criteria.getCustomerId() != null) {
                 specification = specification.and(buildSpecification(criteria.getCustomerId(),

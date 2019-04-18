@@ -38,25 +38,25 @@ public class SepaMandate implements Serializable {
     private String bic;
 
     @NotNull
-    @Column(name = "created", nullable = false)
-    private LocalDate created;
+    @Column(name = "document_date", nullable = false)
+    private LocalDate documentDate;
 
     @NotNull
     @Column(name = "valid_from", nullable = false)
     private LocalDate validFrom;
 
-    @Column(name = "valid_to")
-    private LocalDate validTo;
+    @Column(name = "valid_until")
+    private LocalDate validUntil;
 
     @Column(name = "last_used")
     private LocalDate lastUsed;
 
-    @Column(name = "cancelled")
-    private LocalDate cancelled;
+    @Column(name = "cancellation_date")
+    private LocalDate cancellationDate;
 
     @Size(max = 160)
-    @Column(name = "jhi_comment", length = 160)
-    private String comment;
+    @Column(name = "remark", length = 160)
+    private String remark;
 
     @ManyToOne(optional = false)
     @NotNull
@@ -111,17 +111,17 @@ public class SepaMandate implements Serializable {
         this.bic = bic;
     }
 
-    public LocalDate getCreated() {
-        return created;
+    public LocalDate getDocumentDate() {
+        return documentDate;
     }
 
-    public SepaMandate created(LocalDate created) {
-        this.created = created;
+    public SepaMandate documentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
         return this;
     }
 
-    public void setCreated(LocalDate created) {
-        this.created = created;
+    public void setDocumentDate(LocalDate documentDate) {
+        this.documentDate = documentDate;
     }
 
     public LocalDate getValidFrom() {
@@ -137,17 +137,17 @@ public class SepaMandate implements Serializable {
         this.validFrom = validFrom;
     }
 
-    public LocalDate getValidTo() {
-        return validTo;
+    public LocalDate getValidUntil() {
+        return validUntil;
     }
 
-    public SepaMandate validTo(LocalDate validTo) {
-        this.validTo = validTo;
+    public SepaMandate validUntil(LocalDate validUntil) {
+        this.validUntil = validUntil;
         return this;
     }
 
-    public void setValidTo(LocalDate validTo) {
-        this.validTo = validTo;
+    public void setValidUntil(LocalDate validUntil) {
+        this.validUntil = validUntil;
     }
 
     public LocalDate getLastUsed() {
@@ -163,30 +163,30 @@ public class SepaMandate implements Serializable {
         this.lastUsed = lastUsed;
     }
 
-    public LocalDate getCancelled() {
-        return cancelled;
+    public LocalDate getCancellationDate() {
+        return cancellationDate;
     }
 
-    public SepaMandate cancelled(LocalDate cancelled) {
-        this.cancelled = cancelled;
+    public SepaMandate cancellationDate(LocalDate cancellationDate) {
+        this.cancellationDate = cancellationDate;
         return this;
     }
 
-    public void setCancelled(LocalDate cancelled) {
-        this.cancelled = cancelled;
+    public void setCancellationDate(LocalDate cancellationDate) {
+        this.cancellationDate = cancellationDate;
     }
 
-    public String getComment() {
-        return comment;
+    public String getRemark() {
+        return remark;
     }
 
-    public SepaMandate comment(String comment) {
-        this.comment = comment;
+    public SepaMandate remark(String remark) {
+        this.remark = remark;
         return this;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Customer getCustomer() {
@@ -230,12 +230,12 @@ public class SepaMandate implements Serializable {
             ", reference='" + getReference() + "'" +
             ", iban='" + getIban() + "'" +
             ", bic='" + getBic() + "'" +
-            ", created='" + getCreated() + "'" +
+            ", documentDate='" + getDocumentDate() + "'" +
             ", validFrom='" + getValidFrom() + "'" +
-            ", validTo='" + getValidTo() + "'" +
+            ", validUntil='" + getValidUntil() + "'" +
             ", lastUsed='" + getLastUsed() + "'" +
-            ", cancelled='" + getCancelled() + "'" +
-            ", comment='" + getComment() + "'" +
+            ", cancellationDate='" + getCancellationDate() + "'" +
+            ", remark='" + getRemark() + "'" +
             "}";
     }
 }

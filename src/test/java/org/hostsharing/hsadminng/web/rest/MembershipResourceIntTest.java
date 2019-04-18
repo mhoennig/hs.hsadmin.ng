@@ -50,14 +50,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = HsadminNgApp.class)
 public class MembershipResourceIntTest {
 
-    private static final LocalDate DEFAULT_FROM = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_FROM = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
-    private static final LocalDate DEFAULT_TO = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_TO = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_MEMBER_FROM = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_MEMBER_FROM = LocalDate.now(ZoneId.systemDefault());
 
-    private static final String DEFAULT_COMMENT = "AAAAAAAAAA";
-    private static final String UPDATED_COMMENT = "BBBBBBBBBB";
+    private static final LocalDate DEFAULT_MEMBER_UNTIL = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_MEMBER_UNTIL = LocalDate.now(ZoneId.systemDefault());
+
+    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
+    private static final String UPDATED_REMARK = "BBBBBBBBBB";
 
     @Autowired
     private MembershipRepository membershipRepository;
@@ -110,9 +113,10 @@ public class MembershipResourceIntTest {
      */
     public static Membership createEntity(EntityManager em) {
         Membership membership = new Membership()
-            .from(DEFAULT_FROM)
-            .to(DEFAULT_TO)
-            .comment(DEFAULT_COMMENT);
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .memberFrom(DEFAULT_MEMBER_FROM)
+            .memberUntil(DEFAULT_MEMBER_UNTIL)
+            .remark(DEFAULT_REMARK);
         // Add required entity
         Customer customer = CustomerResourceIntTest.createEntity(em);
         em.persist(customer);
@@ -142,9 +146,10 @@ public class MembershipResourceIntTest {
         List<Membership> membershipList = membershipRepository.findAll();
         assertThat(membershipList).hasSize(databaseSizeBeforeCreate + 1);
         Membership testMembership = membershipList.get(membershipList.size() - 1);
-        assertThat(testMembership.getFrom()).isEqualTo(DEFAULT_FROM);
-        assertThat(testMembership.getTo()).isEqualTo(DEFAULT_TO);
-        assertThat(testMembership.getComment()).isEqualTo(DEFAULT_COMMENT);
+        assertThat(testMembership.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
+        assertThat(testMembership.getMemberFrom()).isEqualTo(DEFAULT_MEMBER_FROM);
+        assertThat(testMembership.getMemberUntil()).isEqualTo(DEFAULT_MEMBER_UNTIL);
+        assertThat(testMembership.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -169,10 +174,29 @@ public class MembershipResourceIntTest {
 
     @Test
     @Transactional
-    public void checkFromIsRequired() throws Exception {
+    public void checkDocumentDateIsRequired() throws Exception {
         int databaseSizeBeforeTest = membershipRepository.findAll().size();
         // set the field null
-        membership.setFrom(null);
+        membership.setDocumentDate(null);
+
+        // Create the Membership, which fails.
+        MembershipDTO membershipDTO = membershipMapper.toDto(membership);
+
+        restMembershipMockMvc.perform(post("/api/memberships")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+            .andExpect(status().isBadRequest());
+
+        List<Membership> membershipList = membershipRepository.findAll();
+        assertThat(membershipList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
+    public void checkMemberFromIsRequired() throws Exception {
+        int databaseSizeBeforeTest = membershipRepository.findAll().size();
+        // set the field null
+        membership.setMemberFrom(null);
 
         // Create the Membership, which fails.
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
@@ -197,9 +221,10 @@ public class MembershipResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(membership.getId().intValue())))
-            .andExpect(jsonPath("$.[*].from").value(hasItem(DEFAULT_FROM.toString())))
-            .andExpect(jsonPath("$.[*].to").value(hasItem(DEFAULT_TO.toString())))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT.toString())));
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].memberFrom").value(hasItem(DEFAULT_MEMBER_FROM.toString())))
+            .andExpect(jsonPath("$.[*].memberUntil").value(hasItem(DEFAULT_MEMBER_UNTIL.toString())))
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -213,180 +238,247 @@ public class MembershipResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(membership.getId().intValue()))
-            .andExpect(jsonPath("$.from").value(DEFAULT_FROM.toString()))
-            .andExpect(jsonPath("$.to").value(DEFAULT_TO.toString()))
-            .andExpect(jsonPath("$.comment").value(DEFAULT_COMMENT.toString()));
+            .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
+            .andExpect(jsonPath("$.memberFrom").value(DEFAULT_MEMBER_FROM.toString()))
+            .andExpect(jsonPath("$.memberUntil").value(DEFAULT_MEMBER_UNTIL.toString()))
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByFromIsEqualToSomething() throws Exception {
+    public void getAllMembershipsByDocumentDateIsEqualToSomething() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where from equals to DEFAULT_FROM
-        defaultMembershipShouldBeFound("from.equals=" + DEFAULT_FROM);
+        // Get all the membershipList where documentDate equals to DEFAULT_DOCUMENT_DATE
+        defaultMembershipShouldBeFound("documentDate.equals=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the membershipList where from equals to UPDATED_FROM
-        defaultMembershipShouldNotBeFound("from.equals=" + UPDATED_FROM);
+        // Get all the membershipList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultMembershipShouldNotBeFound("documentDate.equals=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByFromIsInShouldWork() throws Exception {
+    public void getAllMembershipsByDocumentDateIsInShouldWork() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where from in DEFAULT_FROM or UPDATED_FROM
-        defaultMembershipShouldBeFound("from.in=" + DEFAULT_FROM + "," + UPDATED_FROM);
+        // Get all the membershipList where documentDate in DEFAULT_DOCUMENT_DATE or UPDATED_DOCUMENT_DATE
+        defaultMembershipShouldBeFound("documentDate.in=" + DEFAULT_DOCUMENT_DATE + "," + UPDATED_DOCUMENT_DATE);
 
-        // Get all the membershipList where from equals to UPDATED_FROM
-        defaultMembershipShouldNotBeFound("from.in=" + UPDATED_FROM);
+        // Get all the membershipList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultMembershipShouldNotBeFound("documentDate.in=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByFromIsNullOrNotNull() throws Exception {
+    public void getAllMembershipsByDocumentDateIsNullOrNotNull() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where from is not null
-        defaultMembershipShouldBeFound("from.specified=true");
+        // Get all the membershipList where documentDate is not null
+        defaultMembershipShouldBeFound("documentDate.specified=true");
 
-        // Get all the membershipList where from is null
-        defaultMembershipShouldNotBeFound("from.specified=false");
+        // Get all the membershipList where documentDate is null
+        defaultMembershipShouldNotBeFound("documentDate.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByFromIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllMembershipsByDocumentDateIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where from greater than or equals to DEFAULT_FROM
-        defaultMembershipShouldBeFound("from.greaterOrEqualThan=" + DEFAULT_FROM);
+        // Get all the membershipList where documentDate greater than or equals to DEFAULT_DOCUMENT_DATE
+        defaultMembershipShouldBeFound("documentDate.greaterOrEqualThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the membershipList where from greater than or equals to UPDATED_FROM
-        defaultMembershipShouldNotBeFound("from.greaterOrEqualThan=" + UPDATED_FROM);
+        // Get all the membershipList where documentDate greater than or equals to UPDATED_DOCUMENT_DATE
+        defaultMembershipShouldNotBeFound("documentDate.greaterOrEqualThan=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByFromIsLessThanSomething() throws Exception {
+    public void getAllMembershipsByDocumentDateIsLessThanSomething() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where from less than or equals to DEFAULT_FROM
-        defaultMembershipShouldNotBeFound("from.lessThan=" + DEFAULT_FROM);
+        // Get all the membershipList where documentDate less than or equals to DEFAULT_DOCUMENT_DATE
+        defaultMembershipShouldNotBeFound("documentDate.lessThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the membershipList where from less than or equals to UPDATED_FROM
-        defaultMembershipShouldBeFound("from.lessThan=" + UPDATED_FROM);
-    }
-
-
-    @Test
-    @Transactional
-    public void getAllMembershipsByToIsEqualToSomething() throws Exception {
-        // Initialize the database
-        membershipRepository.saveAndFlush(membership);
-
-        // Get all the membershipList where to equals to DEFAULT_TO
-        defaultMembershipShouldBeFound("to.equals=" + DEFAULT_TO);
-
-        // Get all the membershipList where to equals to UPDATED_TO
-        defaultMembershipShouldNotBeFound("to.equals=" + UPDATED_TO);
-    }
-
-    @Test
-    @Transactional
-    public void getAllMembershipsByToIsInShouldWork() throws Exception {
-        // Initialize the database
-        membershipRepository.saveAndFlush(membership);
-
-        // Get all the membershipList where to in DEFAULT_TO or UPDATED_TO
-        defaultMembershipShouldBeFound("to.in=" + DEFAULT_TO + "," + UPDATED_TO);
-
-        // Get all the membershipList where to equals to UPDATED_TO
-        defaultMembershipShouldNotBeFound("to.in=" + UPDATED_TO);
-    }
-
-    @Test
-    @Transactional
-    public void getAllMembershipsByToIsNullOrNotNull() throws Exception {
-        // Initialize the database
-        membershipRepository.saveAndFlush(membership);
-
-        // Get all the membershipList where to is not null
-        defaultMembershipShouldBeFound("to.specified=true");
-
-        // Get all the membershipList where to is null
-        defaultMembershipShouldNotBeFound("to.specified=false");
-    }
-
-    @Test
-    @Transactional
-    public void getAllMembershipsByToIsGreaterThanOrEqualToSomething() throws Exception {
-        // Initialize the database
-        membershipRepository.saveAndFlush(membership);
-
-        // Get all the membershipList where to greater than or equals to DEFAULT_TO
-        defaultMembershipShouldBeFound("to.greaterOrEqualThan=" + DEFAULT_TO);
-
-        // Get all the membershipList where to greater than or equals to UPDATED_TO
-        defaultMembershipShouldNotBeFound("to.greaterOrEqualThan=" + UPDATED_TO);
-    }
-
-    @Test
-    @Transactional
-    public void getAllMembershipsByToIsLessThanSomething() throws Exception {
-        // Initialize the database
-        membershipRepository.saveAndFlush(membership);
-
-        // Get all the membershipList where to less than or equals to DEFAULT_TO
-        defaultMembershipShouldNotBeFound("to.lessThan=" + DEFAULT_TO);
-
-        // Get all the membershipList where to less than or equals to UPDATED_TO
-        defaultMembershipShouldBeFound("to.lessThan=" + UPDATED_TO);
+        // Get all the membershipList where documentDate less than or equals to UPDATED_DOCUMENT_DATE
+        defaultMembershipShouldBeFound("documentDate.lessThan=" + UPDATED_DOCUMENT_DATE);
     }
 
 
     @Test
     @Transactional
-    public void getAllMembershipsByCommentIsEqualToSomething() throws Exception {
+    public void getAllMembershipsByMemberFromIsEqualToSomething() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where comment equals to DEFAULT_COMMENT
-        defaultMembershipShouldBeFound("comment.equals=" + DEFAULT_COMMENT);
+        // Get all the membershipList where memberFrom equals to DEFAULT_MEMBER_FROM
+        defaultMembershipShouldBeFound("memberFrom.equals=" + DEFAULT_MEMBER_FROM);
 
-        // Get all the membershipList where comment equals to UPDATED_COMMENT
-        defaultMembershipShouldNotBeFound("comment.equals=" + UPDATED_COMMENT);
+        // Get all the membershipList where memberFrom equals to UPDATED_MEMBER_FROM
+        defaultMembershipShouldNotBeFound("memberFrom.equals=" + UPDATED_MEMBER_FROM);
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByCommentIsInShouldWork() throws Exception {
+    public void getAllMembershipsByMemberFromIsInShouldWork() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where comment in DEFAULT_COMMENT or UPDATED_COMMENT
-        defaultMembershipShouldBeFound("comment.in=" + DEFAULT_COMMENT + "," + UPDATED_COMMENT);
+        // Get all the membershipList where memberFrom in DEFAULT_MEMBER_FROM or UPDATED_MEMBER_FROM
+        defaultMembershipShouldBeFound("memberFrom.in=" + DEFAULT_MEMBER_FROM + "," + UPDATED_MEMBER_FROM);
 
-        // Get all the membershipList where comment equals to UPDATED_COMMENT
-        defaultMembershipShouldNotBeFound("comment.in=" + UPDATED_COMMENT);
+        // Get all the membershipList where memberFrom equals to UPDATED_MEMBER_FROM
+        defaultMembershipShouldNotBeFound("memberFrom.in=" + UPDATED_MEMBER_FROM);
     }
 
     @Test
     @Transactional
-    public void getAllMembershipsByCommentIsNullOrNotNull() throws Exception {
+    public void getAllMembershipsByMemberFromIsNullOrNotNull() throws Exception {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where comment is not null
-        defaultMembershipShouldBeFound("comment.specified=true");
+        // Get all the membershipList where memberFrom is not null
+        defaultMembershipShouldBeFound("memberFrom.specified=true");
 
-        // Get all the membershipList where comment is null
-        defaultMembershipShouldNotBeFound("comment.specified=false");
+        // Get all the membershipList where memberFrom is null
+        defaultMembershipShouldNotBeFound("memberFrom.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberFromIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberFrom greater than or equals to DEFAULT_MEMBER_FROM
+        defaultMembershipShouldBeFound("memberFrom.greaterOrEqualThan=" + DEFAULT_MEMBER_FROM);
+
+        // Get all the membershipList where memberFrom greater than or equals to UPDATED_MEMBER_FROM
+        defaultMembershipShouldNotBeFound("memberFrom.greaterOrEqualThan=" + UPDATED_MEMBER_FROM);
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberFromIsLessThanSomething() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberFrom less than or equals to DEFAULT_MEMBER_FROM
+        defaultMembershipShouldNotBeFound("memberFrom.lessThan=" + DEFAULT_MEMBER_FROM);
+
+        // Get all the membershipList where memberFrom less than or equals to UPDATED_MEMBER_FROM
+        defaultMembershipShouldBeFound("memberFrom.lessThan=" + UPDATED_MEMBER_FROM);
+    }
+
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberUntilIsEqualToSomething() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberUntil equals to DEFAULT_MEMBER_UNTIL
+        defaultMembershipShouldBeFound("memberUntil.equals=" + DEFAULT_MEMBER_UNTIL);
+
+        // Get all the membershipList where memberUntil equals to UPDATED_MEMBER_UNTIL
+        defaultMembershipShouldNotBeFound("memberUntil.equals=" + UPDATED_MEMBER_UNTIL);
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberUntilIsInShouldWork() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberUntil in DEFAULT_MEMBER_UNTIL or UPDATED_MEMBER_UNTIL
+        defaultMembershipShouldBeFound("memberUntil.in=" + DEFAULT_MEMBER_UNTIL + "," + UPDATED_MEMBER_UNTIL);
+
+        // Get all the membershipList where memberUntil equals to UPDATED_MEMBER_UNTIL
+        defaultMembershipShouldNotBeFound("memberUntil.in=" + UPDATED_MEMBER_UNTIL);
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberUntilIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberUntil is not null
+        defaultMembershipShouldBeFound("memberUntil.specified=true");
+
+        // Get all the membershipList where memberUntil is null
+        defaultMembershipShouldNotBeFound("memberUntil.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberUntilIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberUntil greater than or equals to DEFAULT_MEMBER_UNTIL
+        defaultMembershipShouldBeFound("memberUntil.greaterOrEqualThan=" + DEFAULT_MEMBER_UNTIL);
+
+        // Get all the membershipList where memberUntil greater than or equals to UPDATED_MEMBER_UNTIL
+        defaultMembershipShouldNotBeFound("memberUntil.greaterOrEqualThan=" + UPDATED_MEMBER_UNTIL);
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByMemberUntilIsLessThanSomething() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where memberUntil less than or equals to DEFAULT_MEMBER_UNTIL
+        defaultMembershipShouldNotBeFound("memberUntil.lessThan=" + DEFAULT_MEMBER_UNTIL);
+
+        // Get all the membershipList where memberUntil less than or equals to UPDATED_MEMBER_UNTIL
+        defaultMembershipShouldBeFound("memberUntil.lessThan=" + UPDATED_MEMBER_UNTIL);
+    }
+
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByRemarkIsEqualToSomething() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where remark equals to DEFAULT_REMARK
+        defaultMembershipShouldBeFound("remark.equals=" + DEFAULT_REMARK);
+
+        // Get all the membershipList where remark equals to UPDATED_REMARK
+        defaultMembershipShouldNotBeFound("remark.equals=" + UPDATED_REMARK);
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByRemarkIsInShouldWork() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where remark in DEFAULT_REMARK or UPDATED_REMARK
+        defaultMembershipShouldBeFound("remark.in=" + DEFAULT_REMARK + "," + UPDATED_REMARK);
+
+        // Get all the membershipList where remark equals to UPDATED_REMARK
+        defaultMembershipShouldNotBeFound("remark.in=" + UPDATED_REMARK);
+    }
+
+    @Test
+    @Transactional
+    public void getAllMembershipsByRemarkIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        membershipRepository.saveAndFlush(membership);
+
+        // Get all the membershipList where remark is not null
+        defaultMembershipShouldBeFound("remark.specified=true");
+
+        // Get all the membershipList where remark is null
+        defaultMembershipShouldNotBeFound("remark.specified=false");
     }
 
     @Test
@@ -453,9 +545,10 @@ public class MembershipResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(membership.getId().intValue())))
-            .andExpect(jsonPath("$.[*].from").value(hasItem(DEFAULT_FROM.toString())))
-            .andExpect(jsonPath("$.[*].to").value(hasItem(DEFAULT_TO.toString())))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT)));
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+            .andExpect(jsonPath("$.[*].memberFrom").value(hasItem(DEFAULT_MEMBER_FROM.toString())))
+            .andExpect(jsonPath("$.[*].memberUntil").value(hasItem(DEFAULT_MEMBER_UNTIL.toString())))
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restMembershipMockMvc.perform(get("/api/memberships/count?sort=id,desc&" + filter))
@@ -503,9 +596,10 @@ public class MembershipResourceIntTest {
         // Disconnect from session so that the updates on updatedMembership are not directly saved in db
         em.detach(updatedMembership);
         updatedMembership
-            .from(UPDATED_FROM)
-            .to(UPDATED_TO)
-            .comment(UPDATED_COMMENT);
+            .documentDate(UPDATED_DOCUMENT_DATE)
+            .memberFrom(UPDATED_MEMBER_FROM)
+            .memberUntil(UPDATED_MEMBER_UNTIL)
+            .remark(UPDATED_REMARK);
         MembershipDTO membershipDTO = membershipMapper.toDto(updatedMembership);
 
         restMembershipMockMvc.perform(put("/api/memberships")
@@ -517,9 +611,10 @@ public class MembershipResourceIntTest {
         List<Membership> membershipList = membershipRepository.findAll();
         assertThat(membershipList).hasSize(databaseSizeBeforeUpdate);
         Membership testMembership = membershipList.get(membershipList.size() - 1);
-        assertThat(testMembership.getFrom()).isEqualTo(UPDATED_FROM);
-        assertThat(testMembership.getTo()).isEqualTo(UPDATED_TO);
-        assertThat(testMembership.getComment()).isEqualTo(UPDATED_COMMENT);
+        assertThat(testMembership.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
+        assertThat(testMembership.getMemberFrom()).isEqualTo(UPDATED_MEMBER_FROM);
+        assertThat(testMembership.getMemberUntil()).isEqualTo(UPDATED_MEMBER_UNTIL);
+        assertThat(testMembership.getRemark()).isEqualTo(UPDATED_REMARK);
     }
 
     @Test

@@ -15,24 +15,26 @@
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="date"><span jhiTranslate="hsadminNgApp.share.date">Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.share.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="valueDate"><span jhiTranslate="hsadminNgApp.share.valueDate">Value Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.share.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="quantity"><span jhiTranslate="hsadminNgApp.share.quantity">Quantity</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.share.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="membershipFrom"><span jhiTranslate="hsadminNgApp.share.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.share.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="membershipDocumentDate"><span jhiTranslate="hsadminNgApp.share.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let share of shares ;trackBy: trackId">
                 <td><a [routerLink]="['/share', share.id, 'view' ]">{{share.id}}</a></td>
-                <td>{{share.date | date:'mediumDate'}}</td>
+                <td>{{share.documentDate | date:'mediumDate'}}</td>
+                <td>{{share.valueDate | date:'mediumDate'}}</td>
                 <td jhiTranslate="{{'hsadminNgApp.ShareAction.' + share.action}}">{{share.action}}</td>
                 <td>{{share.quantity}}</td>
-                <td>{{share.comment}}</td>
+                <td>{{share.remark}}</td>
                 <td>
                     <div *ngIf="share.membershipId">
-                        <a [routerLink]="['../membership', share.membershipId , 'view' ]" >{{share.membershipFrom}}</a>
+                        <a [routerLink]="['../membership', share.membershipId , 'view' ]" >{{share.membershipDocumentDate}}</a>
                     </div>
                 </td>
                 <td class="text-right">

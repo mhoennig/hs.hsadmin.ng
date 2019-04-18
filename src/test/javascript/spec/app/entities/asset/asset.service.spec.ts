@@ -25,14 +25,15 @@ describe('Service Tests', () => {
             httpMock = injector.get(HttpTestingController);
             currentDate = moment();
 
-            elemDefault = new Asset(0, currentDate, AssetAction.PAYMENT, 0, 'AAAAAAA');
+            elemDefault = new Asset(0, currentDate, currentDate, AssetAction.PAYMENT, 0, 'AAAAAAA');
         });
 
         describe('Service methods', async () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        date: currentDate.format(DATE_FORMAT)
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        valueDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
@@ -49,13 +50,15 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        date: currentDate.format(DATE_FORMAT)
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        valueDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        date: currentDate
+                        documentDate: currentDate,
+                        valueDate: currentDate
                     },
                     returnedFromService
                 );
@@ -70,17 +73,19 @@ describe('Service Tests', () => {
             it('should update a Asset', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        date: currentDate.format(DATE_FORMAT),
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        valueDate: currentDate.format(DATE_FORMAT),
                         action: 'BBBBBB',
                         amount: 1,
-                        comment: 'BBBBBB'
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
 
                 const expected = Object.assign(
                     {
-                        date: currentDate
+                        documentDate: currentDate,
+                        valueDate: currentDate
                     },
                     returnedFromService
                 );
@@ -95,16 +100,18 @@ describe('Service Tests', () => {
             it('should return a list of Asset', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        date: currentDate.format(DATE_FORMAT),
+                        documentDate: currentDate.format(DATE_FORMAT),
+                        valueDate: currentDate.format(DATE_FORMAT),
                         action: 'BBBBBB',
                         amount: 1,
-                        comment: 'BBBBBB'
+                        remark: 'BBBBBB'
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        date: currentDate
+                        documentDate: currentDate,
+                        valueDate: currentDate
                     },
                     returnedFromService
                 );

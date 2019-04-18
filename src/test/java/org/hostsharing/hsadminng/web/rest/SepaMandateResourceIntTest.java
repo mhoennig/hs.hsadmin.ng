@@ -57,23 +57,23 @@ public class SepaMandateResourceIntTest {
     private static final String DEFAULT_BIC = "AAAAAAAAAA";
     private static final String UPDATED_BIC = "BBBBBBBBBB";
 
-    private static final LocalDate DEFAULT_CREATED = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_CREATED = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_VALID_FROM = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_VALID_FROM = LocalDate.now(ZoneId.systemDefault());
 
-    private static final LocalDate DEFAULT_VALID_TO = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_VALID_TO = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_VALID_UNTIL = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_VALID_UNTIL = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_LAST_USED = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_LAST_USED = LocalDate.now(ZoneId.systemDefault());
 
-    private static final LocalDate DEFAULT_CANCELLED = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_CANCELLED = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_CANCELLATION_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_CANCELLATION_DATE = LocalDate.now(ZoneId.systemDefault());
 
-    private static final String DEFAULT_COMMENT = "AAAAAAAAAA";
-    private static final String UPDATED_COMMENT = "BBBBBBBBBB";
+    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
+    private static final String UPDATED_REMARK = "BBBBBBBBBB";
 
     @Autowired
     private SepaMandateRepository sepaMandateRepository;
@@ -129,12 +129,12 @@ public class SepaMandateResourceIntTest {
             .reference(DEFAULT_REFERENCE)
             .iban(DEFAULT_IBAN)
             .bic(DEFAULT_BIC)
-            .created(DEFAULT_CREATED)
+            .documentDate(DEFAULT_DOCUMENT_DATE)
             .validFrom(DEFAULT_VALID_FROM)
-            .validTo(DEFAULT_VALID_TO)
+            .validUntil(DEFAULT_VALID_UNTIL)
             .lastUsed(DEFAULT_LAST_USED)
-            .cancelled(DEFAULT_CANCELLED)
-            .comment(DEFAULT_COMMENT);
+            .cancellationDate(DEFAULT_CANCELLATION_DATE)
+            .remark(DEFAULT_REMARK);
         // Add required entity
         Customer customer = CustomerResourceIntTest.createEntity(em);
         em.persist(customer);
@@ -167,12 +167,12 @@ public class SepaMandateResourceIntTest {
         assertThat(testSepaMandate.getReference()).isEqualTo(DEFAULT_REFERENCE);
         assertThat(testSepaMandate.getIban()).isEqualTo(DEFAULT_IBAN);
         assertThat(testSepaMandate.getBic()).isEqualTo(DEFAULT_BIC);
-        assertThat(testSepaMandate.getCreated()).isEqualTo(DEFAULT_CREATED);
+        assertThat(testSepaMandate.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
         assertThat(testSepaMandate.getValidFrom()).isEqualTo(DEFAULT_VALID_FROM);
-        assertThat(testSepaMandate.getValidTo()).isEqualTo(DEFAULT_VALID_TO);
+        assertThat(testSepaMandate.getValidUntil()).isEqualTo(DEFAULT_VALID_UNTIL);
         assertThat(testSepaMandate.getLastUsed()).isEqualTo(DEFAULT_LAST_USED);
-        assertThat(testSepaMandate.getCancelled()).isEqualTo(DEFAULT_CANCELLED);
-        assertThat(testSepaMandate.getComment()).isEqualTo(DEFAULT_COMMENT);
+        assertThat(testSepaMandate.getCancellationDate()).isEqualTo(DEFAULT_CANCELLATION_DATE);
+        assertThat(testSepaMandate.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -216,10 +216,10 @@ public class SepaMandateResourceIntTest {
 
     @Test
     @Transactional
-    public void checkCreatedIsRequired() throws Exception {
+    public void checkDocumentDateIsRequired() throws Exception {
         int databaseSizeBeforeTest = sepaMandateRepository.findAll().size();
         // set the field null
-        sepaMandate.setCreated(null);
+        sepaMandate.setDocumentDate(null);
 
         // Create the SepaMandate, which fails.
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
@@ -266,12 +266,12 @@ public class SepaMandateResourceIntTest {
             .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE.toString())))
             .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN.toString())))
             .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC.toString())))
-            .andExpect(jsonPath("$.[*].created").value(hasItem(DEFAULT_CREATED.toString())))
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].validFrom").value(hasItem(DEFAULT_VALID_FROM.toString())))
-            .andExpect(jsonPath("$.[*].validTo").value(hasItem(DEFAULT_VALID_TO.toString())))
+            .andExpect(jsonPath("$.[*].validUntil").value(hasItem(DEFAULT_VALID_UNTIL.toString())))
             .andExpect(jsonPath("$.[*].lastUsed").value(hasItem(DEFAULT_LAST_USED.toString())))
-            .andExpect(jsonPath("$.[*].cancelled").value(hasItem(DEFAULT_CANCELLED.toString())))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT.toString())));
+            .andExpect(jsonPath("$.[*].cancellationDate").value(hasItem(DEFAULT_CANCELLATION_DATE.toString())))
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -288,12 +288,12 @@ public class SepaMandateResourceIntTest {
             .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE.toString()))
             .andExpect(jsonPath("$.iban").value(DEFAULT_IBAN.toString()))
             .andExpect(jsonPath("$.bic").value(DEFAULT_BIC.toString()))
-            .andExpect(jsonPath("$.created").value(DEFAULT_CREATED.toString()))
+            .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
             .andExpect(jsonPath("$.validFrom").value(DEFAULT_VALID_FROM.toString()))
-            .andExpect(jsonPath("$.validTo").value(DEFAULT_VALID_TO.toString()))
+            .andExpect(jsonPath("$.validUntil").value(DEFAULT_VALID_UNTIL.toString()))
             .andExpect(jsonPath("$.lastUsed").value(DEFAULT_LAST_USED.toString()))
-            .andExpect(jsonPath("$.cancelled").value(DEFAULT_CANCELLED.toString()))
-            .andExpect(jsonPath("$.comment").value(DEFAULT_COMMENT.toString()));
+            .andExpect(jsonPath("$.cancellationDate").value(DEFAULT_CANCELLATION_DATE.toString()))
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -415,67 +415,67 @@ public class SepaMandateResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCreatedIsEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByDocumentDateIsEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where created equals to DEFAULT_CREATED
-        defaultSepaMandateShouldBeFound("created.equals=" + DEFAULT_CREATED);
+        // Get all the sepaMandateList where documentDate equals to DEFAULT_DOCUMENT_DATE
+        defaultSepaMandateShouldBeFound("documentDate.equals=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the sepaMandateList where created equals to UPDATED_CREATED
-        defaultSepaMandateShouldNotBeFound("created.equals=" + UPDATED_CREATED);
+        // Get all the sepaMandateList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultSepaMandateShouldNotBeFound("documentDate.equals=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCreatedIsInShouldWork() throws Exception {
+    public void getAllSepaMandatesByDocumentDateIsInShouldWork() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where created in DEFAULT_CREATED or UPDATED_CREATED
-        defaultSepaMandateShouldBeFound("created.in=" + DEFAULT_CREATED + "," + UPDATED_CREATED);
+        // Get all the sepaMandateList where documentDate in DEFAULT_DOCUMENT_DATE or UPDATED_DOCUMENT_DATE
+        defaultSepaMandateShouldBeFound("documentDate.in=" + DEFAULT_DOCUMENT_DATE + "," + UPDATED_DOCUMENT_DATE);
 
-        // Get all the sepaMandateList where created equals to UPDATED_CREATED
-        defaultSepaMandateShouldNotBeFound("created.in=" + UPDATED_CREATED);
+        // Get all the sepaMandateList where documentDate equals to UPDATED_DOCUMENT_DATE
+        defaultSepaMandateShouldNotBeFound("documentDate.in=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCreatedIsNullOrNotNull() throws Exception {
+    public void getAllSepaMandatesByDocumentDateIsNullOrNotNull() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where created is not null
-        defaultSepaMandateShouldBeFound("created.specified=true");
+        // Get all the sepaMandateList where documentDate is not null
+        defaultSepaMandateShouldBeFound("documentDate.specified=true");
 
-        // Get all the sepaMandateList where created is null
-        defaultSepaMandateShouldNotBeFound("created.specified=false");
+        // Get all the sepaMandateList where documentDate is null
+        defaultSepaMandateShouldNotBeFound("documentDate.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCreatedIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByDocumentDateIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where created greater than or equals to DEFAULT_CREATED
-        defaultSepaMandateShouldBeFound("created.greaterOrEqualThan=" + DEFAULT_CREATED);
+        // Get all the sepaMandateList where documentDate greater than or equals to DEFAULT_DOCUMENT_DATE
+        defaultSepaMandateShouldBeFound("documentDate.greaterOrEqualThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the sepaMandateList where created greater than or equals to UPDATED_CREATED
-        defaultSepaMandateShouldNotBeFound("created.greaterOrEqualThan=" + UPDATED_CREATED);
+        // Get all the sepaMandateList where documentDate greater than or equals to UPDATED_DOCUMENT_DATE
+        defaultSepaMandateShouldNotBeFound("documentDate.greaterOrEqualThan=" + UPDATED_DOCUMENT_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCreatedIsLessThanSomething() throws Exception {
+    public void getAllSepaMandatesByDocumentDateIsLessThanSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where created less than or equals to DEFAULT_CREATED
-        defaultSepaMandateShouldNotBeFound("created.lessThan=" + DEFAULT_CREATED);
+        // Get all the sepaMandateList where documentDate less than or equals to DEFAULT_DOCUMENT_DATE
+        defaultSepaMandateShouldNotBeFound("documentDate.lessThan=" + DEFAULT_DOCUMENT_DATE);
 
-        // Get all the sepaMandateList where created less than or equals to UPDATED_CREATED
-        defaultSepaMandateShouldBeFound("created.lessThan=" + UPDATED_CREATED);
+        // Get all the sepaMandateList where documentDate less than or equals to UPDATED_DOCUMENT_DATE
+        defaultSepaMandateShouldBeFound("documentDate.lessThan=" + UPDATED_DOCUMENT_DATE);
     }
 
 
@@ -547,67 +547,67 @@ public class SepaMandateResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByValidToIsEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByValidUntilIsEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where validTo equals to DEFAULT_VALID_TO
-        defaultSepaMandateShouldBeFound("validTo.equals=" + DEFAULT_VALID_TO);
+        // Get all the sepaMandateList where validUntil equals to DEFAULT_VALID_UNTIL
+        defaultSepaMandateShouldBeFound("validUntil.equals=" + DEFAULT_VALID_UNTIL);
 
-        // Get all the sepaMandateList where validTo equals to UPDATED_VALID_TO
-        defaultSepaMandateShouldNotBeFound("validTo.equals=" + UPDATED_VALID_TO);
+        // Get all the sepaMandateList where validUntil equals to UPDATED_VALID_UNTIL
+        defaultSepaMandateShouldNotBeFound("validUntil.equals=" + UPDATED_VALID_UNTIL);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByValidToIsInShouldWork() throws Exception {
+    public void getAllSepaMandatesByValidUntilIsInShouldWork() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where validTo in DEFAULT_VALID_TO or UPDATED_VALID_TO
-        defaultSepaMandateShouldBeFound("validTo.in=" + DEFAULT_VALID_TO + "," + UPDATED_VALID_TO);
+        // Get all the sepaMandateList where validUntil in DEFAULT_VALID_UNTIL or UPDATED_VALID_UNTIL
+        defaultSepaMandateShouldBeFound("validUntil.in=" + DEFAULT_VALID_UNTIL + "," + UPDATED_VALID_UNTIL);
 
-        // Get all the sepaMandateList where validTo equals to UPDATED_VALID_TO
-        defaultSepaMandateShouldNotBeFound("validTo.in=" + UPDATED_VALID_TO);
+        // Get all the sepaMandateList where validUntil equals to UPDATED_VALID_UNTIL
+        defaultSepaMandateShouldNotBeFound("validUntil.in=" + UPDATED_VALID_UNTIL);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByValidToIsNullOrNotNull() throws Exception {
+    public void getAllSepaMandatesByValidUntilIsNullOrNotNull() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where validTo is not null
-        defaultSepaMandateShouldBeFound("validTo.specified=true");
+        // Get all the sepaMandateList where validUntil is not null
+        defaultSepaMandateShouldBeFound("validUntil.specified=true");
 
-        // Get all the sepaMandateList where validTo is null
-        defaultSepaMandateShouldNotBeFound("validTo.specified=false");
+        // Get all the sepaMandateList where validUntil is null
+        defaultSepaMandateShouldNotBeFound("validUntil.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByValidToIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByValidUntilIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where validTo greater than or equals to DEFAULT_VALID_TO
-        defaultSepaMandateShouldBeFound("validTo.greaterOrEqualThan=" + DEFAULT_VALID_TO);
+        // Get all the sepaMandateList where validUntil greater than or equals to DEFAULT_VALID_UNTIL
+        defaultSepaMandateShouldBeFound("validUntil.greaterOrEqualThan=" + DEFAULT_VALID_UNTIL);
 
-        // Get all the sepaMandateList where validTo greater than or equals to UPDATED_VALID_TO
-        defaultSepaMandateShouldNotBeFound("validTo.greaterOrEqualThan=" + UPDATED_VALID_TO);
+        // Get all the sepaMandateList where validUntil greater than or equals to UPDATED_VALID_UNTIL
+        defaultSepaMandateShouldNotBeFound("validUntil.greaterOrEqualThan=" + UPDATED_VALID_UNTIL);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByValidToIsLessThanSomething() throws Exception {
+    public void getAllSepaMandatesByValidUntilIsLessThanSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where validTo less than or equals to DEFAULT_VALID_TO
-        defaultSepaMandateShouldNotBeFound("validTo.lessThan=" + DEFAULT_VALID_TO);
+        // Get all the sepaMandateList where validUntil less than or equals to DEFAULT_VALID_UNTIL
+        defaultSepaMandateShouldNotBeFound("validUntil.lessThan=" + DEFAULT_VALID_UNTIL);
 
-        // Get all the sepaMandateList where validTo less than or equals to UPDATED_VALID_TO
-        defaultSepaMandateShouldBeFound("validTo.lessThan=" + UPDATED_VALID_TO);
+        // Get all the sepaMandateList where validUntil less than or equals to UPDATED_VALID_UNTIL
+        defaultSepaMandateShouldBeFound("validUntil.lessThan=" + UPDATED_VALID_UNTIL);
     }
 
 
@@ -679,107 +679,107 @@ public class SepaMandateResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCancelledIsEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByCancellationDateIsEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where cancelled equals to DEFAULT_CANCELLED
-        defaultSepaMandateShouldBeFound("cancelled.equals=" + DEFAULT_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate equals to DEFAULT_CANCELLATION_DATE
+        defaultSepaMandateShouldBeFound("cancellationDate.equals=" + DEFAULT_CANCELLATION_DATE);
 
-        // Get all the sepaMandateList where cancelled equals to UPDATED_CANCELLED
-        defaultSepaMandateShouldNotBeFound("cancelled.equals=" + UPDATED_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate equals to UPDATED_CANCELLATION_DATE
+        defaultSepaMandateShouldNotBeFound("cancellationDate.equals=" + UPDATED_CANCELLATION_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCancelledIsInShouldWork() throws Exception {
+    public void getAllSepaMandatesByCancellationDateIsInShouldWork() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where cancelled in DEFAULT_CANCELLED or UPDATED_CANCELLED
-        defaultSepaMandateShouldBeFound("cancelled.in=" + DEFAULT_CANCELLED + "," + UPDATED_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate in DEFAULT_CANCELLATION_DATE or UPDATED_CANCELLATION_DATE
+        defaultSepaMandateShouldBeFound("cancellationDate.in=" + DEFAULT_CANCELLATION_DATE + "," + UPDATED_CANCELLATION_DATE);
 
-        // Get all the sepaMandateList where cancelled equals to UPDATED_CANCELLED
-        defaultSepaMandateShouldNotBeFound("cancelled.in=" + UPDATED_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate equals to UPDATED_CANCELLATION_DATE
+        defaultSepaMandateShouldNotBeFound("cancellationDate.in=" + UPDATED_CANCELLATION_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCancelledIsNullOrNotNull() throws Exception {
+    public void getAllSepaMandatesByCancellationDateIsNullOrNotNull() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where cancelled is not null
-        defaultSepaMandateShouldBeFound("cancelled.specified=true");
+        // Get all the sepaMandateList where cancellationDate is not null
+        defaultSepaMandateShouldBeFound("cancellationDate.specified=true");
 
-        // Get all the sepaMandateList where cancelled is null
-        defaultSepaMandateShouldNotBeFound("cancelled.specified=false");
+        // Get all the sepaMandateList where cancellationDate is null
+        defaultSepaMandateShouldNotBeFound("cancellationDate.specified=false");
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCancelledIsGreaterThanOrEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByCancellationDateIsGreaterThanOrEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where cancelled greater than or equals to DEFAULT_CANCELLED
-        defaultSepaMandateShouldBeFound("cancelled.greaterOrEqualThan=" + DEFAULT_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate greater than or equals to DEFAULT_CANCELLATION_DATE
+        defaultSepaMandateShouldBeFound("cancellationDate.greaterOrEqualThan=" + DEFAULT_CANCELLATION_DATE);
 
-        // Get all the sepaMandateList where cancelled greater than or equals to UPDATED_CANCELLED
-        defaultSepaMandateShouldNotBeFound("cancelled.greaterOrEqualThan=" + UPDATED_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate greater than or equals to UPDATED_CANCELLATION_DATE
+        defaultSepaMandateShouldNotBeFound("cancellationDate.greaterOrEqualThan=" + UPDATED_CANCELLATION_DATE);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCancelledIsLessThanSomething() throws Exception {
+    public void getAllSepaMandatesByCancellationDateIsLessThanSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where cancelled less than or equals to DEFAULT_CANCELLED
-        defaultSepaMandateShouldNotBeFound("cancelled.lessThan=" + DEFAULT_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate less than or equals to DEFAULT_CANCELLATION_DATE
+        defaultSepaMandateShouldNotBeFound("cancellationDate.lessThan=" + DEFAULT_CANCELLATION_DATE);
 
-        // Get all the sepaMandateList where cancelled less than or equals to UPDATED_CANCELLED
-        defaultSepaMandateShouldBeFound("cancelled.lessThan=" + UPDATED_CANCELLED);
+        // Get all the sepaMandateList where cancellationDate less than or equals to UPDATED_CANCELLATION_DATE
+        defaultSepaMandateShouldBeFound("cancellationDate.lessThan=" + UPDATED_CANCELLATION_DATE);
     }
 
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCommentIsEqualToSomething() throws Exception {
+    public void getAllSepaMandatesByRemarkIsEqualToSomething() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where comment equals to DEFAULT_COMMENT
-        defaultSepaMandateShouldBeFound("comment.equals=" + DEFAULT_COMMENT);
+        // Get all the sepaMandateList where remark equals to DEFAULT_REMARK
+        defaultSepaMandateShouldBeFound("remark.equals=" + DEFAULT_REMARK);
 
-        // Get all the sepaMandateList where comment equals to UPDATED_COMMENT
-        defaultSepaMandateShouldNotBeFound("comment.equals=" + UPDATED_COMMENT);
+        // Get all the sepaMandateList where remark equals to UPDATED_REMARK
+        defaultSepaMandateShouldNotBeFound("remark.equals=" + UPDATED_REMARK);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCommentIsInShouldWork() throws Exception {
+    public void getAllSepaMandatesByRemarkIsInShouldWork() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where comment in DEFAULT_COMMENT or UPDATED_COMMENT
-        defaultSepaMandateShouldBeFound("comment.in=" + DEFAULT_COMMENT + "," + UPDATED_COMMENT);
+        // Get all the sepaMandateList where remark in DEFAULT_REMARK or UPDATED_REMARK
+        defaultSepaMandateShouldBeFound("remark.in=" + DEFAULT_REMARK + "," + UPDATED_REMARK);
 
-        // Get all the sepaMandateList where comment equals to UPDATED_COMMENT
-        defaultSepaMandateShouldNotBeFound("comment.in=" + UPDATED_COMMENT);
+        // Get all the sepaMandateList where remark equals to UPDATED_REMARK
+        defaultSepaMandateShouldNotBeFound("remark.in=" + UPDATED_REMARK);
     }
 
     @Test
     @Transactional
-    public void getAllSepaMandatesByCommentIsNullOrNotNull() throws Exception {
+    public void getAllSepaMandatesByRemarkIsNullOrNotNull() throws Exception {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where comment is not null
-        defaultSepaMandateShouldBeFound("comment.specified=true");
+        // Get all the sepaMandateList where remark is not null
+        defaultSepaMandateShouldBeFound("remark.specified=true");
 
-        // Get all the sepaMandateList where comment is null
-        defaultSepaMandateShouldNotBeFound("comment.specified=false");
+        // Get all the sepaMandateList where remark is null
+        defaultSepaMandateShouldNotBeFound("remark.specified=false");
     }
 
     @Test
@@ -811,12 +811,12 @@ public class SepaMandateResourceIntTest {
             .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
             .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN)))
             .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC)))
-            .andExpect(jsonPath("$.[*].created").value(hasItem(DEFAULT_CREATED.toString())))
+            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].validFrom").value(hasItem(DEFAULT_VALID_FROM.toString())))
-            .andExpect(jsonPath("$.[*].validTo").value(hasItem(DEFAULT_VALID_TO.toString())))
+            .andExpect(jsonPath("$.[*].validUntil").value(hasItem(DEFAULT_VALID_UNTIL.toString())))
             .andExpect(jsonPath("$.[*].lastUsed").value(hasItem(DEFAULT_LAST_USED.toString())))
-            .andExpect(jsonPath("$.[*].cancelled").value(hasItem(DEFAULT_CANCELLED.toString())))
-            .andExpect(jsonPath("$.[*].comment").value(hasItem(DEFAULT_COMMENT)));
+            .andExpect(jsonPath("$.[*].cancellationDate").value(hasItem(DEFAULT_CANCELLATION_DATE.toString())))
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates/count?sort=id,desc&" + filter))
@@ -867,12 +867,12 @@ public class SepaMandateResourceIntTest {
             .reference(UPDATED_REFERENCE)
             .iban(UPDATED_IBAN)
             .bic(UPDATED_BIC)
-            .created(UPDATED_CREATED)
+            .documentDate(UPDATED_DOCUMENT_DATE)
             .validFrom(UPDATED_VALID_FROM)
-            .validTo(UPDATED_VALID_TO)
+            .validUntil(UPDATED_VALID_UNTIL)
             .lastUsed(UPDATED_LAST_USED)
-            .cancelled(UPDATED_CANCELLED)
-            .comment(UPDATED_COMMENT);
+            .cancellationDate(UPDATED_CANCELLATION_DATE)
+            .remark(UPDATED_REMARK);
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(updatedSepaMandate);
 
         restSepaMandateMockMvc.perform(put("/api/sepa-mandates")
@@ -887,12 +887,12 @@ public class SepaMandateResourceIntTest {
         assertThat(testSepaMandate.getReference()).isEqualTo(UPDATED_REFERENCE);
         assertThat(testSepaMandate.getIban()).isEqualTo(UPDATED_IBAN);
         assertThat(testSepaMandate.getBic()).isEqualTo(UPDATED_BIC);
-        assertThat(testSepaMandate.getCreated()).isEqualTo(UPDATED_CREATED);
+        assertThat(testSepaMandate.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
         assertThat(testSepaMandate.getValidFrom()).isEqualTo(UPDATED_VALID_FROM);
-        assertThat(testSepaMandate.getValidTo()).isEqualTo(UPDATED_VALID_TO);
+        assertThat(testSepaMandate.getValidUntil()).isEqualTo(UPDATED_VALID_UNTIL);
         assertThat(testSepaMandate.getLastUsed()).isEqualTo(UPDATED_LAST_USED);
-        assertThat(testSepaMandate.getCancelled()).isEqualTo(UPDATED_CANCELLED);
-        assertThat(testSepaMandate.getComment()).isEqualTo(UPDATED_COMMENT);
+        assertThat(testSepaMandate.getCancellationDate()).isEqualTo(UPDATED_CANCELLATION_DATE);
+        assertThat(testSepaMandate.getRemark()).isEqualTo(UPDATED_REMARK);
     }
 
     @Test

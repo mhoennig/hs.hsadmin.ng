@@ -31,17 +31,17 @@ public class SepaMandateCriteria implements Serializable {
 
     private StringFilter bic;
 
-    private LocalDateFilter created;
+    private LocalDateFilter documentDate;
 
     private LocalDateFilter validFrom;
 
-    private LocalDateFilter validTo;
+    private LocalDateFilter validUntil;
 
     private LocalDateFilter lastUsed;
 
-    private LocalDateFilter cancelled;
+    private LocalDateFilter cancellationDate;
 
-    private StringFilter comment;
+    private StringFilter remark;
 
     private LongFilter customerId;
 
@@ -77,12 +77,12 @@ public class SepaMandateCriteria implements Serializable {
         this.bic = bic;
     }
 
-    public LocalDateFilter getCreated() {
-        return created;
+    public LocalDateFilter getDocumentDate() {
+        return documentDate;
     }
 
-    public void setCreated(LocalDateFilter created) {
-        this.created = created;
+    public void setDocumentDate(LocalDateFilter documentDate) {
+        this.documentDate = documentDate;
     }
 
     public LocalDateFilter getValidFrom() {
@@ -93,12 +93,12 @@ public class SepaMandateCriteria implements Serializable {
         this.validFrom = validFrom;
     }
 
-    public LocalDateFilter getValidTo() {
-        return validTo;
+    public LocalDateFilter getValidUntil() {
+        return validUntil;
     }
 
-    public void setValidTo(LocalDateFilter validTo) {
-        this.validTo = validTo;
+    public void setValidUntil(LocalDateFilter validUntil) {
+        this.validUntil = validUntil;
     }
 
     public LocalDateFilter getLastUsed() {
@@ -109,20 +109,20 @@ public class SepaMandateCriteria implements Serializable {
         this.lastUsed = lastUsed;
     }
 
-    public LocalDateFilter getCancelled() {
-        return cancelled;
+    public LocalDateFilter getCancellationDate() {
+        return cancellationDate;
     }
 
-    public void setCancelled(LocalDateFilter cancelled) {
-        this.cancelled = cancelled;
+    public void setCancellationDate(LocalDateFilter cancellationDate) {
+        this.cancellationDate = cancellationDate;
     }
 
-    public StringFilter getComment() {
-        return comment;
+    public StringFilter getRemark() {
+        return remark;
     }
 
-    public void setComment(StringFilter comment) {
-        this.comment = comment;
+    public void setRemark(StringFilter remark) {
+        this.remark = remark;
     }
 
     public LongFilter getCustomerId() {
@@ -148,12 +148,12 @@ public class SepaMandateCriteria implements Serializable {
             Objects.equals(reference, that.reference) &&
             Objects.equals(iban, that.iban) &&
             Objects.equals(bic, that.bic) &&
-            Objects.equals(created, that.created) &&
+            Objects.equals(documentDate, that.documentDate) &&
             Objects.equals(validFrom, that.validFrom) &&
-            Objects.equals(validTo, that.validTo) &&
+            Objects.equals(validUntil, that.validUntil) &&
             Objects.equals(lastUsed, that.lastUsed) &&
-            Objects.equals(cancelled, that.cancelled) &&
-            Objects.equals(comment, that.comment) &&
+            Objects.equals(cancellationDate, that.cancellationDate) &&
+            Objects.equals(remark, that.remark) &&
             Objects.equals(customerId, that.customerId);
     }
 
@@ -164,12 +164,12 @@ public class SepaMandateCriteria implements Serializable {
         reference,
         iban,
         bic,
-        created,
+        documentDate,
         validFrom,
-        validTo,
+        validUntil,
         lastUsed,
-        cancelled,
-        comment,
+        cancellationDate,
+        remark,
         customerId
         );
     }
@@ -181,12 +181,12 @@ public class SepaMandateCriteria implements Serializable {
                 (reference != null ? "reference=" + reference + ", " : "") +
                 (iban != null ? "iban=" + iban + ", " : "") +
                 (bic != null ? "bic=" + bic + ", " : "") +
-                (created != null ? "created=" + created + ", " : "") +
+                (documentDate != null ? "documentDate=" + documentDate + ", " : "") +
                 (validFrom != null ? "validFrom=" + validFrom + ", " : "") +
-                (validTo != null ? "validTo=" + validTo + ", " : "") +
+                (validUntil != null ? "validUntil=" + validUntil + ", " : "") +
                 (lastUsed != null ? "lastUsed=" + lastUsed + ", " : "") +
-                (cancelled != null ? "cancelled=" + cancelled + ", " : "") +
-                (comment != null ? "comment=" + comment + ", " : "") +
+                (cancellationDate != null ? "cancellationDate=" + cancellationDate + ", " : "") +
+                (remark != null ? "remark=" + remark + ", " : "") +
                 (customerId != null ? "customerId=" + customerId + ", " : "") +
             "}";
     }

@@ -18,12 +18,12 @@
             "reference": "Reference",
             "iban": "Iban",
             "bic": "Bic",
-            "created": "Created",
+            "documentDate": "Document Date",
             "validFrom": "Valid From",
-            "validTo": "Valid To",
+            "validUntil": "Valid Until",
             "lastUsed": "Last Used",
-            "cancelled": "Cancelled",
-            "comment": "Comment",
+            "cancellationDate": "Cancellation Date",
+            "remark": "Remark",
             "customer": "Customer"
         }
     }

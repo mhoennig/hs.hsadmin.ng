@@ -5,12 +5,12 @@ export interface ISepaMandate {
     reference?: string;
     iban?: string;
     bic?: string;
-    created?: Moment;
+    documentDate?: Moment;
     validFrom?: Moment;
-    validTo?: Moment;
+    validUntil?: Moment;
     lastUsed?: Moment;
-    cancelled?: Moment;
-    comment?: string;
+    cancellationDate?: Moment;
+    remark?: string;
     customerPrefix?: string;
     customerId?: number;
 }
@@ -21,12 +21,12 @@ export class SepaMandate implements ISepaMandate {
         public reference?: string,
         public iban?: string,
         public bic?: string,
-        public created?: Moment,
+        public documentDate?: Moment,
         public validFrom?: Moment,
-        public validTo?: Moment,
+        public validUntil?: Moment,
         public lastUsed?: Moment,
-        public cancelled?: Moment,
-        public comment?: string,
+        public cancellationDate?: Moment,
+        public remark?: string,
         public customerPrefix?: string,
         public customerId?: number
     ) {}

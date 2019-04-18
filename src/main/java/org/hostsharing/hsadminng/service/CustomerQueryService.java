@@ -89,8 +89,8 @@ public class CustomerQueryService extends QueryService<Customer> {
             if (criteria.getId() != null) {
                 specification = specification.and(buildSpecification(criteria.getId(), Customer_.id));
             }
-            if (criteria.getNumber() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getNumber(), Customer_.number));
+            if (criteria.getReference() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getReference(), Customer_.reference));
             }
             if (criteria.getPrefix() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getPrefix(), Customer_.prefix));
@@ -109,6 +109,9 @@ public class CustomerQueryService extends QueryService<Customer> {
             }
             if (criteria.getBillingAddress() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getBillingAddress(), Customer_.billingAddress));
+            }
+            if (criteria.getRemark() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRemark(), Customer_.remark));
             }
             if (criteria.getMembershipId() != null) {
                 specification = specification.and(buildSpecification(criteria.getMembershipId(),

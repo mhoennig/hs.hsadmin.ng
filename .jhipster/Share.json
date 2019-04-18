@@ -2,7 +2,14 @@
     "name": "Share",
     "fields": [
         {
-            "fieldName": "date",
+            "fieldName": "documentDate",
+            "fieldType": "LocalDate",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "valueDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
@@ -24,7 +31,7 @@
             ]
         },
         {
-            "fieldName": "comment",
+            "fieldName": "remark",
             "fieldType": "String",
             "fieldValidateRules": [
                 "maxlength"
@@ -39,10 +46,10 @@
             "otherEntityRelationshipName": "share",
             "relationshipValidateRules": "required",
             "relationshipName": "membership",
-            "otherEntityField": "from"
+            "otherEntityField": "documentDate"
         }
     ],
-    "changelogDate": "20190418073045",
+    "changelogDate": "20190403083739",
     "entityTableName": "share",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

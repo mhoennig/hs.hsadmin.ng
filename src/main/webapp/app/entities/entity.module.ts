@@ -9,6 +9,46 @@ import { RouterModule } from '@angular/router';
                 loadChildren: './customer/customer.module#HsadminNgCustomerModule'
             },
             {
+                path: 'contact',
+                loadChildren: './contact/contact.module#HsadminNgContactModule'
+            },
+            {
+                path: 'customer-contact',
+                loadChildren: './customer-contact/customer-contact.module#HsadminNgCustomerContactModule'
+            },
+            {
+                path: 'membership',
+                loadChildren: './membership/membership.module#HsadminNgMembershipModule'
+            },
+            {
+                path: 'share',
+                loadChildren: './share/share.module#HsadminNgShareModule'
+            },
+            {
+                path: 'asset',
+                loadChildren: './asset/asset.module#HsadminNgAssetModule'
+            },
+            {
+                path: 'customer',
+                loadChildren: './customer/customer.module#HsadminNgCustomerModule'
+            },
+            {
+                path: 'membership',
+                loadChildren: './membership/membership.module#HsadminNgMembershipModule'
+            },
+            {
+                path: 'share',
+                loadChildren: './share/share.module#HsadminNgShareModule'
+            },
+            {
+                path: 'asset',
+                loadChildren: './asset/asset.module#HsadminNgAssetModule'
+            },
+            {
+                path: 'customer',
+                loadChildren: './customer/customer.module#HsadminNgCustomerModule'
+            },
+            {
                 path: 'membership',
                 loadChildren: './membership/membership.module#HsadminNgMembershipModule'
             },
