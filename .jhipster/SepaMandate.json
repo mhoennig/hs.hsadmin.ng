@@ -72,7 +72,7 @@
             "otherEntityField": "prefix"
         }
     ],
-    "changelogDate": "20190418100951",
+    "changelogDate": "20190418143054",
     "entityTableName": "sepa_mandate",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",
