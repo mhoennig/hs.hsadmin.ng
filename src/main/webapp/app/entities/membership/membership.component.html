@@ -15,8 +15,9 @@
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="sinceDate"><span jhiTranslate="hsadminNgApp.membership.sinceDate">Since Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="untilDate"><span jhiTranslate="hsadminNgApp.membership.untilDate">Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="from"><span jhiTranslate="hsadminNgApp.membership.from">From</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="to"><span jhiTranslate="hsadminNgApp.membership.to">To</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.membership.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="customerPrefix"><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
@@ -24,8 +25,9 @@
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let membership of memberships ;trackBy: trackId">
                 <td><a [routerLink]="['/membership', membership.id, 'view' ]">{{membership.id}}</a></td>
-                <td>{{membership.sinceDate | date:'mediumDate'}}</td>
-                <td>{{membership.untilDate | date:'mediumDate'}}</td>
+                <td>{{membership.from | date:'mediumDate'}}</td>
+                <td>{{membership.to | date:'mediumDate'}}</td>
+                <td>{{membership.comment}}</td>
                 <td>
                     <div *ngIf="membership.customerId">
                         <a [routerLink]="['../customer', membership.customerId , 'view' ]" >{{membership.customerPrefix}}</a>

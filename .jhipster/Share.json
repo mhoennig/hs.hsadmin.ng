@@ -38,11 +38,11 @@
             "otherEntityName": "membership",
             "otherEntityRelationshipName": "share",
             "relationshipValidateRules": "required",
-            "relationshipName": "member",
-            "otherEntityField": "id"
+            "relationshipName": "membership",
+            "otherEntityField": "from"
         }
     ],
-    "changelogDate": "20190403083739",
+    "changelogDate": "20190418073045",
     "entityTableName": "share",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

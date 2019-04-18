@@ -76,13 +76,13 @@ public class MembershipRepositoryIntTest {
         return customer;
     }
 
-    private Customer createCustomerWithMembership(final String sinceDate, final String untilDate) {
+    private Customer createCustomerWithMembership(final String from, final String to) {
         final Customer customer = createCustomer();
         final Membership membership = new Membership();
         membership.setCustomer(customer);
-        membership.setSinceDate(LocalDate.parse(sinceDate));
-        if (untilDate != null) {
-            membership.setUntilDate(LocalDate.parse(untilDate));
+        membership.setTo(LocalDate.parse(from));
+        if (to != null) {
+            membership.setFrom(LocalDate.parse(to));
         }
         membershipRepository.save(membership);
         return customer;

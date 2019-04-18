@@ -1,12 +1,9 @@
 package org.hostsharing.hsadminng.service.dto;
-
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.time.LocalDate;
+import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.util.Objects;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 /**
  * A DTO for the Share entity.
@@ -27,8 +24,10 @@ public class ShareDTO implements Serializable {
     @Size(max = 160)
     private String comment;
 
-    @NotNull
-    private Long memberId;
+
+    private Long membershipId;
+
+    private String membershipFrom;
 
     public Long getId() {
         return id;
@@ -70,12 +69,20 @@ public class ShareDTO implements Serializable {
         this.comment = comment;
     }
 
-    public Long getMemberId() {
-        return memberId;
+    public Long getMembershipId() {
+        return membershipId;
     }
 
-    public void setMemberId(Long membershipId) {
-        this.memberId = membershipId;
+    public void setMembershipId(Long membershipId) {
+        this.membershipId = membershipId;
+    }
+
+    public String getMembershipFrom() {
+        return membershipFrom;
+    }
+
+    public void setMembershipFrom(String membershipFrom) {
+        this.membershipFrom = membershipFrom;
     }
 
     @Override
@@ -107,7 +114,8 @@ public class ShareDTO implements Serializable {
             ", action='" + getAction() + "'" +
             ", quantity=" + getQuantity() +
             ", comment='" + getComment() + "'" +
-            ", member=" + getMemberId() +
+            ", membership=" + getMembershipId() +
+            ", membership='" + getMembershipFrom() + "'" +
             "}";
     }
 }

@@ -11,10 +11,11 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring", uses = {MembershipMapper.class})
 public interface ShareMapper extends EntityMapper<ShareDTO, Share> {
 
-    @Mapping(source = "member.id", target = "memberId")
+    @Mapping(source = "membership.id", target = "membershipId")
+    @Mapping(source = "membership.from", target = "membershipFrom")
     ShareDTO toDto(Share share);
 
-    @Mapping(source = "memberId", target = "member")
+    @Mapping(source = "membershipId", target = "membership")
     Share toEntity(ShareDTO shareDTO);
 
     default Share fromId(Long id) {

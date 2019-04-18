@@ -2,14 +2,15 @@ package org.hostsharing.hsadminng.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 /**
  * A Share.
@@ -47,7 +48,7 @@ public class Share implements Serializable {
     @NotNull
     @ManyToOne(optional = false)
     @JsonIgnoreProperties("shares")
-    private Membership member;
+    private Membership membership;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -110,17 +111,17 @@ public class Share implements Serializable {
         this.comment = comment;
     }
 
-    public Membership getMember() {
-        return member;
+    public Membership getMembership() {
+        return membership;
     }
 
-    public Share member(Membership membership) {
-        this.member = membership;
+    public Share membership(Membership membership) {
+        this.membership = membership;
         return this;
     }
 
-    public void setMember(Membership membership) {
-        this.member = membership;
+    public void setMembership(Membership membership) {
+        this.membership = membership;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

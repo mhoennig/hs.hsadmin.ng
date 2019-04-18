@@ -1,15 +1,17 @@
 package org.hostsharing.hsadminng.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.Objects;
 
 /**
  * A Membership.
@@ -28,20 +30,24 @@ public class Membership implements Serializable {
     private Long id;
 
     @NotNull
-    @Column(name = "since_date", nullable = false)
-    private LocalDate sinceDate;
+    @Column(name = "jhi_from", nullable = false)
+    private LocalDate from;
 
-    @Column(name = "until_date")
-    private LocalDate untilDate;
+    @Column(name = "jhi_to")
+    private LocalDate to;
 
-    @OneToMany(mappedBy = "member")
+    @Size(max = 160)
+    @Column(name = "jhi_comment", length = 160)
+    private String comment;
+
+    @OneToMany(mappedBy = "membership")
     private Set<Share> shares = new HashSet<>();
 
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "membership")
     private Set<Asset> assets = new HashSet<>();
 
-    @NotNull
     @ManyToOne(optional = false)
+    @NotNull
     @JsonIgnoreProperties("memberships")
     private Customer customer;
 
@@ -54,30 +60,43 @@ public class Membership implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getSinceDate() {
-        return sinceDate;
+    public LocalDate getFrom() {
+        return from;
     }
 
-    public Membership sinceDate(LocalDate sinceDate) {
-        this.sinceDate = sinceDate;
+    public Membership from(LocalDate from) {
+        this.from = from;
         return this;
     }
 
-    public void setSinceDate(LocalDate sinceDate) {
-        this.sinceDate = sinceDate;
+    public void setFrom(LocalDate from) {
+        this.from = from;
     }
 
-    public LocalDate getUntilDate() {
-        return untilDate;
+    public LocalDate getTo() {
+        return to;
     }
 
-    public Membership untilDate(LocalDate untilDate) {
-        this.untilDate = untilDate;
+    public Membership to(LocalDate to) {
+        this.to = to;
         return this;
     }
 
-    public void setUntilDate(LocalDate untilDate) {
-        this.untilDate = untilDate;
+    public void setTo(LocalDate to) {
+        this.to = to;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public Membership comment(String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public Set<Share> getShares() {
@@ -91,13 +110,13 @@ public class Membership implements Serializable {
 
     public Membership addShare(Share share) {
         this.shares.add(share);
-        share.setMember(this);
+        share.setMembership(this);
         return this;
     }
 
     public Membership removeShare(Share share) {
         this.shares.remove(share);
-        share.setMember(null);
+        share.setMembership(null);
         return this;
     }
 
@@ -116,13 +135,13 @@ public class Membership implements Serializable {
 
     public Membership addAsset(Asset asset) {
         this.assets.add(asset);
-        asset.setMember(this);
+        asset.setMembership(this);
         return this;
     }
 
     public Membership removeAsset(Asset asset) {
         this.assets.remove(asset);
-        asset.setMember(null);
+        asset.setMembership(null);
         return this;
     }
 
@@ -168,8 +187,9 @@ public class Membership implements Serializable {
     public String toString() {
         return "Membership{" +
             "id=" + getId() +
-            ", sinceDate='" + getSinceDate() + "'" +
-            ", untilDate='" + getUntilDate() + "'" +
+            ", from='" + getFrom() + "'" +
+            ", to='" + getTo() + "'" +
+            ", comment='" + getComment() + "'" +
             "}";
     }
 }

@@ -11,7 +11,8 @@ export interface IShare {
     action?: ShareAction;
     quantity?: number;
     comment?: string;
-    memberId?: number;
+    membershipFrom?: string;
+    membershipId?: number;
 }
 
 export class Share implements IShare {
@@ -21,6 +22,7 @@ export class Share implements IShare {
         public action?: ShareAction,
         public quantity?: number,
         public comment?: string,
-        public memberId?: number
+        public membershipFrom?: string,
+        public membershipId?: number
     ) {}
 }

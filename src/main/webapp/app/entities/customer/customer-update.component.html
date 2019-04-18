@@ -48,33 +48,20 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.name" for="field_name">Name</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.name"
+                           for="field_name">Name</label>
                     <input type="text" class="form-control" name="name" id="field_name"
-                        [(ngModel)]="customer.name" required maxlength="80"/>
+                           [(ngModel)]="customer.name" required maxlength="80"/>
                     <div [hidden]="!(editForm.controls.name?.dirty && editForm.controls.name?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.name?.errors?.required" jhiTranslate="entity.validation.required">
-                        This field is required.
+                               [hidden]="!editForm.controls.name?.errors?.required"
+                               jhiTranslate="entity.validation.required">
+                            This field is required.
                         </small>
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.name?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
-                        This field cannot be longer than 80 characters.
-                        </small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress"
-                           for="field_contractualAddress">Contractual Address</label>
-                    <textarea class="form-control" name="contractualAddress" id="field_contractualAddress" rows="3"
-                              [(ngModel)]="customer.contractualAddress" required maxlength="400"></textarea>
-                    <div [hidden]="!(editForm.controls.contractualAddress?.dirty && editForm.controls.contractualAddress?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.contractualAddress?.errors?.required" jhiTranslate="entity.validation.required">
-                        This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.contractualAddress?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 400 }">
-                        This field cannot be longer than 400 characters.
+                               [hidden]="!editForm.controls.name?.errors?.maxlength"
+                               jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
+                            This field cannot be longer than 80 characters.
                         </small>
                     </div>
                 </div>
@@ -90,13 +77,19 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.billingAddress" for="field_billingAddress">Billing Address</label>
-                    <textarea class="form-control" name="billingAddress" id="field_billingAddress" rows="3"
-                              [(ngModel)]="customer.billingAddress" maxlength="400"></textarea>
-                    <div [hidden]="!(editForm.controls.billingAddress?.dirty && editForm.controls.billingAddress?.invalid)">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualAddress" for="field_contractualAddress">Contractual Address</label>
+                    <input type="text" class="form-control" name="contractualAddress" id="field_contractualAddress"
+                        [(ngModel)]="customer.contractualAddress" required maxlength="400"/>
+                    <div [hidden]="!(editForm.controls.contractualAddress?.dirty && editForm.controls.contractualAddress?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.billingAddress?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 400 }">
-                        This field cannot be longer than 400 characters.
+                               [hidden]="!editForm.controls.contractualAddress?.errors?.required"
+                               jhiTranslate="entity.validation.required">
+                            This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                               [hidden]="!editForm.controls.contractualAddress?.errors?.maxlength"
+                               jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 400 }">
+                            This field cannot be longer than 400 characters.
                         </small>
                     </div>
                 </div>
@@ -108,6 +101,18 @@
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.billingSalutation?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
                         This field cannot be longer than 80 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.billingAddress" for="field_billingAddress">Billing Address</label>
+                    <input type="text" class="form-control" name="billingAddress" id="field_billingAddress"
+                        [(ngModel)]="customer.billingAddress" maxlength="400"/>
+                    <div [hidden]="!(editForm.controls.billingAddress?.dirty && editForm.controls.billingAddress?.invalid)">
+                        <small class="form-text text-danger"
+                               [hidden]="!editForm.controls.billingAddress?.errors?.maxlength"
+                               jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 400 }">
+                            This field cannot be longer than 400 characters.
                         </small>
                     </div>
                 </div>

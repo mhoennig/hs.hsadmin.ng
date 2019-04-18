@@ -1,9 +1,11 @@
 /* tslint:disable max-line-length */
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed, getTestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { map, take } from 'rxjs/operators';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { take, map } from 'rxjs/operators';
 import { CustomerService } from 'app/entities/customer/customer.service';
-import { Customer, ICustomer } from 'app/shared/model/customer.model';
+import { ICustomer, Customer } from 'app/shared/model/customer.model';
 
 describe('Service Tests', () => {
     describe('Customer Service', () => {
@@ -56,10 +58,10 @@ describe('Service Tests', () => {
                         number: 1,
                         prefix: 'BBBBBB',
                         name: 'BBBBBB',
-                        contractualAddress: 'BBBBBB',
                         contractualSalutation: 'BBBBBB',
-                        billingAddress: 'BBBBBB',
-                        billingSalutation: 'BBBBBB'
+                        contractualAddress: 'BBBBBB',
+                        billingSalutation: 'BBBBBB',
+                        billingAddress: 'BBBBBB'
                     },
                     elemDefault
                 );
@@ -79,10 +81,10 @@ describe('Service Tests', () => {
                         number: 1,
                         prefix: 'BBBBBB',
                         name: 'BBBBBB',
-                        contractualAddress: 'BBBBBB',
                         contractualSalutation: 'BBBBBB',
-                        billingAddress: 'BBBBBB',
-                        billingSalutation: 'BBBBBB'
+                        contractualAddress: 'BBBBBB',
+                        billingSalutation: 'BBBBBB',
+                        billingAddress: 'BBBBBB'
                     },
                     elemDefault
                 );

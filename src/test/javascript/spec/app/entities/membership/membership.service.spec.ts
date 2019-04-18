@@ -25,15 +25,15 @@ describe('Service Tests', () => {
             httpMock = injector.get(HttpTestingController);
             currentDate = moment();
 
-            elemDefault = new Membership(0, currentDate, currentDate);
+            elemDefault = new Membership(0, currentDate, currentDate, 'AAAAAAA');
         });
 
         describe('Service methods', async () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        sinceDate: currentDate.format(DATE_FORMAT),
-                        untilDate: currentDate.format(DATE_FORMAT)
+                        from: currentDate.format(DATE_FORMAT),
+                        to: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
@@ -50,15 +50,15 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        sinceDate: currentDate.format(DATE_FORMAT),
-                        untilDate: currentDate.format(DATE_FORMAT)
+                        from: currentDate.format(DATE_FORMAT),
+                        to: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        sinceDate: currentDate,
-                        untilDate: currentDate
+                        from: currentDate,
+                        to: currentDate
                     },
                     returnedFromService
                 );
@@ -73,16 +73,17 @@ describe('Service Tests', () => {
             it('should update a Membership', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        sinceDate: currentDate.format(DATE_FORMAT),
-                        untilDate: currentDate.format(DATE_FORMAT)
+                        from: currentDate.format(DATE_FORMAT),
+                        to: currentDate.format(DATE_FORMAT),
+                        comment: 'BBBBBB'
                     },
                     elemDefault
                 );
 
                 const expected = Object.assign(
                     {
-                        sinceDate: currentDate,
-                        untilDate: currentDate
+                        from: currentDate,
+                        to: currentDate
                     },
                     returnedFromService
                 );
@@ -97,15 +98,16 @@ describe('Service Tests', () => {
             it('should return a list of Membership', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        sinceDate: currentDate.format(DATE_FORMAT),
-                        untilDate: currentDate.format(DATE_FORMAT)
+                        from: currentDate.format(DATE_FORMAT),
+                        to: currentDate.format(DATE_FORMAT),
+                        comment: 'BBBBBB'
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        sinceDate: currentDate,
-                        untilDate: currentDate
+                        from: currentDate,
+                        to: currentDate
                     },
                     returnedFromService
                 );

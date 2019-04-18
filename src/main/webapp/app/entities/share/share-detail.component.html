@@ -21,10 +21,10 @@
                 <dd>
                     <span>{{share.comment}}</span>
                 </dd>
-                <dt><span jhiTranslate="hsadminNgApp.share.member">Member</span></dt>
+                <dt><span jhiTranslate="hsadminNgApp.share.membership">Membership</span></dt>
                 <dd>
-                    <div *ngIf="share.memberId">
-                        <a [routerLink]="['/membership', share.memberId, 'view']">{{share.memberId}}</a>
+                    <div *ngIf="share.membershipId">
+                        <a [routerLink]="['/membership', share.membershipId, 'view']">{{share.membershipFrom}}</a>
                     </div>
                 </dd>
             </dl>

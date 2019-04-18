@@ -1,12 +1,11 @@
 package org.hostsharing.hsadminng.service.dto;
 
+import java.io.Serializable;
+import java.util.Objects;
 import io.github.jhipster.service.filter.Filter;
 import io.github.jhipster.service.filter.IntegerFilter;
 import io.github.jhipster.service.filter.LongFilter;
 import io.github.jhipster.service.filter.StringFilter;
-
-import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * Criteria class for the Customer entity. This class is used in CustomerResource to
@@ -28,17 +27,17 @@ public class CustomerCriteria implements Serializable {
 
     private StringFilter name;
 
-    private StringFilter contractualAddress;
-
     private StringFilter contractualSalutation;
 
-    private StringFilter billingAddress;
+    private StringFilter contractualAddress;
 
     private StringFilter billingSalutation;
 
-    private LongFilter roleId;
+    private StringFilter billingAddress;
 
     private LongFilter membershipId;
+
+    private LongFilter sepamandateId;
 
     public LongFilter getId() {
         return id;
@@ -72,14 +71,6 @@ public class CustomerCriteria implements Serializable {
         this.name = name;
     }
 
-    public StringFilter getContractualAddress() {
-        return contractualAddress;
-    }
-
-    public void setContractualAddress(StringFilter contractualAddress) {
-        this.contractualAddress = contractualAddress;
-    }
-
     public StringFilter getContractualSalutation() {
         return contractualSalutation;
     }
@@ -88,12 +79,12 @@ public class CustomerCriteria implements Serializable {
         this.contractualSalutation = contractualSalutation;
     }
 
-    public StringFilter getBillingAddress() {
-        return billingAddress;
+    public StringFilter getContractualAddress() {
+        return contractualAddress;
     }
 
-    public void setBillingAddress(StringFilter billingAddress) {
-        this.billingAddress = billingAddress;
+    public void setContractualAddress(StringFilter contractualAddress) {
+        this.contractualAddress = contractualAddress;
     }
 
     public StringFilter getBillingSalutation() {
@@ -104,12 +95,12 @@ public class CustomerCriteria implements Serializable {
         this.billingSalutation = billingSalutation;
     }
 
-    public LongFilter getRoleId() {
-        return roleId;
+    public StringFilter getBillingAddress() {
+        return billingAddress;
     }
 
-    public void setRoleId(LongFilter roleId) {
-        this.roleId = roleId;
+    public void setBillingAddress(StringFilter billingAddress) {
+        this.billingAddress = billingAddress;
     }
 
     public LongFilter getMembershipId() {
@@ -118,6 +109,14 @@ public class CustomerCriteria implements Serializable {
 
     public void setMembershipId(LongFilter membershipId) {
         this.membershipId = membershipId;
+    }
+
+    public LongFilter getSepamandateId() {
+        return sepamandateId;
+    }
+
+    public void setSepamandateId(LongFilter sepamandateId) {
+        this.sepamandateId = sepamandateId;
     }
 
 
@@ -135,12 +134,12 @@ public class CustomerCriteria implements Serializable {
             Objects.equals(number, that.number) &&
             Objects.equals(prefix, that.prefix) &&
             Objects.equals(name, that.name) &&
-            Objects.equals(contractualAddress, that.contractualAddress) &&
             Objects.equals(contractualSalutation, that.contractualSalutation) &&
-            Objects.equals(billingAddress, that.billingAddress) &&
+            Objects.equals(contractualAddress, that.contractualAddress) &&
             Objects.equals(billingSalutation, that.billingSalutation) &&
-                Objects.equals(roleId, that.roleId) &&
-                Objects.equals(membershipId, that.membershipId);
+            Objects.equals(billingAddress, that.billingAddress) &&
+            Objects.equals(membershipId, that.membershipId) &&
+            Objects.equals(sepamandateId, that.sepamandateId);
     }
 
     @Override
@@ -150,12 +149,12 @@ public class CustomerCriteria implements Serializable {
         number,
         prefix,
         name,
-        contractualAddress,
         contractualSalutation,
-        billingAddress,
+        contractualAddress,
         billingSalutation,
-            roleId,
-            membershipId
+        billingAddress,
+        membershipId,
+        sepamandateId
         );
     }
 
@@ -166,12 +165,12 @@ public class CustomerCriteria implements Serializable {
                 (number != null ? "number=" + number + ", " : "") +
                 (prefix != null ? "prefix=" + prefix + ", " : "") +
                 (name != null ? "name=" + name + ", " : "") +
-                (contractualAddress != null ? "contractualAddress=" + contractualAddress + ", " : "") +
                 (contractualSalutation != null ? "contractualSalutation=" + contractualSalutation + ", " : "") +
-                (billingAddress != null ? "billingAddress=" + billingAddress + ", " : "") +
+                (contractualAddress != null ? "contractualAddress=" + contractualAddress + ", " : "") +
                 (billingSalutation != null ? "billingSalutation=" + billingSalutation + ", " : "") +
-                (roleId != null ? "roleId=" + roleId + ", " : "") +
-            (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
+                (billingAddress != null ? "billingAddress=" + billingAddress + ", " : "") +
+                (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
+                (sepamandateId != null ? "sepamandateId=" + sepamandateId + ", " : "") +
             "}";
     }
 

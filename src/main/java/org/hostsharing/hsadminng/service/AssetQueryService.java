@@ -101,9 +101,9 @@ public class AssetQueryService extends QueryService<Asset> {
             if (criteria.getComment() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getComment(), Asset_.comment));
             }
-            if (criteria.getMemberId() != null) {
-                specification = specification.and(buildSpecification(criteria.getMemberId(),
-                    root -> root.join(Asset_.member, JoinType.LEFT).get(Membership_.id)));
+            if (criteria.getMembershipId() != null) {
+                specification = specification.and(buildSpecification(criteria.getMembershipId(),
+                    root -> root.join(Asset_.membership, JoinType.LEFT).get(Membership_.id)));
             }
         }
         return specification;

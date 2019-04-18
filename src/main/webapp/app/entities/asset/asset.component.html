@@ -19,7 +19,7 @@
             <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.asset.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="amount"><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="comment"><span jhiTranslate="hsadminNgApp.asset.comment">Comment</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="memberId"><span jhiTranslate="hsadminNgApp.asset.member">Member</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="membershipFrom"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
@@ -31,8 +31,8 @@
                 <td>{{asset.amount}}</td>
                 <td>{{asset.comment}}</td>
                 <td>
-                    <div *ngIf="asset.memberId">
-                        <a [routerLink]="['../membership', asset.memberId , 'view' ]" >{{asset.memberId}}</a>
+                    <div *ngIf="asset.membershipId">
+                        <a [routerLink]="['../membership', asset.membershipId , 'view' ]" >{{asset.membershipFrom}}</a>
                     </div>
                 </td>
                 <td class="text-right">

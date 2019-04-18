@@ -23,18 +23,18 @@ public class CustomerDTO implements Serializable {
     @Size(max = 80)
     private String name;
 
+    @Size(max = 80)
+    private String contractualSalutation;
+
     @NotNull
     @Size(max = 400)
     private String contractualAddress;
 
     @Size(max = 80)
-    private String contractualSalutation;
+    private String billingSalutation;
 
     @Size(max = 400)
     private String billingAddress;
-
-    @Size(max = 80)
-    private String billingSalutation;
 
 
     public Long getId() {
@@ -69,14 +69,6 @@ public class CustomerDTO implements Serializable {
         this.name = name;
     }
 
-    public String getContractualAddress() {
-        return contractualAddress;
-    }
-
-    public void setContractualAddress(String contractualAddress) {
-        this.contractualAddress = contractualAddress;
-    }
-
     public String getContractualSalutation() {
         return contractualSalutation;
     }
@@ -85,12 +77,12 @@ public class CustomerDTO implements Serializable {
         this.contractualSalutation = contractualSalutation;
     }
 
-    public String getBillingAddress() {
-        return billingAddress;
+    public String getContractualAddress() {
+        return contractualAddress;
     }
 
-    public void setBillingAddress(String billingAddress) {
-        this.billingAddress = billingAddress;
+    public void setContractualAddress(String contractualAddress) {
+        this.contractualAddress = contractualAddress;
     }
 
     public String getBillingSalutation() {
@@ -99,6 +91,14 @@ public class CustomerDTO implements Serializable {
 
     public void setBillingSalutation(String billingSalutation) {
         this.billingSalutation = billingSalutation;
+    }
+
+    public String getBillingAddress() {
+        return billingAddress;
+    }
+
+    public void setBillingAddress(String billingAddress) {
+        this.billingAddress = billingAddress;
     }
 
     @Override
@@ -129,10 +129,10 @@ public class CustomerDTO implements Serializable {
             ", number=" + getNumber() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
-            ", contractualAddress='" + getContractualAddress() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
-            ", billingAddress='" + getBillingAddress() + "'" +
+            ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +
+            ", billingAddress='" + getBillingAddress() + "'" +
             "}";
     }
 }

@@ -11,10 +11,11 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring", uses = {MembershipMapper.class})
 public interface AssetMapper extends EntityMapper<AssetDTO, Asset> {
 
-    @Mapping(source = "member.id", target = "memberId")
+    @Mapping(source = "membership.id", target = "membershipId")
+    @Mapping(source = "membership.from", target = "membershipFrom")
     AssetDTO toDto(Asset asset);
 
-    @Mapping(source = "memberId", target = "member")
+    @Mapping(source = "membershipId", target = "membership")
     Asset toEntity(AssetDTO assetDTO);
 
     default Asset fromId(Long id) {
