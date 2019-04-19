@@ -1,27 +1,19 @@
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.commons.lang3.NotImplementedException;
-import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
+import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializerWithAccessFilter;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.springframework.boot.jackson.JsonComponent;
 
 import javax.validation.constraints.*;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.annotation.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Objects;
 
 /**
@@ -182,23 +174,10 @@ public class CustomerDTO implements Serializable {
     public static class UserJsonDeserializer extends JsonDeserializer<CustomerDTO> {
 
         @Override
-        public CustomerDTO deserialize(JsonParser jsonParser,
-                                       DeserializationContext deserializationContext) throws IOException {
+        public CustomerDTO deserialize(final JsonParser jsonParser,
+                                       final DeserializationContext deserializationContext) throws IOException {
 
-            TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
-
-            CustomerDTO dto = new CustomerDTO();
-            dto.setId(((IntNode) treeNode.get("id")).asLong());
-            dto.setReference(((IntNode) treeNode.get("reference")).asInt());
-            dto.setPrefix(((TextNode) treeNode.get("prefix")).asText());
-            dto.setName(((TextNode) treeNode.get("name")).asText());
-            dto.setContractualAddress(((TextNode) treeNode.get("contractualAddress")).asText());
-            dto.setContractualSalutation(((TextNode) treeNode.get("contractualSalutation")).asText());
-            dto.setBillingAddress(((TextNode) treeNode.get("billingAddress")).asText());
-            dto.setBillingSalutation(((TextNode) treeNode.get("billingSalutation")).asText());
-            dto.setRemark(((TextNode) treeNode.get("remark")).asText());
-
-            return dto;
+           return new JSonDeserializerWithAccessFilter<CustomerDTO>(jsonParser, deserializationContext, CustomerDTO.class).deserialize();
         }
     }
 }
