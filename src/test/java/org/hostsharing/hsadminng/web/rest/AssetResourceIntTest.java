@@ -646,17 +646,17 @@ public class AssetResourceIntTest {
         restAssetMockMvc.perform(put("/api/assets")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
         // Validate the Asset in the database
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeUpdate);
         Asset testAsset = assetList.get(assetList.size() - 1);
-        assertThat(testAsset.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
-        assertThat(testAsset.getValueDate()).isEqualTo(UPDATED_VALUE_DATE);
-        assertThat(testAsset.getAction()).isEqualTo(UPDATED_ACTION);
-        assertThat(testAsset.getAmount()).isEqualTo(UPDATED_AMOUNT);
-        assertThat(testAsset.getRemark()).isEqualTo(UPDATED_REMARK);
+        assertThat(testAsset.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
+        assertThat(testAsset.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
+        assertThat(testAsset.getAction()).isEqualByComparingTo(DEFAULT_ACTION);
+        assertThat(testAsset.getAmount()).isEqualByComparingTo(DEFAULT_AMOUNT);
+        assertThat(testAsset.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
