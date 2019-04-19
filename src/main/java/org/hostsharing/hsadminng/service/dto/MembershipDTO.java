@@ -1,7 +1,12 @@
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
+
+import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -10,22 +15,29 @@ import java.util.function.Consumer;
  */
 public class MembershipDTO implements Serializable {
 
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long id;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate memberFrom;
 
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate memberUntil;
 
     @Size(max = 160)
+    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-
+    // TODO @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
+    // @AccessReference(CustomerDTO.class, Role...)
     private Long customerId;
 
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
 
     public MembershipDTO with(
