@@ -7,6 +7,11 @@ import java.lang.reflect.Field;
 /**
  * These enum values are on the one hand used to define the minimum role required to grant access to resources,
  * but on the other hand also for the roles users can be assigned to.
+ *
+ * TODO: Maybe splitting it up into UserRole and RequiredRole would make it more clear?
+ *  And maybe instead of a level, we could then add the comprised roles in the constructor?
+ *  This could also be a better way to express that the financial contact has no rights to
+ *  other users resources (see also ACTUAL_CUSTOMER_USEr vs. ANY_CUSTOMER_USER).
  */
 public enum Role {
     /**
@@ -45,17 +50,32 @@ public enum Role {
     /**
      * This role is for financial contacts of a customer, e.g. for accessing billing data.
      */
-    FINANCIAL_CONTACT(22),
+    FINANCIAL_CONTACT(22) {
+        @Override
+        boolean covers(final Role role) {
+            if (role == ACTUAL_CUSTOMER_USER) {
+                return false;
+            }
+            return super.covers(role);
+        }
+    },
 
     /**
      * This role is for technical contacts of a customer.
      */
     TECHNICAL_CONTACT(22),
 
+
     /**
      * Any user which belongs to a customer has at least this role.
      */
-    ANY_CUSTOMER_USER(80),
+    ACTUAL_CUSTOMER_USER(80),
+
+    /**
+     * Use this to grant rights to any user, also special function users who have no
+     * rights on other users resources.
+     */
+    ANY_CUSTOMER_USER(89),
 
     /**
      * This role is meant to specify that a resources can be accessed by anybody, even without login.
