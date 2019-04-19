@@ -143,6 +143,28 @@ public class SepaMandateResourceIntTest {
         return sepaMandate;
     }
 
+    /**
+     * Create an entity for tests with a specific customer.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static SepaMandate createEntity(EntityManager em, final Customer customer) {
+        SepaMandate sepaMandate = new SepaMandate()
+            .reference(DEFAULT_REFERENCE)
+            .iban(DEFAULT_IBAN)
+            .bic(DEFAULT_BIC)
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .validFrom(DEFAULT_VALID_FROM)
+            .validUntil(DEFAULT_VALID_UNTIL)
+            .lastUsed(DEFAULT_LAST_USED)
+            .cancellationDate(DEFAULT_CANCELLATION_DATE)
+            .remark(DEFAULT_REMARK);
+        // Add required entity
+        sepaMandate.setCustomer(customer);
+        return sepaMandate;
+    }
+
     @Before
     public void initTest() {
         sepaMandate = createEntity(em);
@@ -786,9 +808,7 @@ public class SepaMandateResourceIntTest {
     @Transactional
     public void getAllSepaMandatesByCustomerIsEqualToSomething() throws Exception {
         // Initialize the database
-        Customer customer = CustomerResourceIntTest.createEntity(em);
-        em.persist(customer);
-        em.flush();
+        Customer customer = CustomerResourceIntTest.createPersistentEntity(em);
         sepaMandate.setCustomer(customer);
         sepaMandateRepository.saveAndFlush(sepaMandate);
         Long customerId = customer.getId();

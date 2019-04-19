@@ -4,12 +4,12 @@ import org.hostsharing.hsadminng.HsadminNgApp;
 
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.AssetCriteria;
 import org.hostsharing.hsadminng.service.AssetQueryService;
 
 import org.junit.Before;
@@ -129,6 +129,26 @@ public class AssetResourceIntTest {
         return asset;
     }
 
+    /**
+     * Create a persistent entity related to the given persistent membership for testing purposes.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static Asset createPersistentEntity(EntityManager em, final Membership membership) {
+        Asset asset = new Asset()
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .valueDate(DEFAULT_VALUE_DATE)
+            .action(DEFAULT_ACTION)
+            .amount(DEFAULT_AMOUNT)
+            .remark(DEFAULT_REMARK);
+        // Add required entity
+        asset.setMembership(membership);
+        membership.addAsset(asset);
+        em.persist(asset);
+        em.flush();
+        return asset;
+    }
     @Before
     public void initTest() {
         asset = createEntity(em);
@@ -542,7 +562,7 @@ public class AssetResourceIntTest {
     @Transactional
     public void getAllAssetsByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em);
+        Membership membership = MembershipResourceIntTest.createPersistentEntity(em, CustomerResourceIntTest.createPersistentEntity(em));
         em.persist(membership);
         em.flush();
         asset.setMembership(membership);

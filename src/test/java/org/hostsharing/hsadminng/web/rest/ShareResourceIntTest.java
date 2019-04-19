@@ -128,6 +128,27 @@ public class ShareResourceIntTest {
         return share;
     }
 
+    /**
+     * Create a persistent entity related to the given persistent membership for testing purposes.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static Share createPersistentEntity(EntityManager em, final Membership membership) {
+        Share share = new Share()
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .valueDate(DEFAULT_VALUE_DATE)
+            .action(DEFAULT_ACTION)
+            .quantity(DEFAULT_QUANTITY)
+            .remark(DEFAULT_REMARK);
+        // Add required entity
+        share.setMembership(membership);
+        membership.addShare(share);
+        em.persist(share);
+        em.flush();
+        return share;
+    }
+
     @Before
     public void initTest() {
         share = createEntity(em);
@@ -568,9 +589,7 @@ public class ShareResourceIntTest {
     @Transactional
     public void getAllSharesByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em);
-        em.persist(membership);
-        em.flush();
+        Membership membership = MembershipResourceIntTest.createPersistentEntity(em, CustomerResourceIntTest.createPersistentEntity(em));
         share.setMembership(membership);
         shareRepository.saveAndFlush(share);
         Long membershipId = membership.getId();
@@ -652,17 +671,17 @@ public class ShareResourceIntTest {
         restShareMockMvc.perform(put("/api/shares")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
         // Validate the Share in the database
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeUpdate);
         Share testShare = shareList.get(shareList.size() - 1);
-        assertThat(testShare.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
-        assertThat(testShare.getValueDate()).isEqualTo(UPDATED_VALUE_DATE);
-        assertThat(testShare.getAction()).isEqualTo(UPDATED_ACTION);
-        assertThat(testShare.getQuantity()).isEqualTo(UPDATED_QUANTITY);
-        assertThat(testShare.getRemark()).isEqualTo(UPDATED_REMARK);
+        assertThat(testShare.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
+        assertThat(testShare.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
+        assertThat(testShare.getAction()).isEqualTo(DEFAULT_ACTION);
+        assertThat(testShare.getQuantity()).isEqualTo(DEFAULT_QUANTITY);
+        assertThat(testShare.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -695,11 +714,11 @@ public class ShareResourceIntTest {
         // Delete the share
         restShareMockMvc.perform(delete("/api/shares/{id}", share.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the database still contains the same number of shares
         List<Share> shareList = shareRepository.findAll();
-        assertThat(shareList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(shareList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test

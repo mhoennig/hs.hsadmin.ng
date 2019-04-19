@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = HsadminNgApp.class)
 @Transactional
-public class MembershipRepositoryIntTest {
+public class    MembershipRepositoryIntTest {
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -80,10 +80,11 @@ public class MembershipRepositoryIntTest {
         final Customer customer = createCustomer();
         final Membership membership = new Membership();
         membership.setCustomer(customer);
-        membership.setMemberUntil(LocalDate.parse(from));
+        membership.setMemberFrom(LocalDate.parse(from));
         if (to != null) {
-            membership.setMemberFrom(LocalDate.parse(to));
+            membership.setMemberUntil(LocalDate.parse(to));
         }
+        membership.setDocumentDate(membership.getMemberFrom().minusDays(7));
         membershipRepository.save(membership);
         return customer;
     }

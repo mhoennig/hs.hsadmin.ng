@@ -10,7 +10,6 @@ import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
 import org.hostsharing.hsadminng.service.CustomerQueryService;
 
 import org.junit.Before;
@@ -49,27 +48,33 @@ public class CustomerResourceIntTest {
 
     private static final Integer DEFAULT_REFERENCE = 10000;
     private static final Integer UPDATED_REFERENCE = 10001;
+    private static final Integer OTHER_REFERENCE_BASE = 11000;
 
-    private static final String DEFAULT_PREFIX = "hu";
-    private static final String UPDATED_PREFIX = "umj";
+    private static final String DEFAULT_PREFIX = "def";
+    private static final String UPDATED_PREFIX = "new";
+    private static final String OTHER_PREFIX_BASE = "o";
 
-    private static final String DEFAULT_NAME = "AAAAAAAAAA";
-    private static final String UPDATED_NAME = "BBBBBBBBBB";
+    private static final String DEFAULT_NAME = "Default GmbH";
+    private static final String UPDATED_NAME = "Updated Default GmbH";
+    private static final String OTHER_NAME_BASE = "Other Corp.";
 
-    private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "Default Address";
+    private static final String UPDATED_CONTRACTUAL_ADDRESS = "Updated Address";
+    private static final String OTHER_CONTRACTUAL_ADDRESS_BASE = "Other Street ";
 
-    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_SALUTATION = "Default Contractual Salutation";
+    private static final String UPDATED_CONTRACTUAL_SALUTATION = "Update Contractual Salutation";
 
-    private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
+    private static final String DEFAULT_BILLING_ADDRESS = "Default Billing Address";
+    private static final String UPDATED_BILLING_ADDRESS = "Updated Billing Address";
 
-    private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_BILLING_SALUTATION = "Default Billing Salutation";
+    private static final String UPDATED_BILLING_SALUTATION = "Updted Billing Salutation";
 
-    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
-    private static final String UPDATED_REMARK = "BBBBBBBBBB";
+    private static final String DEFAULT_REMARK = "Default Remark";
+    private static final String UPDATED_REMARK = "Updated Remark";
+
+    private static int otherCounter = 0;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -129,7 +134,26 @@ public class CustomerResourceIntTest {
             .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
             .billingSalutation(DEFAULT_BILLING_SALUTATION)
             .billingAddress(DEFAULT_BILLING_ADDRESS)
+            .billingSalutation(DEFAULT_BILLING_SALUTATION)
             .remark(DEFAULT_REMARK);
+        return customer;
+    }
+
+    /**
+     * Create another entity for tests.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static Customer createPersistentEntity(EntityManager em) {
+        Customer customer = new Customer()
+            .reference(OTHER_REFERENCE_BASE + otherCounter)
+            .prefix(OTHER_PREFIX_BASE + String.format("%02d", otherCounter))
+            .name(OTHER_NAME_BASE + otherCounter)
+            .contractualAddress(OTHER_CONTRACTUAL_ADDRESS_BASE + otherCounter);
+        em.persist(customer);
+        em.flush();
+        ++otherCounter;
         return customer;
     }
 
@@ -645,7 +669,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em);
+        Membership membership = MembershipResourceIntTest.createPersistentEntity(em, createPersistentEntity(em));
         em.persist(membership);
         em.flush();
         customer.addMembership(membership);
@@ -664,7 +688,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersBySepamandateIsEqualToSomething() throws Exception {
         // Initialize the database
-        SepaMandate sepamandate = SepaMandateResourceIntTest.createEntity(em);
+        SepaMandate sepamandate = SepaMandateResourceIntTest.createEntity(em, createPersistentEntity(em));
         em.persist(sepamandate);
         em.flush();
         customer.addSepamandate(sepamandate);
