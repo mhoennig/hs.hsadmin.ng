@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 public class CustomerDTOUnitTest {
 
-
     @Autowired
     private ObjectMapper objectMapper;
 
