@@ -3,6 +3,7 @@ package org.hostsharing.hsadminng.service.dto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hostsharing.hsadminng.security.SecurityUtils;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenLoginUserWithRole;
 import static org.junit.Assert.assertEquals;
 
 @JsonTest
@@ -30,7 +32,7 @@ public class CustomerDTOUnitTest {
 
         // given
         CustomerDTO given = createSomeCustomerDTO();
-        givenLoginUserWithRole("ANY_CUSTOMER_USER");
+        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
 
         // when
         String actual = objectMapper.writeValueAsString(given);
@@ -49,7 +51,7 @@ public class CustomerDTOUnitTest {
 
         // given
         CustomerDTO given = createSomeCustomerDTO();
-        givenLoginUserWithRole("SUPPORTER");
+        givenLoginUserWithRole(Role.SUPPORTER);
 
         // when
         String actual = objectMapper.writeValueAsString(given);
@@ -62,7 +64,7 @@ public class CustomerDTOUnitTest {
     public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
         String json = "{\"id\":1234,\"reference\":10001,\"prefix\":\"abc\",\"name\":\"Mein Name\",\"contractualAddress\":\"Eine Adresse\",\"contractualSalutation\":\"Hallo\",\"billingAddress\":\"Noch eine Adresse\",\"billingSalutation\":\"Moin\",\"remark\":\"Eine Bemerkung\"}";
-        givenLoginUserWithRole("CONTRACTUAL_CONTACT");
+        givenLoginUserWithRole(Role.CONTRACTUAL_CONTACT);
 
         // when
         CustomerDTO actual = objectMapper.readValue(json, CustomerDTO.class);
@@ -119,13 +121,5 @@ public class CustomerDTOUnitTest {
         given.setBillingSalutation("Moin");
         given.setRemark("Eine Bemerkung");
         return given;
-    }
-
-    private void givenLoginUserWithRole(String userName) {
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(userName, userName));
-        SecurityContextHolder.setContext(securityContext);
-        Optional<String> login = SecurityUtils.getCurrentUserLogin();
-        assertThat(login).describedAs("precondition failed").contains(userName);
     }
 }

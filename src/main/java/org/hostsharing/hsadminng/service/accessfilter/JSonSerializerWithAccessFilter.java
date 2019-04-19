@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.apache.commons.lang3.NotImplementedException;
 import org.hostsharing.hsadminng.security.SecurityUtils;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.springframework.boot.jackson.JsonComponent;
 
 import java.io.IOException;
@@ -18,20 +17,22 @@ import java.lang.reflect.Method;
 public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
 
     @Override
-    public void serialize(Object dto, JsonGenerator jsonGenerator,
-                          SerializerProvider serializerProvider) throws IOException {
+    public void serialize(final Object dto, final JsonGenerator jsonGenerator,
+                          final SerializerProvider serializerProvider) throws IOException {
 
+        // TODO: move the implementation to an (if necessary, inner) class
         jsonGenerator.writeStartObject();
-        for (Field prop : CustomerDTO.class.getDeclaredFields()) {
+        for (Field prop : dto.getClass().getDeclaredFields()) {
             toJSon(dto, jsonGenerator, prop);
         }
 
         jsonGenerator.writeEndObject();
     }
 
-    private void toJSon(Object dto, JsonGenerator jsonGenerator, Field prop) throws IOException {
+    private void toJSon(final Object dto, final JsonGenerator jsonGenerator, final Field prop) throws IOException {
         if (getLoginUserRole().isAllowedToRead(prop)) {
             final String fieldName = prop.getName();
+            // TODO: maybe replace by serializerProvider.defaultSerialize...()?
             if (Integer.class.isAssignableFrom(prop.getType()) || int.class.isAssignableFrom(prop.getType())) {
                 jsonGenerator.writeNumberField(fieldName, (int) get(dto, prop));
             } else if (Long.class.isAssignableFrom(prop.getType()) || long.class.isAssignableFrom(prop.getType())) {
@@ -44,25 +45,16 @@ public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
         }
     }
 
-    private Object get(Object dto, Field field) {
+    private Object get(final Object dto, final Field field) {
         try {
             field.setAccessible(true);
             return field.get(dto);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("getting field " + field + " failed", e);
         }
     }
 
     private Role getLoginUserRole() {
         return SecurityUtils.getCurrentUserLogin().map(u -> Role.valueOf(u.toUpperCase())).orElse(Role.ANYBODY);
     }
-
-    private Object invoke(Object dto, Method method) {
-        try {
-            return method.invoke(dto);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }
