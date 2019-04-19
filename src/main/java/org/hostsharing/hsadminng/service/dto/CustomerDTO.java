@@ -179,59 +179,6 @@ public class CustomerDTO implements Serializable {
     }
 
     @JsonComponent
-    public static class JsonSerializerWithAccessFilter extends JsonSerializer<Object> {
-
-        @Override
-        public void serialize(Object dto, JsonGenerator jsonGenerator,
-                              SerializerProvider serializerProvider) throws IOException {
-
-            jsonGenerator.writeStartObject();
-            for (Field prop : CustomerDTO.class.getDeclaredFields()) {
-                toJSon(dto, jsonGenerator, prop);
-            }
-
-            jsonGenerator.writeEndObject();
-        }
-
-        private void toJSon(Object dto, JsonGenerator jsonGenerator, Field prop) throws IOException {
-            if (getLoginUserRole().isAllowedToRead(prop)) {
-                final String fieldName = prop.getName();
-                if (Integer.class.isAssignableFrom(prop.getType()) || int.class.isAssignableFrom(prop.getType())) {
-                    jsonGenerator.writeNumberField(fieldName, (int) get(dto, prop));
-                } else if (Long.class.isAssignableFrom(prop.getType()) || long.class.isAssignableFrom(prop.getType())) {
-                    jsonGenerator.writeNumberField(fieldName, (long) get(dto, prop));
-                } else if (String.class.isAssignableFrom(prop.getType())) {
-                    jsonGenerator.writeStringField(fieldName, (String) get(dto, prop));
-                } else {
-                    throw new NotImplementedException("property type not yet implemented" + prop);
-                }
-            }
-        }
-
-        private Object get(Object dto, Field field) {
-            try {
-                field.setAccessible(true);
-                return field.get(dto);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private Role getLoginUserRole() {
-            return SecurityUtils.getCurrentUserLogin().map(u -> Role.valueOf(u.toUpperCase())).orElse(Role.ANYBODY);
-        }
-
-        private Object invoke(Object dto, Method method) {
-            try {
-                return method.invoke(dto);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-    }
-
-    @JsonComponent
     public static class UserJsonDeserializer extends JsonDeserializer<CustomerDTO> {
 
         @Override
