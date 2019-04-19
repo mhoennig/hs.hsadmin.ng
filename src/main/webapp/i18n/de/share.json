@@ -2,25 +2,25 @@
     "hsadminNgApp": {
         "share": {
             "home": {
-                "title": "Shares",
-                "createLabel": "Share erstellen",
-                "createOrEditLabel": "Share erstellen oder bearbeiten"
+                "title": "Geschäftsanteil-Transaktionen",
+                "createLabel": "Geschäftsanteil-Transaktion erfassen",
+                "createOrEditLabel": "Geschäftsanteil-Transaktion erfassen oder bearbeiten"
             },
-            "created": "Share erstellt mit ID {{ param }}",
-            "updated": "Share aktualisiert mit ID {{ param }}",
-            "deleted": "Share gelöscht mit ID {{ param }}",
+            "created": "Geschäftsanteil-Transaktion erfasst mit ID {{ param }}",
+            "updated": "Geschäftsanteil-Transaktion aktualisiert mit ID {{ param }}",
+            "deleted": "Geschäftsanteil-Transaktion gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Share {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Geschäftsanteil-Transaktion {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Share"
+                "title": "Geschäftsanteil-Transaktion"
             },
-            "documentDate": "Document Date",
-            "valueDate": "Value Date",
-            "action": "Action",
-            "quantity": "Quantity",
-            "remark": "Remark",
-            "membership": "Membership"
+            "documentDate": "Belegdatum",
+            "valueDate": "Buchungsdatum",
+            "action": "Aktion",
+            "quantity": "Anzahl",
+            "remark": "Bemerkung",
+            "membership": "zugehörige Mitgliedschaft"
         }
     }
 }

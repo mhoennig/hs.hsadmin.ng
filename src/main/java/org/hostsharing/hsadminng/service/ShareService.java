@@ -28,9 +28,12 @@ public class ShareService {
 
     private final ShareMapper shareMapper;
 
-    public ShareService(ShareRepository shareRepository, ShareMapper shareMapper) {
+    private final ShareValidator shareValidator;
+
+    public ShareService(ShareRepository shareRepository, ShareMapper shareMapper, ShareValidator shareValidator) {
         this.shareRepository = shareRepository;
         this.shareMapper = shareMapper;
+        this.shareValidator = shareValidator;
     }
 
     /**
@@ -42,16 +45,8 @@ public class ShareService {
     public ShareDTO save(ShareDTO shareDTO) {
         log.debug("Request to save Share : {}", shareDTO);
 
-        if (shareDTO.getId() != null) {
-            throw new BadRequestAlertException("Share transactions are immutable", Share.ENTITY_NAME, "shareTransactionImmutable");
-        }
+        shareValidator.validate(shareDTO);
 
-        if((shareDTO.getAction() == ShareAction.SUBSCRIPTION) && (shareDTO.getQuantity() <= 0)) {
-            throw new BadRequestAlertException("Share subscriptions require a positive quantity", Share.ENTITY_NAME, "shareSubscriptionPositivQuantity");
-        }
-        if((shareDTO.getAction() == ShareAction.CANCELLATION) && (shareDTO.getQuantity() >= 0)) {
-            throw new BadRequestAlertException("Share cancellations require a negative quantity", Share.ENTITY_NAME, "shareCancellationNegativeQuantity");
-        }
         Share share = shareMapper.toEntity(shareDTO);
         share = shareRepository.save(share);
         return shareMapper.toDto(share);

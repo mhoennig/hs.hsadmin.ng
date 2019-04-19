@@ -26,10 +26,12 @@ public class AssetService {
     private final AssetRepository assetRepository;
 
     private final AssetMapper assetMapper;
+    private final AssetValidator assetValidator;
 
-    public AssetService(AssetRepository assetRepository, AssetMapper assetMapper) {
+    public AssetService(AssetRepository assetRepository, AssetMapper assetMapper, AssetValidator assetValidator ) {
         this.assetRepository = assetRepository;
         this.assetMapper = assetMapper;
+        this.assetValidator = assetValidator;
     }
 
     /**
@@ -40,6 +42,9 @@ public class AssetService {
      */
     public AssetDTO save(AssetDTO assetDTO) {
         log.debug("Request to save Asset : {}", assetDTO);
+
+        assetValidator.validate(assetDTO);
+
         Asset asset = assetMapper.toEntity(assetDTO);
         asset = assetRepository.save(asset);
         return assetMapper.toDto(asset);

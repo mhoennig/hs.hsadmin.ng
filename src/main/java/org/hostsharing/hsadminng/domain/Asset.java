@@ -21,6 +21,8 @@ import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 public class Asset implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String ENTITY_NAME = "asset";
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")

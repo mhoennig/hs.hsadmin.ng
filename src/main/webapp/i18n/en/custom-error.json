@@ -1,10 +1,17 @@
 {
     "error": {
-        "shareSubscriptionPositivQuantity": "Share subscriptions require a positive quantity",
+        "shareSubscriptionPositiveQuantity": "Share subscriptions require a positive quantity",
         "shareCancellationNegativeQuantity": "Share cancellations require a negative quantity",
         "shareTransactionImmutable": "Share transactions are immutable",
         "membershipNotDeletable": "Membership cannot be deleted, instead set 'untilDate'",
         "untilDateMustBeAfterSinceDate": "Membership until date must be after since date",
-        "anotherUncancelledMembershipExists": "Only a single uncancelled membership allowed per customer"
+        "documentDateMayNotBeAfterValueDate": "Document date may not be after value date",
+        "anotherUncancelledMembershipExists": "Only a single uncancelled membership allowed per customer",
+        "assetPaymentsPositiveAmount": "Asset payments require a positive amount",
+        "assetAdoptionsPositiveAmount": "Asset adoptions require a positive amount",
+        "assetPaybacksNegativeAmount": "Asset paybacks require a negative amount",
+        "assetHandoversNegativeAmount": "Asset handovers require a negative amount",
+        "assetLossesNegativeAmount": "Asset losses require a negative amount",
+        "assetClearingsNegativeAmount": "Asset clearings require a negative amount"
     }
 }
