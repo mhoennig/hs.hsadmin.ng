@@ -74,13 +74,8 @@ public class AssetResource {
     @PutMapping("/assets")
     public ResponseEntity<AssetDTO> updateAsset(@Valid @RequestBody AssetDTO assetDTO) throws URISyntaxException {
         log.debug("REST request to update Asset : {}", assetDTO);
-        if (assetDTO.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        AssetDTO result = assetService.save(assetDTO);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, assetDTO.getId().toString()))
-            .body(result);
+        // TODO mhoennig: Rather completely remove the endpoint?
+        throw new BadRequestAlertException("Assets are immutable", ENTITY_NAME, "assetTransactionImmutable");
     }
 
     /**
@@ -132,7 +127,7 @@ public class AssetResource {
     @DeleteMapping("/assets/{id}")
     public ResponseEntity<Void> deleteAsset(@PathVariable Long id) {
         log.debug("REST request to delete Asset : {}", id);
-        assetService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        // TODO mhoennig: Rather completely remove the endpoint?
+        throw new BadRequestAlertException("Asset are immutable", ENTITY_NAME, "assetTransactionImmutable");
     }
 }

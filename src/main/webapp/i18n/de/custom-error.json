@@ -6,6 +6,7 @@
         "membershipNotDeletable": "Mitgliedschaft kann nicht gelöscht werden, setze stattdessen das 'untilDate'",
         "untilDateMustBeAfterSinceDate": "Mitgliedshaftsaustrittsdatum muss nach dem Beitrittsdatum liegen",
         "documentDateMayNotBeAfterValueDate": "Belegdatum darf nicht vor dem Buchungsdatum liegen",
+        "assetTransactionImmutable": "Transaktionen mit Geschäftsguthaben sind unveränderlich",
         "anotherUncancelledMembershipExists": "Nur eine einzige ungekündigte Mitgliedschaft pro Kunde ist zulässig",
         "assetPaymentsPositiveAmount": "Einzahlungen von Geschäftsguthaben erfordern einen positiven Betrag",
         "assetAdoptionsPositiveAmount": "Übernahmen von Geschäftsguthaben erfordern einen positiven Betrag",

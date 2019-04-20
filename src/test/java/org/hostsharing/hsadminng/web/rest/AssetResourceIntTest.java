@@ -689,11 +689,11 @@ public class AssetResourceIntTest {
         // Delete the asset
         restAssetMockMvc.perform(delete("/api/assets/{id}", asset.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the database still contains the same number of assets
         List<Asset> assetList = assetRepository.findAll();
-        assertThat(assetList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(assetList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test
