@@ -1,7 +1,9 @@
 package org.hostsharing.hsadminng.service;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Test;
@@ -17,10 +19,19 @@ public class ShareValidatorUnitTest {
     private ShareValidator shareValidator = new ShareValidator();
 
     @Test
-    public void shouldAcceptValidShareDTO() {
+    public void shouldAcceptValidSubscription() {
         new GivenShareValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(ShareAction.SUBSCRIPTION).withQuantity(1)
+            .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
+            .thenActualException().isNull();
+    }
+
+    @Test
+    public void shouldAcceptValidCancellation() {
+        new GivenShareValidationTestCase()
+            .withAnyValidDateValues()
+            .withAction(ShareAction.CANCELLATION).withQuantity(-1)
             .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
             .thenActualException().isNull();
     }
@@ -32,6 +43,15 @@ public class ShareValidatorUnitTest {
             .withAction(ShareAction.SUBSCRIPTION).withQuantity(1)
             .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
             .thenActualException().isNull();
+    }
+
+    @Test
+    public void shouldRejectUpdates() {
+        new GivenShareValidationTestCase()
+            .withId(RandomUtils.nextLong())
+            .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
+            .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
+            "Share transactions are immutable", "share", "shareTransactionImmutable"));
     }
 
     @Test
@@ -47,7 +67,7 @@ public class ShareValidatorUnitTest {
     @Test
     public void shouldRejectIfSubscriptionWithNegativeQuantity() {
         new GivenShareValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(ShareAction.SUBSCRIPTION).withQuantity(-1)
             .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -57,7 +77,7 @@ public class ShareValidatorUnitTest {
     @Test
     public void shouldRejectIfSubscriptionWithZeroQuantity() {
         new GivenShareValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(ShareAction.SUBSCRIPTION).withQuantity(0)
             .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -67,7 +87,7 @@ public class ShareValidatorUnitTest {
     @Test
     public void shouldRejectIfCancellationWithPositiveQuantity() {
         new GivenShareValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(ShareAction.CANCELLATION).withQuantity(1)
             .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -77,7 +97,7 @@ public class ShareValidatorUnitTest {
     @Test
     public void shouldRejectIfCancellationWithZeroQuantity() {
         new GivenShareValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(ShareAction.CANCELLATION).withQuantity(0)
             .when((ShareDTO shareDto) -> shareValidator.validate(shareDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -92,6 +112,11 @@ public class ShareValidatorUnitTest {
         private final ShareDTO shareDto = new ShareDTO();
         private BadRequestAlertException actualException;
 
+        public GivenShareValidationTestCase withId(long id) {
+            shareDto.setId(id);
+            return this;
+        }
+
         GivenShareValidationTestCase withDocumentDate(String documentDate) {
             shareDto.setDocumentDate(LocalDate.parse(documentDate));
             return this;
@@ -100,6 +125,10 @@ public class ShareValidatorUnitTest {
         GivenShareValidationTestCase withValueDate(String valueDate) {
             shareDto.setValueDate(LocalDate.parse(valueDate));
             return this;
+        }
+
+        public GivenShareValidationTestCase withAnyValidDateValues() {
+            return withDocumentDate("2019-04-11").withValueDate("2019-04-12");
         }
 
         GivenShareValidationTestCase withAction(ShareAction shareAction) {

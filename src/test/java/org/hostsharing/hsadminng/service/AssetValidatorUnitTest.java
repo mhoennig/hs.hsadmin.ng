@@ -1,5 +1,7 @@
 package org.hostsharing.hsadminng.service;
 
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.RandomUtils;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
@@ -18,12 +20,25 @@ public class AssetValidatorUnitTest {
     private AssetValidator assetValidator = new AssetValidator();
 
     @Test
-    public void shouldAcceptValidAssetDTO() {
-        new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
-            .withAction(AssetAction.PAYMENT).withAmount("64.00")
-            .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
-            .thenActualException().isNull();
+    public void shouldAcceptValidIncreasingTransaction() {
+        for (AssetAction action : ImmutableList.of(AssetAction.PAYMENT, AssetAction.ADOPTION)) {
+            new GivenAssetValidationTestCase()
+                .withAnyValidDateValues()
+                .withAction(action).withAmount("64.00")
+                .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
+                .thenActualException().isNull();
+        }
+    }
+
+    @Test
+    public void shouldAcceptValidDecreasingTransaction() {
+        for (AssetAction action : ImmutableList.of(AssetAction.PAYBACK, AssetAction.HANDOVER, AssetAction.CLEARING, AssetAction.LOSS)) {
+            new GivenAssetValidationTestCase()
+                .withAnyValidDateValues()
+                .withAction(action).withAmount("-64.00")
+                .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
+                .thenActualException().isNull();
+        }
     }
 
     @Test
@@ -33,6 +48,15 @@ public class AssetValidatorUnitTest {
             .withAction(AssetAction.PAYMENT).withAmount("64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isNull();
+    }
+
+    @Test
+    public void shouldRejectUpdates() {
+        new GivenAssetValidationTestCase()
+            .withId(RandomUtils.nextLong())
+            .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
+            .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
+            "Asset transactions are immutable", "asset", "assetTransactionImmutable"));
     }
 
     @Test
@@ -48,7 +72,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfPaymentWithNegativeAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.PAYMENT).withAmount("-64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -58,7 +82,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfPaymentWithZeroAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.PAYMENT).withAmount("0.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -68,7 +92,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfAdoptionWithNegativeAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.ADOPTION).withAmount("-64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -78,7 +102,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfAdoptionWithZeroAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.ADOPTION).withAmount("0.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -88,7 +112,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfPaybackWithPositiveAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.PAYBACK).withAmount("64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -98,7 +122,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfPaybackWithZeroAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.PAYBACK).withAmount("0.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -108,7 +132,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfHandoverWithPositiveAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.HANDOVER).withAmount("64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -118,7 +142,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfHandoverWithZeroAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.HANDOVER).withAmount("0.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -128,7 +152,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfLossWithPositiveAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.LOSS).withAmount("64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -138,7 +162,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfLossWithZeroAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.LOSS).withAmount("0.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -148,7 +172,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfClearingWithPositiveAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.CLEARING).withAmount("64.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -158,7 +182,7 @@ public class AssetValidatorUnitTest {
     @Test
     public void shouldRejectIfClearingWithZeroAmount() {
         new GivenAssetValidationTestCase()
-            .withDocumentDate("2019-04-11").withValueDate("2019-04-12")
+            .withAnyValidDateValues()
             .withAction(AssetAction.CLEARING).withAmount("0.00")
             .when((AssetDTO assetDto) -> assetValidator.validate(assetDto))
             .thenActualException().isEqualToComparingFieldByField(new BadRequestAlertException(
@@ -173,6 +197,11 @@ public class AssetValidatorUnitTest {
         private final AssetDTO assetDto = new AssetDTO();
         private BadRequestAlertException actualException;
 
+        public GivenAssetValidationTestCase withId(long id) {
+            assetDto.setId(id);
+            return this;
+        }
+
         GivenAssetValidationTestCase withDocumentDate(String documentDate) {
             assetDto.setDocumentDate(LocalDate.parse(documentDate));
             return this;
@@ -181,6 +210,10 @@ public class AssetValidatorUnitTest {
         GivenAssetValidationTestCase withValueDate(String valueDate) {
             assetDto.setValueDate(LocalDate.parse(valueDate));
             return this;
+        }
+
+        public GivenAssetValidationTestCase withAnyValidDateValues() {
+            return withDocumentDate("2019-04-11").withValueDate("2019-04-12");
         }
 
         GivenAssetValidationTestCase withAction(AssetAction assetAction) {
