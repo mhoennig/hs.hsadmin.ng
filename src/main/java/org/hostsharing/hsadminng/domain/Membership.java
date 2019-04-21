@@ -129,16 +129,6 @@ public class Membership implements Serializable {
         return this;
     }
 
-    public Membership removeShare(Share share) {
-        this.shares.remove(share);
-        share.setMembership(null);
-        return this;
-    }
-
-    public void setShares(Set<Share> shares) {
-        this.shares = shares;
-    }
-
     public Set<Asset> getAssets() {
         return assets;
     }
@@ -152,16 +142,6 @@ public class Membership implements Serializable {
         this.assets.add(asset);
         asset.setMembership(this);
         return this;
-    }
-
-    public Membership removeAsset(Asset asset) {
-        this.assets.remove(asset);
-        asset.setMembership(null);
-        return this;
-    }
-
-    public void setAssets(Set<Asset> assets) {
-        this.assets = assets;
     }
 
     public Customer getCustomer() {

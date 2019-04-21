@@ -195,16 +195,6 @@ public class Customer implements Serializable {
         return this;
     }
 
-    public Customer removeMembership(Membership membership) {
-        this.memberships.remove(membership);
-        membership.setCustomer(null);
-        return this;
-    }
-
-    public void setMemberships(Set<Membership> memberships) {
-        this.memberships = memberships;
-    }
-
     public Set<SepaMandate> getSepamandates() {
         return sepamandates;
     }
@@ -220,15 +210,6 @@ public class Customer implements Serializable {
         return this;
     }
 
-    public Customer removeSepamandate(SepaMandate sepaMandate) {
-        this.sepamandates.remove(sepaMandate);
-        sepaMandate.setCustomer(null);
-        return this;
-    }
-
-    public void setSepamandates(Set<SepaMandate> sepaMandates) {
-        this.sepamandates = sepaMandates;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override

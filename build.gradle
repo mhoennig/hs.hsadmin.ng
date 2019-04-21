@@ -208,12 +208,29 @@ task cucumberTestReport(type: TestReport) {
 
 pitest {
     targetClasses = ['org.hostsharing.hsadminng.*']
+
+    excludedClasses = [
+                        // Unit Testing Spring configurations makes little sense in most cases.
+                        'org.hostsharing.hsadminng.config.*',
+                        'org.hostsharing.hsadminng.ApplicationWebXml',
+                        'org.hostsharing.hsadminng.HsadminNgApp',
+
+                        // Unit testing this would need PowerMock and
+                        // blackbox testing of random values has little value.
+                        'org.hostsharing.hsadminng.service.util.RandomUtil',
+
+                        // The following are mostly generated classes,
+                        // as soon as we amend these, consider removing the exclude.
+                        'org.hostsharing.hsadminng.**Criteria',
+                        'org.hostsharing.hsadminng.aop.logging.*',
+                        'org.hostsharing.hsadminng.web.api.*' // API helpers, not the API itself
+                      ]
     threads = 2
 
-    // Do not set these limit even lower, they are already pretty bad values!
-    // 83%*78% means that only ~66% of the code is properly covered by automated tests.
-    mutationThreshold = 78
-    coverageThreshold = 83
+    // Do not set these limit lower! 90% each might sound good, but keep in mind:
+    // 90%*90% means that ~81% of the code are properly covered by automated tests.
+    mutationThreshold = 90
+    coverageThreshold = 90
 
     outputFormats = ['XML', 'HTML']
     timestampedReports = false
