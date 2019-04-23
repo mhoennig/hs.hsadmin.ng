@@ -36,7 +36,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
 
     @Test
     public void shouldSerializeStringField() throws IOException {
-    // when
+        // when
         new JSonSerializerWithAccessFilter().serialize(givenDTO, jsonGenerator, null);
 
         // then

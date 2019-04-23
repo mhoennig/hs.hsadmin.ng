@@ -175,9 +175,9 @@ public class CustomerDTO implements Serializable {
 
         @Override
         public CustomerDTO deserialize(final JsonParser jsonParser,
-                                       final DeserializationContext deserializationContext) throws IOException {
+                                       final DeserializationContext deserializationContext) {
 
-           return new JSonDeserializerWithAccessFilter<CustomerDTO>(jsonParser, deserializationContext, CustomerDTO.class).deserialize();
+           return new JSonDeserializerWithAccessFilter<>(jsonParser, deserializationContext, CustomerDTO.class).deserialize();
         }
     }
 }

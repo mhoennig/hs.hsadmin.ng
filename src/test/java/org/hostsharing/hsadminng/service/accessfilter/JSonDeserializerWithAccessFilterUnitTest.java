@@ -1,8 +1,14 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,6 +21,7 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenLoginUserWithRole;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -24,68 +31,55 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    public JsonGenerator jsonGenerator;
+    public JsonParser jsonParser;
+
+    @Mock
+    public ObjectCodec codec;
+
+    @Mock
+    public TreeNode treeNode;
 
     @Before
-    public void init() {
+    public void init() throws IOException {
         givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+
+        given(jsonParser.getCodec()).willReturn(codec);
     }
 
     @Test
     public void shouldDeserializeStringField() throws IOException {
         // given
-        final String givenJSon = asJSon(ImmutablePair.of("stringField", "String Value"));
+        givenJSonTree(asJSon(ImmutablePair.of("openStringField", "String Value")));
 
         // when
-        new JSonDeserializerWithAccessFilter<C>().deserialize(givenJSon, jsonGenerator, null);
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
 
         // then
-        verify(jsonGenerator).writeStringField("openStringField", givenDTO.openStringField);
+        assertThat(actualDto.openStringField).isEqualTo("String Value");
     }
 
     @Test
-    public void shouldSerializeRestrictedFieldIfRequiredRoleIsCoveredByUser() throws IOException {
-
+    public void shouldDeserializeIntegerField() throws IOException {
         // given
-        givenLoginUserWithRole(Role.FINANCIAL_CONTACT);
+        givenJSonTree(asJSon(ImmutablePair.of("openIntegerField", 1234)));
 
         // when
-        new JSonSerializerWithAccessFilter().serialize(givenDTO, jsonGenerator, null);
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
 
         // then
-        verify(jsonGenerator).writeStringField("restrictedField", givenDTO.restrictedField);
+        assertThat(actualDto.openIntegerField).isEqualTo(1234);
     }
 
     @Test
-    public void shouldNotSerializeRestrictedFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
-
+    public void shouldDeserializeLongField() throws IOException {
         // given
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        givenJSonTree(asJSon(ImmutablePair.of("openLongField", 1234L)));
 
         // when
-        new JSonSerializerWithAccessFilter().serialize(givenDTO, jsonGenerator, null);
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
 
         // then
-        verify(jsonGenerator, never()).writeStringField("restrictedField", givenDTO.restrictedField);
-    }
-
-    @Test
-    public void shouldThrowExceptionForUnimplementedFieldType() throws IOException {
-
-        // given
-        class Arbitrary {
-        }
-        class GivenDtoWithUnimplementedFieldType {
-            @AccessFor(read = Role.ANYBODY)
-            Arbitrary fieldWithUnimplementedType;
-        }
-        final GivenDtoWithUnimplementedFieldType givenDto = new GivenDtoWithUnimplementedFieldType();
-
-        // when
-        Throwable actual = catchThrowable(() -> new JSonSerializerWithAccessFilter().serialize(givenDto, jsonGenerator, null));
-
-        // then
-        assertThat(actual).isInstanceOf(NotImplementedException.class);
+        assertThat(actualDto.openLongField).isEqualTo(1234L);
     }
 
     // --- fixture code below ---
@@ -105,11 +99,15 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         return "{\n" + json.substring(0, json.length()-2) + "\n}";
     }
 
+    private void givenJSonTree(String givenJSon) throws IOException {
+        given(codec.readTree(jsonParser)).willReturn(new ObjectMapper().readTree(givenJSon));
+    }
+
     private String inQuotes(Object value) {
         return "\"" + value.toString() + "\"";
     }
 
-    private static class GivenDto {
+    public static class GivenDto {
         @AccessFor(update = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
         String restrictedField;
 

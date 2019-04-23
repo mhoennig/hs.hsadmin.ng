@@ -40,7 +40,7 @@ public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
             } else if (String.class.isAssignableFrom(prop.getType())) {
                 jsonGenerator.writeStringField(fieldName, (String) get(dto, prop));
             } else {
-                throw new NotImplementedException("property type not yet implemented" + prop);
+                throw new NotImplementedException("property type not yet implemented: " + prop);
             }
         }
     }
