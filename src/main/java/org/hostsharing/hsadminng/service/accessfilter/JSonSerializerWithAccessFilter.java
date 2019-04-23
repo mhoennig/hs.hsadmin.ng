@@ -33,6 +33,9 @@ public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
         if (getLoginUserRole().isAllowedToRead(prop)) {
             final String fieldName = prop.getName();
             // TODO: maybe replace by serializerProvider.defaultSerialize...()?
+            //  But that's difficult for parallel structure with the deserializer, where the API is ugly.
+            //  Alternatively extract the supported types to subclasses of some abstract class and
+            //  here as well as in the deserializer just access the matching implementation through a map.
             if (Integer.class.isAssignableFrom(prop.getType()) || int.class.isAssignableFrom(prop.getType())) {
                 jsonGenerator.writeNumberField(fieldName, (int) get(dto, prop));
             } else if (Long.class.isAssignableFrom(prop.getType()) || long.class.isAssignableFrom(prop.getType())) {
