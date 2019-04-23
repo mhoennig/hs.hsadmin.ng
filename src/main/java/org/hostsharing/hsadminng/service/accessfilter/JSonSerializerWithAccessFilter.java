@@ -20,7 +20,9 @@ public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
     public void serialize(final Object dto, final JsonGenerator jsonGenerator,
                           final SerializerProvider serializerProvider) throws IOException {
 
-        // TODO: move the implementation to an (if necessary, inner) class
+        // TODO: Move the implementation to an (if necessary, inner) class, or maybe better
+        //  expose just the inner implementation from an explicit @JsonCompontent
+        //  as it's necessary for the deserializers anyway.
         jsonGenerator.writeStartObject();
         for (Field prop : dto.getClass().getDeclaredFields()) {
             toJSon(dto, jsonGenerator, prop);
