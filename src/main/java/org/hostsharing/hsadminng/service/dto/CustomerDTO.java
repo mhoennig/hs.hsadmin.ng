@@ -2,17 +2,11 @@ package org.hostsharing.hsadminng.service.dto;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
-import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializerWithAccessFilter;
-import org.hostsharing.hsadminng.service.accessfilter.JSonSerializerWithAccessFilter;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.springframework.boot.jackson.JsonComponent;
 
 import javax.validation.constraints.*;
@@ -25,6 +19,7 @@ import java.util.Objects;
  */
 public class CustomerDTO implements Serializable {
 
+    @SelfId
     @AccessFor(read = Role.ANY_CUSTOMER_USER)
     private Long id;
 

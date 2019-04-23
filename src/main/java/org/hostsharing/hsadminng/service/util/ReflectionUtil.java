@@ -26,6 +26,15 @@ public class ReflectionUtil {
         }
     }
 
+    public static <T> Object getValue(T dto, Field field) {
+        try {
+            field.setAccessible(true);
+            return field.get(dto);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @FunctionalInterface
     public interface ThrowingSupplier<T> {
         T get() throws Exception;

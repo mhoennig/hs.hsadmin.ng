@@ -5,6 +5,8 @@
         "shareTransactionImmutable": "Share transactions are immutable",
         "membershipNotDeletable": "Membership cannot be deleted, instead set 'untilDate'",
         "untilDateMustBeAfterSinceDate": "Membership until date must be after since date",
-        "anotherUncancelledMembershipExists": "Only a single uncancelled membership allowed per customer"
+        "anotherUncancelledMembershipExists": "Only a single uncancelled membership allowed per customer",
+        "initializationProhibited": "Initialization of the field prohibited",
+        "updateProhibited": "Update of the field prohibited"
     }
 }
