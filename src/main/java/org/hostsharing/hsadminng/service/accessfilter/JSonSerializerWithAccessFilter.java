@@ -13,21 +13,26 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-@JsonComponent
-public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
+public class JSonSerializerWithAccessFilter <T> {
+    private final JsonGenerator jsonGenerator;
+    private final SerializerProvider serializerProvider;
+    private final T dto;
 
-    @Override
-    public void serialize(final Object dto, final JsonGenerator jsonGenerator,
-                          final SerializerProvider serializerProvider) throws IOException {
+    public JSonSerializerWithAccessFilter(final JsonGenerator jsonGenerator,
+                                          final SerializerProvider serializerProvider,
+                                          final T dto) {
+        this.jsonGenerator = jsonGenerator;
+        this.serializerProvider = serializerProvider;
+        this.dto = dto;
+    }
 
-        // TODO: Move the implementation to an (if necessary, inner) class, or maybe better
-        //  expose just the inner implementation from an explicit @JsonCompontent
-        //  as it's necessary for the deserializers anyway.
+    // Jackson serializes into the JsonGenerator, thus no return value needed.
+    public void serialize() throws IOException {
+
         jsonGenerator.writeStartObject();
         for (Field prop : dto.getClass().getDeclaredFields()) {
             toJSon(dto, jsonGenerator, prop);
         }
-
         jsonGenerator.writeEndObject();
     }
 
@@ -35,9 +40,10 @@ public class JSonSerializerWithAccessFilter extends JsonSerializer<Object> {
         if (getLoginUserRole().isAllowedToRead(prop)) {
             final String fieldName = prop.getName();
             // TODO: maybe replace by serializerProvider.defaultSerialize...()?
-            //  But that's difficult for parallel structure with the deserializer, where the API is ugly.
+            //  But that makes it difficult for parallel structure with the deserializer (clumsy API).
             //  Alternatively extract the supported types to subclasses of some abstract class and
             //  here as well as in the deserializer just access the matching implementation through a map.
+            //  Or even completely switch from Jackson to GSON?
             if (Integer.class.isAssignableFrom(prop.getType()) || int.class.isAssignableFrom(prop.getType())) {
                 jsonGenerator.writeNumberField(fieldName, (int) get(dto, prop));
             } else if (Long.class.isAssignableFrom(prop.getType()) || long.class.isAssignableFrom(prop.getType())) {

@@ -37,7 +37,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeStringField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter().serialize(givenDTO, jsonGenerator, null);
+        new JSonSerializerWithAccessFilter<>(jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeStringField("openStringField", givenDTO.openStringField);
@@ -50,10 +50,10 @@ public class JSonSerializerWithAccessFilterUnitTest {
         givenLoginUserWithRole(Role.FINANCIAL_CONTACT);
 
         // when
-        new JSonSerializerWithAccessFilter().serialize(givenDTO, jsonGenerator, null);
+        new JSonSerializerWithAccessFilter<>(jsonGenerator, null, givenDTO).serialize();
 
         // then
-       verify(jsonGenerator).writeStringField("restrictedField", givenDTO.restrictedField);
+        verify(jsonGenerator).writeStringField("restrictedField", givenDTO.restrictedField);
     }
 
     @Test
@@ -63,25 +63,26 @@ public class JSonSerializerWithAccessFilterUnitTest {
         givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
 
         // when
-        new JSonSerializerWithAccessFilter().serialize(givenDTO, jsonGenerator, null);
+        new JSonSerializerWithAccessFilter<>(jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator, never()).writeStringField("restrictedField", givenDTO.restrictedField);
     }
 
     @Test
-    public void shouldThrowExceptionForUnimplementedFieldType() throws IOException {
+    public void shouldThrowExceptionForUnimplementedFieldType() {
 
         // given
-        class Arbitrary {}
+        class Arbitrary {
+        }
         class GivenDtoWithUnimplementedFieldType {
             @AccessFor(read = Role.ANYBODY)
             Arbitrary fieldWithUnimplementedType;
         }
-        final GivenDtoWithUnimplementedFieldType givenDto = new GivenDtoWithUnimplementedFieldType();
+        final GivenDtoWithUnimplementedFieldType givenDtoWithUnimplementedFieldType = new GivenDtoWithUnimplementedFieldType();
 
         // when
-        Throwable actual = catchThrowable(() -> new JSonSerializerWithAccessFilter().serialize(givenDto, jsonGenerator, null));
+        Throwable actual = catchThrowable(() -> new JSonSerializerWithAccessFilter<>(jsonGenerator, null, givenDtoWithUnimplementedFieldType).serialize());
 
         // then
         assertThat(actual).isInstanceOf(NotImplementedException.class);

@@ -20,9 +20,10 @@ public class JSonDeserializerWithAccessFilter<T> {
 
     public JSonDeserializerWithAccessFilter(final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
         this.treeNode = unchecked(() -> jsonParser.getCodec().readTree(jsonParser));
-        this.dto = unchecked(() -> dtoClass.newInstance());
+        this.dto = unchecked(dtoClass::newInstance);
     }
 
+    // Jackson deserializes from the JsonParser, thus no input parameter needed.
     public T deserialize() {
         treeNode.fieldNames().forEachRemaining(fieldName -> {
             try {

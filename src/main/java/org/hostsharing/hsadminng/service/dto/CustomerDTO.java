@@ -1,13 +1,17 @@
 package org.hostsharing.hsadminng.service.dto;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
 import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializerWithAccessFilter;
+import org.hostsharing.hsadminng.service.accessfilter.JSonSerializerWithAccessFilter;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.springframework.boot.jackson.JsonComponent;
 
@@ -171,13 +175,26 @@ public class CustomerDTO implements Serializable {
     }
 
     @JsonComponent
-    public static class UserJsonDeserializer extends JsonDeserializer<CustomerDTO> {
+    public static class CustomerJsonSerializer extends JsonSerializer<CustomerDTO> {
+
+        @Override
+        public void serialize(final CustomerDTO customerDTO, final JsonGenerator jsonGenerator,
+                              final SerializerProvider serializerProvider) throws IOException {
+
+           new JSonSerializerWithAccessFilter<>(jsonGenerator, serializerProvider, customerDTO).serialize();
+        }
+    }
+
+
+
+    @JsonComponent
+    public static class CustomerJsonDeserializer extends JsonDeserializer<CustomerDTO> {
 
         @Override
         public CustomerDTO deserialize(final JsonParser jsonParser,
                                        final DeserializationContext deserializationContext) {
 
-           return new JSonDeserializerWithAccessFilter<>(jsonParser, deserializationContext, CustomerDTO.class).deserialize();
+            return new JSonDeserializerWithAccessFilter<>(jsonParser, deserializationContext, CustomerDTO.class).deserialize();
         }
     }
 }
