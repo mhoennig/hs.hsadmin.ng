@@ -31,8 +31,8 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
-        CustomerDTO given = createSomeCustomerDTO();
         givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        CustomerDTO given = createSomeCustomerDTO();
 
         // when
         String actual = objectMapper.writeValueAsString(given);
@@ -50,8 +50,8 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsSupporter() throws JsonProcessingException {
 
         // given
-        CustomerDTO given = createSomeCustomerDTO();
         givenLoginUserWithRole(Role.SUPPORTER);
+        CustomerDTO given = createSomeCustomerDTO();
 
         // when
         String actual = objectMapper.writeValueAsString(given);
@@ -63,8 +63,8 @@ public class CustomerDTOUnitTest {
     @Test
     public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
-        String json = "{\"id\":1234,\"reference\":10001,\"prefix\":\"abc\",\"name\":\"Mein Name\",\"contractualAddress\":\"Eine Adresse\",\"contractualSalutation\":\"Hallo\",\"billingAddress\":\"Noch eine Adresse\",\"billingSalutation\":\"Moin\",\"remark\":\"Eine Bemerkung\"}";
         givenLoginUserWithRole(Role.CONTRACTUAL_CONTACT);
+        String json = "{\"id\":1234,\"contractualSalutation\":\"Hallo Updated\",\"billingSalutation\":\"Moin Updated\"}";
 
         // when
         CustomerDTO actual = objectMapper.readValue(json, CustomerDTO.class);
@@ -72,15 +72,9 @@ public class CustomerDTOUnitTest {
         // then
         CustomerDTO expected = new CustomerDTO();
         expected.setId(1234L);
-        expected.setReference(10001);
-        expected.setPrefix("abc");
-        expected.setName("Mein Name");
-        expected.setContractualAddress(null); // not allowed
-        expected.setContractualSalutation("Hallo");
-        expected.setBillingAddress("Noch eine Adresse");
-        expected.setBillingSalutation("Moin");
-        expected.setRemark("Eine Bemerkung");
-        assertEquals(actual, expected);
+        expected.setContractualSalutation("Hallo Updated");
+        expected.setBillingSalutation("Moin Updated");
+        assertThat(actual).isEqualToComparingFieldByField(expected);
     }
 
     private String createExpectedJSon(CustomerDTO dto) {
