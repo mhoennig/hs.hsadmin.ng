@@ -127,15 +127,15 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     }
 
     @Test
-    public void should() throws IOException {
+    public void shouldDetectMultipleSelfIdFields() throws IOException {
         // given
-        givenJSonTree(asJSon(ImmutablePair.of("restrictedField", "Restricted String Value")));
+        givenJSonTree(asJSon(ImmutablePair.of("id", 1111L)));
 
         // when
         Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDtoWithMultipleSelfId.class).deserialize());
 
         // then
-        assertThat(exception).isInstanceOf(AssertionError.class).hasMessageContaining("xx");
+        assertThat(exception).isInstanceOf(AssertionError.class).hasMessage("multiple @SelfId detected in GivenDtoWithMultipleSelfId");
     }
 
     // --- only fixture code below ---
@@ -182,7 +182,6 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY)
         Long openLongField;
     }
-
 
     public static class GivenDtoWithMultipleSelfId {
 

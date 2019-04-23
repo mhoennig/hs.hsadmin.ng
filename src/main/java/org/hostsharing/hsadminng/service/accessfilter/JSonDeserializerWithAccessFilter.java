@@ -31,6 +31,24 @@ public class JSonDeserializerWithAccessFilter<T> {
 
     // Jackson deserializes from the JsonParser, thus no input parameter needed.
     public T deserialize() {
+        determineSelfIdField();
+        deserializeValues();
+        checkAccessToModifiedFields();
+        return dto;
+    }
+
+     private void determineSelfIdField() {
+        for (Field field : dto.getClass().getDeclaredFields()) {
+            if (field.isAnnotationPresent(SelfId.class)) {
+                if (selfIdField != null) {
+                    throw new AssertionError("multiple @" + SelfId.class.getSimpleName() + " detected in " + field.getDeclaringClass().getSimpleName());
+                }
+                selfIdField = field;
+            }
+        }
+    }
+
+    private void deserializeValues() {
         treeNode.fieldNames().forEachRemaining(fieldName -> {
             try {
                 final Field field = dto.getClass().getDeclaredField(fieldName);
@@ -41,9 +59,6 @@ public class JSonDeserializerWithAccessFilter<T> {
                 throw new RuntimeException("setting field " + fieldName + " failed", e);
             }
         });
-
-        modifiedFields.forEach(this::checkAccess);
-        return dto;
     }
 
     private Object readValue(final TreeNode treeNode, final Field field) {
@@ -82,29 +97,20 @@ public class JSonDeserializerWithAccessFilter<T> {
         return ReflectionUtil.getValue(dto, selfIdField);
     }
 
-    private void checkAccess(final Field field) {
-        if ( !rememberSelfIdField(field) ) {
-            if (getId() == null) {
-                if (!getLoginUserRole().isAllowedToInit(field)) {
-                    throw new BadRequestAlertException("Initialization of field prohibited for current user", toDisplay(field), "initializationProhibited");
-                }
-            } else if (getId() != null) {
-                if (!getLoginUserRole().isAllowedToUpdate(field)) {
-                    throw new BadRequestAlertException("Update of field prohibited for current user", toDisplay(field), "updateProhibited");
+    private void checkAccessToModifiedFields() {
+        modifiedFields.forEach(field -> {
+            if ( !field.equals(selfIdField) ) {
+                if (getId() == null) {
+                    if (!getLoginUserRole().isAllowedToInit(field)) {
+                        throw new BadRequestAlertException("Initialization of field prohibited for current user", toDisplay(field), "initializationProhibited");
+                    }
+                } else if (getId() != null) {
+                    if (!getLoginUserRole().isAllowedToUpdate(field)) {
+                        throw new BadRequestAlertException("Update of field prohibited for current user", toDisplay(field), "updateProhibited");
+                    }
                 }
             }
-        }
-    }
-
-    private boolean rememberSelfIdField(final Field field) {
-        if ( field.isAnnotationPresent(SelfId.class) ) {
-            if ( selfIdField != null ) {
-                throw new AssertionError("multiple " + SelfId.class + " detected in " + field.getDeclaringClass().getSimpleName() );
-            }
-            selfIdField = field;
-            return true;
-        }
-        return false;
+        });
     }
 
     private String toDisplay(final Field field) {
