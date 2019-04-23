@@ -15,7 +15,6 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenLoginUserWithRole;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -31,7 +30,8 @@ public class JSonSerializerWithAccessFilterUnitTest {
 
     @Before
     public void init() {
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ANY_CUSTOMER_USER);
     }
 
     @Test
@@ -47,7 +47,8 @@ public class JSonSerializerWithAccessFilterUnitTest {
     public void shouldSerializeRestrictedFieldIfRequiredRoleIsCoveredByUser() throws IOException {
 
         // given
-        givenLoginUserWithRole(Role.FINANCIAL_CONTACT);
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
 
         // when
         new JSonSerializerWithAccessFilter<>(jsonGenerator, null, givenDTO).serialize();
@@ -60,7 +61,8 @@ public class JSonSerializerWithAccessFilterUnitTest {
     public void shouldNotSerializeRestrictedFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
 
         // given
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ANY_CUSTOMER_USER);
 
         // when
         new JSonSerializerWithAccessFilter<>(jsonGenerator, null, givenDTO).serialize();
@@ -92,6 +94,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
 
     private GivenDto createSampleDto() {
         final GivenDto dto = new GivenDto();
+        dto.customerId = 888L;
         dto.restrictedField = RandomStringUtils.randomAlphabetic(10);
         dto.openStringField = RandomStringUtils.randomAlphabetic(10);
         dto.openIntegerField = RandomUtils.nextInt();
@@ -99,7 +102,15 @@ public class JSonSerializerWithAccessFilterUnitTest {
         return dto;
     }
 
+    private static class GivenCustomerDto {
+
+    }
+
     private static class GivenDto {
+
+        @ParentId(GivenCustomerDto.class)
+        Long customerId;
+
         @AccessFor(read = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
         String restrictedField;
 

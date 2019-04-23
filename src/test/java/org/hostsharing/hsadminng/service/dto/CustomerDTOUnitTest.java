@@ -2,22 +2,18 @@ package org.hostsharing.hsadminng.service.dto;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenLoginUserWithRole;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.junit.Assert.assertEquals;
 
 @JsonTest
@@ -31,7 +27,8 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        givenAuthenticatedUser();
+        givenUserHavingRole(CustomerDTO.class, null, Role.ANY_CUSTOMER_USER);
         CustomerDTO given = createSomeCustomerDTO();
 
         // when
@@ -50,7 +47,8 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsSupporter() throws JsonProcessingException {
 
         // given
-        givenLoginUserWithRole(Role.SUPPORTER);
+        givenAuthenticatedUser();
+        givenUserHavingRole(CustomerDTO.class, null, Role.SUPPORTER);
         CustomerDTO given = createSomeCustomerDTO();
 
         // when
@@ -63,7 +61,8 @@ public class CustomerDTOUnitTest {
     @Test
     public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
-        givenLoginUserWithRole(Role.CONTRACTUAL_CONTACT);
+        givenAuthenticatedUser();
+        givenUserHavingRole(CustomerDTO.class, null, Role.CONTRACTUAL_CONTACT);
         String json = "{\"id\":1234,\"contractualSalutation\":\"Hallo Updated\",\"billingSalutation\":\"Moin Updated\"}";
 
         // when
@@ -76,6 +75,8 @@ public class CustomerDTOUnitTest {
         expected.setBillingSalutation("Moin Updated");
         assertThat(actual).isEqualToComparingFieldByField(expected);
     }
+
+    // --- only test fixture below ---
 
     private String createExpectedJSon(CustomerDTO dto) {
         String json = // the fields in alphanumeric order:

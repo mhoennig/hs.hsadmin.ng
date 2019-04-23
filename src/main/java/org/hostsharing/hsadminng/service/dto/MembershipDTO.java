@@ -1,7 +1,9 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
+import org.hostsharing.hsadminng.service.accessfilter.ParentId;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SelfId;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -15,6 +17,7 @@ import java.util.function.Consumer;
  */
 public class MembershipDTO implements Serializable {
 
+    @SelfId
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long id;
 
@@ -33,8 +36,8 @@ public class MembershipDTO implements Serializable {
     @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-    // TODO @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
-    // @AccessReference(CustomerDTO.class, Role...)
+    @ParentId(CustomerDTO.class)
+    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private Long customerId;
 
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})

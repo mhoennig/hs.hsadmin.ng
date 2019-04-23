@@ -1,6 +1,5 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import com.fasterxml.jackson.annotation.JsonTypeId;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
@@ -18,7 +17,8 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenLoginUserWithRole;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.mockito.BDDMockito.given;
 
 @SuppressWarnings("ALL")
@@ -38,7 +38,8 @@ public class JSonDeserializerWithAccessFilterUnitTest {
 
     @Before
     public void init() {
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        givenAuthenticatedUser();
+        givenUserHavingRole(GivenDto.class, 1234L, Role.ACTUAL_CUSTOMER_USER);
 
         given(jsonParser.getCodec()).willReturn(codec);
     }
@@ -46,7 +47,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeStringField() throws IOException {
         // given
-        givenJSonTree(asJSon(ImmutablePair.of("openStringField", "String Value")));
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("openStringField", "String Value")));
 
         // when
         GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
@@ -58,7 +61,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeIntegerField() throws IOException {
         // given
-        givenJSonTree(asJSon(ImmutablePair.of("openIntegerField", 1234)));
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("openIntegerField", 1234)));
 
         // when
         GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
@@ -70,7 +75,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeLongField() throws IOException {
         // given
-        givenJSonTree(asJSon(ImmutablePair.of("openLongField", 1234L)));
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("openLongField", 1234L)));
 
         // when
         GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
@@ -82,8 +89,11 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeStringFieldIfRequiredRoleIsCoveredByUser() throws IOException {
         // given
-        givenLoginUserWithRole(Role.FINANCIAL_CONTACT);
-        givenJSonTree(asJSon(ImmutablePair.of("restrictedField", "Restricted String Value")));
+        givenAuthenticatedUser();
+        givenUserHavingRole(GivenDto.class, 1234L, Role.FINANCIAL_CONTACT);
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
         GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
@@ -95,7 +105,8 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     @Test
     public void shouldInitializeFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        givenAuthenticatedUser();
+        givenUserHavingRole(null, null, Role.ANY_CUSTOMER_USER);
         givenJSonTree(asJSon(ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
@@ -109,9 +120,41 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     }
 
     @Test
-    public void shouldUpdateFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
+    public void shouldNotCreateIfRoleRequiredByParentEntityIsNotCoveredByUser() throws IOException {
         // given
-        givenLoginUserWithRole(Role.ANY_CUSTOMER_USER);
+        givenAuthenticatedUser();
+        givenUserHavingRole(GivenDto.class, 9999L, Role.CONTRACTUAL_CONTACT);
+        givenJSonTree(asJSon(ImmutablePair.of("parentId", 1111L)));
+
+        // when
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenChildDto.class).deserialize());
+
+        // then
+        assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
+            assertThat(badRequestAlertException.getParam()).isEqualTo("GivenChildDto.parentId");
+            assertThat(badRequestAlertException.getErrorKey()).isEqualTo("referencingProhibited");
+        });
+    }
+
+    @Test
+    public void shouldCreateIfRoleRequiredByReferencedEntityIsCoveredByUser() throws IOException {
+        // given
+        givenAuthenticatedUser();
+        givenUserHavingRole(GivenDto.class, 1111L, Role.CONTRACTUAL_CONTACT);
+        givenJSonTree(asJSon(ImmutablePair.of("parentId", 1111L)));
+
+        // when
+        final GivenChildDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenChildDto.class).deserialize();
+
+        // then
+        assertThat(actualDto.parentId).isEqualTo(1111L);
+    }
+
+    @Test
+    public void shouldNotUpdateFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
+        // given
+        givenAuthenticatedUser();
+        givenUserHavingRole(GivenDto.class, 1234L, Role.ANY_CUSTOMER_USER);
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
             ImmutablePair.of("restrictedField", "Restricted String Value")));
@@ -181,6 +224,20 @@ public class JSonDeserializerWithAccessFilterUnitTest {
 
         @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY)
         Long openLongField;
+    }
+
+    public static class GivenChildDto {
+
+        @SelfId
+        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        Long id;
+
+        @AccessFor(init = Role.CONTRACTUAL_CONTACT, update = Role.CONTRACTUAL_CONTACT, read = Role.ACTUAL_CUSTOMER_USER)
+        @ParentId(GivenDto.class)
+        Long parentId;
+
+        @AccessFor(init = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT}, update = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
+        String restrictedField;
     }
 
     public static class GivenDtoWithMultipleSelfId {

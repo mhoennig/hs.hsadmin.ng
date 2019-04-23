@@ -1,7 +1,5 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import org.hostsharing.hsadminng.security.SecurityUtils;
-
 import java.lang.reflect.Field;
 
 /**
@@ -52,7 +50,7 @@ public enum Role {
      */
     FINANCIAL_CONTACT(22) {
         @Override
-        boolean covers(final Role role) {
+        public boolean covers(final Role role) {
             if (role == ACTUAL_CUSTOMER_USER) {
                 return false;
             }
@@ -94,14 +92,15 @@ public enum Role {
      *
      * Where 'this' means the Java instance itself as a role of a system user.
      *
-     * @example
+     * {@code
      * Role.HOSTMASTER.covers(Role.ANY_CUSTOMER_USER) == true
+     * }
      *
      * @param role The required role for a resource.
      *
      * @return whether this role comprises the given role
      */
-    boolean covers(final Role role) {
+    public boolean covers(final Role role) {
         return this == role || this.level < role.level;
     }
 
@@ -131,8 +130,6 @@ public enum Role {
      */
     public boolean isAllowedToUpdate(final Field field) {
 
-        final Role loginUserRole = SecurityUtils.getCurrentUserLogin().map(u -> Role.valueOf(u.toUpperCase())).orElse(Role.ANYBODY);
-
         final AccessFor accessFor = field.getAnnotation(AccessFor.class);
         if (accessFor == null) {
             return false;
@@ -149,8 +146,6 @@ public enum Role {
      * @return true if allowed
      */
     public boolean isAllowedToRead(final Field field) {
-
-        final Role loginUserRole = SecurityUtils.getCurrentUserLogin().map(u -> Role.valueOf(u.toUpperCase())).orElse(Role.ANYBODY);
 
         final AccessFor accessFor = field.getAnnotation(AccessFor.class);
         if (accessFor == null) {

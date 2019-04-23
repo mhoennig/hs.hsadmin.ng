@@ -5,20 +5,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MockSecurityContext {
 
-    public static void givenLoginUserWithRole(final Role userRole) {
-        final String fakeUserName = userRole.name();
-
+    public static void givenAuthenticatedUser() {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken(fakeUserName, "dummy"));
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("dummyUser", "dummyPassword"));
         SecurityContextHolder.setContext(securityContext);
-        Optional<String> login = SecurityUtils.getCurrentUserLogin();
+        SecurityUtils.clearUserRoles();
 
-        assertThat(login).describedAs("precondition failed").contains(fakeUserName);
+        assertThat(SecurityUtils.getCurrentUserLogin()).describedAs("precondition failed").hasValue("dummyUser");
+    }
+
+    public static void givenUserHavingRole(final Class<?> onClass, final Long onId, final Role role) {
+        SecurityUtils.addUserRole(onClass, onId, role);
     }
 }

@@ -2,28 +2,22 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.apache.commons.lang3.NotImplementedException;
-import org.hostsharing.hsadminng.security.SecurityUtils;
-import org.springframework.boot.jackson.JsonComponent;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
-public class JSonSerializerWithAccessFilter <T> {
+public class JSonSerializerWithAccessFilter <T> extends JSonAccessFilter<T> {
     private final JsonGenerator jsonGenerator;
     private final SerializerProvider serializerProvider;
-    private final T dto;
 
     public JSonSerializerWithAccessFilter(final JsonGenerator jsonGenerator,
                                           final SerializerProvider serializerProvider,
                                           final T dto) {
+        super(dto);
         this.jsonGenerator = jsonGenerator;
         this.serializerProvider = serializerProvider;
-        this.dto = dto;
     }
 
     // Jackson serializes into the JsonGenerator, thus no return value needed.
@@ -65,7 +59,4 @@ public class JSonSerializerWithAccessFilter <T> {
         }
     }
 
-    private Role getLoginUserRole() {
-        return SecurityUtils.getCurrentUserLogin().map(u -> Role.valueOf(u.toUpperCase())).orElse(Role.ANYBODY);
-    }
 }

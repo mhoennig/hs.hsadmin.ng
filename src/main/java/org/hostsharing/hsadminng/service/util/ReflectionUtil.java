@@ -1,9 +1,6 @@
 package org.hostsharing.hsadminng.service.util;
 
-import com.fasterxml.jackson.core.TreeNode;
-
 import java.lang.reflect.Field;
-import java.util.function.Supplier;
 
 public class ReflectionUtil {
 
@@ -26,10 +23,10 @@ public class ReflectionUtil {
         }
     }
 
-    public static <T> Object getValue(T dto, Field field) {
+    public static <T> T getValue(final T dto, final Field field) {
         try {
             field.setAccessible(true);
-            return field.get(dto);
+            return (T) field.get(dto);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }

@@ -1,15 +1,20 @@
 package org.hostsharing.hsadminng.security;
 
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Utility class for Spring Security.
  */
 public final class SecurityUtils {
+
+    private static List<UserRoleAssignment> userRoleAssignments = new ArrayList<>();
 
     private SecurityUtils() {
     }
@@ -72,5 +77,43 @@ public final class SecurityUtils {
             .map(authentication -> authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority)))
             .orElse(false);
+    }
+
+    public static Role getLoginUserRoleFor(final Class<?> onDtoClass, final Long onId) {
+
+        final Role highestRole = userRoleAssignments.stream().
+            map(ura ->
+                matches(onDtoClass, onId, ura)
+                    ? ura.role
+                    : Role.ANYBODY).
+            reduce(Role.ANYBODY, (r1, r2) -> r1.covers(r2) ? r1 : r2);
+        return highestRole;
+    }
+
+    private static boolean matches(Class<?> onDtoClass, Long onId, UserRoleAssignment ura) {
+        final boolean matches =  (ura.onClass == null || onDtoClass == ura.onClass) && (ura.onId == null || onId.equals(ura.onId) );
+        return matches;
+    }
+
+    // TODO: depends on https://plan.hostsharing.net/project/hsadmin/us/67?milestone=34
+    public static void addUserRole(final Class<?> onClass, final Long onId, final Role role) {
+        userRoleAssignments.add(new UserRoleAssignment(onClass, onId, role));
+
+    }
+
+    public static void clearUserRoles() {
+        userRoleAssignments.clear();
+    }
+
+    private static class UserRoleAssignment {
+        final Class<?> onClass;
+        final Long onId;
+        final Role role;
+
+        UserRoleAssignment(Class<?> onClass, Long onId, Role role) {
+            this.onClass = onClass;
+            this.onId = onId;
+            this.role = role;
+        }
     }
 }

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.NotImplementedException;
-import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
@@ -17,35 +16,21 @@ import java.util.Set;
 
 import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
-public class JSonDeserializerWithAccessFilter<T> {
+public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
 
-    private final T dto;
     private final TreeNode treeNode;
     private final Set<Field> modifiedFields = new HashSet<>();
-    private Field selfIdField = null;
 
     public JSonDeserializerWithAccessFilter(final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
+        super(unchecked(dtoClass::newInstance));
         this.treeNode = unchecked(() -> jsonParser.getCodec().readTree(jsonParser));
-        this.dto = unchecked(dtoClass::newInstance);
     }
 
     // Jackson deserializes from the JsonParser, thus no input parameter needed.
     public T deserialize() {
-        determineSelfIdField();
         deserializeValues();
         checkAccessToModifiedFields();
         return dto;
-    }
-
-     private void determineSelfIdField() {
-        for (Field field : dto.getClass().getDeclaredFields()) {
-            if (field.isAnnotationPresent(SelfId.class)) {
-                if (selfIdField != null) {
-                    throw new AssertionError("multiple @" + SelfId.class.getSimpleName() + " detected in " + field.getDeclaringClass().getSimpleName());
-                }
-                selfIdField = field;
-            }
-        }
     }
 
     private void deserializeValues() {
@@ -90,34 +75,21 @@ public class JSonDeserializerWithAccessFilter<T> {
         modifiedFields.add(field);
     }
 
-    private Object getId() {
-        if (selfIdField == null) {
-            return null;
-        }
-        return ReflectionUtil.getValue(dto, selfIdField);
-    }
-
     private void checkAccessToModifiedFields() {
         modifiedFields.forEach(field -> {
             if ( !field.equals(selfIdField) ) {
                 if (getId() == null) {
                     if (!getLoginUserRole().isAllowedToInit(field)) {
-                        throw new BadRequestAlertException("Initialization of field prohibited for current user", toDisplay(field), "initializationProhibited");
+                        if ( !field.equals(parentIdField)) {
+                            throw new BadRequestAlertException("Initialization of field prohibited for current user", toDisplay(field), "initializationProhibited");
+                        } else {
+                            throw new BadRequestAlertException("Referencing field prohibited for current user", toDisplay(field), "referencingProhibited");
+                        }
                     }
-                } else if (getId() != null) {
-                    if (!getLoginUserRole().isAllowedToUpdate(field)) {
+                } else if (!getLoginUserRole().isAllowedToUpdate(field)) {
                         throw new BadRequestAlertException("Update of field prohibited for current user", toDisplay(field), "updateProhibited");
-                    }
                 }
             }
         });
-    }
-
-    private String toDisplay(final Field field) {
-        return field.getDeclaringClass().getSimpleName() + "." + field.getName();
-    }
-
-    private Role getLoginUserRole() {
-        return SecurityUtils.getCurrentUserLogin().map(u -> Role.valueOf(u.toUpperCase())).orElse(Role.ANYBODY);
     }
 }
