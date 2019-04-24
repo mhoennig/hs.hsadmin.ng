@@ -81,6 +81,7 @@ public class CustomerResourceIntTest {
 
     private static final CustomerKind DEFAULT_KIND = CustomerKind.NATURAL;
     private static final CustomerKind UPDATED_KIND = CustomerKind.LEGAL;
+    private static final CustomerKind OTHER_KIND = CustomerKind.LEGAL;
 
     private static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_BIRTH_DATE = LocalDate.now(ZoneId.systemDefault());
@@ -96,6 +97,7 @@ public class CustomerResourceIntTest {
 
     private static final VatRegion DEFAULT_VAT_REGION = VatRegion.DOMESTIC;
     private static final VatRegion UPDATED_VAT_REGION = VatRegion.EU;
+    private static final VatRegion OTHER_VAT_REGION = VatRegion.EU;
 
     private static final String DEFAULT_VAT_NUMBER = "AAAAAAAAAA";
     private static final String UPDATED_VAT_NUMBER = "BBBBBBBBBB";

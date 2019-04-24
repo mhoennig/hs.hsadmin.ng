@@ -16,6 +16,6 @@ import org.springframework.stereotype.Repository;
 public interface MembershipRepository extends JpaRepository<Membership, Long>, JpaSpecificationExecutor<Membership> {
 
     @Query("SELECT CASE WHEN COUNT(m)> 0 THEN TRUE ELSE FALSE END " +
-        " FROM Membership m WHERE m.customer.id=:customerId AND m.memberUntil IS NULL")
+        " FROM Membership m WHERE m.customer.id=:customerId AND m.memberUntilDate IS NULL")
     boolean hasUncancelledMembershipForCustomer(@Param("customerId") final long customerId);
 }

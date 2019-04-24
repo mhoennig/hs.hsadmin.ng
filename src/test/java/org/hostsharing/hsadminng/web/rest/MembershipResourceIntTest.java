@@ -8,17 +8,10 @@ import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.MembershipQueryService;
 
-import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.Share;
-import org.hostsharing.hsadminng.domain.Asset;
-import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
-import org.hostsharing.hsadminng.service.MembershipQueryService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -39,14 +32,12 @@ import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 
 
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -64,22 +55,17 @@ public class MembershipResourceIntTest {
     private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
     private static final LocalDate UPDATED_DOCUMENT_DATE = DEFAULT_DOCUMENT_DATE.plusDays(1);
 
-    private static final LocalDate DEFAULT_MEMBER_FROM = DEFAULT_DOCUMENT_DATE.plusDays(2);
-    private static final LocalDate UPDATED_MEMBER_FROM = UPDATED_DOCUMENT_DATE.plusDays(8);
+    private static final LocalDate DEFAULT_MEMBER_FROM_DATE = DEFAULT_DOCUMENT_DATE.plusDays(2);
+    private static final LocalDate UPDATED_MEMBER_FROM_DATE = UPDATED_DOCUMENT_DATE.plusDays(8);
 
-    private static final LocalDate DEFAULT_MEMBER_UNTIL = DEFAULT_MEMBER_FROM.plusYears(1).withMonth(12).withDayOfMonth(31);
-    private static final LocalDate UPDATED_MEMBER_UNTIL = UPDATED_MEMBER_FROM.plusYears(7).withMonth(12).withDayOfMonth(31);
+    private static final LocalDate DEFAULT_MEMBER_UNTIL_DATE = DEFAULT_MEMBER_FROM_DATE.plusYears(1).withMonth(12).withDayOfMonth(31);
+    private static final LocalDate UPDATED_MEMBER_UNTIL_DATE = UPDATED_MEMBER_FROM_DATE.plusYears(7).withMonth(12).withDayOfMonth(31);
+
     private static final LocalDate DEFAULT_ADMISSION_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_ADMISSION_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_CANCELLATION_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_CANCELLATION_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_MEMBER_FROM_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_MEMBER_FROM_DATE = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_MEMBER_UNTIL_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_MEMBER_UNTIL_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final String DEFAULT_REMARK = "AAAAAAAAAA";
     private static final String UPDATED_REMARK = "BBBBBBBBBB";
@@ -156,9 +142,9 @@ public class MembershipResourceIntTest {
      */
     public static Membership createPersistentEntity(EntityManager em, final Customer customer) {
         Membership membership = new Membership()
-            .admissionDate(DEFAULT_ADMISSION_DATE)
-            .memberFrom(DEFAULT_MEMBER_FROM)
-            .memberUntil(DEFAULT_MEMBER_UNTIL)
+            .admissionDocumentDate(DEFAULT_ADMISSION_DOCUMENT_DATE)
+            .memberFromDate(DEFAULT_MEMBER_FROM_DATE)
+            .memberUntilDate(DEFAULT_MEMBER_UNTIL_DATE)
             .remark(DEFAULT_REMARK);
         // Add required entity
         membership.setCustomer(customer);
@@ -596,11 +582,9 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByShareIsEqualToSomething() throws Exception {
         // Initialize the database
-        Share share = ShareResourceIntTest.createEntity(em);
-        em.persist(share);
-        em.flush();
-        membership.addShare(share);
         membershipRepository.saveAndFlush(membership);
+        Share share = ShareResourceIntTest.createPersistentEntity(em, membership);
+
         Long shareId = share.getId();
 
         // Get all the membershipList where share equals to shareId
@@ -615,11 +599,9 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByAssetIsEqualToSomething() throws Exception {
         // Initialize the database
-        Asset asset = AssetResourceIntTest.createEntity(em);
-        em.persist(asset);
-        em.flush();
-        membership.addAsset(asset);
         membershipRepository.saveAndFlush(membership);
+        Asset asset = AssetResourceIntTest.createPersistentEntity(em, membership);
+
         Long assetId = asset.getId();
 
         // Get all the membershipList where asset equals to assetId
@@ -634,9 +616,7 @@ public class MembershipResourceIntTest {
     @Transactional
     public void getAllMembershipsByCustomerIsEqualToSomething() throws Exception {
         // Initialize the database
-        Customer customer = CustomerResourceIntTest.createEntity(em);
-        em.persist(customer);
-        em.flush();
+        Customer customer = CustomerResourceIntTest.createPersistentEntity(em);
         membership.setCustomer(customer);
         membershipRepository.saveAndFlush(membership);
         Long customerId = customer.getId();
@@ -761,11 +741,11 @@ public class MembershipResourceIntTest {
         // Delete the membership
         restMembershipMockMvc.perform(delete("/api/memberships/{id}", membership.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the database is unchanged
         List<Membership> membershipList = membershipRepository.findAll();
-        assertThat(membershipList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(membershipList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test

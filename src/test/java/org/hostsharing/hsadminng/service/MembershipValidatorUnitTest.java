@@ -101,12 +101,12 @@ public class MembershipValidatorUnitTest {
 
 
         GivenMembershipValidationTestCase since(final String sinceDate) {
-            membershipDto.setMemberFrom(LocalDate.parse(sinceDate));
+            membershipDto.setMemberFromDate(LocalDate.parse(sinceDate));
             return this;
         }
 
         public GivenMembershipValidationTestCase until(final String untilDate) {
-            membershipDto.setMemberUntil(LocalDate.parse(untilDate));
+            membershipDto.setMemberUntilDate(LocalDate.parse(untilDate));
             return this;
         }
 

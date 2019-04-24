@@ -9,7 +9,6 @@ import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
 import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 
 import org.junit.Before;
@@ -60,28 +59,20 @@ public class SepaMandateResourceIntTest {
     private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
-    private static final LocalDate DEFAULT_VALID_FROM = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_VALID_FROM = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_VALID_UNTIL = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_VALID_UNTIL = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_LAST_USED = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_LAST_USED = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_CANCELLATION_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_CANCELLATION_DATE = LocalDate.now(ZoneId.systemDefault());
-    private static final LocalDate DEFAULT_GRANTING_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_GRANTING_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_REVOKATION_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_REVOKATION_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
-
     private static final LocalDate DEFAULT_VALID_FROM_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_VALID_FROM_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_VALID_UNTIL_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_VALID_UNTIL_DATE = LocalDate.now(ZoneId.systemDefault());
+
+    private static final LocalDate DEFAULT_LAST_USED = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_LAST_USED = LocalDate.now(ZoneId.systemDefault());
+
+    private static final LocalDate DEFAULT_REVOKATION_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_REVOKATION_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
+
+    private static final LocalDate DEFAULT_GRANTING_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_GRANTING_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_LAST_USED_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_LAST_USED_DATE = LocalDate.now(ZoneId.systemDefault());
@@ -153,6 +144,28 @@ public class SepaMandateResourceIntTest {
         Customer customer = CustomerResourceIntTest.createEntity(em);
         em.persist(customer);
         em.flush();
+        sepaMandate.setCustomer(customer);
+        return sepaMandate;
+    }
+
+    /**
+     * Create an entity for tests with a specific customer.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static SepaMandate createEntity(EntityManager em, final Customer customer) {
+        SepaMandate sepaMandate = new SepaMandate()
+            .reference(DEFAULT_REFERENCE)
+            .iban(DEFAULT_IBAN)
+            .bic(DEFAULT_BIC)
+            .grantingDocumentDate(DEFAULT_GRANTING_DOCUMENT_DATE)
+            .validFromDate(DEFAULT_VALID_FROM_DATE)
+            .validUntilDate(DEFAULT_VALID_UNTIL_DATE)
+            .lastUsedDate(DEFAULT_LAST_USED)
+            .revokationDocumentDate(DEFAULT_REVOKATION_DOCUMENT_DATE)
+            .remark(DEFAULT_REMARK);
+        // Add required entity
         sepaMandate.setCustomer(customer);
         return sepaMandate;
     }
@@ -800,9 +813,7 @@ public class SepaMandateResourceIntTest {
     @Transactional
     public void getAllSepaMandatesByCustomerIsEqualToSomething() throws Exception {
         // Initialize the database
-        Customer customer = CustomerResourceIntTest.createEntity(em);
-        em.persist(customer);
-        em.flush();
+        Customer customer = CustomerResourceIntTest.createPersistentEntity(em);
         sepaMandate.setCustomer(customer);
         sepaMandateRepository.saveAndFlush(sepaMandate);
         Long customerId = customer.getId();
