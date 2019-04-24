@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class CustomerService implements DtoLoader<CustomerDTO> {
+public class CustomerService implements IdToDtoResolver<CustomerDTO> {
 
     private final Logger log = LoggerFactory.getLogger(CustomerService.class);
 

@@ -1,5 +1,6 @@
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
 import org.hostsharing.hsadminng.service.accessfilter.ParentId;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
@@ -36,7 +37,7 @@ public class MembershipDTO implements Serializable {
     @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-    @ParentId(CustomerDTO.class)
+    @ParentId(resolver = CustomerService.class)
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long customerId;
 

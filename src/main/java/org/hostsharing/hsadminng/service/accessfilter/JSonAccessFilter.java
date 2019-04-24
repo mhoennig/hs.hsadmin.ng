@@ -1,17 +1,16 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.hostsharing.hsadminng.security.SecurityUtils;
-import org.hostsharing.hsadminng.service.CustomerService;
-import org.hostsharing.hsadminng.service.DtoLoader;
-import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
+import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.springframework.context.ApplicationContext;
 
+import javax.persistence.EntityNotFoundException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 abstract class JSonAccessFilter<T> {
     private final ApplicationContext ctx;
@@ -50,43 +49,51 @@ abstract class JSonAccessFilter<T> {
      */
     Role getLoginUserRole() {
         final Role roleOnSelf = getLoginUserRoleOnSelf();
-        if ( roleOnSelf.isIndependent() ) {
+        if (roleOnSelf.isIndependent()) {
             return roleOnSelf;
         }
         return getLoginUserRoleOnAncestorOfDtoClassIfHigher(roleOnSelf, dto);
     }
 
     private Role getLoginUserRoleOnSelf() {
-        return SecurityUtils.getLoginUserRoleFor(dto.getClass(), getId() );
+        return SecurityUtils.getLoginUserRoleFor(dto.getClass(), getId());
     }
 
     private Role getLoginUserRoleOnAncestorOfDtoClassIfHigher(final Role baseRole, final Object dto) {
         final Field parentIdField = determineFieldWithAnnotation(dto.getClass(), ParentId.class);
 
-        if ( parentIdField == null ) {
+        if (parentIdField == null) {
             return baseRole;
         }
 
         final ParentId parentIdAnnot = parentIdField.getAnnotation(ParentId.class);
-        final Class<?> parentDtoClass = parentIdAnnot.value();
+        final Class<? extends IdToDtoResolver> parentDtoLoader = parentIdAnnot.resolver();
+        final Class<?> parentDtoClass = getGenericClassParameter(parentDtoLoader);
         final Long parentId = (Long) ReflectionUtil.getValue(dto, parentIdField);
         final Role roleOnParent = SecurityUtils.getLoginUserRoleFor(parentDtoClass, parentId);
 
-        final Object parentEntity = findParentDto(parentDtoClass, parentId);
+        final Object parentEntity = findParentDto(parentDtoLoader, parentId);
         return Role.broadest(baseRole, getLoginUserRoleOnAncestorOfDtoClassIfHigher(roleOnParent, parentEntity));
     }
 
-    private Object findParentDto(Class<?> parentDtoClass, Long parentId) {
-        // TODO: generalize, e.g. via "all beans that implement DtoLoader<CustomerDTO>
-        if ( parentDtoClass == MembershipDTO.class ) {
-            final DtoLoader<MembershipDTO> dtoLoader = ctx.getAutowireCapableBeanFactory().createBean(MembershipService.class);
-            return dtoLoader.findOne(parentId).get();
+    @SuppressWarnings("unchecked")
+    private Class<T> getGenericClassParameter(Class<? extends IdToDtoResolver> parentDtoLoader) {
+        for (Type genericInterface : parentDtoLoader.getGenericInterfaces()) {
+            if (genericInterface instanceof ParameterizedType) {
+                final ParameterizedType parameterizedType = (ParameterizedType) genericInterface;
+                if (parameterizedType.getRawType()== IdToDtoResolver.class) {
+                    return (Class<T>) parameterizedType.getActualTypeArguments()[0];
+                }
+            }
+
         }
-        if ( parentDtoClass == CustomerDTO.class ) {
-            final DtoLoader<CustomerDTO> dtoLoader = ctx.getAutowireCapableBeanFactory().createBean(CustomerService.class);
-            return dtoLoader.findOne(parentId).get();
-        }
-        throw new NotImplementedException("no DtoLoader implemented for " + parentDtoClass);
+        throw new AssertionError(parentDtoLoader.getSimpleName() + " expected to implement " + IdToDtoResolver.class.getSimpleName() + "<...DTO>");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object findParentDto(final Class<? extends IdToDtoResolver> parentDtoLoader, final Long parentId) {
+        final IdToDtoResolver<MembershipDTO> idToDtoResolver = ctx.getAutowireCapableBeanFactory().createBean(parentDtoLoader);
+        return idToDtoResolver.findOne(parentId).orElseThrow(() -> new EntityNotFoundException("Can't resolve parent entity ID " + parentId + " via " + parentDtoLoader));
     }
 
     private static Field determineFieldWithAnnotation(final Class<?> dtoClass, final Class<? extends Annotation> idAnnotationClass) {

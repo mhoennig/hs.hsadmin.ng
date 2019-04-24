@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -110,9 +111,12 @@ public class JSonSerializerWithAccessFilterUnitTest {
 
     }
 
+    private abstract class GivenCustomerService implements IdToDtoResolver<GivenCustomerDto> {
+    }
+
     private static class GivenDto {
 
-        @ParentId(GivenCustomerDto.class)
+        @ParentId(resolver = GivenCustomerService.class)
         Long customerId;
 
         @AccessFor(read = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})

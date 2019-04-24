@@ -1,5 +1,7 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import org.hostsharing.hsadminng.service.IdToDtoResolver;
+
 import java.lang.annotation.*;
 
 /**
@@ -12,6 +14,6 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ParentId {
-    /// The DTO class of the referenced entity.
-    Class<?> value();
+    /// The service which can load the referenced DTO.
+    Class<? extends IdToDtoResolver<?>> resolver();
 }

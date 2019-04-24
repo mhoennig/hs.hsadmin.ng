@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -211,6 +212,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         Long openLongField;
     }
 
+    abstract class GivenService implements IdToDtoResolver<GivenDto> {
+    }
+
     public static class GivenChildDto {
 
         @SelfId
@@ -218,7 +222,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         Long id;
 
         @AccessFor(init = Role.CONTRACTUAL_CONTACT, update = Role.CONTRACTUAL_CONTACT, read = Role.ACTUAL_CUSTOMER_USER)
-        @ParentId(GivenDto.class)
+        @ParentId(resolver = GivenService.class)
         Long parentId;
 
         @AccessFor(init = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT}, update = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})

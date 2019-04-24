@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class MembershipService implements DtoLoader<MembershipDTO> {
+public class MembershipService implements IdToDtoResolver<MembershipDTO> {
 
     private final Logger log = LoggerFactory.getLogger(MembershipService.class);
 

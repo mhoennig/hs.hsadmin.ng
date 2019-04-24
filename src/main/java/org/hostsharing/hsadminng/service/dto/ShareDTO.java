@@ -1,6 +1,7 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
 import org.hostsharing.hsadminng.service.accessfilter.ParentId;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
@@ -41,7 +42,7 @@ public class ShareDTO implements Serializable {
     @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-    @ParentId(MembershipDTO.class)
+    @ParentId(resolver = MembershipService.class)
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
