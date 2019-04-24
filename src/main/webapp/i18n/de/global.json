@@ -7,6 +7,11 @@
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
+                "customer": "Customer",
+                "membership": "Membership",
+                "share": "Share",
+                "asset": "Asset",
+                "sepaMandate": "Sepa Mandate",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {

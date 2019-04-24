@@ -1,0 +1,49 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="share">
+            <h2><span jhiTranslate="hsadminNgApp.share.detail.title">Share</span> {{share.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="hsadminNgApp.share.documentDate">Document Date</span></dt>
+                <dd>
+                    <span>{{share.documentDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.valueDate">Value Date</span></dt>
+                <dd>
+                    <span>{{share.valueDate}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.action">Action</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'hsadminNgApp.ShareAction.' + share.action}}">{{share.action}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.quantity">Quantity</span></dt>
+                <dd>
+                    <span>{{share.quantity}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.remark">Remark</span></dt>
+                <dd>
+                    <span>{{share.remark}}</span>
+                </dd>
+                <dt><span jhiTranslate="hsadminNgApp.share.membership">Membership</span></dt>
+                <dd>
+                    <div *ngIf="share.membershipId">
+                        <a [routerLink]="['/membership', share.membershipId, 'view']">{{share.membershipAdmissionDocumentDate}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/share', share.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

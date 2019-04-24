@@ -1,0 +1,66 @@
+{
+    "name": "Membership",
+    "fields": [
+        {
+            "fieldName": "admissionDocumentDate",
+            "fieldType": "LocalDate",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "cancellationDocumentDate",
+            "fieldType": "LocalDate"
+        },
+        {
+            "fieldName": "memberFromDate",
+            "fieldType": "LocalDate",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "memberUntilDate",
+            "fieldType": "LocalDate"
+        },
+        {
+            "fieldName": "remark",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 160
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "share",
+            "otherEntityRelationshipName": "membership",
+            "relationshipName": "share"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "asset",
+            "otherEntityRelationshipName": "membership",
+            "relationshipName": "asset"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "customer",
+            "otherEntityRelationshipName": "membership",
+            "relationshipValidateRules": "required",
+            "relationshipName": "customer",
+            "otherEntityField": "prefix"
+        }
+    ],
+    "changelogDate": "20190424123256",
+    "entityTableName": "membership",
+    "dto": "mapstruct",
+    "pagination": "infinite-scroll",
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": true,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}
