@@ -35,6 +35,58 @@
             "fieldValidateRulesMaxlength": 80
         },
         {
+            "fieldName": "kind",
+            "fieldType": "CustomerKind",
+            "fieldValues": "NATURAL,LEGAL",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "birthDate",
+            "fieldType": "LocalDate"
+        },
+        {
+            "fieldName": "birthPlace",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
+            "fieldName": "registrationCourt",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
+            "fieldName": "registrationNumber",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 80
+        },
+        {
+            "fieldName": "vatRegion",
+            "fieldType": "VatRegion",
+            "fieldValues": "DOMESTIC,EU,OTHER",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "vatNumber",
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 40
+        },
+        {
             "fieldName": "contractualSalutation",
             "fieldType": "String",
             "fieldValidateRules": [
@@ -90,7 +142,7 @@
             "relationshipName": "sepamandate"
         }
     ],
-    "changelogDate": "20190418143050",
+    "changelogDate": "20190424123255",
     "entityTableName": "customer",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

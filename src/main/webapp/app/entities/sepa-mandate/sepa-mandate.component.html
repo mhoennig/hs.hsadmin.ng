@@ -18,11 +18,11 @@
             <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.sepaMandate.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="iban"><span jhiTranslate="hsadminNgApp.sepaMandate.iban">Iban</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="bic"><span jhiTranslate="hsadminNgApp.sepaMandate.bic">Bic</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="validFrom"><span jhiTranslate="hsadminNgApp.sepaMandate.validFrom">Valid From</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="validUntil"><span jhiTranslate="hsadminNgApp.sepaMandate.validUntil">Valid Until</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="lastUsed"><span jhiTranslate="hsadminNgApp.sepaMandate.lastUsed">Last Used</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="cancellationDate"><span jhiTranslate="hsadminNgApp.sepaMandate.cancellationDate">Cancellation Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="grantingDocumentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.grantingDocumentDate">Granting Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="revokationDocumentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.revokationDocumentDate">Revokation Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="validFromDate"><span jhiTranslate="hsadminNgApp.sepaMandate.validFromDate">Valid From Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="validUntilDate"><span jhiTranslate="hsadminNgApp.sepaMandate.validUntilDate">Valid Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="lastUsedDate"><span jhiTranslate="hsadminNgApp.sepaMandate.lastUsedDate">Last Used Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.sepaMandate.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="customerPrefix"><span jhiTranslate="hsadminNgApp.sepaMandate.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
@@ -34,11 +34,11 @@
                 <td>{{sepaMandate.reference}}</td>
                 <td>{{sepaMandate.iban}}</td>
                 <td>{{sepaMandate.bic}}</td>
-                <td>{{sepaMandate.documentDate | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.validFrom | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.validUntil | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.lastUsed | date:'mediumDate'}}</td>
-                <td>{{sepaMandate.cancellationDate | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.grantingDocumentDate | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.revokationDocumentDate | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.validFromDate | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.validUntilDate | date:'mediumDate'}}</td>
+                <td>{{sepaMandate.lastUsedDate | date:'mediumDate'}}</td>
                 <td>{{sepaMandate.remark}}</td>
                 <td>
                     <div *ngIf="sepaMandate.customerId">

@@ -3,24 +3,25 @@
         "membership": {
             "home": {
                 "title": "Memberships",
-                "createLabel": "Register a new Membership",
-                "createOrEditLabel": "Register or edit a Membership"
+                "createLabel": "Create a new Membership",
+                "createOrEditLabel": "Create or edit a Membership"
             },
-            "created": "A new membership is registered with identifier {{ param }}",
-            "updated": "A membership is updated with identifier {{ param }}",
-            "deleted": "A membership is deleted with identifier {{ param }}",
+            "created": "A new Membership is created with identifier {{ param }}",
+            "updated": "A Membership is updated with identifier {{ param }}",
+            "deleted": "A Membership is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete membership {{ id }}?"
+                "question": "Are you sure you want to delete Membership {{ id }}?"
             },
             "detail": {
                 "title": "Membership"
             },
-            "documentDate": "Document date",
-            "memberFrom": "Member from",
-            "memberUntil": "Member until",
+            "admissionDocumentDate": "Admission Document Date",
+            "cancellationDocumentDate": "Cancellation Document Date",
+            "memberFromDate": "Member From Date",
+            "memberUntilDate": "Member Until Date",
             "remark": "Remark",
-            "share": "Shares",
-            "asset": "Assets",
+            "share": "Share",
+            "asset": "Asset",
             "customer": "Customer"
         }
     }

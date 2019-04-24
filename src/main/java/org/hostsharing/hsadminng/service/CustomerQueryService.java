@@ -98,6 +98,27 @@ public class CustomerQueryService extends QueryService<Customer> {
             if (criteria.getName() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getName(), Customer_.name));
             }
+            if (criteria.getKind() != null) {
+                specification = specification.and(buildSpecification(criteria.getKind(), Customer_.kind));
+            }
+            if (criteria.getBirthDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getBirthDate(), Customer_.birthDate));
+            }
+            if (criteria.getBirthPlace() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getBirthPlace(), Customer_.birthPlace));
+            }
+            if (criteria.getRegistrationCourt() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRegistrationCourt(), Customer_.registrationCourt));
+            }
+            if (criteria.getRegistrationNumber() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRegistrationNumber(), Customer_.registrationNumber));
+            }
+            if (criteria.getVatRegion() != null) {
+                specification = specification.and(buildSpecification(criteria.getVatRegion(), Customer_.vatRegion));
+            }
+            if (criteria.getVatNumber() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getVatNumber(), Customer_.vatNumber));
+            }
             if (criteria.getContractualSalutation() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getContractualSalutation(), Customer_.contractualSalutation));
             }

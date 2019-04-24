@@ -7,9 +7,14 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Objects;
+
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 
 /**
  * A Customer.
@@ -41,6 +46,35 @@ public class Customer implements Serializable {
     @Size(max = 80)
     @Column(name = "name", length = 80, nullable = false)
     private String name;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kind", nullable = false)
+    private CustomerKind kind;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Size(max = 80)
+    @Column(name = "birth_place", length = 80)
+    private String birthPlace;
+
+    @Size(max = 80)
+    @Column(name = "registration_court", length = 80)
+    private String registrationCourt;
+
+    @Size(max = 80)
+    @Column(name = "registration_number", length = 80)
+    private String registrationNumber;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vat_region", nullable = false)
+    private VatRegion vatRegion;
+
+    @Size(max = 40)
+    @Column(name = "vat_number", length = 40)
+    private String vatNumber;
 
     @Size(max = 80)
     @Column(name = "contractual_salutation", length = 80)
@@ -113,6 +147,97 @@ public class Customer implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public CustomerKind getKind() {
+        return kind;
+    }
+
+    public Customer kind(CustomerKind kind) {
+        this.kind = kind;
+        return this;
+    }
+
+    public void setKind(CustomerKind kind) {
+        this.kind = kind;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public Customer birthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+        return this;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getBirthPlace() {
+        return birthPlace;
+    }
+
+    public Customer birthPlace(String birthPlace) {
+        this.birthPlace = birthPlace;
+        return this;
+    }
+
+    public void setBirthPlace(String birthPlace) {
+        this.birthPlace = birthPlace;
+    }
+
+    public String getRegistrationCourt() {
+        return registrationCourt;
+    }
+
+    public Customer registrationCourt(String registrationCourt) {
+        this.registrationCourt = registrationCourt;
+        return this;
+    }
+
+    public void setRegistrationCourt(String registrationCourt) {
+        this.registrationCourt = registrationCourt;
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public Customer registrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+        return this;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
+
+    public VatRegion getVatRegion() {
+        return vatRegion;
+    }
+
+    public Customer vatRegion(VatRegion vatRegion) {
+        this.vatRegion = vatRegion;
+        return this;
+    }
+
+    public void setVatRegion(VatRegion vatRegion) {
+        this.vatRegion = vatRegion;
+    }
+
+    public String getVatNumber() {
+        return vatNumber;
+    }
+
+    public Customer vatNumber(String vatNumber) {
+        this.vatNumber = vatNumber;
+        return this;
+    }
+
+    public void setVatNumber(String vatNumber) {
+        this.vatNumber = vatNumber;
     }
 
     public String getContractualSalutation() {
@@ -195,6 +320,16 @@ public class Customer implements Serializable {
         return this;
     }
 
+    public Customer removeMembership(Membership membership) {
+        this.memberships.remove(membership);
+        membership.setCustomer(null);
+        return this;
+    }
+
+    public void setMemberships(Set<Membership> memberships) {
+        this.memberships = memberships;
+    }
+
     public Set<SepaMandate> getSepamandates() {
         return sepamandates;
     }
@@ -210,6 +345,15 @@ public class Customer implements Serializable {
         return this;
     }
 
+    public Customer removeSepamandate(SepaMandate sepaMandate) {
+        this.sepamandates.remove(sepaMandate);
+        sepaMandate.setCustomer(null);
+        return this;
+    }
+
+    public void setSepamandates(Set<SepaMandate> sepaMandates) {
+        this.sepamandates = sepaMandates;
+    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
@@ -239,6 +383,13 @@ public class Customer implements Serializable {
             ", reference=" + getReference() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
+            ", kind='" + getKind() + "'" +
+            ", birthDate='" + getBirthDate() + "'" +
+            ", birthPlace='" + getBirthPlace() + "'" +
+            ", registrationCourt='" + getRegistrationCourt() + "'" +
+            ", registrationNumber='" + getRegistrationNumber() + "'" +
+            ", vatRegion='" + getVatRegion() + "'" +
+            ", vatNumber='" + getVatNumber() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
             ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +

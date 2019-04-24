@@ -51,29 +51,35 @@ export class SepaMandateService {
 
     protected convertDateFromClient(sepaMandate: ISepaMandate): ISepaMandate {
         const copy: ISepaMandate = Object.assign({}, sepaMandate, {
-            documentDate:
-                sepaMandate.documentDate != null && sepaMandate.documentDate.isValid()
-                    ? sepaMandate.documentDate.format(DATE_FORMAT)
+            grantingDocumentDate:
+                sepaMandate.grantingDocumentDate != null && sepaMandate.grantingDocumentDate.isValid()
+                    ? sepaMandate.grantingDocumentDate.format(DATE_FORMAT)
                     : null,
-            validFrom: sepaMandate.validFrom != null && sepaMandate.validFrom.isValid() ? sepaMandate.validFrom.format(DATE_FORMAT) : null,
-            validUntil:
-                sepaMandate.validUntil != null && sepaMandate.validUntil.isValid() ? sepaMandate.validUntil.format(DATE_FORMAT) : null,
-            lastUsed: sepaMandate.lastUsed != null && sepaMandate.lastUsed.isValid() ? sepaMandate.lastUsed.format(DATE_FORMAT) : null,
-            cancellationDate:
-                sepaMandate.cancellationDate != null && sepaMandate.cancellationDate.isValid()
-                    ? sepaMandate.cancellationDate.format(DATE_FORMAT)
-                    : null
+            revokationDocumentDate:
+                sepaMandate.revokationDocumentDate != null && sepaMandate.revokationDocumentDate.isValid()
+                    ? sepaMandate.revokationDocumentDate.format(DATE_FORMAT)
+                    : null,
+            validFromDate:
+                sepaMandate.validFromDate != null && sepaMandate.validFromDate.isValid()
+                    ? sepaMandate.validFromDate.format(DATE_FORMAT)
+                    : null,
+            validUntilDate:
+                sepaMandate.validUntilDate != null && sepaMandate.validUntilDate.isValid()
+                    ? sepaMandate.validUntilDate.format(DATE_FORMAT)
+                    : null,
+            lastUsedDate:
+                sepaMandate.lastUsedDate != null && sepaMandate.lastUsedDate.isValid() ? sepaMandate.lastUsedDate.format(DATE_FORMAT) : null
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.documentDate = res.body.documentDate != null ? moment(res.body.documentDate) : null;
-            res.body.validFrom = res.body.validFrom != null ? moment(res.body.validFrom) : null;
-            res.body.validUntil = res.body.validUntil != null ? moment(res.body.validUntil) : null;
-            res.body.lastUsed = res.body.lastUsed != null ? moment(res.body.lastUsed) : null;
-            res.body.cancellationDate = res.body.cancellationDate != null ? moment(res.body.cancellationDate) : null;
+            res.body.grantingDocumentDate = res.body.grantingDocumentDate != null ? moment(res.body.grantingDocumentDate) : null;
+            res.body.revokationDocumentDate = res.body.revokationDocumentDate != null ? moment(res.body.revokationDocumentDate) : null;
+            res.body.validFromDate = res.body.validFromDate != null ? moment(res.body.validFromDate) : null;
+            res.body.validUntilDate = res.body.validUntilDate != null ? moment(res.body.validUntilDate) : null;
+            res.body.lastUsedDate = res.body.lastUsedDate != null ? moment(res.body.lastUsedDate) : null;
         }
         return res;
     }
@@ -81,11 +87,13 @@ export class SepaMandateService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((sepaMandate: ISepaMandate) => {
-                sepaMandate.documentDate = sepaMandate.documentDate != null ? moment(sepaMandate.documentDate) : null;
-                sepaMandate.validFrom = sepaMandate.validFrom != null ? moment(sepaMandate.validFrom) : null;
-                sepaMandate.validUntil = sepaMandate.validUntil != null ? moment(sepaMandate.validUntil) : null;
-                sepaMandate.lastUsed = sepaMandate.lastUsed != null ? moment(sepaMandate.lastUsed) : null;
-                sepaMandate.cancellationDate = sepaMandate.cancellationDate != null ? moment(sepaMandate.cancellationDate) : null;
+                sepaMandate.grantingDocumentDate =
+                    sepaMandate.grantingDocumentDate != null ? moment(sepaMandate.grantingDocumentDate) : null;
+                sepaMandate.revokationDocumentDate =
+                    sepaMandate.revokationDocumentDate != null ? moment(sepaMandate.revokationDocumentDate) : null;
+                sepaMandate.validFromDate = sepaMandate.validFromDate != null ? moment(sepaMandate.validFromDate) : null;
+                sepaMandate.validUntilDate = sepaMandate.validUntilDate != null ? moment(sepaMandate.validUntilDate) : null;
+                sepaMandate.lastUsedDate = sepaMandate.lastUsedDate != null ? moment(sepaMandate.lastUsedDate) : null;
             });
         }
         return res;

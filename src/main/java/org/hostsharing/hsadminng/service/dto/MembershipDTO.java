@@ -3,7 +3,6 @@ import java.time.LocalDate;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * A DTO for the Membership entity.
@@ -13,12 +12,14 @@ public class MembershipDTO implements Serializable {
     private Long id;
 
     @NotNull
-    private LocalDate documentDate;
+    private LocalDate admissionDocumentDate;
+
+    private LocalDate cancellationDocumentDate;
 
     @NotNull
-    private LocalDate memberFrom;
+    private LocalDate memberFromDate;
 
-    private LocalDate memberUntil;
+    private LocalDate memberUntilDate;
 
     @Size(max = 160)
     private String remark;
@@ -28,12 +29,6 @@ public class MembershipDTO implements Serializable {
 
     private String customerPrefix;
 
-    public MembershipDTO with(
-        Consumer<MembershipDTO> builderFunction) {
-        builderFunction.accept(this);
-        return this;
-    }
-
     public Long getId() {
         return id;
     }
@@ -42,28 +37,36 @@ public class MembershipDTO implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getDocumentDate() {
-        return documentDate;
+    public LocalDate getAdmissionDocumentDate() {
+        return admissionDocumentDate;
     }
 
-    public void setDocumentDate(LocalDate documentDate) {
-        this.documentDate = documentDate;
+    public void setAdmissionDocumentDate(LocalDate admissionDocumentDate) {
+        this.admissionDocumentDate = admissionDocumentDate;
     }
 
-    public LocalDate getMemberFrom() {
-        return memberFrom;
+    public LocalDate getCancellationDocumentDate() {
+        return cancellationDocumentDate;
     }
 
-    public void setMemberFrom(LocalDate memberFrom) {
-        this.memberFrom = memberFrom;
+    public void setCancellationDocumentDate(LocalDate cancellationDocumentDate) {
+        this.cancellationDocumentDate = cancellationDocumentDate;
     }
 
-    public LocalDate getMemberUntil() {
-        return memberUntil;
+    public LocalDate getMemberFromDate() {
+        return memberFromDate;
     }
 
-    public void setMemberUntil(LocalDate memberUntil) {
-        this.memberUntil = memberUntil;
+    public void setMemberFromDate(LocalDate memberFromDate) {
+        this.memberFromDate = memberFromDate;
+    }
+
+    public LocalDate getMemberUntilDate() {
+        return memberUntilDate;
+    }
+
+    public void setMemberUntilDate(LocalDate memberUntilDate) {
+        this.memberUntilDate = memberUntilDate;
     }
 
     public String getRemark() {
@@ -115,9 +118,10 @@ public class MembershipDTO implements Serializable {
     public String toString() {
         return "MembershipDTO{" +
             "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", memberFrom='" + getMemberFrom() + "'" +
-            ", memberUntil='" + getMemberUntil() + "'" +
+            ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
+            ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
+            ", memberFromDate='" + getMemberFromDate() + "'" +
+            ", memberUntilDate='" + getMemberUntilDate() + "'" +
             ", remark='" + getRemark() + "'" +
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +

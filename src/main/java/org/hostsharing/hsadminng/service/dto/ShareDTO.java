@@ -30,7 +30,7 @@ public class ShareDTO implements Serializable {
 
     private Long membershipId;
 
-    private String membershipDocumentDate;
+    private String membershipAdmissionDocumentDate;
 
     public Long getId() {
         return id;
@@ -88,12 +88,12 @@ public class ShareDTO implements Serializable {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipDocumentDate() {
-        return membershipDocumentDate;
+    public String getMembershipAdmissionDocumentDate() {
+        return membershipAdmissionDocumentDate;
     }
 
-    public void setMembershipDocumentDate(String membershipDocumentDate) {
-        this.membershipDocumentDate = membershipDocumentDate;
+    public void setMembershipAdmissionDocumentDate(String membershipAdmissionDocumentDate) {
+        this.membershipAdmissionDocumentDate = membershipAdmissionDocumentDate;
     }
 
     @Override
@@ -127,7 +127,7 @@ public class ShareDTO implements Serializable {
             ", quantity=" + getQuantity() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDocumentDate() + "'" +
+            ", membership='" + getMembershipAdmissionDocumentDate() + "'" +
             "}";
     }
 }

@@ -2,26 +2,27 @@
     "hsadminNgApp": {
         "membership": {
             "home": {
-                "title": "Mitgliedschaften",
-                "createLabel": "Mitgliedschaft erfassen",
-                "createOrEditLabel": "Mitgliedschaft erfassen oder bearbeiten"
+                "title": "Memberships",
+                "createLabel": "Membership erstellen",
+                "createOrEditLabel": "Membership erstellen oder bearbeiten"
             },
-            "created": "Mitgliedschaft erfasst mit ID {{ param }}",
-            "updated": "Mitgliedschaft aktualisiert mit ID {{ param }}",
-            "deleted": "Mitgliedschaft gelöscht mit ID {{ param }}",
+            "created": "Membership erstellt mit ID {{ param }}",
+            "updated": "Membership aktualisiert mit ID {{ param }}",
+            "deleted": "Membership gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll die Mitgliedschaft {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Membership {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Mitgliedschaft"
+                "title": "Membership"
             },
-            "documentDate": "Belegdatum",
-            "memberFrom": "Mitglied ab",
-            "memberUntil": "Mitglied bis",
-            "remark": "Bemerkung",
-            "share": "Geschäftsanteile",
-            "asset": "Geschäftsguthaben",
-            "customer": "Kunde/Kundin"
+            "admissionDocumentDate": "Admission Document Date",
+            "cancellationDocumentDate": "Cancellation Document Date",
+            "memberFromDate": "Member From Date",
+            "memberUntilDate": "Member Until Date",
+            "remark": "Remark",
+            "share": "Share",
+            "asset": "Asset",
+            "customer": "Customer"
         }
     }
 }

@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import * as moment from 'moment';
 import { ICustomer } from 'app/shared/model/customer.model';
 import { CustomerService } from './customer.service';
 
@@ -13,6 +14,7 @@ import { CustomerService } from './customer.service';
 export class CustomerUpdateComponent implements OnInit {
     customer: ICustomer;
     isSaving: boolean;
+    birthDateDp: any;
 
     constructor(protected customerService: CustomerService, protected activatedRoute: ActivatedRoute) {}
 

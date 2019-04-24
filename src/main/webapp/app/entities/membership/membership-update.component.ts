@@ -19,9 +19,10 @@ export class MembershipUpdateComponent implements OnInit {
     isSaving: boolean;
 
     customers: ICustomer[];
-    documentDateDp: any;
-    memberFromDp: any;
-    memberUntilDp: any;
+    admissionDocumentDateDp: any;
+    cancellationDocumentDateDp: any;
+    memberFromDateDp: any;
+    memberUntilDateDp: any;
 
     constructor(
         protected jhiAlertService: JhiAlertService,

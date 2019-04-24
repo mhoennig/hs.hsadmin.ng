@@ -51,20 +51,33 @@ export class MembershipService {
 
     protected convertDateFromClient(membership: IMembership): IMembership {
         const copy: IMembership = Object.assign({}, membership, {
-            documentDate:
-                membership.documentDate != null && membership.documentDate.isValid() ? membership.documentDate.format(DATE_FORMAT) : null,
-            memberFrom: membership.memberFrom != null && membership.memberFrom.isValid() ? membership.memberFrom.format(DATE_FORMAT) : null,
-            memberUntil:
-                membership.memberUntil != null && membership.memberUntil.isValid() ? membership.memberUntil.format(DATE_FORMAT) : null
+            admissionDocumentDate:
+                membership.admissionDocumentDate != null && membership.admissionDocumentDate.isValid()
+                    ? membership.admissionDocumentDate.format(DATE_FORMAT)
+                    : null,
+            cancellationDocumentDate:
+                membership.cancellationDocumentDate != null && membership.cancellationDocumentDate.isValid()
+                    ? membership.cancellationDocumentDate.format(DATE_FORMAT)
+                    : null,
+            memberFromDate:
+                membership.memberFromDate != null && membership.memberFromDate.isValid()
+                    ? membership.memberFromDate.format(DATE_FORMAT)
+                    : null,
+            memberUntilDate:
+                membership.memberUntilDate != null && membership.memberUntilDate.isValid()
+                    ? membership.memberUntilDate.format(DATE_FORMAT)
+                    : null
         });
         return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.documentDate = res.body.documentDate != null ? moment(res.body.documentDate) : null;
-            res.body.memberFrom = res.body.memberFrom != null ? moment(res.body.memberFrom) : null;
-            res.body.memberUntil = res.body.memberUntil != null ? moment(res.body.memberUntil) : null;
+            res.body.admissionDocumentDate = res.body.admissionDocumentDate != null ? moment(res.body.admissionDocumentDate) : null;
+            res.body.cancellationDocumentDate =
+                res.body.cancellationDocumentDate != null ? moment(res.body.cancellationDocumentDate) : null;
+            res.body.memberFromDate = res.body.memberFromDate != null ? moment(res.body.memberFromDate) : null;
+            res.body.memberUntilDate = res.body.memberUntilDate != null ? moment(res.body.memberUntilDate) : null;
         }
         return res;
     }
@@ -72,9 +85,12 @@ export class MembershipService {
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((membership: IMembership) => {
-                membership.documentDate = membership.documentDate != null ? moment(membership.documentDate) : null;
-                membership.memberFrom = membership.memberFrom != null ? moment(membership.memberFrom) : null;
-                membership.memberUntil = membership.memberUntil != null ? moment(membership.memberUntil) : null;
+                membership.admissionDocumentDate =
+                    membership.admissionDocumentDate != null ? moment(membership.admissionDocumentDate) : null;
+                membership.cancellationDocumentDate =
+                    membership.cancellationDocumentDate != null ? moment(membership.cancellationDocumentDate) : null;
+                membership.memberFromDate = membership.memberFromDate != null ? moment(membership.memberFromDate) : null;
+                membership.memberUntilDate = membership.memberUntilDate != null ? moment(membership.memberUntilDate) : null;
             });
         }
         return res;

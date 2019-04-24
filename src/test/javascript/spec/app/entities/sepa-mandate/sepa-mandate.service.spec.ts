@@ -43,11 +43,11 @@ describe('Service Tests', () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        validFrom: currentDate.format(DATE_FORMAT),
-                        validUntil: currentDate.format(DATE_FORMAT),
-                        lastUsed: currentDate.format(DATE_FORMAT),
-                        cancellationDate: currentDate.format(DATE_FORMAT)
+                        grantingDocumentDate: currentDate.format(DATE_FORMAT),
+                        revokationDocumentDate: currentDate.format(DATE_FORMAT),
+                        validFromDate: currentDate.format(DATE_FORMAT),
+                        validUntilDate: currentDate.format(DATE_FORMAT),
+                        lastUsedDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
@@ -64,21 +64,21 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        validFrom: currentDate.format(DATE_FORMAT),
-                        validUntil: currentDate.format(DATE_FORMAT),
-                        lastUsed: currentDate.format(DATE_FORMAT),
-                        cancellationDate: currentDate.format(DATE_FORMAT)
+                        grantingDocumentDate: currentDate.format(DATE_FORMAT),
+                        revokationDocumentDate: currentDate.format(DATE_FORMAT),
+                        validFromDate: currentDate.format(DATE_FORMAT),
+                        validUntilDate: currentDate.format(DATE_FORMAT),
+                        lastUsedDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        documentDate: currentDate,
-                        validFrom: currentDate,
-                        validUntil: currentDate,
-                        lastUsed: currentDate,
-                        cancellationDate: currentDate
+                        grantingDocumentDate: currentDate,
+                        revokationDocumentDate: currentDate,
+                        validFromDate: currentDate,
+                        validUntilDate: currentDate,
+                        lastUsedDate: currentDate
                     },
                     returnedFromService
                 );
@@ -96,11 +96,11 @@ describe('Service Tests', () => {
                         reference: 'BBBBBB',
                         iban: 'BBBBBB',
                         bic: 'BBBBBB',
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        validFrom: currentDate.format(DATE_FORMAT),
-                        validUntil: currentDate.format(DATE_FORMAT),
-                        lastUsed: currentDate.format(DATE_FORMAT),
-                        cancellationDate: currentDate.format(DATE_FORMAT),
+                        grantingDocumentDate: currentDate.format(DATE_FORMAT),
+                        revokationDocumentDate: currentDate.format(DATE_FORMAT),
+                        validFromDate: currentDate.format(DATE_FORMAT),
+                        validUntilDate: currentDate.format(DATE_FORMAT),
+                        lastUsedDate: currentDate.format(DATE_FORMAT),
                         remark: 'BBBBBB'
                     },
                     elemDefault
@@ -108,11 +108,11 @@ describe('Service Tests', () => {
 
                 const expected = Object.assign(
                     {
-                        documentDate: currentDate,
-                        validFrom: currentDate,
-                        validUntil: currentDate,
-                        lastUsed: currentDate,
-                        cancellationDate: currentDate
+                        grantingDocumentDate: currentDate,
+                        revokationDocumentDate: currentDate,
+                        validFromDate: currentDate,
+                        validUntilDate: currentDate,
+                        lastUsedDate: currentDate
                     },
                     returnedFromService
                 );
@@ -130,22 +130,22 @@ describe('Service Tests', () => {
                         reference: 'BBBBBB',
                         iban: 'BBBBBB',
                         bic: 'BBBBBB',
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        validFrom: currentDate.format(DATE_FORMAT),
-                        validUntil: currentDate.format(DATE_FORMAT),
-                        lastUsed: currentDate.format(DATE_FORMAT),
-                        cancellationDate: currentDate.format(DATE_FORMAT),
+                        grantingDocumentDate: currentDate.format(DATE_FORMAT),
+                        revokationDocumentDate: currentDate.format(DATE_FORMAT),
+                        validFromDate: currentDate.format(DATE_FORMAT),
+                        validUntilDate: currentDate.format(DATE_FORMAT),
+                        lastUsedDate: currentDate.format(DATE_FORMAT),
                         remark: 'BBBBBB'
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        documentDate: currentDate,
-                        validFrom: currentDate,
-                        validUntil: currentDate,
-                        lastUsed: currentDate,
-                        cancellationDate: currentDate
+                        grantingDocumentDate: currentDate,
+                        revokationDocumentDate: currentDate,
+                        validFromDate: currentDate,
+                        validUntilDate: currentDate,
+                        lastUsedDate: currentDate
                     },
                     returnedFromService
                 );

@@ -28,29 +28,29 @@
             "fieldValidateRulesMaxlength": 11
         },
         {
-            "fieldName": "documentDate",
+            "fieldName": "grantingDocumentDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
             ]
         },
         {
-            "fieldName": "validFrom",
+            "fieldName": "revokationDocumentDate",
+            "fieldType": "LocalDate"
+        },
+        {
+            "fieldName": "validFromDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
             ]
         },
         {
-            "fieldName": "validUntil",
+            "fieldName": "validUntilDate",
             "fieldType": "LocalDate"
         },
         {
-            "fieldName": "lastUsed",
-            "fieldType": "LocalDate"
-        },
-        {
-            "fieldName": "cancellationDate",
+            "fieldName": "lastUsedDate",
             "fieldType": "LocalDate"
         },
         {
@@ -72,7 +72,7 @@
             "otherEntityField": "prefix"
         }
     ],
-    "changelogDate": "20190418143054",
+    "changelogDate": "20190424123259",
     "entityTableName": "sepa_mandate",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

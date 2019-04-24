@@ -42,9 +42,7 @@ public class AssetService {
      */
     public AssetDTO save(AssetDTO assetDTO) {
         log.debug("Request to save Asset : {}", assetDTO);
-
         assetValidator.validate(assetDTO);
-
         Asset asset = assetMapper.toEntity(assetDTO);
         asset = assetRepository.save(asset);
         return assetMapper.toDto(asset);

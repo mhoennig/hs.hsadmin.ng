@@ -19,11 +19,11 @@ export class SepaMandateUpdateComponent implements OnInit {
     isSaving: boolean;
 
     customers: ICustomer[];
-    documentDateDp: any;
-    validFromDp: any;
-    validUntilDp: any;
-    lastUsedDp: any;
-    cancellationDateDp: any;
+    grantingDocumentDateDp: any;
+    revokationDocumentDateDp: any;
+    validFromDateDp: any;
+    validUntilDateDp: any;
+    lastUsedDateDp: any;
 
     constructor(
         protected jhiAlertService: JhiAlertService,

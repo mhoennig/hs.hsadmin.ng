@@ -46,10 +46,10 @@
             "otherEntityRelationshipName": "share",
             "relationshipValidateRules": "required",
             "relationshipName": "membership",
-            "otherEntityField": "documentDate"
+            "otherEntityField": "admissionDocumentDate"
         }
     ],
-    "changelogDate": "20190418143052",
+    "changelogDate": "20190424123257",
     "entityTableName": "share",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

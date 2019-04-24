@@ -1,7 +1,10 @@
 package org.hostsharing.hsadminng.service.dto;
+import java.time.LocalDate;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.Objects;
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 
 /**
  * A DTO for the Customer entity.
@@ -23,6 +26,26 @@ public class CustomerDTO implements Serializable {
     @NotNull
     @Size(max = 80)
     private String name;
+
+    @NotNull
+    private CustomerKind kind;
+
+    private LocalDate birthDate;
+
+    @Size(max = 80)
+    private String birthPlace;
+
+    @Size(max = 80)
+    private String registrationCourt;
+
+    @Size(max = 80)
+    private String registrationNumber;
+
+    @NotNull
+    private VatRegion vatRegion;
+
+    @Size(max = 40)
+    private String vatNumber;
 
     @Size(max = 80)
     private String contractualSalutation;
@@ -71,6 +94,62 @@ public class CustomerDTO implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public CustomerKind getKind() {
+        return kind;
+    }
+
+    public void setKind(CustomerKind kind) {
+        this.kind = kind;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getBirthPlace() {
+        return birthPlace;
+    }
+
+    public void setBirthPlace(String birthPlace) {
+        this.birthPlace = birthPlace;
+    }
+
+    public String getRegistrationCourt() {
+        return registrationCourt;
+    }
+
+    public void setRegistrationCourt(String registrationCourt) {
+        this.registrationCourt = registrationCourt;
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
+
+    public VatRegion getVatRegion() {
+        return vatRegion;
+    }
+
+    public void setVatRegion(VatRegion vatRegion) {
+        this.vatRegion = vatRegion;
+    }
+
+    public String getVatNumber() {
+        return vatNumber;
+    }
+
+    public void setVatNumber(String vatNumber) {
+        this.vatNumber = vatNumber;
     }
 
     public String getContractualSalutation() {
@@ -141,6 +220,13 @@ public class CustomerDTO implements Serializable {
             ", reference=" + getReference() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
+            ", kind='" + getKind() + "'" +
+            ", birthDate='" + getBirthDate() + "'" +
+            ", birthPlace='" + getBirthPlace() + "'" +
+            ", registrationCourt='" + getRegistrationCourt() + "'" +
+            ", registrationNumber='" + getRegistrationNumber() + "'" +
+            ", vatRegion='" + getVatRegion() + "'" +
+            ", vatNumber='" + getVatNumber() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
             ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +

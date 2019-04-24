@@ -98,20 +98,20 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
             if (criteria.getBic() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getBic(), SepaMandate_.bic));
             }
-            if (criteria.getDocumentDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getDocumentDate(), SepaMandate_.documentDate));
+            if (criteria.getGrantingDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getGrantingDocumentDate(), SepaMandate_.grantingDocumentDate));
             }
-            if (criteria.getValidFrom() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidFrom(), SepaMandate_.validFrom));
+            if (criteria.getRevokationDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getRevokationDocumentDate(), SepaMandate_.revokationDocumentDate));
             }
-            if (criteria.getValidUntil() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidUntil(), SepaMandate_.validUntil));
+            if (criteria.getValidFromDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getValidFromDate(), SepaMandate_.validFromDate));
             }
-            if (criteria.getLastUsed() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getLastUsed(), SepaMandate_.lastUsed));
+            if (criteria.getValidUntilDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getValidUntilDate(), SepaMandate_.validUntilDate));
             }
-            if (criteria.getCancellationDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getCancellationDate(), SepaMandate_.cancellationDate));
+            if (criteria.getLastUsedDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getLastUsedDate(), SepaMandate_.lastUsedDate));
             }
             if (criteria.getRemark() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getRemark(), SepaMandate_.remark));

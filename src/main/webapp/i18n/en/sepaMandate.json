@@ -18,11 +18,11 @@
             "reference": "Reference",
             "iban": "Iban",
             "bic": "Bic",
-            "documentDate": "Document Date",
-            "validFrom": "Valid From",
-            "validUntil": "Valid Until",
-            "lastUsed": "Last Used",
-            "cancellationDate": "Cancellation Date",
+            "grantingDocumentDate": "Granting Document Date",
+            "revokationDocumentDate": "Revokation Document Date",
+            "validFromDate": "Valid From Date",
+            "validUntilDate": "Valid Until Date",
+            "lastUsedDate": "Last Used Date",
             "remark": "Remark",
             "customer": "Customer"
         }

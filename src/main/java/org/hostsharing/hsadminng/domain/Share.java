@@ -49,8 +49,8 @@ public class Share implements Serializable {
     @Column(name = "remark", length = 160)
     private String remark;
 
-    @NotNull
     @ManyToOne(optional = false)
+    @NotNull
     @JsonIgnoreProperties("shares")
     private Membership membership;
 

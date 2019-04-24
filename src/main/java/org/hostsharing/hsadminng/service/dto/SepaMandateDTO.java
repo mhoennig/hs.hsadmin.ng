@@ -22,16 +22,16 @@ public class SepaMandateDTO implements Serializable {
     private String bic;
 
     @NotNull
-    private LocalDate documentDate;
+    private LocalDate grantingDocumentDate;
+
+    private LocalDate revokationDocumentDate;
 
     @NotNull
-    private LocalDate validFrom;
+    private LocalDate validFromDate;
 
-    private LocalDate validUntil;
+    private LocalDate validUntilDate;
 
-    private LocalDate lastUsed;
-
-    private LocalDate cancellationDate;
+    private LocalDate lastUsedDate;
 
     @Size(max = 160)
     private String remark;
@@ -73,44 +73,44 @@ public class SepaMandateDTO implements Serializable {
         this.bic = bic;
     }
 
-    public LocalDate getDocumentDate() {
-        return documentDate;
+    public LocalDate getGrantingDocumentDate() {
+        return grantingDocumentDate;
     }
 
-    public void setDocumentDate(LocalDate documentDate) {
-        this.documentDate = documentDate;
+    public void setGrantingDocumentDate(LocalDate grantingDocumentDate) {
+        this.grantingDocumentDate = grantingDocumentDate;
     }
 
-    public LocalDate getValidFrom() {
-        return validFrom;
+    public LocalDate getRevokationDocumentDate() {
+        return revokationDocumentDate;
     }
 
-    public void setValidFrom(LocalDate validFrom) {
-        this.validFrom = validFrom;
+    public void setRevokationDocumentDate(LocalDate revokationDocumentDate) {
+        this.revokationDocumentDate = revokationDocumentDate;
     }
 
-    public LocalDate getValidUntil() {
-        return validUntil;
+    public LocalDate getValidFromDate() {
+        return validFromDate;
     }
 
-    public void setValidUntil(LocalDate validUntil) {
-        this.validUntil = validUntil;
+    public void setValidFromDate(LocalDate validFromDate) {
+        this.validFromDate = validFromDate;
     }
 
-    public LocalDate getLastUsed() {
-        return lastUsed;
+    public LocalDate getValidUntilDate() {
+        return validUntilDate;
     }
 
-    public void setLastUsed(LocalDate lastUsed) {
-        this.lastUsed = lastUsed;
+    public void setValidUntilDate(LocalDate validUntilDate) {
+        this.validUntilDate = validUntilDate;
     }
 
-    public LocalDate getCancellationDate() {
-        return cancellationDate;
+    public LocalDate getLastUsedDate() {
+        return lastUsedDate;
     }
 
-    public void setCancellationDate(LocalDate cancellationDate) {
-        this.cancellationDate = cancellationDate;
+    public void setLastUsedDate(LocalDate lastUsedDate) {
+        this.lastUsedDate = lastUsedDate;
     }
 
     public String getRemark() {
@@ -165,11 +165,11 @@ public class SepaMandateDTO implements Serializable {
             ", reference='" + getReference() + "'" +
             ", iban='" + getIban() + "'" +
             ", bic='" + getBic() + "'" +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", validFrom='" + getValidFrom() + "'" +
-            ", validUntil='" + getValidUntil() + "'" +
-            ", lastUsed='" + getLastUsed() + "'" +
-            ", cancellationDate='" + getCancellationDate() + "'" +
+            ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
+            ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
+            ", validFromDate='" + getValidFromDate() + "'" +
+            ", validUntilDate='" + getValidUntilDate() + "'" +
+            ", lastUsedDate='" + getLastUsedDate() + "'" +
             ", remark='" + getRemark() + "'" +
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +

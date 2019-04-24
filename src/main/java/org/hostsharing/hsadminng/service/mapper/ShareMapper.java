@@ -12,7 +12,7 @@ import org.mapstruct.*;
 public interface ShareMapper extends EntityMapper<ShareDTO, Share> {
 
     @Mapping(source = "membership.id", target = "membershipId")
-    @Mapping(source = "membership.documentDate", target = "membershipDocumentDate")
+    @Mapping(source = "membership.admissionDocumentDate", target = "membershipAdmissionDocumentDate")
     ShareDTO toDto(Share share);
 
     @Mapping(source = "membershipId", target = "membership")

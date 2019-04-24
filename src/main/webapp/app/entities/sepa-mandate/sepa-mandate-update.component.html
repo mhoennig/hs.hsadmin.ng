@@ -47,64 +47,64 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.documentDate" for="field_documentDate">Document Date</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.grantingDocumentDate" for="field_grantingDocumentDate">Granting Document Date</label>
                     <div class="input-group">
-                        <input id="field_documentDate" type="text" class="form-control" name="documentDate" ngbDatepicker  #documentDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.documentDate"
+                        <input id="field_grantingDocumentDate" type="text" class="form-control" name="grantingDocumentDate" ngbDatepicker  #grantingDocumentDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.grantingDocumentDate"
                         required/>
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="documentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="grantingDocumentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
-                    <div [hidden]="!(editForm.controls.documentDate?.dirty && editForm.controls.documentDate?.invalid)">
+                    <div [hidden]="!(editForm.controls.grantingDocumentDate?.dirty && editForm.controls.grantingDocumentDate?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.documentDate?.errors?.required" jhiTranslate="entity.validation.required">
+                        [hidden]="!editForm.controls.grantingDocumentDate?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validFrom" for="field_validFrom">Valid From</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.revokationDocumentDate" for="field_revokationDocumentDate">Revokation Document Date</label>
                     <div class="input-group">
-                        <input id="field_validFrom" type="text" class="form-control" name="validFrom" ngbDatepicker  #validFromDp="ngbDatepicker" [(ngModel)]="sepaMandate.validFrom"
-                        required/>
+                        <input id="field_revokationDocumentDate" type="text" class="form-control" name="revokationDocumentDate" ngbDatepicker  #revokationDocumentDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.revokationDocumentDate"
+                        />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="validFromDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="revokationDocumentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
-                    <div [hidden]="!(editForm.controls.validFrom?.dirty && editForm.controls.validFrom?.invalid)">
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validFromDate" for="field_validFromDate">Valid From Date</label>
+                    <div class="input-group">
+                        <input id="field_validFromDate" type="text" class="form-control" name="validFromDate" ngbDatepicker  #validFromDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.validFromDate"
+                        required/>
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="validFromDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                    <div [hidden]="!(editForm.controls.validFromDate?.dirty && editForm.controls.validFromDate?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.validFrom?.errors?.required" jhiTranslate="entity.validation.required">
+                        [hidden]="!editForm.controls.validFromDate?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validUntil" for="field_validUntil">Valid Until</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.validUntilDate" for="field_validUntilDate">Valid Until Date</label>
                     <div class="input-group">
-                        <input id="field_validUntil" type="text" class="form-control" name="validUntil" ngbDatepicker  #validUntilDp="ngbDatepicker" [(ngModel)]="sepaMandate.validUntil"
+                        <input id="field_validUntilDate" type="text" class="form-control" name="validUntilDate" ngbDatepicker  #validUntilDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.validUntilDate"
                         />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="validUntilDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="validUntilDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.lastUsed" for="field_lastUsed">Last Used</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.lastUsedDate" for="field_lastUsedDate">Last Used Date</label>
                     <div class="input-group">
-                        <input id="field_lastUsed" type="text" class="form-control" name="lastUsed" ngbDatepicker  #lastUsedDp="ngbDatepicker" [(ngModel)]="sepaMandate.lastUsed"
+                        <input id="field_lastUsedDate" type="text" class="form-control" name="lastUsedDate" ngbDatepicker  #lastUsedDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.lastUsedDate"
                         />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="lastUsedDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
-                        </span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.cancellationDate" for="field_cancellationDate">Cancellation Date</label>
-                    <div class="input-group">
-                        <input id="field_cancellationDate" type="text" class="form-control" name="cancellationDate" ngbDatepicker  #cancellationDateDp="ngbDatepicker" [(ngModel)]="sepaMandate.cancellationDate"
-                        />
-                        <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="cancellationDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="lastUsedDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
                 </div>

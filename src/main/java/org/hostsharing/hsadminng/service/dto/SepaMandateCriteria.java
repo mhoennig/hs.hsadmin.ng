@@ -31,15 +31,15 @@ public class SepaMandateCriteria implements Serializable {
 
     private StringFilter bic;
 
-    private LocalDateFilter documentDate;
+    private LocalDateFilter grantingDocumentDate;
 
-    private LocalDateFilter validFrom;
+    private LocalDateFilter revokationDocumentDate;
 
-    private LocalDateFilter validUntil;
+    private LocalDateFilter validFromDate;
 
-    private LocalDateFilter lastUsed;
+    private LocalDateFilter validUntilDate;
 
-    private LocalDateFilter cancellationDate;
+    private LocalDateFilter lastUsedDate;
 
     private StringFilter remark;
 
@@ -77,44 +77,44 @@ public class SepaMandateCriteria implements Serializable {
         this.bic = bic;
     }
 
-    public LocalDateFilter getDocumentDate() {
-        return documentDate;
+    public LocalDateFilter getGrantingDocumentDate() {
+        return grantingDocumentDate;
     }
 
-    public void setDocumentDate(LocalDateFilter documentDate) {
-        this.documentDate = documentDate;
+    public void setGrantingDocumentDate(LocalDateFilter grantingDocumentDate) {
+        this.grantingDocumentDate = grantingDocumentDate;
     }
 
-    public LocalDateFilter getValidFrom() {
-        return validFrom;
+    public LocalDateFilter getRevokationDocumentDate() {
+        return revokationDocumentDate;
     }
 
-    public void setValidFrom(LocalDateFilter validFrom) {
-        this.validFrom = validFrom;
+    public void setRevokationDocumentDate(LocalDateFilter revokationDocumentDate) {
+        this.revokationDocumentDate = revokationDocumentDate;
     }
 
-    public LocalDateFilter getValidUntil() {
-        return validUntil;
+    public LocalDateFilter getValidFromDate() {
+        return validFromDate;
     }
 
-    public void setValidUntil(LocalDateFilter validUntil) {
-        this.validUntil = validUntil;
+    public void setValidFromDate(LocalDateFilter validFromDate) {
+        this.validFromDate = validFromDate;
     }
 
-    public LocalDateFilter getLastUsed() {
-        return lastUsed;
+    public LocalDateFilter getValidUntilDate() {
+        return validUntilDate;
     }
 
-    public void setLastUsed(LocalDateFilter lastUsed) {
-        this.lastUsed = lastUsed;
+    public void setValidUntilDate(LocalDateFilter validUntilDate) {
+        this.validUntilDate = validUntilDate;
     }
 
-    public LocalDateFilter getCancellationDate() {
-        return cancellationDate;
+    public LocalDateFilter getLastUsedDate() {
+        return lastUsedDate;
     }
 
-    public void setCancellationDate(LocalDateFilter cancellationDate) {
-        this.cancellationDate = cancellationDate;
+    public void setLastUsedDate(LocalDateFilter lastUsedDate) {
+        this.lastUsedDate = lastUsedDate;
     }
 
     public StringFilter getRemark() {
@@ -148,11 +148,11 @@ public class SepaMandateCriteria implements Serializable {
             Objects.equals(reference, that.reference) &&
             Objects.equals(iban, that.iban) &&
             Objects.equals(bic, that.bic) &&
-            Objects.equals(documentDate, that.documentDate) &&
-            Objects.equals(validFrom, that.validFrom) &&
-            Objects.equals(validUntil, that.validUntil) &&
-            Objects.equals(lastUsed, that.lastUsed) &&
-            Objects.equals(cancellationDate, that.cancellationDate) &&
+            Objects.equals(grantingDocumentDate, that.grantingDocumentDate) &&
+            Objects.equals(revokationDocumentDate, that.revokationDocumentDate) &&
+            Objects.equals(validFromDate, that.validFromDate) &&
+            Objects.equals(validUntilDate, that.validUntilDate) &&
+            Objects.equals(lastUsedDate, that.lastUsedDate) &&
             Objects.equals(remark, that.remark) &&
             Objects.equals(customerId, that.customerId);
     }
@@ -164,11 +164,11 @@ public class SepaMandateCriteria implements Serializable {
         reference,
         iban,
         bic,
-        documentDate,
-        validFrom,
-        validUntil,
-        lastUsed,
-        cancellationDate,
+        grantingDocumentDate,
+        revokationDocumentDate,
+        validFromDate,
+        validUntilDate,
+        lastUsedDate,
         remark,
         customerId
         );
@@ -181,11 +181,11 @@ public class SepaMandateCriteria implements Serializable {
                 (reference != null ? "reference=" + reference + ", " : "") +
                 (iban != null ? "iban=" + iban + ", " : "") +
                 (bic != null ? "bic=" + bic + ", " : "") +
-                (documentDate != null ? "documentDate=" + documentDate + ", " : "") +
-                (validFrom != null ? "validFrom=" + validFrom + ", " : "") +
-                (validUntil != null ? "validUntil=" + validUntil + ", " : "") +
-                (lastUsed != null ? "lastUsed=" + lastUsed + ", " : "") +
-                (cancellationDate != null ? "cancellationDate=" + cancellationDate + ", " : "") +
+                (grantingDocumentDate != null ? "grantingDocumentDate=" + grantingDocumentDate + ", " : "") +
+                (revokationDocumentDate != null ? "revokationDocumentDate=" + revokationDocumentDate + ", " : "") +
+                (validFromDate != null ? "validFromDate=" + validFromDate + ", " : "") +
+                (validUntilDate != null ? "validUntilDate=" + validUntilDate + ", " : "") +
+                (lastUsedDate != null ? "lastUsedDate=" + lastUsedDate + ", " : "") +
                 (remark != null ? "remark=" + remark + ", " : "") +
                 (customerId != null ? "customerId=" + customerId + ", " : "") +
             "}";

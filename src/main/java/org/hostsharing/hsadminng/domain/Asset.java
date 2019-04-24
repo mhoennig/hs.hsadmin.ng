@@ -50,8 +50,8 @@ public class Asset implements Serializable {
     @Column(name = "remark", length = 160)
     private String remark;
 
-    @NotNull
     @ManyToOne(optional = false)
+    @NotNull
     @JsonIgnoreProperties("assets")
     private Membership membership;
 

@@ -2,6 +2,8 @@ package org.hostsharing.hsadminng.service.dto;
 
 import java.io.Serializable;
 import java.util.Objects;
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import io.github.jhipster.service.filter.BooleanFilter;
 import io.github.jhipster.service.filter.DoubleFilter;
 import io.github.jhipster.service.filter.Filter;
@@ -9,6 +11,7 @@ import io.github.jhipster.service.filter.FloatFilter;
 import io.github.jhipster.service.filter.IntegerFilter;
 import io.github.jhipster.service.filter.LongFilter;
 import io.github.jhipster.service.filter.StringFilter;
+import io.github.jhipster.service.filter.LocalDateFilter;
 
 /**
  * Criteria class for the Customer entity. This class is used in CustomerResource to
@@ -19,6 +22,16 @@ import io.github.jhipster.service.filter.StringFilter;
  * fix type specific filters.
  */
 public class CustomerCriteria implements Serializable {
+    /**
+     * Class for filtering CustomerKind
+     */
+    public static class CustomerKindFilter extends Filter<CustomerKind> {
+    }
+    /**
+     * Class for filtering VatRegion
+     */
+    public static class VatRegionFilter extends Filter<VatRegion> {
+    }
 
     private static final long serialVersionUID = 1L;
 
@@ -29,6 +42,20 @@ public class CustomerCriteria implements Serializable {
     private StringFilter prefix;
 
     private StringFilter name;
+
+    private CustomerKindFilter kind;
+
+    private LocalDateFilter birthDate;
+
+    private StringFilter birthPlace;
+
+    private StringFilter registrationCourt;
+
+    private StringFilter registrationNumber;
+
+    private VatRegionFilter vatRegion;
+
+    private StringFilter vatNumber;
 
     private StringFilter contractualSalutation;
 
@@ -74,6 +101,62 @@ public class CustomerCriteria implements Serializable {
 
     public void setName(StringFilter name) {
         this.name = name;
+    }
+
+    public CustomerKindFilter getKind() {
+        return kind;
+    }
+
+    public void setKind(CustomerKindFilter kind) {
+        this.kind = kind;
+    }
+
+    public LocalDateFilter getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDateFilter birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public StringFilter getBirthPlace() {
+        return birthPlace;
+    }
+
+    public void setBirthPlace(StringFilter birthPlace) {
+        this.birthPlace = birthPlace;
+    }
+
+    public StringFilter getRegistrationCourt() {
+        return registrationCourt;
+    }
+
+    public void setRegistrationCourt(StringFilter registrationCourt) {
+        this.registrationCourt = registrationCourt;
+    }
+
+    public StringFilter getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(StringFilter registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
+
+    public VatRegionFilter getVatRegion() {
+        return vatRegion;
+    }
+
+    public void setVatRegion(VatRegionFilter vatRegion) {
+        this.vatRegion = vatRegion;
+    }
+
+    public StringFilter getVatNumber() {
+        return vatNumber;
+    }
+
+    public void setVatNumber(StringFilter vatNumber) {
+        this.vatNumber = vatNumber;
     }
 
     public StringFilter getContractualSalutation() {
@@ -147,6 +230,13 @@ public class CustomerCriteria implements Serializable {
             Objects.equals(reference, that.reference) &&
             Objects.equals(prefix, that.prefix) &&
             Objects.equals(name, that.name) &&
+            Objects.equals(kind, that.kind) &&
+            Objects.equals(birthDate, that.birthDate) &&
+            Objects.equals(birthPlace, that.birthPlace) &&
+            Objects.equals(registrationCourt, that.registrationCourt) &&
+            Objects.equals(registrationNumber, that.registrationNumber) &&
+            Objects.equals(vatRegion, that.vatRegion) &&
+            Objects.equals(vatNumber, that.vatNumber) &&
             Objects.equals(contractualSalutation, that.contractualSalutation) &&
             Objects.equals(contractualAddress, that.contractualAddress) &&
             Objects.equals(billingSalutation, that.billingSalutation) &&
@@ -163,6 +253,13 @@ public class CustomerCriteria implements Serializable {
         reference,
         prefix,
         name,
+        kind,
+        birthDate,
+        birthPlace,
+        registrationCourt,
+        registrationNumber,
+        vatRegion,
+        vatNumber,
         contractualSalutation,
         contractualAddress,
         billingSalutation,
@@ -180,6 +277,13 @@ public class CustomerCriteria implements Serializable {
                 (reference != null ? "reference=" + reference + ", " : "") +
                 (prefix != null ? "prefix=" + prefix + ", " : "") +
                 (name != null ? "name=" + name + ", " : "") +
+                (kind != null ? "kind=" + kind + ", " : "") +
+                (birthDate != null ? "birthDate=" + birthDate + ", " : "") +
+                (birthPlace != null ? "birthPlace=" + birthPlace + ", " : "") +
+                (registrationCourt != null ? "registrationCourt=" + registrationCourt + ", " : "") +
+                (registrationNumber != null ? "registrationNumber=" + registrationNumber + ", " : "") +
+                (vatRegion != null ? "vatRegion=" + vatRegion + ", " : "") +
+                (vatNumber != null ? "vatNumber=" + vatNumber + ", " : "") +
                 (contractualSalutation != null ? "contractualSalutation=" + contractualSalutation + ", " : "") +
                 (contractualAddress != null ? "contractualAddress=" + contractualAddress + ", " : "") +
                 (billingSalutation != null ? "billingSalutation=" + billingSalutation + ", " : "") +
