@@ -37,10 +37,10 @@ public class MembershipDTO implements Serializable {
     private String remark;
 
     @ParentId(CustomerDTO.class)
-    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long customerId;
 
-    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
 
     public MembershipDTO with(

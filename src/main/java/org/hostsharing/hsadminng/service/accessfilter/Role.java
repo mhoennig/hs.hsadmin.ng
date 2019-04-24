@@ -88,6 +88,26 @@ public enum Role {
     }
 
     /**
+     * @return true if this role is independent of a target object, false otherwise.
+     */
+    public boolean isIndependent() {
+        return covers(Role.SUPPORTER);
+    }
+
+    /**
+    @return the role with the broadest access rights
+     */
+    public static Role broadest(final Role role, final Role... roles) {
+        Role broadests = role;
+        for ( Role r: roles ) {
+            if ( r.covers(broadests)) {
+                broadests = r;
+            }
+        }
+        return broadests;
+    }
+
+    /**
      * Determines if the given role is covered by this role.
      *
      * Where 'this' means the Java instance itself as a role of a system user.
@@ -163,5 +183,4 @@ public enum Role {
         }
         return false;
     }
-
 }

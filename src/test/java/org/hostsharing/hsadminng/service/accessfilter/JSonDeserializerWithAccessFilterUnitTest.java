@@ -12,11 +12,13 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
 import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
 import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.mockito.BDDMockito.given;
@@ -26,6 +28,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
+
+    @Mock
+    public ApplicationContext ctx;
 
     @Mock
     public JsonParser jsonParser;
@@ -52,7 +57,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
             ImmutablePair.of("openStringField", "String Value")));
 
         // when
-        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openStringField).isEqualTo("String Value");
@@ -66,7 +71,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
             ImmutablePair.of("openIntegerField", 1234)));
 
         // when
-        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openIntegerField).isEqualTo(1234);
@@ -80,7 +85,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
             ImmutablePair.of("openLongField", 1234L)));
 
         // when
-        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openLongField).isEqualTo(1234L);
@@ -96,7 +101,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
             ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
-        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.restrictedField).isEqualTo("Restricted String Value");
@@ -110,7 +115,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
-        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize());
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -127,7 +132,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("parentId", 1111L)));
 
         // when
-        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenChildDto.class).deserialize());
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenChildDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -144,7 +149,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("parentId", 1111L)));
 
         // when
-        final GivenChildDto actualDto = new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenChildDto.class).deserialize();
+        final GivenChildDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenChildDto.class).deserialize();
 
         // then
         assertThat(actualDto.parentId).isEqualTo(1111L);
@@ -160,7 +165,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
             ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
-        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDto.class).deserialize());
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -175,7 +180,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("id", 1111L)));
 
         // when
-        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(jsonParser, null, GivenDtoWithMultipleSelfId.class).deserialize());
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDtoWithMultipleSelfId.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOf(AssertionError.class).hasMessage("multiple @SelfId detected in GivenDtoWithMultipleSelfId");
@@ -183,28 +188,8 @@ public class JSonDeserializerWithAccessFilterUnitTest {
 
     // --- only fixture code below ---
 
-    @SafeVarargs
-    private final String asJSon(final ImmutablePair<String, Object>... properties) {
-        final StringBuilder json = new StringBuilder();
-        for (ImmutablePair<String, Object> prop : properties) {
-            json.append(inQuotes(prop.left));
-            json.append(": ");
-            if (prop.right instanceof Number) {
-                json.append(prop.right);
-            } else {
-                json.append(inQuotes(prop.right));
-            }
-            json.append(",\n");
-        }
-        return "{\n" + json.substring(0, json.length() - 2) + "\n}";
-    }
-
     private void givenJSonTree(String givenJSon) throws IOException {
         given(codec.readTree(jsonParser)).willReturn(new ObjectMapper().readTree(givenJSon));
-    }
-
-    private String inQuotes(Object value) {
-        return "\"" + value.toString() + "\"";
     }
 
     public static class GivenDto {

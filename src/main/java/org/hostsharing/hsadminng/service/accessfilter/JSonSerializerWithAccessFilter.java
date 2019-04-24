@@ -4,18 +4,21 @@ package org.hostsharing.hsadminng.service.accessfilter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 
 public class JSonSerializerWithAccessFilter <T> extends JSonAccessFilter<T> {
     private final JsonGenerator jsonGenerator;
     private final SerializerProvider serializerProvider;
 
-    public JSonSerializerWithAccessFilter(final JsonGenerator jsonGenerator,
+    public JSonSerializerWithAccessFilter(final ApplicationContext ctx,
+                                          final JsonGenerator jsonGenerator,
                                           final SerializerProvider serializerProvider,
                                           final T dto) {
-        super(dto);
+        super(ctx, dto);
         this.jsonGenerator = jsonGenerator;
         this.serializerProvider = serializerProvider;
     }
@@ -42,6 +45,10 @@ public class JSonSerializerWithAccessFilter <T> extends JSonAccessFilter<T> {
                 jsonGenerator.writeNumberField(fieldName, (int) get(dto, prop));
             } else if (Long.class.isAssignableFrom(prop.getType()) || long.class.isAssignableFrom(prop.getType())) {
                 jsonGenerator.writeNumberField(fieldName, (long) get(dto, prop));
+            } else if (LocalDate.class.isAssignableFrom(prop.getType())) {
+                jsonGenerator.writeStringField(fieldName, get(dto, prop).toString()); // TODO proper format
+            } else if (Enum.class.isAssignableFrom(prop.getType())) {
+                jsonGenerator.writeStringField(fieldName, get(dto, prop).toString()); // TODO proper representation
             } else if (String.class.isAssignableFrom(prop.getType())) {
                 jsonGenerator.writeStringField(fieldName, (String) get(dto, prop));
             } else {

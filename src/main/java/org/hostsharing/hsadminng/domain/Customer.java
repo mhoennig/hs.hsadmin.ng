@@ -1,15 +1,12 @@
 package org.hostsharing.hsadminng.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
 import javax.validation.constraints.*;
-
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A Customer.
@@ -65,11 +62,19 @@ public class Customer implements Serializable {
 
     @OneToMany(mappedBy = "customer")
     private Set<Membership> memberships = new HashSet<>();
+
     @OneToMany(mappedBy = "customer")
     private Set<SepaMandate> sepamandates = new HashSet<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+
     public Long getId() {
         return id;
+    }
+
+    public Customer id(long id) {
+        this.id = id;
+        return this;
     }
 
     public void setId(Long id) {
@@ -229,6 +234,7 @@ public class Customer implements Serializable {
     public void setSepamandates(Set<SepaMandate> sepaMandates) {
         this.sepamandates = sepaMandates;
     }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override

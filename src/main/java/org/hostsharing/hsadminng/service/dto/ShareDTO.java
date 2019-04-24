@@ -1,35 +1,51 @@
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
-import java.io.Serializable;
-import java.util.Objects;
+
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
+import org.hostsharing.hsadminng.service.accessfilter.ParentId;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SelfId;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * A DTO for the Share entity.
  */
 public class ShareDTO implements Serializable {
 
+    @SelfId
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long id;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate valueDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private ShareAction action;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Integer quantity;
 
     @Size(max = 160)
+    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-
+    @ParentId(MembershipDTO.class)
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
+    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String membershipDocumentDate;
 
     public Long getId() {

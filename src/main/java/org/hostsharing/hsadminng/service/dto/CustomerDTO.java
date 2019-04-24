@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.*;
 import java.io.IOException;
@@ -172,24 +173,34 @@ public class CustomerDTO implements Serializable {
     @JsonComponent
     public static class CustomerJsonSerializer extends JsonSerializer<CustomerDTO> {
 
+        private final ApplicationContext ctx;
+
+        public CustomerJsonSerializer(final ApplicationContext ctx) {
+            this.ctx = ctx;
+        }
+
         @Override
         public void serialize(final CustomerDTO customerDTO, final JsonGenerator jsonGenerator,
                               final SerializerProvider serializerProvider) throws IOException {
 
-           new JSonSerializerWithAccessFilter<>(jsonGenerator, serializerProvider, customerDTO).serialize();
+           new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, serializerProvider, customerDTO).serialize();
         }
     }
 
-
-
     @JsonComponent
     public static class CustomerJsonDeserializer extends JsonDeserializer<CustomerDTO> {
+
+        private final ApplicationContext ctx;
+
+        public CustomerJsonDeserializer(final ApplicationContext ctx) {
+            this.ctx = ctx;
+        }
 
         @Override
         public CustomerDTO deserialize(final JsonParser jsonParser,
                                        final DeserializationContext deserializationContext) {
 
-            return new JSonDeserializerWithAccessFilter<>(jsonParser, deserializationContext, CustomerDTO.class).deserialize();
+            return new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, deserializationContext, CustomerDTO.class).deserialize();
         }
     }
 }

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.commons.lang3.NotImplementedException;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -21,8 +22,8 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
     private final TreeNode treeNode;
     private final Set<Field> modifiedFields = new HashSet<>();
 
-    public JSonDeserializerWithAccessFilter(final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
-        super(unchecked(dtoClass::newInstance));
+    public JSonDeserializerWithAccessFilter(final ApplicationContext ctx, final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
+        super(ctx, unchecked(dtoClass::newInstance));
         this.treeNode = unchecked(() -> jsonParser.getCodec().readTree(jsonParser));
     }
 
