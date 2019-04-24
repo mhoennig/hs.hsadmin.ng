@@ -1,9 +1,11 @@
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
-
-import javax.persistence.criteria.JoinType;
-
+import io.github.jhipster.service.QueryService;
+import org.hostsharing.hsadminng.domain.*;
+import org.hostsharing.hsadminng.repository.MembershipRepository;
+import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
+import org.hostsharing.hsadminng.service.dto.MembershipDTO;
+import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,14 +14,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
-
-import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.MembershipRepository;
-import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
-import org.hostsharing.hsadminng.service.dto.MembershipDTO;
-import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
+import javax.persistence.criteria.JoinType;
+import java.util.List;
 
 /**
  * Service for executing complex queries for Membership entities in the database.
@@ -89,14 +85,17 @@ public class MembershipQueryService extends QueryService<Membership> {
             if (criteria.getId() != null) {
                 specification = specification.and(buildSpecification(criteria.getId(), Membership_.id));
             }
-            if (criteria.getDocumentDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getDocumentDate(), Membership_.documentDate));
+            if (criteria.getAdmissionDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getAdmissionDocumentDate(), Membership_.admissionDocumentDate));
             }
-            if (criteria.getMemberFrom() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getMemberFrom(), Membership_.memberFrom));
+            if (criteria.getCancellationDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getCancellationDocumentDate(), Membership_.cancellationDocumentDate));
             }
-            if (criteria.getMemberUntil() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getMemberUntil(), Membership_.memberUntil));
+            if (criteria.getMemberFromDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getMemberFromDate(), Membership_.memberFromDate));
+            }
+            if (criteria.getMemberUntilDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getMemberUntilDate(), Membership_.memberUntilDate));
             }
             if (criteria.getRemark() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getRemark(), Membership_.remark));

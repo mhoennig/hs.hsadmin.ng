@@ -19,3 +19,12 @@ Either simply:
 or with a specific port:
 
     SERVER_PORT=8081 ./gradlew bootRun
+
+== Running JUnit tests with branch coverage
+
+=== for IntelliJ IDEA
+
+see: https://confluence.jetbrains.com/display/IDEADEV/IDEA+Coverage+Runner
+
+Either apply it to specific test configurations or,
+better, delete the previous test configurations and amend the JUnit template.

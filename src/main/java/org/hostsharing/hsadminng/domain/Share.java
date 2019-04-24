@@ -2,15 +2,14 @@ package org.hostsharing.hsadminng.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
-
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 /**
  * A Share.
@@ -49,8 +48,8 @@ public class Share implements Serializable {
     @Column(name = "remark", length = 160)
     private String remark;
 
-    @NotNull
     @ManyToOne(optional = false)
+    @NotNull
     @JsonIgnoreProperties("shares")
     private Membership membership;
 

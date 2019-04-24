@@ -1,15 +1,12 @@
 package org.hostsharing.hsadminng.service.dto;
 
-import java.io.Serializable;
-import java.util.Objects;
-import io.github.jhipster.service.filter.BooleanFilter;
-import io.github.jhipster.service.filter.DoubleFilter;
 import io.github.jhipster.service.filter.Filter;
-import io.github.jhipster.service.filter.FloatFilter;
-import io.github.jhipster.service.filter.IntegerFilter;
+import io.github.jhipster.service.filter.LocalDateFilter;
 import io.github.jhipster.service.filter.LongFilter;
 import io.github.jhipster.service.filter.StringFilter;
-import io.github.jhipster.service.filter.LocalDateFilter;
+
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Criteria class for the Membership entity. This class is used in MembershipResource to
@@ -25,11 +22,13 @@ public class MembershipCriteria implements Serializable {
 
     private LongFilter id;
 
-    private LocalDateFilter documentDate;
+    private LocalDateFilter admissionDocumentDate;
 
-    private LocalDateFilter memberFrom;
+    private LocalDateFilter cancellationDocumentDate;
 
-    private LocalDateFilter memberUntil;
+    private LocalDateFilter memberFromDate;
+
+    private LocalDateFilter memberUntilDate;
 
     private StringFilter remark;
 
@@ -47,28 +46,36 @@ public class MembershipCriteria implements Serializable {
         this.id = id;
     }
 
-    public LocalDateFilter getDocumentDate() {
-        return documentDate;
+    public LocalDateFilter getAdmissionDocumentDate() {
+        return admissionDocumentDate;
     }
 
-    public void setDocumentDate(LocalDateFilter documentDate) {
-        this.documentDate = documentDate;
+    public void setAdmissionDocumentDate(LocalDateFilter admissionDocumentDate) {
+        this.admissionDocumentDate = admissionDocumentDate;
     }
 
-    public LocalDateFilter getMemberFrom() {
-        return memberFrom;
+    public LocalDateFilter getCancellationDocumentDate() {
+        return cancellationDocumentDate;
     }
 
-    public void setMemberFrom(LocalDateFilter memberFrom) {
-        this.memberFrom = memberFrom;
+    public void setCancellationDocumentDate(LocalDateFilter cancellationDocumentDate) {
+        this.cancellationDocumentDate = cancellationDocumentDate;
     }
 
-    public LocalDateFilter getMemberUntil() {
-        return memberUntil;
+    public LocalDateFilter getMemberFromDate() {
+        return memberFromDate;
     }
 
-    public void setMemberUntil(LocalDateFilter memberUntil) {
-        this.memberUntil = memberUntil;
+    public void setMemberFromDate(LocalDateFilter memberFromDate) {
+        this.memberFromDate = memberFromDate;
+    }
+
+    public LocalDateFilter getMemberUntilDate() {
+        return memberUntilDate;
+    }
+
+    public void setMemberUntilDate(LocalDateFilter memberUntilDate) {
+        this.memberUntilDate = memberUntilDate;
     }
 
     public StringFilter getRemark() {
@@ -115,9 +122,10 @@ public class MembershipCriteria implements Serializable {
         final MembershipCriteria that = (MembershipCriteria) o;
         return
             Objects.equals(id, that.id) &&
-            Objects.equals(documentDate, that.documentDate) &&
-            Objects.equals(memberFrom, that.memberFrom) &&
-            Objects.equals(memberUntil, that.memberUntil) &&
+            Objects.equals(admissionDocumentDate, that.admissionDocumentDate) &&
+            Objects.equals(cancellationDocumentDate, that.cancellationDocumentDate) &&
+            Objects.equals(memberFromDate, that.memberFromDate) &&
+            Objects.equals(memberUntilDate, that.memberUntilDate) &&
             Objects.equals(remark, that.remark) &&
             Objects.equals(shareId, that.shareId) &&
             Objects.equals(assetId, that.assetId) &&
@@ -128,9 +136,10 @@ public class MembershipCriteria implements Serializable {
     public int hashCode() {
         return Objects.hash(
         id,
-        documentDate,
-        memberFrom,
-        memberUntil,
+        admissionDocumentDate,
+        cancellationDocumentDate,
+        memberFromDate,
+        memberUntilDate,
         remark,
         shareId,
         assetId,
@@ -142,9 +151,10 @@ public class MembershipCriteria implements Serializable {
     public String toString() {
         return "MembershipCriteria{" +
                 (id != null ? "id=" + id + ", " : "") +
-                (documentDate != null ? "documentDate=" + documentDate + ", " : "") +
-                (memberFrom != null ? "memberFrom=" + memberFrom + ", " : "") +
-                (memberUntil != null ? "memberUntil=" + memberUntil + ", " : "") +
+                (admissionDocumentDate != null ? "admissionDocumentDate=" + admissionDocumentDate + ", " : "") +
+                (cancellationDocumentDate != null ? "cancellationDocumentDate=" + cancellationDocumentDate + ", " : "") +
+                (memberFromDate != null ? "memberFromDate=" + memberFromDate + ", " : "") +
+                (memberUntilDate != null ? "memberUntilDate=" + memberUntilDate + ", " : "") +
                 (remark != null ? "remark=" + remark + ", " : "") +
                 (shareId != null ? "shareId=" + shareId + ", " : "") +
                 (assetId != null ? "assetId=" + assetId + ", " : "") +

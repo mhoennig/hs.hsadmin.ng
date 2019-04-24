@@ -20,7 +20,7 @@
             <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.asset.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="amount"><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.asset.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="membershipDocumentDate"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="membershipAdmissionDocumentDate"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
@@ -34,7 +34,7 @@
                 <td>{{asset.remark}}</td>
                 <td>
                     <div *ngIf="asset.membershipId">
-                        <a [routerLink]="['../membership', asset.membershipId , 'view' ]" >{{asset.membershipDocumentDate}}</a>
+                        <a [routerLink]="['../membership', asset.membershipId , 'view' ]" >{{asset.membershipAdmissionDocumentDate}}</a>
                     </div>
                 </td>
                 <td class="text-right">

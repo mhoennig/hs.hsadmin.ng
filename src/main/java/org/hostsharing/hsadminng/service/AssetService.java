@@ -6,7 +6,6 @@ import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,10 +25,12 @@ public class AssetService {
     private final AssetRepository assetRepository;
 
     private final AssetMapper assetMapper;
+    private final AssetValidator assetValidator;
 
-    public AssetService(AssetRepository assetRepository, AssetMapper assetMapper) {
+    public AssetService(AssetRepository assetRepository, AssetMapper assetMapper, AssetValidator assetValidator ) {
         this.assetRepository = assetRepository;
         this.assetMapper = assetMapper;
+        this.assetValidator = assetValidator;
     }
 
     /**
@@ -40,6 +41,7 @@ public class AssetService {
      */
     public AssetDTO save(AssetDTO assetDTO) {
         log.debug("Request to save Asset : {}", assetDTO);
+        assetValidator.validate(assetDTO);
         Asset asset = assetMapper.toEntity(assetDTO);
         asset = assetRepository.save(asset);
         return assetMapper.toDto(asset);

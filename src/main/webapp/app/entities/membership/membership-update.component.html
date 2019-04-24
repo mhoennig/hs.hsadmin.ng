@@ -10,44 +10,54 @@
                         [(ngModel)]="membership.id" readonly />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.documentDate" for="field_documentDate">Document Date</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.admissionDocumentDate" for="field_admissionDocumentDate">Admission Document Date</label>
                     <div class="input-group">
-                        <input id="field_documentDate" type="text" class="form-control" name="documentDate" ngbDatepicker  #documentDateDp="ngbDatepicker" [(ngModel)]="membership.documentDate"
+                        <input id="field_admissionDocumentDate" type="text" class="form-control" name="admissionDocumentDate" ngbDatepicker  #admissionDocumentDateDp="ngbDatepicker" [(ngModel)]="membership.admissionDocumentDate"
                         required/>
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="documentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="admissionDocumentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
-                    <div [hidden]="!(editForm.controls.documentDate?.dirty && editForm.controls.documentDate?.invalid)">
+                    <div [hidden]="!(editForm.controls.admissionDocumentDate?.dirty && editForm.controls.admissionDocumentDate?.invalid)">
                         <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.documentDate?.errors?.required" jhiTranslate="entity.validation.required">
+                        [hidden]="!editForm.controls.admissionDocumentDate?.errors?.required" jhiTranslate="entity.validation.required">
                         This field is required.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.memberFrom" for="field_memberFrom">Member From</label>
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.cancellationDocumentDate" for="field_cancellationDocumentDate">Cancellation Document Date</label>
                     <div class="input-group">
-                        <input id="field_memberFrom" type="text" class="form-control" name="memberFrom" ngbDatepicker  #memberFromDp="ngbDatepicker" [(ngModel)]="membership.memberFrom"
-                        required/>
-                        <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="memberFromDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
-                        </span>
-                    </div>
-                    <div [hidden]="!(editForm.controls.memberFrom?.dirty && editForm.controls.memberFrom?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.memberFrom?.errors?.required" jhiTranslate="entity.validation.required">
-                        This field is required.
-                        </small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.memberUntil" for="field_memberUntil">Member Until</label>
-                    <div class="input-group">
-                        <input id="field_memberUntil" type="text" class="form-control" name="memberUntil" ngbDatepicker  #memberUntilDp="ngbDatepicker" [(ngModel)]="membership.memberUntil"
+                        <input id="field_cancellationDocumentDate" type="text" class="form-control" name="cancellationDocumentDate" ngbDatepicker  #cancellationDocumentDateDp="ngbDatepicker" [(ngModel)]="membership.cancellationDocumentDate"
                         />
                         <span class="input-group-append">
-                            <button type="button" class="btn btn-secondary" (click)="memberUntilDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            <button type="button" class="btn btn-secondary" (click)="cancellationDocumentDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.memberFromDate" for="field_memberFromDate">Member From Date</label>
+                    <div class="input-group">
+                        <input id="field_memberFromDate" type="text" class="form-control" name="memberFromDate" ngbDatepicker  #memberFromDateDp="ngbDatepicker" [(ngModel)]="membership.memberFromDate"
+                        required/>
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="memberFromDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                    <div [hidden]="!(editForm.controls.memberFromDate?.dirty && editForm.controls.memberFromDate?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.memberFromDate?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.memberUntilDate" for="field_memberUntilDate">Member Until Date</label>
+                    <div class="input-group">
+                        <input id="field_memberUntilDate" type="text" class="form-control" name="memberUntilDate" ngbDatepicker  #memberUntilDateDp="ngbDatepicker" [(ngModel)]="membership.memberUntilDate"
+                        />
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="memberUntilDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
                         </span>
                     </div>
                 </div>

@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
 
 // HINT: In IntelliJ IDEA such unit test classes can be created with Shift-Ctrl-T.
@@ -30,6 +32,9 @@ public class ShareServiceUnitTest {
 
     @Mock
     private ShareRepository shareRepository;
+
+    @Mock
+    private ShareValidator shareValidator; // needed for @InjectMocks shareService
 
     @Mock
     private ShareMapper shareMapper;
@@ -55,23 +60,11 @@ public class ShareServiceUnitTest {
     }
 
     @Test
-    public void saveShouldNotUpdateAnyExistingShareTransaction() {
-        // given
-        final ShareDTO givenShareDTO = givenShareDTO(anyNonNullId(), ShareAction.SUBSCRIPTION, anyPositiveNumber());
-
-
-        // when
-        final Throwable throwException = catchThrowableOfType(() -> shareService.save(givenShareDTO), BadRequestAlertException.class);
-
-        // then
-        assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Share transactions are immutable", "share", "shareTransactionImmutable"));
-    }
-
-    @Test
-    public void saveShouldPersistSubscriptionWithPositiveAmount() {
+    public void saveShouldPersistValidTransactions() {
         // given
         final ShareDTO givenShareDTO = givenShareDTO(null, ShareAction.SUBSCRIPTION, anyPositiveNumber());
+        // HINT: given(...)...will...() can't be used for void methods, in that case use Mockito's do...() methods
+        doNothing().when(shareValidator).validate(givenShareDTO);
 
         // when
         final ShareDTO returnedShareDto = shareService.save(givenShareDTO);
@@ -81,22 +74,24 @@ public class ShareServiceUnitTest {
     }
 
     @Test
-    public void saveShouldRejectSubscriptionWithNegativeAmount() {
+    public void saveShouldNotPersistInvalidTransactions() {
         // given
         final ShareDTO givenShareDTO = givenShareDTO(null, ShareAction.SUBSCRIPTION, anyNegativeNumber());
+        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy")).when(shareValidator).validate(givenShareDTO);
 
         // when
         final Throwable throwException = catchThrowableOfType(() -> shareService.save(givenShareDTO), BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Share subscriptions require a positive quantity", "share", "shareSubscriptionPositivQuantity"));
+            new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"));
     }
 
     @Test
-    public void saveShouldPersistCancellationWithNegativeAmount() {
+    public void saveShouldUpdateValidTransactions() {
         // given
-        final ShareDTO givenShareDTO = givenShareDTO(null, ShareAction.CANCELLATION, anyNegativeNumber());
+        final ShareDTO givenShareDTO = givenShareDTO(anyNonNullId(), ShareAction.SUBSCRIPTION, anyPositiveNumber());
+        doNothing().when(shareValidator).validate(givenShareDTO);
 
         // when
         final ShareDTO returnedShareDto = shareService.save(givenShareDTO);
@@ -106,16 +101,18 @@ public class ShareServiceUnitTest {
     }
 
     @Test
-    public void saveShouldRejectCancellationWithPositiveAmount() {
+    public void saveShouldNotUpdateInvalidTransactions() {
         // given
-        final ShareDTO givenShareDTO = givenShareDTO(null, ShareAction.CANCELLATION, anyPositiveNumber());
+        final ShareDTO givenShareDTO = givenShareDTO(anyNonNullId(), ShareAction.SUBSCRIPTION, anyNegativeNumber());
+        // HINT: given(...) can't be used for void methods, in that case use Mockito's do...() methods
+        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy")).when(shareValidator).validate(givenShareDTO);
 
         // when
         final Throwable throwException = catchThrowableOfType(() -> shareService.save(givenShareDTO), BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Share cancellations require a negative quantity", "share", "shareCancellationNegativeQuantity"));
+            new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"));
     }
 
     // --- only test fixture code below ---

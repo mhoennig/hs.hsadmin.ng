@@ -4,8 +4,8 @@ package org.hostsharing.hsadminng.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -38,21 +38,21 @@ public class SepaMandate implements Serializable {
     private String bic;
 
     @NotNull
-    @Column(name = "document_date", nullable = false)
-    private LocalDate documentDate;
+    @Column(name = "granting_document_date", nullable = false)
+    private LocalDate grantingDocumentDate;
+
+    @Column(name = "revokation_document_date")
+    private LocalDate revokationDocumentDate;
 
     @NotNull
-    @Column(name = "valid_from", nullable = false)
-    private LocalDate validFrom;
+    @Column(name = "valid_from_date", nullable = false)
+    private LocalDate validFromDate;
 
-    @Column(name = "valid_until")
-    private LocalDate validUntil;
+    @Column(name = "valid_until_date")
+    private LocalDate validUntilDate;
 
-    @Column(name = "last_used")
-    private LocalDate lastUsed;
-
-    @Column(name = "cancellation_date")
-    private LocalDate cancellationDate;
+    @Column(name = "last_used_date")
+    private LocalDate lastUsedDate;
 
     @Size(max = 160)
     @Column(name = "remark", length = 160)
@@ -111,69 +111,69 @@ public class SepaMandate implements Serializable {
         this.bic = bic;
     }
 
-    public LocalDate getDocumentDate() {
-        return documentDate;
+    public LocalDate getGrantingDocumentDate() {
+        return grantingDocumentDate;
     }
 
-    public SepaMandate documentDate(LocalDate documentDate) {
-        this.documentDate = documentDate;
+    public SepaMandate grantingDocumentDate(LocalDate grantingDocumentDate) {
+        this.grantingDocumentDate = grantingDocumentDate;
         return this;
     }
 
-    public void setDocumentDate(LocalDate documentDate) {
-        this.documentDate = documentDate;
+    public void setGrantingDocumentDate(LocalDate grantingDocumentDate) {
+        this.grantingDocumentDate = grantingDocumentDate;
     }
 
-    public LocalDate getValidFrom() {
-        return validFrom;
+    public LocalDate getRevokationDocumentDate() {
+        return revokationDocumentDate;
     }
 
-    public SepaMandate validFrom(LocalDate validFrom) {
-        this.validFrom = validFrom;
+    public SepaMandate revokationDocumentDate(LocalDate revokationDocumentDate) {
+        this.revokationDocumentDate = revokationDocumentDate;
         return this;
     }
 
-    public void setValidFrom(LocalDate validFrom) {
-        this.validFrom = validFrom;
+    public void setRevokationDocumentDate(LocalDate revokationDocumentDate) {
+        this.revokationDocumentDate = revokationDocumentDate;
     }
 
-    public LocalDate getValidUntil() {
-        return validUntil;
+    public LocalDate getValidFromDate() {
+        return validFromDate;
     }
 
-    public SepaMandate validUntil(LocalDate validUntil) {
-        this.validUntil = validUntil;
+    public SepaMandate validFromDate(LocalDate validFromDate) {
+        this.validFromDate = validFromDate;
         return this;
     }
 
-    public void setValidUntil(LocalDate validUntil) {
-        this.validUntil = validUntil;
+    public void setValidFromDate(LocalDate validFromDate) {
+        this.validFromDate = validFromDate;
     }
 
-    public LocalDate getLastUsed() {
-        return lastUsed;
+    public LocalDate getValidUntilDate() {
+        return validUntilDate;
     }
 
-    public SepaMandate lastUsed(LocalDate lastUsed) {
-        this.lastUsed = lastUsed;
+    public SepaMandate validUntilDate(LocalDate validUntilDate) {
+        this.validUntilDate = validUntilDate;
         return this;
     }
 
-    public void setLastUsed(LocalDate lastUsed) {
-        this.lastUsed = lastUsed;
+    public void setValidUntilDate(LocalDate validUntilDate) {
+        this.validUntilDate = validUntilDate;
     }
 
-    public LocalDate getCancellationDate() {
-        return cancellationDate;
+    public LocalDate getLastUsedDate() {
+        return lastUsedDate;
     }
 
-    public SepaMandate cancellationDate(LocalDate cancellationDate) {
-        this.cancellationDate = cancellationDate;
+    public SepaMandate lastUsedDate(LocalDate lastUsedDate) {
+        this.lastUsedDate = lastUsedDate;
         return this;
     }
 
-    public void setCancellationDate(LocalDate cancellationDate) {
-        this.cancellationDate = cancellationDate;
+    public void setLastUsedDate(LocalDate lastUsedDate) {
+        this.lastUsedDate = lastUsedDate;
     }
 
     public String getRemark() {
@@ -230,11 +230,11 @@ public class SepaMandate implements Serializable {
             ", reference='" + getReference() + "'" +
             ", iban='" + getIban() + "'" +
             ", bic='" + getBic() + "'" +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", validFrom='" + getValidFrom() + "'" +
-            ", validUntil='" + getValidUntil() + "'" +
-            ", lastUsed='" + getLastUsed() + "'" +
-            ", cancellationDate='" + getCancellationDate() + "'" +
+            ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
+            ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
+            ", validFromDate='" + getValidFromDate() + "'" +
+            ", validUntilDate='" + getValidUntilDate() + "'" +
+            ", lastUsedDate='" + getLastUsedDate() + "'" +
             ", remark='" + getRemark() + "'" +
             "}";
     }

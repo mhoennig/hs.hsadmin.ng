@@ -67,6 +67,87 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.kind" for="field_kind">Kind</label>
+                    <select class="form-control" name="kind" [(ngModel)]="customer.kind" id="field_kind"  required>
+                        <option value="NATURAL">{{'hsadminNgApp.CustomerKind.NATURAL' | translate}}</option>
+                        <option value="LEGAL">{{'hsadminNgApp.CustomerKind.LEGAL' | translate}}</option>
+                    </select>
+                    <div [hidden]="!(editForm.controls.kind?.dirty && editForm.controls.kind?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.kind?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.birthDate" for="field_birthDate">Birth Date</label>
+                    <div class="input-group">
+                        <input id="field_birthDate" type="text" class="form-control" name="birthDate" ngbDatepicker  #birthDateDp="ngbDatepicker" [(ngModel)]="customer.birthDate"
+                        />
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="birthDateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.birthPlace" for="field_birthPlace">Birth Place</label>
+                    <input type="text" class="form-control" name="birthPlace" id="field_birthPlace"
+                        [(ngModel)]="customer.birthPlace" maxlength="80"/>
+                    <div [hidden]="!(editForm.controls.birthPlace?.dirty && editForm.controls.birthPlace?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.birthPlace?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
+                        This field cannot be longer than 80 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.registrationCourt" for="field_registrationCourt">Registration Court</label>
+                    <input type="text" class="form-control" name="registrationCourt" id="field_registrationCourt"
+                        [(ngModel)]="customer.registrationCourt" maxlength="80"/>
+                    <div [hidden]="!(editForm.controls.registrationCourt?.dirty && editForm.controls.registrationCourt?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.registrationCourt?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
+                        This field cannot be longer than 80 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.registrationNumber" for="field_registrationNumber">Registration Number</label>
+                    <input type="text" class="form-control" name="registrationNumber" id="field_registrationNumber"
+                        [(ngModel)]="customer.registrationNumber" maxlength="80"/>
+                    <div [hidden]="!(editForm.controls.registrationNumber?.dirty && editForm.controls.registrationNumber?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.registrationNumber?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 80 }">
+                        This field cannot be longer than 80 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.vatRegion" for="field_vatRegion">Vat Region</label>
+                    <select class="form-control" name="vatRegion" [(ngModel)]="customer.vatRegion" id="field_vatRegion"  required>
+                        <option value="DOMESTIC">{{'hsadminNgApp.VatRegion.DOMESTIC' | translate}}</option>
+                        <option value="EU">{{'hsadminNgApp.VatRegion.EU' | translate}}</option>
+                        <option value="OTHER">{{'hsadminNgApp.VatRegion.OTHER' | translate}}</option>
+                    </select>
+                    <div [hidden]="!(editForm.controls.vatRegion?.dirty && editForm.controls.vatRegion?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.vatRegion?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.vatNumber" for="field_vatNumber">Vat Number</label>
+                    <input type="text" class="form-control" name="vatNumber" id="field_vatNumber"
+                        [(ngModel)]="customer.vatNumber" maxlength="40"/>
+                    <div [hidden]="!(editForm.controls.vatNumber?.dirty && editForm.controls.vatNumber?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.vatNumber?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 40 }">
+                        This field cannot be longer than 40 characters.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.customer.contractualSalutation" for="field_contractualSalutation">Contractual Salutation</label>
                     <input type="text" class="form-control" name="contractualSalutation" id="field_contractualSalutation"
                         [(ngModel)]="customer.contractualSalutation" maxlength="80"/>

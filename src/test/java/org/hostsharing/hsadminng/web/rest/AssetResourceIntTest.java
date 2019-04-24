@@ -1,17 +1,15 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
+import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.AssetCriteria;
-import org.hostsharing.hsadminng.service.AssetQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,14 +31,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 /**
  * Test class for the AssetResource REST controller.
  *
@@ -129,6 +124,26 @@ public class AssetResourceIntTest {
         return asset;
     }
 
+    /**
+     * Create a persistent entity related to the given persistent membership for testing purposes.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static Asset createPersistentEntity(EntityManager em, final Membership membership) {
+        Asset asset = new Asset()
+            .documentDate(DEFAULT_DOCUMENT_DATE)
+            .valueDate(DEFAULT_VALUE_DATE)
+            .action(DEFAULT_ACTION)
+            .amount(DEFAULT_AMOUNT)
+            .remark(DEFAULT_REMARK);
+        // Add required entity
+        asset.setMembership(membership);
+        membership.addAsset(asset);
+        em.persist(asset);
+        em.flush();
+        return asset;
+    }
     @Before
     public void initTest() {
         asset = createEntity(em);
@@ -542,9 +557,7 @@ public class AssetResourceIntTest {
     @Transactional
     public void getAllAssetsByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em);
-        em.persist(membership);
-        em.flush();
+        Membership membership = MembershipResourceIntTest.createPersistentEntity(em, CustomerResourceIntTest.createPersistentEntity(em));
         asset.setMembership(membership);
         assetRepository.saveAndFlush(asset);
         Long membershipId = membership.getId();
@@ -626,17 +639,17 @@ public class AssetResourceIntTest {
         restAssetMockMvc.perform(put("/api/assets")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
         // Validate the Asset in the database
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeUpdate);
         Asset testAsset = assetList.get(assetList.size() - 1);
-        assertThat(testAsset.getDocumentDate()).isEqualTo(UPDATED_DOCUMENT_DATE);
-        assertThat(testAsset.getValueDate()).isEqualTo(UPDATED_VALUE_DATE);
-        assertThat(testAsset.getAction()).isEqualTo(UPDATED_ACTION);
-        assertThat(testAsset.getAmount()).isEqualTo(UPDATED_AMOUNT);
-        assertThat(testAsset.getRemark()).isEqualTo(UPDATED_REMARK);
+        assertThat(testAsset.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
+        assertThat(testAsset.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
+        assertThat(testAsset.getAction()).isEqualByComparingTo(DEFAULT_ACTION);
+        assertThat(testAsset.getAmount()).isEqualByComparingTo(DEFAULT_AMOUNT);
+        assertThat(testAsset.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
@@ -669,11 +682,11 @@ public class AssetResourceIntTest {
         // Delete the asset
         restAssetMockMvc.perform(delete("/api/assets/{id}", asset.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the database still contains the same number of assets
         List<Asset> assetList = assetRepository.findAll();
-        assertThat(assetList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(assetList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test

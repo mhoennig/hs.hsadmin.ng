@@ -1,18 +1,17 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.SepaMandate;
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,15 +28,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
 import javax.persistence.EntityManager;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 /**
  * Test class for the CustomerResource REST controller.
  *
@@ -49,27 +48,56 @@ public class CustomerResourceIntTest {
 
     private static final Integer DEFAULT_REFERENCE = 10000;
     private static final Integer UPDATED_REFERENCE = 10001;
+    private static final Integer OTHER_REFERENCE_BASE = 11000;
 
-    private static final String DEFAULT_PREFIX = "hu";
-    private static final String UPDATED_PREFIX = "umj";
+    private static final String DEFAULT_PREFIX = "def";
+    private static final String UPDATED_PREFIX = "new";
+    private static final String OTHER_PREFIX_BASE = "o";
 
-    private static final String DEFAULT_NAME = "AAAAAAAAAA";
-    private static final String UPDATED_NAME = "BBBBBBBBBB";
+    private static final String DEFAULT_NAME = "Default GmbH";
+    private static final String UPDATED_NAME = "Updated Default GmbH";
+    private static final String OTHER_NAME_BASE = "Other Corp.";
 
-    private static final String DEFAULT_CONTRACTUAL_SALUTATION = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_SALUTATION = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "Default Address";
+    private static final String UPDATED_CONTRACTUAL_ADDRESS = "Updated Address";
+    private static final String OTHER_CONTRACTUAL_ADDRESS_BASE = "Other Street ";
 
-    private static final String DEFAULT_CONTRACTUAL_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_CONTRACTUAL_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_CONTRACTUAL_SALUTATION = "Default Contractual Salutation";
+    private static final String UPDATED_CONTRACTUAL_SALUTATION = "Update Contractual Salutation";
 
-    private static final String DEFAULT_BILLING_SALUTATION = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_SALUTATION = "BBBBBBBBBB";
+    private static final String DEFAULT_BILLING_ADDRESS = "Default Billing Address";
+    private static final String UPDATED_BILLING_ADDRESS = "Updated Billing Address";
 
-    private static final String DEFAULT_BILLING_ADDRESS = "AAAAAAAAAA";
-    private static final String UPDATED_BILLING_ADDRESS = "BBBBBBBBBB";
+    private static final String DEFAULT_BILLING_SALUTATION = "Default Billing Salutation";
+    private static final String UPDATED_BILLING_SALUTATION = "Updted Billing Salutation";
 
-    private static final String DEFAULT_REMARK = "AAAAAAAAAA";
-    private static final String UPDATED_REMARK = "BBBBBBBBBB";
+    private static final String DEFAULT_REMARK = "Default Remark";
+    private static final String UPDATED_REMARK = "Updated Remark";
+
+    private static final CustomerKind DEFAULT_KIND = CustomerKind.NATURAL;
+    private static final CustomerKind UPDATED_KIND = CustomerKind.LEGAL;
+    private static final CustomerKind OTHER_KIND = CustomerKind.LEGAL;
+
+    private static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_BIRTH_DATE = LocalDate.now(ZoneId.systemDefault());
+
+    private static final String DEFAULT_BIRTH_PLACE = "AAAAAAAAAA";
+    private static final String UPDATED_BIRTH_PLACE = "BBBBBBBBBB";
+
+    private static final String DEFAULT_REGISTRATION_COURT = "AAAAAAAAAA";
+    private static final String UPDATED_REGISTRATION_COURT = "BBBBBBBBBB";
+
+    private static final String DEFAULT_REGISTRATION_NUMBER = "AAAAAAAAAA";
+    private static final String UPDATED_REGISTRATION_NUMBER = "BBBBBBBBBB";
+
+    private static final VatRegion DEFAULT_VAT_REGION = VatRegion.DOMESTIC;
+    private static final VatRegion UPDATED_VAT_REGION = VatRegion.EU;
+    private static final VatRegion OTHER_VAT_REGION = VatRegion.EU;
+
+    private static final String DEFAULT_VAT_NUMBER = "AAAAAAAAAA";
+    private static final String UPDATED_VAT_NUMBER = "BBBBBBBBBB";
+
+    private static int otherCounter = 0;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -125,11 +153,38 @@ public class CustomerResourceIntTest {
             .reference(DEFAULT_REFERENCE)
             .prefix(DEFAULT_PREFIX)
             .name(DEFAULT_NAME)
+            .kind(DEFAULT_KIND)
+            .birthDate(DEFAULT_BIRTH_DATE)
+            .birthPlace(DEFAULT_BIRTH_PLACE)
+            .registrationCourt(DEFAULT_REGISTRATION_COURT)
+            .registrationNumber(DEFAULT_REGISTRATION_NUMBER)
+            .vatRegion(DEFAULT_VAT_REGION)
+            .vatNumber(DEFAULT_VAT_NUMBER)
             .contractualSalutation(DEFAULT_CONTRACTUAL_SALUTATION)
             .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
             .billingSalutation(DEFAULT_BILLING_SALUTATION)
             .billingAddress(DEFAULT_BILLING_ADDRESS)
             .remark(DEFAULT_REMARK);
+        return customer;
+    }
+
+    /**
+     * Create another entity for tests.
+     *
+     * This is a static method, as tests for other entities might also need it,
+     * if they test an entity which requires the current entity.
+     */
+    public static Customer createPersistentEntity(EntityManager em) {
+        Customer customer = new Customer()
+            .reference(OTHER_REFERENCE_BASE + otherCounter)
+            .prefix(OTHER_PREFIX_BASE + String.format("%02d", otherCounter))
+            .name(OTHER_NAME_BASE + otherCounter)
+            .kind(OTHER_KIND)
+            .vatRegion(OTHER_VAT_REGION)
+            .contractualAddress(OTHER_CONTRACTUAL_ADDRESS_BASE + otherCounter);
+        em.persist(customer);
+        em.flush();
+        ++otherCounter;
         return customer;
     }
 
@@ -157,6 +212,13 @@ public class CustomerResourceIntTest {
         assertThat(testCustomer.getReference()).isEqualTo(DEFAULT_REFERENCE);
         assertThat(testCustomer.getPrefix()).isEqualTo(DEFAULT_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(DEFAULT_NAME);
+        assertThat(testCustomer.getKind()).isEqualTo(DEFAULT_KIND);
+        assertThat(testCustomer.getBirthDate()).isEqualTo(DEFAULT_BIRTH_DATE);
+        assertThat(testCustomer.getBirthPlace()).isEqualTo(DEFAULT_BIRTH_PLACE);
+        assertThat(testCustomer.getRegistrationCourt()).isEqualTo(DEFAULT_REGISTRATION_COURT);
+        assertThat(testCustomer.getRegistrationNumber()).isEqualTo(DEFAULT_REGISTRATION_NUMBER);
+        assertThat(testCustomer.getVatRegion()).isEqualTo(DEFAULT_VAT_REGION);
+        assertThat(testCustomer.getVatNumber()).isEqualTo(DEFAULT_VAT_NUMBER);
         assertThat(testCustomer.getContractualSalutation()).isEqualTo(DEFAULT_CONTRACTUAL_SALUTATION);
         assertThat(testCustomer.getContractualAddress()).isEqualTo(DEFAULT_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getBillingSalutation()).isEqualTo(DEFAULT_BILLING_SALUTATION);
@@ -243,6 +305,44 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
+    public void checkKindIsRequired() throws Exception {
+        int databaseSizeBeforeTest = customerRepository.findAll().size();
+        // set the field null
+        customer.setKind(null);
+
+        // Create the Customer, which fails.
+        CustomerDTO customerDTO = customerMapper.toDto(customer);
+
+        restCustomerMockMvc.perform(post("/api/customers")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+            .andExpect(status().isBadRequest());
+
+        List<Customer> customerList = customerRepository.findAll();
+        assertThat(customerList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
+    public void checkVatRegionIsRequired() throws Exception {
+        int databaseSizeBeforeTest = customerRepository.findAll().size();
+        // set the field null
+        customer.setVatRegion(null);
+
+        // Create the Customer, which fails.
+        CustomerDTO customerDTO = customerMapper.toDto(customer);
+
+        restCustomerMockMvc.perform(post("/api/customers")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+            .andExpect(status().isBadRequest());
+
+        List<Customer> customerList = customerRepository.findAll();
+        assertThat(customerList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
     public void checkContractualAddressIsRequired() throws Exception {
         int databaseSizeBeforeTest = customerRepository.findAll().size();
         // set the field null
@@ -274,6 +374,13 @@ public class CustomerResourceIntTest {
             .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
             .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX.toString())))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
+            .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
+            .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
+            .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE.toString())))
+            .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT.toString())))
+            .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER.toString())))
+            .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
+            .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER.toString())))
             .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION.toString())))
             .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS.toString())))
             .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION.toString())))
@@ -295,6 +402,13 @@ public class CustomerResourceIntTest {
             .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE))
             .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX.toString()))
             .andExpect(jsonPath("$.name").value(DEFAULT_NAME.toString()))
+            .andExpect(jsonPath("$.kind").value(DEFAULT_KIND.toString()))
+            .andExpect(jsonPath("$.birthDate").value(DEFAULT_BIRTH_DATE.toString()))
+            .andExpect(jsonPath("$.birthPlace").value(DEFAULT_BIRTH_PLACE.toString()))
+            .andExpect(jsonPath("$.registrationCourt").value(DEFAULT_REGISTRATION_COURT.toString()))
+            .andExpect(jsonPath("$.registrationNumber").value(DEFAULT_REGISTRATION_NUMBER.toString()))
+            .andExpect(jsonPath("$.vatRegion").value(DEFAULT_VAT_REGION.toString()))
+            .andExpect(jsonPath("$.vatNumber").value(DEFAULT_VAT_NUMBER.toString()))
             .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION.toString()))
             .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS.toString()))
             .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION.toString()))
@@ -444,6 +558,306 @@ public class CustomerResourceIntTest {
 
         // Get all the customerList where name is null
         defaultCustomerShouldNotBeFound("name.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByKindIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where kind equals to DEFAULT_KIND
+        defaultCustomerShouldBeFound("kind.equals=" + DEFAULT_KIND);
+
+        // Get all the customerList where kind equals to UPDATED_KIND
+        defaultCustomerShouldNotBeFound("kind.equals=" + UPDATED_KIND);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByKindIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where kind in DEFAULT_KIND or UPDATED_KIND
+        defaultCustomerShouldBeFound("kind.in=" + DEFAULT_KIND + "," + UPDATED_KIND);
+
+        // Get all the customerList where kind equals to UPDATED_KIND
+        defaultCustomerShouldNotBeFound("kind.in=" + UPDATED_KIND);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByKindIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where kind is not null
+        defaultCustomerShouldBeFound("kind.specified=true");
+
+        // Get all the customerList where kind is null
+        defaultCustomerShouldNotBeFound("kind.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthDateIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthDate equals to DEFAULT_BIRTH_DATE
+        defaultCustomerShouldBeFound("birthDate.equals=" + DEFAULT_BIRTH_DATE);
+
+        // Get all the customerList where birthDate equals to UPDATED_BIRTH_DATE
+        defaultCustomerShouldNotBeFound("birthDate.equals=" + UPDATED_BIRTH_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthDateIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthDate in DEFAULT_BIRTH_DATE or UPDATED_BIRTH_DATE
+        defaultCustomerShouldBeFound("birthDate.in=" + DEFAULT_BIRTH_DATE + "," + UPDATED_BIRTH_DATE);
+
+        // Get all the customerList where birthDate equals to UPDATED_BIRTH_DATE
+        defaultCustomerShouldNotBeFound("birthDate.in=" + UPDATED_BIRTH_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthDateIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthDate is not null
+        defaultCustomerShouldBeFound("birthDate.specified=true");
+
+        // Get all the customerList where birthDate is null
+        defaultCustomerShouldNotBeFound("birthDate.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthDateIsGreaterThanOrEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthDate greater than or equals to DEFAULT_BIRTH_DATE
+        defaultCustomerShouldBeFound("birthDate.greaterOrEqualThan=" + DEFAULT_BIRTH_DATE);
+
+        // Get all the customerList where birthDate greater than or equals to UPDATED_BIRTH_DATE
+        defaultCustomerShouldNotBeFound("birthDate.greaterOrEqualThan=" + UPDATED_BIRTH_DATE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthDateIsLessThanSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthDate less than or equals to DEFAULT_BIRTH_DATE
+        defaultCustomerShouldNotBeFound("birthDate.lessThan=" + DEFAULT_BIRTH_DATE);
+
+        // Get all the customerList where birthDate less than or equals to UPDATED_BIRTH_DATE
+        defaultCustomerShouldBeFound("birthDate.lessThan=" + UPDATED_BIRTH_DATE);
+    }
+
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthPlaceIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthPlace equals to DEFAULT_BIRTH_PLACE
+        defaultCustomerShouldBeFound("birthPlace.equals=" + DEFAULT_BIRTH_PLACE);
+
+        // Get all the customerList where birthPlace equals to UPDATED_BIRTH_PLACE
+        defaultCustomerShouldNotBeFound("birthPlace.equals=" + UPDATED_BIRTH_PLACE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthPlaceIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthPlace in DEFAULT_BIRTH_PLACE or UPDATED_BIRTH_PLACE
+        defaultCustomerShouldBeFound("birthPlace.in=" + DEFAULT_BIRTH_PLACE + "," + UPDATED_BIRTH_PLACE);
+
+        // Get all the customerList where birthPlace equals to UPDATED_BIRTH_PLACE
+        defaultCustomerShouldNotBeFound("birthPlace.in=" + UPDATED_BIRTH_PLACE);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByBirthPlaceIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where birthPlace is not null
+        defaultCustomerShouldBeFound("birthPlace.specified=true");
+
+        // Get all the customerList where birthPlace is null
+        defaultCustomerShouldNotBeFound("birthPlace.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRegistrationCourtIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where registrationCourt equals to DEFAULT_REGISTRATION_COURT
+        defaultCustomerShouldBeFound("registrationCourt.equals=" + DEFAULT_REGISTRATION_COURT);
+
+        // Get all the customerList where registrationCourt equals to UPDATED_REGISTRATION_COURT
+        defaultCustomerShouldNotBeFound("registrationCourt.equals=" + UPDATED_REGISTRATION_COURT);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRegistrationCourtIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where registrationCourt in DEFAULT_REGISTRATION_COURT or UPDATED_REGISTRATION_COURT
+        defaultCustomerShouldBeFound("registrationCourt.in=" + DEFAULT_REGISTRATION_COURT + "," + UPDATED_REGISTRATION_COURT);
+
+        // Get all the customerList where registrationCourt equals to UPDATED_REGISTRATION_COURT
+        defaultCustomerShouldNotBeFound("registrationCourt.in=" + UPDATED_REGISTRATION_COURT);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRegistrationCourtIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where registrationCourt is not null
+        defaultCustomerShouldBeFound("registrationCourt.specified=true");
+
+        // Get all the customerList where registrationCourt is null
+        defaultCustomerShouldNotBeFound("registrationCourt.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRegistrationNumberIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where registrationNumber equals to DEFAULT_REGISTRATION_NUMBER
+        defaultCustomerShouldBeFound("registrationNumber.equals=" + DEFAULT_REGISTRATION_NUMBER);
+
+        // Get all the customerList where registrationNumber equals to UPDATED_REGISTRATION_NUMBER
+        defaultCustomerShouldNotBeFound("registrationNumber.equals=" + UPDATED_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRegistrationNumberIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where registrationNumber in DEFAULT_REGISTRATION_NUMBER or UPDATED_REGISTRATION_NUMBER
+        defaultCustomerShouldBeFound("registrationNumber.in=" + DEFAULT_REGISTRATION_NUMBER + "," + UPDATED_REGISTRATION_NUMBER);
+
+        // Get all the customerList where registrationNumber equals to UPDATED_REGISTRATION_NUMBER
+        defaultCustomerShouldNotBeFound("registrationNumber.in=" + UPDATED_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByRegistrationNumberIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where registrationNumber is not null
+        defaultCustomerShouldBeFound("registrationNumber.specified=true");
+
+        // Get all the customerList where registrationNumber is null
+        defaultCustomerShouldNotBeFound("registrationNumber.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByVatRegionIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where vatRegion equals to DEFAULT_VAT_REGION
+        defaultCustomerShouldBeFound("vatRegion.equals=" + DEFAULT_VAT_REGION);
+
+        // Get all the customerList where vatRegion equals to UPDATED_VAT_REGION
+        defaultCustomerShouldNotBeFound("vatRegion.equals=" + UPDATED_VAT_REGION);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByVatRegionIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where vatRegion in DEFAULT_VAT_REGION or UPDATED_VAT_REGION
+        defaultCustomerShouldBeFound("vatRegion.in=" + DEFAULT_VAT_REGION + "," + UPDATED_VAT_REGION);
+
+        // Get all the customerList where vatRegion equals to UPDATED_VAT_REGION
+        defaultCustomerShouldNotBeFound("vatRegion.in=" + UPDATED_VAT_REGION);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByVatRegionIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where vatRegion is not null
+        defaultCustomerShouldBeFound("vatRegion.specified=true");
+
+        // Get all the customerList where vatRegion is null
+        defaultCustomerShouldNotBeFound("vatRegion.specified=false");
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByVatNumberIsEqualToSomething() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where vatNumber equals to DEFAULT_VAT_NUMBER
+        defaultCustomerShouldBeFound("vatNumber.equals=" + DEFAULT_VAT_NUMBER);
+
+        // Get all the customerList where vatNumber equals to UPDATED_VAT_NUMBER
+        defaultCustomerShouldNotBeFound("vatNumber.equals=" + UPDATED_VAT_NUMBER);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByVatNumberIsInShouldWork() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where vatNumber in DEFAULT_VAT_NUMBER or UPDATED_VAT_NUMBER
+        defaultCustomerShouldBeFound("vatNumber.in=" + DEFAULT_VAT_NUMBER + "," + UPDATED_VAT_NUMBER);
+
+        // Get all the customerList where vatNumber equals to UPDATED_VAT_NUMBER
+        defaultCustomerShouldNotBeFound("vatNumber.in=" + UPDATED_VAT_NUMBER);
+    }
+
+    @Test
+    @Transactional
+    public void getAllCustomersByVatNumberIsNullOrNotNull() throws Exception {
+        // Initialize the database
+        customerRepository.saveAndFlush(customer);
+
+        // Get all the customerList where vatNumber is not null
+        defaultCustomerShouldBeFound("vatNumber.specified=true");
+
+        // Get all the customerList where vatNumber is null
+        defaultCustomerShouldNotBeFound("vatNumber.specified=false");
     }
 
     @Test
@@ -645,7 +1059,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createEntity(em);
+        Membership membership = MembershipResourceIntTest.createPersistentEntity(em, createPersistentEntity(em));
         em.persist(membership);
         em.flush();
         customer.addMembership(membership);
@@ -664,7 +1078,7 @@ public class CustomerResourceIntTest {
     @Transactional
     public void getAllCustomersBySepamandateIsEqualToSomething() throws Exception {
         // Initialize the database
-        SepaMandate sepamandate = SepaMandateResourceIntTest.createEntity(em);
+        SepaMandate sepamandate = SepaMandateResourceIntTest.createEntity(em, createPersistentEntity(em));
         em.persist(sepamandate);
         em.flush();
         customer.addSepamandate(sepamandate);
@@ -689,6 +1103,13 @@ public class CustomerResourceIntTest {
             .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
             .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
             .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
+            .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
+            .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
+            .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE)))
+            .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT)))
+            .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER)))
+            .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
+            .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER)))
             .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
             .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
             .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
@@ -744,6 +1165,13 @@ public class CustomerResourceIntTest {
             .reference(UPDATED_REFERENCE)
             .prefix(UPDATED_PREFIX)
             .name(UPDATED_NAME)
+            .kind(UPDATED_KIND)
+            .birthDate(UPDATED_BIRTH_DATE)
+            .birthPlace(UPDATED_BIRTH_PLACE)
+            .registrationCourt(UPDATED_REGISTRATION_COURT)
+            .registrationNumber(UPDATED_REGISTRATION_NUMBER)
+            .vatRegion(UPDATED_VAT_REGION)
+            .vatNumber(UPDATED_VAT_NUMBER)
             .contractualSalutation(UPDATED_CONTRACTUAL_SALUTATION)
             .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
             .billingSalutation(UPDATED_BILLING_SALUTATION)
@@ -763,6 +1191,13 @@ public class CustomerResourceIntTest {
         assertThat(testCustomer.getReference()).isEqualTo(UPDATED_REFERENCE);
         assertThat(testCustomer.getPrefix()).isEqualTo(UPDATED_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(UPDATED_NAME);
+        assertThat(testCustomer.getKind()).isEqualTo(UPDATED_KIND);
+        assertThat(testCustomer.getBirthDate()).isEqualTo(UPDATED_BIRTH_DATE);
+        assertThat(testCustomer.getBirthPlace()).isEqualTo(UPDATED_BIRTH_PLACE);
+        assertThat(testCustomer.getRegistrationCourt()).isEqualTo(UPDATED_REGISTRATION_COURT);
+        assertThat(testCustomer.getRegistrationNumber()).isEqualTo(UPDATED_REGISTRATION_NUMBER);
+        assertThat(testCustomer.getVatRegion()).isEqualTo(UPDATED_VAT_REGION);
+        assertThat(testCustomer.getVatNumber()).isEqualTo(UPDATED_VAT_NUMBER);
         assertThat(testCustomer.getContractualSalutation()).isEqualTo(UPDATED_CONTRACTUAL_SALUTATION);
         assertThat(testCustomer.getContractualAddress()).isEqualTo(UPDATED_CONTRACTUAL_ADDRESS);
         assertThat(testCustomer.getBillingSalutation()).isEqualTo(UPDATED_BILLING_SALUTATION);

@@ -15,9 +15,10 @@
             "detail": {
                 "title": "Membership"
             },
-            "documentDate": "Document Date",
-            "memberFrom": "Member From",
-            "memberUntil": "Member Until",
+            "admissionDocumentDate": "Admission Document Date",
+            "cancellationDocumentDate": "Cancellation Document Date",
+            "memberFromDate": "Member From Date",
+            "memberUntilDate": "Member Until Date",
             "remark": "Remark",
             "share": "Share",
             "asset": "Asset",

@@ -1,9 +1,14 @@
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
-
-import javax.persistence.criteria.JoinType;
-
+import io.github.jhipster.service.QueryService;
+import org.hostsharing.hsadminng.domain.Customer;
+import org.hostsharing.hsadminng.domain.Customer_;
+import org.hostsharing.hsadminng.domain.Membership_;
+import org.hostsharing.hsadminng.domain.SepaMandate_;
+import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
+import org.hostsharing.hsadminng.service.dto.CustomerDTO;
+import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,14 +17,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
-
-import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.CustomerRepository;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
-import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
+import javax.persistence.criteria.JoinType;
+import java.util.List;
 
 /**
  * Service for executing complex queries for Customer entities in the database.
@@ -97,6 +96,27 @@ public class CustomerQueryService extends QueryService<Customer> {
             }
             if (criteria.getName() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getName(), Customer_.name));
+            }
+            if (criteria.getKind() != null) {
+                specification = specification.and(buildSpecification(criteria.getKind(), Customer_.kind));
+            }
+            if (criteria.getBirthDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getBirthDate(), Customer_.birthDate));
+            }
+            if (criteria.getBirthPlace() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getBirthPlace(), Customer_.birthPlace));
+            }
+            if (criteria.getRegistrationCourt() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRegistrationCourt(), Customer_.registrationCourt));
+            }
+            if (criteria.getRegistrationNumber() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getRegistrationNumber(), Customer_.registrationNumber));
+            }
+            if (criteria.getVatRegion() != null) {
+                specification = specification.and(buildSpecification(criteria.getVatRegion(), Customer_.vatRegion));
+            }
+            if (criteria.getVatNumber() != null) {
+                specification = specification.and(buildStringSpecification(criteria.getVatNumber(), Customer_.vatNumber));
             }
             if (criteria.getContractualSalutation() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getContractualSalutation(), Customer_.contractualSalutation));

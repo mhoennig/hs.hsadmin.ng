@@ -2,25 +2,25 @@
     "hsadminNgApp": {
         "share": {
             "home": {
-                "title": "Shares",
-                "createLabel": "Create a new Share",
-                "createOrEditLabel": "Create or edit a Share"
+                "title": "Share Transactions",
+                "createLabel": "Register a new share transaction",
+                "createOrEditLabel": "Register or edit a share transaction"
             },
-            "created": "A new Share is created with identifier {{ param }}",
-            "updated": "A Share is updated with identifier {{ param }}",
-            "deleted": "A Share is deleted with identifier {{ param }}",
+            "created": "A new share transactions is registered with identifier {{ param }}",
+            "updated": "A share transaction is updated with identifier {{ param }}",
+            "deleted": "A share transcation is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Share {{ id }}?"
+                "question": "Are you sure you want to delete share transaction {{ id }}?"
             },
             "detail": {
-                "title": "Share"
+                "title": "Share transaction"
             },
-            "documentDate": "Document Date",
-            "valueDate": "Value Date",
+            "documentDate": "Document date",
+            "valueDate": "Value date",
             "action": "Action",
             "quantity": "Quantity",
             "remark": "Remark",
-            "membership": "Membership"
+            "membership": "Related membership"
         }
     }
 }

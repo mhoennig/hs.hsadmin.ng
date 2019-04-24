@@ -1,12 +1,5 @@
 package org.hostsharing.hsadminng.service.dto;
 
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
-import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
-import org.hostsharing.hsadminng.service.accessfilter.ParentId;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.accessfilter.SelfId;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -24,9 +17,11 @@ public class ShareDTO implements Serializable {
 
     @NotNull
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate valueDate;
 
@@ -47,7 +42,7 @@ public class ShareDTO implements Serializable {
     private Long membershipId;
 
     @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
-    private String membershipDocumentDate;
+    private String membershipAdmissionDocumentDate;
 
     public Long getId() {
         return id;
@@ -105,12 +100,12 @@ public class ShareDTO implements Serializable {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipDocumentDate() {
-        return membershipDocumentDate;
+    public String getMembershipAdmissionDocumentDate() {
+        return membershipAdmissionDocumentDate;
     }
 
-    public void setMembershipDocumentDate(String membershipDocumentDate) {
-        this.membershipDocumentDate = membershipDocumentDate;
+    public void setMembershipAdmissionDocumentDate(String membershipAdmissionDocumentDate) {
+        this.membershipAdmissionDocumentDate = membershipAdmissionDocumentDate;
     }
 
     @Override
@@ -144,7 +139,7 @@ public class ShareDTO implements Serializable {
             ", quantity=" + getQuantity() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDocumentDate() + "'" +
+            ", membership='" + getMembershipAdmissionDocumentDate() + "'" +
             "}";
     }
 }

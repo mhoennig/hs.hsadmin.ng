@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
@@ -13,6 +15,7 @@ import org.springframework.context.ApplicationContext;
 import javax.validation.constraints.*;
 import java.io.IOException;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -40,6 +43,26 @@ public class CustomerDTO implements Serializable {
     @Size(max = 80)
     @AccessFor(init = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
     private String name;
+
+    @NotNull
+    private CustomerKind kind;
+
+    private LocalDate birthDate;
+
+    @Size(max = 80)
+    private String birthPlace;
+
+    @Size(max = 80)
+    private String registrationCourt;
+
+    @Size(max = 80)
+    private String registrationNumber;
+
+    @NotNull
+    private VatRegion vatRegion;
+
+    @Size(max = 40)
+    private String vatNumber;
 
     @Size(max = 80)
     @AccessFor(init = Role.ADMIN, update = Role.CONTRACTUAL_CONTACT, read = Role.ANY_CUSTOMER_CONTACT)
@@ -92,6 +115,62 @@ public class CustomerDTO implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public CustomerKind getKind() {
+        return kind;
+    }
+
+    public void setKind(CustomerKind kind) {
+        this.kind = kind;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getBirthPlace() {
+        return birthPlace;
+    }
+
+    public void setBirthPlace(String birthPlace) {
+        this.birthPlace = birthPlace;
+    }
+
+    public String getRegistrationCourt() {
+        return registrationCourt;
+    }
+
+    public void setRegistrationCourt(String registrationCourt) {
+        this.registrationCourt = registrationCourt;
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
+
+    public VatRegion getVatRegion() {
+        return vatRegion;
+    }
+
+    public void setVatRegion(VatRegion vatRegion) {
+        this.vatRegion = vatRegion;
+    }
+
+    public String getVatNumber() {
+        return vatNumber;
+    }
+
+    public void setVatNumber(String vatNumber) {
+        this.vatNumber = vatNumber;
     }
 
     public String getContractualSalutation() {
@@ -162,6 +241,13 @@ public class CustomerDTO implements Serializable {
             ", reference=" + getReference() +
             ", prefix='" + getPrefix() + "'" +
             ", name='" + getName() + "'" +
+            ", kind='" + getKind() + "'" +
+            ", birthDate='" + getBirthDate() + "'" +
+            ", birthPlace='" + getBirthPlace() + "'" +
+            ", registrationCourt='" + getRegistrationCourt() + "'" +
+            ", registrationNumber='" + getRegistrationNumber() + "'" +
+            ", vatRegion='" + getVatRegion() + "'" +
+            ", vatNumber='" + getVatNumber() + "'" +
             ", contractualSalutation='" + getContractualSalutation() + "'" +
             ", contractualAddress='" + getContractualAddress() + "'" +
             ", billingSalutation='" + getBillingSalutation() + "'" +

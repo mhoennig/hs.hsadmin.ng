@@ -3,10 +3,28 @@ dto all with mapstruct
 service all with serviceClass
 paginate all with infinite-scroll
 
+enum CustomerKind {
+    NATURAL,
+    LEGAL
+}
+
+enum VatRegion {
+    DOMESTIC,
+    EU,
+    OTHER
+}
+
 entity Customer {
     reference Integer required unique min(10000) max(99999),
     prefix String required maxlength(3) unique pattern(/[a-z][a-z0-9]+/),
     name String required maxlength(80),
+    kind CustomerKind required,
+    birthDate LocalDate,
+    birthPlace String maxlength(80),
+    registrationCourt String maxlength(80),
+    registrationNumber String maxlength(80),
+    vatRegion VatRegion required,
+    vatNumber String maxlength(40),
     contractualSalutation String maxlength(80),
     contractualAddress String required maxlength(400),
     billingSalutation String maxlength(80),
@@ -15,9 +33,10 @@ entity Customer {
 }
 
 entity Membership {
-    documentDate LocalDate required,
-    memberFrom LocalDate required,
-    memberUntil LocalDate,
+    admissionDocumentDate LocalDate required,
+    cancellationDocumentDate LocalDate,
+    memberFromDate LocalDate required,
+    memberUntilDate LocalDate,
     remark String maxlength(160)
 }
 
@@ -55,17 +74,17 @@ entity SepaMandate {
     reference String maxlength(40) unique required,
     iban String maxlength(34),
     bic String maxlength(11),
-    documentDate LocalDate required,
-    validFrom LocalDate required,
-    validUntil LocalDate,
-    lastUsed LocalDate,
-    cancellationDate LocalDate,
+    grantingDocumentDate LocalDate required,
+    revokationDocumentDate LocalDate,
+    validFromDate LocalDate required,
+    validUntilDate LocalDate,
+    lastUsedDate LocalDate,
     remark String maxlength(160)
 }
 
 relationship OneToMany {
     Customer{membership} to Membership{customer(prefix) required},
     Customer{sepamandate} to SepaMandate{customer(prefix) required},
-    Membership{share} to Share{membership(documentDate) required},
-    Membership{asset} to Asset{membership(documentDate) required}
+    Membership{share} to Share{membership(admissionDocumentDate) required},
+    Membership{asset} to Asset{membership(admissionDocumentDate) required}
 }

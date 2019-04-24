@@ -2,25 +2,25 @@
     "hsadminNgApp": {
         "asset": {
             "home": {
-                "title": "Assets",
-                "createLabel": "Asset erstellen",
-                "createOrEditLabel": "Asset erstellen oder bearbeiten"
+                "title": "Geschäftsguthaben-Transaktionen",
+                "createLabel": "Geschäftsguthaben-Transaktion erfassen",
+                "createOrEditLabel": "Geschäftsguthaben-Transaktion erfassen oder bearbeiten"
             },
-            "created": "Asset erstellt mit ID {{ param }}",
-            "updated": "Asset aktualisiert mit ID {{ param }}",
-            "deleted": "Asset gelöscht mit ID {{ param }}",
+            "created": "Geschäftsguthaben-Transaktion erfasst mit ID {{ param }}",
+            "updated": "Geschäftsguthaben-Transaktion aktualisiert mit ID {{ param }}",
+            "deleted": "Geschäftsguthaben-Transaktion gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Asset {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Geschäftsguthaben-Transaktion {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Asset"
+                "title": "Geschäftsguthaben-Transaktion"
             },
-            "documentDate": "Document Date",
-            "valueDate": "Value Date",
-            "action": "Action",
-            "amount": "Amount",
-            "remark": "Remark",
-            "membership": "Membership"
+            "documentDate": "Belegdatum",
+            "valueDate": "Buchungsdatum",
+            "action": "Transaktion",
+            "amount": "Betrag",
+            "remark": "Bemerkung",
+            "membership": "zugehörige Mitgliedschaft"
         }
     }
 }

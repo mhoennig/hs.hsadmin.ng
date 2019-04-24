@@ -29,15 +29,18 @@ public class Membership implements Serializable {
     private Long id;
 
     @NotNull
-    @Column(name = "document_date", nullable = false)
-    private LocalDate documentDate;
+    @Column(name = "admission_document_date", nullable = false)
+    private LocalDate admissionDocumentDate;
+
+    @Column(name = "cancellation_document_date")
+    private LocalDate cancellationDocumentDate;
 
     @NotNull
-    @Column(name = "member_from", nullable = false)
-    private LocalDate memberFrom;
+    @Column(name = "member_from_date", nullable = false)
+    private LocalDate memberFromDate;
 
-    @Column(name = "member_until")
-    private LocalDate memberUntil;
+    @Column(name = "member_until_date")
+    private LocalDate memberUntilDate;
 
     @Size(max = 160)
     @Column(name = "remark", length = 160)
@@ -69,43 +72,56 @@ public class Membership implements Serializable {
         this.id = id;
     }
 
-    public LocalDate getDocumentDate() {
-        return documentDate;
+    public LocalDate getAdmissionDocumentDate() {
+        return admissionDocumentDate;
     }
 
-    public Membership documentDate(LocalDate documentDate) {
-        this.documentDate = documentDate;
+    public Membership admissionDocumentDate(LocalDate admissionDocumentDate) {
+        this.admissionDocumentDate = admissionDocumentDate;
         return this;
     }
 
-    public void setDocumentDate(LocalDate documentDate) {
-        this.documentDate = documentDate;
+    public void setAdmissionDocumentDate(LocalDate admissionDocumentDate) {
+        this.admissionDocumentDate = admissionDocumentDate;
     }
 
-    public LocalDate getMemberFrom() {
-        return memberFrom;
+    public LocalDate getCancellationDocumentDate() {
+        return cancellationDocumentDate;
     }
 
-    public Membership memberFrom(LocalDate memberFrom) {
-        this.memberFrom = memberFrom;
+    public Membership cancellationDocumentDate(LocalDate cancellationDocumentDate) {
+        this.cancellationDocumentDate = cancellationDocumentDate;
         return this;
     }
 
-    public void setMemberFrom(LocalDate memberFrom) {
-        this.memberFrom = memberFrom;
+    public void setCancellationDocumentDate(LocalDate cancellationDocumentDate) {
+        this.cancellationDocumentDate = cancellationDocumentDate;
     }
 
-    public LocalDate getMemberUntil() {
-        return memberUntil;
+    public LocalDate getMemberFromDate() {
+        return memberFromDate;
     }
 
-    public Membership memberUntil(LocalDate memberUntil) {
-        this.memberUntil = memberUntil;
+    public Membership memberFromDate(LocalDate memberFromDate) {
+        this.memberFromDate = memberFromDate;
         return this;
     }
 
-    public void setMemberUntil(LocalDate memberUntil) {
-        this.memberUntil = memberUntil;
+    public void setMemberFromDate(LocalDate memberFromDate) {
+        this.memberFromDate = memberFromDate;
+    }
+
+    public LocalDate getMemberUntilDate() {
+        return memberUntilDate;
+    }
+
+    public Membership memberUntilDate(LocalDate memberUntilDate) {
+        this.memberUntilDate = memberUntilDate;
+        return this;
+    }
+
+    public void setMemberUntilDate(LocalDate memberUntilDate) {
+        this.memberUntilDate = memberUntilDate;
     }
 
     public String getRemark() {
@@ -210,9 +226,10 @@ public class Membership implements Serializable {
     public String toString() {
         return "Membership{" +
             "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", memberFrom='" + getMemberFrom() + "'" +
-            ", memberUntil='" + getMemberUntil() + "'" +
+            ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
+            ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
+            ", memberFromDate='" + getMemberFromDate() + "'" +
+            ", memberUntilDate='" + getMemberUntilDate() + "'" +
             ", remark='" + getRemark() + "'" +
             "}";
     }

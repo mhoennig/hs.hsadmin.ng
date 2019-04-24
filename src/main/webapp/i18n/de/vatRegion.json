@@ -1,0 +1,10 @@
+{
+    "hsadminNgApp": {
+        "VatRegion": {
+            "null": "",
+            "DOMESTIC": "DOMESTIC",
+            "EU": "EU",
+            "OTHER": "OTHER"
+        }
+    }
+}

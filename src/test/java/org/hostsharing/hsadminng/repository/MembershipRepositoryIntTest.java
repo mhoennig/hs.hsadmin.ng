@@ -5,6 +5,8 @@ import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = HsadminNgApp.class)
 @Transactional
-public class MembershipRepositoryIntTest {
+public class    MembershipRepositoryIntTest {
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -72,6 +74,8 @@ public class MembershipRepositoryIntTest {
         customer.setReference(RandomUtils.nextInt(10001, 19999));
         customer.setName(RandomStringUtils.randomAlphabetic(10));
         customer.setContractualAddress(RandomStringUtils.randomAlphabetic(10));
+        customer.setKind(CustomerKind.NATURAL);
+        customer.setVatRegion(VatRegion.DOMESTIC);
         customerRepository.save(customer);
         return customer;
     }
@@ -80,10 +84,11 @@ public class MembershipRepositoryIntTest {
         final Customer customer = createCustomer();
         final Membership membership = new Membership();
         membership.setCustomer(customer);
-        membership.setMemberUntil(LocalDate.parse(from));
+        membership.setMemberFromDate(LocalDate.parse(from));
         if (to != null) {
-            membership.setMemberFrom(LocalDate.parse(to));
+            membership.setMemberUntilDate(LocalDate.parse(to));
         }
+        membership.setAdmissionDocumentDate(membership.getMemberFromDate().minusDays(7));
         membershipRepository.save(membership);
         return customer;
     }

@@ -4,9 +4,10 @@ import { IAsset } from 'app/shared/model/asset.model';
 
 export interface IMembership {
     id?: number;
-    documentDate?: Moment;
-    memberFrom?: Moment;
-    memberUntil?: Moment;
+    admissionDocumentDate?: Moment;
+    cancellationDocumentDate?: Moment;
+    memberFromDate?: Moment;
+    memberUntilDate?: Moment;
     remark?: string;
     shares?: IShare[];
     assets?: IAsset[];
@@ -17,9 +18,10 @@ export interface IMembership {
 export class Membership implements IMembership {
     constructor(
         public id?: number,
-        public documentDate?: Moment,
-        public memberFrom?: Moment,
-        public memberUntil?: Moment,
+        public admissionDocumentDate?: Moment,
+        public cancellationDocumentDate?: Moment,
+        public memberFromDate?: Moment,
+        public memberUntilDate?: Moment,
         public remark?: string,
         public shares?: IShare[],
         public assets?: IAsset[],

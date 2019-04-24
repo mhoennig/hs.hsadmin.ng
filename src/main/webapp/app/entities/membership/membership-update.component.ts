@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { IMembership } from 'app/shared/model/membership.model';
 import { MembershipService } from './membership.service';
@@ -19,9 +18,10 @@ export class MembershipUpdateComponent implements OnInit {
     isSaving: boolean;
 
     customers: ICustomer[];
-    documentDateDp: any;
-    memberFromDp: any;
-    memberUntilDp: any;
+    admissionDocumentDateDp: any;
+    cancellationDocumentDateDp: any;
+    memberFromDateDp: any;
+    memberUntilDateDp: any;
 
     constructor(
         protected jhiAlertService: JhiAlertService,

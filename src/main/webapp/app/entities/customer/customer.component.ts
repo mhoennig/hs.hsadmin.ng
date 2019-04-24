@@ -1,8 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Subscription, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { JhiEventManager, JhiParseLinks, JhiAlertService } from 'ng-jhipster';
+import { Subscription } from 'rxjs';
+import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
 import { ICustomer } from 'app/shared/model/customer.model';
 import { AccountService } from 'app/core';
@@ -24,9 +23,6 @@ export class CustomerComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
-    filterValue: any;
-    filterValueChanged = new Subject<string>();
-    subscription: Subscription;
 
     constructor(
         protected customerService: CustomerService,
@@ -43,25 +39,11 @@ export class CustomerComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
-        this.resetFilter();
-    }
-
-    resetFilter() {
-        this.filterValue = {
-            number: null,
-            prefix: null
-        };
-        this.loadAll();
     }
 
     loadAll() {
-        const criteria = {
-            ...(this.filterValue.number && { 'number.equals': this.filterValue.number }),
-            ...(this.filterValue.prefix && { 'prefix.contains': this.filterValue.prefix })
-        };
         this.customerService
             .query({
-                ...criteria,
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -70,10 +52,6 @@ export class CustomerComponent implements OnInit, OnDestroy {
                 (res: HttpResponse<ICustomer[]>) => this.paginateCustomers(res.body, res.headers),
                 (res: HttpErrorResponse) => this.onError(res.message)
             );
-    }
-
-    filter($event) {
-        this.filterValueChanged.next($event.target.value);
     }
 
     reset() {
@@ -93,15 +71,6 @@ export class CustomerComponent implements OnInit, OnDestroy {
             this.currentAccount = account;
         });
         this.registerChangeInCustomers();
-
-        this.subscription = this.filterValueChanged
-            .pipe(
-                debounceTime(500),
-                distinctUntilChanged((previous: any, current: any) => previous === current)
-            )
-            .subscribe(() => {
-                this.loadAll();
-            });
     }
 
     ngOnDestroy() {
@@ -127,8 +96,6 @@ export class CustomerComponent implements OnInit, OnDestroy {
     protected paginateCustomers(data: ICustomer[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
-        this.page = 0;
-        this.customers = [];
         for (let i = 0; i < data.length; i++) {
             this.customers.push(data[i]);
         }

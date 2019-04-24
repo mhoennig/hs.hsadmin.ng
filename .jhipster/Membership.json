@@ -2,21 +2,25 @@
     "name": "Membership",
     "fields": [
         {
-            "fieldName": "documentDate",
+            "fieldName": "admissionDocumentDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
             ]
         },
         {
-            "fieldName": "memberFrom",
+            "fieldName": "cancellationDocumentDate",
+            "fieldType": "LocalDate"
+        },
+        {
+            "fieldName": "memberFromDate",
             "fieldType": "LocalDate",
             "fieldValidateRules": [
                 "required"
             ]
         },
         {
-            "fieldName": "memberUntil",
+            "fieldName": "memberUntilDate",
             "fieldType": "LocalDate"
         },
         {
@@ -50,7 +54,7 @@
             "otherEntityField": "prefix"
         }
     ],
-    "changelogDate": "20190418143051",
+    "changelogDate": "20190424123256",
     "entityTableName": "membership",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

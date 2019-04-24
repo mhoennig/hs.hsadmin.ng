@@ -1,9 +1,13 @@
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
-
-import javax.persistence.criteria.JoinType;
-
+import io.github.jhipster.service.QueryService;
+import org.hostsharing.hsadminng.domain.Customer_;
+import org.hostsharing.hsadminng.domain.SepaMandate;
+import org.hostsharing.hsadminng.domain.SepaMandate_;
+import org.hostsharing.hsadminng.repository.SepaMandateRepository;
+import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
+import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
+import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,14 +16,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
-
-import org.hostsharing.hsadminng.domain.SepaMandate;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.SepaMandateRepository;
-import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
-import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
-import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
+import javax.persistence.criteria.JoinType;
+import java.util.List;
 
 /**
  * Service for executing complex queries for SepaMandate entities in the database.
@@ -98,20 +96,20 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
             if (criteria.getBic() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getBic(), SepaMandate_.bic));
             }
-            if (criteria.getDocumentDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getDocumentDate(), SepaMandate_.documentDate));
+            if (criteria.getGrantingDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getGrantingDocumentDate(), SepaMandate_.grantingDocumentDate));
             }
-            if (criteria.getValidFrom() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidFrom(), SepaMandate_.validFrom));
+            if (criteria.getRevokationDocumentDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getRevokationDocumentDate(), SepaMandate_.revokationDocumentDate));
             }
-            if (criteria.getValidUntil() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidUntil(), SepaMandate_.validUntil));
+            if (criteria.getValidFromDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getValidFromDate(), SepaMandate_.validFromDate));
             }
-            if (criteria.getLastUsed() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getLastUsed(), SepaMandate_.lastUsed));
+            if (criteria.getValidUntilDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getValidUntilDate(), SepaMandate_.validUntilDate));
             }
-            if (criteria.getCancellationDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getCancellationDate(), SepaMandate_.cancellationDate));
+            if (criteria.getLastUsedDate() != null) {
+                specification = specification.and(buildRangeSpecification(criteria.getLastUsedDate(), SepaMandate_.lastUsedDate));
             }
             if (criteria.getRemark() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getRemark(), SepaMandate_.remark));

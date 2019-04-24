@@ -1,9 +1,7 @@
 /* tslint:disable max-line-length */
-import { TestBed, getTestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_FORMAT } from 'app/shared/constants/input.constants';
 import { MembershipService } from 'app/entities/membership/membership.service';
@@ -25,16 +23,17 @@ describe('Service Tests', () => {
             httpMock = injector.get(HttpTestingController);
             currentDate = moment();
 
-            elemDefault = new Membership(0, currentDate, currentDate, currentDate, 'AAAAAAA');
+            elemDefault = new Membership(0, currentDate, currentDate, currentDate, currentDate, 'AAAAAAA');
         });
 
         describe('Service methods', async () => {
             it('should find an element', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        memberFrom: currentDate.format(DATE_FORMAT),
-                        memberUntil: currentDate.format(DATE_FORMAT)
+                        admissionDocumentDate: currentDate.format(DATE_FORMAT),
+                        cancellationDocumentDate: currentDate.format(DATE_FORMAT),
+                        memberFromDate: currentDate.format(DATE_FORMAT),
+                        memberUntilDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
@@ -51,17 +50,19 @@ describe('Service Tests', () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0,
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        memberFrom: currentDate.format(DATE_FORMAT),
-                        memberUntil: currentDate.format(DATE_FORMAT)
+                        admissionDocumentDate: currentDate.format(DATE_FORMAT),
+                        cancellationDocumentDate: currentDate.format(DATE_FORMAT),
+                        memberFromDate: currentDate.format(DATE_FORMAT),
+                        memberUntilDate: currentDate.format(DATE_FORMAT)
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        documentDate: currentDate,
-                        memberFrom: currentDate,
-                        memberUntil: currentDate
+                        admissionDocumentDate: currentDate,
+                        cancellationDocumentDate: currentDate,
+                        memberFromDate: currentDate,
+                        memberUntilDate: currentDate
                     },
                     returnedFromService
                 );
@@ -76,9 +77,10 @@ describe('Service Tests', () => {
             it('should update a Membership', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        memberFrom: currentDate.format(DATE_FORMAT),
-                        memberUntil: currentDate.format(DATE_FORMAT),
+                        admissionDocumentDate: currentDate.format(DATE_FORMAT),
+                        cancellationDocumentDate: currentDate.format(DATE_FORMAT),
+                        memberFromDate: currentDate.format(DATE_FORMAT),
+                        memberUntilDate: currentDate.format(DATE_FORMAT),
                         remark: 'BBBBBB'
                     },
                     elemDefault
@@ -86,9 +88,10 @@ describe('Service Tests', () => {
 
                 const expected = Object.assign(
                     {
-                        documentDate: currentDate,
-                        memberFrom: currentDate,
-                        memberUntil: currentDate
+                        admissionDocumentDate: currentDate,
+                        cancellationDocumentDate: currentDate,
+                        memberFromDate: currentDate,
+                        memberUntilDate: currentDate
                     },
                     returnedFromService
                 );
@@ -103,18 +106,20 @@ describe('Service Tests', () => {
             it('should return a list of Membership', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        documentDate: currentDate.format(DATE_FORMAT),
-                        memberFrom: currentDate.format(DATE_FORMAT),
-                        memberUntil: currentDate.format(DATE_FORMAT),
+                        admissionDocumentDate: currentDate.format(DATE_FORMAT),
+                        cancellationDocumentDate: currentDate.format(DATE_FORMAT),
+                        memberFromDate: currentDate.format(DATE_FORMAT),
+                        memberUntilDate: currentDate.format(DATE_FORMAT),
                         remark: 'BBBBBB'
                     },
                     elemDefault
                 );
                 const expected = Object.assign(
                     {
-                        documentDate: currentDate,
-                        memberFrom: currentDate,
-                        memberUntil: currentDate
+                        admissionDocumentDate: currentDate,
+                        cancellationDocumentDate: currentDate,
+                        memberFromDate: currentDate,
+                        memberUntilDate: currentDate
                     },
                     returnedFromService
                 );
