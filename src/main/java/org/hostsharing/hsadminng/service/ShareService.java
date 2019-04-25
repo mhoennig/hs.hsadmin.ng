@@ -1,7 +1,6 @@
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Share;
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
@@ -20,7 +19,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class ShareService {
+public class ShareService implements IdToDtoResolver<ShareDTO> {
 
     private final Logger log = LoggerFactory.getLogger(ShareService.class);
 

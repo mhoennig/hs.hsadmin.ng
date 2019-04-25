@@ -1,25 +1,24 @@
 package org.hostsharing.hsadminng.web.rest;
+
+import io.github.jhipster.web.util.ResponseUtil;
+import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
+import org.hostsharing.hsadminng.service.dto.AssetCriteria;
+import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.hostsharing.hsadminng.web.rest.util.HeaderUtil;
 import org.hostsharing.hsadminng.web.rest.util.PaginationUtil;
-import org.hostsharing.hsadminng.service.dto.AssetDTO;
-import org.hostsharing.hsadminng.service.dto.AssetCriteria;
-import org.hostsharing.hsadminng.service.AssetQueryService;
-import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 

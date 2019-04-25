@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class MembershipService {
+public class MembershipService implements IdToDtoResolver<MembershipDTO> {
 
     private final Logger log = LoggerFactory.getLogger(MembershipService.class);
 
@@ -73,6 +73,7 @@ public class MembershipService {
      * @param id the id of the entity
      * @return the entity
      */
+    @Override
     @Transactional(readOnly = true)
     public Optional<MembershipDTO> findOne(Long id) {
         log.debug("Request to get Membership : {}", id);

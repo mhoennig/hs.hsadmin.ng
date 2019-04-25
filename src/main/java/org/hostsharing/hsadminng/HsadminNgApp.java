@@ -1,11 +1,11 @@
 package org.hostsharing.hsadminng;
 
+import io.github.jhipster.config.JHipsterConstants;
+import org.apache.commons.lang3.StringUtils;
 import org.hostsharing.hsadminng.config.ApplicationProperties;
 import org.hostsharing.hsadminng.config.DefaultProfileUtil;
-
-import io.github.jhipster.config.JHipsterConstants;
-
-import org.apache.commons.lang3.StringUtils;
+import org.hostsharing.hsadminng.security.SecurityUtils;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -41,6 +41,10 @@ public class HsadminNgApp {
      */
     @PostConstruct
     public void initApplication() {
+
+        // TODO: remove this hack once proper user roles are implemented
+        SecurityUtils.addUserRole(null, null, Role.HOSTMASTER);
+
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run " +

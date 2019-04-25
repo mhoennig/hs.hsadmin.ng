@@ -3,7 +3,6 @@ package org.hostsharing.hsadminng.service;
 import org.apache.commons.lang3.RandomUtils;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
-import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Test;

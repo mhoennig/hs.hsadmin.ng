@@ -1,9 +1,11 @@
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
-
-import javax.persistence.criteria.JoinType;
-
+import io.github.jhipster.service.QueryService;
+import org.hostsharing.hsadminng.domain.*;
+import org.hostsharing.hsadminng.repository.MembershipRepository;
+import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
+import org.hostsharing.hsadminng.service.dto.MembershipDTO;
+import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,14 +14,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
-
-import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.MembershipRepository;
-import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
-import org.hostsharing.hsadminng.service.dto.MembershipDTO;
-import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
+import javax.persistence.criteria.JoinType;
+import java.util.List;
 
 /**
  * Service for executing complex queries for Membership entities in the database.

@@ -1,25 +1,24 @@
 package org.hostsharing.hsadminng.web.rest;
+
+import io.github.jhipster.web.util.ResponseUtil;
+import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
+import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.hostsharing.hsadminng.web.rest.util.HeaderUtil;
 import org.hostsharing.hsadminng.web.rest.util.PaginationUtil;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
-import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -72,7 +71,7 @@ public class CustomerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/customers")
-    public ResponseEntity<CustomerDTO> updateCustomer(@Valid @RequestBody CustomerDTO customerDTO) throws URISyntaxException {
+    public ResponseEntity<CustomerDTO> updateCustomer(@RequestBody CustomerDTO customerDTO) {
         log.debug("REST request to update Customer : {}", customerDTO);
         if (customerDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");

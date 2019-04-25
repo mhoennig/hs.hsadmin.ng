@@ -1,9 +1,13 @@
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
-
-import javax.persistence.criteria.JoinType;
-
+import io.github.jhipster.service.QueryService;
+import org.hostsharing.hsadminng.domain.Customer_;
+import org.hostsharing.hsadminng.domain.SepaMandate;
+import org.hostsharing.hsadminng.domain.SepaMandate_;
+import org.hostsharing.hsadminng.repository.SepaMandateRepository;
+import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
+import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
+import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,14 +16,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
-
-import org.hostsharing.hsadminng.domain.SepaMandate;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.SepaMandateRepository;
-import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
-import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
-import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
+import javax.persistence.criteria.JoinType;
+import java.util.List;
 
 /**
  * Service for executing complex queries for SepaMandate entities in the database.

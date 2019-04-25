@@ -1,18 +1,18 @@
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
-
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.SepaMandate;
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,15 +33,14 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
-import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 /**
  * Test class for the CustomerResource REST controller.
  *
@@ -138,6 +137,10 @@ public class CustomerResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+
+        givenAuthenticatedUser();
+        givenUserHavingRole(Role.ADMIN);
+
         final CustomerResource customerResource = new CustomerResource(customerService, customerQueryService);
         this.restCustomerMockMvc = MockMvcBuilders.standaloneSetup(customerResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
@@ -149,7 +152,7 @@ public class CustomerResourceIntTest {
 
     /**
      * Create an entity for this test.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -175,7 +178,7 @@ public class CustomerResourceIntTest {
 
     /**
      * Create another entity for tests.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -377,22 +380,22 @@ public class CustomerResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
             .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
-            .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX.toString())))
-            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME.toString())))
+            .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
+            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
             .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
             .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
-            .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE.toString())))
-            .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT.toString())))
-            .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER.toString())))
+            .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE)))
+            .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT)))
+            .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER)))
             .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
-            .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER.toString())))
-            .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION.toString())))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS.toString())))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION.toString())))
-            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+            .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER)))
+            .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
+            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
+            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
+            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
     }
-    
+
     @Test
     @Transactional
     public void getCustomer() throws Exception {
@@ -1167,8 +1170,8 @@ public class CustomerResourceIntTest {
         // Disconnect from session so that the updates on updatedCustomer are not directly saved in db
         em.detach(updatedCustomer);
         updatedCustomer
-            .reference(UPDATED_REFERENCE)
-            .prefix(UPDATED_PREFIX)
+            .reference(null)
+            .prefix(null)
             .name(UPDATED_NAME)
             .kind(UPDATED_KIND)
             .birthDate(UPDATED_BIRTH_DATE)
@@ -1193,8 +1196,8 @@ public class CustomerResourceIntTest {
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeUpdate);
         Customer testCustomer = customerList.get(customerList.size() - 1);
-        assertThat(testCustomer.getReference()).isEqualTo(UPDATED_REFERENCE);
-        assertThat(testCustomer.getPrefix()).isEqualTo(UPDATED_PREFIX);
+        assertThat(testCustomer.getReference()).isEqualTo(DEFAULT_REFERENCE);
+        assertThat(testCustomer.getPrefix()).isEqualTo(DEFAULT_PREFIX);
         assertThat(testCustomer.getName()).isEqualTo(UPDATED_NAME);
         assertThat(testCustomer.getKind()).isEqualTo(UPDATED_KIND);
         assertThat(testCustomer.getBirthDate()).isEqualTo(UPDATED_BIRTH_DATE);
