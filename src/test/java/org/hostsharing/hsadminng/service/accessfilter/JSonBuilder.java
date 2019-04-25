@@ -21,7 +21,7 @@ public class JSonBuilder {
     }
 
     private static String inQuotes(Object value) {
-        return "\"" + value.toString() + "\"";
+        return value != null ? "\"" + value.toString() + "\"" : "null";
     }
 
 }

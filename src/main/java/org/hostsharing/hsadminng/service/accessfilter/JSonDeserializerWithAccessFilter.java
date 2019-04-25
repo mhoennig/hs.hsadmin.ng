@@ -3,10 +3,7 @@ package org.hostsharing.hsadminng.service.accessfilter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
@@ -60,7 +57,7 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
     }
 
     private void overwriteUnmodifiedFieldsWithCurrentValues(final Object currentDto) {
-        if ( currentDto == null ) {
+        if (currentDto == null) {
             return;
         }
         for (Field field : currentDto.getClass().getDeclaredFields()) {
@@ -79,21 +76,30 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
 
     private Object readValue(final TreeNode treeNode, final String fieldName, final Class<?> fieldClass) {
         final TreeNode fieldNode = treeNode.get(fieldName);
+        if (fieldNode instanceof NullNode) {
+            return null;
+        }
         if (fieldNode instanceof TextNode) {
             return ((TextNode) fieldNode).asText();
-        } else if (fieldNode instanceof IntNode) {
+        }
+        if (fieldNode instanceof IntNode) {
             return ((IntNode) fieldNode).asInt();
-        } else if (fieldNode instanceof LongNode) {
+        }
+        if (fieldNode instanceof LongNode) {
             return ((LongNode) fieldNode).asLong();
-        } else if (fieldNode instanceof ArrayNode && LocalDate.class.isAssignableFrom(fieldClass)) {
+        }
+        if (fieldNode instanceof ArrayNode && LocalDate.class.isAssignableFrom(fieldClass)) {
             return LocalDate.of(((ArrayNode) fieldNode).get(0).asInt(), ((ArrayNode) fieldNode).get(1).asInt(), ((ArrayNode) fieldNode).get(2).asInt());
-        } else {
+        }
+        {
             throw new NotImplementedException("property type not yet implemented: " + fieldNode + " -> " + fieldName + ": " + fieldClass);
         }
     }
 
     private void writeValue(final T dto, final Field field, final Object value) {
-        if (field.getType().isAssignableFrom(value.getClass())) {
+        if (value == null) {
+            ReflectionUtil.setValue(dto, field, null);
+        } else if (field.getType().isAssignableFrom(value.getClass())) {
             ReflectionUtil.setValue(dto, field, value);
         } else if (Integer.class.isAssignableFrom(field.getType()) || int.class.isAssignableFrom(field.getType())) {
             ReflectionUtil.setValue(dto, field, ((Number) value).intValue());
@@ -121,7 +127,7 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
                             throw new BadRequestAlertException("Referencing field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "referencingProhibited");
                         }
                     }
-                } else if (isUpdate(field, dto, currentDto) && !getLoginUserRole().isAllowedToUpdate(field)){
+                } else if (isUpdate(field, dto, currentDto) && !getLoginUserRole().isAllowedToUpdate(field)) {
                     throw new BadRequestAlertException("Update of field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "updateProhibited");
                 }
             }

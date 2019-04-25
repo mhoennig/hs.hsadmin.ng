@@ -5,7 +5,11 @@ package org.hostsharing.hsadminng.security;
  */
 public final class AuthoritiesConstants {
 
+    public static final String HOSTMASTER = "ROLE_HOSTMASTER";
+
     public static final String ADMIN = "ROLE_ADMIN";
+
+    public static final String SUPPORTER = "ROLE_SUPPORTER";
 
     public static final String USER = "ROLE_USER";
 

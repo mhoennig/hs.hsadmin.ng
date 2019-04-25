@@ -73,6 +73,20 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     }
 
     @Test
+    public void shouldDeserializeNullField() throws IOException {
+        // given
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("openStringField", null)));
+
+        // when
+        GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+
+        // then
+        assertThat(actualDto.openStringField).isNull();
+    }
+
+    @Test
     public void shouldDeserializeStringField() throws IOException {
         // given
         givenJSonTree(asJSon(
