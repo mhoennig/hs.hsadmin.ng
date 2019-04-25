@@ -2,10 +2,6 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.hostsharing.hsadminng.service.IdToDtoResolver;
-import org.hostsharing.hsadminng.service.dto.FluentBuilder;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,6 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -62,6 +59,87 @@ public class JSonSerializerWithAccessFilterUnitTest {
 
         // then
         verify(jsonGenerator).writeStringField("openStringField", givenDTO.openStringField);
+    }
+
+    @Test
+    public void shouldSerializeIntegerField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeNumberField("openIntegerField", givenDTO.openIntegerField);
+    }
+
+    @Test
+    public void shouldSerializePrimitiveIntField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeNumberField("openPrimitiveIntField", givenDTO.openPrimitiveIntField);
+    }
+
+    @Test
+    public void shouldSerializeLongField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeNumberField("openLongField", givenDTO.openLongField);
+    }
+
+    @Test
+    public void shouldSerializePrimitiveLongField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeNumberField("openPrimitiveLongField", givenDTO.openPrimitiveLongField);
+    }
+
+    @Test
+    public void shouldSerializeBooleanField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeBooleanField("openBooleanField", givenDTO.openBooleanField);
+    }
+
+    @Test
+    public void shouldSerializePrimitiveBooleanField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeBooleanField("openPrimitiveBooleanField", givenDTO.openPrimitiveBooleanField);
+    }
+
+    @Test
+    public void shouldSerializeBigDecimalField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeNumberField("openBigDecimalField", givenDTO.openBigDecimalField);
+    }
+
+    @Test
+    public void shouldSerializeLocalDateField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeStringField("openLocalDateField", givenDTO.openLocalDateFieldAsString);
+    }
+
+    @Test
+    public void shouldSerializeEnumField() throws IOException {
+        // when
+        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+
+        // then
+        verify(jsonGenerator).writeStringField("openEnumField", givenDTO.openEnumFieldAsString);
     }
 
     @Test
@@ -112,51 +190,5 @@ public class JSonSerializerWithAccessFilterUnitTest {
     }
 
     // --- fixture code below ---
-
-    private GivenDto createSampleDto() {
-        final GivenDto dto = new GivenDto();
-        dto.customerId = 888L;
-        dto.restrictedField = RandomStringUtils.randomAlphabetic(10);
-        dto.openStringField = RandomStringUtils.randomAlphabetic(10);
-        dto.openIntegerField = RandomUtils.nextInt();
-        dto.openLongField = RandomUtils.nextLong();
-        return dto;
-    }
-
-    private static class GivenCustomerDto extends FluentBuilder<GivenCustomerDto> {
-        @SelfId(resolver = GivenService.class)
-        @AccessFor(read = Role.ANYBODY)
-        Long id;
-    }
-
-    private abstract class GivenCustomerService implements IdToDtoResolver<GivenCustomerDto> {
-    }
-
-    private static class GivenDto {
-
-        @SelfId(resolver = GivenService.class)
-        @AccessFor(read = Role.ANYBODY)
-        Long id;
-
-        @ParentId(resolver = GivenCustomerService.class)
-        @AccessFor(read = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
-        Long customerId;
-
-        @AccessFor(read = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
-        String restrictedField;
-
-        @AccessFor(read = Role.ANYBODY)
-        String openStringField;
-
-        @AccessFor(read = Role.ANYBODY)
-        Integer openIntegerField;
-
-        @AccessFor(read = Role.ANYBODY)
-        Long openLongField;
-    }
-
-    private abstract class GivenService implements IdToDtoResolver<GivenService> {
-    }
-
 
 }

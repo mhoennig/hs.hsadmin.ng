@@ -28,10 +28,6 @@ abstract class JSonAccessFilter<T> {
         this.parentIdField = determineFieldWithAnnotation(dto.getClass(), ParentId.class);
     }
 
-    boolean isParentIdField(final Field field) {
-        return field.equals(parentIdField);
-    }
-
     Long getId() {
         if (selfIdField == null) {
             return null;
@@ -95,7 +91,7 @@ abstract class JSonAccessFilter<T> {
 
     @SuppressWarnings("unchecked")
     protected Object loadDto(final Class<? extends IdToDtoResolver> resolverClass, final Long id) {
-        verify(id != null, "id must not be null");
+        verify(id != null,  "id must not be null for " + resolverClass.getSimpleName());
 
         final AutowireCapableBeanFactory beanFactory = ctx.getAutowireCapableBeanFactory();
         verify(beanFactory != null, "no bean factory found, probably missing mock configuration for ApplicationContext, e.g. given(...)");

@@ -11,6 +11,7 @@ import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,8 +41,8 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
         treeNode.fieldNames().forEachRemaining(fieldName -> {
             try {
                 final Field field = dto.getClass().getDeclaredField(fieldName);
-                final Object newValue = readValue(treeNode, field);
-                writeValue(dto, field, newValue);
+                final Object newValue = readValueFromJSon(treeNode, field);
+                writeValueToDto(dto, field, newValue);
             } catch (NoSuchFieldException e) {
                 throw new RuntimeException("setting field " + fieldName + " failed", e);
             }
@@ -69,12 +70,12 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
         }
     }
 
-    private Object readValue(final TreeNode treeNode, final Field field) {
-        return readValue(treeNode, field.getName(), field.getType());
+    private Object readValueFromJSon(final TreeNode treeNode, final Field field) {
+        return readValueFromJSon(treeNode, field.getName(), field.getType());
 
     }
 
-    private Object readValue(final TreeNode treeNode, final String fieldName, final Class<?> fieldClass) {
+    private Object readValueFromJSon(final TreeNode treeNode, final String fieldName, final Class<?> fieldClass) {
         final TreeNode fieldNode = treeNode.get(fieldName);
         if (fieldNode instanceof NullNode) {
             return null;
@@ -88,23 +89,29 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
         if (fieldNode instanceof LongNode) {
             return ((LongNode) fieldNode).asLong();
         }
+        if (fieldNode instanceof DoubleNode) {
+            // TODO: we need to figure out, why DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS does not work
+            return ((DoubleNode) fieldNode).asDouble();
+        }
         if (fieldNode instanceof ArrayNode && LocalDate.class.isAssignableFrom(fieldClass)) {
             return LocalDate.of(((ArrayNode) fieldNode).get(0).asInt(), ((ArrayNode) fieldNode).get(1).asInt(), ((ArrayNode) fieldNode).get(2).asInt());
         }
-        {
-            throw new NotImplementedException("property type not yet implemented: " + fieldNode + " -> " + fieldName + ": " + fieldClass);
-        }
+        throw new NotImplementedException("JSon node type not implemented: " + fieldNode.getClass() + " -> " + fieldName + ": " + fieldClass);
     }
 
-    private void writeValue(final T dto, final Field field, final Object value) {
+    private void writeValueToDto(final T dto, final Field field, final Object value) {
         if (value == null) {
             ReflectionUtil.setValue(dto, field, null);
         } else if (field.getType().isAssignableFrom(value.getClass())) {
             ReflectionUtil.setValue(dto, field, value);
-        } else if (Integer.class.isAssignableFrom(field.getType()) || int.class.isAssignableFrom(field.getType())) {
+        } else if (int.class.isAssignableFrom(field.getType())) {
             ReflectionUtil.setValue(dto, field, ((Number) value).intValue());
         } else if (Long.class.isAssignableFrom(field.getType()) || long.class.isAssignableFrom(field.getType())) {
             ReflectionUtil.setValue(dto, field, ((Number) value).longValue());
+        } else if (BigDecimal.class.isAssignableFrom(field.getType())) {
+            ReflectionUtil.setValue(dto, field, new BigDecimal(value.toString()));
+        } else if (Boolean.class.isAssignableFrom(field.getType()) || boolean.class.isAssignableFrom(field.getType())) {
+            ReflectionUtil.setValue(dto, field, Boolean.valueOf(value.toString()));
         } else if (field.getType().isEnum()) {
             ReflectionUtil.setValue(dto, field, Enum.valueOf((Class<Enum>) field.getType(), value.toString()));
         } else if (LocalDate.class.isAssignableFrom(field.getType())) {

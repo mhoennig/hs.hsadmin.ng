@@ -4,10 +4,12 @@ package org.hostsharing.hsadminng.service.accessfilter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.apache.commons.lang3.NotImplementedException;
+import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class JSonSerializerWithAccessFilter<T> extends JSonAccessFilter<T> {
@@ -41,31 +43,26 @@ public class JSonSerializerWithAccessFilter<T> extends JSonAccessFilter<T> {
             //  Alternatively extract the supported types to subclasses of some abstract class and
             //  here as well as in the deserializer just access the matching implementation through a map.
             //  Or even completely switch from Jackson to GSON?
-            final Object fieldValue = get(dto, field);
+            final Object fieldValue = ReflectionUtil.getValue(dto, field);
             if (fieldValue == null) {
                 jsonGenerator.writeNullField(fieldName);
+            } else if (String.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeStringField(fieldName, (String) fieldValue);
             } else if (Integer.class.isAssignableFrom(field.getType()) || int.class.isAssignableFrom(field.getType())) {
                 jsonGenerator.writeNumberField(fieldName, (int) fieldValue);
             } else if (Long.class.isAssignableFrom(field.getType()) || long.class.isAssignableFrom(field.getType())) {
                 jsonGenerator.writeNumberField(fieldName, (long) fieldValue);
             } else if (LocalDate.class.isAssignableFrom(field.getType())) {
-                jsonGenerator.writeStringField(fieldName, fieldValue.toString()); // TODO proper format
+                jsonGenerator.writeStringField(fieldName, fieldValue.toString());
             } else if (Enum.class.isAssignableFrom(field.getType())) {
-                jsonGenerator.writeStringField(fieldName, fieldValue.toString()); // TODO proper representation
-            } else if (String.class.isAssignableFrom(field.getType())) {
-                jsonGenerator.writeStringField(fieldName, (String) fieldValue);
+                jsonGenerator.writeStringField(fieldName, ((Enum) fieldValue).name());
+            } else if (Boolean.class.isAssignableFrom(field.getType()) || boolean.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeBooleanField(fieldName, (Boolean) fieldValue);
+            } else if (BigDecimal.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeNumberField(fieldName, (BigDecimal) fieldValue);
             } else {
                 throw new NotImplementedException("property type not yet implemented: " + field);
             }
-        }
-    }
-
-    private Object get(final Object dto, final Field field) {
-        try {
-            field.setAccessible(true);
-            return field.get(dto);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("getting field " + field + " failed", e);
         }
     }
 

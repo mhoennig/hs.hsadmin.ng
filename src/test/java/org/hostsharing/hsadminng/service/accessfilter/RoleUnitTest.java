@@ -2,6 +2,8 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RoleUnitTest {
@@ -70,14 +72,59 @@ public class RoleUnitTest {
     }
 
     @Test
+    public void isIndependent() {
+        assertThat(Role.HOSTMASTER.isIndependent()).isTrue();
+        assertThat(Role.SUPPORTER.isIndependent()).isTrue();
+
+        assertThat(Role.CONTRACTUAL_CONTACT.isIndependent()).isFalse();
+        assertThat(Role.ANY_CUSTOMER_USER.isIndependent()).isFalse();
+    }
+
+    @Test
+    public void isBroadest() {
+        assertThat(Role.broadest(Role.HOSTMASTER, Role.CONTRACTUAL_CONTACT)).isEqualTo(Role.HOSTMASTER);
+        assertThat(Role.broadest(Role.CONTRACTUAL_CONTACT, Role.HOSTMASTER)).isEqualTo(Role.HOSTMASTER);
+        assertThat(Role.broadest(Role.CONTRACTUAL_CONTACT, Role.ANY_CUSTOMER_USER)).isEqualTo(Role.CONTRACTUAL_CONTACT);
+    }
+
+    @Test
     public void isAllowedToInit() {
+        assertThat(Role.HOSTMASTER.isAllowedToInit(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Role.SUPPORTER.isAllowedToInit(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Role.ADMIN.isAllowedToInit(someFieldWithAccessForAnnotation)).isTrue();
     }
 
     @Test
     public void isAllowedToUpdate() {
+        assertThat(Role.HOSTMASTER.isAllowedToUpdate(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Role.ANY_CUSTOMER_CONTACT.isAllowedToUpdate(someFieldWithAccessForAnnotation)).isFalse();
+        assertThat(Role.SUPPORTER.isAllowedToUpdate(someFieldWithAccessForAnnotation)).isTrue();
     }
 
     @Test
     public void isAllowedToRead() {
+        assertThat(Role.HOSTMASTER.isAllowedToRead(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Role.ANY_CUSTOMER_USER.isAllowedToRead(someFieldWithAccessForAnnotation)).isFalse();
+        assertThat(Role.ANY_CUSTOMER_CONTACT.isAllowedToRead(someFieldWithAccessForAnnotation)).isTrue();
+    }
+
+    // --- only test fixture below ---
+
+    static class TestDto {
+        @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.ANY_CUSTOMER_CONTACT)
+        private Integer someFieldWithAccessForAnnotation;
+
+        private Integer someFieldWithoutAccessForAnnotation;
+    }
+
+    private static Field someFieldWithoutAccessForAnnotation;
+    private static Field someFieldWithAccessForAnnotation;
+    static {
+        try {
+            someFieldWithoutAccessForAnnotation = TestDto.class.getDeclaredField("someFieldWithoutAccessForAnnotation");
+            someFieldWithAccessForAnnotation = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotation");
+        } catch (NoSuchFieldException e) {
+            throw new AssertionError("precondition failed", e);
+        }
     }
 }

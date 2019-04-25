@@ -83,6 +83,9 @@ spring:
             enabled: false
     thymeleaf:
         mode: HTML
+    jackson:
+        deserialization:
+            USE_BIG_DECIMAL_FOR_FLOATS: true
 
 server:
     servlet:

@@ -236,7 +236,29 @@ public class CustomerResourceIntTest {
 
     @Test
     @Transactional
-    public void createCustomerWithExistingId() throws Exception {
+    public void createCustomerWithExistingIdIsRejected() throws Exception {
+        // Initialize the database
+        final long existingCustomerId = customerRepository.saveAndFlush(customer).getId();
+        int databaseSizeBeforeCreate = customerRepository.findAll().size();
+
+        // Create the Customer with an existing ID
+        customer.setId(existingCustomerId);
+        CustomerDTO customerDTO = customerMapper.toDto(customer);
+
+        // An entity with an existing ID cannot be created, so this API call must fail
+        restCustomerMockMvc.perform(post("/api/customers")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+            .andExpect(status().isBadRequest());
+
+        // Validate the Customer in the database
+        List<Customer> customerList = customerRepository.findAll();
+        assertThat(customerList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createCustomerWithNonExistingIdIsRejected() throws Exception {
         int databaseSizeBeforeCreate = customerRepository.findAll().size();
 
         // Create the Customer with an existing ID
