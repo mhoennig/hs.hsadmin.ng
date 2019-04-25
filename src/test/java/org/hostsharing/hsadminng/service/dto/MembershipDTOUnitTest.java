@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializerWithAccessFilter;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
@@ -14,9 +16,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -31,20 +35,36 @@ public class MembershipDTOUnitTest {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
-    public ApplicationContext ctx;
+    private ApplicationContext ctx;
 
     @Mock
-    public JsonParser jsonParser;
+    private AutowireCapableBeanFactory autowireCapableBeanFactory;
 
     @Mock
-    public ObjectCodec codec;
+    private JsonParser jsonParser;
 
     @Mock
-    public TreeNode treeNode;
+    private ObjectCodec codec;
+
+    @Mock
+    private TreeNode treeNode;
+
+    @Mock
+    private MembershipService membershipService;
+
+    @Mock
+    private CustomerService customerService;
 
     @Before
     public void init() {
         given(jsonParser.getCodec()).willReturn(codec);
+
+        given (ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
+        given(autowireCapableBeanFactory.createBean(MembershipService.class)).willReturn(membershipService);
+        given(autowireCapableBeanFactory.createBean(CustomerService.class)).willReturn(customerService);
+        given(customerService.findOne(1234L)).willReturn(Optional.of(new CustomerDTO()
+            .with(dto -> dto.setId(1234L))
+        ));
     }
 
     @Test

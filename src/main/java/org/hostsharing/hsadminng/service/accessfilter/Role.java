@@ -34,16 +34,11 @@ public enum Role {
     SUPPORTER(3),
 
     /**
-     * This meta-role is to specify that any kind of customer contact can get access to the resource.
-     */
-    ANY_CUSTOMER_CONTACT(20),
-
-    /**
      * This role is for contractual contacts of a customer, like a director of the company.
      * Who has this role, has the broadest access to all resources which belong to this customer.
      * Everything which relates to the contract with the customer, needs this role.
      */
-    CONTRACTUAL_CONTACT(21),
+    CONTRACTUAL_CONTACT(20),
 
     /**
      * This role is for financial contacts of a customer, e.g. for accessing billing data.
@@ -63,6 +58,11 @@ public enum Role {
      */
     TECHNICAL_CONTACT(22),
 
+
+    /**
+     * This meta-role is to specify that any kind of customer contact can get access to the resource.
+     */
+    ANY_CUSTOMER_CONTACT(29),
 
     /**
      * Any user which belongs to a customer has at least this role.

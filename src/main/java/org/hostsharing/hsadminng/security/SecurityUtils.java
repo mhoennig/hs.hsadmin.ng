@@ -80,7 +80,6 @@ public final class SecurityUtils {
     }
 
     public static Role getLoginUserRoleFor(final Class<?> onDtoClass, final Long onId) {
-
         final Role highestRole = userRoleAssignments.stream().
             map(ura ->
                 matches(onDtoClass, onId, ura)
@@ -91,7 +90,7 @@ public final class SecurityUtils {
     }
 
     private static boolean matches(Class<?> onDtoClass, Long onId, UserRoleAssignment ura) {
-        final boolean matches =  (ura.onClass == null || onDtoClass == ura.onClass) && (ura.onId == null || onId.equals(ura.onId) );
+        final boolean matches =  (ura.onClass == null || onDtoClass == ura.onClass) && (ura.onId == null || ura.onId.equals(onId));
         return matches;
     }
 

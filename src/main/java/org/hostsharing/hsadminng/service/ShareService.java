@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class ShareService {
+public class ShareService implements IdToDtoResolver<ShareDTO> {
 
     private final Logger log = LoggerFactory.getLogger(ShareService.class);
 

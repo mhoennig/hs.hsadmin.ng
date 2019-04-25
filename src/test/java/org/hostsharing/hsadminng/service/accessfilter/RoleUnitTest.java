@@ -28,7 +28,7 @@ public class RoleUnitTest {
         assertThat(Role.SUPPORTER.covers(Role.ADMIN)).isFalse();
 
         assertThat(Role.ANY_CUSTOMER_CONTACT.covers(Role.SUPPORTER)).isFalse();
-        assertThat(Role.CONTRACTUAL_CONTACT.covers(Role.ANY_CUSTOMER_CONTACT)).isFalse();
+        assertThat(Role.ANY_CUSTOMER_CONTACT.covers(Role.CONTRACTUAL_CONTACT)).isFalse();
         assertThat(Role.FINANCIAL_CONTACT.covers(Role.CONTRACTUAL_CONTACT)).isFalse();
         assertThat(Role.FINANCIAL_CONTACT.covers(Role.TECHNICAL_CONTACT)).isFalse();
         assertThat(Role.TECHNICAL_CONTACT.covers(Role.CONTRACTUAL_CONTACT)).isFalse();
@@ -55,7 +55,7 @@ public class RoleUnitTest {
 
         assertThat(Role.SUPPORTER.covers(Role.ANY_CUSTOMER_CONTACT)).isTrue();
 
-        assertThat(Role.ANY_CUSTOMER_CONTACT.covers(Role.CONTRACTUAL_CONTACT)).isTrue();
+        assertThat(Role.CONTRACTUAL_CONTACT.covers(Role.ANY_CUSTOMER_CONTACT)).isTrue();
         assertThat(Role.CONTRACTUAL_CONTACT.covers(Role.FINANCIAL_CONTACT)).isTrue();
         assertThat(Role.CONTRACTUAL_CONTACT.covers(Role.TECHNICAL_CONTACT)).isTrue();
         assertThat(Role.TECHNICAL_CONTACT.covers(Role.ANY_CUSTOMER_USER)).isTrue();

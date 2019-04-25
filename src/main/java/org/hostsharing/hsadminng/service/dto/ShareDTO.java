@@ -1,5 +1,13 @@
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.ShareService;
+import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
+import org.hostsharing.hsadminng.service.accessfilter.ParentId;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SelfId;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -11,17 +19,15 @@ import java.util.Objects;
  */
 public class ShareDTO implements Serializable {
 
-    @SelfId
+    @SelfId(resolver = ShareService.class)
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long id;
 
     @NotNull
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate valueDate;
 
@@ -41,8 +47,8 @@ public class ShareDTO implements Serializable {
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
-    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
-    private String membershipAdmissionDocumentDate;
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    private String membershipDisplayReference;
 
     public Long getId() {
         return id;
@@ -100,12 +106,12 @@ public class ShareDTO implements Serializable {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipAdmissionDocumentDate() {
-        return membershipAdmissionDocumentDate;
+    public String getMembershipDisplayReference() {
+        return membershipDisplayReference;
     }
 
-    public void setMembershipAdmissionDocumentDate(String membershipAdmissionDocumentDate) {
-        this.membershipAdmissionDocumentDate = membershipAdmissionDocumentDate;
+    public void setMembershipDisplayReference(String membershipDisplayReference) {
+        this.membershipDisplayReference = membershipDisplayReference;
     }
 
     @Override
@@ -139,7 +145,7 @@ public class ShareDTO implements Serializable {
             ", quantity=" + getQuantity() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipAdmissionDocumentDate() + "'" +
+            ", membership='" + getMembershipDisplayReference() + "'" +
             "}";
     }
 }

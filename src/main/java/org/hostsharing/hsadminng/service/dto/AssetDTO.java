@@ -34,7 +34,7 @@ public class AssetDTO implements Serializable {
 
     private Long membershipId;
 
-    private String membershipAdmissionDocumentDate;
+    private String membershipDisplayReference;
 
     public Long getId() {
         return id;
@@ -92,12 +92,12 @@ public class AssetDTO implements Serializable {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipAdmissionDocumentDate() {
-        return membershipAdmissionDocumentDate;
+    public String getMembershipDisplayReference() {
+        return membershipDisplayReference;
     }
 
-    public void setMembershipAdmissionDocumentDate(String membershipAdmissionDocumentDate) {
-        this.membershipAdmissionDocumentDate = membershipAdmissionDocumentDate;
+    public void setMembershipDisplayReference(String membershipDisplayReference) {
+        this.membershipDisplayReference = membershipDisplayReference;
     }
 
     @Override
@@ -131,7 +131,7 @@ public class AssetDTO implements Serializable {
             ", amount=" + getAmount() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipAdmissionDocumentDate() + "'" +
+            ", membership='" + getMembershipDisplayReference() + "'" +
             "}";
     }
 }

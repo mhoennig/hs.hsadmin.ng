@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
+import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
@@ -21,9 +22,9 @@ import java.util.Objects;
 /**
  * A DTO for the Customer entity.
  */
-public class CustomerDTO implements Serializable {
+public class CustomerDTO extends FluentBuilder<CustomerDTO> implements Serializable {
 
-    @SelfId
+    @SelfId(resolver = CustomerService.class)
     @AccessFor(read = Role.ANY_CUSTOMER_USER)
     private Long id;
 
@@ -41,31 +42,38 @@ public class CustomerDTO implements Serializable {
 
     @NotNull
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
     private String name;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.CONTRACTUAL_CONTACT)
     private CustomerKind kind;
 
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate birthDate;
 
     @Size(max = 80)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String birthPlace;
 
     @Size(max = 80)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String registrationCourt;
 
     @Size(max = 80)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String registrationNumber;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private VatRegion vatRegion;
 
     @Size(max = 40)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String vatNumber;
 
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.CONTRACTUAL_CONTACT, read = Role.ANY_CUSTOMER_CONTACT)
+    @AccessFor(init = Role.ADMIN, update = Role.CONTRACTUAL_CONTACT, read = Role.CONTRACTUAL_CONTACT)
     private String contractualSalutation;
 
     @NotNull
@@ -78,7 +86,7 @@ public class CustomerDTO implements Serializable {
     private String billingSalutation;
 
     @Size(max = 400)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.CONTRACTUAL_CONTACT)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String billingAddress;
 
     @Size(max = 160)

@@ -4,13 +4,16 @@ import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
-import javax.persistence.EntityNotFoundException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+
+import static com.google.common.base.Verify.verify;
 
 abstract class JSonAccessFilter<T> {
     private final ApplicationContext ctx;
@@ -72,7 +75,7 @@ abstract class JSonAccessFilter<T> {
         final Long parentId = (Long) ReflectionUtil.getValue(dto, parentIdField);
         final Role roleOnParent = SecurityUtils.getLoginUserRoleFor(parentDtoClass, parentId);
 
-        final Object parentEntity = findParentDto(parentDtoLoader, parentId);
+        final Object parentEntity = loadDto(parentDtoLoader, parentId);
         return Role.broadest(baseRole, getLoginUserRoleOnAncestorOfDtoClassIfHigher(roleOnParent, parentEntity));
     }
 
@@ -91,9 +94,16 @@ abstract class JSonAccessFilter<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private Object findParentDto(final Class<? extends IdToDtoResolver> parentDtoLoader, final Long parentId) {
-        final IdToDtoResolver<MembershipDTO> idToDtoResolver = ctx.getAutowireCapableBeanFactory().createBean(parentDtoLoader);
-        return idToDtoResolver.findOne(parentId).orElseThrow(() -> new EntityNotFoundException("Can't resolve parent entity ID " + parentId + " via " + parentDtoLoader));
+    protected Object loadDto(final Class<? extends IdToDtoResolver> resolverClass, final Long id) {
+        verify(id != null, "id must not be null");
+
+        final AutowireCapableBeanFactory beanFactory = ctx.getAutowireCapableBeanFactory();
+        verify(beanFactory != null, "no bean factory found, probably missing mock configuration for ApplicationContext, e.g. given(...)");
+
+        final IdToDtoResolver<MembershipDTO> resolverBean = beanFactory.createBean(resolverClass);
+        verify(resolverBean != null, "no " + resolverClass.getSimpleName() + " bean created, probably missing mock configuration for AutowireCapableBeanFactory, e.g. given(...)");
+
+        return resolverBean.findOne(id).orElseThrow(() -> new BadRequestAlertException("Can't resolve entity ID " + id + " via " + resolverClass, resolverClass.getSimpleName(), "isNotFound"));
     }
 
     private static Field determineFieldWithAnnotation(final Class<?> dtoClass, final Class<? extends Annotation> idAnnotationClass) {

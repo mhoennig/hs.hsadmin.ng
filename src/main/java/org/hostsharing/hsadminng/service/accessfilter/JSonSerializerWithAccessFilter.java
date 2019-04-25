@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 
-public class JSonSerializerWithAccessFilter <T> extends JSonAccessFilter<T> {
+public class JSonSerializerWithAccessFilter<T> extends JSonAccessFilter<T> {
     private final JsonGenerator jsonGenerator;
     private final SerializerProvider serializerProvider;
 
@@ -27,32 +27,35 @@ public class JSonSerializerWithAccessFilter <T> extends JSonAccessFilter<T> {
     public void serialize() throws IOException {
 
         jsonGenerator.writeStartObject();
-        for (Field prop : dto.getClass().getDeclaredFields()) {
-            toJSon(dto, jsonGenerator, prop);
+        for (Field field : dto.getClass().getDeclaredFields()) {
+            toJSon(dto, jsonGenerator, field);
         }
         jsonGenerator.writeEndObject();
     }
 
-    private void toJSon(final Object dto, final JsonGenerator jsonGenerator, final Field prop) throws IOException {
-        if (getLoginUserRole().isAllowedToRead(prop)) {
-            final String fieldName = prop.getName();
+    private void toJSon(final Object dto, final JsonGenerator jsonGenerator, final Field field) throws IOException {
+        if (getLoginUserRole().isAllowedToRead(field)) {
+            final String fieldName = field.getName();
             // TODO: maybe replace by serializerProvider.defaultSerialize...()?
             //  But that makes it difficult for parallel structure with the deserializer (clumsy API).
             //  Alternatively extract the supported types to subclasses of some abstract class and
             //  here as well as in the deserializer just access the matching implementation through a map.
             //  Or even completely switch from Jackson to GSON?
-            if (Integer.class.isAssignableFrom(prop.getType()) || int.class.isAssignableFrom(prop.getType())) {
-                jsonGenerator.writeNumberField(fieldName, (int) get(dto, prop));
-            } else if (Long.class.isAssignableFrom(prop.getType()) || long.class.isAssignableFrom(prop.getType())) {
-                jsonGenerator.writeNumberField(fieldName, (long) get(dto, prop));
-            } else if (LocalDate.class.isAssignableFrom(prop.getType())) {
-                jsonGenerator.writeStringField(fieldName, get(dto, prop).toString()); // TODO proper format
-            } else if (Enum.class.isAssignableFrom(prop.getType())) {
-                jsonGenerator.writeStringField(fieldName, get(dto, prop).toString()); // TODO proper representation
-            } else if (String.class.isAssignableFrom(prop.getType())) {
-                jsonGenerator.writeStringField(fieldName, (String) get(dto, prop));
+            final Object fieldValue = get(dto, field);
+            if (fieldValue == null) {
+                jsonGenerator.writeNullField(fieldName);
+            } else if (Integer.class.isAssignableFrom(field.getType()) || int.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeNumberField(fieldName, (int) fieldValue);
+            } else if (Long.class.isAssignableFrom(field.getType()) || long.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeNumberField(fieldName, (long) fieldValue);
+            } else if (LocalDate.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeStringField(fieldName, fieldValue.toString()); // TODO proper format
+            } else if (Enum.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeStringField(fieldName, fieldValue.toString()); // TODO proper representation
+            } else if (String.class.isAssignableFrom(field.getType())) {
+                jsonGenerator.writeStringField(fieldName, (String) fieldValue);
             } else {
-                throw new NotImplementedException("property type not yet implemented: " + prop);
+                throw new NotImplementedException("property type not yet implemented: " + field);
             }
         }
     }

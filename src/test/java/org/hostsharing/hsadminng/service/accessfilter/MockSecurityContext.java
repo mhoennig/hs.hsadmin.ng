@@ -20,8 +20,13 @@ public class MockSecurityContext {
 
     public static void givenUserHavingRole(final Class<?> onClass, final Long onId, final Role role) {
         if ((onClass == null || onId == null) && !role.isIndependent()) {
-            throw new IllegalArgumentException("dependent roles like " + role + " depend on DtoClass and ID");
+            throw new IllegalArgumentException("dependent roles like " + role + " missing DtoClass and ID");
         }
         SecurityUtils.addUserRole(onClass, onId, role);
     }
+
+    public static void givenUserHavingRole(final Role role) {
+        givenUserHavingRole(null, null, role);
+    }
+
 }

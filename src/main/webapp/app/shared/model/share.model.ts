@@ -12,7 +12,7 @@ export interface IShare {
     action?: ShareAction;
     quantity?: number;
     remark?: string;
-    membershipAdmissionDocumentDate?: string;
+    membershipDisplayReference?: string;
     membershipId?: number;
 }
 
@@ -24,7 +24,7 @@ export class Share implements IShare {
         public action?: ShareAction,
         public quantity?: number,
         public remark?: string,
-        public membershipAdmissionDocumentDate?: string,
+        public membershipDisplayReference?: string,
         public membershipId?: number
     ) {}
 }

@@ -28,7 +28,7 @@
                 <dt><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span></dt>
                 <dd>
                     <div *ngIf="asset.membershipId">
-                        <a [routerLink]="['/membership', asset.membershipId, 'view']">{{asset.membershipAdmissionDocumentDate}}</a>
+                        <a [routerLink]="['/membership', asset.membershipId, 'view']">{{asset.membershipDisplayReference}}</a>
                     </div>
                 </dd>
             </dl>

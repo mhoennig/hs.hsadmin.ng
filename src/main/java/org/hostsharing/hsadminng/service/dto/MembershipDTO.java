@@ -1,6 +1,7 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
 import org.hostsharing.hsadminng.service.accessfilter.ParentId;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
@@ -11,14 +12,13 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * A DTO for the Membership entity.
  */
-public class MembershipDTO implements Serializable {
+public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Serializable {
 
-    @SelfId
+    @SelfId(resolver = MembershipService.class)
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long id;
 
@@ -46,12 +46,6 @@ public class MembershipDTO implements Serializable {
 
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
-
-    public MembershipDTO with(
-        Consumer<MembershipDTO> builderFunction) {
-        builderFunction.accept(this);
-        return this;
-    }
 
     public Long getId() {
         return id;
