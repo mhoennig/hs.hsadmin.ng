@@ -2,10 +2,9 @@ package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
-import org.hostsharing.hsadminng.service.accessfilter.ParentId;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.accessfilter.SelfId;
+import org.hostsharing.hsadminng.service.accessfilter.*;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -16,7 +15,7 @@ import java.util.Objects;
 /**
  * A DTO for the Membership entity.
  */
-public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Serializable {
+public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Serializable, AccessMappings {
 
     @SelfId(resolver = MembershipService.class)
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
@@ -46,6 +45,9 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
 
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
+
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    private String membershipDisplayReference;
 
     public Long getId() {
         return id;
@@ -111,6 +113,14 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
         this.customerPrefix = customerPrefix;
     }
 
+    private String getMembershipDisplayReference() {
+        return membershipDisplayReference;
+    }
+
+    public void setMembershipDisplayReference(final String membershipDisplayReference) {
+        this.membershipDisplayReference = membershipDisplayReference;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -144,5 +154,21 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +
             "}";
+    }
+
+    @JsonComponent
+    public static class MembershipJsonSerializer extends JsonSerializerWithAccessFilter<MembershipDTO> {
+
+        public MembershipJsonSerializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
+    }
+
+    @JsonComponent
+    public static class MembershipJsonDeserializer extends JsonDeserializerWithAccessFilter<MembershipDTO> {
+
+        public MembershipJsonDeserializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
     }
 }
