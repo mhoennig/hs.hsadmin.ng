@@ -10,6 +10,12 @@ import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 public class ReflectionUtilUnitTest {
 
     @Test
+    public void getUknownFieldThrowsIllegalArgumentException() {
+        final Throwable actual = catchThrowable(() -> ReflectionUtil.getField(SomeClass.class, "unknownField"));
+        assertThat(actual).isInstanceOf(IllegalArgumentException.class).hasMessage("java.lang.NoSuchFieldException: unknownField");
+    }
+
+    @Test
     public void setValue() {
         final TestDto dto = new TestDto(5);
         ReflectionUtil.setValue(dto, ReflectionUtil.getField(dto.getClass(), "intVal"), 77);
