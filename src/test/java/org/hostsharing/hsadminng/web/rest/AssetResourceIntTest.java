@@ -54,8 +54,8 @@ public class AssetResourceIntTest {
     private static final AssetAction DEFAULT_ACTION = AssetAction.PAYMENT;
     private static final AssetAction UPDATED_ACTION = AssetAction.HANDOVER;
 
-    private static final BigDecimal DEFAULT_AMOUNT = new BigDecimal("1.00");
-    private static final BigDecimal UPDATED_AMOUNT = new BigDecimal("2.00");
+    private static final BigDecimal DEFAULT_AMOUNT = new BigDecimal("1");
+    private static final BigDecimal UPDATED_AMOUNT = new BigDecimal("2");
 
     private static final String DEFAULT_REMARK = "AAAAAAAAAA";
     private static final String UPDATED_REMARK = "BBBBBBBBBB";
@@ -168,7 +168,7 @@ public class AssetResourceIntTest {
         assertThat(testAsset.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
         assertThat(testAsset.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
         assertThat(testAsset.getAction()).isEqualTo(DEFAULT_ACTION);
-        assertThat(testAsset.getAmount()).isEqualTo(DEFAULT_AMOUNT);
+        assertThat(testAsset.getAmount()).isEqualTo(DEFAULT_AMOUNT.setScale(2));
         assertThat(testAsset.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
