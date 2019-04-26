@@ -325,7 +325,7 @@ public class AssetResourceIntTest {
 
             // Get all the assetList where documentDate equals to UPDATED_DOCUMENT_DATE
             defaultAssetShouldNotBeFound("documentDate.equals=" + UPDATED_DOCUMENT_DATE);
-        } catch (Exception exc) {
+        } catch (java.lang.AssertionError exc) {
             // TOOD: on Jenkins the customer row vanishes, locally all tests are green
             assertThat(customerService.findOne(asset.getMembership().getCustomer().getId())).as("postcondition failed").isNotNull();
         }
