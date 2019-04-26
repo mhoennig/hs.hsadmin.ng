@@ -2,6 +2,8 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import java.util.List;
+
 public class JSonBuilder {
 
     @SafeVarargs
@@ -12,6 +14,15 @@ public class JSonBuilder {
             json.append(": ");
             if (prop.right instanceof Number) {
                 json.append(prop.right);
+            } else if (prop.right instanceof List)  {
+                json.append("[");
+                for ( int n = 0; n < ((List<Integer>)prop.right).size(); ++n ) {
+                    if ( n > 0 ) {
+                        json.append(",");
+                    }
+                    json.append(((List<Integer>)prop.right).get(n));
+                }
+                json.append("]");
             } else {
                 json.append(inQuotes(prop.right));
             }

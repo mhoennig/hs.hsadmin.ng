@@ -3,10 +3,10 @@ package org.hostsharing.hsadminng.service.accessfilter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.hostsharing.hsadminng.service.IdToDtoResolver;
-import org.hostsharing.hsadminng.service.dto.FluentBuilder;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -18,10 +18,14 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
 import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
 import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
@@ -54,19 +58,32 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     @Mock
     private GivenChildService givenChildService;
 
+    @Mock
+    private GivenCustomerService givenCustomerService;
+
     @Before
     public void init() {
         givenAuthenticatedUser();
         givenUserHavingRole(GivenDto.class, 1234L, Role.ACTUAL_CUSTOMER_USER);
 
-        given (ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
+        given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenService.class)).willReturn(givenService);
         given(givenService.findOne(1234L)).willReturn(Optional.of(new GivenDto()
             .with(dto -> dto.id = 1234L)
-            .with(dto -> dto.openIntegerField = 1)
-            .with(dto -> dto.openLongField = 2L)
-            .with(dto -> dto.openStringField = "3")
+            .with(dto -> dto.customerId = 888L)
+            .with(dto -> dto.openIntegerField = 11111)
+            .with(dto -> dto.openPrimitiveIntField = 2222)
+            .with(dto -> dto.openLongField = 33333333333333L)
+            .with(dto -> dto.openPrimitiveLongField = 44444444L)
+            .with(dto -> dto.openBooleanField = true)
+            .with(dto -> dto.openPrimitiveBooleanField = false)
+            .with(dto -> dto.openBigDecimalField = new BigDecimal("9876543.09"))
+            .with(dto -> dto.openStringField = "3333")
             .with(dto -> dto.restrictedField = "initial value of restricted field")
+        ));
+        given(autowireCapableBeanFactory.createBean(GivenCustomerService.class)).willReturn(givenCustomerService);
+        given(givenCustomerService.findOne(888L)).willReturn(Optional.of(new GivenCustomerDto()
+            .with(dto -> dto.id = 888L)
         ));
 
         given(jsonParser.getCodec()).willReturn(codec);
@@ -77,6 +94,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         // given
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
             ImmutablePair.of("openStringField", null)));
 
         // when
@@ -91,6 +109,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         // given
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
             ImmutablePair.of("openStringField", "String Value")));
 
         // when
@@ -105,6 +124,7 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         // given
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
             ImmutablePair.of("openIntegerField", 1234)));
 
         // when
@@ -115,26 +135,68 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     }
 
     @Test
-    public void shouldDeserializeLongField() throws IOException {
+    // TODO: split in separate tests for each type, you see all errors at once (if any) and it's easier to debug when there are problems
+    public void shouldDeserializeAcessibleFieldOfAnyType() throws IOException {
         // given
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
-            ImmutablePair.of("openLongField", 1234L)));
+            ImmutablePair.of("customerId", 888L),
+            ImmutablePair.of("openIntegerField", 11),
+            ImmutablePair.of("openPrimitiveIntField", 22),
+            ImmutablePair.of("openLongField", 333333333333333333L),
+            ImmutablePair.of("openPrimitiveLongField", 44444L),
+            ImmutablePair.of("openBooleanField", true),
+            ImmutablePair.of("openPrimitiveBooleanField", false),
+            // TODO: ImmutablePair.of("openBigDecimalField", new BigDecimal("99999999999999999999.1")),
+            //  check why DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS is not working!
+            ImmutablePair.of("openBigDecimalField", new BigDecimal("99999999999999.1")),
+            ImmutablePair.of("openLocalDateField", LocalDate.parse("2019-04-25")),
+            ImmutablePair.of("openLocalDateField2", Arrays.asList(2019, 4, 24)),
+            ImmutablePair.of("openEnumField", TestEnum.GREEN)
+            )
+        );
 
         // when
         GivenDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
 
         // then
-        assertThat(actualDto.openLongField).isEqualTo(1234L);
+        assertThat(actualDto.openIntegerField).isEqualTo(11);
+        assertThat(actualDto.openPrimitiveIntField).isEqualTo(22);
+        assertThat(actualDto.openLongField).isEqualTo(333333333333333333L);
+        assertThat(actualDto.openPrimitiveLongField).isEqualTo(44444L);
+        assertThat(actualDto.openBooleanField).isEqualTo(true);
+        assertThat(actualDto.openPrimitiveBooleanField).isEqualTo(false);
+        assertThat(actualDto.openBigDecimalField).isEqualTo(new BigDecimal("99999999999999.1"));
+        assertThat(actualDto.openLocalDateField).isEqualTo(LocalDate.parse("2019-04-25"));
+        assertThat(actualDto.openLocalDateField2).isEqualTo(LocalDate.parse("2019-04-24"));
+        assertThat(actualDto.openEnumField).isEqualTo(TestEnum.GREEN);
+    }
+
+    @Test
+    public void shouldNotDeserializeFieldWithUnknownJSonNodeType() throws IOException {
+        // given
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
+            ImmutablePair.of("openArrayField", Arrays.asList(11, 22, 33))
+            )
+        );
+
+        // when
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
+
+        // then
+        assertThat(exception).isInstanceOf(NotImplementedException.class);
     }
 
     @Test
     public void shouldDeserializeStringFieldIfRequiredRoleIsCoveredByUser() throws IOException {
         // given
         givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1234L, Role.FINANCIAL_CONTACT);
+        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
             ImmutablePair.of("restrictedField", "update value of restricted field")));
 
         // when
@@ -148,9 +210,10 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     public void shouldDeserializeUnchangedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1234L, Role.ANY_CUSTOMER_USER);
+        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
             ImmutablePair.of("restrictedField", "initial value of restricted field")));
 
         // when
@@ -164,8 +227,11 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     public void shouldNotDeserializeUpatedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1L, Role.ANY_CUSTOMER_USER);
-        givenJSonTree(asJSon(ImmutablePair.of("restrictedField", "updated value of restricted field")));
+        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+        givenJSonTree(asJSon(
+            ImmutablePair.of("customerId", 888L),
+            ImmutablePair.of("restrictedField", "updated value of restricted field"))
+        );
 
         // when
         Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
@@ -181,8 +247,11 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     public void shouldInitializeFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1L, Role.ANY_CUSTOMER_USER);
-        givenJSonTree(asJSon(ImmutablePair.of("restrictedField", "another value of restricted field")));
+        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+        givenJSonTree(asJSon(
+            ImmutablePair.of("customerId", 888L),
+            ImmutablePair.of("restrictedField", "another value of restricted field"))
+        );
 
         // when
         Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
@@ -199,7 +268,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         // given
         givenAuthenticatedUser();
         givenUserHavingRole(GivenDto.class, 9999L, Role.CONTRACTUAL_CONTACT);
-        givenJSonTree(asJSon(ImmutablePair.of("parentId", 1234L)));
+        givenJSonTree(asJSon(
+            ImmutablePair.of("parentId", 1234L))
+        );
 
         // when
         Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenChildDto.class).deserialize());
@@ -216,7 +287,9 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         // given
         givenAuthenticatedUser();
         givenUserHavingRole(GivenDto.class, 1234L, Role.CONTRACTUAL_CONTACT);
-        givenJSonTree(asJSon(ImmutablePair.of("parentId", 1234L)));
+        givenJSonTree(asJSon(
+            ImmutablePair.of("parentId", 1234L))
+        );
 
         // when
         final GivenChildDto actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenChildDto.class).deserialize();
@@ -229,9 +302,10 @@ public class JSonDeserializerWithAccessFilterUnitTest {
     public void shouldNotUpdateFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1234L, Role.ANY_CUSTOMER_USER);
+        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
             ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
@@ -256,60 +330,29 @@ public class JSonDeserializerWithAccessFilterUnitTest {
         assertThat(exception).isInstanceOf(AssertionError.class).hasMessage("multiple @SelfId detected in GivenDtoWithMultipleSelfId");
     }
 
+    @Test
+    public void shouldDetectUnknownFieldType() throws IOException {
+        // given
+        givenAuthenticatedUser();
+        givenUserHavingRole(Role.ADMIN);
+        givenJSonTree(asJSon(ImmutablePair.of("unknown", new Arbitrary())));
+
+        // when
+        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, GivenDtoWithUnknownFieldType.class).deserialize());
+
+        // then
+        assertThat(exception).isInstanceOf(NotImplementedException.class)
+            .hasMessageStartingWith("property type not yet implemented: ")
+            .hasMessageContaining("Arbitrary")
+            .hasMessageContaining("GivenDtoWithUnknownFieldType.unknown");
+    }
+
     // --- only fixture code below ---
 
     private void givenJSonTree(String givenJSon) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
         given(codec.readTree(jsonParser)).willReturn(new ObjectMapper().readTree(givenJSon));
     }
 
-    abstract class GivenService implements IdToDtoResolver<GivenDto> {
-    }
-
-    public static class GivenDto extends FluentBuilder<GivenDto> {
-
-        @SelfId(resolver = GivenService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
-        Long id;
-
-        @AccessFor(init = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT}, update = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
-        String restrictedField;
-
-        @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY)
-        String openStringField;
-
-        @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY)
-        Integer openIntegerField;
-
-        @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY)
-        Long openLongField;
-    }
-
-    abstract class GivenChildService implements IdToDtoResolver<GivenChildDto> {
-    }
-
-    public static class GivenChildDto extends FluentBuilder<GivenChildDto> {
-
-        @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
-        Long id;
-
-        @AccessFor(init = Role.CONTRACTUAL_CONTACT, update = Role.CONTRACTUAL_CONTACT, read = Role.ACTUAL_CUSTOMER_USER)
-        @ParentId(resolver = GivenService.class)
-        Long parentId;
-
-        @AccessFor(init = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT}, update = {Role.TECHNICAL_CONTACT, Role.FINANCIAL_CONTACT})
-        String restrictedField;
-    }
-
-    public static class GivenDtoWithMultipleSelfId {
-
-        @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
-        Long id;
-
-        @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
-        Long id2;
-
-    }
 }
