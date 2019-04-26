@@ -1,6 +1,10 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
+import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.accessfilter.*;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -12,28 +16,37 @@ import java.util.Objects;
 /**
  * A DTO for the Asset entity.
  */
-public class AssetDTO implements Serializable {
+public class AssetDTO implements Serializable, AccessMappings {
 
+    @SelfId(resolver = CustomerService.class)
+    @AccessFor(read = Role.ANY_CUSTOMER_USER)
     private Long id;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate valueDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private AssetAction action;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private BigDecimal amount;
 
     @Size(max = 160)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.ADMIN)
     private String remark;
 
-
+    @ParentId(resolver = CustomerService.class)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
+    @AccessFor(init=Role.ANYBODY, update=Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String membershipDisplayReference;
 
     public Long getId() {
@@ -133,5 +146,21 @@ public class AssetDTO implements Serializable {
             ", membership=" + getMembershipId() +
             ", membership='" + getMembershipDisplayReference() + "'" +
             "}";
+    }
+
+    @JsonComponent
+    public static class AssetJsonSerializer extends JsonSerializerWithAccessFilter<AssetDTO> {
+
+        public AssetJsonSerializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
+    }
+
+    @JsonComponent
+    public static class AssetJsonDeserializer extends JsonDeserializerWithAccessFilter<AssetDTO> {
+
+        public AssetJsonDeserializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
     }
 }
