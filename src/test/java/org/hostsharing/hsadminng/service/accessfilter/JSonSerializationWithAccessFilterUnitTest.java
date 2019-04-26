@@ -21,7 +21,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-public class JSonSerializerWithAccessFilterUnitTest {
+public class JSonSerializationWithAccessFilterUnitTest {
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -55,7 +55,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeStringField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeStringField("openStringField", givenDTO.openStringField);
@@ -64,7 +64,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeIntegerField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("openIntegerField", givenDTO.openIntegerField);
@@ -73,7 +73,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializePrimitiveIntField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("openPrimitiveIntField", givenDTO.openPrimitiveIntField);
@@ -82,7 +82,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeLongField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("openLongField", givenDTO.openLongField);
@@ -91,7 +91,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializePrimitiveLongField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("openPrimitiveLongField", givenDTO.openPrimitiveLongField);
@@ -100,7 +100,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeBooleanField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeBooleanField("openBooleanField", givenDTO.openBooleanField);
@@ -109,7 +109,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializePrimitiveBooleanField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeBooleanField("openPrimitiveBooleanField", givenDTO.openPrimitiveBooleanField);
@@ -118,7 +118,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeBigDecimalField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("openBigDecimalField", givenDTO.openBigDecimalField);
@@ -127,7 +127,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeLocalDateField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeStringField("openLocalDateField", givenDTO.openLocalDateFieldAsString);
@@ -136,7 +136,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
     @Test
     public void shouldSerializeEnumField() throws IOException {
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeStringField("openEnumField", givenDTO.openEnumFieldAsString);
@@ -150,7 +150,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
         MockSecurityContext.givenUserHavingRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
 
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeStringField("restrictedField", givenDTO.restrictedField);
@@ -164,7 +164,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
         MockSecurityContext.givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ANY_CUSTOMER_USER);
 
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator, never()).writeStringField("restrictedField", givenDTO.restrictedField);
@@ -183,7 +183,7 @@ public class JSonSerializerWithAccessFilterUnitTest {
         final GivenDtoWithUnimplementedFieldType givenDtoWithUnimplementedFieldType = new GivenDtoWithUnimplementedFieldType();
 
         // when
-        final Throwable actual = catchThrowable(() -> new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDtoWithUnimplementedFieldType).serialize());
+        final Throwable actual = catchThrowable(() -> new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDtoWithUnimplementedFieldType).serialize());
 
         // then
         assertThat(actual).isInstanceOf(NotImplementedException.class);

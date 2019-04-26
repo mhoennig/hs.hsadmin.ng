@@ -156,7 +156,8 @@ def jhipsterGeneratedClassesWithLowCoverage = [
 
 def specialExceptions = [
     // lots of unreachable code due to error handling / verifications
-    'org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilter'
+    'org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilter',
+    'org.hostsharing.hsadminng.service.util.ReflectionUtil'
 ]
 
 jacocoTestCoverageVerification {

@@ -12,14 +12,20 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class JSonSerializerWithAccessFilter<T> extends JSonAccessFilter<T> {
+/** Actual implementation of JSON serialization, where {link JsonSerializerWithAccessFilter}
+ * is a stateless bean, {@link JSonSerializationWithAccessFilter} exists only during the actual
+ * serialization and contains a serialization state.
+ *
+ * @param <T> DTO class to serialize
+ */
+public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
     private final JsonGenerator jsonGenerator;
     private final SerializerProvider serializerProvider;
 
-    public JSonSerializerWithAccessFilter(final ApplicationContext ctx,
-                                          final JsonGenerator jsonGenerator,
-                                          final SerializerProvider serializerProvider,
-                                          final T dto) {
+    public JSonSerializationWithAccessFilter(final ApplicationContext ctx,
+                                             final JsonGenerator jsonGenerator,
+                                             final SerializerProvider serializerProvider,
+                                             final T dto) {
         super(ctx, dto);
         this.jsonGenerator = jsonGenerator;
         this.serializerProvider = serializerProvider;

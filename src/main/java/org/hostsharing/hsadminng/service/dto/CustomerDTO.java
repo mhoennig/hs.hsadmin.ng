@@ -1,11 +1,5 @@
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.CustomerService;
@@ -14,15 +8,13 @@ import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.*;
-import java.io.IOException;
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
 
 /**
  * A DTO for the Customer entity.
  */
-public class CustomerDTO extends FluentBuilder<CustomerDTO> implements Serializable {
+public class CustomerDTO extends FluentBuilder<CustomerDTO> implements AccessMappings {
 
     @SelfId(resolver = CustomerService.class)
     @AccessFor(read = Role.ANY_CUSTOMER_USER)
@@ -265,36 +257,18 @@ public class CustomerDTO extends FluentBuilder<CustomerDTO> implements Serializa
     }
 
     @JsonComponent
-    public static class CustomerJsonSerializer extends JsonSerializer<CustomerDTO> {
-
-        private final ApplicationContext ctx;
+    public static class CustomerJsonSerializer extends JsonSerializerWithAccessFilter<CustomerDTO> {
 
         public CustomerJsonSerializer(final ApplicationContext ctx) {
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void serialize(final CustomerDTO customerDTO, final JsonGenerator jsonGenerator,
-                              final SerializerProvider serializerProvider) throws IOException {
-
-           new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, serializerProvider, customerDTO).serialize();
+            super(ctx);
         }
     }
 
     @JsonComponent
-    public static class CustomerJsonDeserializer extends JsonDeserializer<CustomerDTO> {
-
-        private final ApplicationContext ctx;
+    public static class CustomerJsonDeserializer extends JsonDeserializerWithAccessFilter<CustomerDTO> {
 
         public CustomerJsonDeserializer(final ApplicationContext ctx) {
-            this.ctx = ctx;
-        }
-
-        @Override
-        public CustomerDTO deserialize(final JsonParser jsonParser,
-                                       final DeserializationContext deserializationContext) {
-
-            return new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, deserializationContext, CustomerDTO.class).deserialize();
+            super(ctx);
         }
     }
 }

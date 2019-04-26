@@ -18,12 +18,18 @@ import java.util.Set;
 
 import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
-public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
+/** Actual implementation of JSON deserialization, where {link JSonDeserializerWithAccessFilter}
+ * is a stateless bean, {@link JSonDeserializationWithAccessFilter} exists only during the actual
+ * deserialization and contains a deserialization state.
+ *
+ * @param <T> DTO class to serialize
+ */
+public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> {
 
     private final TreeNode treeNode;
     private final Set<Field> writtenFields = new HashSet<>();
 
-    public JSonDeserializerWithAccessFilter(final ApplicationContext ctx, final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
+    public JSonDeserializationWithAccessFilter(final ApplicationContext ctx, final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
         super(ctx, unchecked(dtoClass::newInstance));
         this.treeNode = unchecked(() -> jsonParser.getCodec().readTree(jsonParser));
     }
@@ -113,7 +119,7 @@ public class JSonDeserializerWithAccessFilter<T> extends JSonAccessFilter<T> {
         } else if (Boolean.class.isAssignableFrom(field.getType()) || boolean.class.isAssignableFrom(field.getType())) {
             ReflectionUtil.setValue(dto, field, Boolean.valueOf(value.toString()));
         } else if (field.getType().isEnum()) {
-            ReflectionUtil.setValue(dto, field, Enum.valueOf((Class<Enum>) field.getType(), value.toString()));
+            ReflectionUtil.setValue(dto, field, ReflectionUtil.asEnumValue(field.getType(), value));
         } else if (LocalDate.class.isAssignableFrom(field.getType())) {
             ReflectionUtil.setValue(dto, field, LocalDate.parse(value.toString()));
         } else {
