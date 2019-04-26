@@ -2,14 +2,12 @@ package org.hostsharing.hsadminng.service.util;
 
 import org.junit.Test;
 
-import java.awt.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
 
-public class ReflectionUtilTest {
+public class ReflectionUtilUnitTest {
 
     @Test
     public void setValue() {
@@ -54,7 +52,7 @@ public class ReflectionUtilTest {
     @Test
     public void throwsExceptionIfGenericInterfaceNotImplemented() {
         final Throwable actual = catchThrowable(() -> ReflectionUtil.determineGenericInterfaceParameter(SomeClass.class, UnusedGenericInterface.class, 1));
-        assertThat(actual).isInstanceOf(AssertionError.class).hasMessageContaining("GenericClass expected to implement UnusedGenericInterface<...>");
+        assertThat(actual).isInstanceOf(AssertionError.class).hasMessageContaining("SomeClass expected to implement UnusedGenericInterface<...>");
     }
 
     @Test
@@ -88,7 +86,7 @@ public class ReflectionUtilTest {
 
     @Test
     public void asEnumValue() {
-        assertThat(ReflectionUtil.asEnumValue(Color.class, "RED")).isEqualTo(Color.RED);
+        assertThat(ReflectionUtil.asEnumValue(SomeEnum.class, "GREEN")).isEqualTo(SomeEnum.GREEN);
     }
 
     // --- only test fixture below ---
@@ -111,19 +109,25 @@ public class ReflectionUtilTest {
     private static class SomeClass extends SuperClass {
     }
 
-    private static class SuperClass extends GenericClass<String, Boolean> implements GenericInterface<Integer, Long> {
+    private static class SuperClass extends GenericClass<String, Boolean> implements IntermediateInterfaces<Integer, Long> {
     }
 
-
-    private static class UnusedSuperClass extends GenericClass<String, Boolean> implements GenericInterface<Integer, Long> {
+    private static class UnusedSuperClass extends GenericClass<String, Boolean> implements IntermediateInterfaces<Integer, Long> {
     }
 
     private static class GenericClass<T, V> {
+    }
+
+    private interface IntermediateInterfaces<T, V> extends GenericInterface<Integer, Long> {
     }
 
     private interface GenericInterface<T, V> {
     }
 
     private interface UnusedGenericInterface<T, V> {
+    }
+
+    enum SomeEnum {
+        RED, BLUE, GREEN
     }
 }
