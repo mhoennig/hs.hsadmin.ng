@@ -19,7 +19,6 @@
             <th jhiSortBy="cancellationDocumentDate"><span jhiTranslate="hsadminNgApp.membership.cancellationDocumentDate">Cancellation Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="memberFromDate"><span jhiTranslate="hsadminNgApp.membership.memberFromDate">Member From Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="memberUntilDate"><span jhiTranslate="hsadminNgApp.membership.memberUntilDate">Member Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.membership.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="customerPrefix"><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
@@ -28,13 +27,12 @@
             <tr *ngFor="let membership of memberships ;trackBy: trackId">
                 <td><a [routerLink]="['/membership', membership.id, 'view' ]">{{membership.id}}</a></td>
                 <td>{{membership.admissionDocumentDate | date:'mediumDate'}}</td>
-                <td>{{membership.cancellationDocumentDate | date:'mediumDate'}}</td>
+                <td>{{membership.cancellationDocumentDate | date:'mediumDsate'}}</td>
                 <td>{{membership.memberFromDate | date:'mediumDate'}}</td>
                 <td>{{membership.memberUntilDate | date:'mediumDate'}}</td>
-                <td>{{membership.remark}}</td>
                 <td>
                     <div *ngIf="membership.customerId">
-                        <a [routerLink]="['../customer', membership.customerId , 'view' ]" >{{membership.customerPrefix}}</a>
+                        <a [routerLink]="['../customer', membership.customerId , 'view' ]" >{{membership.customerDisplayLabel}}</a>
                     </div>
                 </td>
                 <td class="text-right">

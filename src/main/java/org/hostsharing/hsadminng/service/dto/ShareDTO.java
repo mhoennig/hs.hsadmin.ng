@@ -48,7 +48,7 @@ public class ShareDTO implements Serializable {
     private Long membershipId;
 
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
-    private String membershipDisplayReference;
+    private String membershipDisplayLabel;
 
     public Long getId() {
         return id;
@@ -106,12 +106,12 @@ public class ShareDTO implements Serializable {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipDisplayReference() {
-        return membershipDisplayReference;
+    public String getMembershipDisplayLabel() {
+        return membershipDisplayLabel;
     }
 
-    public void setMembershipDisplayReference(String membershipDisplayReference) {
-        this.membershipDisplayReference = membershipDisplayReference;
+    public void setMembershipDisplayLabel(String membershipDisplayLabel) {
+        this.membershipDisplayLabel = membershipDisplayLabel;
     }
 
     @Override
@@ -145,7 +145,7 @@ public class ShareDTO implements Serializable {
             ", quantity=" + getQuantity() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDisplayReference() + "'" +
+            ", membership='" + getMembershipDisplayLabel() + "'" +
             "}";
     }
 }

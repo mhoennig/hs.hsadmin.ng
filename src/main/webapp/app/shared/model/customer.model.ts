@@ -32,6 +32,7 @@ export interface ICustomer {
     remark?: string;
     memberships?: IMembership[];
     sepamandates?: ISepaMandate[];
+    displayLabel?: string;
 }
 
 export class Customer implements ICustomer {
@@ -53,6 +54,7 @@ export class Customer implements ICustomer {
         public billingAddress?: string,
         public remark?: string,
         public memberships?: IMembership[],
-        public sepamandates?: ISepaMandate[]
+        public sepamandates?: ISepaMandate[],
+        public displayLabel?: string
     ) {}
 }
