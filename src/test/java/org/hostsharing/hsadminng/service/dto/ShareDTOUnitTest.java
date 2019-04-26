@@ -9,8 +9,8 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializerWithAccessFilter;
-import org.hostsharing.hsadminng.service.accessfilter.JSonSerializerWithAccessFilter;
+import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializationWithAccessFilter;
+import org.hostsharing.hsadminng.service.accessfilter.JSonSerializationWithAccessFilter;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Before;
@@ -89,7 +89,7 @@ public class ShareDTOUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("membershipId", SOME_MEMBERSHIP_ID)));
 
         // when
-        final ShareDTO actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, ShareDTO.class).deserialize();
+        final ShareDTO actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, ShareDTO.class).deserialize();
 
         // then
         assertThat(actualDto.getMembershipId()).isEqualTo(SOME_MEMBERSHIP_ID);
@@ -102,7 +102,7 @@ public class ShareDTOUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("membershipId", ShareDTOUnitTest.SOME_MEMBERSHIP_ID)));
 
         // when
-        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, ShareDTO.class).deserialize());
+        Throwable exception = catchThrowable(() -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, ShareDTO.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -118,7 +118,7 @@ public class ShareDTOUnitTest {
         final ShareDTO givenDTO = createShareDto();
 
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("id", givenDTO.getId());
@@ -133,7 +133,7 @@ public class ShareDTOUnitTest {
         final ShareDTO givenDTO = createShareDto();
 
         // when
-        new JSonSerializerWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
+        new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDTO).serialize();
 
         // then
         verify(jsonGenerator).writeNumberField("id", givenDTO.getId());

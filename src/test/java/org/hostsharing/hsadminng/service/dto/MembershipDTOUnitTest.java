@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializerWithAccessFilter;
+import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializationWithAccessFilter;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Before;
@@ -74,7 +74,7 @@ public class MembershipDTOUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
 
         // when
-        final MembershipDTO actualDto = new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, MembershipDTO.class).deserialize();
+        final MembershipDTO actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, MembershipDTO.class).deserialize();
 
         // then
         assertThat(actualDto.getCustomerId()).isEqualTo(1234L);
@@ -87,7 +87,7 @@ public class MembershipDTOUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
 
         // when
-        Throwable exception = catchThrowable(() -> new JSonDeserializerWithAccessFilter<>(ctx, jsonParser, null, MembershipDTO.class).deserialize());
+        Throwable exception = catchThrowable(() -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, MembershipDTO.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {

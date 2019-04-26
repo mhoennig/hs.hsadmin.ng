@@ -10,8 +10,6 @@ import org.springframework.context.ApplicationContext;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 
 import static com.google.common.base.Verify.verify;
 
@@ -67,26 +65,14 @@ abstract class JSonAccessFilter<T> {
 
         final ParentId parentIdAnnot = parentIdField.getAnnotation(ParentId.class);
         final Class<? extends IdToDtoResolver> parentDtoLoader = parentIdAnnot.resolver();
-        final Class<?> parentDtoClass = getGenericClassParameter(parentDtoLoader);
-        final Long parentId = (Long) ReflectionUtil.getValue(dto, parentIdField);
+        final Class<IdToDtoResolver> rawType = IdToDtoResolver.class;
+
+        final Class<?> parentDtoClass = ReflectionUtil.<T>determineGenericInterfaceParameter(parentDtoLoader, rawType, 0);
+        final Long parentId = ReflectionUtil.getValue(dto, parentIdField);
         final Role roleOnParent = SecurityUtils.getLoginUserRoleFor(parentDtoClass, parentId);
 
         final Object parentEntity = loadDto(parentDtoLoader, parentId);
         return Role.broadest(baseRole, getLoginUserRoleOnAncestorOfDtoClassIfHigher(roleOnParent, parentEntity));
-    }
-
-    @SuppressWarnings("unchecked")
-    private Class<T> getGenericClassParameter(Class<? extends IdToDtoResolver> parentDtoLoader) {
-        for (Type genericInterface : parentDtoLoader.getGenericInterfaces()) {
-            if (genericInterface instanceof ParameterizedType) {
-                final ParameterizedType parameterizedType = (ParameterizedType) genericInterface;
-                if (parameterizedType.getRawType()== IdToDtoResolver.class) {
-                    return (Class<T>) parameterizedType.getActualTypeArguments()[0];
-                }
-            }
-
-        }
-        throw new AssertionError(parentDtoLoader.getSimpleName() + " expected to implement " + IdToDtoResolver.class.getSimpleName() + "<...DTO>");
     }
 
     @SuppressWarnings("unchecked")
