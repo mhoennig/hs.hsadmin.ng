@@ -1,6 +1,7 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
+import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.springframework.boot.jackson.JsonComponent;
@@ -18,7 +19,7 @@ import java.util.Objects;
  */
 public class AssetDTO implements Serializable, AccessMappings {
 
-    @SelfId(resolver = CustomerService.class)
+    @SelfId(resolver = AssetService.class)
     @AccessFor(read = Role.ANY_CUSTOMER_USER)
     private Long id;
 
@@ -46,7 +47,7 @@ public class AssetDTO implements Serializable, AccessMappings {
     @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
-    @AccessFor(init=Role.ANYBODY, update=Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String membershipDisplayReference;
 
     public Long getId() {

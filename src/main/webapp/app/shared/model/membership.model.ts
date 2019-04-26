@@ -13,6 +13,7 @@ export interface IMembership {
     assets?: IAsset[];
     customerPrefix?: string;
     customerId?: number;
+    membershipDisplayReference?: string;
 }
 
 export class Membership implements IMembership {
@@ -26,6 +27,7 @@ export class Membership implements IMembership {
         public shares?: IShare[],
         public assets?: IAsset[],
         public customerPrefix?: string,
-        public customerId?: number
+        public customerId?: number,
+        public membershipDisplayReference?: string
     ) {}
 }

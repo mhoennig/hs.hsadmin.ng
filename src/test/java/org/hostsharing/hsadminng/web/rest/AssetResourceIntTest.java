@@ -27,6 +27,7 @@ import org.springframework.validation.Validator;
 
 import javax.persistence.EntityManager;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -168,17 +169,38 @@ public class AssetResourceIntTest {
         assertThat(testAsset.getDocumentDate()).isEqualTo(DEFAULT_DOCUMENT_DATE);
         assertThat(testAsset.getValueDate()).isEqualTo(DEFAULT_VALUE_DATE);
         assertThat(testAsset.getAction()).isEqualTo(DEFAULT_ACTION);
-        assertThat(testAsset.getAmount()).isEqualTo(DEFAULT_AMOUNT.setScale(2));
+        assertThat(testAsset.getAmount()).isEqualTo(DEFAULT_AMOUNT.setScale(2, RoundingMode.HALF_DOWN));
         assertThat(testAsset.getRemark()).isEqualTo(DEFAULT_REMARK);
     }
 
     @Test
     @Transactional
-    public void createAssetWithExistingId() throws Exception {
+    public void createAssetWithIdForNonExistingEntity() throws Exception {
         int databaseSizeBeforeCreate = assetRepository.findAll().size();
 
-        // Create the Asset with an existing ID
+        // Create the Asset with an ID
         asset.setId(1L);
+        AssetDTO assetDTO = assetMapper.toDto(asset);
+
+        // An entity with an existing ID cannot be created, so this API call must fail
+        restAssetMockMvc.perform(post("/api/assets")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+            .andExpect(status().isBadRequest());
+
+        // Validate the Asset in the database
+        List<Asset> assetList = assetRepository.findAll();
+        assertThat(assetList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createAssetWithExistingExistingEntity() throws Exception {
+        // Initialize the database
+        assetRepository.saveAndFlush(asset);
+        int databaseSizeBeforeCreate = assetRepository.findAll().size();
+
+        // Create the Asset with the ID of an existing ID
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
         // An entity with an existing ID cannot be created, so this API call must fail

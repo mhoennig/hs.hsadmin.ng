@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class AssetService {
+public class AssetService implements IdToDtoResolver<AssetDTO> {
 
     private final Logger log = LoggerFactory.getLogger(AssetService.class);
 
