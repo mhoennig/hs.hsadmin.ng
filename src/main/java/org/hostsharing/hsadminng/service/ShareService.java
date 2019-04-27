@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.Optional;
 
 /**
@@ -23,13 +24,16 @@ public class ShareService implements IdToDtoResolver<ShareDTO> {
 
     private final Logger log = LoggerFactory.getLogger(ShareService.class);
 
+    private final EntityManager em;
+
     private final ShareRepository shareRepository;
 
     private final ShareMapper shareMapper;
 
     private final ShareValidator shareValidator;
 
-    public ShareService(ShareRepository shareRepository, ShareMapper shareMapper, ShareValidator shareValidator) {
+    public ShareService(final EntityManager em, final ShareRepository shareRepository, final ShareMapper shareMapper, final ShareValidator shareValidator) {
+        this.em = em;
         this.shareRepository = shareRepository;
         this.shareMapper = shareMapper;
         this.shareValidator = shareValidator;
@@ -48,6 +52,8 @@ public class ShareService implements IdToDtoResolver<ShareDTO> {
 
         Share share = shareMapper.toEntity(shareDTO);
         share = shareRepository.save(share);
+        em.flush();
+        em.refresh(share);
         return shareMapper.toDto(share);
     }
 

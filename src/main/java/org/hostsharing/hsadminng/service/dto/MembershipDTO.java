@@ -2,10 +2,9 @@ package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
-import org.hostsharing.hsadminng.service.accessfilter.ParentId;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.accessfilter.SelfId;
+import org.hostsharing.hsadminng.service.accessfilter.*;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -16,7 +15,7 @@ import java.util.Objects;
 /**
  * A DTO for the Membership entity.
  */
-public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Serializable {
+public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Serializable, AccessMappings {
 
     @SelfId(resolver = MembershipService.class)
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
@@ -26,18 +25,18 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate admissionDocumentDate;
 
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate cancellationDocumentDate;
 
     @NotNull
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate memberFromDate;
 
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate memberUntilDate;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
@@ -46,6 +45,12 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
 
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
+
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
+    private String displayLabel;
+
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
+    private String customerDisplayLabel;
 
     public Long getId() {
         return id;
@@ -111,6 +116,22 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
         this.customerPrefix = customerPrefix;
     }
 
+    public String getDisplayLabel() {
+        return displayLabel;
+    }
+
+    public void setDisplayLabel(final String displayLabel) {
+        this.displayLabel = displayLabel;
+    }
+
+    public String getCustomerDisplayLabel() {
+        return customerDisplayLabel;
+    }
+
+    public void setCustomerDisplayLabel(final String customerDisplayLabel) {
+        this.customerDisplayLabel = customerDisplayLabel;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -144,5 +165,21 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
             ", customer=" + getCustomerId() +
             ", customer='" + getCustomerPrefix() + "'" +
             "}";
+    }
+
+    @JsonComponent
+    public static class MembershipJsonSerializer extends JsonSerializerWithAccessFilter<MembershipDTO> {
+
+        public MembershipJsonSerializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
+    }
+
+    @JsonComponent
+    public static class MembershipJsonDeserializer extends JsonDeserializerWithAccessFilter<MembershipDTO> {
+
+        public MembershipJsonDeserializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
     }
 }

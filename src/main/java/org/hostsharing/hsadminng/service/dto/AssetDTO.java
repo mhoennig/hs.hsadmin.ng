@@ -1,6 +1,11 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
+import org.hostsharing.hsadminng.service.AssetService;
+import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.accessfilter.*;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -12,29 +17,40 @@ import java.util.Objects;
 /**
  * A DTO for the Asset entity.
  */
-public class AssetDTO implements Serializable {
+public class AssetDTO implements Serializable, AccessMappings {
 
+    @SelfId(resolver = AssetService.class)
+    @AccessFor(read = Role.ANY_CUSTOMER_USER)
     private Long id;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate valueDate;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private AssetAction action;
 
     @NotNull
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private BigDecimal amount;
 
     @Size(max = 160)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-
+    @ParentId(resolver = MembershipService.class)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
-    private String membershipDisplayReference;
+    // TODO: these init/update rights actually mean "ignore", we might want to express this in a better way
+    //  background: there is no converter for any display label in DTOs to entity field values anyway
+    @AccessFor(init=Role.ANYBODY, update = Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    private String membershipDisplayLabel;
 
     public Long getId() {
         return id;
@@ -92,12 +108,12 @@ public class AssetDTO implements Serializable {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipDisplayReference() {
-        return membershipDisplayReference;
+    public String getMembershipDisplayLabel() {
+        return membershipDisplayLabel;
     }
 
-    public void setMembershipDisplayReference(String membershipDisplayReference) {
-        this.membershipDisplayReference = membershipDisplayReference;
+    public void setMembershipDisplayLabel(String membershipDisplayLabel) {
+        this.membershipDisplayLabel = membershipDisplayLabel;
     }
 
     @Override
@@ -131,7 +147,23 @@ public class AssetDTO implements Serializable {
             ", amount=" + getAmount() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDisplayReference() + "'" +
+            ", membership='" + getMembershipDisplayLabel() + "'" +
             "}";
+    }
+
+    @JsonComponent
+    public static class AssetJsonSerializer extends JsonSerializerWithAccessFilter<AssetDTO> {
+
+        public AssetJsonSerializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
+    }
+
+    @JsonComponent
+    public static class AssetJsonDeserializer extends JsonDeserializerWithAccessFilter<AssetDTO> {
+
+        public AssetJsonDeserializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
     }
 }

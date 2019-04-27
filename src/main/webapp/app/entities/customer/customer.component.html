@@ -18,18 +18,7 @@
             <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.customer.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="prefix"><span jhiTranslate="hsadminNgApp.customer.prefix">Prefix</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="kind"><span jhiTranslate="hsadminNgApp.customer.kind">Kind</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="birthDate"><span jhiTranslate="hsadminNgApp.customer.birthDate">Birth Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="birthPlace"><span jhiTranslate="hsadminNgApp.customer.birthPlace">Birth Place</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="registrationCourt"><span jhiTranslate="hsadminNgApp.customer.registrationCourt">Registration Court</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="registrationNumber"><span jhiTranslate="hsadminNgApp.customer.registrationNumber">Registration Number</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="vatRegion"><span jhiTranslate="hsadminNgApp.customer.vatRegion">Vat Region</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="vatNumber"><span jhiTranslate="hsadminNgApp.customer.vatNumber">Vat Number</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="contractualSalutation"><span jhiTranslate="hsadminNgApp.customer.contractualSalutation">Contractual Salutation</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="contractualAddress"><span jhiTranslate="hsadminNgApp.customer.contractualAddress">Contractual Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="billingSalutation"><span jhiTranslate="hsadminNgApp.customer.billingSalutation">Billing Salutation</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="billingAddress"><span jhiTranslate="hsadminNgApp.customer.billingAddress">Billing Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.customer.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="kind"><span jhiTranslate="hsadminNgApp.customer.kind">Kind</span> <fa-icon [icon]="'sort'"></fa-icon></thn></th>
             <th></th>
             </tr>
             </thead>
@@ -40,17 +29,6 @@
                 <td>{{customer.prefix}}</td>
                 <td>{{customer.name}}</td>
                 <td jhiTranslate="{{'hsadminNgApp.CustomerKind.' + customer.kind}}">{{customer.kind}}</td>
-                <td>{{customer.birthDate | date:'mediumDate'}}</td>
-                <td>{{customer.birthPlace}}</td>
-                <td>{{customer.registrationCourt}}</td>
-                <td>{{customer.registrationNumber}}</td>
-                <td jhiTranslate="{{'hsadminNgApp.VatRegion.' + customer.vatRegion}}">{{customer.vatRegion}}</td>
-                <td>{{customer.vatNumber}}</td>
-                <td>{{customer.contractualSalutation}}</td>
-                <td>{{customer.contractualAddress}}</td>
-                <td>{{customer.billingSalutation}}</td>
-                <td>{{customer.billingAddress}}</td>
-                <td>{{customer.remark}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

@@ -22,7 +22,7 @@ public class Asset implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String ENTITY_NAME = "asset";
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
@@ -57,6 +57,11 @@ public class Asset implements Serializable {
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
+    }
+
+    public Asset id(Long id) {
+        this.id = id;
+        return this;
     }
 
     public void setId(Long id) {

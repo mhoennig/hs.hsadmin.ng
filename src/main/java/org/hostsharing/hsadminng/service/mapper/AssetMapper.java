@@ -2,8 +2,10 @@ package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 /**
  * Mapper for the entity Asset and its DTO AssetDTO.
@@ -12,8 +14,13 @@ import org.mapstruct.Mapping;
 public interface AssetMapper extends EntityMapper<AssetDTO, Asset> {
 
     @Mapping(source = "membership.id", target = "membershipId")
-    @Mapping(source = "membership.admissionDocumentDate", target = "membershipDisplayReference")
+    @Mapping(target = "membershipDisplayLabel", ignore = true)
     AssetDTO toDto(Asset asset);
+
+    @AfterMapping
+    default void setMembershipDisplayLabel(final @MappingTarget AssetDTO dto, final Asset entity) {
+        dto.setMembershipDisplayLabel(MembershipMapper.displayLabel(entity.getMembership()));
+    }
 
     @Mapping(source = "membershipId", target = "membership")
     Asset toEntity(AssetDTO assetDTO);

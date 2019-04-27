@@ -8,6 +8,8 @@ import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -97,6 +99,9 @@ public class MembershipResourceIntTest {
 
     @Before
     public void setup() {
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+
         MockitoAnnotations.initMocks(this);
         final MembershipResource membershipResource = new MembershipResource(membershipService, membershipQueryService);
         this.restMembershipMockMvc = MockMvcBuilders.standaloneSetup(membershipResource)
@@ -177,10 +182,32 @@ public class MembershipResourceIntTest {
 
     @Test
     @Transactional
-    public void createMembershipWithExistingId() throws Exception {
+    public void createCustomerWithExistingIdIsRejected() throws Exception {
+        // Initialize the database
+        final long existingCustomerId = membershipRepository.saveAndFlush(membership).getId();
         int databaseSizeBeforeCreate = membershipRepository.findAll().size();
 
-        // Create the Membership with an existing ID
+        // Create the Customer with an existing ID
+        membership.setId(existingCustomerId);
+        MembershipDTO membershipDTO = membershipMapper.toDto(membership);
+
+        // An entity with an existing ID cannot be created, so this API call must fail
+        restMembershipMockMvc.perform(post("/api/memberships")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+            .andExpect(status().isBadRequest());
+
+        // Validate the Customer in the database
+        List<Membership> membershipList = membershipRepository.findAll();
+        assertThat(membershipList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createCustomerWithNonExistingIdIsRejected() throws Exception {
+        int databaseSizeBeforeCreate = membershipRepository.findAll().size();
+
+        // Create the Membership with an ID for which no entity exists
         membership.setId(1L);
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
 
@@ -248,7 +275,7 @@ public class MembershipResourceIntTest {
             .andExpect(jsonPath("$.[*].cancellationDocumentDate").value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
             .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
     }
 
     @Test
@@ -266,7 +293,7 @@ public class MembershipResourceIntTest {
             .andExpect(jsonPath("$.cancellationDocumentDate").value(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString()))
             .andExpect(jsonPath("$.memberFromDate").value(DEFAULT_MEMBER_FROM_DATE.toString()))
             .andExpect(jsonPath("$.memberUntilDate").value(DEFAULT_MEMBER_UNTIL_DATE.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
     }
 
     @Test
@@ -682,9 +709,7 @@ public class MembershipResourceIntTest {
         // Disconnect from session so that the updates on updatedMembership are not directly saved in db
         em.detach(updatedMembership);
         updatedMembership
-            .admissionDocumentDate(UPDATED_ADMISSION_DOCUMENT_DATE)
             .cancellationDocumentDate(UPDATED_CANCELLATION_DOCUMENT_DATE)
-            .memberFromDate(UPDATED_MEMBER_FROM_DATE)
             .memberUntilDate(UPDATED_MEMBER_UNTIL_DATE)
             .remark(UPDATED_REMARK);
         MembershipDTO membershipDTO = membershipMapper.toDto(updatedMembership);
@@ -698,9 +723,9 @@ public class MembershipResourceIntTest {
         List<Membership> membershipList = membershipRepository.findAll();
         assertThat(membershipList).hasSize(databaseSizeBeforeUpdate);
         Membership testMembership = membershipList.get(membershipList.size() - 1);
-        assertThat(testMembership.getAdmissionDocumentDate()).isEqualTo(UPDATED_ADMISSION_DOCUMENT_DATE);
+        assertThat(testMembership.getAdmissionDocumentDate()).isEqualTo(DEFAULT_ADMISSION_DOCUMENT_DATE);
         assertThat(testMembership.getCancellationDocumentDate()).isEqualTo(UPDATED_CANCELLATION_DOCUMENT_DATE);
-        assertThat(testMembership.getMemberFromDate()).isEqualTo(UPDATED_MEMBER_FROM_DATE);
+        assertThat(testMembership.getMemberFromDate()).isEqualTo(DEFAULT_MEMBER_FROM_DATE);
         assertThat(testMembership.getMemberUntilDate()).isEqualTo(UPDATED_MEMBER_UNTIL_DATE);
         assertThat(testMembership.getRemark()).isEqualTo(UPDATED_REMARK);
     }

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.Optional;
 
 /**
@@ -23,15 +24,19 @@ public class MembershipService implements IdToDtoResolver<MembershipDTO> {
 
     private final Logger log = LoggerFactory.getLogger(MembershipService.class);
 
+    private final EntityManager em;
+
     private final MembershipValidator membershipValidator;
 
     private final MembershipRepository membershipRepository;
 
     private final MembershipMapper membershipMapper;
 
-    public MembershipService(final MembershipValidator membershipValidator,
+    public MembershipService(final EntityManager em,
+                             final MembershipValidator membershipValidator,
                              final MembershipRepository membershipRepository,
                              final MembershipMapper membershipMapper) {
+        this.em = em;
         this.membershipValidator = membershipValidator;
         this.membershipRepository = membershipRepository;
         this.membershipMapper = membershipMapper;
@@ -50,6 +55,8 @@ public class MembershipService implements IdToDtoResolver<MembershipDTO> {
 
         Membership membership = membershipMapper.toEntity(membershipDTO);
         membership = membershipRepository.save(membership);
+        em.flush();
+        em.refresh(membership);
         return membershipMapper.toDto(membership);
     }
 

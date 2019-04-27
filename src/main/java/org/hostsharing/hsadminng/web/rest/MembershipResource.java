@@ -1,25 +1,24 @@
 package org.hostsharing.hsadminng.web.rest;
+
+import io.github.jhipster.web.util.ResponseUtil;
+import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
+import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.hostsharing.hsadminng.web.rest.util.HeaderUtil;
 import org.hostsharing.hsadminng.web.rest.util.PaginationUtil;
-import org.hostsharing.hsadminng.service.dto.MembershipDTO;
-import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
-import org.hostsharing.hsadminng.service.MembershipQueryService;
-import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -132,7 +131,7 @@ public class MembershipResource {
     @DeleteMapping("/memberships/{id}")
     public ResponseEntity<Void> deleteMembership(@PathVariable Long id) {
         log.debug("REST request to delete Membership : {}", id);
-        membershipService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        // TODO mhoennig: Rather completely remove the endpoint?
+        throw new BadRequestAlertException("Memberships can't be deleted", ENTITY_NAME, "membershipNotDeletable");
     }
 }

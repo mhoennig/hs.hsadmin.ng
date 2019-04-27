@@ -5,6 +5,7 @@
         "shareCancellationNegativeQuantity": "Share cancellations require a negative quantity",
         "shareTransactionImmutable": "Share transactions are immutable",
         "membershipNotDeletable": "Membership cannot be deleted, instead set 'untilDate'",
+        "customerNotDeletable": "Customer cannot be deleted explicitly'",
         "untilDateMustBeAfterSinceDate": "Membership until date must be after since date",
         "anotherUncancelledMembershipExists": "Only a single uncancelled membership allowed per customer",
         "initializationProhibited": "Initialization of the field prohibited",

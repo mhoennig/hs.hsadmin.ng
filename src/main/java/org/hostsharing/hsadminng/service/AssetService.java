@@ -4,6 +4,7 @@ import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.Optional;
 
 /**
@@ -18,16 +20,19 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class AssetService {
+public class AssetService implements IdToDtoResolver<AssetDTO> {
 
     private final Logger log = LoggerFactory.getLogger(AssetService.class);
+
+    private final EntityManager em;
 
     private final AssetRepository assetRepository;
 
     private final AssetMapper assetMapper;
     private final AssetValidator assetValidator;
 
-    public AssetService(AssetRepository assetRepository, AssetMapper assetMapper, AssetValidator assetValidator ) {
+    public AssetService(final EntityManager em, final AssetRepository assetRepository, final AssetMapper assetMapper, final AssetValidator assetValidator) {
+        this.em = em;
         this.assetRepository = assetRepository;
         this.assetMapper = assetMapper;
         this.assetValidator = assetValidator;
@@ -44,6 +49,8 @@ public class AssetService {
         assetValidator.validate(assetDTO);
         Asset asset = assetMapper.toEntity(assetDTO);
         asset = assetRepository.save(asset);
+        em.flush();
+        em.refresh(asset);
         return assetMapper.toDto(asset);
     }
 
@@ -81,6 +88,7 @@ public class AssetService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Asset : {}", id);
-        assetRepository.deleteById(id);
+
+        throw new BadRequestAlertException("Asset transactions are immutable", Asset.ENTITY_NAME, "assetTransactionImmutable");
     }
 }

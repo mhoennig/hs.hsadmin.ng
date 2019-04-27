@@ -131,7 +131,7 @@ public class CustomerResource {
     @DeleteMapping("/customers/{id}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
         log.debug("REST request to delete Customer : {}", id);
-        customerService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        // TODO mhoennig: Rather completely remove the endpoint?
+        throw new BadRequestAlertException("Customres can't be deleted", ENTITY_NAME, "customerNotDeletable");
     }
 }

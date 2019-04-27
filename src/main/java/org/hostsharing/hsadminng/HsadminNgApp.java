@@ -42,9 +42,6 @@ public class HsadminNgApp {
     @PostConstruct
     public void initApplication() {
 
-        // TODO: remove this hack once proper user roles are implemented
-        SecurityUtils.addUserRole(null, null, Role.HOSTMASTER);
-
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run " +
@@ -53,6 +50,14 @@ public class HsadminNgApp {
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
             log.error("You have misconfigured your application! It should not " +
                 "run with both the 'dev' and 'cloud' profiles at the same time.");
+        }
+
+        // TODO: remove this hack once proper user roles are implemented
+        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            // For some strange reasons, HsadminNgApp is created in locally running tests,
+            // but not on Jenkins, therefore the login user had no rights and many tests
+            // failed.
+            SecurityUtils.addUserRole(null, null, Role.HOSTMASTER);
         }
     }
 

@@ -7,6 +7,8 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.ShareQueryService;
 import org.hostsharing.hsadminng.service.ShareService;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -92,6 +94,9 @@ public class ShareResourceIntTest {
 
     @Before
     public void setup() {
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+
         MockitoAnnotations.initMocks(this);
         final ShareResource shareResource = new ShareResource(shareService, shareQueryService);
         this.restShareMockMvc = MockMvcBuilders.standaloneSetup(shareResource)
