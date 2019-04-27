@@ -54,8 +54,8 @@ public class AssetResourceIntTest {
     private static final AssetAction DEFAULT_ACTION = AssetAction.PAYMENT;
     private static final AssetAction UPDATED_ACTION = AssetAction.HANDOVER;
 
-    private static final BigDecimal DEFAULT_AMOUNT = new BigDecimal("1.00");
-    private static final BigDecimal UPDATED_AMOUNT = new BigDecimal("2.00");
+    private static final BigDecimal DEFAULT_AMOUNT = new BigDecimal(1);
+    private static final BigDecimal UPDATED_AMOUNT = new BigDecimal(2);
 
     private static final String DEFAULT_REMARK = "AAAAAAAAAA";
     private static final String UPDATED_REMARK = "BBBBBBBBBB";
@@ -283,7 +283,7 @@ public class AssetResourceIntTest {
             .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
             .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
             .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -301,7 +301,7 @@ public class AssetResourceIntTest {
             .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
             .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
             .andExpect(jsonPath("$.amount").value(DEFAULT_AMOUNT.intValue()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test

@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.Optional;
 
 /**
@@ -27,10 +26,8 @@ public class AssetService {
 
     private final AssetMapper assetMapper;
     private final AssetValidator assetValidator;
-    private final EntityManager em;
 
-    public AssetService(final EntityManager em, final AssetRepository assetRepository, final AssetMapper assetMapper, final AssetValidator assetValidator) {
-        this.em = em;
+    public AssetService(AssetRepository assetRepository, AssetMapper assetMapper, AssetValidator assetValidator ) {
         this.assetRepository = assetRepository;
         this.assetMapper = assetMapper;
         this.assetValidator = assetValidator;
@@ -47,8 +44,6 @@ public class AssetService {
         assetValidator.validate(assetDTO);
         Asset asset = assetMapper.toEntity(assetDTO);
         asset = assetRepository.save(asset);
-        em.flush();
-        em.refresh(asset);
         return assetMapper.toDto(asset);
     }
 

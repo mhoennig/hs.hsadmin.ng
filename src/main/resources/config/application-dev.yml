@@ -37,10 +37,7 @@ spring:
             indent-output: true
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        # H2 in memory:
         url: jdbc:h2:mem:hsadminng;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        # H2 in file:
-        # url: jdbc:h2:~/.hsadminng.h2db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
         username: hsadminNg
         password:
         hikari:
