@@ -1,6 +1,8 @@
 package org.hostsharing.hsadminng.security;
 
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +15,8 @@ import java.util.Optional;
  * Utility class for Spring Security.
  */
 public final class SecurityUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityUtils.class);
 
     private static List<UserRoleAssignment> userRoleAssignments = new ArrayList<>();
 
@@ -86,16 +90,18 @@ public final class SecurityUtils {
                     ? ura.role
                     : Role.ANYBODY).
             reduce(Role.ANYBODY, (r1, r2) -> r1.covers(r2) ? r1 : r2);
+        log.info("getLoginUserRoleFor({}, {}) returned {}", onDtoClass, onId, highestRole);
         return highestRole;
     }
 
     private static boolean matches(Class<?> onDtoClass, Long onId, UserRoleAssignment ura) {
-        final boolean matches =  (ura.onClass == null || onDtoClass == ura.onClass) && (ura.onId == null || ura.onId.equals(onId));
+        final boolean matches = (ura.onClass == null || onDtoClass == ura.onClass) && (ura.onId == null || ura.onId.equals(onId));
         return matches;
     }
 
     // TODO: depends on https://plan.hostsharing.net/project/hsadmin/us/67?milestone=34
     public static void addUserRole(final Class<?> onClass, final Long onId, final Role role) {
+        log.info("addUserRole({}, {}, {})", onClass, onId, role);
         userRoleAssignments.add(new UserRoleAssignment(onClass, onId, role));
 
     }
