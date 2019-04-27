@@ -8,6 +8,8 @@ import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -97,6 +99,9 @@ public class MembershipResourceIntTest {
 
     @Before
     public void setup() {
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+
         MockitoAnnotations.initMocks(this);
         final MembershipResource membershipResource = new MembershipResource(membershipService, membershipQueryService);
         this.restMembershipMockMvc = MockMvcBuilders.standaloneSetup(membershipResource)

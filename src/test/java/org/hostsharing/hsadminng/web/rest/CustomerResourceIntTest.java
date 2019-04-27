@@ -9,6 +9,7 @@ import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
@@ -136,6 +137,9 @@ public class CustomerResourceIntTest {
 
     @Before
     public void setup() {
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+
         MockitoAnnotations.initMocks(this);
 
         givenAuthenticatedUser();

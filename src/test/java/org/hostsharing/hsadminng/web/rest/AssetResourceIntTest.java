@@ -7,6 +7,8 @@ import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -94,6 +96,9 @@ public class AssetResourceIntTest {
 
     @Before
     public void setup() {
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+
         MockitoAnnotations.initMocks(this);
         final AssetResource assetResource = new AssetResource(assetService, assetQueryService);
         this.restAssetMockMvc = MockMvcBuilders.standaloneSetup(assetResource)
