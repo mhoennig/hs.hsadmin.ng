@@ -90,7 +90,7 @@ public final class SecurityUtils {
                     ? ura.role
                     : Role.ANYBODY).
             reduce(Role.ANYBODY, (r1, r2) -> r1.covers(r2) ? r1 : r2);
-        log.info("getLoginUserRoleFor({}, {}) returned {}", onDtoClass, onId, highestRole);
+        log.debug("getLoginUserRoleFor({}, {}) returned {}", onDtoClass, onId, highestRole);
         return highestRole;
     }
 
