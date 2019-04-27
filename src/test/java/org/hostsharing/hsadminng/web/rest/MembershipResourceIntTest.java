@@ -182,10 +182,32 @@ public class MembershipResourceIntTest {
 
     @Test
     @Transactional
-    public void createMembershipWithExistingId() throws Exception {
+    public void createCustomerWithExistingIdIsRejected() throws Exception {
+        // Initialize the database
+        final long existingCustomerId = membershipRepository.saveAndFlush(membership).getId();
         int databaseSizeBeforeCreate = membershipRepository.findAll().size();
 
-        // Create the Membership with an existing ID
+        // Create the Customer with an existing ID
+        membership.setId(existingCustomerId);
+        MembershipDTO membershipDTO = membershipMapper.toDto(membership);
+
+        // An entity with an existing ID cannot be created, so this API call must fail
+        restMembershipMockMvc.perform(post("/api/memberships")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+            .andExpect(status().isBadRequest());
+
+        // Validate the Customer in the database
+        List<Membership> membershipList = membershipRepository.findAll();
+        assertThat(membershipList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createCustomerWithNonExistingIdIsRejected() throws Exception {
+        int databaseSizeBeforeCreate = membershipRepository.findAll().size();
+
+        // Create the Membership with an ID for which no entity exists
         membership.setId(1L);
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
 

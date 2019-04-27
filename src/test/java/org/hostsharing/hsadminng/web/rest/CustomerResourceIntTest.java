@@ -265,7 +265,7 @@ public class CustomerResourceIntTest {
     public void createCustomerWithNonExistingIdIsRejected() throws Exception {
         int databaseSizeBeforeCreate = customerRepository.findAll().size();
 
-        // Create the Customer with an existing ID
+        // Create the Customer with an ID for which no entity exists
         customer.setId(1L);
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
@@ -434,20 +434,20 @@ public class CustomerResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(customer.getId().intValue()))
             .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE))
-            .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX.toString()))
-            .andExpect(jsonPath("$.name").value(DEFAULT_NAME.toString()))
+            .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX))
+            .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
             .andExpect(jsonPath("$.kind").value(DEFAULT_KIND.toString()))
             .andExpect(jsonPath("$.birthDate").value(DEFAULT_BIRTH_DATE.toString()))
-            .andExpect(jsonPath("$.birthPlace").value(DEFAULT_BIRTH_PLACE.toString()))
-            .andExpect(jsonPath("$.registrationCourt").value(DEFAULT_REGISTRATION_COURT.toString()))
-            .andExpect(jsonPath("$.registrationNumber").value(DEFAULT_REGISTRATION_NUMBER.toString()))
+            .andExpect(jsonPath("$.birthPlace").value(DEFAULT_BIRTH_PLACE))
+            .andExpect(jsonPath("$.registrationCourt").value(DEFAULT_REGISTRATION_COURT))
+            .andExpect(jsonPath("$.registrationNumber").value(DEFAULT_REGISTRATION_NUMBER))
             .andExpect(jsonPath("$.vatRegion").value(DEFAULT_VAT_REGION.toString()))
-            .andExpect(jsonPath("$.vatNumber").value(DEFAULT_VAT_NUMBER.toString()))
-            .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION.toString()))
-            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS.toString()))
-            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION.toString()))
-            .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+            .andExpect(jsonPath("$.vatNumber").value(DEFAULT_VAT_NUMBER))
+            .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION))
+            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS))
+            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION))
+            .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS))
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
     }
 
     @Test
@@ -1269,11 +1269,11 @@ public class CustomerResourceIntTest {
         // Delete the customer
         restCustomerMockMvc.perform(delete("/api/customers/{id}", customer.getId())
             .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+            .andExpect(status().isBadRequest());
 
-        // Validate the database is empty
+        // Validate the database is unchanged
         List<Customer> customerList = customerRepository.findAll();
-        assertThat(customerList).hasSize(databaseSizeBeforeDelete - 1);
+        assertThat(customerList).hasSize(databaseSizeBeforeDelete);
     }
 
     @Test
