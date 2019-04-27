@@ -13,7 +13,7 @@ export interface IMembership {
     assets?: IAsset[];
     customerPrefix?: string;
     customerId?: number;
-    membershipDisplayLabel?: string;
+    customerDisplayLabel?: string;
     displayLabel?: string;
 }
 
@@ -29,7 +29,7 @@ export class Membership implements IMembership {
         public assets?: IAsset[],
         public customerPrefix?: string,
         public customerId?: number,
-        public displayLabel?: string,
-        public membershipDisplayLabel?: string
+        public customerDisplayLabel?: string,
+        public displayLabel?: string
     ) {}
 }
