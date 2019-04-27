@@ -253,7 +253,7 @@ public class MembershipResourceIntTest {
             .andExpect(jsonPath("$.[*].cancellationDocumentDate").value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
             .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
     }
 
     @Test
@@ -271,7 +271,7 @@ public class MembershipResourceIntTest {
             .andExpect(jsonPath("$.cancellationDocumentDate").value(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString()))
             .andExpect(jsonPath("$.memberFromDate").value(DEFAULT_MEMBER_FROM_DATE.toString()))
             .andExpect(jsonPath("$.memberUntilDate").value(DEFAULT_MEMBER_UNTIL_DATE.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
     }
 
     @Test

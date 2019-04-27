@@ -16,8 +16,8 @@ export interface IAsset {
     action?: AssetAction;
     amount?: number;
     remark?: string;
-    membershipDisplayReference?: string;
     membershipId?: number;
+    membershipDisplayLabel?: string;
 }
 
 export class Asset implements IAsset {
@@ -28,7 +28,7 @@ export class Asset implements IAsset {
         public action?: AssetAction,
         public amount?: number,
         public remark?: string,
-        public membershipDisplayReference?: string,
-        public membershipId?: number
+        public membershipId?: number,
+        public membershipDisplayLabel?: string
     ) {}
 }

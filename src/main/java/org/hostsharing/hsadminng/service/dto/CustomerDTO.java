@@ -85,6 +85,9 @@ public class CustomerDTO extends FluentBuilder<CustomerDTO> implements AccessMap
     @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.SUPPORTER)
     private String remark;
 
+    @AccessFor(init=Role.ANYBODY, update=Role.ANYBODY, read = Role.ANY_CUSTOMER_USER)
+    private String displayLabel;
+
     public Long getId() {
         return id;
     }
@@ -211,6 +214,14 @@ public class CustomerDTO extends FluentBuilder<CustomerDTO> implements AccessMap
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getDisplayLabel() {
+        return displayLabel;
+    }
+
+    public void setDisplayLabel(final String displayLabel) {
+        this.displayLabel = displayLabel;
     }
 
     @Override

@@ -46,8 +46,11 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
 
-    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
-    private String membershipDisplayReference;
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
+    private String displayLabel;
+
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
+    private String customerDisplayLabel;
 
     public Long getId() {
         return id;
@@ -113,12 +116,20 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
         this.customerPrefix = customerPrefix;
     }
 
-    private String getMembershipDisplayReference() {
-        return membershipDisplayReference;
+    public String getDisplayLabel() {
+        return displayLabel;
     }
 
-    public void setMembershipDisplayReference(final String membershipDisplayReference) {
-        this.membershipDisplayReference = membershipDisplayReference;
+    public void setDisplayLabel(final String displayLabel) {
+        this.displayLabel = displayLabel;
+    }
+
+    public String getCustomerDisplayLabel() {
+        return customerDisplayLabel;
+    }
+
+    public void setCustomerDisplayLabel(final String customerDisplayLabel) {
+        this.customerDisplayLabel = customerDisplayLabel;
     }
 
     @Override
