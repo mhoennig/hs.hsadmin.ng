@@ -238,6 +238,7 @@ pitest {
                         // The following are mostly generated classes,
                         // as soon as we amend these, consider removing the exclude.
                         'org.hostsharing.hsadminng.**Criteria',
+                        'org.hostsharing.hsadminng.**MapperImpl',
                         'org.hostsharing.hsadminng.aop.logging.*',
                         'org.hostsharing.hsadminng.web.api.*' // API helpers, not the API itself
                       ]
