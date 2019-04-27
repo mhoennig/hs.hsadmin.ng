@@ -27,7 +27,7 @@ import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> {
 
     private final TreeNode treeNode;
-    private final Set<Field> writtenFields = new HashSet<>();
+    private final Set<Field> updatingFields = new HashSet<>();
 
     public JSonDeserializationWithAccessFilter(final ApplicationContext ctx, final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
         super(ctx, unchecked(dtoClass::newInstance));
@@ -63,14 +63,21 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
         return null;
     }
 
-    private void overwriteUnmodifiedFieldsWithCurrentValues(final Object currentDto) {
+    private void overwriteUnmodifiedFieldsWithCurrentValues(final T currentDto) {
         if (currentDto == null) {
             return;
         }
         for (Field field : currentDto.getClass().getDeclaredFields()) {
-            if (field.isAnnotationPresent(AccessFor.class) && !writtenFields.contains(field)) {
-                final Object value = ReflectionUtil.getValue(currentDto, field);
-                ReflectionUtil.setValue(dto, field, value);
+            if (field.isAnnotationPresent(AccessFor.class) ) {
+                boolean updatingField = updatingFields.contains(field);
+                if (updatingField && !isActuallyUpdated(field, dto, currentDto) ) {
+                    updatingFields.remove(field);
+                    updatingField = false;
+                }
+                if (!updatingField) {
+                    final Object value = ReflectionUtil.getValue(currentDto, field);
+                    ReflectionUtil.setValue(dto, field, value);
+                }
             }
 
         }
@@ -78,7 +85,6 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
 
     private Object readValueFromJSon(final TreeNode treeNode, final Field field) {
         return readValueFromJSon(treeNode, field.getName(), field.getType());
-
     }
 
     private Object readValueFromJSon(final TreeNode treeNode, final String fieldName, final Class<?> fieldClass) {
@@ -125,11 +131,11 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
         } else {
             throw new NotImplementedException("property type not yet implemented: " + field);
         }
-        writtenFields.add(field);
+        updatingFields.add(field);
     }
 
     private void checkAccessToWrittenFields(final T currentDto) {
-        writtenFields.forEach(field -> {
+        updatingFields.forEach(field -> {
             // TODO this ugly code needs cleanup
             if (!field.equals(selfIdField)) {
                 final Role role = getLoginUserRole();
@@ -141,7 +147,7 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
                             throw new BadRequestAlertException("Referencing field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "referencingProhibited");
                         }
                     }
-                } else if ( !Role.toBeIgnoredForUpdates(field) && isActuallyUpdated(field, dto, currentDto) && !getLoginUserRole().isAllowedToUpdate(field)) {
+                } else if ( !Role.toBeIgnoredForUpdates(field) && !getLoginUserRole().isAllowedToUpdate(field)) {
                     throw new BadRequestAlertException("Update of field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "updateProhibited");
                 }
             }
