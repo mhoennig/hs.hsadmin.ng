@@ -153,6 +153,6 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
     }
 
     private boolean isActuallyUpdated(final Field field, final T dto, T currentDto) {
-        return ObjectUtils.notEqual(ReflectionUtil.getValue(dto, field), ReflectionUtil.getValue(currentDto, field));
+         return 0 != ObjectUtils.compare(ReflectionUtil.getValue(dto, field), ReflectionUtil.getValue(currentDto, field));
     }
 }

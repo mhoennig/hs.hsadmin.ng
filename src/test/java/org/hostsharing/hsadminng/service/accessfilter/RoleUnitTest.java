@@ -91,7 +91,7 @@ public class RoleUnitTest {
         assertThat(Role.ANY_CUSTOMER_USER.coversAny(Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT)).isFalse();
 
         assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny())).isInstanceOf(VerifyException.class);
-        assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny(null))).isInstanceOf(VerifyException.class);
+        assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny((Role[]) null))).isInstanceOf(VerifyException.class);
     }
 
     @Test

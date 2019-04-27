@@ -92,6 +92,9 @@ public class JSonAccessFilterTestFixture {
         @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
         BigDecimal openBigDecimalField;
 
+        @AccessFor(init = SUPPORTER, update = SUPPORTER, read = SUPPORTER)
+        BigDecimal restrictedBigDecimalField;
+
         @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
         int[] openArrayField;
     }

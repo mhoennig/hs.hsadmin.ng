@@ -34,6 +34,9 @@ import static org.mockito.BDDMockito.given;
 @SuppressWarnings("ALL")
 public class JSonDeserializationWithAccessFilterUnitTest {
 
+    public static final String SOME_BIG_DECIMAL_AS_STRING = "5432191234888.1";
+    public static final BigDecimal SOME_BIG_DECIMAL = new BigDecimal(SOME_BIG_DECIMAL_AS_STRING).setScale(2, BigDecimal.ROUND_HALF_UP);
+    public static final BigDecimal SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE = new BigDecimal(SOME_BIG_DECIMAL_AS_STRING).setScale(5, BigDecimal.ROUND_HALF_UP);
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
 
@@ -77,9 +80,10 @@ public class JSonDeserializationWithAccessFilterUnitTest {
             .with(dto -> dto.openPrimitiveLongField = 44444444L)
             .with(dto -> dto.openBooleanField = true)
             .with(dto -> dto.openPrimitiveBooleanField = false)
-            .with(dto -> dto.openBigDecimalField = new BigDecimal("9876543.09"))
+            .with(dto -> dto.openBigDecimalField = SOME_BIG_DECIMAL)
             .with(dto -> dto.openStringField = "3333")
             .with(dto -> dto.restrictedField = "initial value of restricted field")
+            .with(dto -> dto.restrictedBigDecimalField = SOME_BIG_DECIMAL)
         ));
         given(autowireCapableBeanFactory.createBean(GivenCustomerService.class)).willReturn(givenCustomerService);
         given(givenCustomerService.findOne(888L)).willReturn(Optional.of(new GivenCustomerDto()
@@ -132,6 +136,24 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // then
         assertThat(actualDto.openIntegerField).isEqualTo(1234);
+    }
+
+
+    @Test
+    public void shouldDeserializeRestrictedBigDecimalFieldIfUnchangedByCompareTo() throws IOException {
+        // given
+        assertThat(SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE).as("precondition failed").isNotEqualTo(SOME_BIG_DECIMAL);
+        givenJSonTree(asJSon(
+            ImmutablePair.of("id", 1234L),
+            ImmutablePair.of("customerId", 888L),
+            ImmutablePair.of("restrictedBigDecimalField", SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE)));
+
+        // when
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+
+        // then
+        assertThat(actualDto.restrictedBigDecimalField).isEqualByComparingTo(SOME_BIG_DECIMAL);
+        assertThat(actualDto.restrictedBigDecimalField).isEqualByComparingTo(SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE);
     }
 
     @Test
