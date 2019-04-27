@@ -2,10 +2,8 @@ package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 /**
  * Mapper for the entity Share and its DTO ShareDTO.
@@ -14,13 +12,8 @@ import org.mapstruct.MappingTarget;
 public interface ShareMapper extends EntityMapper<ShareDTO, Share> {
 
     @Mapping(source = "membership.id", target = "membershipId")
-    @Mapping(target = "membershipDisplayLabel", ignore = true)
+    @Mapping(source = "membership.admissionDocumentDate", target = "membershipDisplayReference")
     ShareDTO toDto(Share share);
-
-    @AfterMapping
-    default void setMembershipDisplayLabel(final @MappingTarget ShareDTO dto, final Share entity) {
-        dto.setMembershipDisplayLabel(MembershipMapper.displayLabel(entity.getMembership()));
-    }
 
     @Mapping(source = "membershipId", target = "membership")
     Share toEntity(ShareDTO shareDTO);

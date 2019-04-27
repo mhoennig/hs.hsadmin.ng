@@ -19,7 +19,8 @@
             <th jhiSortBy="valueDate"><span jhiTranslate="hsadminNgApp.asset.valueDate">Value Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.asset.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="amount"><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="membershipDisplayLabel"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="remark"><span jhiTranslate="hsadminNgApp.asset.remark">Remark</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="membershipDisplayReference"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
             </thead>
@@ -30,9 +31,10 @@
                 <td>{{asset.valueDate | date:'mediumDate'}}</td>
                 <td jhiTranslate="{{'hsadminNgApp.AssetAction.' + asset.action}}">{{asset.action}}</td>
                 <td>{{asset.amount}}</td>
+                <td>{{asset.remark}}</td>
                 <td>
                     <div *ngIf="asset.membershipId">
-                        <a [routerLink]="['../membership', asset.membershipId , 'view' ]" >{{asset.membershipDisplayLabel}}</a>
+                        <a [routerLink]="['../membership', asset.membershipId , 'view' ]" >{{asset.membershipDisplayReference}}</a>
                     </div>
                 </td>
                 <td class="text-right">

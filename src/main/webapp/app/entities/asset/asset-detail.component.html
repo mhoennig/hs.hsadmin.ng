@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="asset">
-            <h2><span jhiTranslate="hsadminNgApp.asset.detail.title">Asset</span>: #{{asset.id}} - {{asset.membershipDisplayLabel}}</h2>
+            <h2><span jhiTranslate="hsadminNgApp.asset.detail.title">Asset</span> {{asset.id}}</h2>
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
@@ -28,7 +28,7 @@
                 <dt><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span></dt>
                 <dd>
                     <div *ngIf="asset.membershipId">
-                        <a [routerLink]="['/membership', asset.membershipId, 'view']">{{asset.membershipDisplayLabel}}</a>
+                        <a [routerLink]="['/membership', asset.membershipId, 'view']">{{asset.membershipDisplayReference}}</a>
                     </div>
                 </dd>
             </dl>

@@ -47,7 +47,7 @@ public class AssetDTO implements Serializable, AccessMappings {
     private Long membershipId;
 
     @AccessFor(init=Role.ANYBODY, update=Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
-    private String membershipDisplayLabel;
+    private String membershipDisplayReference;
 
     public Long getId() {
         return id;
@@ -105,12 +105,12 @@ public class AssetDTO implements Serializable, AccessMappings {
         this.membershipId = membershipId;
     }
 
-    public String getMembershipDisplayLabel() {
-        return membershipDisplayLabel;
+    public String getMembershipDisplayReference() {
+        return membershipDisplayReference;
     }
 
-    public void setMembershipDisplayLabel(String membershipDisplayLabel) {
-        this.membershipDisplayLabel = membershipDisplayLabel;
+    public void setMembershipDisplayReference(String membershipDisplayReference) {
+        this.membershipDisplayReference = membershipDisplayReference;
     }
 
     @Override
@@ -144,7 +144,7 @@ public class AssetDTO implements Serializable, AccessMappings {
             ", amount=" + getAmount() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDisplayLabel() + "'" +
+            ", membership='" + getMembershipDisplayReference() + "'" +
             "}";
     }
 

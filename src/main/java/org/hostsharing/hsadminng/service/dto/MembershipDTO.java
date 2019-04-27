@@ -25,18 +25,18 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate admissionDocumentDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate cancellationDocumentDate;
 
     @NotNull
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate memberFromDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate memberUntilDate;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN,update = Role.ADMIN,  read = Role.SUPPORTER)
+    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
@@ -46,11 +46,8 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String customerPrefix;
 
-    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
-    private String displayLabel;
-
-    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
-    private String customerDisplayLabel;
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    private String membershipDisplayReference;
 
     public Long getId() {
         return id;
@@ -116,20 +113,12 @@ public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Seria
         this.customerPrefix = customerPrefix;
     }
 
-    public String getDisplayLabel() {
-        return displayLabel;
+    private String getMembershipDisplayReference() {
+        return membershipDisplayReference;
     }
 
-    public void setDisplayLabel(final String displayLabel) {
-        this.displayLabel = displayLabel;
-    }
-
-    public String getCustomerDisplayLabel() {
-        return customerDisplayLabel;
-    }
-
-    public void setCustomerDisplayLabel(final String customerDisplayLabel) {
-        this.customerDisplayLabel = customerDisplayLabel;
+    public void setMembershipDisplayReference(final String membershipDisplayReference) {
+        this.membershipDisplayReference = membershipDisplayReference;
     }
 
     @Override

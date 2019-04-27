@@ -82,8 +82,7 @@ public class CustomerDTOUnitTest {
             toJSonFieldDefinition("id", given.getId()) + "," +
             toJSonFieldDefinition("reference", given.getReference()) + "," +
             toJSonFieldDefinition("prefix", given.getPrefix()) + "," +
-            toJSonFieldDefinition("name", given.getName()) + "," +
-            toJSonFieldDefinition("displayLabel", given.getDisplayLabel()) +
+            toJSonFieldDefinition("name", given.getName()) +
             "}";
         assertEquals(expectedJSon, actual);
     }
@@ -119,7 +118,7 @@ public class CustomerDTOUnitTest {
         expected.setId(1234L);
         expected.setContractualSalutation("Hallo Updated");
         expected.setBillingSalutation("Moin Updated");
-        assertThat(actual).isEqualToIgnoringGivenFields(expected, "displayLabel");
+        assertThat(actual).isEqualToComparingFieldByField(expected);
     }
 
     // --- only test fixture below ---
@@ -141,10 +140,11 @@ public class CustomerDTOUnitTest {
                 toJSonFieldDefinitionIfPresent("contractualAddress", dto.getContractualAddress()) +
                 toJSonFieldDefinitionIfPresent("billingSalutation", dto.getBillingSalutation()) +
                 toJSonFieldDefinitionIfPresent("billingAddress", dto.getBillingAddress()) +
-                toJSonFieldDefinitionIfPresent("remark", dto.getRemark()) +
-                toJSonFieldDefinitionIfPresent("displayLabel", dto.getDisplayLabel());
+                toJSonFieldDefinitionIfPresent("remark", dto.getRemark());
         return "{" + json.substring(0, json.length() - 1) + "}";
     }
+
+
 
     private String toJSonFieldDefinition(String name, String value) {
         return inQuotes(name) + ":" + (value != null ? inQuotes(value) : "null");
@@ -186,7 +186,6 @@ public class CustomerDTOUnitTest {
         given.setBillingAddress("Noch eine Adresse");
         given.setBillingSalutation("Moin");
         given.setRemark("Eine Bemerkung");
-        given.setDisplayLabel("Display Label");
         return given;
     }
 }

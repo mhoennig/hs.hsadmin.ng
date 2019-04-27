@@ -248,7 +248,7 @@ public class MembershipResourceIntTest {
             .andExpect(jsonPath("$.[*].cancellationDocumentDate").value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
             .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
 
     @Test
@@ -266,7 +266,7 @@ public class MembershipResourceIntTest {
             .andExpect(jsonPath("$.cancellationDocumentDate").value(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString()))
             .andExpect(jsonPath("$.memberFromDate").value(DEFAULT_MEMBER_FROM_DATE.toString()))
             .andExpect(jsonPath("$.memberUntilDate").value(DEFAULT_MEMBER_UNTIL_DATE.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -682,7 +682,9 @@ public class MembershipResourceIntTest {
         // Disconnect from session so that the updates on updatedMembership are not directly saved in db
         em.detach(updatedMembership);
         updatedMembership
+            .admissionDocumentDate(UPDATED_ADMISSION_DOCUMENT_DATE)
             .cancellationDocumentDate(UPDATED_CANCELLATION_DOCUMENT_DATE)
+            .memberFromDate(UPDATED_MEMBER_FROM_DATE)
             .memberUntilDate(UPDATED_MEMBER_UNTIL_DATE)
             .remark(UPDATED_REMARK);
         MembershipDTO membershipDTO = membershipMapper.toDto(updatedMembership);
@@ -696,9 +698,9 @@ public class MembershipResourceIntTest {
         List<Membership> membershipList = membershipRepository.findAll();
         assertThat(membershipList).hasSize(databaseSizeBeforeUpdate);
         Membership testMembership = membershipList.get(membershipList.size() - 1);
-        assertThat(testMembership.getAdmissionDocumentDate()).isEqualTo(DEFAULT_ADMISSION_DOCUMENT_DATE);
+        assertThat(testMembership.getAdmissionDocumentDate()).isEqualTo(UPDATED_ADMISSION_DOCUMENT_DATE);
         assertThat(testMembership.getCancellationDocumentDate()).isEqualTo(UPDATED_CANCELLATION_DOCUMENT_DATE);
-        assertThat(testMembership.getMemberFromDate()).isEqualTo(DEFAULT_MEMBER_FROM_DATE);
+        assertThat(testMembership.getMemberFromDate()).isEqualTo(UPDATED_MEMBER_FROM_DATE);
         assertThat(testMembership.getMemberUntilDate()).isEqualTo(UPDATED_MEMBER_UNTIL_DATE);
         assertThat(testMembership.getRemark()).isEqualTo(UPDATED_REMARK);
     }

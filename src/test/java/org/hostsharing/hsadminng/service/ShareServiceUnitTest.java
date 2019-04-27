@@ -15,13 +15,12 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import javax.persistence.EntityManager;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
 
 // HINT: In IntelliJ IDEA such unit test classes can be created with Shift-Ctrl-T.
@@ -30,9 +29,6 @@ public class ShareServiceUnitTest {
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Mock
-    private EntityManager em;
 
     @Mock
     private ShareRepository shareRepository;
@@ -74,8 +70,6 @@ public class ShareServiceUnitTest {
         final ShareDTO returnedShareDto = shareService.save(givenShareDTO);
 
         // then
-        verify(em).flush();
-        verify(em).refresh(any(Share.class));
         assertThat(returnedShareDto).isEqualToIgnoringGivenFields(givenShareDTO, "id");
     }
 
@@ -103,8 +97,6 @@ public class ShareServiceUnitTest {
         final ShareDTO returnedShareDto = shareService.save(givenShareDTO);
 
         // then
-        verify(em).flush();
-        verify(em).refresh(any(Share.class));
         assertThat(returnedShareDto).isEqualToIgnoringGivenFields(givenShareDTO, "id");
     }
 

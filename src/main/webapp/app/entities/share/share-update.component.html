@@ -85,7 +85,7 @@
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.share.membership" for="field_membership">Membership</label>
                     <select class="form-control" id="field_membership" name="membership" [(ngModel)]="share.membershipId"  required>
                         <option *ngIf="!editForm.value.membership" [ngValue]="null" selected></option>
-                        <option [ngValue]="membershipOption.id" *ngFor="let membershipOption of memberships; trackBy: trackMembershipById">{{membershipOption.displayLabel}}</option>
+                        <option [ngValue]="membershipOption.id" *ngFor="let membershipOption of memberships; trackBy: trackMembershipById">{{membershipOption.admissionDocumentDate}}</option>
                     </select>
                 </div>
                 <div [hidden]="!(editForm.controls.membership?.dirty && editForm.controls.membership?.invalid)">

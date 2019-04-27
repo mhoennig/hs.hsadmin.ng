@@ -154,7 +154,7 @@ public class ShareDTOUnitTest {
         givenDTO.setAction(ShareAction.SUBSCRIPTION);
         givenDTO.setQuantity(3);
         givenDTO.setDocumentDate(LocalDate.parse("2019-04-22"));
-        givenDTO.setMembershipDisplayLabel("2019-04-21"); // TODO: why is this not a LocalDate?
+        givenDTO.setMembershipDisplayReference("2019-04-21"); // TODO: why is this not a LocalDate?
         givenDTO.setValueDate(LocalDate.parse("2019-04-30"));
         givenDTO.setRemark("Some Remark");
         return givenDTO;
