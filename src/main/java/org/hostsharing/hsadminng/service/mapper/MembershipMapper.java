@@ -19,8 +19,8 @@ public interface MembershipMapper extends EntityMapper<MembershipDTO, Membership
     static String displayLabel(final Membership entity) {
         final Customer customer = entity.getCustomer();
         return CustomerMapper.displayLabel(customer) + " "
-            + Objects.toString(entity.getAdmissionDocumentDate(), "") + " - "
-            + Objects.toString(entity.getCancellationDocumentDate(), "...");
+            + Objects.toString(entity.getMemberFromDate(), "") + " - "
+            + Objects.toString(entity.getMemberUntilDate(), "...");
     }
 
     @Mapping(source = "customer.id", target = "customerId")

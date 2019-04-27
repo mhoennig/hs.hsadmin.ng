@@ -7,6 +7,7 @@ import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
@@ -78,13 +79,12 @@ public class CustomerDTOUnitTest {
         String actual = objectMapper.writeValueAsString(given);
 
         // then
-        final String expectedJSon = "{" +
-            toJSonFieldDefinition("id", given.getId()) + "," +
-            toJSonFieldDefinition("reference", given.getReference()) + "," +
-            toJSonFieldDefinition("prefix", given.getPrefix()) + "," +
-            toJSonFieldDefinition("name", given.getName()) + "," +
-            toJSonFieldDefinition("displayLabel", given.getDisplayLabel()) +
-            "}";
+        final String expectedJSon = new JSonBuilder()
+            .withFieldValue("id", given.getId())
+            .withFieldValue("reference", given.getReference())
+            .withFieldValue("prefix", given.getPrefix())
+            .withFieldValue("name", given.getName())
+            .withFieldValue("displayLabel", given.getDisplayLabel()).toString();
         assertEquals(expectedJSon, actual);
     }
 
@@ -125,49 +125,24 @@ public class CustomerDTOUnitTest {
     // --- only test fixture below ---
 
     private String createExpectedJSon(CustomerDTO dto) {
-        String json = // the fields in alphanumeric order:
-            toJSonFieldDefinitionIfPresent("id", dto.getId()) +
-                toJSonFieldDefinitionIfPresent("reference", dto.getReference()) +
-                toJSonFieldDefinitionIfPresent("prefix", dto.getPrefix()) +
-                toJSonFieldDefinitionIfPresent("name", dto.getName()) +
-                toJSonFieldDefinitionIfPresent("kind", "LEGAL") +
-                toJSonNullFieldDefinition("birthDate") +
-                toJSonNullFieldDefinition("birthPlace") +
-                toJSonFieldDefinitionIfPresent("registrationCourt", "Registergericht") +
-                toJSonFieldDefinitionIfPresent("registrationNumber", "Registernummer") +
-                toJSonFieldDefinitionIfPresent("vatRegion", "DOMESTIC") +
-                toJSonFieldDefinitionIfPresent("vatNumber", "DE1234") +
-                toJSonFieldDefinitionIfPresent("contractualSalutation", dto.getContractualSalutation()) +
-                toJSonFieldDefinitionIfPresent("contractualAddress", dto.getContractualAddress()) +
-                toJSonFieldDefinitionIfPresent("billingSalutation", dto.getBillingSalutation()) +
-                toJSonFieldDefinitionIfPresent("billingAddress", dto.getBillingAddress()) +
-                toJSonFieldDefinitionIfPresent("remark", dto.getRemark()) +
-                toJSonFieldDefinitionIfPresent("displayLabel", dto.getDisplayLabel());
-        return "{" + json.substring(0, json.length() - 1) + "}";
-    }
-
-    private String toJSonFieldDefinition(String name, String value) {
-        return inQuotes(name) + ":" + (value != null ? inQuotes(value) : "null");
-    }
-
-    private String toJSonFieldDefinition(String name, Number value) {
-        return inQuotes(name) + ":" + (value != null ? value : "null");
-    }
-
-    private String toJSonNullFieldDefinition(String name) {
-        return inQuotes(name) + ":null,";
-    }
-
-    private String toJSonFieldDefinitionIfPresent(String name, String value) {
-        return value != null ? inQuotes(name) + ":" + inQuotes(value) + "," : "";
-    }
-
-    private String toJSonFieldDefinitionIfPresent(String name, Number value) {
-        return value != null ? inQuotes(name) + ":" + value + "," : "";
-    }
-
-    private String inQuotes(Object value) {
-        return "\"" + value.toString() + "\"";
+        return new JSonBuilder()
+            .withFieldValueIfPresent("id", dto.getId())
+            .withFieldValueIfPresent("reference", dto.getReference())
+            .withFieldValueIfPresent("prefix", dto.getPrefix())
+            .withFieldValueIfPresent("name", dto.getName())
+            .withFieldValueIfPresent("kind", "LEGAL")
+            .toJSonNullFieldDefinition("birthDate")
+            .toJSonNullFieldDefinition("birthPlace")
+            .withFieldValueIfPresent("registrationCourt", "Registergericht")
+            .withFieldValueIfPresent("registrationNumber", "Registernummer")
+            .withFieldValueIfPresent("vatRegion", "DOMESTIC")
+            .withFieldValueIfPresent("vatNumber", "DE1234")
+            .withFieldValueIfPresent("contractualSalutation", dto.getContractualSalutation())
+            .withFieldValueIfPresent("contractualAddress", dto.getContractualAddress())
+            .withFieldValueIfPresent("billingSalutation", dto.getBillingSalutation())
+            .withFieldValueIfPresent("billingAddress", dto.getBillingAddress())
+            .withFieldValueIfPresent("remark", dto.getRemark())
+            .withFieldValueIfPresent("displayLabel", dto.getDisplayLabel()).toString();
     }
 
     private CustomerDTO createSomeCustomerDTO(final long id) {

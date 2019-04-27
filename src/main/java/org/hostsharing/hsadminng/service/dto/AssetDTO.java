@@ -2,7 +2,7 @@ package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.AssetService;
-import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
@@ -40,13 +40,15 @@ public class AssetDTO implements Serializable, AccessMappings {
     private BigDecimal amount;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.ADMIN)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
-    @ParentId(resolver = CustomerService.class)
+    @ParentId(resolver = MembershipService.class)
     @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
+    // TODO: these init/update rights actually mean "ignore", we might want to express this in a better way
+    //  background: there is no converter for any display label in DTOs to entity field values anyway
     @AccessFor(init=Role.ANYBODY, update = Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String membershipDisplayLabel;
 
