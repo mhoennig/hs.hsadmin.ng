@@ -130,9 +130,10 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
 
     private void checkAccessToWrittenFields(final T currentDto) {
         writtenFields.forEach(field -> {
+            // TODO this ugly code needs cleanup
             if (!field.equals(selfIdField)) {
                 final Role role = getLoginUserRole();
-                if (getId() == null) {
+                if (isInitAccess()) {
                     if (!role.isAllowedToInit(field)) {
                         if (!field.equals(parentIdField)) {
                             throw new BadRequestAlertException("Initialization of field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "initializationProhibited");
@@ -140,14 +141,18 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
                             throw new BadRequestAlertException("Referencing field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "referencingProhibited");
                         }
                     }
-                } else if (isUpdate(field, dto, currentDto) && !getLoginUserRole().isAllowedToUpdate(field)) {
+                } else if ( !Role.toBeIgnoredForUpdates(field) && isActuallyUpdated(field, dto, currentDto) && !getLoginUserRole().isAllowedToUpdate(field)) {
                     throw new BadRequestAlertException("Update of field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "updateProhibited");
                 }
             }
         });
     }
 
-    private boolean isUpdate(final Field field, final T dto, T currentDto) {
+    private boolean isInitAccess() {
+        return getId() == null;
+    }
+
+    private boolean isActuallyUpdated(final Field field, final T dto, T currentDto) {
         return ObjectUtils.notEqual(ReflectionUtil.getValue(dto, field), ReflectionUtil.getValue(currentDto, field));
     }
 }

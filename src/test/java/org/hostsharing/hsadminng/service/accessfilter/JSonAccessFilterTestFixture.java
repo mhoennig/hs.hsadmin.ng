@@ -35,6 +35,10 @@ public class JSonAccessFilterTestFixture {
         @SelfId(resolver = GivenService.class)
         @AccessFor(read = ANYBODY)
         Long id;
+
+        @AccessFor(update = IGNORED, read = ANYBODY)
+        String displayLabel;
+
     }
 
     static abstract class GivenCustomerService implements IdToDtoResolver<GivenCustomerDto> {

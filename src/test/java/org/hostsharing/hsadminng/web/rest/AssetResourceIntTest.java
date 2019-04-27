@@ -162,6 +162,7 @@ public class AssetResourceIntTest {
 
         // Create the Asset
         AssetDTO assetDTO = assetMapper.toDto(asset);
+        assetDTO.setMembershipDisplayLabel(null);
         restAssetMockMvc.perform(post("/api/assets")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(assetDTO)))

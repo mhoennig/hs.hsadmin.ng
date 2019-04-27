@@ -1,10 +1,12 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import com.google.common.base.VerifyException;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 
 public class RoleUnitTest {
 
@@ -72,6 +74,46 @@ public class RoleUnitTest {
     }
 
     @Test
+    public void ignoredCoversNothingAndIsNotCovered() {
+        assertThat(Role.IGNORED.covers(Role.HOSTMASTER)).isFalse();
+        assertThat(Role.IGNORED.covers(Role.ANYBODY)).isFalse();
+        assertThat(Role.IGNORED.covers(Role.IGNORED)).isFalse();
+        assertThat(Role.HOSTMASTER.covers(Role.IGNORED)).isFalse();
+        assertThat(Role.ANYBODY.covers(Role.IGNORED)).isFalse();
+    }
+
+    @Test
+    public void coversAny() {
+        assertThat(Role.HOSTMASTER.coversAny(Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT)).isTrue();
+        assertThat(Role.CONTRACTUAL_CONTACT.coversAny(Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT)).isTrue();
+        assertThat(Role.FINANCIAL_CONTACT.coversAny(Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT)).isTrue();
+
+        assertThat(Role.ANY_CUSTOMER_USER.coversAny(Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT)).isFalse();
+
+        assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny())).isInstanceOf(VerifyException.class);
+        assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny(null))).isInstanceOf(VerifyException.class);
+    }
+
+    @Test
+    public void isIgnored() {
+        for (Role role : Role.values()) {
+            if (role == Role.IGNORED) {
+                assertThat(role.isIgnored()).isTrue();
+            } else {
+                assertThat(role.isIgnored()).isFalse();
+            }
+        }
+    }
+
+    @Test
+    public void toBeIgnoredForUpdates() {
+        assertThat(Role.toBeIgnoredForUpdates(someFieldWithoutAccessForAnnotation)).isTrue();
+        assertThat(Role.toBeIgnoredForUpdates(someFieldWithAccessForAnnotationToBeIgnoredForUpdates)).isTrue();
+        assertThat(Role.toBeIgnoredForUpdates(someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers)).isFalse();
+        assertThat(Role.toBeIgnoredForUpdates(someFieldWithAccessForAnnotation)).isFalse();
+    }
+
+    @Test
     public void isIndependent() {
         assertThat(Role.HOSTMASTER.isIndependent()).isTrue();
         assertThat(Role.SUPPORTER.isIndependent()).isTrue();
@@ -114,14 +156,25 @@ public class RoleUnitTest {
         @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.ANY_CUSTOMER_CONTACT)
         private Integer someFieldWithAccessForAnnotation;
 
+        @AccessFor(update = Role.IGNORED, read = Role.ANY_CUSTOMER_CONTACT)
+        private Integer someFieldWithAccessForAnnotationToBeIgnoredForUpdates;
+
+        @AccessFor(update = {Role.IGNORED, Role.SUPPORTER}, read = Role.ANY_CUSTOMER_CONTACT)
+        private Integer someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers;
+
         private Integer someFieldWithoutAccessForAnnotation;
     }
 
     private static Field someFieldWithoutAccessForAnnotation;
+    private static Field someFieldWithAccessForAnnotationToBeIgnoredForUpdates;
+    private static Field someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers;
     private static Field someFieldWithAccessForAnnotation;
+
     static {
         try {
             someFieldWithoutAccessForAnnotation = TestDto.class.getDeclaredField("someFieldWithoutAccessForAnnotation");
+            someFieldWithAccessForAnnotationToBeIgnoredForUpdates = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotationToBeIgnoredForUpdates");
+            someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers");
             someFieldWithAccessForAnnotation = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotation");
         } catch (NoSuchFieldException e) {
             throw new AssertionError("precondition failed", e);

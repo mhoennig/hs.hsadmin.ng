@@ -20,23 +20,23 @@ import java.util.Objects;
 public class AssetDTO implements Serializable, AccessMappings {
 
     @SelfId(resolver = AssetService.class)
-    @AccessFor(read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long id;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate documentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private LocalDate valueDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private AssetAction action;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private BigDecimal amount;
 
     @Size(max = 160)
@@ -44,12 +44,10 @@ public class AssetDTO implements Serializable, AccessMappings {
     private String remark;
 
     @ParentId(resolver = MembershipService.class)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
-    // TODO: these init/update rights actually mean "ignore", we might want to express this in a better way
-    //  background: there is no converter for any display label in DTOs to entity field values anyway
-    @AccessFor(init=Role.ANYBODY, update = Role.ANYBODY, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(update = Role.IGNORED, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String membershipDisplayLabel;
 
     public Long getId() {
@@ -147,7 +145,7 @@ public class AssetDTO implements Serializable, AccessMappings {
             ", amount=" + getAmount() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDisplayLabel() + "'" +
+            ", membershipDisplayLabel='" + getMembershipDisplayLabel() + "'" +
             "}";
     }
 

@@ -1,214 +1,101 @@
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.hostsharing.hsadminng.domain.Asset;
-import org.hostsharing.hsadminng.domain.Customer;
-import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
-import org.hostsharing.hsadminng.repository.AssetRepository;
-import org.hostsharing.hsadminng.repository.CustomerRepository;
-import org.hostsharing.hsadminng.repository.MembershipRepository;
-import org.hostsharing.hsadminng.service.AssetService;
-import org.hostsharing.hsadminng.service.AssetValidator;
-import org.hostsharing.hsadminng.service.MembershipValidator;
-import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.mapper.AssetMapper;
-import org.hostsharing.hsadminng.service.mapper.AssetMapperImpl;
-import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
-import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
-import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.json.JsonTest;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.persistence.EntityManager;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
 
+public class AssetDTOUnitTest extends AccessMappingsUnitTestBase {
 
-@JsonTest
-@SpringBootTest(classes = {
-    AssetMapperImpl.class,
-    AssetDTO.AssetJsonSerializer.class,
-    AssetDTO.AssetJsonDeserializer.class,
-
-    MembershipMapperImpl.class,
-
-    CustomerMapperImpl.class
-})
-@RunWith(SpringRunner.class)
-public class AssetDTOUnitTest {
-
-
-    private static final Long SOME_CUSTOMER_ID = RandomUtils.nextLong(100, 199);
-    private static final Integer SOME_CUSTOMER_REFERENCE = 10001;
-    private static final String SOME_CUSTOMER_PREFIX = "abc";
-    private static final String SOME_CUSTOMER_NAME = "Some Customer Name";
-    private static final Customer SOME_CUSTOMER = new Customer().id(SOME_CUSTOMER_ID).reference(SOME_CUSTOMER_REFERENCE).prefix(SOME_CUSTOMER_PREFIX).name(SOME_CUSTOMER_NAME);
-
-    private static final Long SOME_MEMBERSHIP_ID = RandomUtils.nextLong(200, 299);
-    private static final LocalDate SOME_MEMBER_FROM_DATE = LocalDate.parse("2000-12-06") ;
-    private static final Membership SOME_MEMBERSHIP = new Membership().id(SOME_MEMBERSHIP_ID).customer(SOME_CUSTOMER).memberFromDate(SOME_MEMBER_FROM_DATE);
-    public static final String SOME_MEMBERSHIP_DISPLAY_LABEL = "Some Customer Name [10001:abc] 2000-12-06 - ...";
-
-    private static final Long SOME_ASSET_ID = RandomUtils.nextLong(300, 399);
-    private static final Asset SOME_ASSET = new Asset().id(SOME_ASSET_ID).membership(SOME_MEMBERSHIP);
-
-    @Rule
-    public MockitoRule mockito = MockitoJUnit.rule();
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private AssetMapper assetMapper;
-
-    @MockBean
-    private AssetRepository assetRepository;
-
-    @MockBean
-    private AssetValidator assetValidator;
-
-    @MockBean
-    private CustomerRepository customerRepository;
-
-    @MockBean
-    private MembershipRepository membershipRepository;
-
-    @MockBean
-    private MembershipValidator membershipValidator;
-
-    @MockBean
-    private AssetService assetService;
-
-    @MockBean
-    private EntityManager em;
-
-    @Before
-    public void init() {
-        given(customerRepository.findById(SOME_CUSTOMER_ID)).willReturn(Optional.of(SOME_CUSTOMER));
-        given(membershipRepository.findById(SOME_MEMBERSHIP_ID)).willReturn(Optional.of(SOME_MEMBERSHIP));
-        given(assetRepository.findById(SOME_ASSET_ID)).willReturn((Optional.of(SOME_ASSET)));
+    @Test
+    public void shouldHaveProperAccessForAdmin() {
+        initAccesFor(AssetDTO.class, Role.ADMIN).shouldBeExactlyFor(
+            "membershipId", "documentDate", "amount", "action", "valueDate", "remark");
+        updateAccesFor(AssetDTO.class, Role.ADMIN).shouldBeExactlyFor("remark");
+        readAccesFor(AssetDTO.class, Role.ADMIN).shouldBeForAllFields();
     }
 
     @Test
-    public void shouldSerializePartiallyForFinancialCustomerContact() throws JsonProcessingException {
-
-        // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
-        final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
-
-        // when
-        final String actual = objectMapper.writeValueAsString(given);
-
-        // then
-        given.setRemark(null);
-        assertEquals(createExpectedJSon(given), actual);
+    public void shouldHaveProperAccessForContractualContact() {
+        initAccesFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
+        updateAccesFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
+        readAccesFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+            "id", "membershipId", "documentDate", "amount", "action", "valueDate", "membershipDisplayLabel");
     }
 
     @Test
-    public void shouldSerializeCompletelyForSupporter() throws JsonProcessingException {
-
-        // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.SUPPORTER);
-        final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
-
-        // when
-        final String actual = objectMapper.writeValueAsString(given);
-
-        // then
-        assertEquals(createExpectedJSon(given), actual);
+    public void shouldHaveNoAccessForTechnicalContact() {
+        initAccesFor(AssetDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        updateAccesFor(AssetDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        readAccesFor(AssetDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
     }
 
     @Test
-    public void shouldNotDeserializeForContractualCustomerContact() {
-        // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
-        final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_ASSET_ID)
-            .withFieldValue("remark", "Updated Remark")
-            .toString();
-
-        // when
-        final Throwable actual = catchThrowable(() -> objectMapper.readValue(json, AssetDTO.class));
-
-        // then
-        assertThat(actual).isInstanceOfSatisfying(BadRequestAlertException.class, bre ->
-            assertThat(bre.getMessage()).isEqualTo("Update of field AssetDTO.remark prohibited for current user role CONTRACTUAL_CONTACT")
-        );
+    public void shouldHaveNoAccessForNormalUsersWithinCustomerRealm() {
+        initAccesFor(AssetDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        updateAccesFor(AssetDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        readAccesFor(AssetDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
     }
 
     @Test
-    public void shouldDeserializeForAdminIfRemarkIsChanged() throws IOException {
-        // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.ADMIN);
-        final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_ASSET_ID)
-            .withFieldValue("remark", "Updated Remark")
-            .toString();
+    public void shouldConvertToString() {
+        final AssetDTO dto = createDto(1234L);
+        assertThat(dto.toString()).isEqualTo("AssetDTO{id=1234, documentDate='2000-12-07', valueDate='2000-12-18', action='PAYMENT', amount=512.01, remark='Some Remark', membership=888, membershipDisplayLabel='Some Membership'}");
+    }
 
-        // when
-        final AssetDTO actual = objectMapper.readValue(json, AssetDTO.class);
+    @Test
+    public void shouldImplementEqualsJustUsingClassAndId() {
+        final AssetDTO dto = createDto(1234L);
+        assertThat(dto.equals(dto)).isTrue();
 
-        // then
-        final AssetDTO expected = new AssetDTO();
-        expected.setId(SOME_ASSET_ID);
-        expected.setMembershipId(SOME_MEMBERSHIP_ID);
-        expected.setRemark("Updated Remark");
-        expected.setMembershipDisplayLabel(SOME_MEMBERSHIP_DISPLAY_LABEL);
-        assertThat(actual).isEqualToIgnoringGivenFields(expected, "displayLabel");
+        final AssetDTO dtoWithSameId = createRandomDto(1234L);
+        assertThat(dto.equals(dtoWithSameId)).isTrue();
+
+        final AssetDTO dtoWithAnotherId = createRandomDto(RandomUtils.nextLong(2000, 9999));
+        assertThat(dtoWithAnotherId.equals(dtoWithSameId)).isFalse();
+
+        final AssetDTO dtoWithoutId = createRandomDto(null);
+        assertThat(dto.equals(dtoWithoutId)).isFalse();
+        assertThat(dtoWithoutId.equals(dto)).isFalse();
+
+        assertThat(dto.equals(null)).isFalse();
+        assertThat(dto.equals("")).isFalse();
     }
 
     // --- only test fixture below ---
 
-    private String createExpectedJSon(AssetDTO dto) {
-        return new JSonBuilder()
-            .withFieldValueIfPresent("id", dto.getId())
-            .withFieldValueIfPresent("documentDate", dto.getDocumentDate().toString())
-            .withFieldValueIfPresent("valueDate", dto.getValueDate().toString())
-            .withFieldValueIfPresent("action", dto.getAction().name())
-            .withFieldValueIfPresent("amount", dto.getAmount().doubleValue())
-            .withFieldValueIfPresent("remark", dto.getRemark())
-            .withFieldValueIfPresent("membershipId", dto.getMembershipId())
-            .withFieldValue("membershipDisplayLabel", dto.getMembershipDisplayLabel())
-            .toString();
+    private AssetDTO createDto(final Long id) {
+        final AssetDTO dto = new AssetDTO();
+        dto.setId(id);
+        dto.setDocumentDate(LocalDate.parse("2000-12-07"));
+        dto.setAmount(new BigDecimal("512.01"));
+        dto.setAction(AssetAction.PAYMENT);
+        dto.setRemark("Some Remark");
+        dto.setValueDate(LocalDate.parse("2000-12-18"));
+        dto.setMembershipId(888L);
+        dto.setMembershipDisplayLabel("Some Membership");
+        return dto;
     }
 
 
-    private AssetDTO createSomeAssetDTO(final long id) {
-        final AssetDTO given = new AssetDTO();
-        given.setId(id);
-        given.setAction(AssetAction.PAYMENT);
-        given.setAmount(new BigDecimal("512.01"));
-        given.setDocumentDate(LocalDate.parse("2019-04-27"));
-        given.setValueDate(LocalDate.parse("2019-04-28"));
-        given.setMembershipId(SOME_MEMBERSHIP_ID);
-        given.setRemark("Some Remark");
-        given.setMembershipDisplayLabel("Display Label for Membership #" + SOME_MEMBERSHIP_ID);
-        return given;
+    private AssetDTO createRandomDto(final Long id) {
+        final AssetDTO dto = new AssetDTO();
+        dto.setId(id);
+        final LocalDate randomDate = LocalDate.parse("2000-12-07").plusDays(RandomUtils.nextInt(1, 999));
+        dto.setDocumentDate(randomDate);
+        dto.setAmount(new BigDecimal("512.01"));
+        dto.setAction(AssetAction.PAYMENT);
+        dto.setRemark("Some Remark");
+        dto.setValueDate(randomDate.plusDays(RandomUtils.nextInt(1, 99)));
+        dto.setMembershipId(RandomUtils.nextLong());
+        dto.setMembershipDisplayLabel(RandomStringUtils.randomAlphabetic(20));
+        return dto;
     }
+
 }

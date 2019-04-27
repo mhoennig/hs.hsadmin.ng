@@ -74,7 +74,6 @@ public class ShareDTOUnitTest {
         given(jsonParser.getCodec()).willReturn(codec);
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
-        given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(CustomerService.class)).willReturn(customerService);
         given(autowireCapableBeanFactory.createBean(MembershipService.class)).willReturn(membershipService);
 
