@@ -161,6 +161,7 @@ public class ShareResourceIntTest {
 
         // Create the Share
         ShareDTO shareDTO = shareMapper.toDto(share);
+        shareDTO.setMembershipDisplayLabel(null);
         restShareMockMvc.perform(post("/api/shares")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(shareDTO)))

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.util.RandomUtil;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -59,19 +60,18 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
         return dto;
     }
 
-
     @Override
     public AssetDTO createRandomDto(final Long id) {
         final AssetDTO dto = new AssetDTO();
         dto.setId(id);
         final LocalDate randomDate = LocalDate.parse("2000-12-07").plusDays(RandomUtils.nextInt(1, 999));
         dto.setDocumentDate(randomDate);
-        dto.setAmount(new BigDecimal("512.01"));
-        dto.setAction(AssetAction.PAYMENT);
-        dto.setRemark("Some Remark");
+        dto.setAmount(new BigDecimal(RandomUtils.nextDouble()));
+        dto.setAction(RandomUtil.generateEnumValue(AssetAction.class));
+        dto.setRemark(RandomStringUtils.randomAlphanumeric(20));
         dto.setValueDate(randomDate.plusDays(RandomUtils.nextInt(1, 99)));
         dto.setMembershipId(RandomUtils.nextLong());
-        dto.setMembershipDisplayLabel(RandomStringUtils.randomAlphabetic(20));
+        dto.setMembershipDisplayLabel("The Membership #" + dto.getMembershipId());
         return dto;
     }
 }

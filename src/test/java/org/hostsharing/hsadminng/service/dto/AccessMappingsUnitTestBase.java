@@ -1,12 +1,13 @@
 package org.hostsharing.hsadminng.service.dto;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.junit.Test;
+import org.springframework.boot.jackson.JsonComponent;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * Usually base classes for unit tests are not a good idea, but because
@@ -59,6 +61,23 @@ public abstract class AccessMappingsUnitTestBase<D> {
         final D dtoWithoutId = createRandomDto(null);
         assertThat(dtoWithoutId.hashCode()).isEqualTo(Objects.hashCode(null));
     }
+
+    @Test
+    public void shouldImplementAccessMappings() {
+        assertThat(getDtoClass().getInterfaces()).as("must implement " + AccessMappings.class).contains(AccessMappings.class);
+    }
+
+    @Test
+    public void shouldImplementSerializer() {
+        shouldImplementJsonComponent(JsonSerializerWithAccessFilter.class);
+    }
+
+    @Test
+    public void shouldImplementDeserializer() {
+        shouldImplementJsonComponent(JsonDeserializerWithAccessFilter.class);
+    }
+
+    // --- only test fixture below ---
 
     protected abstract D createSampleDto(final Long id);
 
@@ -173,5 +192,27 @@ public abstract class AccessMappingsUnitTestBase<D> {
 
     private boolean isJHipsterToStringUsingQuotes(final Field field) {
         return !Number.class.isAssignableFrom(field.getType()) && !Boolean.class.isAssignableFrom(field.getType());
+    }
+
+    private void shouldImplementJsonComponent(final Class<?> expectedSuperclass) {
+        final Class<D> dtoClass = getDtoClass();
+        for (Class<?> declaredClass: dtoClass.getDeclaredClasses()) {
+            if (expectedSuperclass.isAssignableFrom(declaredClass) ) {
+                assertThat( declaredClass.isAnnotationPresent(JsonComponent.class) )
+                    .as(declaredClass + " requires @" + JsonComponent.class.getSimpleName()).isTrue();
+                assertThat( ReflectionUtil.determineGenericClassParameter(declaredClass, expectedSuperclass, 0))
+                    .as(declaredClass + " must resolve generic parameter of " + expectedSuperclass + " to type of DTO").isEqualTo(dtoClass);
+                assertThat(Modifier.isPublic(declaredClass.getModifiers()) ).as(declaredClass + " must be public").isTrue();
+                assertThat(Modifier.isStatic(declaredClass.getModifiers()) ).as(declaredClass + " must be static").isTrue();
+                assertThat(Modifier.isFinal(declaredClass.getModifiers()) ).as(declaredClass + " must not be final").isFalse();
+                assertThat(Modifier.isAbstract(declaredClass.getModifiers()) ).as(declaredClass + " must not be abstract").isFalse();
+                return;
+            }
+        }
+        fail("no " + expectedSuperclass + " defined for " + dtoClass);
+    }
+
+    private Class<D> getDtoClass() {
+        return ReflectionUtil.determineGenericClassParameter(this.getClass(), AccessMappingsUnitTestBase.class, 0);
     }
 }

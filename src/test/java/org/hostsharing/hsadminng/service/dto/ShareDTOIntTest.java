@@ -3,22 +3,22 @@ package org.hostsharing.hsadminng.service.dto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomUtils;
-import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
-import org.hostsharing.hsadminng.repository.AssetRepository;
+import org.hostsharing.hsadminng.domain.Share;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
-import org.hostsharing.hsadminng.service.AssetService;
-import org.hostsharing.hsadminng.service.AssetValidator;
+import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.MembershipValidator;
+import org.hostsharing.hsadminng.service.ShareService;
+import org.hostsharing.hsadminng.service.ShareValidator;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.mapper.AssetMapper;
-import org.hostsharing.hsadminng.service.mapper.AssetMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
+import org.hostsharing.hsadminng.service.mapper.ShareMapper;
+import org.hostsharing.hsadminng.service.mapper.ShareMapperImpl;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +34,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.EntityManager;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -49,12 +48,12 @@ import static org.mockito.BDDMockito.given;
 @SpringBootTest(classes = {
     CustomerMapperImpl.class,
     MembershipMapperImpl.class,
-    AssetMapperImpl.class,
-    AssetDTO.JsonSerializer.class,
-    AssetDTO.JsonDeserializer.class
+    ShareMapperImpl.class,
+    ShareDTO.JsonSerializer.class,
+    ShareDTO.JsonDeserializer.class
 })
 @RunWith(SpringRunner.class)
-public class AssetDTOIntTest {
+public class ShareDTOIntTest {
 
     private static final Long SOME_CUSTOMER_ID = RandomUtils.nextLong(100, 199);
     private static final Integer SOME_CUSTOMER_REFERENCE = 10001;
@@ -69,8 +68,8 @@ public class AssetDTOIntTest {
         .customer(SOME_CUSTOMER).memberFromDate(SOME_MEMBER_FROM_DATE);
     private static final String SOME_MEMBERSHIP_DISPLAY_LABEL = "Some Customer Name [10001:abc] 2000-12-06 - ...";
 
-    private static final Long SOME_ASSET_ID = RandomUtils.nextLong(300, 399);
-    private static final Asset SOME_ASSET = new Asset().id(SOME_ASSET_ID).membership(SOME_MEMBERSHIP);
+    private static final Long SOME_SHARE_ID = RandomUtils.nextLong(300, 399);
+    private static final Share SOME_SHARE = new Share().id(SOME_SHARE_ID).membership(SOME_MEMBERSHIP);
 
     @Rule
     public MockitoRule mockito = MockitoJUnit.rule();
@@ -79,13 +78,13 @@ public class AssetDTOIntTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private AssetMapper assetMapper;
+    private ShareMapper shareMapper;
 
     @MockBean
-    private AssetRepository assetRepository;
+    private ShareRepository shareRepository;
 
     @MockBean
-    private AssetValidator assetValidator;
+    private ShareValidator shareValidator;
 
     @MockBean
     private CustomerRepository customerRepository;
@@ -97,7 +96,7 @@ public class AssetDTOIntTest {
     private MembershipValidator membershipValidator;
 
     @MockBean
-    private AssetService assetService;
+    private ShareService shareService;
 
     @MockBean
     private EntityManager em;
@@ -106,7 +105,7 @@ public class AssetDTOIntTest {
     public void init() {
         given(customerRepository.findById(SOME_CUSTOMER_ID)).willReturn(Optional.of(SOME_CUSTOMER));
         given(membershipRepository.findById(SOME_MEMBERSHIP_ID)).willReturn(Optional.of(SOME_MEMBERSHIP));
-        given(assetRepository.findById(SOME_ASSET_ID)).willReturn((Optional.of(SOME_ASSET)));
+        given(shareRepository.findById(SOME_SHARE_ID)).willReturn((Optional.of(SOME_SHARE)));
     }
 
     @Test
@@ -115,7 +114,7 @@ public class AssetDTOIntTest {
         // given
         givenAuthenticatedUser();
         givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
-        final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
+        final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
         final String actual = objectMapper.writeValueAsString(given);
@@ -131,7 +130,7 @@ public class AssetDTOIntTest {
         // given
         givenAuthenticatedUser();
         givenUserHavingRole(Role.SUPPORTER);
-        final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
+        final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
         final String actual = objectMapper.writeValueAsString(given);
@@ -146,16 +145,16 @@ public class AssetDTOIntTest {
         givenAuthenticatedUser();
         givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_ASSET_ID)
+            .withFieldValue("id", SOME_SHARE_ID)
             .withFieldValue("remark", "Updated Remark")
             .toString();
 
         // when
-        final Throwable actual = catchThrowable(() -> objectMapper.readValue(json, AssetDTO.class));
+        final Throwable actual = catchThrowable(() -> objectMapper.readValue(json, ShareDTO.class));
 
         // then
         assertThat(actual).isInstanceOfSatisfying(BadRequestAlertException.class, bre ->
-            assertThat(bre.getMessage()).isEqualTo("Update of field AssetDTO.remark prohibited for current user role CONTRACTUAL_CONTACT")
+            assertThat(bre.getMessage()).isEqualTo("Update of field ShareDTO.remark prohibited for current user role CONTRACTUAL_CONTACT")
         );
     }
 
@@ -165,16 +164,16 @@ public class AssetDTOIntTest {
         givenAuthenticatedUser();
         givenUserHavingRole(Role.ADMIN);
         final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_ASSET_ID)
+            .withFieldValue("id", SOME_SHARE_ID)
             .withFieldValue("remark", "Updated Remark")
             .toString();
 
         // when
-        final AssetDTO actual = objectMapper.readValue(json, AssetDTO.class);
+        final ShareDTO actual = objectMapper.readValue(json, ShareDTO.class);
 
         // then
-        final AssetDTO expected = new AssetDTO();
-        expected.setId(SOME_ASSET_ID);
+        final ShareDTO expected = new ShareDTO();
+        expected.setId(SOME_SHARE_ID);
         expected.setMembershipId(SOME_MEMBERSHIP_ID);
         expected.setRemark("Updated Remark");
         expected.setMembershipDisplayLabel(SOME_MEMBERSHIP_DISPLAY_LABEL);
@@ -183,25 +182,24 @@ public class AssetDTOIntTest {
 
     // --- only test fixture below ---
 
-    private String createExpectedJSon(AssetDTO dto) {
+    private String createExpectedJSon(ShareDTO dto) {
         return new JSonBuilder()
             .withFieldValueIfPresent("id", dto.getId())
             .withFieldValueIfPresent("documentDate", dto.getDocumentDate().toString())
             .withFieldValueIfPresent("valueDate", dto.getValueDate().toString())
             .withFieldValueIfPresent("action", dto.getAction().name())
-            .withFieldValueIfPresent("amount", dto.getAmount().doubleValue())
+            .withFieldValueIfPresent("quantity", dto.getQuantity())
             .withFieldValueIfPresent("remark", dto.getRemark())
             .withFieldValueIfPresent("membershipId", dto.getMembershipId())
             .withFieldValue("membershipDisplayLabel", dto.getMembershipDisplayLabel())
             .toString();
     }
 
-
-    private AssetDTO createSomeAssetDTO(final long id) {
-        final AssetDTO given = new AssetDTO();
+    private ShareDTO createSomeShareDTO(final long id) {
+        final ShareDTO given = new ShareDTO();
         given.setId(id);
-        given.setAction(AssetAction.PAYMENT);
-        given.setAmount(new BigDecimal("512.01"));
+        given.setAction(ShareAction.SUBSCRIPTION);
+        given.setQuantity(16);
         given.setDocumentDate(LocalDate.parse("2019-04-27"));
         given.setValueDate(LocalDate.parse("2019-04-28"));
         given.setMembershipId(SOME_MEMBERSHIP_ID);

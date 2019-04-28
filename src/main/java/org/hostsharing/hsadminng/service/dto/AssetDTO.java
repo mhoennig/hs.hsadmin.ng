@@ -150,17 +150,17 @@ public class AssetDTO implements Serializable, AccessMappings {
     }
 
     @JsonComponent
-    public static class AssetJsonSerializer extends JsonSerializerWithAccessFilter<AssetDTO> {
+    public static class JsonSerializer extends JsonSerializerWithAccessFilter<AssetDTO> {
 
-        public AssetJsonSerializer(final ApplicationContext ctx) {
+        public JsonSerializer(final ApplicationContext ctx) {
             super(ctx);
         }
     }
 
     @JsonComponent
-    public static class AssetJsonDeserializer extends JsonDeserializerWithAccessFilter<AssetDTO> {
+    public static class JsonDeserializer extends JsonDeserializerWithAccessFilter<AssetDTO> {
 
-        public AssetJsonDeserializer(final ApplicationContext ctx) {
+        public JsonDeserializer(final ApplicationContext ctx) {
             super(ctx);
         }
     }

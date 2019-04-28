@@ -3,10 +3,9 @@ package org.hostsharing.hsadminng.service.dto;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.ShareService;
-import org.hostsharing.hsadminng.service.accessfilter.AccessFor;
-import org.hostsharing.hsadminng.service.accessfilter.ParentId;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.accessfilter.SelfId;
+import org.hostsharing.hsadminng.service.accessfilter.*;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -17,7 +16,7 @@ import java.util.Objects;
 /**
  * A DTO for the Share entity.
  */
-public class ShareDTO implements Serializable {
+public class ShareDTO implements Serializable, AccessMappings {
 
     @SelfId(resolver = ShareService.class)
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
@@ -40,14 +39,14 @@ public class ShareDTO implements Serializable {
     private Integer quantity;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
     private String remark;
 
     @ParentId(resolver = MembershipService.class)
     @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private Long membershipId;
 
-    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(update = Role.IGNORED, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
     private String membershipDisplayLabel;
 
     public Long getId() {
@@ -145,7 +144,23 @@ public class ShareDTO implements Serializable {
             ", quantity=" + getQuantity() +
             ", remark='" + getRemark() + "'" +
             ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipDisplayLabel() + "'" +
+            ", membershipDisplayLabel='" + getMembershipDisplayLabel() + "'" +
             "}";
+    }
+
+    @JsonComponent
+    public static class JsonSerializer extends JsonSerializerWithAccessFilter<ShareDTO> {
+
+        public JsonSerializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
+    }
+
+    @JsonComponent
+    public static class JsonDeserializer extends JsonDeserializerWithAccessFilter<ShareDTO> {
+
+        public JsonDeserializer(final ApplicationContext ctx) {
+            super(ctx);
+        }
     }
 }

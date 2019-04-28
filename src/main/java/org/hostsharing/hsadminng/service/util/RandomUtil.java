@@ -1,9 +1,10 @@
 package org.hostsharing.hsadminng.service.util;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 
 /**
- * Utility class for generating random Strings.
+ * Utility class for generating random Values.
  */
 public final class RandomUtil {
 
@@ -37,5 +38,15 @@ public final class RandomUtil {
      */
     public static String generateResetKey() {
         return RandomStringUtils.randomNumeric(DEF_COUNT);
+    }
+
+    /**
+     * Generate a random enum value for a given enum type.
+     *
+     * @return the generated enum value
+     */
+    public static  <E extends Enum<E>> E generateEnumValue(final Class<E> enumType) {
+        final E[] enumValues = enumType.getEnumConstants();
+        return enumValues[RandomUtils.nextInt(0, enumValues.length-1)];
     }
 }
