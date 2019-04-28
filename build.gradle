@@ -240,14 +240,17 @@ pitest {
                         'org.hostsharing.hsadminng.**Criteria',
                         'org.hostsharing.hsadminng.**MapperImpl',
                         'org.hostsharing.hsadminng.aop.logging.*',
+                        'org.hostsharing.hsadminng.web.rest.vm.*',
+                        'org.hostsharing.hsadminng.security.jwt.TokenProvider',
                         'org.hostsharing.hsadminng.web.api.*' // API helpers, not the API itself
                       ]
     threads = 2
 
-    // Do not set these limit lower! 90% each might sound good, but keep in mind:
-    // 90%*90% means that ~81% of the code are properly covered by automated tests.
-    mutationThreshold = 90
-    coverageThreshold = 90
+    // Do not set these limit lower! 96% each might sound great, but keep in mind:
+    // 91%*91% means that ~8% of the code are NOT properly covered by automated tests
+    // (100%-94%*96% = ~8%). Not counting defects which come through missing code :-)
+    coverageThreshold = 94
+    mutationThreshold = 96
 
     outputFormats = ['XML', 'HTML']
     timestampedReports = false
