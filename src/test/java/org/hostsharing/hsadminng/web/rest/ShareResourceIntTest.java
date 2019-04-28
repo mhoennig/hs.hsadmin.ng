@@ -37,6 +37,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 /**
  * Test class for the ShareResource REST controller.
  *
@@ -109,7 +110,7 @@ public class ShareResourceIntTest {
 
     /**
      * Create an entity for this test.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -130,7 +131,7 @@ public class ShareResourceIntTest {
 
     /**
      * Create a persistent entity related to the given persistent membership for testing purposes.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -180,10 +181,10 @@ public class ShareResourceIntTest {
 
     @Test
     @Transactional
-    public void createShareWithExistingId() throws Exception {
+    public void createShareWithIdForNonExistingEntity() throws Exception {
         int databaseSizeBeforeCreate = shareRepository.findAll().size();
 
-        // Create the Share with an existing ID
+        // Create the Share with an ID
         share.setId(1L);
         ShareDTO shareDTO = shareMapper.toDto(share);
 
@@ -196,6 +197,27 @@ public class ShareResourceIntTest {
         // Validate the Share in the database
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeCreate);
+    }
+
+    @Test
+    @Transactional
+    public void createShareWithExistingExistingEntity() throws Exception {
+        // Initialize the database
+        shareRepository.saveAndFlush(share);
+        int databaseSizeBeforeCreate = shareRepository.findAll().size();
+
+        // Create the Share with the ID of an existing ID
+        ShareDTO shareDTO = shareMapper.toDto(share);
+
+        // An entity with an existing ID cannot be created, so this API call must fail
+        restShareMockMvc.perform(post("/api/shares")
+            .contentType(TestUtil.APPLICATION_JSON_UTF8)
+            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+            .andExpect(status().isBadRequest());
+
+        // Validate the Share in the database
+        List<Share> assetList = shareRepository.findAll();
+        assertThat(assetList).hasSize(databaseSizeBeforeCreate);
     }
 
     @Test
@@ -291,7 +313,7 @@ public class ShareResourceIntTest {
             .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
             .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
-    
+
     @Test
     @Transactional
     public void getShare() throws Exception {
