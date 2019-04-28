@@ -5,7 +5,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class MockSecurityContext {
 
@@ -15,7 +15,7 @@ public class MockSecurityContext {
         SecurityContextHolder.setContext(securityContext);
         SecurityUtils.clearUserRoles();
 
-        assertThat(SecurityUtils.getCurrentUserLogin()).describedAs("precondition failed").hasValue("dummyUser");
+        assumeThat(SecurityUtils.getCurrentUserLogin()).hasValue("dummyUser");
     }
 
     public static void givenUserHavingRole(final Class<?> onClass, final Long onId, final Role role) {

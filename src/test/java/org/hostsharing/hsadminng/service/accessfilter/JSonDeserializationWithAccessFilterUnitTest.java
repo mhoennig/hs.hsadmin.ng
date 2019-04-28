@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
 import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
@@ -142,7 +143,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeRestrictedBigDecimalFieldIfUnchangedByCompareTo() throws IOException {
         // given
-        assertThat(SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE).as("precondition failed").isNotEqualTo(SOME_BIG_DECIMAL);
+        assumeThat(SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE).isNotEqualTo(SOME_BIG_DECIMAL);
         givenJSonTree(asJSon(
             ImmutablePair.of("id", 1234L),
             ImmutablePair.of("customerId", 888L),
