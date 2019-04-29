@@ -6,11 +6,13 @@ You'll often need to execute `./gradlew`, therefore we suggest to define this al
 
     alias gw='./gradlew'
 
-## Building the Application with Test Execution
+## Frequent Tasks
+
+### Building the Application with Test Execution
 
 gw build
 
-## Starting the Application
+### Starting the Application
 
 Either simply:
 
@@ -20,16 +22,16 @@ or with a specific port:
 
     SERVER_PORT=8081 ./gradlew bootRun
 
-## Running JUnit tests with branch coverage
+### Running JUnit tests with branch coverage
 
-### for IntelliJ IDEA
+#### for IntelliJ IDEA
 
 see: https://confluence.jetbrains.com/display/IDEADEV/IDEA+Coverage+Runner
 
 Either apply it to specific test configurations or,
 better, delete the previous test configurations and amend the JUnit template.
 
-## Git Workflow
+## Git Workflow for JHipster Generator
 
 The jhipster-generated git branch tracks the history of the JDL model file
 and the generated source code. The project has to be resetted to a clean state
@@ -64,7 +66,7 @@ and the generated source code. The project has to be resetted to a clean state
     git checkout master
     git merge jhipster-generated
 
-## HOWTO do this and that
+## HOWTO do This and That
 
 There are git tags on some commits which show how to add certian features.
 
