@@ -64,14 +64,8 @@ public class SepaMandate implements Serializable {
     private Customer customer;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public Long getId() {
         return id;
-    }
-
-    public SepaMandate id(final Long id) {
-        this.id = id;
-        return this;
     }
 
     public void setId(Long id) {

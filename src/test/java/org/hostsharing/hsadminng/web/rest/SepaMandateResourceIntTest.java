@@ -6,8 +6,6 @@ import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
 import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -106,9 +104,6 @@ public class SepaMandateResourceIntTest {
 
     @Before
     public void setup() {
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
-
         MockitoAnnotations.initMocks(this);
         final SepaMandateResource sepaMandateResource = new SepaMandateResource(sepaMandateService, sepaMandateQueryService);
         this.restSepaMandateMockMvc = MockMvcBuilders.standaloneSetup(sepaMandateResource)
@@ -178,7 +173,6 @@ public class SepaMandateResourceIntTest {
 
         // Create the SepaMandate
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
-        sepaMandateDTO.setCustomerPrefix(null);
         restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
@@ -287,15 +281,15 @@ public class SepaMandateResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(sepaMandate.getId().intValue())))
-            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
-            .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN)))
-            .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC)))
+            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE.toString())))
+            .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN.toString())))
+            .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC.toString())))
             .andExpect(jsonPath("$.[*].grantingDocumentDate").value(hasItem(DEFAULT_GRANTING_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].revokationDocumentDate").value(hasItem(DEFAULT_REVOKATION_DOCUMENT_DATE.toString())))
             .andExpect(jsonPath("$.[*].validFromDate").value(hasItem(DEFAULT_VALID_FROM_DATE.toString())))
             .andExpect(jsonPath("$.[*].validUntilDate").value(hasItem(DEFAULT_VALID_UNTIL_DATE.toString())))
             .andExpect(jsonPath("$.[*].lastUsedDate").value(hasItem(DEFAULT_LAST_USED_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
     
     @Test
@@ -309,15 +303,15 @@ public class SepaMandateResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(sepaMandate.getId().intValue()))
-            .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE))
-            .andExpect(jsonPath("$.iban").value(DEFAULT_IBAN))
-            .andExpect(jsonPath("$.bic").value(DEFAULT_BIC))
+            .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE.toString()))
+            .andExpect(jsonPath("$.iban").value(DEFAULT_IBAN.toString()))
+            .andExpect(jsonPath("$.bic").value(DEFAULT_BIC.toString()))
             .andExpect(jsonPath("$.grantingDocumentDate").value(DEFAULT_GRANTING_DOCUMENT_DATE.toString()))
             .andExpect(jsonPath("$.revokationDocumentDate").value(DEFAULT_REVOKATION_DOCUMENT_DATE.toString()))
             .andExpect(jsonPath("$.validFromDate").value(DEFAULT_VALID_FROM_DATE.toString()))
             .andExpect(jsonPath("$.validUntilDate").value(DEFAULT_VALID_UNTIL_DATE.toString()))
             .andExpect(jsonPath("$.lastUsedDate").value(DEFAULT_LAST_USED_DATE.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
+            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -886,7 +880,12 @@ public class SepaMandateResourceIntTest {
         // Disconnect from session so that the updates on updatedSepaMandate are not directly saved in db
         em.detach(updatedSepaMandate);
         updatedSepaMandate
+            .reference(UPDATED_REFERENCE)
+            .iban(UPDATED_IBAN)
+            .bic(UPDATED_BIC)
+            .grantingDocumentDate(UPDATED_GRANTING_DOCUMENT_DATE)
             .revokationDocumentDate(UPDATED_REVOKATION_DOCUMENT_DATE)
+            .validFromDate(UPDATED_VALID_FROM_DATE)
             .validUntilDate(UPDATED_VALID_UNTIL_DATE)
             .lastUsedDate(UPDATED_LAST_USED_DATE)
             .remark(UPDATED_REMARK);
@@ -901,12 +900,12 @@ public class SepaMandateResourceIntTest {
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
         assertThat(sepaMandateList).hasSize(databaseSizeBeforeUpdate);
         SepaMandate testSepaMandate = sepaMandateList.get(sepaMandateList.size() - 1);
-        assertThat(testSepaMandate.getReference()).isEqualTo(DEFAULT_REFERENCE);
-        assertThat(testSepaMandate.getIban()).isEqualTo(DEFAULT_IBAN);
-        assertThat(testSepaMandate.getBic()).isEqualTo(DEFAULT_BIC);
-        assertThat(testSepaMandate.getGrantingDocumentDate()).isEqualTo(DEFAULT_GRANTING_DOCUMENT_DATE);
+        assertThat(testSepaMandate.getReference()).isEqualTo(UPDATED_REFERENCE);
+        assertThat(testSepaMandate.getIban()).isEqualTo(UPDATED_IBAN);
+        assertThat(testSepaMandate.getBic()).isEqualTo(UPDATED_BIC);
+        assertThat(testSepaMandate.getGrantingDocumentDate()).isEqualTo(UPDATED_GRANTING_DOCUMENT_DATE);
         assertThat(testSepaMandate.getRevokationDocumentDate()).isEqualTo(UPDATED_REVOKATION_DOCUMENT_DATE);
-        assertThat(testSepaMandate.getValidFromDate()).isEqualTo(DEFAULT_VALID_FROM_DATE);
+        assertThat(testSepaMandate.getValidFromDate()).isEqualTo(UPDATED_VALID_FROM_DATE);
         assertThat(testSepaMandate.getValidUntilDate()).isEqualTo(UPDATED_VALID_UNTIL_DATE);
         assertThat(testSepaMandate.getLastUsedDate()).isEqualTo(UPDATED_LAST_USED_DATE);
         assertThat(testSepaMandate.getRemark()).isEqualTo(UPDATED_REMARK);
