@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class SepaMandateService {
+public class SepaMandateService implements IdToDtoResolver<SepaMandateDTO> {
 
     private final Logger log = LoggerFactory.getLogger(SepaMandateService.class);
 
