@@ -40,7 +40,7 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
             "validUntilDate", "revokationDocumentDate");
         readAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
             "grantingDocumentDate", "bic", "id", "validUntilDate", "customerId", "validFromDate", "iban",
-            "revokationDocumentDate", "customerPrefix", "lastUsedDate", "reference");
+            "revokationDocumentDate", "customerDisplayLabel", "lastUsedDate", "reference");
     }
 
     @Test
@@ -72,7 +72,7 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
         dto.setBic("BIC1234");
         dto.setRemark("Some Remark");
         dto.setCustomerId(parentId);
-        dto.setCustomerPrefix("abc");
+        dto.setCustomerDisplayLabel("abc");
         return dto;
     }
 
@@ -90,7 +90,7 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
         dto.setBic(RandomStringUtils.randomAlphanumeric(10).toUpperCase());
         dto.setRemark(RandomStringUtils.randomAlphanumeric(20).toUpperCase());
         dto.setCustomerId(parentId);
-        dto.setCustomerPrefix(RandomStringUtils.randomAlphabetic(3).toLowerCase());
+        dto.setCustomerDisplayLabel(RandomStringUtils.randomAlphabetic(3).toLowerCase());
         return dto;
     }
 }

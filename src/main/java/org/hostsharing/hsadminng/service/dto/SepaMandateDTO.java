@@ -59,7 +59,7 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
     private Long customerId;
 
     @AccessFor(update = Role.IGNORED, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
-    private String customerPrefix;
+    private String customerDisplayLabel;
 
     public Long getId() {
         return id;
@@ -149,12 +149,12 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
         this.customerId = customerId;
     }
 
-    public String getCustomerPrefix() {
-        return customerPrefix;
+    public String getCustomerDisplayLabel() {
+        return customerDisplayLabel;
     }
 
-    public void setCustomerPrefix(String customerPrefix) {
-        this.customerPrefix = customerPrefix;
+    public void setCustomerDisplayLabel(String customerDisplayLabel) {
+        this.customerDisplayLabel = customerDisplayLabel;
     }
 
     @Override
@@ -192,7 +192,7 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
             ", lastUsedDate='" + getLastUsedDate() + "'" +
             ", remark='" + getRemark() + "'" +
             ", customer=" + getCustomerId() +
-            ", customerPrefix='" + getCustomerPrefix() + "'" +
+            ", customerDisplayLabel='" + getCustomerDisplayLabel() + "'" +
             "}";
     }
 

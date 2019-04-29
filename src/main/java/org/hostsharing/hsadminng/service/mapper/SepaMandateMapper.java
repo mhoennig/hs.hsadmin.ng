@@ -1,9 +1,11 @@
 package org.hostsharing.hsadminng.service.mapper;
 
-import org.hostsharing.hsadminng.domain.*;
+import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
-
-import org.mapstruct.*;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 /**
  * Mapper for the entity SepaMandate and its DTO SepaMandateDTO.
@@ -12,8 +14,13 @@ import org.mapstruct.*;
 public interface SepaMandateMapper extends EntityMapper<SepaMandateDTO, SepaMandate> {
 
     @Mapping(source = "customer.id", target = "customerId")
-    @Mapping(source = "customer.prefix", target = "customerPrefix")
+    @Mapping(target = "customerDisplayLabel", ignore = true)
     SepaMandateDTO toDto(SepaMandate sepaMandate);
+
+    @AfterMapping
+    default void setDisplayLabels(final @MappingTarget SepaMandateDTO dto, final SepaMandate entity) {
+        dto.setCustomerDisplayLabel(CustomerMapper.displayLabel(entity.getCustomer()));
+    }
 
     @Mapping(source = "customerId", target = "customer")
     SepaMandate toEntity(SepaMandateDTO sepaMandateDTO);

@@ -57,6 +57,7 @@ public class SepaMandateDTOIntTest {
     private static final Integer SOME_CUSTOMER_REFERENCE = 10001;
     private static final String SOME_CUSTOMER_PREFIX = "abc";
     private static final String SOME_CUSTOMER_NAME = "Some Customer Name";
+    private static final String SOME_CUSTOMER_DISPLAY_LABEL = "Some Customer Name [10001:abc]";
     private static final Customer SOME_CUSTOMER = new Customer().id(SOME_CUSTOMER_ID)
         .reference(SOME_CUSTOMER_REFERENCE).prefix(SOME_CUSTOMER_PREFIX).name(SOME_CUSTOMER_NAME);
 
@@ -164,7 +165,7 @@ public class SepaMandateDTOIntTest {
         expected.setId(SOME_SEPA_MANDATE_ID);
         expected.setCustomerId(SOME_CUSTOMER_ID);
         expected.setRemark("Updated Remark");
-        expected.setCustomerPrefix(SOME_CUSTOMER_PREFIX);
+        expected.setCustomerDisplayLabel(SOME_CUSTOMER_DISPLAY_LABEL);
         assertThat(actual).isEqualToIgnoringGivenFields(expected, "displayLabel");
     }
 
@@ -183,7 +184,7 @@ public class SepaMandateDTOIntTest {
             .withFieldValueIfPresent("lastUsedDate", Objects.toString(dto.getLastUsedDate()))
             .withFieldValueIfPresent("remark", dto.getRemark())
             .withFieldValueIfPresent("customerId", dto.getCustomerId())
-            .withFieldValue("customerPrefix", dto.getCustomerPrefix())
+            .withFieldValue("customerDisplayLabel", dto.getCustomerDisplayLabel())
             .toString();
     }
 }

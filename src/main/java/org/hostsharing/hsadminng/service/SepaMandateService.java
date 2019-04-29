@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.util.Optional;
 
 /**
@@ -22,11 +23,14 @@ public class SepaMandateService implements IdToDtoResolver<SepaMandateDTO> {
 
     private final Logger log = LoggerFactory.getLogger(SepaMandateService.class);
 
+    private final EntityManager em;
+
     private final SepaMandateRepository sepaMandateRepository;
 
     private final SepaMandateMapper sepaMandateMapper;
 
-    public SepaMandateService(SepaMandateRepository sepaMandateRepository, SepaMandateMapper sepaMandateMapper) {
+    public SepaMandateService(final EntityManager em, final SepaMandateRepository sepaMandateRepository, final SepaMandateMapper sepaMandateMapper) {
+        this.em = em;
         this.sepaMandateRepository = sepaMandateRepository;
         this.sepaMandateMapper = sepaMandateMapper;
     }
@@ -41,6 +45,8 @@ public class SepaMandateService implements IdToDtoResolver<SepaMandateDTO> {
         log.debug("Request to save SepaMandate : {}", sepaMandateDTO);
         SepaMandate sepaMandate = sepaMandateMapper.toEntity(sepaMandateDTO);
         sepaMandate = sepaMandateRepository.save(sepaMandate);
+        em.flush();
+        em.refresh(sepaMandate);
         return sepaMandateMapper.toDto(sepaMandate);
     }
 

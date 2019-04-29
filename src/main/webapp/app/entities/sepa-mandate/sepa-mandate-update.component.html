@@ -124,7 +124,7 @@
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.sepaMandate.customer" for="field_customer">Customer</label>
                     <select class="form-control" id="field_customer" name="customer" [(ngModel)]="sepaMandate.customerId"  required>
                         <option *ngIf="!editForm.value.customer" [ngValue]="null" selected></option>
-                        <option [ngValue]="customerOption.id" *ngFor="let customerOption of customers; trackBy: trackCustomerById">{{customerOption.prefix}}</option>
+                        <option [ngValue]="customerOption.id" *ngFor="let customerOption of customers; trackBy: trackCustomerById">{{customerOption.displayLabel}}</option>
                     </select>
                 </div>
                 <div [hidden]="!(editForm.controls.customer?.dirty && editForm.controls.customer?.invalid)">

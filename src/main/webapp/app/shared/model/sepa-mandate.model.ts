@@ -11,7 +11,7 @@ export interface ISepaMandate {
     validUntilDate?: Moment;
     lastUsedDate?: Moment;
     remark?: string;
-    customerPrefix?: string;
+    customerDisplayLabel?: string;
     customerId?: number;
 }
 
@@ -27,7 +27,7 @@ export class SepaMandate implements ISepaMandate {
         public validUntilDate?: Moment,
         public lastUsedDate?: Moment,
         public remark?: string,
-        public customerPrefix?: string,
+        public customerDisplayLabel?: string,
         public customerId?: number
     ) {}
 }

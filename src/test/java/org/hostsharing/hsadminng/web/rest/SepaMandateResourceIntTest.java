@@ -179,7 +179,7 @@ public class SepaMandateResourceIntTest {
 
         // Create the SepaMandate
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
-        sepaMandateDTO.setCustomerPrefix(null);
+        sepaMandateDTO.setCustomerDisplayLabel(null);
         sepaMandateDTO.setRemark(null);
         sepaMandateDTO.setRevokationDocumentDate(null);
         sepaMandateDTO.setLastUsedDate(null);
