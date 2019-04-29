@@ -31,7 +31,7 @@ public class JSonAccessFilterTestFixture {
         return dto;
     }
 
-    static class GivenCustomerDto extends FluentBuilder<GivenCustomerDto> {
+    static class GivenCustomerDto implements FluentBuilder<GivenCustomerDto> {
         @SelfId(resolver = GivenService.class)
         @AccessFor(read = ANYBODY)
         Long id;
@@ -44,7 +44,7 @@ public class JSonAccessFilterTestFixture {
     static abstract class GivenCustomerService implements IdToDtoResolver<GivenCustomerDto> {
     }
 
-    static class GivenDto extends FluentBuilder<GivenDto> {
+    static class GivenDto implements FluentBuilder<GivenDto> {
         @SelfId(resolver = GivenService.class)
         @AccessFor(read = ANYBODY)
         Long id;
@@ -109,7 +109,7 @@ public class JSonAccessFilterTestFixture {
     static abstract class GivenChildService implements IdToDtoResolver<GivenChildDto> {
     }
 
-    public static class GivenChildDto extends FluentBuilder<GivenChildDto> {
+    public static class GivenChildDto implements FluentBuilder<GivenChildDto> {
 
         @SelfId(resolver = GivenChildService.class)
         @AccessFor(read = Role.ANY_CUSTOMER_USER)

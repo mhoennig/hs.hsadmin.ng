@@ -14,7 +14,7 @@ import java.util.Objects;
 /**
  * A DTO for the Customer entity.
  */
-public class CustomerDTO extends FluentBuilder<CustomerDTO> implements AccessMappings {
+public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO>  {
 
     @SelfId(resolver = CustomerService.class)
     @AccessFor(read = Role.ANY_CUSTOMER_USER)

@@ -73,18 +73,20 @@ public class JSonDeserializationWithAccessFilterUnitTest {
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenService.class)).willReturn(givenService);
         given(givenService.findOne(1234L)).willReturn(Optional.of(new GivenDto()
-            .with(dto -> dto.id = 1234L)
-            .with(dto -> dto.customerId = 888L)
-            .with(dto -> dto.openIntegerField = 11111)
-            .with(dto -> dto.openPrimitiveIntField = 2222)
-            .with(dto -> dto.openLongField = 33333333333333L)
-            .with(dto -> dto.openPrimitiveLongField = 44444444L)
-            .with(dto -> dto.openBooleanField = true)
-            .with(dto -> dto.openPrimitiveBooleanField = false)
-            .with(dto -> dto.openBigDecimalField = SOME_BIG_DECIMAL)
-            .with(dto -> dto.openStringField = "3333")
-            .with(dto -> dto.restrictedField = "initial value of restricted field")
-            .with(dto -> dto.restrictedBigDecimalField = SOME_BIG_DECIMAL)
+            .with( dto -> {
+                dto.id = 1234L;
+                dto.customerId = 888L;
+                dto.openIntegerField = 11111;
+                dto.openPrimitiveIntField = 2222;
+                dto.openLongField = 33333333333333L;
+                dto.openPrimitiveLongField = 44444444L;
+                dto.openBooleanField = true;
+                dto.openPrimitiveBooleanField = false;
+                dto.openBigDecimalField = SOME_BIG_DECIMAL;
+                dto.openStringField = "3333";
+                dto.restrictedField = "initial value of restricted field";
+                dto.restrictedBigDecimalField = SOME_BIG_DECIMAL;
+            })
         ));
         given(autowireCapableBeanFactory.createBean(GivenCustomerService.class)).willReturn(givenCustomerService);
         given(givenCustomerService.findOne(888L)).willReturn(Optional.of(new GivenCustomerDto()

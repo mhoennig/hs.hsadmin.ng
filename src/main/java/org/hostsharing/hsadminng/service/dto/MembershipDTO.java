@@ -8,14 +8,13 @@ import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
 
 /**
  * A DTO for the Membership entity.
  */
-public class MembershipDTO extends FluentBuilder<MembershipDTO> implements Serializable, AccessMappings {
+public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDTO>  {
 
     @SelfId(resolver = MembershipService.class)
     @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
