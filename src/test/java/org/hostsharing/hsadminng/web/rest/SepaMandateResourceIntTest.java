@@ -53,23 +53,17 @@ public class SepaMandateResourceIntTest {
     private static final String DEFAULT_BIC = "AAAAAAAAAA";
     private static final String UPDATED_BIC = "BBBBBBBBBB";
 
-    private static final LocalDate DEFAULT_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
-
     private static final LocalDate DEFAULT_VALID_FROM_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_VALID_FROM_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_VALID_UNTIL_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_VALID_UNTIL_DATE = LocalDate.now(ZoneId.systemDefault());
 
-    private static final LocalDate DEFAULT_LAST_USED = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_LAST_USED = LocalDate.now(ZoneId.systemDefault());
+    private static final LocalDate DEFAULT_GRANTING_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
+    private static final LocalDate UPDATED_GRANTING_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_REVOKATION_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_REVOKATION_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
-
-    private static final LocalDate DEFAULT_GRANTING_DOCUMENT_DATE = LocalDate.ofEpochDay(0L);
-    private static final LocalDate UPDATED_GRANTING_DOCUMENT_DATE = LocalDate.now(ZoneId.systemDefault());
 
     private static final LocalDate DEFAULT_LAST_USED_DATE = LocalDate.ofEpochDay(0L);
     private static final LocalDate UPDATED_LAST_USED_DATE = LocalDate.now(ZoneId.systemDefault());
@@ -159,7 +153,7 @@ public class SepaMandateResourceIntTest {
             .grantingDocumentDate(DEFAULT_GRANTING_DOCUMENT_DATE)
             .validFromDate(DEFAULT_VALID_FROM_DATE)
             .validUntilDate(DEFAULT_VALID_UNTIL_DATE)
-            .lastUsedDate(DEFAULT_LAST_USED)
+            .lastUsedDate(DEFAULT_LAST_USED_DATE)
             .revokationDocumentDate(DEFAULT_REVOKATION_DOCUMENT_DATE)
             .remark(DEFAULT_REMARK);
         // Add required entity
