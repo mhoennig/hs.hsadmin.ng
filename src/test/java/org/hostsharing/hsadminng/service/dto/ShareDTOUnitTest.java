@@ -11,6 +11,10 @@ import java.time.LocalDate;
 
 public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
 
+    public ShareDTOUnitTest() {
+        super(ShareDTO.class, ShareDTOUnitTest::createSampleDTO, ShareDTOUnitTest::createRandomDTO);
+    }
+
     @Test
     public void shouldHaveProperAccessForAdmin() {
         initAccessFor(ShareDTO.class, Role.ADMIN).shouldBeExactlyFor(
@@ -43,11 +47,10 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
 
     // --- only test fixture below ---
 
-    @Override
-    public ShareDTO createSampleDto(final Long id) {
+    public static ShareDTO createSampleDTO(final Long id, final Long parentId) {
         final ShareDTO dto = new ShareDTO();
         dto.setId(id);
-        dto.setMembershipId(888L);
+        dto.setMembershipId(parentId);
         dto.setAction(ShareAction.SUBSCRIPTION);
         dto.setQuantity(3);
         dto.setDocumentDate(LocalDate.parse("2019-04-22"));
@@ -57,11 +60,10 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
         return dto;
     }
 
-    @Override
-    public ShareDTO createRandomDto(final Long id) {
+    public static ShareDTO createRandomDTO(final Long id, final Long parentId) {
         final ShareDTO dto = new ShareDTO();
         dto.setId(id);
-        dto.setMembershipId(RandomUtils.nextLong());
+        dto.setMembershipId(parentId);
         dto.setAction(RandomUtil.generateEnumValue(ShareAction.class));
         dto.setQuantity(RandomUtils.nextInt());
         final LocalDate randomDate = LocalDate.parse("2000-12-07").plusDays(RandomUtils.nextInt(1, 999));

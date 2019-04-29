@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,9 +26,19 @@ import static org.junit.Assert.fail;
  */
 public abstract class AccessMappingsUnitTestBase<D> {
 
+    private final Class<? extends AccessMappings> dtoClass;
+    private final BiFunction<Long, Long, D> createSampleDTO;
+    private final BiFunction<Long, Long, D> createRandomDTO;
+
+    public AccessMappingsUnitTestBase(Class<? extends AccessMappings> dtoClass, final BiFunction<Long, Long, D> createSampleDTO, final BiFunction<Long, Long, D> createRandomDTO) {
+        this.dtoClass = dtoClass;
+        this.createSampleDTO = createSampleDTO;
+        this.createRandomDTO = createRandomDTO;
+    }
+
     @Test
     public void shouldConvertToString() {
-        final D sampleDto = createSampleDto(1234L);
+        final D sampleDto = createSampleDTO.apply(1234L, 77L);
         final String dtoAsString = dtoToString(sampleDto);
         assertThat(sampleDto.toString()).isEqualTo(dtoAsString);
     }
@@ -35,16 +46,16 @@ public abstract class AccessMappingsUnitTestBase<D> {
     @Test
     @SuppressWarnings("all")
     public void shouldImplementEqualsJustUsingClassAndId() {
-        final D dto = createSampleDto(1234L);
+        final D dto = createSampleDTO.apply(1234L, 77L);
         assertThat(dto.equals(dto)).isTrue();
 
-        final D dtoWithSameId = createRandomDto(1234L);
+        final D dtoWithSameId = createSampleDTO.apply(1234L, 77L);
         assertThat(dto.equals(dtoWithSameId)).isTrue();
 
-        final D dtoWithAnotherId = createRandomDto(RandomUtils.nextLong(2000, 9999));
+        final D dtoWithAnotherId = createSampleDTO.apply(RandomUtils.nextLong(2000, 9999), 77L);
         assertThat(dtoWithAnotherId.equals(dtoWithSameId)).isFalse();
 
-        final D dtoWithoutId = createRandomDto(null);
+        final D dtoWithoutId = createSampleDTO.apply(null, RandomUtils.nextLong());
         assertThat(dto.equals(dtoWithoutId)).isFalse();
         assertThat(dtoWithoutId.equals(dto)).isFalse();
 
@@ -55,16 +66,16 @@ public abstract class AccessMappingsUnitTestBase<D> {
     @Test
     public void shouldImplementHashCodeJustUsingClassAndId() {
         final long randomId = RandomUtils.nextLong();
-        final D dto = createSampleDto(randomId);
+        final D dto = createSampleDTO.apply(randomId, RandomUtils.nextLong());
         assertThat(dto.hashCode()).isEqualTo(Objects.hashCode(randomId));
 
-        final D dtoWithoutId = createRandomDto(null);
+        final D dtoWithoutId = createSampleDTO.apply(null, RandomUtils.nextLong());
         assertThat(dtoWithoutId.hashCode()).isEqualTo(Objects.hashCode(null));
     }
 
     @Test
     public void shouldImplementAccessMappings() {
-        assertThat(getDtoClass().getInterfaces()).as("must implement " + AccessMappings.class).contains(AccessMappings.class);
+        assertThat(dtoClass.getInterfaces()).as("must implement " + AccessMappings.class).contains(AccessMappings.class);
     }
 
     @Test
@@ -78,10 +89,6 @@ public abstract class AccessMappingsUnitTestBase<D> {
     }
 
     // --- only test fixture below ---
-
-    protected abstract D createSampleDto(final Long id);
-
-    protected abstract D createRandomDto(final Long id);
 
     protected AccessRightsMatcher initAccessFor(final Class<D> dtoClass, final Role role) {
         return new AccessRightsMatcher(dtoClass, role, AccessFor::init);
@@ -195,24 +202,19 @@ public abstract class AccessMappingsUnitTestBase<D> {
     }
 
     private void shouldImplementJsonComponent(final Class<?> expectedSuperclass) {
-        final Class<D> dtoClass = getDtoClass();
-        for (Class<?> declaredClass: dtoClass.getDeclaredClasses()) {
-            if (expectedSuperclass.isAssignableFrom(declaredClass) ) {
-                assertThat( declaredClass.isAnnotationPresent(JsonComponent.class) )
+        for (Class<?> declaredClass : dtoClass.getDeclaredClasses()) {
+            if (expectedSuperclass.isAssignableFrom(declaredClass)) {
+                assertThat(declaredClass.isAnnotationPresent(JsonComponent.class))
                     .as(declaredClass + " requires @" + JsonComponent.class.getSimpleName()).isTrue();
-                assertThat( ReflectionUtil.determineGenericClassParameter(declaredClass, expectedSuperclass, 0))
+                assertThat(ReflectionUtil.determineGenericClassParameter(declaredClass, expectedSuperclass, 0))
                     .as(declaredClass + " must resolve generic parameter of " + expectedSuperclass + " to type of DTO").isEqualTo(dtoClass);
-                assertThat(Modifier.isPublic(declaredClass.getModifiers()) ).as(declaredClass + " must be public").isTrue();
-                assertThat(Modifier.isStatic(declaredClass.getModifiers()) ).as(declaredClass + " must be static").isTrue();
-                assertThat(Modifier.isFinal(declaredClass.getModifiers()) ).as(declaredClass + " must not be final").isFalse();
-                assertThat(Modifier.isAbstract(declaredClass.getModifiers()) ).as(declaredClass + " must not be abstract").isFalse();
+                assertThat(Modifier.isPublic(declaredClass.getModifiers())).as(declaredClass + " must be public").isTrue();
+                assertThat(Modifier.isStatic(declaredClass.getModifiers())).as(declaredClass + " must be static").isTrue();
+                assertThat(Modifier.isFinal(declaredClass.getModifiers())).as(declaredClass + " must not be final").isFalse();
+                assertThat(Modifier.isAbstract(declaredClass.getModifiers())).as(declaredClass + " must not be abstract").isFalse();
                 return;
             }
         }
         fail("no " + expectedSuperclass + " defined for " + dtoClass);
-    }
-
-    private Class<D> getDtoClass() {
-        return ReflectionUtil.determineGenericClassParameter(this.getClass(), AccessMappingsUnitTestBase.class, 0);
     }
 }

@@ -12,6 +12,10 @@ import java.time.LocalDate;
 
 public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
 
+    public AssetDTOUnitTest() {
+        super(AssetDTO.class, AssetDTOUnitTest::createSampleDTO, AssetDTOUnitTest::createRandomDTO);
+    }
+
     @Test
     public void shouldHaveProperAccessForAdmin() {
         initAccessFor(AssetDTO.class, Role.ADMIN).shouldBeExactlyFor(
@@ -44,24 +48,20 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
 
     // --- only test fixture below ---
 
-    @Override
-    public AssetDTO createSampleDto(final Long id) {
+    public static AssetDTO createSampleDTO(final Long id, final Long parentId) {
         final AssetDTO dto = new AssetDTO();
         dto.setId(id);
         dto.setDocumentDate(LocalDate.parse("2000-12-07"));
         dto.setAmount(new BigDecimal("512.01"));
         dto.setAction(AssetAction.PAYMENT);
         dto.setRemark("Some Remark");
-        dto.setRemark(null);
         dto.setValueDate(LocalDate.parse("2000-12-18"));
-        dto.setMembershipId(888L);
-        dto.setMembershipId(null);
+        dto.setMembershipId(parentId);
         dto.setMembershipDisplayLabel("Some Membership");
         return dto;
     }
 
-    @Override
-    public AssetDTO createRandomDto(final Long id) {
+    public static AssetDTO createRandomDTO(final Long id, final Long parentId) {
         final AssetDTO dto = new AssetDTO();
         dto.setId(id);
         final LocalDate randomDate = LocalDate.parse("2000-12-07").plusDays(RandomUtils.nextInt(1, 999));
@@ -70,7 +70,7 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
         dto.setAction(RandomUtil.generateEnumValue(AssetAction.class));
         dto.setRemark(RandomStringUtils.randomAlphanumeric(20));
         dto.setValueDate(randomDate.plusDays(RandomUtils.nextInt(1, 99)));
-        dto.setMembershipId(RandomUtils.nextLong());
+        dto.setMembershipId(parentId);
         dto.setMembershipDisplayLabel("The Membership #" + dto.getMembershipId());
         return dto;
     }
