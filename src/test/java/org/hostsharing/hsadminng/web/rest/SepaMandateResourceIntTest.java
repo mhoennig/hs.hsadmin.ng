@@ -8,6 +8,7 @@ import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -179,6 +180,12 @@ public class SepaMandateResourceIntTest {
         // Create the SepaMandate
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
         sepaMandateDTO.setCustomerPrefix(null);
+        sepaMandateDTO.setRemark(null);
+        sepaMandateDTO.setRevokationDocumentDate(null);
+        sepaMandateDTO.setLastUsedDate(null);
+        MockSecurityContext.givenAuthenticatedUser();
+        MockSecurityContext.givenUserHavingRole(CustomerDTO.class, sepaMandateDTO.getCustomerId(), Role.FINANCIAL_CONTACT);
+
         restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
@@ -192,11 +199,11 @@ public class SepaMandateResourceIntTest {
         assertThat(testSepaMandate.getIban()).isEqualTo(DEFAULT_IBAN);
         assertThat(testSepaMandate.getBic()).isEqualTo(DEFAULT_BIC);
         assertThat(testSepaMandate.getGrantingDocumentDate()).isEqualTo(DEFAULT_GRANTING_DOCUMENT_DATE);
-        assertThat(testSepaMandate.getRevokationDocumentDate()).isEqualTo(DEFAULT_REVOKATION_DOCUMENT_DATE);
+        assertThat(testSepaMandate.getRevokationDocumentDate()).isNull();
         assertThat(testSepaMandate.getValidFromDate()).isEqualTo(DEFAULT_VALID_FROM_DATE);
         assertThat(testSepaMandate.getValidUntilDate()).isEqualTo(DEFAULT_VALID_UNTIL_DATE);
-        assertThat(testSepaMandate.getLastUsedDate()).isEqualTo(DEFAULT_LAST_USED_DATE);
-        assertThat(testSepaMandate.getRemark()).isEqualTo(DEFAULT_REMARK);
+        assertThat(testSepaMandate.getLastUsedDate()).isNull();
+        assertThat(testSepaMandate.getRemark()).isNull();
     }
 
     @Test
