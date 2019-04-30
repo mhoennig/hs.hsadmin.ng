@@ -13,8 +13,8 @@ buildscript {
         classpath "org.openapitools:openapi-generator-gradle-plugin:3.3.0"
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
-    }
-    dependencies {
+
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:3.22.0"
         classpath 'org.owasp:dependency-check-gradle:4.0.2'
     }
 }
@@ -49,6 +49,7 @@ apply plugin: 'idea'
 apply from: 'build-jacoco.gradle'
 apply from: 'build-pitest.gradle'
 apply from: 'build-cucumber.gradle'
+apply from: 'build-spotless.gradle'
 
 idea {
   module {
