@@ -35,7 +35,11 @@ better, delete the previous test configurations and amend the JUnit template.
 
 The jhipster-generated git branch tracks the history of the JDL model file
 and the generated source code. The project has to be resetted to a clean state
-(without any generated entitites) before changes to the JDL file can be imported.
+(without any generated entities) before changes to the JDL file can be imported.
+
+| WARNING: This workflow is currently changing, do NOT use! |
+| --------------------------------------------------------- |
+
 
     # Prepare/Cleanup Workspace
 

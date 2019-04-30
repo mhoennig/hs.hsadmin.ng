@@ -10,9 +10,9 @@ node {
             sh "java -version"
         }
 
-        stage('clean') {
+        stage('clean+spotless') {
             sh "chmod +x gradlew"
-            sh "./gradlew clean --no-daemon"
+            sh "./gradlew clean spotlessCheck --no-daemon"
         }
 
         stage('npm install') {
