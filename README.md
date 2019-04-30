@@ -37,38 +37,55 @@ The jhipster-generated git branch tracks the history of the JDL model file
 and the generated source code. The project has to be resetted to a clean state
 (without any generated entities) before changes to the JDL file can be imported.
 
-| WARNING: This workflow is currently changing, do NOT use! |
-| --------------------------------------------------------- |
+| WARNING: This is just a guideline. You should understand what you are doing! |
+| ---------------------------------------------------------------------------- |
 
-
-    # Prepare/Cleanup Workspace
 
     git checkout jhipster-generated
+    git pull
+    git tag REAL-HEAD
     git reset --hard jdl-base
     git clean -f -d
-    git checkout HEAD@{1} src/main/jdl/customer.jdl
-    git reset HEAD .
+    git cherry-pick -n spotless
+    git reset --soft REAL-HEAD
+    git checkout REAL-HEAD src/main/jdl/customer.jdl # AND OTHERS!
+    git tag -d REAL-HEAD
 
-    # Apply changes to the jdl file
+    # MANUAL STEP: Apply changes to the jdl file!
 
-    # Invoke JHipster generator
+    # (Re-) Importing
+    jhipster import-jdl src/main/jdl/customer.jdl
+    jhipster import-jdl src/main/jdl/accessrights.jdl
+    # AND OTHERS, if applicable!
 
-    jhipster import-jdl src/main/jdl/customer.jdl --force
-
-    # Let Git determine change set between most recent commit and the re-generated source
-
-    git reset --soft HEAD@{1}
-    git reset HEAD .
+    gw spotlessApply
     git add .
+    git commit -m"..."
 
-    # Commit changeset
-
-    git commit -m '...'
+    # MANUAL STEP:
+    # - if you've renamed any identifiers, use refactoring to rename in master as well BEFORE MERGING!
 
     # Merge changeset into master branch
-
     git checkout master
     git merge jhipster-generated
+
+### Amending the spotless commit
+
+If you need to amend the commit tagged 'spotless', e.g. to change the spotless configuration,
+it can be done with these steps:
+
+    git tag REAL-HEAD
+    git reset --hard spotless^
+    git cherry-pick -n spotless
+    ...
+    git add .
+    # do NOT run: gw spotlessApply yet!
+    # for the case you have a commit hook which runs spotlessCheck:
+    git commit --no-verify
+    git tag --force spotless
+    git push --no-verify origin spotless
+    git reset --hard REAL-HEAD
+    git tag -d REAL-HEAD
 
 ## HOWTO do This and That
 
