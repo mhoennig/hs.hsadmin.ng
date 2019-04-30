@@ -16,7 +16,7 @@
     <!--
         Added the entity UserRoleAssignment.
     -->
-    <changeSet id="20190430152204-1" author="jhipster">
+    <changeSet id="20190430154711-1" author="jhipster">
         <createTable tableName="user_role_assignment">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
@@ -27,10 +27,6 @@
 
             <column name="entity_object_id" type="bigint">
                 <constraints nullable="true" />
-            </column>
-
-            <column name="user_id" type="bigint">
-                <constraints nullable="false" />
             </column>
 
             <column name="assigned_role" type="varchar(255)">

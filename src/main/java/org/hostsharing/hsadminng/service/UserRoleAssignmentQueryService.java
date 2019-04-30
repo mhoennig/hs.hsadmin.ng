@@ -96,9 +96,6 @@ public class UserRoleAssignmentQueryService extends QueryService<UserRoleAssignm
                 specification = specification
                         .and(buildRangeSpecification(criteria.getEntityObjectId(), UserRoleAssignment_.entityObjectId));
             }
-            if (criteria.getUserId() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getUserId(), UserRoleAssignment_.userId));
-            }
             if (criteria.getAssignedRole() != null) {
                 specification = specification
                         .and(buildSpecification(criteria.getAssignedRole(), UserRoleAssignment_.assignedRole));

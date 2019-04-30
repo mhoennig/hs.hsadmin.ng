@@ -20,21 +20,6 @@
                         [(ngModel)]="userRoleAssignment.entityObjectId" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.userId" for="field_userId">User Id</label>
-                    <input type="number" class="form-control" name="userId" id="field_userId"
-                        [(ngModel)]="userRoleAssignment.userId" required/>
-                    <div [hidden]="!(editForm.controls.userId?.dirty && editForm.controls.userId?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.userId?.errors?.required" jhiTranslate="entity.validation.required">
-                        This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.userId?.errors?.number" jhiTranslate="entity.validation.number">
-                            This field should be a number.
-                        </small>
-                    </div>
-                </div>
-                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole" for="field_assignedRole">Assigned Role</label>
                     <select class="form-control" name="assignedRole" [(ngModel)]="userRoleAssignment.assignedRole" id="field_assignedRole"  required>
                         <option value="HOSTMASTER">{{'hsadminNgApp.UserRole.HOSTMASTER' | translate}}</option>

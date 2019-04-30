@@ -34,8 +34,6 @@ public class UserRoleAssignmentCriteria implements Serializable {
 
     private LongFilter entityObjectId;
 
-    private LongFilter userId;
-
     private UserRoleFilter assignedRole;
 
     private LongFilter userId;
@@ -62,14 +60,6 @@ public class UserRoleAssignmentCriteria implements Serializable {
 
     public void setEntityObjectId(LongFilter entityObjectId) {
         this.entityObjectId = entityObjectId;
-    }
-
-    public LongFilter getUserId() {
-        return userId;
-    }
-
-    public void setUserId(LongFilter userId) {
-        this.userId = userId;
     }
 
     public UserRoleFilter getAssignedRole() {
@@ -100,7 +90,6 @@ public class UserRoleAssignmentCriteria implements Serializable {
         return Objects.equals(id, that.id) &&
                 Objects.equals(entityTypeId, that.entityTypeId) &&
                 Objects.equals(entityObjectId, that.entityObjectId) &&
-                Objects.equals(userId, that.userId) &&
                 Objects.equals(assignedRole, that.assignedRole) &&
                 Objects.equals(userId, that.userId);
     }
@@ -111,7 +100,6 @@ public class UserRoleAssignmentCriteria implements Serializable {
                 id,
                 entityTypeId,
                 entityObjectId,
-                userId,
                 assignedRole,
                 userId);
     }
@@ -122,7 +110,6 @@ public class UserRoleAssignmentCriteria implements Serializable {
                 (id != null ? "id=" + id + ", " : "") +
                 (entityTypeId != null ? "entityTypeId=" + entityTypeId + ", " : "") +
                 (entityObjectId != null ? "entityObjectId=" + entityObjectId + ", " : "") +
-                (userId != null ? "userId=" + userId + ", " : "") +
                 (assignedRole != null ? "assignedRole=" + assignedRole + ", " : "") +
                 (userId != null ? "userId=" + userId + ", " : "") +
                 "}";
