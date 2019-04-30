@@ -110,6 +110,14 @@ Besides common build tasks like `build`, `test` or `bootRun` this projects has s
 Runs (almost) all JUnit tests under mutation testing.
 Mutation testing is a means to determine the quality of the tests.
 
+On Jenkins, the results can be found in the build artifacts under:
+
+-   https://ci.hostsharing.net/job/hsadmin-ng-pitest/XX/artifact/build/reports/pitest/index.html
+
+Where XX is the build number. Or for the latest build under:
+
+-   https://ci.hostsharing.net/job/hsadmin-ng-pitest/lastCompletedBuild/artifact/build/reports/pitest/index.html
+
 #### Some Background Information on Mutation Testing
 
 PiTest does it with these steps:
