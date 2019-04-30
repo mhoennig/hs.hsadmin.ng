@@ -4,15 +4,15 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <!--
-        Added the constraints for entity Membership.
+        Added the constraints for entity Asset.
     -->
-    <changeSet id="20190430150325-2" author="jhipster">
+    <changeSet id="20190430152139-2" author="jhipster">
         
-        <addForeignKeyConstraint baseColumnNames="customer_id"
-                                 baseTableName="membership"
-                                 constraintName="fk_membership_customer_id"
+        <addForeignKeyConstraint baseColumnNames="membership_id"
+                                 baseTableName="asset"
+                                 constraintName="fk_asset_membership_id"
                                  referencedColumnNames="id"
-                                 referencedTableName="customer"/>
+                                 referencedTableName="membership"/>
 
     </changeSet>
 </databaseChangeLog>

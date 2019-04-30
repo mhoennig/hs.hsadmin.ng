@@ -14,34 +14,34 @@
     <property name="floatType" value="float" dbms="mysql, oracle, mssql"/>
 
     <!--
-        Added the entity Membership.
+        Added the entity Share.
     -->
-    <changeSet id="20190430150325-1" author="jhipster">
-        <createTable tableName="membership">
+    <changeSet id="20190430152138-1" author="jhipster">
+        <createTable tableName="share">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="admission_document_date" type="date">
+            <column name="document_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="cancellation_document_date" type="date">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="member_from_date" type="date">
+            <column name="value_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="member_until_date" type="date">
-                <constraints nullable="true" />
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="quantity" type="integer">
+                <constraints nullable="false" />
             </column>
 
             <column name="remark" type="varchar(160)">
                 <constraints nullable="true" />
             </column>
 
-            <column name="customer_id" type="bigint">
+            <column name="membership_id" type="bigint">
                 <constraints nullable="false" />
             </column>
 

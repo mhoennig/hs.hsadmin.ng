@@ -1,0 +1,46 @@
+{
+    "name": "UserRoleAssignment",
+    "fields": [
+        {
+            "fieldName": "entityTypeId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "entityObjectId",
+            "fieldType": "Long"
+        },
+        {
+            "fieldName": "userId",
+            "fieldType": "Long",
+            "fieldValidateRules": [
+                "required"
+            ]
+        },
+        {
+            "fieldName": "assignedRole",
+            "fieldType": "UserRole",
+            "fieldValues": "HOSTMASTER,ADMIN,SUPPORTER,CONTRACTUAL_CONTACT,FINANCIAL_CONTACT,TECHNICAL_CONTACT,CUSTOMER_USER",
+            "fieldValidateRules": [
+                "required"
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "user",
+            "otherEntityRelationshipName": "required",
+            "relationshipName": "user",
+            "otherEntityField": "login"
+        }
+    ],
+    "changelogDate": "20190430152204",
+    "entityTableName": "user_role_assignment",
+    "dto": "no",
+    "pagination": "infinite-scroll",
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": true,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

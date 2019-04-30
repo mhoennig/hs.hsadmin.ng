@@ -1,0 +1,25 @@
+{
+    "hsadminNgApp": {
+        "userRoleAssignment": {
+            "home": {
+                "title": "User Role Assignments",
+                "createLabel": "User Role Assignment erstellen",
+                "createOrEditLabel": "User Role Assignment erstellen oder bearbeiten"
+            },
+            "created": "User Role Assignment erstellt mit ID {{ param }}",
+            "updated": "User Role Assignment aktualisiert mit ID {{ param }}",
+            "deleted": "User Role Assignment gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll User Role Assignment {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "User Role Assignment"
+            },
+            "entityTypeId": "Entity Type Id",
+            "entityObjectId": "Entity Object Id",
+            "userId": "User Id",
+            "assignedRole": "Assigned Role",
+            "user": "User"
+        }
+    }
+}

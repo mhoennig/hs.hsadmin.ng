@@ -23,6 +23,10 @@ import { RouterModule } from '@angular/router';
             {
                 path: 'sepa-mandate',
                 loadChildren: './sepa-mandate/sepa-mandate.module#HsadminNgSepaMandateModule'
+            },
+            {
+                path: 'user-role-assignment',
+                loadChildren: './user-role-assignment/user-role-assignment.module#HsadminNgUserRoleAssignmentModule'
             }
             /* jhipster-needle-add-entity-route - JHipster will add entity modules routes here */
         ])
