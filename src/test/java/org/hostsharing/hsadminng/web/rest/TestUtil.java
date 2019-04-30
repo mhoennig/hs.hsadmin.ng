@@ -1,8 +1,12 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
@@ -15,8 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Utility class for testing REST controllers.
  */
@@ -27,8 +29,8 @@ public final class TestUtil {
     /** MediaType for JSON UTF8 */
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(
             MediaType.APPLICATION_JSON.getType(),
-            MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);
-
+            MediaType.APPLICATION_JSON.getSubtype(),
+            StandardCharsets.UTF_8);
 
     private static ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -85,8 +87,9 @@ public final class TestUtil {
                 }
                 return true;
             } catch (DateTimeParseException e) {
-                mismatchDescription.appendText("was ").appendValue(item)
-                    .appendText(", which could not be parsed as a ZonedDateTime");
+                mismatchDescription.appendText("was ")
+                        .appendValue(item)
+                        .appendText(", which could not be parsed as a ZonedDateTime");
                 return false;
             }
 
@@ -100,6 +103,7 @@ public final class TestUtil {
 
     /**
      * Creates a matcher that matches when the examined string reprensents the same instant as the reference datetime
+     * 
      * @param date the reference datetime against which the examined string is checked
      */
     public static ZonedDateTimeMatcher sameInstant(ZonedDateTime date) {
@@ -127,15 +131,17 @@ public final class TestUtil {
 
     /**
      * Create a FormattingConversionService which use ISO date format, instead of the localized one.
+     * 
      * @return the FormattingConversionService
      */
     public static FormattingConversionService createFormattingConversionService() {
-        DefaultFormattingConversionService dfcs = new DefaultFormattingConversionService ();
+        DefaultFormattingConversionService dfcs = new DefaultFormattingConversionService();
         DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
         registrar.setUseIsoFormat(true);
         registrar.registerFormatters(dfcs);
         return dfcs;
     }
 
-    private TestUtil() {}
+    private TestUtil() {
+    }
 }

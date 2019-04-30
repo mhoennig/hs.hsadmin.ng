@@ -1,6 +1,8 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.security;
 
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContext;
@@ -31,15 +33,15 @@ public final class SecurityUtils {
     public static Optional<String> getCurrentUserLogin() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication())
-            .map(authentication -> {
-                if (authentication.getPrincipal() instanceof UserDetails) {
-                    UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
-                    return springSecurityUser.getUsername();
-                } else if (authentication.getPrincipal() instanceof String) {
-                    return (String) authentication.getPrincipal();
-                }
-                return null;
-            });
+                .map(authentication -> {
+                    if (authentication.getPrincipal() instanceof UserDetails) {
+                        UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
+                        return springSecurityUser.getUsername();
+                    } else if (authentication.getPrincipal() instanceof String) {
+                        return (String) authentication.getPrincipal();
+                    }
+                    return null;
+                });
     }
 
     /**
@@ -50,8 +52,8 @@ public final class SecurityUtils {
     public static Optional<String> getCurrentUserJWT() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication())
-            .filter(authentication -> authentication.getCredentials() instanceof String)
-            .map(authentication -> (String) authentication.getCredentials());
+                .filter(authentication -> authentication.getCredentials() instanceof String)
+                .map(authentication -> (String) authentication.getCredentials());
     }
 
     /**
@@ -62,9 +64,13 @@ public final class SecurityUtils {
     public static boolean isAuthenticated() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication())
-            .map(authentication -> authentication.getAuthorities().stream()
-                .noneMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(AuthoritiesConstants.ANONYMOUS)))
-            .orElse(false);
+                .map(
+                        authentication -> authentication.getAuthorities()
+                                .stream()
+                                .noneMatch(
+                                        grantedAuthority -> grantedAuthority.getAuthority()
+                                                .equals(AuthoritiesConstants.ANONYMOUS)))
+                .orElse(false);
     }
 
     /**
@@ -78,24 +84,27 @@ public final class SecurityUtils {
     public static boolean isCurrentUserInRole(String authority) {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication())
-            .map(authentication -> authentication.getAuthorities().stream()
-                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority)))
-            .orElse(false);
+                .map(
+                        authentication -> authentication.getAuthorities()
+                                .stream()
+                                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority)))
+                .orElse(false);
     }
 
     public static Role getLoginUserRoleFor(final Class<?> onDtoClass, final Long onId) {
-        final Role highestRole = userRoleAssignments.stream().
-            map(ura ->
-                matches(onDtoClass, onId, ura)
-                    ? ura.role
-                    : Role.ANYBODY).
-            reduce(Role.ANYBODY, (r1, r2) -> r1.covers(r2) ? r1 : r2);
+        final Role highestRole = userRoleAssignments.stream()
+                .map(
+                        ura -> matches(onDtoClass, onId, ura)
+                                ? ura.role
+                                : Role.ANYBODY)
+                .reduce(Role.ANYBODY, (r1, r2) -> r1.covers(r2) ? r1 : r2);
         log.debug("getLoginUserRoleFor({}, {}) returned {}", onDtoClass, onId, highestRole);
         return highestRole;
     }
 
     private static boolean matches(Class<?> onDtoClass, Long onId, UserRoleAssignment ura) {
-        final boolean matches = (ura.onClass == null || onDtoClass == ura.onClass) && (ura.onId == null || ura.onId.equals(onId));
+        final boolean matches = (ura.onClass == null || onDtoClass == ura.onClass)
+                && (ura.onId == null || ura.onId.equals(onId));
         return matches;
     }
 
@@ -111,6 +120,7 @@ public final class SecurityUtils {
     }
 
     private static class UserRoleAssignment {
+
         final Class<?> onClass;
         final Long onId;
         final Role role;

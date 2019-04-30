@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.repository;
 
 import org.hostsharing.hsadminng.domain.Authority;

@@ -1,15 +1,18 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A DTO for the SepaMandate entity.
@@ -17,37 +20,53 @@ import java.util.Objects;
 public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandateDTO> {
 
     @SelfId(resolver = SepaMandateService.class)
-    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long id;
 
     @NotNull
     @Size(max = 40)
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String reference;
 
     @Size(max = 34)
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String iban;
 
     @Size(max = 11)
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String bic;
 
     @NotNull
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate grantingDocumentDate;
 
-    @AccessFor(init = Role.ADMIN, update = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = Role.ADMIN,
+            update = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate revokationDocumentDate;
 
     @NotNull
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate validFromDate;
 
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, update = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            update = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate validUntilDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate lastUsedDate;
 
     @Size(max = 160)
@@ -55,10 +74,12 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
-    @AccessFor(init = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(
+            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long customerId;
 
-    @AccessFor(update = Role.IGNORED, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(update = Role.IGNORED, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String customerDisplayLabel;
 
     public Long getId() {
@@ -181,19 +202,19 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
     @Override
     public String toString() {
         return "SepaMandateDTO{" +
-            "id=" + getId() +
-            ", reference='" + getReference() + "'" +
-            ", iban='" + getIban() + "'" +
-            ", bic='" + getBic() + "'" +
-            ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
-            ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
-            ", validFromDate='" + getValidFromDate() + "'" +
-            ", validUntilDate='" + getValidUntilDate() + "'" +
-            ", lastUsedDate='" + getLastUsedDate() + "'" +
-            ", remark='" + getRemark() + "'" +
-            ", customer=" + getCustomerId() +
-            ", customerDisplayLabel='" + getCustomerDisplayLabel() + "'" +
-            "}";
+                "id=" + getId() +
+                ", reference='" + getReference() + "'" +
+                ", iban='" + getIban() + "'" +
+                ", bic='" + getBic() + "'" +
+                ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
+                ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
+                ", validFromDate='" + getValidFromDate() + "'" +
+                ", validUntilDate='" + getValidUntilDate() + "'" +
+                ", lastUsedDate='" + getLastUsedDate() + "'" +
+                ", remark='" + getRemark() + "'" +
+                ", customer=" + getCustomerId() +
+                ", customerDisplayLabel='" + getCustomerDisplayLabel() + "'" +
+                "}";
     }
 
     @JsonComponent

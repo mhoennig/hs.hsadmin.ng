@@ -1,16 +1,17 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
-
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A Membership.
@@ -225,12 +226,12 @@ public class Membership implements Serializable {
     @Override
     public String toString() {
         return "Membership{" +
-            "id=" + getId() +
-            ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
-            ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
-            ", memberFromDate='" + getMemberFromDate() + "'" +
-            ", memberUntilDate='" + getMemberUntilDate() + "'" +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
+                ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
+                ", memberFromDate='" + getMemberFromDate() + "'" +
+                ", memberUntilDate='" + getMemberUntilDate() + "'" +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

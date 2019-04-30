@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.security.jwt.JWTFilter;
@@ -36,8 +37,9 @@ public class UserJWTController {
     @PostMapping("/authenticate")
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM) {
 
-        UsernamePasswordAuthenticationToken authenticationToken =
-            new UsernamePasswordAuthenticationToken(loginVM.getUsername(), loginVM.getPassword());
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                loginVM.getUsername(),
+                loginVM.getPassword());
 
         Authentication authentication = this.authenticationManager.authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);

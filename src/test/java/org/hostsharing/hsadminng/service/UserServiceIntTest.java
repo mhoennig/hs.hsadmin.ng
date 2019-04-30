@@ -1,4 +1,8 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.config.Constants;
@@ -22,13 +26,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 /**
  * Test class for the UserResource REST controller.
@@ -169,11 +170,12 @@ public class UserServiceIntTest {
         }
         final PageRequest pageable = PageRequest.of(0, (int) userRepository.count());
         final Page<UserDTO> allManagedUsers = userService.getAllManagedUsers(pageable);
-        assertThat(allManagedUsers.getContent().stream()
-            .noneMatch(user -> Constants.ANONYMOUS_USER.equals(user.getLogin())))
-            .isTrue();
+        assertThat(
+                allManagedUsers.getContent()
+                        .stream()
+                        .noneMatch(user -> Constants.ANONYMOUS_USER.equals(user.getLogin())))
+                                .isTrue();
     }
-
 
     @Test
     @Transactional

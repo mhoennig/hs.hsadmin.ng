@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest.errors;
 
 import org.springframework.dao.ConcurrencyFailureException;
@@ -6,10 +7,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @RestController
 public class ExceptionTranslatorTestController {

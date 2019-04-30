@@ -1,16 +1,18 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A Asset.
@@ -170,12 +172,12 @@ public class Asset implements Serializable {
     @Override
     public String toString() {
         return "Asset{" +
-            "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", valueDate='" + getValueDate() + "'" +
-            ", action='" + getAction() + "'" +
-            ", amount=" + getAmount() +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", documentDate='" + getDocumentDate() + "'" +
+                ", valueDate='" + getValueDate() + "'" +
+                ", action='" + getAction() + "'" +
+                ", amount=" + getAmount() +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

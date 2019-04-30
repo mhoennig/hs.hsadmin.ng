@@ -1,12 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.User;
 
 import io.github.jhipster.config.JHipsterProperties;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Locale;
-import javax.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +14,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+
+import javax.mail.internet.MimeMessage;
 
 /**
  * Service for sending emails.
@@ -40,8 +42,11 @@ public class MailService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender,
-            MessageSource messageSource, SpringTemplateEngine templateEngine) {
+    public MailService(
+            JHipsterProperties jHipsterProperties,
+            JavaMailSender javaMailSender,
+            MessageSource messageSource,
+            SpringTemplateEngine templateEngine) {
 
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
@@ -51,8 +56,13 @@ public class MailService {
 
     @Async
     public void sendEmail(String to, String subject, String content, boolean isMultipart, boolean isHtml) {
-        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}",
-            isMultipart, isHtml, to, subject, content);
+        log.debug(
+                "Send email[multipart '{}' and html '{}'] to '{}' with subject '{}' and content={}",
+                isMultipart,
+                isHtml,
+                to,
+                subject,
+                content);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();

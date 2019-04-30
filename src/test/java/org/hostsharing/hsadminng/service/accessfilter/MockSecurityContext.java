@@ -1,11 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import static org.assertj.core.api.Assumptions.assumeThat;
+
 import org.hostsharing.hsadminng.security.SecurityUtils;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class MockSecurityContext {
 

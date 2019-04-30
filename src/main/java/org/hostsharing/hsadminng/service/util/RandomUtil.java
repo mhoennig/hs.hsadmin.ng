@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.util;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -45,8 +46,8 @@ public final class RandomUtil {
      *
      * @return the generated enum value
      */
-    public static  <E extends Enum<E>> E generateEnumValue(final Class<E> enumType) {
+    public static <E extends Enum<E>> E generateEnumValue(final Class<E> enumType) {
         final E[] enumValues = enumType.getEnumConstants();
-        return enumValues[RandomUtils.nextInt(0, enumValues.length-1)];
+        return enumValues[RandomUtils.nextInt(0, enumValues.length - 1)];
     }
 }

@@ -1,8 +1,10 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
+
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -16,31 +18,66 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
     @Test
     public void shouldHaveProperAccessForAdmin() {
         initAccessFor(SepaMandateDTO.class, Role.ADMIN).shouldBeExactlyFor(
-            "grantingDocumentDate", "bic", "remark", "validUntilDate", "customerId", "validFromDate",
-            "iban", "revokationDocumentDate", "lastUsedDate", "reference");
+                "grantingDocumentDate",
+                "bic",
+                "remark",
+                "validUntilDate",
+                "customerId",
+                "validFromDate",
+                "iban",
+                "revokationDocumentDate",
+                "lastUsedDate",
+                "reference");
         updateAccessFor(SepaMandateDTO.class, Role.ADMIN).shouldBeExactlyFor(
-            "remark", "validUntilDate", "revokationDocumentDate", "lastUsedDate");
+                "remark",
+                "validUntilDate",
+                "revokationDocumentDate",
+                "lastUsedDate");
         readAccessFor(SepaMandateDTO.class, Role.ADMIN).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForSupporter() {
         initAccessFor(SepaMandateDTO.class, Role.SUPPORTER).shouldBeExactlyFor(
-            "grantingDocumentDate", "bic", "validUntilDate", "customerId", "validFromDate", "iban", "reference");
+                "grantingDocumentDate",
+                "bic",
+                "validUntilDate",
+                "customerId",
+                "validFromDate",
+                "iban",
+                "reference");
         updateAccessFor(SepaMandateDTO.class, Role.SUPPORTER).shouldBeExactlyFor(
-            "remark", "validUntilDate", "revokationDocumentDate");
+                "remark",
+                "validUntilDate",
+                "revokationDocumentDate");
         readAccessFor(SepaMandateDTO.class, Role.SUPPORTER).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
         initAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
-            "grantingDocumentDate", "bic", "validUntilDate", "customerId", "validFromDate", "iban", "reference");
+                "grantingDocumentDate",
+                "bic",
+                "validUntilDate",
+                "customerId",
+                "validFromDate",
+                "iban",
+                "reference");
         updateAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
-            "validUntilDate", "revokationDocumentDate");
+                "validUntilDate",
+                "revokationDocumentDate");
         readAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
-            "grantingDocumentDate", "bic", "id", "validUntilDate", "customerId", "validFromDate", "iban",
-            "revokationDocumentDate", "customerDisplayLabel", "lastUsedDate", "reference");
+                "grantingDocumentDate",
+                "bic",
+                "id",
+                "validUntilDate",
+                "customerId",
+                "validFromDate",
+                "iban",
+                "revokationDocumentDate",
+                "customerDisplayLabel",
+                "lastUsedDate",
+                "reference");
     }
 
     @Test

@@ -1,7 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
+
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,8 +16,8 @@ import org.mapstruct.MappingTarget;
 public interface CustomerMapper extends EntityMapper<CustomerDTO, Customer> {
 
     static String displayLabel(Customer customer) {
-        return  customer.getName()
-            + " [" + customer.getReference() + ":" + customer.getPrefix() +"]";
+        return customer.getName()
+                + " [" + customer.getReference() + ":" + customer.getPrefix() + "]";
     }
 
     @Mapping(target = "displayLabel", ignore = true)

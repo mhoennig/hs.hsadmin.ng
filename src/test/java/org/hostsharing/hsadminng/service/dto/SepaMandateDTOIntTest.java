@@ -1,8 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.RandomUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
+import static org.hostsharing.hsadminng.service.dto.SepaMandateDTOUnitTest.createSampleDTO;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
@@ -17,6 +23,11 @@ import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapperImpl;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,27 +40,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
-import static org.hostsharing.hsadminng.service.dto.SepaMandateDTOUnitTest.createSampleDTO;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
+import javax.persistence.EntityManager;
 
 @JsonTest
-@SpringBootTest(classes = {
-    CustomerMapperImpl.class,
-    MembershipMapperImpl.class,
-    SepaMandateMapperImpl.class,
-    SepaMandateDTO.JsonSerializer.class,
-    SepaMandateDTO.JsonDeserializer.class
-})
+@SpringBootTest(
+        classes = {
+                CustomerMapperImpl.class,
+                MembershipMapperImpl.class,
+                SepaMandateMapperImpl.class,
+                SepaMandateDTO.JsonSerializer.class,
+                SepaMandateDTO.JsonDeserializer.class
+        })
 @RunWith(SpringRunner.class)
 public class SepaMandateDTOIntTest {
 
@@ -59,7 +64,9 @@ public class SepaMandateDTOIntTest {
     private static final String SOME_CUSTOMER_NAME = "Some Customer Name";
     private static final String SOME_CUSTOMER_DISPLAY_LABEL = "Some Customer Name [10001:abc]";
     private static final Customer SOME_CUSTOMER = new Customer().id(SOME_CUSTOMER_ID)
-        .reference(SOME_CUSTOMER_REFERENCE).prefix(SOME_CUSTOMER_PREFIX).name(SOME_CUSTOMER_NAME);
+            .reference(SOME_CUSTOMER_REFERENCE)
+            .prefix(SOME_CUSTOMER_PREFIX)
+            .name(SOME_CUSTOMER_NAME);
 
     private static final Long SOME_SEPA_MANDATE_ID = RandomUtils.nextLong(300, 399);
     private static final SepaMandate SOME_SEPA_MANDATE = new SepaMandate().id(SOME_SEPA_MANDATE_ID).customer(SOME_CUSTOMER);
@@ -134,17 +141,18 @@ public class SepaMandateDTOIntTest {
         givenAuthenticatedUser();
         givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_SEPA_MANDATE_ID)
-            .withFieldValue("remark", "Updated Remark")
-            .toString();
+                .withFieldValue("id", SOME_SEPA_MANDATE_ID)
+                .withFieldValue("remark", "Updated Remark")
+                .toString();
 
         // when
         final Throwable actual = catchThrowable(() -> objectMapper.readValue(json, SepaMandateDTO.class));
 
         // then
-        assertThat(actual).isInstanceOfSatisfying(BadRequestAlertException.class, bre ->
-            assertThat(bre.getMessage()).isEqualTo("Update of field SepaMandateDTO.remark prohibited for current user role CONTRACTUAL_CONTACT")
-        );
+        assertThat(actual).isInstanceOfSatisfying(
+                BadRequestAlertException.class,
+                bre -> assertThat(bre.getMessage()).isEqualTo(
+                        "Update of field SepaMandateDTO.remark prohibited for current user role CONTRACTUAL_CONTACT"));
     }
 
     @Test
@@ -153,9 +161,9 @@ public class SepaMandateDTOIntTest {
         givenAuthenticatedUser();
         givenUserHavingRole(Role.ADMIN);
         final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_SEPA_MANDATE_ID)
-            .withFieldValue("remark", "Updated Remark")
-            .toString();
+                .withFieldValue("id", SOME_SEPA_MANDATE_ID)
+                .withFieldValue("remark", "Updated Remark")
+                .toString();
 
         // when
         final SepaMandateDTO actual = objectMapper.readValue(json, SepaMandateDTO.class);
@@ -173,18 +181,18 @@ public class SepaMandateDTOIntTest {
 
     private String createExpectedJSon(SepaMandateDTO dto) {
         return new JSonBuilder()
-            .withFieldValueIfPresent("id", dto.getId())
-            .withFieldValueIfPresent("reference", dto.getReference())
-            .withFieldValueIfPresent("iban", dto.getIban())
-            .withFieldValueIfPresent("bic", dto.getBic())
-            .withFieldValueIfPresent("grantingDocumentDate", Objects.toString(dto.getGrantingDocumentDate()))
-            .withFieldValueIfPresent("revokationDocumentDate", Objects.toString(dto.getRevokationDocumentDate()))
-            .withFieldValueIfPresent("validFromDate", Objects.toString(dto.getValidFromDate()))
-            .withFieldValueIfPresent("validUntilDate", Objects.toString(dto.getValidUntilDate()))
-            .withFieldValueIfPresent("lastUsedDate", Objects.toString(dto.getLastUsedDate()))
-            .withFieldValueIfPresent("remark", dto.getRemark())
-            .withFieldValueIfPresent("customerId", dto.getCustomerId())
-            .withFieldValue("customerDisplayLabel", dto.getCustomerDisplayLabel())
-            .toString();
+                .withFieldValueIfPresent("id", dto.getId())
+                .withFieldValueIfPresent("reference", dto.getReference())
+                .withFieldValueIfPresent("iban", dto.getIban())
+                .withFieldValueIfPresent("bic", dto.getBic())
+                .withFieldValueIfPresent("grantingDocumentDate", Objects.toString(dto.getGrantingDocumentDate()))
+                .withFieldValueIfPresent("revokationDocumentDate", Objects.toString(dto.getRevokationDocumentDate()))
+                .withFieldValueIfPresent("validFromDate", Objects.toString(dto.getValidFromDate()))
+                .withFieldValueIfPresent("validUntilDate", Objects.toString(dto.getValidUntilDate()))
+                .withFieldValueIfPresent("lastUsedDate", Objects.toString(dto.getLastUsedDate()))
+                .withFieldValueIfPresent("remark", dto.getRemark())
+                .withFieldValueIfPresent("customerId", dto.getCustomerId())
+                .withFieldValue("customerDisplayLabel", dto.getCustomerDisplayLabel())
+                .toString();
     }
 }

@@ -1,14 +1,16 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
+
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.dto.FluentBuilder;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
-import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
 
 public class JSonAccessFilterTestFixture {
 
@@ -32,6 +34,7 @@ public class JSonAccessFilterTestFixture {
     }
 
     static class GivenCustomerDto implements FluentBuilder<GivenCustomerDto> {
+
         @SelfId(resolver = GivenService.class)
         @AccessFor(read = ANYBODY)
         Long id;
@@ -45,6 +48,7 @@ public class JSonAccessFilterTestFixture {
     }
 
     static class GivenDto implements FluentBuilder<GivenDto> {
+
         @SelfId(resolver = GivenService.class)
         @AccessFor(read = ANYBODY)
         Long id;
@@ -53,7 +57,10 @@ public class JSonAccessFilterTestFixture {
         @AccessFor(init = ACTUAL_CUSTOMER_USER, update = ACTUAL_CUSTOMER_USER, read = ACTUAL_CUSTOMER_USER)
         Long customerId;
 
-        @AccessFor(init = {TECHNICAL_CONTACT, FINANCIAL_CONTACT}, update = {TECHNICAL_CONTACT, FINANCIAL_CONTACT}, read = {TECHNICAL_CONTACT, FINANCIAL_CONTACT})
+        @AccessFor(
+                init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT },
+                update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT },
+                read = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
         String restrictedField;
 
         @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
@@ -103,7 +110,8 @@ public class JSonAccessFilterTestFixture {
     }
 
     enum TestEnum {
-        BLUE, GREEN
+        BLUE,
+        GREEN
     }
 
     static abstract class GivenChildService implements IdToDtoResolver<GivenChildDto> {
@@ -119,7 +127,7 @@ public class JSonAccessFilterTestFixture {
         @ParentId(resolver = GivenService.class)
         Long parentId;
 
-        @AccessFor(init = {TECHNICAL_CONTACT, FINANCIAL_CONTACT}, update = {TECHNICAL_CONTACT, FINANCIAL_CONTACT})
+        @AccessFor(init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT }, update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
         String restrictedField;
     }
 

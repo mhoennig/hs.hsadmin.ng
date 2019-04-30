@@ -1,15 +1,17 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Objects;
 
 /**
  * A Share.
@@ -169,12 +171,12 @@ public class Share implements Serializable {
     @Override
     public String toString() {
         return "Share{" +
-            "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", valueDate='" + getValueDate() + "'" +
-            ", action='" + getAction() + "'" +
-            ", quantity=" + getQuantity() +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", documentDate='" + getDocumentDate() + "'" +
+                ", valueDate='" + getValueDate() + "'" +
+                ", action='" + getAction() + "'" +
+                ", quantity=" + getQuantity() +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

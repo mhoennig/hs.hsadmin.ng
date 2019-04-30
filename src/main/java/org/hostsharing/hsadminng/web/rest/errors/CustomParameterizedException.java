@@ -1,11 +1,12 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest.errors;
+
+import static org.zalando.problem.Status.BAD_REQUEST;
 
 import org.zalando.problem.AbstractThrowableProblem;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.zalando.problem.Status.BAD_REQUEST;
 
 /**
  * Custom, parameterized exception, which can be translated on the client side.
@@ -32,7 +33,13 @@ public class CustomParameterizedException extends AbstractThrowableProblem {
     }
 
     public CustomParameterizedException(String message, Map<String, Object> paramMap) {
-        super(ErrorConstants.PARAMETERIZED_TYPE, "Parameterized Exception", BAD_REQUEST, null, null, null, toProblemParameters(message, paramMap));
+        super(ErrorConstants.PARAMETERIZED_TYPE,
+              "Parameterized Exception",
+              BAD_REQUEST,
+              null,
+              null,
+              null,
+              toProblemParameters(message, paramMap));
     }
 
     public static Map<String, Object> toParamMap(String... params) {

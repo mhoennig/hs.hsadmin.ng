@@ -1,4 +1,11 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Membership;
@@ -12,6 +19,7 @@ import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,16 +35,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
-import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import javax.persistence.EntityManager;
 
 /**
  * Test class for the ShareResource REST controller.
@@ -101,11 +104,12 @@ public class ShareResourceIntTest {
         MockitoAnnotations.initMocks(this);
         final ShareResource shareResource = new ShareResource(shareService, shareQueryService);
         this.restShareMockMvc = MockMvcBuilders.standaloneSetup(shareResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setControllerAdvice(exceptionTranslator)
-            .setConversionService(createFormattingConversionService())
-            .setMessageConverters(jacksonMessageConverter)
-            .setValidator(validator).build();
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .setControllerAdvice(exceptionTranslator)
+                .setConversionService(createFormattingConversionService())
+                .setMessageConverters(jacksonMessageConverter)
+                .setValidator(validator)
+                .build();
     }
 
     /**
@@ -116,11 +120,11 @@ public class ShareResourceIntTest {
      */
     public static Share createEntity(EntityManager em) {
         Share share = new Share()
-            .documentDate(DEFAULT_DOCUMENT_DATE)
-            .valueDate(DEFAULT_VALUE_DATE)
-            .action(DEFAULT_ACTION)
-            .quantity(DEFAULT_QUANTITY)
-            .remark(DEFAULT_REMARK);
+                .documentDate(DEFAULT_DOCUMENT_DATE)
+                .valueDate(DEFAULT_VALUE_DATE)
+                .action(DEFAULT_ACTION)
+                .quantity(DEFAULT_QUANTITY)
+                .remark(DEFAULT_REMARK);
         // Add required entity
         Membership membership = MembershipResourceIntTest.createEntity(em);
         em.persist(membership);
@@ -137,11 +141,11 @@ public class ShareResourceIntTest {
      */
     public static Share createPersistentEntity(EntityManager em, final Membership membership) {
         Share share = new Share()
-            .documentDate(DEFAULT_DOCUMENT_DATE)
-            .valueDate(DEFAULT_VALUE_DATE)
-            .action(DEFAULT_ACTION)
-            .quantity(DEFAULT_QUANTITY)
-            .remark(DEFAULT_REMARK);
+                .documentDate(DEFAULT_DOCUMENT_DATE)
+                .valueDate(DEFAULT_VALUE_DATE)
+                .action(DEFAULT_ACTION)
+                .quantity(DEFAULT_QUANTITY)
+                .remark(DEFAULT_REMARK);
         // Add required entity
         share.setMembership(membership);
         membership.addShare(share);
@@ -163,10 +167,11 @@ public class ShareResourceIntTest {
         // Create the Share
         ShareDTO shareDTO = shareMapper.toDto(share);
         shareDTO.setMembershipDisplayLabel(null);
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isCreated());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isCreated());
 
         // Validate the Share in the database
         List<Share> shareList = shareRepository.findAll();
@@ -189,10 +194,11 @@ public class ShareResourceIntTest {
         ShareDTO shareDTO = shareMapper.toDto(share);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Share in the database
         List<Share> shareList = shareRepository.findAll();
@@ -210,10 +216,11 @@ public class ShareResourceIntTest {
         ShareDTO shareDTO = shareMapper.toDto(share);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Share in the database
         List<Share> assetList = shareRepository.findAll();
@@ -230,10 +237,11 @@ public class ShareResourceIntTest {
         // Create the Share, which fails.
         ShareDTO shareDTO = shareMapper.toDto(share);
 
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeTest);
@@ -249,10 +257,11 @@ public class ShareResourceIntTest {
         // Create the Share, which fails.
         ShareDTO shareDTO = shareMapper.toDto(share);
 
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeTest);
@@ -268,10 +277,11 @@ public class ShareResourceIntTest {
         // Create the Share, which fails.
         ShareDTO shareDTO = shareMapper.toDto(share);
 
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeTest);
@@ -287,10 +297,11 @@ public class ShareResourceIntTest {
         // Create the Share, which fails.
         ShareDTO shareDTO = shareMapper.toDto(share);
 
-        restShareMockMvc.perform(post("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                post("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Share> shareList = shareRepository.findAll();
         assertThat(shareList).hasSize(databaseSizeBeforeTest);
@@ -304,14 +315,14 @@ public class ShareResourceIntTest {
 
         // Get all the shareList
         restShareMockMvc.perform(get("/api/shares?sort=id,desc"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(share.getId().intValue())))
-            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
-            .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
-            .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(share.getId().intValue())))
+                .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
+                .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
+                .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
 
     @Test
@@ -322,14 +333,14 @@ public class ShareResourceIntTest {
 
         // Get the share
         restShareMockMvc.perform(get("/api/shares/{id}", share.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(share.getId().intValue()))
-            .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
-            .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
-            .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
-            .andExpect(jsonPath("$.quantity").value(DEFAULT_QUANTITY))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.id").value(share.getId().intValue()))
+                .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
+                .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
+                .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
+                .andExpect(jsonPath("$.quantity").value(DEFAULT_QUANTITY))
+                .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -397,7 +408,6 @@ public class ShareResourceIntTest {
         defaultShareShouldBeFound("documentDate.lessThan=" + UPDATED_DOCUMENT_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllSharesByValueDateIsEqualToSomething() throws Exception {
@@ -462,7 +472,6 @@ public class ShareResourceIntTest {
         // Get all the shareList where valueDate less than or equals to UPDATED_VALUE_DATE
         defaultShareShouldBeFound("valueDate.lessThan=" + UPDATED_VALUE_DATE);
     }
-
 
     @Test
     @Transactional
@@ -568,7 +577,6 @@ public class ShareResourceIntTest {
         defaultShareShouldBeFound("quantity.lessThan=" + UPDATED_QUANTITY);
     }
 
-
     @Test
     @Transactional
     public void getAllSharesByRemarkIsEqualToSomething() throws Exception {
@@ -612,7 +620,8 @@ public class ShareResourceIntTest {
     @Transactional
     public void getAllSharesByMembershipIsEqualToSomething() throws Exception {
         // Initialize the database
-        Membership membership = MembershipResourceIntTest.createPersistentEntity(em, CustomerResourceIntTest.createPersistentEntity(em));
+        Membership membership = MembershipResourceIntTest
+                .createPersistentEntity(em, CustomerResourceIntTest.createPersistentEntity(em));
         share.setMembership(membership);
         shareRepository.saveAndFlush(share);
         Long membershipId = membership.getId();
@@ -629,20 +638,20 @@ public class ShareResourceIntTest {
      */
     private void defaultShareShouldBeFound(String filter) throws Exception {
         restShareMockMvc.perform(get("/api/shares?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(share.getId().intValue())))
-            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
-            .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
-            .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(share.getId().intValue())))
+                .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
+                .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
+                .andExpect(jsonPath("$.[*].quantity").value(hasItem(DEFAULT_QUANTITY)))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restShareMockMvc.perform(get("/api/shares/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("1"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("1"));
     }
 
     /**
@@ -650,25 +659,24 @@ public class ShareResourceIntTest {
      */
     private void defaultShareShouldNotBeFound(String filter) throws Exception {
         restShareMockMvc.perform(get("/api/shares?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
 
         // Check, that the count call also returns 0
         restShareMockMvc.perform(get("/api/shares/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("0"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("0"));
     }
-
 
     @Test
     @Transactional
     public void getNonExistingShare() throws Exception {
         // Get the share
         restShareMockMvc.perform(get("/api/shares/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -684,17 +692,18 @@ public class ShareResourceIntTest {
         // Disconnect from session so that the updates on updatedShare are not directly saved in db
         em.detach(updatedShare);
         updatedShare
-            .documentDate(UPDATED_DOCUMENT_DATE)
-            .valueDate(UPDATED_VALUE_DATE)
-            .action(UPDATED_ACTION)
-            .quantity(UPDATED_QUANTITY)
-            .remark(UPDATED_REMARK);
+                .documentDate(UPDATED_DOCUMENT_DATE)
+                .valueDate(UPDATED_VALUE_DATE)
+                .action(UPDATED_ACTION)
+                .quantity(UPDATED_QUANTITY)
+                .remark(UPDATED_REMARK);
         ShareDTO shareDTO = shareMapper.toDto(updatedShare);
 
-        restShareMockMvc.perform(put("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                put("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the database is unchanged
         List<Share> shareList = shareRepository.findAll();
@@ -717,10 +726,11 @@ public class ShareResourceIntTest {
         ShareDTO shareDTO = shareMapper.toDto(share);
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restShareMockMvc.perform(put("/api/shares")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                put("/api/shares")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(shareDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Share in the database
         List<Share> shareList = shareRepository.findAll();
@@ -736,9 +746,10 @@ public class ShareResourceIntTest {
         int databaseSizeBeforeDelete = shareRepository.findAll().size();
 
         // Delete the share
-        restShareMockMvc.perform(delete("/api/shares/{id}", share.getId())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isBadRequest());
+        restShareMockMvc.perform(
+                delete("/api/shares/{id}", share.getId())
+                        .accept(TestUtil.APPLICATION_JSON_UTF8))
+                .andExpect(status().isBadRequest());
 
         // Validate the database is unchanged
         List<Share> shareList = shareRepository.findAll();

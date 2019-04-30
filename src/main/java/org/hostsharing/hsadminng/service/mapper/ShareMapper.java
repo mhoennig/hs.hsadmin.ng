@@ -1,7 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
+
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -10,7 +12,7 @@ import org.mapstruct.MappingTarget;
 /**
  * Mapper for the entity Share and its DTO ShareDTO.
  */
-@Mapper(componentModel = "spring", uses = {MembershipMapper.class})
+@Mapper(componentModel = "spring", uses = { MembershipMapper.class })
 public interface ShareMapper extends EntityMapper<ShareDTO, Share> {
 
     @Mapping(source = "membership.id", target = "membershipId")

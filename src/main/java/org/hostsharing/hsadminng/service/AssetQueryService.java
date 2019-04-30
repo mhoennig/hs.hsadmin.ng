@@ -1,8 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
+import org.hostsharing.hsadminng.domain.*;
+import org.hostsharing.hsadminng.domain.Asset;
+import org.hostsharing.hsadminng.repository.AssetRepository;
+import org.hostsharing.hsadminng.service.dto.AssetCriteria;
+import org.hostsharing.hsadminng.service.dto.AssetDTO;
+import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 
-import javax.persistence.criteria.JoinType;
+import io.github.jhipster.service.QueryService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,14 +18,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
+import java.util.List;
 
-import org.hostsharing.hsadminng.domain.Asset;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.AssetRepository;
-import org.hostsharing.hsadminng.service.dto.AssetCriteria;
-import org.hostsharing.hsadminng.service.dto.AssetDTO;
-import org.hostsharing.hsadminng.service.mapper.AssetMapper;
+import javax.persistence.criteria.JoinType;
 
 /**
  * Service for executing complex queries for Asset entities in the database.
@@ -44,6 +45,7 @@ public class AssetQueryService extends QueryService<Asset> {
 
     /**
      * Return a {@link List} of {@link AssetDTO} which matches the criteria from the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @return the matching entities.
      */
@@ -56,6 +58,7 @@ public class AssetQueryService extends QueryService<Asset> {
 
     /**
      * Return a {@link Page} of {@link AssetDTO} which matches the criteria from the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @param page The page, which should be returned.
      * @return the matching entities.
@@ -65,11 +68,12 @@ public class AssetQueryService extends QueryService<Asset> {
         log.debug("find by criteria : {}, page: {}", criteria, page);
         final Specification<Asset> specification = createSpecification(criteria);
         return assetRepository.findAll(specification, page)
-            .map(assetMapper::toDto);
+                .map(assetMapper::toDto);
     }
 
     /**
      * Return the number of matching entities in the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @return the number of matching entities.
      */
@@ -105,8 +109,10 @@ public class AssetQueryService extends QueryService<Asset> {
                 specification = specification.and(buildStringSpecification(criteria.getRemark(), Asset_.remark));
             }
             if (criteria.getMembershipId() != null) {
-                specification = specification.and(buildSpecification(criteria.getMembershipId(),
-                    root -> root.join(Asset_.membership, JoinType.LEFT).get(Membership_.id)));
+                specification = specification.and(
+                        buildSpecification(
+                                criteria.getMembershipId(),
+                                root -> root.join(Asset_.membership, JoinType.LEFT).get(Membership_.id)));
             }
         }
         return specification;

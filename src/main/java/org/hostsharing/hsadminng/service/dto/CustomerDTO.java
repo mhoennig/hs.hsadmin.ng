@@ -1,20 +1,23 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.*;
 
 /**
  * A DTO for the Customer entity.
  */
-public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO>  {
+public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO> {
 
     @SelfId(resolver = CustomerService.class)
     @AccessFor(read = Role.ANY_CUSTOMER_USER)
@@ -41,27 +44,27 @@ public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO>  
     @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.CONTRACTUAL_CONTACT)
     private CustomerKind kind;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate birthDate;
 
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String birthPlace;
 
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String registrationCourt;
 
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String registrationNumber;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private VatRegion vatRegion;
 
     @Size(max = 40)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String vatNumber;
 
     @Size(max = 80)
@@ -74,18 +77,21 @@ public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO>  
     private String contractualAddress;
 
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT}, read = Role.CONTRACTUAL_CONTACT)
+    @AccessFor(
+            init = Role.ADMIN,
+            update = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
+            read = Role.CONTRACTUAL_CONTACT)
     private String billingSalutation;
 
     @Size(max = 400)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String billingAddress;
 
     @Size(max = 160)
     @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.SUPPORTER)
     private String remark;
 
-    @AccessFor(init=Role.ANYBODY, update=Role.ANYBODY, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.ANY_CUSTOMER_USER)
     private String displayLabel;
 
     public Long getId() {
@@ -248,23 +254,23 @@ public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO>  
     @Override
     public String toString() {
         return "CustomerDTO{" +
-            "id=" + getId() +
-            ", reference=" + getReference() +
-            ", prefix='" + getPrefix() + "'" +
-            ", name='" + getName() + "'" +
-            ", kind='" + getKind() + "'" +
-            ", birthDate='" + getBirthDate() + "'" +
-            ", birthPlace='" + getBirthPlace() + "'" +
-            ", registrationCourt='" + getRegistrationCourt() + "'" +
-            ", registrationNumber='" + getRegistrationNumber() + "'" +
-            ", vatRegion='" + getVatRegion() + "'" +
-            ", vatNumber='" + getVatNumber() + "'" +
-            ", contractualSalutation='" + getContractualSalutation() + "'" +
-            ", contractualAddress='" + getContractualAddress() + "'" +
-            ", billingSalutation='" + getBillingSalutation() + "'" +
-            ", billingAddress='" + getBillingAddress() + "'" +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", reference=" + getReference() +
+                ", prefix='" + getPrefix() + "'" +
+                ", name='" + getName() + "'" +
+                ", kind='" + getKind() + "'" +
+                ", birthDate='" + getBirthDate() + "'" +
+                ", birthPlace='" + getBirthPlace() + "'" +
+                ", registrationCourt='" + getRegistrationCourt() + "'" +
+                ", registrationNumber='" + getRegistrationNumber() + "'" +
+                ", vatRegion='" + getVatRegion() + "'" +
+                ", vatNumber='" + getVatNumber() + "'" +
+                ", contractualSalutation='" + getContractualSalutation() + "'" +
+                ", contractualAddress='" + getContractualAddress() + "'" +
+                ", billingSalutation='" + getBillingSalutation() + "'" +
+                ", billingAddress='" + getBillingAddress() + "'" +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 
     @JsonComponent
@@ -283,4 +289,3 @@ public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO>  
         }
     }
 }
-

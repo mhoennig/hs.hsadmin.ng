@@ -1,18 +1,19 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.util;
-
-import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
+import org.junit.Test;
 
 public class ReflectionUtilUnitTest {
 
     @Test
     public void getUknownFieldThrowsIllegalArgumentException() {
         final Throwable actual = catchThrowable(() -> ReflectionUtil.getField(SomeClass.class, "unknownField"));
-        assertThat(actual).isInstanceOf(IllegalArgumentException.class).hasMessage("java.lang.NoSuchFieldException: unknownField");
+        assertThat(actual).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("java.lang.NoSuchFieldException: unknownField");
     }
 
     @Test
@@ -57,8 +58,10 @@ public class ReflectionUtilUnitTest {
 
     @Test
     public void throwsExceptionIfGenericInterfaceNotImplemented() {
-        final Throwable actual = catchThrowable(() -> ReflectionUtil.determineGenericInterfaceParameter(SomeClass.class, UnusedGenericInterface.class, 1));
-        assertThat(actual).isInstanceOf(AssertionError.class).hasMessageContaining("SomeClass expected to implement UnusedGenericInterface<...>");
+        final Throwable actual = catchThrowable(
+                () -> ReflectionUtil.determineGenericInterfaceParameter(SomeClass.class, UnusedGenericInterface.class, 1));
+        assertThat(actual).isInstanceOf(AssertionError.class)
+                .hasMessageContaining("SomeClass expected to implement UnusedGenericInterface<...>");
     }
 
     @Test
@@ -75,8 +78,10 @@ public class ReflectionUtilUnitTest {
 
     @Test
     public void throwsExceptionIfGenericClassNotExended() {
-        final Throwable actual = catchThrowable(() -> ReflectionUtil.determineGenericClassParameter(SomeClass.class, UnusedSuperClass.class, 1));
-        assertThat(actual).isInstanceOf(AssertionError.class).hasMessageContaining("GenericClass expected to extend UnusedSuperClass<...>");
+        final Throwable actual = catchThrowable(
+                () -> ReflectionUtil.determineGenericClassParameter(SomeClass.class, UnusedSuperClass.class, 1));
+        assertThat(actual).isInstanceOf(AssertionError.class)
+                .hasMessageContaining("GenericClass expected to extend UnusedSuperClass<...>");
     }
 
     @Test
@@ -85,9 +90,8 @@ public class ReflectionUtilUnitTest {
         final Throwable actual = catchThrowable(() -> unchecked(() -> {
             throw givenException;
         }));
-        assertThat(actual).isInstanceOfSatisfying(RuntimeException.class, rte ->
-            assertThat(rte.getCause()).isSameAs(givenException)
-        );
+        assertThat(actual)
+                .isInstanceOfSatisfying(RuntimeException.class, rte -> assertThat(rte.getCause()).isSameAs(givenException));
     }
 
     @Test
@@ -98,6 +102,7 @@ public class ReflectionUtilUnitTest {
     // --- only test fixture below ---
 
     private static class TestDto {
+
         int intVal;
 
         TestDto(final int intval) {
@@ -118,7 +123,8 @@ public class ReflectionUtilUnitTest {
     private static class SuperClass extends GenericClass<String, Boolean> implements IntermediateInterfaces<Integer, Long> {
     }
 
-    private static class UnusedSuperClass extends GenericClass<String, Boolean> implements IntermediateInterfaces<Integer, Long> {
+    private static class UnusedSuperClass extends GenericClass<String, Boolean>
+            implements IntermediateInterfaces<Integer, Long> {
     }
 
     private static class GenericClass<T, V> {
@@ -134,6 +140,8 @@ public class ReflectionUtilUnitTest {
     }
 
     enum SomeEnum {
-        RED, BLUE, GREEN
+        RED,
+        BLUE,
+        GREEN
     }
 }

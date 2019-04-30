@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.config;
 
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
@@ -15,6 +16,7 @@ public class JacksonConfiguration {
 
     /**
      * Support for Java date and time API.
+     * 
      * @return the corresponding Jackson module.
      */
     @Bean
@@ -26,7 +28,6 @@ public class JacksonConfiguration {
     public Jdk8Module jdk8TimeModule() {
         return new Jdk8Module();
     }
-
 
     /*
      * Support for Hibernate types in Jackson.

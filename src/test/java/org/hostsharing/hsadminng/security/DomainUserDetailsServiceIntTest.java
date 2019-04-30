@@ -1,4 +1,7 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.security;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.User;
@@ -17,8 +20,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test class for DomainUserDetailsService.
@@ -107,7 +108,7 @@ public class DomainUserDetailsServiceIntTest {
     @Test(expected = UsernameNotFoundException.class)
     @Transactional
     public void assertThatUserCanNotBeFoundByEmailIgnoreCase() {
-    domainUserDetailsService.loadUserByUsername(USER_TWO_EMAIL.toUpperCase(Locale.ENGLISH));
+        domainUserDetailsService.loadUserByUsername(USER_TWO_EMAIL.toUpperCase(Locale.ENGLISH));
     }
 
     @Test

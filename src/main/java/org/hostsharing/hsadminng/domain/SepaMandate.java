@@ -1,14 +1,15 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Objects;
 
 /**
  * A SepaMandate.
@@ -18,7 +19,7 @@ import java.util.Objects;
 public class SepaMandate implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
@@ -232,16 +233,16 @@ public class SepaMandate implements Serializable {
     @Override
     public String toString() {
         return "SepaMandate{" +
-            "id=" + getId() +
-            ", reference='" + getReference() + "'" +
-            ", iban='" + getIban() + "'" +
-            ", bic='" + getBic() + "'" +
-            ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
-            ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
-            ", validFromDate='" + getValidFromDate() + "'" +
-            ", validUntilDate='" + getValidUntilDate() + "'" +
-            ", lastUsedDate='" + getLastUsedDate() + "'" +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", reference='" + getReference() + "'" +
+                ", iban='" + getIban() + "'" +
+                ", bic='" + getBic() + "'" +
+                ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
+                ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
+                ", validFromDate='" + getValidFromDate() + "'" +
+                ", validUntilDate='" + getValidUntilDate() + "'" +
+                ", lastUsedDate='" + getLastUsedDate() + "'" +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

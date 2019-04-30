@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Asset;
@@ -5,6 +6,7 @@ import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,8 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
 
 /**
  * Service Implementation for managing Asset.
@@ -31,7 +34,11 @@ public class AssetService implements IdToDtoResolver<AssetDTO> {
     private final AssetMapper assetMapper;
     private final AssetValidator assetValidator;
 
-    public AssetService(final EntityManager em, final AssetRepository assetRepository, final AssetMapper assetMapper, final AssetValidator assetValidator) {
+    public AssetService(
+            final EntityManager em,
+            final AssetRepository assetRepository,
+            final AssetMapper assetMapper,
+            final AssetValidator assetValidator) {
         this.em = em;
         this.assetRepository = assetRepository;
         this.assetMapper = assetMapper;
@@ -64,9 +71,8 @@ public class AssetService implements IdToDtoResolver<AssetDTO> {
     public Page<AssetDTO> findAll(Pageable pageable) {
         log.debug("Request to get all Assets");
         return assetRepository.findAll(pageable)
-            .map(assetMapper::toDto);
+                .map(assetMapper::toDto);
     }
-
 
     /**
      * Get one asset by id.
@@ -78,7 +84,7 @@ public class AssetService implements IdToDtoResolver<AssetDTO> {
     public Optional<AssetDTO> findOne(Long id) {
         log.debug("Request to get Asset : {}", id);
         return assetRepository.findById(id)
-            .map(assetMapper::toDto);
+                .map(assetMapper::toDto);
     }
 
     /**

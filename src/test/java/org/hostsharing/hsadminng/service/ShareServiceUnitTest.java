@@ -1,12 +1,20 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
-import org.apache.commons.lang3.RandomUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
 import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -16,13 +24,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import javax.persistence.EntityManager;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-
 
 // HINT: In IntelliJ IDEA such unit test classes can be created with Shift-Ctrl-T.
 // Do not forget to amend the class name (.e.g. ...UnitTest / ...IntTest)!
@@ -54,13 +55,15 @@ public class ShareServiceUnitTest {
     @Test
     public void deleteIsRejectedForShareTransactions() {
         // when
-        final Throwable throwException = catchThrowableOfType(() -> shareService.delete(RandomUtils.nextLong()), BadRequestAlertException.class);
+        final Throwable throwException = catchThrowableOfType(
+                () -> shareService.delete(RandomUtils.nextLong()),
+                BadRequestAlertException.class);
 
         // then
         // HINT: When using auto-import for assertions (e.g. via Alt-Enter in IntelliJ IDEA),
         // beware to use the correct candidate from org.assertj.core.api.Assertions.
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Share transactions are immutable", "share", "shareTransactionImmutable"));
+                new BadRequestAlertException("Share transactions are immutable", "share", "shareTransactionImmutable"));
     }
 
     @Test
@@ -83,14 +86,18 @@ public class ShareServiceUnitTest {
     public void saveShouldNotPersistInvalidTransactions() {
         // given
         final ShareDTO givenShareDTO = givenShareDTO(null, ShareAction.SUBSCRIPTION, anyNegativeNumber());
-        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy")).when(shareValidator).validate(givenShareDTO);
+        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"))
+                .when(shareValidator)
+                .validate(givenShareDTO);
 
         // when
-        final Throwable throwException = catchThrowableOfType(() -> shareService.save(givenShareDTO), BadRequestAlertException.class);
+        final Throwable throwException = catchThrowableOfType(
+                () -> shareService.save(givenShareDTO),
+                BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"));
+                new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"));
     }
 
     @Test
@@ -113,14 +120,18 @@ public class ShareServiceUnitTest {
         // given
         final ShareDTO givenShareDTO = givenShareDTO(anyNonNullId(), ShareAction.SUBSCRIPTION, anyNegativeNumber());
         // HINT: given(...) can't be used for void methods, in that case use Mockito's do...() methods
-        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy")).when(shareValidator).validate(givenShareDTO);
+        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"))
+                .when(shareValidator)
+                .validate(givenShareDTO);
 
         // when
-        final Throwable throwException = catchThrowableOfType(() -> shareService.save(givenShareDTO), BadRequestAlertException.class);
+        final Throwable throwException = catchThrowableOfType(
+                () -> shareService.save(givenShareDTO),
+                BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"));
+                new BadRequestAlertException("Some Dummy Test Violation", "share", "shareInvalidTestDummy"));
     }
 
     // --- only test fixture code below ---
@@ -129,7 +140,8 @@ public class ShareServiceUnitTest {
         return RandomUtils.nextInt();
     }
 
-    // HINT: This rather complicated setup indicates that the method ShareService::save breaks the single responsibility principle.
+    // HINT: This rather complicated setup indicates that the method ShareService::save breaks the single responsibility
+    // principle.
     private ShareDTO givenShareDTO(final Long id, final ShareAction givenAction, final int givenQuantity) {
         final ShareDTO givenShareDTO = createShareDTO(id, givenAction, givenQuantity);
 

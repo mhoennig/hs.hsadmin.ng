@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Share;
@@ -5,6 +6,7 @@ import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,8 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
 
 /**
  * Service Implementation for managing Share.
@@ -32,7 +35,11 @@ public class ShareService implements IdToDtoResolver<ShareDTO> {
 
     private final ShareValidator shareValidator;
 
-    public ShareService(final EntityManager em, final ShareRepository shareRepository, final ShareMapper shareMapper, final ShareValidator shareValidator) {
+    public ShareService(
+            final EntityManager em,
+            final ShareRepository shareRepository,
+            final ShareMapper shareMapper,
+            final ShareValidator shareValidator) {
         this.em = em;
         this.shareRepository = shareRepository;
         this.shareMapper = shareMapper;
@@ -67,9 +74,8 @@ public class ShareService implements IdToDtoResolver<ShareDTO> {
     public Page<ShareDTO> findAll(Pageable pageable) {
         log.debug("Request to get all Shares");
         return shareRepository.findAll(pageable)
-            .map(shareMapper::toDto);
+                .map(shareMapper::toDto);
     }
-
 
     /**
      * Get one share by id.
@@ -81,7 +87,7 @@ public class ShareService implements IdToDtoResolver<ShareDTO> {
     public Optional<ShareDTO> findOne(Long id) {
         log.debug("Request to get Share : {}", id);
         return shareRepository.findById(id)
-            .map(shareMapper::toDto);
+                .map(shareMapper::toDto);
     }
 
     /**

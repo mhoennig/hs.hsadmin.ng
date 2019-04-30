@@ -1,10 +1,12 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.util.RandomUtil;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -19,7 +21,12 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
     @Test
     public void shouldHaveProperAccessForAdmin() {
         initAccessFor(AssetDTO.class, Role.ADMIN).shouldBeExactlyFor(
-            "membershipId", "documentDate", "amount", "action", "valueDate", "remark");
+                "membershipId",
+                "documentDate",
+                "amount",
+                "action",
+                "valueDate",
+                "remark");
         updateAccessFor(AssetDTO.class, Role.ADMIN).shouldBeExactlyFor("remark");
         readAccessFor(AssetDTO.class, Role.ADMIN).shouldBeForAllFields();
     }
@@ -29,7 +36,13 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
         initAccessFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
         updateAccessFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
         readAccessFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
-            "id", "membershipId", "documentDate", "amount", "action", "valueDate", "membershipDisplayLabel");
+                "id",
+                "membershipId",
+                "documentDate",
+                "amount",
+                "action",
+                "valueDate",
+                "membershipDisplayLabel");
     }
 
     @Test

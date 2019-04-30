@@ -1,8 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang3.RandomUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.Share;
@@ -20,6 +25,11 @@ import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.service.mapper.ShareMapperImpl;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,26 +42,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
+import javax.persistence.EntityManager;
 
 @JsonTest
-@SpringBootTest(classes = {
-    CustomerMapperImpl.class,
-    MembershipMapperImpl.class,
-    ShareMapperImpl.class,
-    ShareDTO.JsonSerializer.class,
-    ShareDTO.JsonDeserializer.class
-})
+@SpringBootTest(
+        classes = {
+                CustomerMapperImpl.class,
+                MembershipMapperImpl.class,
+                ShareMapperImpl.class,
+                ShareDTO.JsonSerializer.class,
+                ShareDTO.JsonDeserializer.class
+        })
 @RunWith(SpringRunner.class)
 public class ShareDTOIntTest {
 
@@ -60,12 +65,15 @@ public class ShareDTOIntTest {
     private static final String SOME_CUSTOMER_PREFIX = "abc";
     private static final String SOME_CUSTOMER_NAME = "Some Customer Name";
     private static final Customer SOME_CUSTOMER = new Customer().id(SOME_CUSTOMER_ID)
-        .reference(SOME_CUSTOMER_REFERENCE).prefix(SOME_CUSTOMER_PREFIX).name(SOME_CUSTOMER_NAME);
+            .reference(SOME_CUSTOMER_REFERENCE)
+            .prefix(SOME_CUSTOMER_PREFIX)
+            .name(SOME_CUSTOMER_NAME);
 
     private static final Long SOME_MEMBERSHIP_ID = RandomUtils.nextLong(200, 299);
     private static final LocalDate SOME_MEMBER_FROM_DATE = LocalDate.parse("2000-12-06");
     private static final Membership SOME_MEMBERSHIP = new Membership().id(SOME_MEMBERSHIP_ID)
-        .customer(SOME_CUSTOMER).memberFromDate(SOME_MEMBER_FROM_DATE);
+            .customer(SOME_CUSTOMER)
+            .memberFromDate(SOME_MEMBER_FROM_DATE);
     private static final String SOME_MEMBERSHIP_DISPLAY_LABEL = "Some Customer Name [10001:abc] 2000-12-06 - ...";
 
     private static final Long SOME_SHARE_ID = RandomUtils.nextLong(300, 399);
@@ -145,17 +153,18 @@ public class ShareDTOIntTest {
         givenAuthenticatedUser();
         givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_SHARE_ID)
-            .withFieldValue("remark", "Updated Remark")
-            .toString();
+                .withFieldValue("id", SOME_SHARE_ID)
+                .withFieldValue("remark", "Updated Remark")
+                .toString();
 
         // when
         final Throwable actual = catchThrowable(() -> objectMapper.readValue(json, ShareDTO.class));
 
         // then
-        assertThat(actual).isInstanceOfSatisfying(BadRequestAlertException.class, bre ->
-            assertThat(bre.getMessage()).isEqualTo("Update of field ShareDTO.remark prohibited for current user role CONTRACTUAL_CONTACT")
-        );
+        assertThat(actual).isInstanceOfSatisfying(
+                BadRequestAlertException.class,
+                bre -> assertThat(bre.getMessage())
+                        .isEqualTo("Update of field ShareDTO.remark prohibited for current user role CONTRACTUAL_CONTACT"));
     }
 
     @Test
@@ -164,9 +173,9 @@ public class ShareDTOIntTest {
         givenAuthenticatedUser();
         givenUserHavingRole(Role.ADMIN);
         final String json = new JSonBuilder()
-            .withFieldValue("id", SOME_SHARE_ID)
-            .withFieldValue("remark", "Updated Remark")
-            .toString();
+                .withFieldValue("id", SOME_SHARE_ID)
+                .withFieldValue("remark", "Updated Remark")
+                .toString();
 
         // when
         final ShareDTO actual = objectMapper.readValue(json, ShareDTO.class);
@@ -184,15 +193,15 @@ public class ShareDTOIntTest {
 
     private String createExpectedJSon(ShareDTO dto) {
         return new JSonBuilder()
-            .withFieldValueIfPresent("id", dto.getId())
-            .withFieldValueIfPresent("documentDate", dto.getDocumentDate().toString())
-            .withFieldValueIfPresent("valueDate", dto.getValueDate().toString())
-            .withFieldValueIfPresent("action", dto.getAction().name())
-            .withFieldValueIfPresent("quantity", dto.getQuantity())
-            .withFieldValueIfPresent("remark", dto.getRemark())
-            .withFieldValueIfPresent("membershipId", dto.getMembershipId())
-            .withFieldValue("membershipDisplayLabel", dto.getMembershipDisplayLabel())
-            .toString();
+                .withFieldValueIfPresent("id", dto.getId())
+                .withFieldValueIfPresent("documentDate", dto.getDocumentDate().toString())
+                .withFieldValueIfPresent("valueDate", dto.getValueDate().toString())
+                .withFieldValueIfPresent("action", dto.getAction().name())
+                .withFieldValueIfPresent("quantity", dto.getQuantity())
+                .withFieldValueIfPresent("remark", dto.getRemark())
+                .withFieldValueIfPresent("membershipId", dto.getMembershipId())
+                .withFieldValue("membershipDisplayLabel", dto.getMembershipDisplayLabel())
+                .toString();
     }
 
     private ShareDTO createSomeShareDTO(final long id) {

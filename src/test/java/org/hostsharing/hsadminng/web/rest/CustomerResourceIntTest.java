@@ -1,4 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Customer;
@@ -14,6 +23,7 @@ import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,18 +39,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
-import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import javax.persistence.EntityManager;
 
 /**
  * Test class for the CustomerResource REST controller.
@@ -147,11 +150,12 @@ public class CustomerResourceIntTest {
 
         final CustomerResource customerResource = new CustomerResource(customerService, customerQueryService);
         this.restCustomerMockMvc = MockMvcBuilders.standaloneSetup(customerResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setControllerAdvice(exceptionTranslator)
-            .setConversionService(createFormattingConversionService())
-            .setMessageConverters(jacksonMessageConverter)
-            .setValidator(validator).build();
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .setControllerAdvice(exceptionTranslator)
+                .setConversionService(createFormattingConversionService())
+                .setMessageConverters(jacksonMessageConverter)
+                .setValidator(validator)
+                .build();
     }
 
     /**
@@ -162,21 +166,21 @@ public class CustomerResourceIntTest {
      */
     public static Customer createEntity(EntityManager em) {
         Customer customer = new Customer()
-            .reference(DEFAULT_REFERENCE)
-            .prefix(DEFAULT_PREFIX)
-            .name(DEFAULT_NAME)
-            .kind(DEFAULT_KIND)
-            .birthDate(DEFAULT_BIRTH_DATE)
-            .birthPlace(DEFAULT_BIRTH_PLACE)
-            .registrationCourt(DEFAULT_REGISTRATION_COURT)
-            .registrationNumber(DEFAULT_REGISTRATION_NUMBER)
-            .vatRegion(DEFAULT_VAT_REGION)
-            .vatNumber(DEFAULT_VAT_NUMBER)
-            .contractualSalutation(DEFAULT_CONTRACTUAL_SALUTATION)
-            .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
-            .billingSalutation(DEFAULT_BILLING_SALUTATION)
-            .billingAddress(DEFAULT_BILLING_ADDRESS)
-            .remark(DEFAULT_REMARK);
+                .reference(DEFAULT_REFERENCE)
+                .prefix(DEFAULT_PREFIX)
+                .name(DEFAULT_NAME)
+                .kind(DEFAULT_KIND)
+                .birthDate(DEFAULT_BIRTH_DATE)
+                .birthPlace(DEFAULT_BIRTH_PLACE)
+                .registrationCourt(DEFAULT_REGISTRATION_COURT)
+                .registrationNumber(DEFAULT_REGISTRATION_NUMBER)
+                .vatRegion(DEFAULT_VAT_REGION)
+                .vatNumber(DEFAULT_VAT_NUMBER)
+                .contractualSalutation(DEFAULT_CONTRACTUAL_SALUTATION)
+                .contractualAddress(DEFAULT_CONTRACTUAL_ADDRESS)
+                .billingSalutation(DEFAULT_BILLING_SALUTATION)
+                .billingAddress(DEFAULT_BILLING_ADDRESS)
+                .remark(DEFAULT_REMARK);
         return customer;
     }
 
@@ -188,12 +192,12 @@ public class CustomerResourceIntTest {
      */
     public static Customer createPersistentEntity(EntityManager em) {
         Customer customer = new Customer()
-            .reference(OTHER_REFERENCE_BASE + otherCounter)
-            .prefix(OTHER_PREFIX_BASE + String.format("%02d", otherCounter))
-            .name(OTHER_NAME_BASE + otherCounter)
-            .kind(OTHER_KIND)
-            .vatRegion(OTHER_VAT_REGION)
-            .contractualAddress(OTHER_CONTRACTUAL_ADDRESS_BASE + otherCounter);
+                .reference(OTHER_REFERENCE_BASE + otherCounter)
+                .prefix(OTHER_PREFIX_BASE + String.format("%02d", otherCounter))
+                .name(OTHER_NAME_BASE + otherCounter)
+                .kind(OTHER_KIND)
+                .vatRegion(OTHER_VAT_REGION)
+                .contractualAddress(OTHER_CONTRACTUAL_ADDRESS_BASE + otherCounter);
         em.persist(customer);
         em.flush();
         ++otherCounter;
@@ -212,10 +216,11 @@ public class CustomerResourceIntTest {
 
         // Create the Customer
         CustomerDTO customerDTO = customerMapper.toDto(customer);
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isCreated());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isCreated());
 
         // Validate the Customer in the database
         List<Customer> customerList = customerRepository.findAll();
@@ -250,10 +255,11 @@ public class CustomerResourceIntTest {
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Customer in the database
         List<Customer> customerList = customerRepository.findAll();
@@ -270,10 +276,11 @@ public class CustomerResourceIntTest {
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Customer in the database
         List<Customer> customerList = customerRepository.findAll();
@@ -290,10 +297,11 @@ public class CustomerResourceIntTest {
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeTest);
@@ -309,10 +317,11 @@ public class CustomerResourceIntTest {
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeTest);
@@ -328,10 +337,11 @@ public class CustomerResourceIntTest {
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeTest);
@@ -347,10 +357,11 @@ public class CustomerResourceIntTest {
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeTest);
@@ -366,10 +377,11 @@ public class CustomerResourceIntTest {
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeTest);
@@ -385,10 +397,11 @@ public class CustomerResourceIntTest {
         // Create the Customer, which fails.
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
-        restCustomerMockMvc.perform(post("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                post("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Customer> customerList = customerRepository.findAll();
         assertThat(customerList).hasSize(databaseSizeBeforeTest);
@@ -402,24 +415,24 @@ public class CustomerResourceIntTest {
 
         // Get all the customerList
         restCustomerMockMvc.perform(get("/api/customers?sort=id,desc"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
-            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
-            .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
-            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
-            .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
-            .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
-            .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE)))
-            .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT)))
-            .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER)))
-            .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
-            .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER)))
-            .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
-            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
+                .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
+                .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
+                .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
+                .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
+                .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
+                .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE)))
+                .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT)))
+                .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER)))
+                .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
+                .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER)))
+                .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
+                .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
+                .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
+                .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
     }
 
     @Test
@@ -430,24 +443,24 @@ public class CustomerResourceIntTest {
 
         // Get the customer
         restCustomerMockMvc.perform(get("/api/customers/{id}", customer.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(customer.getId().intValue()))
-            .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE))
-            .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX))
-            .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
-            .andExpect(jsonPath("$.kind").value(DEFAULT_KIND.toString()))
-            .andExpect(jsonPath("$.birthDate").value(DEFAULT_BIRTH_DATE.toString()))
-            .andExpect(jsonPath("$.birthPlace").value(DEFAULT_BIRTH_PLACE))
-            .andExpect(jsonPath("$.registrationCourt").value(DEFAULT_REGISTRATION_COURT))
-            .andExpect(jsonPath("$.registrationNumber").value(DEFAULT_REGISTRATION_NUMBER))
-            .andExpect(jsonPath("$.vatRegion").value(DEFAULT_VAT_REGION.toString()))
-            .andExpect(jsonPath("$.vatNumber").value(DEFAULT_VAT_NUMBER))
-            .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION))
-            .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS))
-            .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION))
-            .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.id").value(customer.getId().intValue()))
+                .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE))
+                .andExpect(jsonPath("$.prefix").value(DEFAULT_PREFIX))
+                .andExpect(jsonPath("$.name").value(DEFAULT_NAME))
+                .andExpect(jsonPath("$.kind").value(DEFAULT_KIND.toString()))
+                .andExpect(jsonPath("$.birthDate").value(DEFAULT_BIRTH_DATE.toString()))
+                .andExpect(jsonPath("$.birthPlace").value(DEFAULT_BIRTH_PLACE))
+                .andExpect(jsonPath("$.registrationCourt").value(DEFAULT_REGISTRATION_COURT))
+                .andExpect(jsonPath("$.registrationNumber").value(DEFAULT_REGISTRATION_NUMBER))
+                .andExpect(jsonPath("$.vatRegion").value(DEFAULT_VAT_REGION.toString()))
+                .andExpect(jsonPath("$.vatNumber").value(DEFAULT_VAT_NUMBER))
+                .andExpect(jsonPath("$.contractualSalutation").value(DEFAULT_CONTRACTUAL_SALUTATION))
+                .andExpect(jsonPath("$.contractualAddress").value(DEFAULT_CONTRACTUAL_ADDRESS))
+                .andExpect(jsonPath("$.billingSalutation").value(DEFAULT_BILLING_SALUTATION))
+                .andExpect(jsonPath("$.billingAddress").value(DEFAULT_BILLING_ADDRESS))
+                .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK));
     }
 
     @Test
@@ -514,7 +527,6 @@ public class CustomerResourceIntTest {
         // Get all the customerList where reference less than or equals to (DEFAULT_REFERENCE + 1)
         defaultCustomerShouldBeFound("reference.lessThan=" + (DEFAULT_REFERENCE + 1));
     }
-
 
     @Test
     @Transactional
@@ -698,7 +710,6 @@ public class CustomerResourceIntTest {
         defaultCustomerShouldBeFound("birthDate.lessThan=" + UPDATED_BIRTH_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllCustomersByBirthPlaceIsEqualToSomething() throws Exception {
@@ -797,7 +808,8 @@ public class CustomerResourceIntTest {
         customerRepository.saveAndFlush(customer);
 
         // Get all the customerList where registrationNumber in DEFAULT_REGISTRATION_NUMBER or UPDATED_REGISTRATION_NUMBER
-        defaultCustomerShouldBeFound("registrationNumber.in=" + DEFAULT_REGISTRATION_NUMBER + "," + UPDATED_REGISTRATION_NUMBER);
+        defaultCustomerShouldBeFound(
+                "registrationNumber.in=" + DEFAULT_REGISTRATION_NUMBER + "," + UPDATED_REGISTRATION_NUMBER);
 
         // Get all the customerList where registrationNumber equals to UPDATED_REGISTRATION_NUMBER
         defaultCustomerShouldNotBeFound("registrationNumber.in=" + UPDATED_REGISTRATION_NUMBER);
@@ -913,8 +925,10 @@ public class CustomerResourceIntTest {
         // Initialize the database
         customerRepository.saveAndFlush(customer);
 
-        // Get all the customerList where contractualSalutation in DEFAULT_CONTRACTUAL_SALUTATION or UPDATED_CONTRACTUAL_SALUTATION
-        defaultCustomerShouldBeFound("contractualSalutation.in=" + DEFAULT_CONTRACTUAL_SALUTATION + "," + UPDATED_CONTRACTUAL_SALUTATION);
+        // Get all the customerList where contractualSalutation in DEFAULT_CONTRACTUAL_SALUTATION or
+        // UPDATED_CONTRACTUAL_SALUTATION
+        defaultCustomerShouldBeFound(
+                "contractualSalutation.in=" + DEFAULT_CONTRACTUAL_SALUTATION + "," + UPDATED_CONTRACTUAL_SALUTATION);
 
         // Get all the customerList where contractualSalutation equals to UPDATED_CONTRACTUAL_SALUTATION
         defaultCustomerShouldNotBeFound("contractualSalutation.in=" + UPDATED_CONTRACTUAL_SALUTATION);
@@ -953,7 +967,8 @@ public class CustomerResourceIntTest {
         customerRepository.saveAndFlush(customer);
 
         // Get all the customerList where contractualAddress in DEFAULT_CONTRACTUAL_ADDRESS or UPDATED_CONTRACTUAL_ADDRESS
-        defaultCustomerShouldBeFound("contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
+        defaultCustomerShouldBeFound(
+                "contractualAddress.in=" + DEFAULT_CONTRACTUAL_ADDRESS + "," + UPDATED_CONTRACTUAL_ADDRESS);
 
         // Get all the customerList where contractualAddress equals to UPDATED_CONTRACTUAL_ADDRESS
         defaultCustomerShouldNotBeFound("contractualAddress.in=" + UPDATED_CONTRACTUAL_ADDRESS);
@@ -1107,7 +1122,6 @@ public class CustomerResourceIntTest {
         defaultCustomerShouldNotBeFound("membershipId.equals=" + (membershipId + 1));
     }
 
-
     @Test
     @Transactional
     public void getAllCustomersBySepamandateIsEqualToSomething() throws Exception {
@@ -1131,30 +1145,30 @@ public class CustomerResourceIntTest {
      */
     private void defaultCustomerShouldBeFound(String filter) throws Exception {
         restCustomerMockMvc.perform(get("/api/customers?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
-            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
-            .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
-            .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
-            .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
-            .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
-            .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE)))
-            .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT)))
-            .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER)))
-            .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
-            .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER)))
-            .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
-            .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
-            .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
-            .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(customer.getId().intValue())))
+                .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
+                .andExpect(jsonPath("$.[*].prefix").value(hasItem(DEFAULT_PREFIX)))
+                .andExpect(jsonPath("$.[*].name").value(hasItem(DEFAULT_NAME)))
+                .andExpect(jsonPath("$.[*].kind").value(hasItem(DEFAULT_KIND.toString())))
+                .andExpect(jsonPath("$.[*].birthDate").value(hasItem(DEFAULT_BIRTH_DATE.toString())))
+                .andExpect(jsonPath("$.[*].birthPlace").value(hasItem(DEFAULT_BIRTH_PLACE)))
+                .andExpect(jsonPath("$.[*].registrationCourt").value(hasItem(DEFAULT_REGISTRATION_COURT)))
+                .andExpect(jsonPath("$.[*].registrationNumber").value(hasItem(DEFAULT_REGISTRATION_NUMBER)))
+                .andExpect(jsonPath("$.[*].vatRegion").value(hasItem(DEFAULT_VAT_REGION.toString())))
+                .andExpect(jsonPath("$.[*].vatNumber").value(hasItem(DEFAULT_VAT_NUMBER)))
+                .andExpect(jsonPath("$.[*].contractualSalutation").value(hasItem(DEFAULT_CONTRACTUAL_SALUTATION)))
+                .andExpect(jsonPath("$.[*].contractualAddress").value(hasItem(DEFAULT_CONTRACTUAL_ADDRESS)))
+                .andExpect(jsonPath("$.[*].billingSalutation").value(hasItem(DEFAULT_BILLING_SALUTATION)))
+                .andExpect(jsonPath("$.[*].billingAddress").value(hasItem(DEFAULT_BILLING_ADDRESS)))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restCustomerMockMvc.perform(get("/api/customers/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("1"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("1"));
     }
 
     /**
@@ -1162,25 +1176,24 @@ public class CustomerResourceIntTest {
      */
     private void defaultCustomerShouldNotBeFound(String filter) throws Exception {
         restCustomerMockMvc.perform(get("/api/customers?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
 
         // Check, that the count call also returns 0
         restCustomerMockMvc.perform(get("/api/customers/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("0"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("0"));
     }
-
 
     @Test
     @Transactional
     public void getNonExistingCustomer() throws Exception {
         // Get the customer
         restCustomerMockMvc.perform(get("/api/customers/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -1196,27 +1209,28 @@ public class CustomerResourceIntTest {
         // Disconnect from session so that the updates on updatedCustomer are not directly saved in db
         em.detach(updatedCustomer);
         updatedCustomer
-            .reference(null)
-            .prefix(null)
-            .name(UPDATED_NAME)
-            .kind(UPDATED_KIND)
-            .birthDate(UPDATED_BIRTH_DATE)
-            .birthPlace(UPDATED_BIRTH_PLACE)
-            .registrationCourt(UPDATED_REGISTRATION_COURT)
-            .registrationNumber(UPDATED_REGISTRATION_NUMBER)
-            .vatRegion(UPDATED_VAT_REGION)
-            .vatNumber(UPDATED_VAT_NUMBER)
-            .contractualSalutation(UPDATED_CONTRACTUAL_SALUTATION)
-            .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
-            .billingSalutation(UPDATED_BILLING_SALUTATION)
-            .billingAddress(UPDATED_BILLING_ADDRESS)
-            .remark(UPDATED_REMARK);
+                .reference(null)
+                .prefix(null)
+                .name(UPDATED_NAME)
+                .kind(UPDATED_KIND)
+                .birthDate(UPDATED_BIRTH_DATE)
+                .birthPlace(UPDATED_BIRTH_PLACE)
+                .registrationCourt(UPDATED_REGISTRATION_COURT)
+                .registrationNumber(UPDATED_REGISTRATION_NUMBER)
+                .vatRegion(UPDATED_VAT_REGION)
+                .vatNumber(UPDATED_VAT_NUMBER)
+                .contractualSalutation(UPDATED_CONTRACTUAL_SALUTATION)
+                .contractualAddress(UPDATED_CONTRACTUAL_ADDRESS)
+                .billingSalutation(UPDATED_BILLING_SALUTATION)
+                .billingAddress(UPDATED_BILLING_ADDRESS)
+                .remark(UPDATED_REMARK);
         CustomerDTO customerDTO = customerMapper.toDto(updatedCustomer);
 
-        restCustomerMockMvc.perform(put("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isOk());
+        restCustomerMockMvc.perform(
+                put("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isOk());
 
         // Validate the Customer in the database
         List<Customer> customerList = customerRepository.findAll();
@@ -1248,10 +1262,11 @@ public class CustomerResourceIntTest {
         CustomerDTO customerDTO = customerMapper.toDto(customer);
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restCustomerMockMvc.perform(put("/api/customers")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                put("/api/customers")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(customerDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Customer in the database
         List<Customer> customerList = customerRepository.findAll();
@@ -1267,9 +1282,10 @@ public class CustomerResourceIntTest {
         int databaseSizeBeforeDelete = customerRepository.findAll().size();
 
         // Delete the customer
-        restCustomerMockMvc.perform(delete("/api/customers/{id}", customer.getId())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isBadRequest());
+        restCustomerMockMvc.perform(
+                delete("/api/customers/{id}", customer.getId())
+                        .accept(TestUtil.APPLICATION_JSON_UTF8))
+                .andExpect(status().isBadRequest());
 
         // Validate the database is unchanged
         List<Customer> customerList = customerRepository.findAll();

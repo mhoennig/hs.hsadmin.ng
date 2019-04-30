@@ -1,8 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import java.lang.reflect.Field;
-
 import static com.google.common.base.Verify.verify;
+
+import java.lang.reflect.Field;
 
 /**
  * These enum values are on the one hand used to define the minimum role required to grant access to resources,
@@ -46,6 +47,7 @@ public enum Role {
      * This role is for financial contacts of a customer, e.g. for accessing billing data.
      */
     FINANCIAL_CONTACT(22) {
+
         @Override
         public boolean covers(final Role role) {
             if (role == ACTUAL_CUSTOMER_USER) {
@@ -59,7 +61,6 @@ public enum Role {
      * This role is for technical contacts of a customer.
      */
     TECHNICAL_CONTACT(22),
-
 
     /**
      * This meta-role is to specify that any kind of customer contact can get access to the resource.

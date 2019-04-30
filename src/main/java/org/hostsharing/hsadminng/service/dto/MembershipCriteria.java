@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import io.github.jhipster.service.filter.Filter;
@@ -110,7 +111,6 @@ public class MembershipCriteria implements Serializable {
         this.customerId = customerId;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -120,31 +120,29 @@ public class MembershipCriteria implements Serializable {
             return false;
         }
         final MembershipCriteria that = (MembershipCriteria) o;
-        return
-            Objects.equals(id, that.id) &&
-            Objects.equals(admissionDocumentDate, that.admissionDocumentDate) &&
-            Objects.equals(cancellationDocumentDate, that.cancellationDocumentDate) &&
-            Objects.equals(memberFromDate, that.memberFromDate) &&
-            Objects.equals(memberUntilDate, that.memberUntilDate) &&
-            Objects.equals(remark, that.remark) &&
-            Objects.equals(shareId, that.shareId) &&
-            Objects.equals(assetId, that.assetId) &&
-            Objects.equals(customerId, that.customerId);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(admissionDocumentDate, that.admissionDocumentDate) &&
+                Objects.equals(cancellationDocumentDate, that.cancellationDocumentDate) &&
+                Objects.equals(memberFromDate, that.memberFromDate) &&
+                Objects.equals(memberUntilDate, that.memberUntilDate) &&
+                Objects.equals(remark, that.remark) &&
+                Objects.equals(shareId, that.shareId) &&
+                Objects.equals(assetId, that.assetId) &&
+                Objects.equals(customerId, that.customerId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-        id,
-        admissionDocumentDate,
-        cancellationDocumentDate,
-        memberFromDate,
-        memberUntilDate,
-        remark,
-        shareId,
-        assetId,
-        customerId
-        );
+                id,
+                admissionDocumentDate,
+                cancellationDocumentDate,
+                memberFromDate,
+                memberUntilDate,
+                remark,
+                shareId,
+                assetId,
+                customerId);
     }
 
     @Override
@@ -159,7 +157,7 @@ public class MembershipCriteria implements Serializable {
                 (shareId != null ? "shareId=" + shareId + ", " : "") +
                 (assetId != null ? "assetId=" + assetId + ", " : "") +
                 (customerId != null ? "customerId=" + customerId + ", " : "") +
-            "}";
+                "}";
     }
 
 }

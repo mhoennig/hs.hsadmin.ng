@@ -1,10 +1,12 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
+
 import org.apache.commons.lang3.NotImplementedException;
-import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
@@ -12,20 +14,23 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** Actual implementation of JSON serialization, where {link JsonSerializerWithAccessFilter}
+/**
+ * Actual implementation of JSON serialization, where {link JsonSerializerWithAccessFilter}
  * is a stateless bean, {@link JSonSerializationWithAccessFilter} exists only during the actual
  * serialization and contains a serialization state.
  *
  * @param <T> DTO class to serialize
  */
 public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
+
     private final JsonGenerator jsonGenerator;
     private final SerializerProvider serializerProvider;
 
-    public JSonSerializationWithAccessFilter(final ApplicationContext ctx,
-                                             final JsonGenerator jsonGenerator,
-                                             final SerializerProvider serializerProvider,
-                                             final T dto) {
+    public JSonSerializationWithAccessFilter(
+            final ApplicationContext ctx,
+            final JsonGenerator jsonGenerator,
+            final SerializerProvider serializerProvider,
+            final T dto) {
         super(ctx, dto);
         this.jsonGenerator = jsonGenerator;
         this.serializerProvider = serializerProvider;
@@ -45,10 +50,10 @@ public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
         if (getLoginUserRole().isAllowedToRead(field)) {
             final String fieldName = field.getName();
             // TODO: maybe replace by serializerProvider.defaultSerialize...()?
-            //  But that makes it difficult for parallel structure with the deserializer (clumsy API).
-            //  Alternatively extract the supported types to subclasses of some abstract class and
-            //  here as well as in the deserializer just access the matching implementation through a map.
-            //  Or even completely switch from Jackson to GSON?
+            // But that makes it difficult for parallel structure with the deserializer (clumsy API).
+            // Alternatively extract the supported types to subclasses of some abstract class and
+            // here as well as in the deserializer just access the matching implementation through a map.
+            // Or even completely switch from Jackson to GSON?
             final Object fieldValue = ReflectionUtil.getValue(dto, field);
             if (fieldValue == null) {
                 jsonGenerator.writeNullField(fieldName);

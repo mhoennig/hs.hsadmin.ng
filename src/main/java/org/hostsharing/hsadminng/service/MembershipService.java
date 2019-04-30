@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Membership;
@@ -5,6 +6,7 @@ import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -12,8 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
 
 /**
  * Service Implementation for managing Membership.
@@ -32,10 +35,11 @@ public class MembershipService implements IdToDtoResolver<MembershipDTO> {
 
     private final MembershipMapper membershipMapper;
 
-    public MembershipService(final EntityManager em,
-                             final MembershipValidator membershipValidator,
-                             final MembershipRepository membershipRepository,
-                             final MembershipMapper membershipMapper) {
+    public MembershipService(
+            final EntityManager em,
+            final MembershipValidator membershipValidator,
+            final MembershipRepository membershipRepository,
+            final MembershipMapper membershipMapper) {
         this.em = em;
         this.membershipValidator = membershipValidator;
         this.membershipRepository = membershipRepository;
@@ -70,9 +74,8 @@ public class MembershipService implements IdToDtoResolver<MembershipDTO> {
     public Page<MembershipDTO> findAll(Pageable pageable) {
         log.debug("Request to get all Memberships");
         return membershipRepository.findAll(pageable)
-            .map(membershipMapper::toDto);
+                .map(membershipMapper::toDto);
     }
-
 
     /**
      * Get one membership by id.
@@ -85,7 +88,7 @@ public class MembershipService implements IdToDtoResolver<MembershipDTO> {
     public Optional<MembershipDTO> findOne(Long id) {
         log.debug("Request to get Membership : {}", id);
         return membershipRepository.findById(id)
-            .map(membershipMapper::toDto);
+                .map(membershipMapper::toDto);
     }
 
     /**

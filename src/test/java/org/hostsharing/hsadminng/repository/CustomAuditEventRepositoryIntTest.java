@@ -1,9 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.repository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hostsharing.hsadminng.repository.CustomAuditEventRepository.EVENT_DATA_COLUMN_MAX_LENGTH;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.config.Constants;
 import org.hostsharing.hsadminng.config.audit.AuditEventConverter;
 import org.hostsharing.hsadminng.domain.PersistentAuditEvent;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,14 +21,12 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpSession;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hostsharing.hsadminng.repository.CustomAuditEventRepository.EVENT_DATA_COLUMN_MAX_LENGTH;
+import javax.servlet.http.HttpSession;
 
 /**
  * Test class for the CustomAuditEventRepository class.

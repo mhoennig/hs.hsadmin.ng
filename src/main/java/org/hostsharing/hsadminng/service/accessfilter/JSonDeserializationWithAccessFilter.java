@@ -1,13 +1,18 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
+
+import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
+
+import org.hostsharing.hsadminng.service.util.ReflectionUtil;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.node.*;
+
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
-import org.hostsharing.hsadminng.service.util.ReflectionUtil;
-import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Field;
@@ -16,9 +21,8 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
-
-/** Actual implementation of JSON deserialization, where {link JSonDeserializerWithAccessFilter}
+/**
+ * Actual implementation of JSON deserialization, where {link JSonDeserializerWithAccessFilter}
  * is a stateless bean, {@link JSonDeserializationWithAccessFilter} exists only during the actual
  * deserialization and contains a deserialization state.
  *
@@ -29,7 +33,11 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
     private final TreeNode treeNode;
     private final Set<Field> updatingFields = new HashSet<>();
 
-    public JSonDeserializationWithAccessFilter(final ApplicationContext ctx, final JsonParser jsonParser, final DeserializationContext deserializationContext, Class<T> dtoClass) {
+    public JSonDeserializationWithAccessFilter(
+            final ApplicationContext ctx,
+            final JsonParser jsonParser,
+            final DeserializationContext deserializationContext,
+            Class<T> dtoClass) {
         super(ctx, unchecked(dtoClass::newInstance));
         this.treeNode = unchecked(() -> jsonParser.getCodec().readTree(jsonParser));
     }
@@ -68,9 +76,9 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
             return;
         }
         for (Field field : currentDto.getClass().getDeclaredFields()) {
-            if (field.isAnnotationPresent(AccessFor.class) ) {
+            if (field.isAnnotationPresent(AccessFor.class)) {
                 boolean updatingField = updatingFields.contains(field);
-                if (updatingField && !isActuallyUpdated(field, dto, currentDto) ) {
+                if (updatingField && !isActuallyUpdated(field, dto, currentDto)) {
                     updatingFields.remove(field);
                     updatingField = false;
                 }
@@ -106,9 +114,13 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
             return ((DoubleNode) fieldNode).asDouble();
         }
         if (fieldNode instanceof ArrayNode && LocalDate.class.isAssignableFrom(fieldClass)) {
-            return LocalDate.of(((ArrayNode) fieldNode).get(0).asInt(), ((ArrayNode) fieldNode).get(1).asInt(), ((ArrayNode) fieldNode).get(2).asInt());
+            return LocalDate.of(
+                    ((ArrayNode) fieldNode).get(0).asInt(),
+                    ((ArrayNode) fieldNode).get(1).asInt(),
+                    ((ArrayNode) fieldNode).get(2).asInt());
         }
-        throw new NotImplementedException("JSon node type not implemented: " + fieldNode.getClass() + " -> " + fieldName + ": " + fieldClass);
+        throw new NotImplementedException(
+                "JSon node type not implemented: " + fieldNode.getClass() + " -> " + fieldName + ": " + fieldClass);
     }
 
     private void writeValueToDto(final T dto, final Field field, final Object value) {
@@ -135,23 +147,35 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
     }
 
     private void checkAccessToWrittenFields(final T currentDto) {
-        updatingFields.forEach(field -> {
-            // TODO this ugly code needs cleanup
-            if (!field.equals(selfIdField)) {
-                final Role role = getLoginUserRole();
-                if (isInitAccess()) {
-                    if (!role.isAllowedToInit(field)) {
-                        if (!field.equals(parentIdField)) {
-                            throw new BadRequestAlertException("Initialization of field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "initializationProhibited");
-                        } else {
-                            throw new BadRequestAlertException("Referencing field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "referencingProhibited");
+        updatingFields.forEach(
+                field -> {
+                    // TODO this ugly code needs cleanup
+                    if (!field.equals(selfIdField)) {
+                        final Role role = getLoginUserRole();
+                        if (isInitAccess()) {
+                            if (!role.isAllowedToInit(field)) {
+                                if (!field.equals(parentIdField)) {
+                                    throw new BadRequestAlertException(
+                                            "Initialization of field " + toDisplay(field) + " prohibited for current user role "
+                                                    + role,
+                                            toDisplay(field),
+                                            "initializationProhibited");
+                                } else {
+                                    throw new BadRequestAlertException(
+                                            "Referencing field " + toDisplay(field) + " prohibited for current user role "
+                                                    + role,
+                                            toDisplay(field),
+                                            "referencingProhibited");
+                                }
+                            }
+                        } else if (!Role.toBeIgnoredForUpdates(field) && !getLoginUserRole().isAllowedToUpdate(field)) {
+                            throw new BadRequestAlertException(
+                                    "Update of field " + toDisplay(field) + " prohibited for current user role " + role,
+                                    toDisplay(field),
+                                    "updateProhibited");
                         }
                     }
-                } else if ( !Role.toBeIgnoredForUpdates(field) && !getLoginUserRole().isAllowedToUpdate(field)) {
-                    throw new BadRequestAlertException("Update of field " + toDisplay(field) + " prohibited for current user role " + role, toDisplay(field), "updateProhibited");
-                }
-            }
-        });
+                });
     }
 
     private boolean isInitAccess() {
@@ -159,6 +183,6 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
     }
 
     private boolean isActuallyUpdated(final Field field, final T dto, T currentDto) {
-         return 0 != ObjectUtils.compare(ReflectionUtil.getValue(dto, field), ReflectionUtil.getValue(currentDto, field));
+        return 0 != ObjectUtils.compare(ReflectionUtil.getValue(dto, field), ReflectionUtil.getValue(currentDto, field));
     }
 }

@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import io.github.jhipster.service.filter.Filter;
@@ -130,7 +131,6 @@ public class SepaMandateCriteria implements Serializable {
         this.customerId = customerId;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -140,35 +140,33 @@ public class SepaMandateCriteria implements Serializable {
             return false;
         }
         final SepaMandateCriteria that = (SepaMandateCriteria) o;
-        return
-            Objects.equals(id, that.id) &&
-            Objects.equals(reference, that.reference) &&
-            Objects.equals(iban, that.iban) &&
-            Objects.equals(bic, that.bic) &&
-            Objects.equals(grantingDocumentDate, that.grantingDocumentDate) &&
-            Objects.equals(revokationDocumentDate, that.revokationDocumentDate) &&
-            Objects.equals(validFromDate, that.validFromDate) &&
-            Objects.equals(validUntilDate, that.validUntilDate) &&
-            Objects.equals(lastUsedDate, that.lastUsedDate) &&
-            Objects.equals(remark, that.remark) &&
-            Objects.equals(customerId, that.customerId);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(reference, that.reference) &&
+                Objects.equals(iban, that.iban) &&
+                Objects.equals(bic, that.bic) &&
+                Objects.equals(grantingDocumentDate, that.grantingDocumentDate) &&
+                Objects.equals(revokationDocumentDate, that.revokationDocumentDate) &&
+                Objects.equals(validFromDate, that.validFromDate) &&
+                Objects.equals(validUntilDate, that.validUntilDate) &&
+                Objects.equals(lastUsedDate, that.lastUsedDate) &&
+                Objects.equals(remark, that.remark) &&
+                Objects.equals(customerId, that.customerId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-        id,
-        reference,
-        iban,
-        bic,
-        grantingDocumentDate,
-        revokationDocumentDate,
-        validFromDate,
-        validUntilDate,
-        lastUsedDate,
-        remark,
-        customerId
-        );
+                id,
+                reference,
+                iban,
+                bic,
+                grantingDocumentDate,
+                revokationDocumentDate,
+                validFromDate,
+                validUntilDate,
+                lastUsedDate,
+                remark,
+                customerId);
     }
 
     @Override
@@ -185,7 +183,7 @@ public class SepaMandateCriteria implements Serializable {
                 (lastUsedDate != null ? "lastUsedDate=" + lastUsedDate + ", " : "") +
                 (remark != null ? "remark=" + remark + ", " : "") +
                 (customerId != null ? "customerId=" + customerId + ", " : "") +
-            "}";
+                "}";
     }
 
 }

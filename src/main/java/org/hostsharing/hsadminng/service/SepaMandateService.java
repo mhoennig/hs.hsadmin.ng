@@ -1,9 +1,11 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -11,8 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
 
 /**
  * Service Implementation for managing SepaMandate.
@@ -29,7 +32,10 @@ public class SepaMandateService implements IdToDtoResolver<SepaMandateDTO> {
 
     private final SepaMandateMapper sepaMandateMapper;
 
-    public SepaMandateService(final EntityManager em, final SepaMandateRepository sepaMandateRepository, final SepaMandateMapper sepaMandateMapper) {
+    public SepaMandateService(
+            final EntityManager em,
+            final SepaMandateRepository sepaMandateRepository,
+            final SepaMandateMapper sepaMandateMapper) {
         this.em = em;
         this.sepaMandateRepository = sepaMandateRepository;
         this.sepaMandateMapper = sepaMandateMapper;
@@ -60,9 +66,8 @@ public class SepaMandateService implements IdToDtoResolver<SepaMandateDTO> {
     public Page<SepaMandateDTO> findAll(Pageable pageable) {
         log.debug("Request to get all SepaMandates");
         return sepaMandateRepository.findAll(pageable)
-            .map(sepaMandateMapper::toDto);
+                .map(sepaMandateMapper::toDto);
     }
-
 
     /**
      * Get one sepaMandate by id.
@@ -74,7 +79,7 @@ public class SepaMandateService implements IdToDtoResolver<SepaMandateDTO> {
     public Optional<SepaMandateDTO> findOne(Long id) {
         log.debug("Request to get SepaMandate : {}", id);
         return sepaMandateRepository.findById(id)
-            .map(sepaMandateMapper::toDto);
+                .map(sepaMandateMapper::toDto);
     }
 
     /**

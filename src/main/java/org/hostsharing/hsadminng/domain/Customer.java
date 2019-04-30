@@ -1,16 +1,17 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
-
 
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 
-import javax.persistence.*;
-import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.persistence.*;
+import javax.validation.constraints.*;
 
 /**
  * A Customer.
@@ -20,7 +21,7 @@ import java.util.Set;
 public class Customer implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
@@ -384,22 +385,22 @@ public class Customer implements Serializable {
     @Override
     public String toString() {
         return "Customer{" +
-            "id=" + getId() +
-            ", reference=" + getReference() +
-            ", prefix='" + getPrefix() + "'" +
-            ", name='" + getName() + "'" +
-            ", kind='" + getKind() + "'" +
-            ", birthDate='" + getBirthDate() + "'" +
-            ", birthPlace='" + getBirthPlace() + "'" +
-            ", registrationCourt='" + getRegistrationCourt() + "'" +
-            ", registrationNumber='" + getRegistrationNumber() + "'" +
-            ", vatRegion='" + getVatRegion() + "'" +
-            ", vatNumber='" + getVatNumber() + "'" +
-            ", contractualSalutation='" + getContractualSalutation() + "'" +
-            ", contractualAddress='" + getContractualAddress() + "'" +
-            ", billingSalutation='" + getBillingSalutation() + "'" +
-            ", billingAddress='" + getBillingAddress() + "'" +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", reference=" + getReference() +
+                ", prefix='" + getPrefix() + "'" +
+                ", name='" + getName() + "'" +
+                ", kind='" + getKind() + "'" +
+                ", birthDate='" + getBirthDate() + "'" +
+                ", birthPlace='" + getBirthPlace() + "'" +
+                ", registrationCourt='" + getRegistrationCourt() + "'" +
+                ", registrationNumber='" + getRegistrationNumber() + "'" +
+                ", vatRegion='" + getVatRegion() + "'" +
+                ", vatNumber='" + getVatNumber() + "'" +
+                ", contractualSalutation='" + getContractualSalutation() + "'" +
+                ", contractualAddress='" + getContractualAddress() + "'" +
+                ", billingSalutation='" + getBillingSalutation() + "'" +
+                ", billingAddress='" + getBillingAddress() + "'" +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

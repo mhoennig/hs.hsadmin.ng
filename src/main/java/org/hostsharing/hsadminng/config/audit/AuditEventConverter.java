@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.config.audit;
 
 import org.hostsharing.hsadminng.domain.PersistentAuditEvent;
@@ -38,8 +39,11 @@ public class AuditEventConverter {
         if (persistentAuditEvent == null) {
             return null;
         }
-        return new AuditEvent(persistentAuditEvent.getAuditEventDate(), persistentAuditEvent.getPrincipal(),
-            persistentAuditEvent.getAuditEventType(), convertDataToObjects(persistentAuditEvent.getData()));
+        return new AuditEvent(
+                persistentAuditEvent.getAuditEventDate(),
+                persistentAuditEvent.getPrincipal(),
+                persistentAuditEvent.getAuditEventType(),
+                convertDataToObjects(persistentAuditEvent.getData()));
     }
 
     /**

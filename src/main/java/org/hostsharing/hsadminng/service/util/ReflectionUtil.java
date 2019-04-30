@@ -1,9 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-
 
 public class ReflectionUtil {
 
@@ -38,24 +38,32 @@ public class ReflectionUtil {
     }
 
     /**
-     * Searches the annotations of 'clazz' for an implemented interface 'rawInterface' and returns the class of the actual generics parameter at the specified index.
+     * Searches the annotations of 'clazz' for an implemented interface 'rawInterface' and returns the class of the actual
+     * generics parameter at the specified index.
      *
-     * @param clazz        a class which implements the generic interface 'rawInterface'
+     * @param clazz a class which implements the generic interface 'rawInterface'
      * @param rawInterface a generic interface
-     * @param paramIndex   the index of the generics parameter within 'rawInterface'
-     * @param <T>          the expected class of the generics parameter at position 'index' in 'rawInterface'
+     * @param paramIndex the index of the generics parameter within 'rawInterface'
+     * @param <T> the expected class of the generics parameter at position 'index' in 'rawInterface'
      * @return the actual generics parameter
      */
-    public static <T> Class<T> determineGenericInterfaceParameter(final Class<?> clazz, final Class<?> rawInterface, final int paramIndex) {
+    public static <T> Class<T> determineGenericInterfaceParameter(
+            final Class<?> clazz,
+            final Class<?> rawInterface,
+            final int paramIndex) {
         final Class<T> found = determineGenericInterfaceParameterImpl(clazz, rawInterface, paramIndex);
         if (found == null) {
-            throw new AssertionError(clazz.getSimpleName() + " expected to implement " + rawInterface.getSimpleName() + "<...>");
+            throw new AssertionError(
+                    clazz.getSimpleName() + " expected to implement " + rawInterface.getSimpleName() + "<...>");
         }
         return found;
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Class<T> determineGenericInterfaceParameterImpl(final Class<?> clazz, final Class<?> rawInterface, final int paramIndex) {
+    private static <T> Class<T> determineGenericInterfaceParameterImpl(
+            final Class<?> clazz,
+            final Class<?> rawInterface,
+            final int paramIndex) {
         for (Type genericInterface : clazz.getGenericInterfaces()) {
             if (genericInterface instanceof ParameterizedType) {
                 final ParameterizedType parameterizedType = (ParameterizedType) genericInterface;
@@ -80,15 +88,19 @@ public class ReflectionUtil {
     }
 
     /**
-     * Searches the annotations of 'clazz' for an extended class 'rawClass' and returns the class of the actual generics parameter at the specified index.
+     * Searches the annotations of 'clazz' for an extended class 'rawClass' and returns the class of the actual generics
+     * parameter at the specified index.
      *
-     * @param clazz      a class which implements the generic interface 'rawClass'
-     * @param rawClass   a generic class
+     * @param clazz a class which implements the generic interface 'rawClass'
+     * @param rawClass a generic class
      * @param paramIndex the index of the generics parameter within 'rawClass'
-     * @param <T>        the expected class of the generics parameter at position 'index' in 'rawClass'
+     * @param <T> the expected class of the generics parameter at position 'index' in 'rawClass'
      * @return the actual generics parameter
      */
-    public static <T> Class<T> determineGenericClassParameter(final Class<?> clazz, final Class<?> rawClass, final int paramIndex) {
+    public static <T> Class<T> determineGenericClassParameter(
+            final Class<?> clazz,
+            final Class<?> rawClass,
+            final int paramIndex) {
         final Class<T> found = determineGenericClassParameterImpl(clazz, rawClass, paramIndex);
         if (found == null) {
             throw new AssertionError(clazz.getSimpleName() + " expected to extend " + rawClass.getSimpleName() + "<...>");
@@ -97,7 +109,10 @@ public class ReflectionUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Class<T> determineGenericClassParameterImpl(final Class<?> clazz, final Class<?> rawClass, final int paramIndex) {
+    private static <T> Class<T> determineGenericClassParameterImpl(
+            final Class<?> clazz,
+            final Class<?> rawClass,
+            final int paramIndex) {
         final Type genericClass = clazz.getGenericSuperclass();
         if (genericClass instanceof ParameterizedType) {
             final ParameterizedType parameterizedType = (ParameterizedType) genericClass;
@@ -118,6 +133,7 @@ public class ReflectionUtil {
 
     @FunctionalInterface
     public interface ThrowingSupplier<T> {
+
         T get() throws Exception;
     }
 

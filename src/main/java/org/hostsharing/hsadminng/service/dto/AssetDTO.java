@@ -1,18 +1,21 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A DTO for the Asset entity.
@@ -20,23 +23,23 @@ import java.util.Objects;
 public class AssetDTO implements Serializable, AccessMappings {
 
     @SelfId(resolver = AssetService.class)
-    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long id;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate documentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate valueDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private AssetAction action;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private BigDecimal amount;
 
     @Size(max = 160)
@@ -44,10 +47,10 @@ public class AssetDTO implements Serializable, AccessMappings {
     private String remark;
 
     @ParentId(resolver = MembershipService.class)
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long membershipId;
 
-    @AccessFor(update = Role.IGNORED, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(update = Role.IGNORED, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String membershipDisplayLabel;
 
     public Long getId() {
@@ -138,15 +141,15 @@ public class AssetDTO implements Serializable, AccessMappings {
     @Override
     public String toString() {
         return "AssetDTO{" +
-            "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", valueDate='" + getValueDate() + "'" +
-            ", action='" + getAction() + "'" +
-            ", amount=" + getAmount() +
-            ", remark='" + getRemark() + "'" +
-            ", membership=" + getMembershipId() +
-            ", membershipDisplayLabel='" + getMembershipDisplayLabel() + "'" +
-            "}";
+                "id=" + getId() +
+                ", documentDate='" + getDocumentDate() + "'" +
+                ", valueDate='" + getValueDate() + "'" +
+                ", action='" + getAction() + "'" +
+                ", amount=" + getAmount() +
+                ", remark='" + getRemark() + "'" +
+                ", membership=" + getMembershipId() +
+                ", membershipDisplayLabel='" + getMembershipDisplayLabel() + "'" +
+                "}";
     }
 
     @JsonComponent

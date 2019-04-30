@@ -1,7 +1,12 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
+import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
@@ -11,6 +16,10 @@ import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,14 +34,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
-
 @JsonTest
-@SpringBootTest(classes = {CustomerMapperImpl.class, CustomerRepository.class, CustomerService.class, CustomerDTO.CustomerJsonSerializer.class, CustomerDTO.CustomerJsonDeserializer.class})
+@SpringBootTest(
+        classes = {
+                CustomerMapperImpl.class,
+                CustomerRepository.class,
+                CustomerService.class,
+                CustomerDTO.CustomerJsonSerializer.class,
+                CustomerDTO.CustomerJsonDeserializer.class })
 @RunWith(SpringRunner.class)
 public class CustomerDTOUnitTest {
 
@@ -80,11 +89,12 @@ public class CustomerDTOUnitTest {
 
         // then
         final String expectedJSon = new JSonBuilder()
-            .withFieldValue("id", given.getId())
-            .withFieldValue("reference", given.getReference())
-            .withFieldValue("prefix", given.getPrefix())
-            .withFieldValue("name", given.getName())
-            .withFieldValue("displayLabel", given.getDisplayLabel()).toString();
+                .withFieldValue("id", given.getId())
+                .withFieldValue("reference", given.getReference())
+                .withFieldValue("prefix", given.getPrefix())
+                .withFieldValue("name", given.getName())
+                .withFieldValue("displayLabel", given.getDisplayLabel())
+                .toString();
         assertEquals(expectedJSon, actual);
     }
 
@@ -126,23 +136,24 @@ public class CustomerDTOUnitTest {
 
     private String createExpectedJSon(CustomerDTO dto) {
         return new JSonBuilder()
-            .withFieldValueIfPresent("id", dto.getId())
-            .withFieldValueIfPresent("reference", dto.getReference())
-            .withFieldValueIfPresent("prefix", dto.getPrefix())
-            .withFieldValueIfPresent("name", dto.getName())
-            .withFieldValueIfPresent("kind", "LEGAL")
-            .toJSonNullFieldDefinition("birthDate")
-            .toJSonNullFieldDefinition("birthPlace")
-            .withFieldValueIfPresent("registrationCourt", "Registergericht")
-            .withFieldValueIfPresent("registrationNumber", "Registernummer")
-            .withFieldValueIfPresent("vatRegion", "DOMESTIC")
-            .withFieldValueIfPresent("vatNumber", "DE1234")
-            .withFieldValueIfPresent("contractualSalutation", dto.getContractualSalutation())
-            .withFieldValueIfPresent("contractualAddress", dto.getContractualAddress())
-            .withFieldValueIfPresent("billingSalutation", dto.getBillingSalutation())
-            .withFieldValueIfPresent("billingAddress", dto.getBillingAddress())
-            .withFieldValueIfPresent("remark", dto.getRemark())
-            .withFieldValueIfPresent("displayLabel", dto.getDisplayLabel()).toString();
+                .withFieldValueIfPresent("id", dto.getId())
+                .withFieldValueIfPresent("reference", dto.getReference())
+                .withFieldValueIfPresent("prefix", dto.getPrefix())
+                .withFieldValueIfPresent("name", dto.getName())
+                .withFieldValueIfPresent("kind", "LEGAL")
+                .toJSonNullFieldDefinition("birthDate")
+                .toJSonNullFieldDefinition("birthPlace")
+                .withFieldValueIfPresent("registrationCourt", "Registergericht")
+                .withFieldValueIfPresent("registrationNumber", "Registernummer")
+                .withFieldValueIfPresent("vatRegion", "DOMESTIC")
+                .withFieldValueIfPresent("vatNumber", "DE1234")
+                .withFieldValueIfPresent("contractualSalutation", dto.getContractualSalutation())
+                .withFieldValueIfPresent("contractualAddress", dto.getContractualAddress())
+                .withFieldValueIfPresent("billingSalutation", dto.getBillingSalutation())
+                .withFieldValueIfPresent("billingAddress", dto.getBillingAddress())
+                .withFieldValueIfPresent("remark", dto.getRemark())
+                .withFieldValueIfPresent("displayLabel", dto.getDisplayLabel())
+                .toString();
     }
 
     private CustomerDTO createSomeCustomerDTO(final long id) {

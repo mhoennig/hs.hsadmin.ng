@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest.vm;
 
 import javax.validation.constraints.NotNull;
@@ -45,8 +46,8 @@ public class LoginVM {
     @Override
     public String toString() {
         return "LoginVM{" +
-            "username='" + username + '\'' +
-            ", rememberMe=" + rememberMe +
-            '}';
+                "username='" + username + '\'' +
+                ", rememberMe=" + rememberMe +
+                '}';
     }
 }

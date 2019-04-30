@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.security.jwt;
 
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;

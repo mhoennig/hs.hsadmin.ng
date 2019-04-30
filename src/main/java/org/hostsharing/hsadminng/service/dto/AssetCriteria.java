@@ -1,17 +1,16 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
+
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
+
+import io.github.jhipster.service.filter.BigDecimalFilter;
+import io.github.jhipster.service.filter.Filter;
+import io.github.jhipster.service.filter.LocalDateFilter;
+import io.github.jhipster.service.filter.LongFilter;
+import io.github.jhipster.service.filter.StringFilter;
 
 import java.io.Serializable;
 import java.util.Objects;
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
-import io.github.jhipster.service.filter.BooleanFilter;
-import io.github.jhipster.service.filter.DoubleFilter;
-import io.github.jhipster.service.filter.Filter;
-import io.github.jhipster.service.filter.FloatFilter;
-import io.github.jhipster.service.filter.IntegerFilter;
-import io.github.jhipster.service.filter.LongFilter;
-import io.github.jhipster.service.filter.StringFilter;
-import io.github.jhipster.service.filter.BigDecimalFilter;
-import io.github.jhipster.service.filter.LocalDateFilter;
 
 /**
  * Criteria class for the Asset entity. This class is used in AssetResource to
@@ -22,6 +21,7 @@ import io.github.jhipster.service.filter.LocalDateFilter;
  * fix type specific filters.
  */
 public class AssetCriteria implements Serializable {
+
     /**
      * Class for filtering AssetAction
      */
@@ -100,7 +100,6 @@ public class AssetCriteria implements Serializable {
         this.membershipId = membershipId;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -110,27 +109,25 @@ public class AssetCriteria implements Serializable {
             return false;
         }
         final AssetCriteria that = (AssetCriteria) o;
-        return
-            Objects.equals(id, that.id) &&
-            Objects.equals(documentDate, that.documentDate) &&
-            Objects.equals(valueDate, that.valueDate) &&
-            Objects.equals(action, that.action) &&
-            Objects.equals(amount, that.amount) &&
-            Objects.equals(remark, that.remark) &&
-            Objects.equals(membershipId, that.membershipId);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(documentDate, that.documentDate) &&
+                Objects.equals(valueDate, that.valueDate) &&
+                Objects.equals(action, that.action) &&
+                Objects.equals(amount, that.amount) &&
+                Objects.equals(remark, that.remark) &&
+                Objects.equals(membershipId, that.membershipId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-        id,
-        documentDate,
-        valueDate,
-        action,
-        amount,
-        remark,
-        membershipId
-        );
+                id,
+                documentDate,
+                valueDate,
+                action,
+                amount,
+                remark,
+                membershipId);
     }
 
     @Override
@@ -143,7 +140,7 @@ public class AssetCriteria implements Serializable {
                 (amount != null ? "amount=" + amount + ", " : "") +
                 (remark != null ? "remark=" + remark + ", " : "") +
                 (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
-            "}";
+                "}";
     }
 
 }

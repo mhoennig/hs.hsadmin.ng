@@ -1,6 +1,15 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import com.fasterxml.jackson.core.JsonGenerator;
+
 import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -13,13 +22,6 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 public class JSonSerializationWithAccessFilterUnitTest {
 
@@ -47,9 +49,10 @@ public class JSonSerializationWithAccessFilterUnitTest {
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenCustomerService.class)).willReturn(givenCustomerService);
-        given(givenCustomerService.findOne(888L)).willReturn(Optional.of(new GivenCustomerDto()
-            .with(dto -> dto.id = 888L)
-        ));
+        given(givenCustomerService.findOne(888L)).willReturn(
+                Optional.of(
+                        new GivenCustomerDto()
+                                .with(dto -> dto.id = 888L)));
     }
 
     @Test
@@ -177,13 +180,16 @@ public class JSonSerializationWithAccessFilterUnitTest {
         class Arbitrary {
         }
         class GivenDtoWithUnimplementedFieldType {
+
             @AccessFor(read = Role.ANYBODY)
             Arbitrary fieldWithUnimplementedType = new Arbitrary();
         }
         final GivenDtoWithUnimplementedFieldType givenDtoWithUnimplementedFieldType = new GivenDtoWithUnimplementedFieldType();
 
         // when
-        final Throwable actual = catchThrowable(() -> new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDtoWithUnimplementedFieldType).serialize());
+        final Throwable actual = catchThrowable(
+                () -> new JSonSerializationWithAccessFilter<>(ctx, jsonGenerator, null, givenDtoWithUnimplementedFieldType)
+                        .serialize());
 
         // then
         assertThat(actual).isInstanceOf(NotImplementedException.class);

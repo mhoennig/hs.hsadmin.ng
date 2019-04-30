@@ -1,4 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.User;
@@ -6,6 +15,7 @@ import org.hostsharing.hsadminng.repository.UserRepository;
 import org.hostsharing.hsadminng.security.jwt.TokenProvider;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
 import org.hostsharing.hsadminng.web.rest.vm.LoginVM;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,14 +27,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.isEmptyString;
-import static org.hamcrest.Matchers.not;
 
 /**
  * Test class for the UserJWTController REST controller.
@@ -56,8 +58,8 @@ public class UserJWTControllerIntTest {
     public void setup() {
         UserJWTController userJWTController = new UserJWTController(tokenProvider, authenticationManager);
         this.mockMvc = MockMvcBuilders.standaloneSetup(userJWTController)
-            .setControllerAdvice(exceptionTranslator)
-            .build();
+                .setControllerAdvice(exceptionTranslator)
+                .build();
     }
 
     @Test
@@ -74,14 +76,15 @@ public class UserJWTControllerIntTest {
         LoginVM login = new LoginVM();
         login.setUsername("user-jwt-controller");
         login.setPassword("test");
-        mockMvc.perform(post("/api/authenticate")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(login)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id_token").isString())
-            .andExpect(jsonPath("$.id_token").isNotEmpty())
-            .andExpect(header().string("Authorization", not(nullValue())))
-            .andExpect(header().string("Authorization", not(isEmptyString())));
+        mockMvc.perform(
+                post("/api/authenticate")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(login)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id_token").isString())
+                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(header().string("Authorization", not(nullValue())))
+                .andExpect(header().string("Authorization", not(isEmptyString())));
     }
 
     @Test
@@ -99,14 +102,15 @@ public class UserJWTControllerIntTest {
         login.setUsername("user-jwt-controller-remember-me");
         login.setPassword("test");
         login.setRememberMe(true);
-        mockMvc.perform(post("/api/authenticate")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(login)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id_token").isString())
-            .andExpect(jsonPath("$.id_token").isNotEmpty())
-            .andExpect(header().string("Authorization", not(nullValue())))
-            .andExpect(header().string("Authorization", not(isEmptyString())));
+        mockMvc.perform(
+                post("/api/authenticate")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(login)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id_token").isString())
+                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(header().string("Authorization", not(nullValue())))
+                .andExpect(header().string("Authorization", not(isEmptyString())));
     }
 
     @Test
@@ -115,11 +119,12 @@ public class UserJWTControllerIntTest {
         LoginVM login = new LoginVM();
         login.setUsername("wrong-user");
         login.setPassword("wrong password");
-        mockMvc.perform(post("/api/authenticate")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(login)))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.id_token").doesNotExist())
-            .andExpect(header().doesNotExist("Authorization"));
+        mockMvc.perform(
+                post("/api/authenticate")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(login)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.id_token").doesNotExist())
+                .andExpect(header().doesNotExist("Authorization"));
     }
 }

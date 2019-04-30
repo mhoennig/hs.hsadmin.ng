@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import java.util.function.Consumer;
@@ -17,18 +18,18 @@ public interface FluentBuilder<T> {
      *
      * <h3>Example</h3>
      * {code
-     *      // adding a fluent builder to your class
-     *      class YourClass implements FluentBuilder<YourClass> {
-     *          public int someField;
-     *          public String anotherField;
-     *          // ...
-     *      }
+     * // adding a fluent builder to your class
+     * class YourClass implements FluentBuilder<YourClass> {
+     * public int someField;
+     * public String anotherField;
+     * // ...
+     * }
      *
-     *      // using the fluent builder somewhere else
-     *      someMethod( new YourClass().with( it -> {
-     *          it.someField = 5;
-     *          it.anotherField = "Hello";
-     *      }));
+     * // using the fluent builder somewhere else
+     * someMethod( new YourClass().with( it -> {
+     * it.someField = 5;
+     * it.anotherField = "Hello";
+     * }));
      * }
      *
      * @param builderFunction statements to apply to 'this'
@@ -37,10 +38,9 @@ public interface FluentBuilder<T> {
      */
     @SuppressWarnings("unchecked")
     default T with(
-        Consumer<T> builderFunction) {
+            Consumer<T> builderFunction) {
         builderFunction.accept((T) this);
         return (T) this;
     }
-
 
 }

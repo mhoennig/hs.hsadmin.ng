@@ -1,16 +1,18 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTOUnitTest;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 
 // Currently this class tests mostly special 'bad paths'
 // which make little sense to test in *ResourceIntTest.

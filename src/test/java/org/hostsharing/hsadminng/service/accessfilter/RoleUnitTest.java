@@ -1,12 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
-
-import com.google.common.base.VerifyException;
-import org.junit.Test;
-
-import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+
+import com.google.common.base.VerifyException;
+
+import org.junit.Test;
+
+import java.lang.reflect.Field;
 
 public class RoleUnitTest {
 
@@ -19,7 +21,6 @@ public class RoleUnitTest {
         assertThat(Role.CONTRACTUAL_CONTACT.covers(Role.CONTRACTUAL_CONTACT)).isTrue();
         assertThat(Role.FINANCIAL_CONTACT.covers(Role.FINANCIAL_CONTACT)).isTrue();
         assertThat(Role.TECHNICAL_CONTACT.covers(Role.TECHNICAL_CONTACT)).isTrue();
-
 
         assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.ACTUAL_CUSTOMER_USER))).isTrue();
         assertThat(Role.ANY_CUSTOMER_USER.covers((Role.ANY_CUSTOMER_USER))).isTrue();
@@ -153,13 +154,14 @@ public class RoleUnitTest {
     // --- only test fixture below ---
 
     static class TestDto {
+
         @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.ANY_CUSTOMER_CONTACT)
         private Integer someFieldWithAccessForAnnotation;
 
         @AccessFor(update = Role.IGNORED, read = Role.ANY_CUSTOMER_CONTACT)
         private Integer someFieldWithAccessForAnnotationToBeIgnoredForUpdates;
 
-        @AccessFor(update = {Role.IGNORED, Role.SUPPORTER}, read = Role.ANY_CUSTOMER_CONTACT)
+        @AccessFor(update = { Role.IGNORED, Role.SUPPORTER }, read = Role.ANY_CUSTOMER_CONTACT)
         private Integer someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers;
 
         private Integer someFieldWithoutAccessForAnnotation;
@@ -173,8 +175,10 @@ public class RoleUnitTest {
     static {
         try {
             someFieldWithoutAccessForAnnotation = TestDto.class.getDeclaredField("someFieldWithoutAccessForAnnotation");
-            someFieldWithAccessForAnnotationToBeIgnoredForUpdates = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotationToBeIgnoredForUpdates");
-            someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers");
+            someFieldWithAccessForAnnotationToBeIgnoredForUpdates = TestDto.class
+                    .getDeclaredField("someFieldWithAccessForAnnotationToBeIgnoredForUpdates");
+            someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers = TestDto.class
+                    .getDeclaredField("someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers");
             someFieldWithAccessForAnnotation = TestDto.class.getDeclaredField("someFieldWithAccessForAnnotation");
         } catch (NoSuchFieldException e) {
             throw new AssertionError("precondition failed", e);

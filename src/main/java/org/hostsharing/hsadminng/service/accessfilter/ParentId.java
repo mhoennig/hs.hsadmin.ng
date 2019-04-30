@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
@@ -11,9 +12,10 @@ import java.lang.annotation.*;
  * @see AccessFor
  */
 @Documented
-@Target({ElementType.FIELD})
+@Target({ ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ParentId {
+
     /// The service which can load the referenced DTO.
     Class<? extends IdToDtoResolver<?>> resolver();
 }

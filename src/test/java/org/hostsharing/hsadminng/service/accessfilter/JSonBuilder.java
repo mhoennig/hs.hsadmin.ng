@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
 import org.apache.commons.lang3.StringUtils;
@@ -69,7 +70,6 @@ public class JSonBuilder {
         }
         return jsonArray.toString() + "]";
     }
-
 
     private static String inQuotes(Object value) {
         return value != null ? "\"" + value.toString() + "\"" : "null";

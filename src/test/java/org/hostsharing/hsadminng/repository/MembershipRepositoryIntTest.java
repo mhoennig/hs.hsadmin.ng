@@ -1,12 +1,16 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.repository;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = HsadminNgApp.class)
 @Transactional
-public class    MembershipRepositoryIntTest {
+public class MembershipRepositoryIntTest {
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -36,7 +37,8 @@ public class    MembershipRepositoryIntTest {
         final Customer givenCustomerWithUncancelledMembership = createCustomerWithMembership("2011-08-18", null);
 
         // when
-        boolean actual = membershipRepository.hasUncancelledMembershipForCustomer(givenCustomerWithUncancelledMembership.getId());
+        boolean actual = membershipRepository
+                .hasUncancelledMembershipForCustomer(givenCustomerWithUncancelledMembership.getId());
 
         // then
         assertThat(actual).isTrue();

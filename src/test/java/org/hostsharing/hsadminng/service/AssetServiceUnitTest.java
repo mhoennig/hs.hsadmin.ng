@@ -1,12 +1,20 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
-import org.apache.commons.lang3.RandomUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -15,15 +23,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import javax.persistence.EntityManager;
 import java.math.BigDecimal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
-
+import javax.persistence.EntityManager;
 
 // HINT: In IntelliJ IDEA such unit test classes can be created with Shift-Ctrl-T.
 // Do not forget to amend the class name (.e.g. ...UnitTest / ...IntTest)!
@@ -55,13 +57,15 @@ public class AssetServiceUnitTest {
     @Test
     public void deleteIsRejectedForAssetTransactions() {
         // when
-        final Throwable throwException = catchThrowableOfType(() -> assetService.delete(RandomUtils.nextLong()), BadRequestAlertException.class);
+        final Throwable throwException = catchThrowableOfType(
+                () -> assetService.delete(RandomUtils.nextLong()),
+                BadRequestAlertException.class);
 
         // then
         // HINT: When using auto-import for assertions (e.g. via Alt-Enter in IntelliJ IDEA),
         // beware to use the correct candidate from org.assertj.core.api.Assertions.
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Asset transactions are immutable", "asset", "assetTransactionImmutable"));
+                new BadRequestAlertException("Asset transactions are immutable", "asset", "assetTransactionImmutable"));
     }
 
     @Test
@@ -84,14 +88,18 @@ public class AssetServiceUnitTest {
     public void saveShouldNotPersistInvalidTransactions() {
         // given
         final AssetDTO givenAssetDTO = givenAssetDTO(null, AssetAction.PAYMENT, anyNegativeAmount());
-        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy")).when(assetValidator).validate(givenAssetDTO);
+        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy"))
+                .when(assetValidator)
+                .validate(givenAssetDTO);
 
         // when
-        final Throwable throwException = catchThrowableOfType(() -> assetService.save(givenAssetDTO), BadRequestAlertException.class);
+        final Throwable throwException = catchThrowableOfType(
+                () -> assetService.save(givenAssetDTO),
+                BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy"));
+                new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy"));
     }
 
     @Test
@@ -114,14 +122,18 @@ public class AssetServiceUnitTest {
         // given
         final AssetDTO givenAssetDTO = givenAssetDTO(anyNonNullId(), AssetAction.PAYMENT, anyNegativeAmount());
         // HINT: given(...) can't be used for void methods, in that case use Mockito's do...() methods
-        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy")).when(assetValidator).validate(givenAssetDTO);
+        doThrow(new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy"))
+                .when(assetValidator)
+                .validate(givenAssetDTO);
 
         // when
-        final Throwable throwException = catchThrowableOfType(() -> assetService.save(givenAssetDTO), BadRequestAlertException.class);
+        final Throwable throwException = catchThrowableOfType(
+                () -> assetService.save(givenAssetDTO),
+                BadRequestAlertException.class);
 
         // then
         assertThat(throwException).isEqualToComparingFieldByField(
-            new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy"));
+                new BadRequestAlertException("Some Dummy Test Violation", "asset", "assetInvalidTestDummy"));
     }
 
     // --- only test fixture code below ---
@@ -130,7 +142,8 @@ public class AssetServiceUnitTest {
         return RandomUtils.nextInt();
     }
 
-    // HINT: This rather complicated setup indicates that the method AssetService::save breaks the single responsibility principle.
+    // HINT: This rather complicated setup indicates that the method AssetService::save breaks the single responsibility
+    // principle.
     private AssetDTO givenAssetDTO(final Long id, final AssetAction givenAction, final BigDecimal givenQuantity) {
         final AssetDTO givenAssetDTO = createAssetDTO(id, givenAction, givenQuantity);
 

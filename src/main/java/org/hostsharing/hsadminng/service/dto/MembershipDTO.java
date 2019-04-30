@@ -1,37 +1,40 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A DTO for the Membership entity.
  */
-public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDTO>  {
+public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDTO> {
 
     @SelfId(resolver = MembershipService.class)
-    @AccessFor(read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long id;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate admissionDocumentDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate cancellationDocumentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate memberFromDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private LocalDate memberUntilDate;
 
     @Size(max = 160)
@@ -39,10 +42,10 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long customerId;
 
-    @AccessFor(init = Role.ADMIN, read = {Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT})
+    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String customerPrefix;
 
     @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
@@ -155,15 +158,15 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
     @Override
     public String toString() {
         return "MembershipDTO{" +
-            "id=" + getId() +
-            ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
-            ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
-            ", memberFromDate='" + getMemberFromDate() + "'" +
-            ", memberUntilDate='" + getMemberUntilDate() + "'" +
-            ", remark='" + getRemark() + "'" +
-            ", customer=" + getCustomerId() +
-            ", customer='" + getCustomerPrefix() + "'" +
-            "}";
+                "id=" + getId() +
+                ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
+                ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
+                ", memberFromDate='" + getMemberFromDate() + "'" +
+                ", memberUntilDate='" + getMemberUntilDate() + "'" +
+                ", remark='" + getRemark() + "'" +
+                ", customer=" + getCustomerId() +
+                ", customer='" + getCustomerPrefix() + "'" +
+                "}";
     }
 
     @JsonComponent

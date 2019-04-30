@@ -1,8 +1,10 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
+
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,14 +15,14 @@ import java.util.Objects;
 /**
  * Mapper for the entity Membership and its DTO MembershipDTO.
  */
-@Mapper(componentModel = "spring", uses = {CustomerMapper.class})
+@Mapper(componentModel = "spring", uses = { CustomerMapper.class })
 public interface MembershipMapper extends EntityMapper<MembershipDTO, Membership> {
 
     static String displayLabel(final Membership entity) {
         final Customer customer = entity.getCustomer();
         return CustomerMapper.displayLabel(customer) + " "
-            + Objects.toString(entity.getMemberFromDate(), "") + " - "
-            + Objects.toString(entity.getMemberUntilDate(), "...");
+                + Objects.toString(entity.getMemberFromDate(), "") + " - "
+                + Objects.toString(entity.getMemberUntilDate(), "...");
     }
 
     @Mapping(source = "customer.id", target = "customerId")
@@ -30,7 +32,7 @@ public interface MembershipMapper extends EntityMapper<MembershipDTO, Membership
     MembershipDTO toDto(Membership membership);
 
     // TODO BLOG HOWTO: multi-field display reference for selection lists
-    //  also change the filed in the option list in *-update.html
+    // also change the filed in the option list in *-update.html
     @AfterMapping
     default void setMembershipDisplayLabel(final @MappingTarget MembershipDTO dto, final Membership entity) {
         dto.setDisplayLabel(displayLabel(entity));

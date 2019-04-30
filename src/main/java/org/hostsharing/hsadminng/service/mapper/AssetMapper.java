@@ -1,7 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
+
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -10,7 +12,7 @@ import org.mapstruct.MappingTarget;
 /**
  * Mapper for the entity Asset and its DTO AssetDTO.
  */
-@Mapper(componentModel = "spring", uses = {MembershipMapper.class})
+@Mapper(componentModel = "spring", uses = { MembershipMapper.class })
 public interface AssetMapper extends EntityMapper<AssetDTO, Asset> {
 
     @Mapping(source = "membership.id", target = "membershipId")

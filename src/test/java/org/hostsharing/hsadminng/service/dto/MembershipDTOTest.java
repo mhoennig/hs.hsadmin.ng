@@ -1,8 +1,9 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.Test;
 
 public class MembershipDTOTest {
 

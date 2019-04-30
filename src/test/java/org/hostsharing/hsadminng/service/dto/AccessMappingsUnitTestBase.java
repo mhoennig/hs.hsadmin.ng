@@ -1,8 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.apache.commons.lang3.RandomUtils;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
+
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
+
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.springframework.boot.jackson.JsonComponent;
 
@@ -15,10 +21,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.removeEnd;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
-
 /**
  * Usually base classes for unit tests are not a good idea, but because
  * DTOs which implement AccessMapping are more like a DSL,
@@ -30,7 +32,10 @@ public abstract class AccessMappingsUnitTestBase<D> {
     private final BiFunction<Long, Long, D> createSampleDTO;
     private final BiFunction<Long, Long, D> createRandomDTO;
 
-    public AccessMappingsUnitTestBase(Class<? extends AccessMappings> dtoClass, final BiFunction<Long, Long, D> createSampleDTO, final BiFunction<Long, Long, D> createRandomDTO) {
+    public AccessMappingsUnitTestBase(
+            Class<? extends AccessMappings> dtoClass,
+            final BiFunction<Long, Long, D> createSampleDTO,
+            final BiFunction<Long, Long, D> createRandomDTO) {
         this.dtoClass = dtoClass;
         this.createSampleDTO = createSampleDTO;
         this.createRandomDTO = createRandomDTO;
@@ -105,6 +110,7 @@ public abstract class AccessMappingsUnitTestBase<D> {
     // This class should have the same generics as the outer class, but then the
     // method references (AccessFor::*) can't be resolved anymore by the Java compiler.
     protected static class AccessRightsMatcher {
+
         private final Object dtoClass;
         private final Role role;
 
@@ -117,9 +123,14 @@ public abstract class AccessMappingsUnitTestBase<D> {
 
             final Set<Field> fieldsWithAccessForAnnotation = determineFieldsWithAccessForAnnotation(dtoClass);
             this.namesOfFieldsWithAccessForAnnotation = fieldsWithAccessForAnnotation.stream()
-                .map(Field::getName).collect(Collectors.toList()).toArray(new String[]{});
+                    .map(Field::getName)
+                    .collect(Collectors.toList())
+                    .toArray(new String[] {});
             this.namesOfAccessibleFields = fieldsWithAccessForAnnotation.stream()
-                .filter(f -> allows(f, access, role)).map(Field::getName).collect(Collectors.toList()).toArray(new String[]{});
+                    .filter(f -> allows(f, access, role))
+                    .map(Field::getName)
+                    .collect(Collectors.toList())
+                    .toArray(new String[] {});
         }
 
         public void shouldBeExactlyFor(final String... expectedFields) {
@@ -133,7 +144,6 @@ public abstract class AccessMappingsUnitTestBase<D> {
         public void shouldBeForAllFields() {
             assertThat(namesOfAccessibleFields).containsExactlyInAnyOrder(namesOfFieldsWithAccessForAnnotation);
         }
-
 
         private static Set<Field> determineFieldsWithAccessForAnnotation(final Class<?> dtoClass) {
 
@@ -205,13 +215,16 @@ public abstract class AccessMappingsUnitTestBase<D> {
         for (Class<?> declaredClass : dtoClass.getDeclaredClasses()) {
             if (expectedSuperclass.isAssignableFrom(declaredClass)) {
                 assertThat(declaredClass.isAnnotationPresent(JsonComponent.class))
-                    .as(declaredClass + " requires @" + JsonComponent.class.getSimpleName()).isTrue();
+                        .as(declaredClass + " requires @" + JsonComponent.class.getSimpleName())
+                        .isTrue();
                 assertThat(ReflectionUtil.determineGenericClassParameter(declaredClass, expectedSuperclass, 0))
-                    .as(declaredClass + " must resolve generic parameter of " + expectedSuperclass + " to type of DTO").isEqualTo(dtoClass);
+                        .as(declaredClass + " must resolve generic parameter of " + expectedSuperclass + " to type of DTO")
+                        .isEqualTo(dtoClass);
                 assertThat(Modifier.isPublic(declaredClass.getModifiers())).as(declaredClass + " must be public").isTrue();
                 assertThat(Modifier.isStatic(declaredClass.getModifiers())).as(declaredClass + " must be static").isTrue();
                 assertThat(Modifier.isFinal(declaredClass.getModifiers())).as(declaredClass + " must not be final").isFalse();
-                assertThat(Modifier.isAbstract(declaredClass.getModifiers())).as(declaredClass + " must not be abstract").isFalse();
+                assertThat(Modifier.isAbstract(declaredClass.getModifiers())).as(declaredClass + " must not be abstract")
+                        .isFalse();
                 return;
             }
         }

@@ -1,10 +1,12 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.util.RandomUtil;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -18,7 +20,12 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
     @Test
     public void shouldHaveProperAccessForAdmin() {
         initAccessFor(ShareDTO.class, Role.ADMIN).shouldBeExactlyFor(
-            "membershipId", "documentDate", "quantity", "action", "valueDate", "remark");
+                "membershipId",
+                "documentDate",
+                "quantity",
+                "action",
+                "valueDate",
+                "remark");
         updateAccessFor(ShareDTO.class, Role.ADMIN).shouldBeExactlyFor("remark");
         readAccessFor(ShareDTO.class, Role.ADMIN).shouldBeForAllFields();
     }
@@ -28,7 +35,13 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
         initAccessFor(ShareDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
         updateAccessFor(ShareDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
         readAccessFor(ShareDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
-            "id", "membershipId", "documentDate", "quantity", "action", "valueDate", "membershipDisplayLabel");
+                "id",
+                "membershipId",
+                "documentDate",
+                "quantity",
+                "action",
+                "valueDate",
+                "membershipDisplayLabel");
     }
 
     @Test
@@ -74,4 +87,3 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
         return dto;
     }
 }
-

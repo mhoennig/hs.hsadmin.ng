@@ -1,6 +1,8 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest.vm;
 
 import org.hostsharing.hsadminng.service.dto.UserDTO;
+
 import javax.validation.constraints.Size;
 
 /**
@@ -30,6 +32,6 @@ public class ManagedUserVM extends UserDTO {
     @Override
     public String toString() {
         return "ManagedUserVM{" +
-            "} " + super.toString();
+                "} " + super.toString();
     }
 }
