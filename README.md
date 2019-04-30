@@ -144,6 +144,6 @@ To limit load in our Jenkins build server, it only uses 2 CPU threads, thus it n
 
 If you want to spend more CPU threads on your local system, you can change that via command line:
 
-    ./gradlew pitest -Doverride.pitest.threads=7
+    gw pitest -Doverride.pitest.threads=7
 
 I suggest to leave one CPU thread for other tasks or your might lag extremely.
