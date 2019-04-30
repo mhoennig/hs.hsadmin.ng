@@ -10,13 +10,6 @@
             "fieldType": "Long"
         },
         {
-            "fieldName": "userId",
-            "fieldType": "Long",
-            "fieldValidateRules": [
-                "required"
-            ]
-        },
-        {
             "fieldName": "assignedRole",
             "fieldType": "UserRole",
             "fieldValues": "HOSTMASTER,ADMIN,SUPPORTER,CONTRACTUAL_CONTACT,FINANCIAL_CONTACT,TECHNICAL_CONTACT,CUSTOMER_USER",
@@ -34,7 +27,7 @@
             "otherEntityField": "login"
         }
     ],
-    "changelogDate": "20190430152204",
+    "changelogDate": "20190430154711",
     "entityTableName": "user_role_assignment",
     "dto": "no",
     "pagination": "infinite-scroll",

@@ -17,7 +17,6 @@
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="entityTypeId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.entityTypeId">Entity Type Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="entityObjectId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.entityObjectId">Entity Object Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="userId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.userId">User Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="assignedRole"><span jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole">Assigned Role</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="user.login"><span jhiTranslate="hsadminNgApp.userRoleAssignment.user">User</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
@@ -28,7 +27,6 @@
                 <td><a [routerLink]="['/user-role-assignment', userRoleAssignment.id, 'view' ]">{{userRoleAssignment.id}}</a></td>
                 <td>{{userRoleAssignment.entityTypeId}}</td>
                 <td>{{userRoleAssignment.entityObjectId}}</td>
-                <td>{{userRoleAssignment.userId}}</td>
                 <td jhiTranslate="{{'hsadminNgApp.UserRole.' + userRoleAssignment.assignedRole}}">{{userRoleAssignment.assignedRole}}</td>
                 <td>
                     {{userRoleAssignment.user?.login}}

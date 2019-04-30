@@ -53,8 +53,8 @@ public class CustomerResourceIntTest {
     private static final Integer DEFAULT_REFERENCE = 10000;
     private static final Integer UPDATED_REFERENCE = 10001;
 
-    private static final String DEFAULT_PREFIX = "xfl";
-    private static final String UPDATED_PREFIX = "x0";
+    private static final String DEFAULT_PREFIX = "z4a";
+    private static final String UPDATED_PREFIX = "dr";
 
     private static final String DEFAULT_NAME = "AAAAAAAAAA";
     private static final String UPDATED_NAME = "BBBBBBBBBB";

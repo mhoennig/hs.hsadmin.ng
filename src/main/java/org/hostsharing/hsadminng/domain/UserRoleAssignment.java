@@ -32,10 +32,6 @@ public class UserRoleAssignment implements Serializable {
     private Long entityObjectId;
 
     @NotNull
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "assigned_role", nullable = false)
     private UserRole assignedRole;
@@ -77,19 +73,6 @@ public class UserRoleAssignment implements Serializable {
 
     public void setEntityObjectId(Long entityObjectId) {
         this.entityObjectId = entityObjectId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public UserRoleAssignment userId(Long userId) {
-        this.userId = userId;
-        return this;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 
     public UserRole getAssignedRole() {
@@ -145,7 +128,6 @@ public class UserRoleAssignment implements Serializable {
                 "id=" + getId() +
                 ", entityTypeId='" + getEntityTypeId() + "'" +
                 ", entityObjectId=" + getEntityObjectId() +
-                ", userId=" + getUserId() +
                 ", assignedRole='" + getAssignedRole() + "'" +
                 "}";
     }
