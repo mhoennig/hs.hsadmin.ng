@@ -1,10 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
-import java.io.Serializable;
-import java.util.Objects;
+
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
+
+import javax.validation.constraints.*;
 
 /**
  * A DTO for the Customer entity.
@@ -62,7 +66,6 @@ public class CustomerDTO implements Serializable {
 
     @Size(max = 160)
     private String remark;
-
 
     public Long getId() {
         return id;
@@ -216,22 +219,22 @@ public class CustomerDTO implements Serializable {
     @Override
     public String toString() {
         return "CustomerDTO{" +
-            "id=" + getId() +
-            ", reference=" + getReference() +
-            ", prefix='" + getPrefix() + "'" +
-            ", name='" + getName() + "'" +
-            ", kind='" + getKind() + "'" +
-            ", birthDate='" + getBirthDate() + "'" +
-            ", birthPlace='" + getBirthPlace() + "'" +
-            ", registrationCourt='" + getRegistrationCourt() + "'" +
-            ", registrationNumber='" + getRegistrationNumber() + "'" +
-            ", vatRegion='" + getVatRegion() + "'" +
-            ", vatNumber='" + getVatNumber() + "'" +
-            ", contractualSalutation='" + getContractualSalutation() + "'" +
-            ", contractualAddress='" + getContractualAddress() + "'" +
-            ", billingSalutation='" + getBillingSalutation() + "'" +
-            ", billingAddress='" + getBillingAddress() + "'" +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", reference=" + getReference() +
+                ", prefix='" + getPrefix() + "'" +
+                ", name='" + getName() + "'" +
+                ", kind='" + getKind() + "'" +
+                ", birthDate='" + getBirthDate() + "'" +
+                ", birthPlace='" + getBirthPlace() + "'" +
+                ", registrationCourt='" + getRegistrationCourt() + "'" +
+                ", registrationNumber='" + getRegistrationNumber() + "'" +
+                ", vatRegion='" + getVatRegion() + "'" +
+                ", vatNumber='" + getVatNumber() + "'" +
+                ", contractualSalutation='" + getContractualSalutation() + "'" +
+                ", contractualAddress='" + getContractualAddress() + "'" +
+                ", billingSalutation='" + getBillingSalutation() + "'" +
+                ", billingAddress='" + getBillingAddress() + "'" +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

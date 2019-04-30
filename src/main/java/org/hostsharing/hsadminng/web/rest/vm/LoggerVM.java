@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest.vm;
 
 import ch.qos.logback.classic.Logger;
@@ -39,8 +40,8 @@ public class LoggerVM {
     @Override
     public String toString() {
         return "LoggerVM{" +
-            "name='" + name + '\'' +
-            ", level='" + level + '\'' +
-            '}';
+                "name='" + name + '\'' +
+                ", level='" + level + '\'' +
+                '}';
     }
 }

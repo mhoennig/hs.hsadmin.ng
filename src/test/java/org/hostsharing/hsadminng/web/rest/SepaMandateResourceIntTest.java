@@ -1,16 +1,21 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
-import org.hostsharing.hsadminng.HsadminNgApp;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.hostsharing.hsadminng.domain.SepaMandate;
+import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Customer;
+import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
+import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
-import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,17 +32,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
-import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import javax.persistence.EntityManager;
 
 /**
  * Test class for the SepaMandateResource REST controller.
@@ -111,11 +110,12 @@ public class SepaMandateResourceIntTest {
         MockitoAnnotations.initMocks(this);
         final SepaMandateResource sepaMandateResource = new SepaMandateResource(sepaMandateService, sepaMandateQueryService);
         this.restSepaMandateMockMvc = MockMvcBuilders.standaloneSetup(sepaMandateResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setControllerAdvice(exceptionTranslator)
-            .setConversionService(createFormattingConversionService())
-            .setMessageConverters(jacksonMessageConverter)
-            .setValidator(validator).build();
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .setControllerAdvice(exceptionTranslator)
+                .setConversionService(createFormattingConversionService())
+                .setMessageConverters(jacksonMessageConverter)
+                .setValidator(validator)
+                .build();
     }
 
     /**
@@ -126,15 +126,15 @@ public class SepaMandateResourceIntTest {
      */
     public static SepaMandate createEntity(EntityManager em) {
         SepaMandate sepaMandate = new SepaMandate()
-            .reference(DEFAULT_REFERENCE)
-            .iban(DEFAULT_IBAN)
-            .bic(DEFAULT_BIC)
-            .grantingDocumentDate(DEFAULT_GRANTING_DOCUMENT_DATE)
-            .revokationDocumentDate(DEFAULT_REVOKATION_DOCUMENT_DATE)
-            .validFromDate(DEFAULT_VALID_FROM_DATE)
-            .validUntilDate(DEFAULT_VALID_UNTIL_DATE)
-            .lastUsedDate(DEFAULT_LAST_USED_DATE)
-            .remark(DEFAULT_REMARK);
+                .reference(DEFAULT_REFERENCE)
+                .iban(DEFAULT_IBAN)
+                .bic(DEFAULT_BIC)
+                .grantingDocumentDate(DEFAULT_GRANTING_DOCUMENT_DATE)
+                .revokationDocumentDate(DEFAULT_REVOKATION_DOCUMENT_DATE)
+                .validFromDate(DEFAULT_VALID_FROM_DATE)
+                .validUntilDate(DEFAULT_VALID_UNTIL_DATE)
+                .lastUsedDate(DEFAULT_LAST_USED_DATE)
+                .remark(DEFAULT_REMARK);
         // Add required entity
         Customer customer = CustomerResourceIntTest.createEntity(em);
         em.persist(customer);
@@ -155,10 +155,11 @@ public class SepaMandateResourceIntTest {
 
         // Create the SepaMandate
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
-        restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isCreated());
+        restSepaMandateMockMvc.perform(
+                post("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isCreated());
 
         // Validate the SepaMandate in the database
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
@@ -185,10 +186,11 @@ public class SepaMandateResourceIntTest {
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isBadRequest());
+        restSepaMandateMockMvc.perform(
+                post("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the SepaMandate in the database
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
@@ -205,10 +207,11 @@ public class SepaMandateResourceIntTest {
         // Create the SepaMandate, which fails.
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
 
-        restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isBadRequest());
+        restSepaMandateMockMvc.perform(
+                post("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isBadRequest());
 
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
         assertThat(sepaMandateList).hasSize(databaseSizeBeforeTest);
@@ -224,10 +227,11 @@ public class SepaMandateResourceIntTest {
         // Create the SepaMandate, which fails.
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
 
-        restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isBadRequest());
+        restSepaMandateMockMvc.perform(
+                post("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isBadRequest());
 
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
         assertThat(sepaMandateList).hasSize(databaseSizeBeforeTest);
@@ -243,10 +247,11 @@ public class SepaMandateResourceIntTest {
         // Create the SepaMandate, which fails.
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
 
-        restSepaMandateMockMvc.perform(post("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isBadRequest());
+        restSepaMandateMockMvc.perform(
+                post("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isBadRequest());
 
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
         assertThat(sepaMandateList).hasSize(databaseSizeBeforeTest);
@@ -260,20 +265,20 @@ public class SepaMandateResourceIntTest {
 
         // Get all the sepaMandateList
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates?sort=id,desc"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(sepaMandate.getId().intValue())))
-            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE.toString())))
-            .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN.toString())))
-            .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC.toString())))
-            .andExpect(jsonPath("$.[*].grantingDocumentDate").value(hasItem(DEFAULT_GRANTING_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].revokationDocumentDate").value(hasItem(DEFAULT_REVOKATION_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].validFromDate").value(hasItem(DEFAULT_VALID_FROM_DATE.toString())))
-            .andExpect(jsonPath("$.[*].validUntilDate").value(hasItem(DEFAULT_VALID_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].lastUsedDate").value(hasItem(DEFAULT_LAST_USED_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(sepaMandate.getId().intValue())))
+                .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE.toString())))
+                .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN.toString())))
+                .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC.toString())))
+                .andExpect(jsonPath("$.[*].grantingDocumentDate").value(hasItem(DEFAULT_GRANTING_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].revokationDocumentDate").value(hasItem(DEFAULT_REVOKATION_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].validFromDate").value(hasItem(DEFAULT_VALID_FROM_DATE.toString())))
+                .andExpect(jsonPath("$.[*].validUntilDate").value(hasItem(DEFAULT_VALID_UNTIL_DATE.toString())))
+                .andExpect(jsonPath("$.[*].lastUsedDate").value(hasItem(DEFAULT_LAST_USED_DATE.toString())))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
-    
+
     @Test
     @Transactional
     public void getSepaMandate() throws Exception {
@@ -282,18 +287,18 @@ public class SepaMandateResourceIntTest {
 
         // Get the sepaMandate
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates/{id}", sepaMandate.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(sepaMandate.getId().intValue()))
-            .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE.toString()))
-            .andExpect(jsonPath("$.iban").value(DEFAULT_IBAN.toString()))
-            .andExpect(jsonPath("$.bic").value(DEFAULT_BIC.toString()))
-            .andExpect(jsonPath("$.grantingDocumentDate").value(DEFAULT_GRANTING_DOCUMENT_DATE.toString()))
-            .andExpect(jsonPath("$.revokationDocumentDate").value(DEFAULT_REVOKATION_DOCUMENT_DATE.toString()))
-            .andExpect(jsonPath("$.validFromDate").value(DEFAULT_VALID_FROM_DATE.toString()))
-            .andExpect(jsonPath("$.validUntilDate").value(DEFAULT_VALID_UNTIL_DATE.toString()))
-            .andExpect(jsonPath("$.lastUsedDate").value(DEFAULT_LAST_USED_DATE.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.id").value(sepaMandate.getId().intValue()))
+                .andExpect(jsonPath("$.reference").value(DEFAULT_REFERENCE.toString()))
+                .andExpect(jsonPath("$.iban").value(DEFAULT_IBAN.toString()))
+                .andExpect(jsonPath("$.bic").value(DEFAULT_BIC.toString()))
+                .andExpect(jsonPath("$.grantingDocumentDate").value(DEFAULT_GRANTING_DOCUMENT_DATE.toString()))
+                .andExpect(jsonPath("$.revokationDocumentDate").value(DEFAULT_REVOKATION_DOCUMENT_DATE.toString()))
+                .andExpect(jsonPath("$.validFromDate").value(DEFAULT_VALID_FROM_DATE.toString()))
+                .andExpect(jsonPath("$.validUntilDate").value(DEFAULT_VALID_UNTIL_DATE.toString()))
+                .andExpect(jsonPath("$.lastUsedDate").value(DEFAULT_LAST_USED_DATE.toString()))
+                .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -432,8 +437,10 @@ public class SepaMandateResourceIntTest {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where grantingDocumentDate in DEFAULT_GRANTING_DOCUMENT_DATE or UPDATED_GRANTING_DOCUMENT_DATE
-        defaultSepaMandateShouldBeFound("grantingDocumentDate.in=" + DEFAULT_GRANTING_DOCUMENT_DATE + "," + UPDATED_GRANTING_DOCUMENT_DATE);
+        // Get all the sepaMandateList where grantingDocumentDate in DEFAULT_GRANTING_DOCUMENT_DATE or
+        // UPDATED_GRANTING_DOCUMENT_DATE
+        defaultSepaMandateShouldBeFound(
+                "grantingDocumentDate.in=" + DEFAULT_GRANTING_DOCUMENT_DATE + "," + UPDATED_GRANTING_DOCUMENT_DATE);
 
         // Get all the sepaMandateList where grantingDocumentDate equals to UPDATED_GRANTING_DOCUMENT_DATE
         defaultSepaMandateShouldNotBeFound("grantingDocumentDate.in=" + UPDATED_GRANTING_DOCUMENT_DATE);
@@ -478,7 +485,6 @@ public class SepaMandateResourceIntTest {
         defaultSepaMandateShouldBeFound("grantingDocumentDate.lessThan=" + UPDATED_GRANTING_DOCUMENT_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllSepaMandatesByRevokationDocumentDateIsEqualToSomething() throws Exception {
@@ -498,8 +504,10 @@ public class SepaMandateResourceIntTest {
         // Initialize the database
         sepaMandateRepository.saveAndFlush(sepaMandate);
 
-        // Get all the sepaMandateList where revokationDocumentDate in DEFAULT_REVOKATION_DOCUMENT_DATE or UPDATED_REVOKATION_DOCUMENT_DATE
-        defaultSepaMandateShouldBeFound("revokationDocumentDate.in=" + DEFAULT_REVOKATION_DOCUMENT_DATE + "," + UPDATED_REVOKATION_DOCUMENT_DATE);
+        // Get all the sepaMandateList where revokationDocumentDate in DEFAULT_REVOKATION_DOCUMENT_DATE or
+        // UPDATED_REVOKATION_DOCUMENT_DATE
+        defaultSepaMandateShouldBeFound(
+                "revokationDocumentDate.in=" + DEFAULT_REVOKATION_DOCUMENT_DATE + "," + UPDATED_REVOKATION_DOCUMENT_DATE);
 
         // Get all the sepaMandateList where revokationDocumentDate equals to UPDATED_REVOKATION_DOCUMENT_DATE
         defaultSepaMandateShouldNotBeFound("revokationDocumentDate.in=" + UPDATED_REVOKATION_DOCUMENT_DATE);
@@ -543,7 +551,6 @@ public class SepaMandateResourceIntTest {
         // Get all the sepaMandateList where revokationDocumentDate less than or equals to UPDATED_REVOKATION_DOCUMENT_DATE
         defaultSepaMandateShouldBeFound("revokationDocumentDate.lessThan=" + UPDATED_REVOKATION_DOCUMENT_DATE);
     }
-
 
     @Test
     @Transactional
@@ -610,7 +617,6 @@ public class SepaMandateResourceIntTest {
         defaultSepaMandateShouldBeFound("validFromDate.lessThan=" + UPDATED_VALID_FROM_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllSepaMandatesByValidUntilDateIsEqualToSomething() throws Exception {
@@ -675,7 +681,6 @@ public class SepaMandateResourceIntTest {
         // Get all the sepaMandateList where validUntilDate less than or equals to UPDATED_VALID_UNTIL_DATE
         defaultSepaMandateShouldBeFound("validUntilDate.lessThan=" + UPDATED_VALID_UNTIL_DATE);
     }
-
 
     @Test
     @Transactional
@@ -742,7 +747,6 @@ public class SepaMandateResourceIntTest {
         defaultSepaMandateShouldBeFound("lastUsedDate.lessThan=" + UPDATED_LAST_USED_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllSepaMandatesByRemarkIsEqualToSomething() throws Exception {
@@ -805,24 +809,24 @@ public class SepaMandateResourceIntTest {
      */
     private void defaultSepaMandateShouldBeFound(String filter) throws Exception {
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(sepaMandate.getId().intValue())))
-            .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
-            .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN)))
-            .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC)))
-            .andExpect(jsonPath("$.[*].grantingDocumentDate").value(hasItem(DEFAULT_GRANTING_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].revokationDocumentDate").value(hasItem(DEFAULT_REVOKATION_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].validFromDate").value(hasItem(DEFAULT_VALID_FROM_DATE.toString())))
-            .andExpect(jsonPath("$.[*].validUntilDate").value(hasItem(DEFAULT_VALID_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].lastUsedDate").value(hasItem(DEFAULT_LAST_USED_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(sepaMandate.getId().intValue())))
+                .andExpect(jsonPath("$.[*].reference").value(hasItem(DEFAULT_REFERENCE)))
+                .andExpect(jsonPath("$.[*].iban").value(hasItem(DEFAULT_IBAN)))
+                .andExpect(jsonPath("$.[*].bic").value(hasItem(DEFAULT_BIC)))
+                .andExpect(jsonPath("$.[*].grantingDocumentDate").value(hasItem(DEFAULT_GRANTING_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].revokationDocumentDate").value(hasItem(DEFAULT_REVOKATION_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].validFromDate").value(hasItem(DEFAULT_VALID_FROM_DATE.toString())))
+                .andExpect(jsonPath("$.[*].validUntilDate").value(hasItem(DEFAULT_VALID_UNTIL_DATE.toString())))
+                .andExpect(jsonPath("$.[*].lastUsedDate").value(hasItem(DEFAULT_LAST_USED_DATE.toString())))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("1"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("1"));
     }
 
     /**
@@ -830,25 +834,24 @@ public class SepaMandateResourceIntTest {
      */
     private void defaultSepaMandateShouldNotBeFound(String filter) throws Exception {
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
 
         // Check, that the count call also returns 0
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("0"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("0"));
     }
-
 
     @Test
     @Transactional
     public void getNonExistingSepaMandate() throws Exception {
         // Get the sepaMandate
         restSepaMandateMockMvc.perform(get("/api/sepa-mandates/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -864,21 +867,22 @@ public class SepaMandateResourceIntTest {
         // Disconnect from session so that the updates on updatedSepaMandate are not directly saved in db
         em.detach(updatedSepaMandate);
         updatedSepaMandate
-            .reference(UPDATED_REFERENCE)
-            .iban(UPDATED_IBAN)
-            .bic(UPDATED_BIC)
-            .grantingDocumentDate(UPDATED_GRANTING_DOCUMENT_DATE)
-            .revokationDocumentDate(UPDATED_REVOKATION_DOCUMENT_DATE)
-            .validFromDate(UPDATED_VALID_FROM_DATE)
-            .validUntilDate(UPDATED_VALID_UNTIL_DATE)
-            .lastUsedDate(UPDATED_LAST_USED_DATE)
-            .remark(UPDATED_REMARK);
+                .reference(UPDATED_REFERENCE)
+                .iban(UPDATED_IBAN)
+                .bic(UPDATED_BIC)
+                .grantingDocumentDate(UPDATED_GRANTING_DOCUMENT_DATE)
+                .revokationDocumentDate(UPDATED_REVOKATION_DOCUMENT_DATE)
+                .validFromDate(UPDATED_VALID_FROM_DATE)
+                .validUntilDate(UPDATED_VALID_UNTIL_DATE)
+                .lastUsedDate(UPDATED_LAST_USED_DATE)
+                .remark(UPDATED_REMARK);
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(updatedSepaMandate);
 
-        restSepaMandateMockMvc.perform(put("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isOk());
+        restSepaMandateMockMvc.perform(
+                put("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isOk());
 
         // Validate the SepaMandate in the database
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
@@ -904,10 +908,11 @@ public class SepaMandateResourceIntTest {
         SepaMandateDTO sepaMandateDTO = sepaMandateMapper.toDto(sepaMandate);
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restSepaMandateMockMvc.perform(put("/api/sepa-mandates")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
-            .andExpect(status().isBadRequest());
+        restSepaMandateMockMvc.perform(
+                put("/api/sepa-mandates")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(sepaMandateDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the SepaMandate in the database
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();
@@ -923,9 +928,10 @@ public class SepaMandateResourceIntTest {
         int databaseSizeBeforeDelete = sepaMandateRepository.findAll().size();
 
         // Delete the sepaMandate
-        restSepaMandateMockMvc.perform(delete("/api/sepa-mandates/{id}", sepaMandate.getId())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+        restSepaMandateMockMvc.perform(
+                delete("/api/sepa-mandates/{id}", sepaMandate.getId())
+                        .accept(TestUtil.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
 
         // Validate the database is empty
         List<SepaMandate> sepaMandateList = sepaMandateRepository.findAll();

@@ -1,9 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
-import java.io.Serializable;
-import java.util.Objects;
+
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Objects;
+
+import javax.validation.constraints.*;
 
 /**
  * A DTO for the Share entity.
@@ -26,7 +30,6 @@ public class ShareDTO implements Serializable {
 
     @Size(max = 160)
     private String remark;
-
 
     private Long membershipId;
 
@@ -120,14 +123,14 @@ public class ShareDTO implements Serializable {
     @Override
     public String toString() {
         return "ShareDTO{" +
-            "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", valueDate='" + getValueDate() + "'" +
-            ", action='" + getAction() + "'" +
-            ", quantity=" + getQuantity() +
-            ", remark='" + getRemark() + "'" +
-            ", membership=" + getMembershipId() +
-            ", membership='" + getMembershipAdmissionDocumentDate() + "'" +
-            "}";
+                "id=" + getId() +
+                ", documentDate='" + getDocumentDate() + "'" +
+                ", valueDate='" + getValueDate() + "'" +
+                ", action='" + getAction() + "'" +
+                ", quantity=" + getQuantity() +
+                ", remark='" + getRemark() + "'" +
+                ", membership=" + getMembershipId() +
+                ", membership='" + getMembershipAdmissionDocumentDate() + "'" +
+                "}";
     }
 }

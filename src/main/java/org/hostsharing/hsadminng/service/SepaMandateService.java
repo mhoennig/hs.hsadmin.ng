@@ -1,12 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,9 +56,8 @@ public class SepaMandateService {
     public Page<SepaMandateDTO> findAll(Pageable pageable) {
         log.debug("Request to get all SepaMandates");
         return sepaMandateRepository.findAll(pageable)
-            .map(sepaMandateMapper::toDto);
+                .map(sepaMandateMapper::toDto);
     }
-
 
     /**
      * Get one sepaMandate by id.
@@ -69,7 +69,7 @@ public class SepaMandateService {
     public Optional<SepaMandateDTO> findOne(Long id) {
         log.debug("Request to get SepaMandate : {}", id);
         return sepaMandateRepository.findById(id)
-            .map(sepaMandateMapper::toDto);
+                .map(sepaMandateMapper::toDto);
     }
 
     /**

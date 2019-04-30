@@ -1,12 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,9 +56,8 @@ public class AssetService {
     public Page<AssetDTO> findAll(Pageable pageable) {
         log.debug("Request to get all Assets");
         return assetRepository.findAll(pageable)
-            .map(assetMapper::toDto);
+                .map(assetMapper::toDto);
     }
-
 
     /**
      * Get one asset by id.
@@ -69,7 +69,7 @@ public class AssetService {
     public Optional<AssetDTO> findOne(Long id) {
         log.debug("Request to get Asset : {}", id);
         return assetRepository.findById(id)
-            .map(assetMapper::toDto);
+                .map(assetMapper::toDto);
     }
 
     /**

@@ -1,0 +1,15 @@
+// apply and check standard formatting of files
+
+apply plugin: "com.diffplug.gradle.spotless"
+
+spotless {
+    // automatically format source files, see https://github.com/diffplug/spotless
+    java {
+        licenseHeader '// Licensed under Apache-2.0'
+        importOrderFile 'cfg/spotless/hsadminng.importorder'
+        eclipse().configFile 'cfg/spotless/eclipse_formatter.xml'
+        target 'src/main/**/*.java', 'src/test/**/*.java'
+        removeUnusedImports()
+        endWithNewline()
+    }
+}

@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.*;
@@ -8,7 +9,7 @@ import org.mapstruct.*;
 /**
  * Mapper for the entity SepaMandate and its DTO SepaMandateDTO.
  */
-@Mapper(componentModel = "spring", uses = {CustomerMapper.class})
+@Mapper(componentModel = "spring", uses = { CustomerMapper.class })
 public interface SepaMandateMapper extends EntityMapper<SepaMandateDTO, SepaMandate> {
 
     @Mapping(source = "customer.id", target = "customerId")

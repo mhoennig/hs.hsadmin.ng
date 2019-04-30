@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest.util;
 
 import org.slf4j.Logger;

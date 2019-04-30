@@ -1,16 +1,22 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
-import org.hostsharing.hsadminng.HsadminNgApp;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
+import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.AssetCriteria;
-import org.hostsharing.hsadminng.service.AssetQueryService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,20 +33,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
-import javax.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
+import javax.persistence.EntityManager;
 
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 /**
  * Test class for the AssetResource REST controller.
  *
@@ -101,11 +100,12 @@ public class AssetResourceIntTest {
         MockitoAnnotations.initMocks(this);
         final AssetResource assetResource = new AssetResource(assetService, assetQueryService);
         this.restAssetMockMvc = MockMvcBuilders.standaloneSetup(assetResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setControllerAdvice(exceptionTranslator)
-            .setConversionService(createFormattingConversionService())
-            .setMessageConverters(jacksonMessageConverter)
-            .setValidator(validator).build();
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .setControllerAdvice(exceptionTranslator)
+                .setConversionService(createFormattingConversionService())
+                .setMessageConverters(jacksonMessageConverter)
+                .setValidator(validator)
+                .build();
     }
 
     /**
@@ -116,11 +116,11 @@ public class AssetResourceIntTest {
      */
     public static Asset createEntity(EntityManager em) {
         Asset asset = new Asset()
-            .documentDate(DEFAULT_DOCUMENT_DATE)
-            .valueDate(DEFAULT_VALUE_DATE)
-            .action(DEFAULT_ACTION)
-            .amount(DEFAULT_AMOUNT)
-            .remark(DEFAULT_REMARK);
+                .documentDate(DEFAULT_DOCUMENT_DATE)
+                .valueDate(DEFAULT_VALUE_DATE)
+                .action(DEFAULT_ACTION)
+                .amount(DEFAULT_AMOUNT)
+                .remark(DEFAULT_REMARK);
         // Add required entity
         Membership membership = MembershipResourceIntTest.createEntity(em);
         em.persist(membership);
@@ -141,10 +141,11 @@ public class AssetResourceIntTest {
 
         // Create the Asset
         AssetDTO assetDTO = assetMapper.toDto(asset);
-        restAssetMockMvc.perform(post("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isCreated());
+        restAssetMockMvc.perform(
+                post("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isCreated());
 
         // Validate the Asset in the database
         List<Asset> assetList = assetRepository.findAll();
@@ -167,10 +168,11 @@ public class AssetResourceIntTest {
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restAssetMockMvc.perform(post("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isBadRequest());
+        restAssetMockMvc.perform(
+                post("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Asset in the database
         List<Asset> assetList = assetRepository.findAll();
@@ -187,10 +189,11 @@ public class AssetResourceIntTest {
         // Create the Asset, which fails.
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
-        restAssetMockMvc.perform(post("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isBadRequest());
+        restAssetMockMvc.perform(
+                post("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeTest);
@@ -206,10 +209,11 @@ public class AssetResourceIntTest {
         // Create the Asset, which fails.
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
-        restAssetMockMvc.perform(post("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isBadRequest());
+        restAssetMockMvc.perform(
+                post("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeTest);
@@ -225,10 +229,11 @@ public class AssetResourceIntTest {
         // Create the Asset, which fails.
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
-        restAssetMockMvc.perform(post("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isBadRequest());
+        restAssetMockMvc.perform(
+                post("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeTest);
@@ -244,10 +249,11 @@ public class AssetResourceIntTest {
         // Create the Asset, which fails.
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
-        restAssetMockMvc.perform(post("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isBadRequest());
+        restAssetMockMvc.perform(
+                post("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Asset> assetList = assetRepository.findAll();
         assertThat(assetList).hasSize(databaseSizeBeforeTest);
@@ -261,16 +267,16 @@ public class AssetResourceIntTest {
 
         // Get all the assetList
         restAssetMockMvc.perform(get("/api/assets?sort=id,desc"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(asset.getId().intValue())))
-            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
-            .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
-            .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(asset.getId().intValue())))
+                .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
+                .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
+                .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
-    
+
     @Test
     @Transactional
     public void getAsset() throws Exception {
@@ -279,14 +285,14 @@ public class AssetResourceIntTest {
 
         // Get the asset
         restAssetMockMvc.perform(get("/api/assets/{id}", asset.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(asset.getId().intValue()))
-            .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
-            .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
-            .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
-            .andExpect(jsonPath("$.amount").value(DEFAULT_AMOUNT.intValue()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.id").value(asset.getId().intValue()))
+                .andExpect(jsonPath("$.documentDate").value(DEFAULT_DOCUMENT_DATE.toString()))
+                .andExpect(jsonPath("$.valueDate").value(DEFAULT_VALUE_DATE.toString()))
+                .andExpect(jsonPath("$.action").value(DEFAULT_ACTION.toString()))
+                .andExpect(jsonPath("$.amount").value(DEFAULT_AMOUNT.intValue()))
+                .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -354,7 +360,6 @@ public class AssetResourceIntTest {
         defaultAssetShouldBeFound("documentDate.lessThan=" + UPDATED_DOCUMENT_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllAssetsByValueDateIsEqualToSomething() throws Exception {
@@ -419,7 +424,6 @@ public class AssetResourceIntTest {
         // Get all the assetList where valueDate less than or equals to UPDATED_VALUE_DATE
         defaultAssetShouldBeFound("valueDate.lessThan=" + UPDATED_VALUE_DATE);
     }
-
 
     @Test
     @Transactional
@@ -561,20 +565,20 @@ public class AssetResourceIntTest {
      */
     private void defaultAssetShouldBeFound(String filter) throws Exception {
         restAssetMockMvc.perform(get("/api/assets?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(asset.getId().intValue())))
-            .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
-            .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
-            .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(asset.getId().intValue())))
+                .andExpect(jsonPath("$.[*].documentDate").value(hasItem(DEFAULT_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].valueDate").value(hasItem(DEFAULT_VALUE_DATE.toString())))
+                .andExpect(jsonPath("$.[*].action").value(hasItem(DEFAULT_ACTION.toString())))
+                .andExpect(jsonPath("$.[*].amount").value(hasItem(DEFAULT_AMOUNT.intValue())))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restAssetMockMvc.perform(get("/api/assets/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("1"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("1"));
     }
 
     /**
@@ -582,25 +586,24 @@ public class AssetResourceIntTest {
      */
     private void defaultAssetShouldNotBeFound(String filter) throws Exception {
         restAssetMockMvc.perform(get("/api/assets?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
 
         // Check, that the count call also returns 0
         restAssetMockMvc.perform(get("/api/assets/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("0"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("0"));
     }
-
 
     @Test
     @Transactional
     public void getNonExistingAsset() throws Exception {
         // Get the asset
         restAssetMockMvc.perform(get("/api/assets/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -616,17 +619,18 @@ public class AssetResourceIntTest {
         // Disconnect from session so that the updates on updatedAsset are not directly saved in db
         em.detach(updatedAsset);
         updatedAsset
-            .documentDate(UPDATED_DOCUMENT_DATE)
-            .valueDate(UPDATED_VALUE_DATE)
-            .action(UPDATED_ACTION)
-            .amount(UPDATED_AMOUNT)
-            .remark(UPDATED_REMARK);
+                .documentDate(UPDATED_DOCUMENT_DATE)
+                .valueDate(UPDATED_VALUE_DATE)
+                .action(UPDATED_ACTION)
+                .amount(UPDATED_AMOUNT)
+                .remark(UPDATED_REMARK);
         AssetDTO assetDTO = assetMapper.toDto(updatedAsset);
 
-        restAssetMockMvc.perform(put("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isOk());
+        restAssetMockMvc.perform(
+                put("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isOk());
 
         // Validate the Asset in the database
         List<Asset> assetList = assetRepository.findAll();
@@ -648,10 +652,11 @@ public class AssetResourceIntTest {
         AssetDTO assetDTO = assetMapper.toDto(asset);
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restAssetMockMvc.perform(put("/api/assets")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
-            .andExpect(status().isBadRequest());
+        restAssetMockMvc.perform(
+                put("/api/assets")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(assetDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Asset in the database
         List<Asset> assetList = assetRepository.findAll();
@@ -667,9 +672,10 @@ public class AssetResourceIntTest {
         int databaseSizeBeforeDelete = assetRepository.findAll().size();
 
         // Delete the asset
-        restAssetMockMvc.perform(delete("/api/assets/{id}", asset.getId())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+        restAssetMockMvc.perform(
+                delete("/api/assets/{id}", asset.getId())
+                        .accept(TestUtil.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
 
         // Validate the database is empty
         List<Asset> assetList = assetRepository.findAll();

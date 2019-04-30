@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.config;
 
 import org.springframework.web.bind.annotation.GetMapping;

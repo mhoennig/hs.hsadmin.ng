@@ -1,8 +1,11 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
+
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.*;
 
 /**
  * A DTO for the SepaMandate entity.
@@ -35,7 +38,6 @@ public class SepaMandateDTO implements Serializable {
 
     @Size(max = 160)
     private String remark;
-
 
     private Long customerId;
 
@@ -161,18 +163,18 @@ public class SepaMandateDTO implements Serializable {
     @Override
     public String toString() {
         return "SepaMandateDTO{" +
-            "id=" + getId() +
-            ", reference='" + getReference() + "'" +
-            ", iban='" + getIban() + "'" +
-            ", bic='" + getBic() + "'" +
-            ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
-            ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
-            ", validFromDate='" + getValidFromDate() + "'" +
-            ", validUntilDate='" + getValidUntilDate() + "'" +
-            ", lastUsedDate='" + getLastUsedDate() + "'" +
-            ", remark='" + getRemark() + "'" +
-            ", customer=" + getCustomerId() +
-            ", customer='" + getCustomerPrefix() + "'" +
-            "}";
+                "id=" + getId() +
+                ", reference='" + getReference() + "'" +
+                ", iban='" + getIban() + "'" +
+                ", bic='" + getBic() + "'" +
+                ", grantingDocumentDate='" + getGrantingDocumentDate() + "'" +
+                ", revokationDocumentDate='" + getRevokationDocumentDate() + "'" +
+                ", validFromDate='" + getValidFromDate() + "'" +
+                ", validUntilDate='" + getValidUntilDate() + "'" +
+                ", lastUsedDate='" + getLastUsedDate() + "'" +
+                ", remark='" + getRemark() + "'" +
+                ", customer=" + getCustomerId() +
+                ", customer='" + getCustomerPrefix() + "'" +
+                "}";
     }
 }

@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.util;
 
 import org.apache.commons.lang3.RandomStringUtils;

@@ -1,8 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
+import org.hostsharing.hsadminng.domain.*;
+import org.hostsharing.hsadminng.domain.Share;
+import org.hostsharing.hsadminng.repository.ShareRepository;
+import org.hostsharing.hsadminng.service.dto.ShareCriteria;
+import org.hostsharing.hsadminng.service.dto.ShareDTO;
+import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 
-import javax.persistence.criteria.JoinType;
+import io.github.jhipster.service.QueryService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,14 +18,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
+import java.util.List;
 
-import org.hostsharing.hsadminng.domain.Share;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.ShareRepository;
-import org.hostsharing.hsadminng.service.dto.ShareCriteria;
-import org.hostsharing.hsadminng.service.dto.ShareDTO;
-import org.hostsharing.hsadminng.service.mapper.ShareMapper;
+import javax.persistence.criteria.JoinType;
 
 /**
  * Service for executing complex queries for Share entities in the database.
@@ -44,6 +45,7 @@ public class ShareQueryService extends QueryService<Share> {
 
     /**
      * Return a {@link List} of {@link ShareDTO} which matches the criteria from the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @return the matching entities.
      */
@@ -56,6 +58,7 @@ public class ShareQueryService extends QueryService<Share> {
 
     /**
      * Return a {@link Page} of {@link ShareDTO} which matches the criteria from the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @param page The page, which should be returned.
      * @return the matching entities.
@@ -65,11 +68,12 @@ public class ShareQueryService extends QueryService<Share> {
         log.debug("find by criteria : {}, page: {}", criteria, page);
         final Specification<Share> specification = createSpecification(criteria);
         return shareRepository.findAll(specification, page)
-            .map(shareMapper::toDto);
+                .map(shareMapper::toDto);
     }
 
     /**
      * Return the number of matching entities in the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @return the number of matching entities.
      */
@@ -105,8 +109,10 @@ public class ShareQueryService extends QueryService<Share> {
                 specification = specification.and(buildStringSpecification(criteria.getRemark(), Share_.remark));
             }
             if (criteria.getMembershipId() != null) {
-                specification = specification.and(buildSpecification(criteria.getMembershipId(),
-                    root -> root.join(Share_.membership, JoinType.LEFT).get(Membership_.id)));
+                specification = specification.and(
+                        buildSpecification(
+                                criteria.getMembershipId(),
+                                root -> root.join(Share_.membership, JoinType.LEFT).get(Membership_.id)));
             }
         }
         return specification;

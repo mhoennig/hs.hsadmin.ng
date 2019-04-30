@@ -1,27 +1,30 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import org.hostsharing.hsadminng.service.ShareQueryService;
 import org.hostsharing.hsadminng.service.ShareService;
+import org.hostsharing.hsadminng.service.dto.ShareCriteria;
+import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.hostsharing.hsadminng.web.rest.util.HeaderUtil;
 import org.hostsharing.hsadminng.web.rest.util.PaginationUtil;
-import org.hostsharing.hsadminng.service.dto.ShareDTO;
-import org.hostsharing.hsadminng.service.dto.ShareCriteria;
-import org.hostsharing.hsadminng.service.ShareQueryService;
+
 import io.github.jhipster.web.util.ResponseUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
+
+import javax.validation.Valid;
 
 /**
  * REST controller for managing Share.
@@ -44,10 +47,11 @@ public class ShareResource {
     }
 
     /**
-     * POST  /shares : Create a new share.
+     * POST /shares : Create a new share.
      *
      * @param shareDTO the shareDTO to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new shareDTO, or with status 400 (Bad Request) if the share has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new shareDTO, or with status 400 (Bad Request) if
+     *         the share has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/shares")
@@ -58,17 +62,17 @@ public class ShareResource {
         }
         ShareDTO result = shareService.save(shareDTO);
         return ResponseEntity.created(new URI("/api/shares/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
     }
 
     /**
-     * PUT  /shares : Updates an existing share.
+     * PUT /shares : Updates an existing share.
      *
      * @param shareDTO the shareDTO to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated shareDTO,
-     * or with status 400 (Bad Request) if the shareDTO is not valid,
-     * or with status 500 (Internal Server Error) if the shareDTO couldn't be updated
+     *         or with status 400 (Bad Request) if the shareDTO is not valid,
+     *         or with status 500 (Internal Server Error) if the shareDTO couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/shares")
@@ -79,12 +83,12 @@ public class ShareResource {
         }
         ShareDTO result = shareService.save(shareDTO);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, shareDTO.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, shareDTO.getId().toString()))
+                .body(result);
     }
 
     /**
-     * GET  /shares : get all the shares.
+     * GET /shares : get all the shares.
      *
      * @param pageable the pagination information
      * @param criteria the criterias which the requested entities should match
@@ -99,11 +103,11 @@ public class ShareResource {
     }
 
     /**
-    * GET  /shares/count : count all the shares.
-    *
-    * @param criteria the criterias which the requested entities should match
-    * @return the ResponseEntity with status 200 (OK) and the count in body
-    */
+     * GET /shares/count : count all the shares.
+     *
+     * @param criteria the criterias which the requested entities should match
+     * @return the ResponseEntity with status 200 (OK) and the count in body
+     */
     @GetMapping("/shares/count")
     public ResponseEntity<Long> countShares(ShareCriteria criteria) {
         log.debug("REST request to count Shares by criteria: {}", criteria);
@@ -111,7 +115,7 @@ public class ShareResource {
     }
 
     /**
-     * GET  /shares/:id : get the "id" share.
+     * GET /shares/:id : get the "id" share.
      *
      * @param id the id of the shareDTO to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the shareDTO, or with status 404 (Not Found)
@@ -124,7 +128,7 @@ public class ShareResource {
     }
 
     /**
-     * DELETE  /shares/:id : delete the "id" share.
+     * DELETE /shares/:id : delete the "id" share.
      *
      * @param id the id of the shareDTO to delete
      * @return the ResponseEntity with status 200 (OK)

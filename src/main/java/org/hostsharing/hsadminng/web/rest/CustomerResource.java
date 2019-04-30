@@ -1,27 +1,30 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
+
+import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
+import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.hostsharing.hsadminng.web.rest.util.HeaderUtil;
 import org.hostsharing.hsadminng.web.rest.util.PaginationUtil;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
-import org.hostsharing.hsadminng.service.dto.CustomerCriteria;
-import org.hostsharing.hsadminng.service.CustomerQueryService;
+
 import io.github.jhipster.web.util.ResponseUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
+
+import javax.validation.Valid;
 
 /**
  * REST controller for managing Customer.
@@ -44,10 +47,11 @@ public class CustomerResource {
     }
 
     /**
-     * POST  /customers : Create a new customer.
+     * POST /customers : Create a new customer.
      *
      * @param customerDTO the customerDTO to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new customerDTO, or with status 400 (Bad Request) if the customer has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new customerDTO, or with status 400 (Bad Request)
+     *         if the customer has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/customers")
@@ -58,17 +62,17 @@ public class CustomerResource {
         }
         CustomerDTO result = customerService.save(customerDTO);
         return ResponseEntity.created(new URI("/api/customers/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
     }
 
     /**
-     * PUT  /customers : Updates an existing customer.
+     * PUT /customers : Updates an existing customer.
      *
      * @param customerDTO the customerDTO to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated customerDTO,
-     * or with status 400 (Bad Request) if the customerDTO is not valid,
-     * or with status 500 (Internal Server Error) if the customerDTO couldn't be updated
+     *         or with status 400 (Bad Request) if the customerDTO is not valid,
+     *         or with status 500 (Internal Server Error) if the customerDTO couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/customers")
@@ -79,12 +83,12 @@ public class CustomerResource {
         }
         CustomerDTO result = customerService.save(customerDTO);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, customerDTO.getId().toString()))
-            .body(result);
+                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, customerDTO.getId().toString()))
+                .body(result);
     }
 
     /**
-     * GET  /customers : get all the customers.
+     * GET /customers : get all the customers.
      *
      * @param pageable the pagination information
      * @param criteria the criterias which the requested entities should match
@@ -99,11 +103,11 @@ public class CustomerResource {
     }
 
     /**
-    * GET  /customers/count : count all the customers.
-    *
-    * @param criteria the criterias which the requested entities should match
-    * @return the ResponseEntity with status 200 (OK) and the count in body
-    */
+     * GET /customers/count : count all the customers.
+     *
+     * @param criteria the criterias which the requested entities should match
+     * @return the ResponseEntity with status 200 (OK) and the count in body
+     */
     @GetMapping("/customers/count")
     public ResponseEntity<Long> countCustomers(CustomerCriteria criteria) {
         log.debug("REST request to count Customers by criteria: {}", criteria);
@@ -111,7 +115,7 @@ public class CustomerResource {
     }
 
     /**
-     * GET  /customers/:id : get the "id" customer.
+     * GET /customers/:id : get the "id" customer.
      *
      * @param id the id of the customerDTO to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the customerDTO, or with status 404 (Not Found)
@@ -124,7 +128,7 @@ public class CustomerResource {
     }
 
     /**
-     * DELETE  /customers/:id : delete the "id" customer.
+     * DELETE /customers/:id : delete the "id" customer.
      *
      * @param id the id of the customerDTO to delete
      * @return the ResponseEntity with status 200 (OK)

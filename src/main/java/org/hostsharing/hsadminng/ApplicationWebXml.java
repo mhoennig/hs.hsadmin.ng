@@ -1,6 +1,8 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng;
 
 import org.hostsharing.hsadminng.config.DefaultProfileUtil;
+
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 

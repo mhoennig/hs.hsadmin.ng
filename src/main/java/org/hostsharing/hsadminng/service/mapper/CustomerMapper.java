@@ -1,3 +1,4 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.mapper;
 
 import org.hostsharing.hsadminng.domain.*;
@@ -10,7 +11,6 @@ import org.mapstruct.*;
  */
 @Mapper(componentModel = "spring", uses = {})
 public interface CustomerMapper extends EntityMapper<CustomerDTO, Customer> {
-
 
     @Mapping(target = "memberships", ignore = true)
     @Mapping(target = "sepamandates", ignore = true)

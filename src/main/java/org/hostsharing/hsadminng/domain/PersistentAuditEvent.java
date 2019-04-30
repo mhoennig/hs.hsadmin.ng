@@ -1,12 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Map;
+import java.util.Objects;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 /**
  * Persist AuditEvent managed by the Spring Boot actuator.
@@ -38,7 +40,7 @@ public class PersistentAuditEvent implements Serializable {
     @ElementCollection
     @MapKeyColumn(name = "name")
     @Column(name = "value")
-    @CollectionTable(name = "jhi_persistent_audit_evt_data", joinColumns=@JoinColumn(name="event_id"))
+    @CollectionTable(name = "jhi_persistent_audit_evt_data", joinColumns = @JoinColumn(name = "event_id"))
     private Map<String, String> data = new HashMap<>();
 
     public Long getId() {
@@ -91,7 +93,8 @@ public class PersistentAuditEvent implements Serializable {
         }
 
         PersistentAuditEvent persistentAuditEvent = (PersistentAuditEvent) o;
-        return !(persistentAuditEvent.getId() == null || getId() == null) && Objects.equals(getId(), persistentAuditEvent.getId());
+        return !(persistentAuditEvent.getId() == null || getId() == null)
+                && Objects.equals(getId(), persistentAuditEvent.getId());
     }
 
     @Override
@@ -102,9 +105,9 @@ public class PersistentAuditEvent implements Serializable {
     @Override
     public String toString() {
         return "PersistentAuditEvent{" +
-            "principal='" + principal + '\'' +
-            ", auditEventDate=" + auditEventDate +
-            ", auditEventType='" + auditEventType + '\'' +
-            '}';
+                "principal='" + principal + '\'' +
+                ", auditEventDate=" + auditEventDate +
+                ", auditEventType='" + auditEventType + '\'' +
+                '}';
     }
 }

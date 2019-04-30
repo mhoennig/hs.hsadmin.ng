@@ -1,18 +1,23 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
-import org.hostsharing.hsadminng.HsadminNgApp;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.hostsharing.hsadminng.domain.Membership;
-import org.hostsharing.hsadminng.domain.Share;
+import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Customer;
+import org.hostsharing.hsadminng.domain.Membership;
+import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
+import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-import org.hostsharing.hsadminng.service.dto.MembershipCriteria;
-import org.hostsharing.hsadminng.service.MembershipQueryService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,17 +34,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
-import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
-
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import javax.persistence.EntityManager;
 
 /**
  * Test class for the MembershipResource REST controller.
@@ -101,11 +100,12 @@ public class MembershipResourceIntTest {
         MockitoAnnotations.initMocks(this);
         final MembershipResource membershipResource = new MembershipResource(membershipService, membershipQueryService);
         this.restMembershipMockMvc = MockMvcBuilders.standaloneSetup(membershipResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setControllerAdvice(exceptionTranslator)
-            .setConversionService(createFormattingConversionService())
-            .setMessageConverters(jacksonMessageConverter)
-            .setValidator(validator).build();
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .setControllerAdvice(exceptionTranslator)
+                .setConversionService(createFormattingConversionService())
+                .setMessageConverters(jacksonMessageConverter)
+                .setValidator(validator)
+                .build();
     }
 
     /**
@@ -116,11 +116,11 @@ public class MembershipResourceIntTest {
      */
     public static Membership createEntity(EntityManager em) {
         Membership membership = new Membership()
-            .admissionDocumentDate(DEFAULT_ADMISSION_DOCUMENT_DATE)
-            .cancellationDocumentDate(DEFAULT_CANCELLATION_DOCUMENT_DATE)
-            .memberFromDate(DEFAULT_MEMBER_FROM_DATE)
-            .memberUntilDate(DEFAULT_MEMBER_UNTIL_DATE)
-            .remark(DEFAULT_REMARK);
+                .admissionDocumentDate(DEFAULT_ADMISSION_DOCUMENT_DATE)
+                .cancellationDocumentDate(DEFAULT_CANCELLATION_DOCUMENT_DATE)
+                .memberFromDate(DEFAULT_MEMBER_FROM_DATE)
+                .memberUntilDate(DEFAULT_MEMBER_UNTIL_DATE)
+                .remark(DEFAULT_REMARK);
         // Add required entity
         Customer customer = CustomerResourceIntTest.createEntity(em);
         em.persist(customer);
@@ -141,10 +141,11 @@ public class MembershipResourceIntTest {
 
         // Create the Membership
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
-        restMembershipMockMvc.perform(post("/api/memberships")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
-            .andExpect(status().isCreated());
+        restMembershipMockMvc.perform(
+                post("/api/memberships")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+                .andExpect(status().isCreated());
 
         // Validate the Membership in the database
         List<Membership> membershipList = membershipRepository.findAll();
@@ -167,10 +168,11 @@ public class MembershipResourceIntTest {
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
 
         // An entity with an existing ID cannot be created, so this API call must fail
-        restMembershipMockMvc.perform(post("/api/memberships")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
-            .andExpect(status().isBadRequest());
+        restMembershipMockMvc.perform(
+                post("/api/memberships")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Membership in the database
         List<Membership> membershipList = membershipRepository.findAll();
@@ -187,10 +189,11 @@ public class MembershipResourceIntTest {
         // Create the Membership, which fails.
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
 
-        restMembershipMockMvc.perform(post("/api/memberships")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
-            .andExpect(status().isBadRequest());
+        restMembershipMockMvc.perform(
+                post("/api/memberships")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Membership> membershipList = membershipRepository.findAll();
         assertThat(membershipList).hasSize(databaseSizeBeforeTest);
@@ -206,10 +209,11 @@ public class MembershipResourceIntTest {
         // Create the Membership, which fails.
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
 
-        restMembershipMockMvc.perform(post("/api/memberships")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
-            .andExpect(status().isBadRequest());
+        restMembershipMockMvc.perform(
+                post("/api/memberships")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+                .andExpect(status().isBadRequest());
 
         List<Membership> membershipList = membershipRepository.findAll();
         assertThat(membershipList).hasSize(databaseSizeBeforeTest);
@@ -223,16 +227,18 @@ public class MembershipResourceIntTest {
 
         // Get all the membershipList
         restMembershipMockMvc.perform(get("/api/memberships?sort=id,desc"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(membership.getId().intValue())))
-            .andExpect(jsonPath("$.[*].admissionDocumentDate").value(hasItem(DEFAULT_ADMISSION_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].cancellationDocumentDate").value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
-            .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(membership.getId().intValue())))
+                .andExpect(jsonPath("$.[*].admissionDocumentDate").value(hasItem(DEFAULT_ADMISSION_DOCUMENT_DATE.toString())))
+                .andExpect(
+                        jsonPath("$.[*].cancellationDocumentDate")
+                                .value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
+                .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK.toString())));
     }
-    
+
     @Test
     @Transactional
     public void getMembership() throws Exception {
@@ -241,14 +247,14 @@ public class MembershipResourceIntTest {
 
         // Get the membership
         restMembershipMockMvc.perform(get("/api/memberships/{id}", membership.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(membership.getId().intValue()))
-            .andExpect(jsonPath("$.admissionDocumentDate").value(DEFAULT_ADMISSION_DOCUMENT_DATE.toString()))
-            .andExpect(jsonPath("$.cancellationDocumentDate").value(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString()))
-            .andExpect(jsonPath("$.memberFromDate").value(DEFAULT_MEMBER_FROM_DATE.toString()))
-            .andExpect(jsonPath("$.memberUntilDate").value(DEFAULT_MEMBER_UNTIL_DATE.toString()))
-            .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.id").value(membership.getId().intValue()))
+                .andExpect(jsonPath("$.admissionDocumentDate").value(DEFAULT_ADMISSION_DOCUMENT_DATE.toString()))
+                .andExpect(jsonPath("$.cancellationDocumentDate").value(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString()))
+                .andExpect(jsonPath("$.memberFromDate").value(DEFAULT_MEMBER_FROM_DATE.toString()))
+                .andExpect(jsonPath("$.memberUntilDate").value(DEFAULT_MEMBER_UNTIL_DATE.toString()))
+                .andExpect(jsonPath("$.remark").value(DEFAULT_REMARK.toString()));
     }
 
     @Test
@@ -270,8 +276,10 @@ public class MembershipResourceIntTest {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where admissionDocumentDate in DEFAULT_ADMISSION_DOCUMENT_DATE or UPDATED_ADMISSION_DOCUMENT_DATE
-        defaultMembershipShouldBeFound("admissionDocumentDate.in=" + DEFAULT_ADMISSION_DOCUMENT_DATE + "," + UPDATED_ADMISSION_DOCUMENT_DATE);
+        // Get all the membershipList where admissionDocumentDate in DEFAULT_ADMISSION_DOCUMENT_DATE or
+        // UPDATED_ADMISSION_DOCUMENT_DATE
+        defaultMembershipShouldBeFound(
+                "admissionDocumentDate.in=" + DEFAULT_ADMISSION_DOCUMENT_DATE + "," + UPDATED_ADMISSION_DOCUMENT_DATE);
 
         // Get all the membershipList where admissionDocumentDate equals to UPDATED_ADMISSION_DOCUMENT_DATE
         defaultMembershipShouldNotBeFound("admissionDocumentDate.in=" + UPDATED_ADMISSION_DOCUMENT_DATE);
@@ -316,7 +324,6 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldBeFound("admissionDocumentDate.lessThan=" + UPDATED_ADMISSION_DOCUMENT_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllMembershipsByCancellationDocumentDateIsEqualToSomething() throws Exception {
@@ -336,8 +343,10 @@ public class MembershipResourceIntTest {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where cancellationDocumentDate in DEFAULT_CANCELLATION_DOCUMENT_DATE or UPDATED_CANCELLATION_DOCUMENT_DATE
-        defaultMembershipShouldBeFound("cancellationDocumentDate.in=" + DEFAULT_CANCELLATION_DOCUMENT_DATE + "," + UPDATED_CANCELLATION_DOCUMENT_DATE);
+        // Get all the membershipList where cancellationDocumentDate in DEFAULT_CANCELLATION_DOCUMENT_DATE or
+        // UPDATED_CANCELLATION_DOCUMENT_DATE
+        defaultMembershipShouldBeFound(
+                "cancellationDocumentDate.in=" + DEFAULT_CANCELLATION_DOCUMENT_DATE + "," + UPDATED_CANCELLATION_DOCUMENT_DATE);
 
         // Get all the membershipList where cancellationDocumentDate equals to UPDATED_CANCELLATION_DOCUMENT_DATE
         defaultMembershipShouldNotBeFound("cancellationDocumentDate.in=" + UPDATED_CANCELLATION_DOCUMENT_DATE);
@@ -362,10 +371,12 @@ public class MembershipResourceIntTest {
         // Initialize the database
         membershipRepository.saveAndFlush(membership);
 
-        // Get all the membershipList where cancellationDocumentDate greater than or equals to DEFAULT_CANCELLATION_DOCUMENT_DATE
+        // Get all the membershipList where cancellationDocumentDate greater than or equals to
+        // DEFAULT_CANCELLATION_DOCUMENT_DATE
         defaultMembershipShouldBeFound("cancellationDocumentDate.greaterOrEqualThan=" + DEFAULT_CANCELLATION_DOCUMENT_DATE);
 
-        // Get all the membershipList where cancellationDocumentDate greater than or equals to UPDATED_CANCELLATION_DOCUMENT_DATE
+        // Get all the membershipList where cancellationDocumentDate greater than or equals to
+        // UPDATED_CANCELLATION_DOCUMENT_DATE
         defaultMembershipShouldNotBeFound("cancellationDocumentDate.greaterOrEqualThan=" + UPDATED_CANCELLATION_DOCUMENT_DATE);
     }
 
@@ -381,7 +392,6 @@ public class MembershipResourceIntTest {
         // Get all the membershipList where cancellationDocumentDate less than or equals to UPDATED_CANCELLATION_DOCUMENT_DATE
         defaultMembershipShouldBeFound("cancellationDocumentDate.lessThan=" + UPDATED_CANCELLATION_DOCUMENT_DATE);
     }
-
 
     @Test
     @Transactional
@@ -448,7 +458,6 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldBeFound("memberFromDate.lessThan=" + UPDATED_MEMBER_FROM_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllMembershipsByMemberUntilDateIsEqualToSomething() throws Exception {
@@ -514,7 +523,6 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldBeFound("memberUntilDate.lessThan=" + UPDATED_MEMBER_UNTIL_DATE);
     }
 
-
     @Test
     @Transactional
     public void getAllMembershipsByRemarkIsEqualToSomething() throws Exception {
@@ -572,7 +580,6 @@ public class MembershipResourceIntTest {
         defaultMembershipShouldNotBeFound("shareId.equals=" + (shareId + 1));
     }
 
-
     @Test
     @Transactional
     public void getAllMembershipsByAssetIsEqualToSomething() throws Exception {
@@ -590,7 +597,6 @@ public class MembershipResourceIntTest {
         // Get all the membershipList where asset equals to assetId + 1
         defaultMembershipShouldNotBeFound("assetId.equals=" + (assetId + 1));
     }
-
 
     @Test
     @Transactional
@@ -615,20 +621,22 @@ public class MembershipResourceIntTest {
      */
     private void defaultMembershipShouldBeFound(String filter) throws Exception {
         restMembershipMockMvc.perform(get("/api/memberships?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(membership.getId().intValue())))
-            .andExpect(jsonPath("$.[*].admissionDocumentDate").value(hasItem(DEFAULT_ADMISSION_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].cancellationDocumentDate").value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
-            .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
-            .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
-            .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(membership.getId().intValue())))
+                .andExpect(jsonPath("$.[*].admissionDocumentDate").value(hasItem(DEFAULT_ADMISSION_DOCUMENT_DATE.toString())))
+                .andExpect(
+                        jsonPath("$.[*].cancellationDocumentDate")
+                                .value(hasItem(DEFAULT_CANCELLATION_DOCUMENT_DATE.toString())))
+                .andExpect(jsonPath("$.[*].memberFromDate").value(hasItem(DEFAULT_MEMBER_FROM_DATE.toString())))
+                .andExpect(jsonPath("$.[*].memberUntilDate").value(hasItem(DEFAULT_MEMBER_UNTIL_DATE.toString())))
+                .andExpect(jsonPath("$.[*].remark").value(hasItem(DEFAULT_REMARK)));
 
         // Check, that the count call also returns 1
         restMembershipMockMvc.perform(get("/api/memberships/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("1"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("1"));
     }
 
     /**
@@ -636,25 +644,24 @@ public class MembershipResourceIntTest {
      */
     private void defaultMembershipShouldNotBeFound(String filter) throws Exception {
         restMembershipMockMvc.perform(get("/api/memberships?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
 
         // Check, that the count call also returns 0
         restMembershipMockMvc.perform(get("/api/memberships/count?sort=id,desc&" + filter))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(content().string("0"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(content().string("0"));
     }
-
 
     @Test
     @Transactional
     public void getNonExistingMembership() throws Exception {
         // Get the membership
         restMembershipMockMvc.perform(get("/api/memberships/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -670,17 +677,18 @@ public class MembershipResourceIntTest {
         // Disconnect from session so that the updates on updatedMembership are not directly saved in db
         em.detach(updatedMembership);
         updatedMembership
-            .admissionDocumentDate(UPDATED_ADMISSION_DOCUMENT_DATE)
-            .cancellationDocumentDate(UPDATED_CANCELLATION_DOCUMENT_DATE)
-            .memberFromDate(UPDATED_MEMBER_FROM_DATE)
-            .memberUntilDate(UPDATED_MEMBER_UNTIL_DATE)
-            .remark(UPDATED_REMARK);
+                .admissionDocumentDate(UPDATED_ADMISSION_DOCUMENT_DATE)
+                .cancellationDocumentDate(UPDATED_CANCELLATION_DOCUMENT_DATE)
+                .memberFromDate(UPDATED_MEMBER_FROM_DATE)
+                .memberUntilDate(UPDATED_MEMBER_UNTIL_DATE)
+                .remark(UPDATED_REMARK);
         MembershipDTO membershipDTO = membershipMapper.toDto(updatedMembership);
 
-        restMembershipMockMvc.perform(put("/api/memberships")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
-            .andExpect(status().isOk());
+        restMembershipMockMvc.perform(
+                put("/api/memberships")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+                .andExpect(status().isOk());
 
         // Validate the Membership in the database
         List<Membership> membershipList = membershipRepository.findAll();
@@ -702,10 +710,11 @@ public class MembershipResourceIntTest {
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restMembershipMockMvc.perform(put("/api/memberships")
-            .contentType(TestUtil.APPLICATION_JSON_UTF8)
-            .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
-            .andExpect(status().isBadRequest());
+        restMembershipMockMvc.perform(
+                put("/api/memberships")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(membershipDTO)))
+                .andExpect(status().isBadRequest());
 
         // Validate the Membership in the database
         List<Membership> membershipList = membershipRepository.findAll();
@@ -721,9 +730,10 @@ public class MembershipResourceIntTest {
         int databaseSizeBeforeDelete = membershipRepository.findAll().size();
 
         // Delete the membership
-        restMembershipMockMvc.perform(delete("/api/memberships/{id}", membership.getId())
-            .accept(TestUtil.APPLICATION_JSON_UTF8))
-            .andExpect(status().isOk());
+        restMembershipMockMvc.perform(
+                delete("/api/memberships/{id}", membership.getId())
+                        .accept(TestUtil.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
 
         // Validate the database is empty
         List<Membership> membershipList = membershipRepository.findAll();

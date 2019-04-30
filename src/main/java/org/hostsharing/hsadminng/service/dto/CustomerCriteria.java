@@ -1,17 +1,17 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
+
+import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
+import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
+
+import io.github.jhipster.service.filter.Filter;
+import io.github.jhipster.service.filter.IntegerFilter;
+import io.github.jhipster.service.filter.LocalDateFilter;
+import io.github.jhipster.service.filter.LongFilter;
+import io.github.jhipster.service.filter.StringFilter;
 
 import java.io.Serializable;
 import java.util.Objects;
-import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
-import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
-import io.github.jhipster.service.filter.BooleanFilter;
-import io.github.jhipster.service.filter.DoubleFilter;
-import io.github.jhipster.service.filter.Filter;
-import io.github.jhipster.service.filter.FloatFilter;
-import io.github.jhipster.service.filter.IntegerFilter;
-import io.github.jhipster.service.filter.LongFilter;
-import io.github.jhipster.service.filter.StringFilter;
-import io.github.jhipster.service.filter.LocalDateFilter;
 
 /**
  * Criteria class for the Customer entity. This class is used in CustomerResource to
@@ -22,11 +22,13 @@ import io.github.jhipster.service.filter.LocalDateFilter;
  * fix type specific filters.
  */
 public class CustomerCriteria implements Serializable {
+
     /**
      * Class for filtering CustomerKind
      */
     public static class CustomerKindFilter extends Filter<CustomerKind> {
     }
+
     /**
      * Class for filtering VatRegion
      */
@@ -215,7 +217,6 @@ public class CustomerCriteria implements Serializable {
         this.sepamandateId = sepamandateId;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -225,49 +226,47 @@ public class CustomerCriteria implements Serializable {
             return false;
         }
         final CustomerCriteria that = (CustomerCriteria) o;
-        return
-            Objects.equals(id, that.id) &&
-            Objects.equals(reference, that.reference) &&
-            Objects.equals(prefix, that.prefix) &&
-            Objects.equals(name, that.name) &&
-            Objects.equals(kind, that.kind) &&
-            Objects.equals(birthDate, that.birthDate) &&
-            Objects.equals(birthPlace, that.birthPlace) &&
-            Objects.equals(registrationCourt, that.registrationCourt) &&
-            Objects.equals(registrationNumber, that.registrationNumber) &&
-            Objects.equals(vatRegion, that.vatRegion) &&
-            Objects.equals(vatNumber, that.vatNumber) &&
-            Objects.equals(contractualSalutation, that.contractualSalutation) &&
-            Objects.equals(contractualAddress, that.contractualAddress) &&
-            Objects.equals(billingSalutation, that.billingSalutation) &&
-            Objects.equals(billingAddress, that.billingAddress) &&
-            Objects.equals(remark, that.remark) &&
-            Objects.equals(membershipId, that.membershipId) &&
-            Objects.equals(sepamandateId, that.sepamandateId);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(reference, that.reference) &&
+                Objects.equals(prefix, that.prefix) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(kind, that.kind) &&
+                Objects.equals(birthDate, that.birthDate) &&
+                Objects.equals(birthPlace, that.birthPlace) &&
+                Objects.equals(registrationCourt, that.registrationCourt) &&
+                Objects.equals(registrationNumber, that.registrationNumber) &&
+                Objects.equals(vatRegion, that.vatRegion) &&
+                Objects.equals(vatNumber, that.vatNumber) &&
+                Objects.equals(contractualSalutation, that.contractualSalutation) &&
+                Objects.equals(contractualAddress, that.contractualAddress) &&
+                Objects.equals(billingSalutation, that.billingSalutation) &&
+                Objects.equals(billingAddress, that.billingAddress) &&
+                Objects.equals(remark, that.remark) &&
+                Objects.equals(membershipId, that.membershipId) &&
+                Objects.equals(sepamandateId, that.sepamandateId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-        id,
-        reference,
-        prefix,
-        name,
-        kind,
-        birthDate,
-        birthPlace,
-        registrationCourt,
-        registrationNumber,
-        vatRegion,
-        vatNumber,
-        contractualSalutation,
-        contractualAddress,
-        billingSalutation,
-        billingAddress,
-        remark,
-        membershipId,
-        sepamandateId
-        );
+                id,
+                reference,
+                prefix,
+                name,
+                kind,
+                birthDate,
+                birthPlace,
+                registrationCourt,
+                registrationNumber,
+                vatRegion,
+                vatNumber,
+                contractualSalutation,
+                contractualAddress,
+                billingSalutation,
+                billingAddress,
+                remark,
+                membershipId,
+                sepamandateId);
     }
 
     @Override
@@ -291,7 +290,7 @@ public class CustomerCriteria implements Serializable {
                 (remark != null ? "remark=" + remark + ", " : "") +
                 (membershipId != null ? "membershipId=" + membershipId + ", " : "") +
                 (sepamandateId != null ? "sepamandateId=" + sepamandateId + ", " : "") +
-            "}";
+                "}";
     }
 
 }

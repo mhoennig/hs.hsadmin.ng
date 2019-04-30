@@ -1,8 +1,11 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
-import java.time.LocalDate;
-import javax.validation.constraints.*;
+
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.*;
 
 /**
  * A DTO for the Membership entity.
@@ -23,7 +26,6 @@ public class MembershipDTO implements Serializable {
 
     @Size(max = 160)
     private String remark;
-
 
     private Long customerId;
 
@@ -117,14 +119,14 @@ public class MembershipDTO implements Serializable {
     @Override
     public String toString() {
         return "MembershipDTO{" +
-            "id=" + getId() +
-            ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
-            ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
-            ", memberFromDate='" + getMemberFromDate() + "'" +
-            ", memberUntilDate='" + getMemberUntilDate() + "'" +
-            ", remark='" + getRemark() + "'" +
-            ", customer=" + getCustomerId() +
-            ", customer='" + getCustomerPrefix() + "'" +
-            "}";
+                "id=" + getId() +
+                ", admissionDocumentDate='" + getAdmissionDocumentDate() + "'" +
+                ", cancellationDocumentDate='" + getCancellationDocumentDate() + "'" +
+                ", memberFromDate='" + getMemberFromDate() + "'" +
+                ", memberUntilDate='" + getMemberUntilDate() + "'" +
+                ", remark='" + getRemark() + "'" +
+                ", customer=" + getCustomerId() +
+                ", customer='" + getCustomerPrefix() + "'" +
+                "}";
     }
 }

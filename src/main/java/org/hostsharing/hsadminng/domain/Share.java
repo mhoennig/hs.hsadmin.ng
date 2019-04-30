@@ -1,16 +1,16 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
 
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+import javax.persistence.*;
+import javax.validation.constraints.*;
 
 /**
  * A Share.
@@ -20,7 +20,7 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 public class Share implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
@@ -163,12 +163,12 @@ public class Share implements Serializable {
     @Override
     public String toString() {
         return "Share{" +
-            "id=" + getId() +
-            ", documentDate='" + getDocumentDate() + "'" +
-            ", valueDate='" + getValueDate() + "'" +
-            ", action='" + getAction() + "'" +
-            ", quantity=" + getQuantity() +
-            ", remark='" + getRemark() + "'" +
-            "}";
+                "id=" + getId() +
+                ", documentDate='" + getDocumentDate() + "'" +
+                ", valueDate='" + getValueDate() + "'" +
+                ", action='" + getAction() + "'" +
+                ", quantity=" + getQuantity() +
+                ", remark='" + getRemark() + "'" +
+                "}";
     }
 }

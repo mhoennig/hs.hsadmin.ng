@@ -1,12 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,9 +56,8 @@ public class CustomerService {
     public Page<CustomerDTO> findAll(Pageable pageable) {
         log.debug("Request to get all Customers");
         return customerRepository.findAll(pageable)
-            .map(customerMapper::toDto);
+                .map(customerMapper::toDto);
     }
-
 
     /**
      * Get one customer by id.
@@ -69,7 +69,7 @@ public class CustomerService {
     public Optional<CustomerDTO> findOne(Long id) {
         log.debug("Request to get Customer : {}", id);
         return customerRepository.findById(id)
-            .map(customerMapper::toDto);
+                .map(customerMapper::toDto);
     }
 
     /**

@@ -1,12 +1,13 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,9 +56,8 @@ public class MembershipService {
     public Page<MembershipDTO> findAll(Pageable pageable) {
         log.debug("Request to get all Memberships");
         return membershipRepository.findAll(pageable)
-            .map(membershipMapper::toDto);
+                .map(membershipMapper::toDto);
     }
-
 
     /**
      * Get one membership by id.
@@ -69,7 +69,7 @@ public class MembershipService {
     public Optional<MembershipDTO> findOne(Long id) {
         log.debug("Request to get Membership : {}", id);
         return membershipRepository.findById(id)
-            .map(membershipMapper::toDto);
+                .map(membershipMapper::toDto);
     }
 
     /**

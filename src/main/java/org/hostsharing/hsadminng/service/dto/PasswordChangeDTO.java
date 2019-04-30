@@ -1,9 +1,11 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
 /**
  * A DTO representing a password change required data - current and new password.
  */
 public class PasswordChangeDTO {
+
     private String currentPassword;
     private String newPassword;
 

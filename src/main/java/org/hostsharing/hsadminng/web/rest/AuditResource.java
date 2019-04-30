@@ -1,9 +1,11 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
 import org.hostsharing.hsadminng.service.AuditEventService;
 import org.hostsharing.hsadminng.web.rest.util.PaginationUtil;
 
 import io.github.jhipster.web.util.ResponseUtil;
+
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,29 +45,29 @@ public class AuditResource {
     }
 
     /**
-     * GET  /audits : get a page of AuditEvents between the fromDate and toDate.
+     * GET /audits : get a page of AuditEvents between the fromDate and toDate.
      *
      * @param fromDate the start of the time period of AuditEvents to get
      * @param toDate the end of the time period of AuditEvents to get
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
-    @GetMapping(params = {"fromDate", "toDate"})
+    @GetMapping(params = { "fromDate", "toDate" })
     public ResponseEntity<List<AuditEvent>> getByDates(
-        @RequestParam(value = "fromDate") LocalDate fromDate,
-        @RequestParam(value = "toDate") LocalDate toDate,
-        Pageable pageable) {
+            @RequestParam(value = "fromDate") LocalDate fromDate,
+            @RequestParam(value = "toDate") LocalDate toDate,
+            Pageable pageable) {
 
         Page<AuditEvent> page = auditEventService.findByDates(
-            fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant(),
-            toDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant(),
-            pageable);
+                fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                toDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant(),
+                pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/management/audits");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET  /audits/:id : get an AuditEvent by id.
+     * GET /audits/:id : get an AuditEvent by id.
      *
      * @param id the id of the entity to get
      * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)

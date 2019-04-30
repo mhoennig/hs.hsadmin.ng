@@ -1,8 +1,14 @@
+// Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
-import java.util.List;
+import org.hostsharing.hsadminng.domain.*;
+import org.hostsharing.hsadminng.domain.SepaMandate;
+import org.hostsharing.hsadminng.repository.SepaMandateRepository;
+import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
+import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
+import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 
-import javax.persistence.criteria.JoinType;
+import io.github.jhipster.service.QueryService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,14 +18,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.github.jhipster.service.QueryService;
+import java.util.List;
 
-import org.hostsharing.hsadminng.domain.SepaMandate;
-import org.hostsharing.hsadminng.domain.*; // for static metamodels
-import org.hostsharing.hsadminng.repository.SepaMandateRepository;
-import org.hostsharing.hsadminng.service.dto.SepaMandateCriteria;
-import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
-import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
+import javax.persistence.criteria.JoinType;
 
 /**
  * Service for executing complex queries for SepaMandate entities in the database.
@@ -44,6 +45,7 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
 
     /**
      * Return a {@link List} of {@link SepaMandateDTO} which matches the criteria from the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @return the matching entities.
      */
@@ -56,6 +58,7 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
 
     /**
      * Return a {@link Page} of {@link SepaMandateDTO} which matches the criteria from the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @param page The page, which should be returned.
      * @return the matching entities.
@@ -65,11 +68,12 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
         log.debug("find by criteria : {}, page: {}", criteria, page);
         final Specification<SepaMandate> specification = createSpecification(criteria);
         return sepaMandateRepository.findAll(specification, page)
-            .map(sepaMandateMapper::toDto);
+                .map(sepaMandateMapper::toDto);
     }
 
     /**
      * Return the number of matching entities in the database
+     * 
      * @param criteria The object which holds all the filters, which the entities should match.
      * @return the number of matching entities.
      */
@@ -99,26 +103,33 @@ public class SepaMandateQueryService extends QueryService<SepaMandate> {
                 specification = specification.and(buildStringSpecification(criteria.getBic(), SepaMandate_.bic));
             }
             if (criteria.getGrantingDocumentDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getGrantingDocumentDate(), SepaMandate_.grantingDocumentDate));
+                specification = specification
+                        .and(buildRangeSpecification(criteria.getGrantingDocumentDate(), SepaMandate_.grantingDocumentDate));
             }
             if (criteria.getRevokationDocumentDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getRevokationDocumentDate(), SepaMandate_.revokationDocumentDate));
+                specification = specification.and(
+                        buildRangeSpecification(criteria.getRevokationDocumentDate(), SepaMandate_.revokationDocumentDate));
             }
             if (criteria.getValidFromDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidFromDate(), SepaMandate_.validFromDate));
+                specification = specification
+                        .and(buildRangeSpecification(criteria.getValidFromDate(), SepaMandate_.validFromDate));
             }
             if (criteria.getValidUntilDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getValidUntilDate(), SepaMandate_.validUntilDate));
+                specification = specification
+                        .and(buildRangeSpecification(criteria.getValidUntilDate(), SepaMandate_.validUntilDate));
             }
             if (criteria.getLastUsedDate() != null) {
-                specification = specification.and(buildRangeSpecification(criteria.getLastUsedDate(), SepaMandate_.lastUsedDate));
+                specification = specification
+                        .and(buildRangeSpecification(criteria.getLastUsedDate(), SepaMandate_.lastUsedDate));
             }
             if (criteria.getRemark() != null) {
                 specification = specification.and(buildStringSpecification(criteria.getRemark(), SepaMandate_.remark));
             }
             if (criteria.getCustomerId() != null) {
-                specification = specification.and(buildSpecification(criteria.getCustomerId(),
-                    root -> root.join(SepaMandate_.customer, JoinType.LEFT).get(Customer_.id)));
+                specification = specification.and(
+                        buildSpecification(
+                                criteria.getCustomerId(),
+                                root -> root.join(SepaMandate_.customer, JoinType.LEFT).get(Customer_.id)));
             }
         }
         return specification;
