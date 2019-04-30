@@ -48,7 +48,6 @@ apply plugin: 'idea'
 
 apply from: 'build-jacoco.gradle'
 apply from: 'build-pitest.gradle'
-apply from: 'build-cucumber.gradle'
 apply from: 'build-spotless.gradle'
 
 idea {
@@ -117,7 +116,27 @@ test {
     reports.html.enabled = false
 }
 
-// ------------------------------
+task cucumberTest(type: Test) {
+    description = "Execute cucumber BDD tests."
+    group = "verification"
+    include '**/CucumberTest*'
+
+    // uncomment if the tests reports are not generated
+    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
+    // ignoreFailures true
+    reports.html.enabled = false
+}
+
+check.dependsOn cucumberTest
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+    reportOn test
+}
+
+task cucumberTestReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+    reportOn cucumberTest
+}
 
 apply from: 'gradle/docker.gradle'
 apply from: 'gradle/sonar.gradle'

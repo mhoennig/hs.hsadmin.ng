@@ -12,50 +12,34 @@
     <property name="floatType" value="float" dbms="mysql, oracle, mssql"/>
 
     <!--
-        Added the entity SepaMandate.
+        Added the entity Share.
     -->
-    <changeSet id="20190424123259-1" author="jhipster">
-        <createTable tableName="sepa_mandate">
+    <changeSet id="20190430150326-1" author="jhipster">
+        <createTable tableName="share">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="reference" type="varchar(40)">
-                <constraints nullable="false" unique="true" uniqueConstraintName="ux_sepa_mandate_reference" />
-            </column>
-
-            <column name="iban" type="varchar(34)">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="bic" type="varchar(11)">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="granting_document_date" type="date">
+            <column name="document_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="revokation_document_date" type="date">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="valid_from_date" type="date">
+            <column name="value_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="valid_until_date" type="date">
-                <constraints nullable="true" />
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false" />
             </column>
 
-            <column name="last_used_date" type="date">
-                <constraints nullable="true" />
+            <column name="quantity" type="integer">
+                <constraints nullable="false" />
             </column>
 
             <column name="remark" type="varchar(160)">
                 <constraints nullable="true" />
             </column>
 
-            <column name="customer_id" type="bigint">
+            <column name="membership_id" type="bigint">
                 <constraints nullable="false" />
             </column>
 

@@ -12,34 +12,34 @@
     <property name="floatType" value="float" dbms="mysql, oracle, mssql"/>
 
     <!--
-        Added the entity Asset.
+        Added the entity Membership.
     -->
-    <changeSet id="20190424123258-1" author="jhipster">
-        <createTable tableName="asset">
+    <changeSet id="20190430150325-1" author="jhipster">
+        <createTable tableName="membership">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="document_date" type="date">
+            <column name="admission_document_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="value_date" type="date">
+            <column name="cancellation_document_date" type="date">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="member_from_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="action" type="varchar(255)">
-                <constraints nullable="false" />
-            </column>
-
-            <column name="amount" type="decimal(10,2)">
-                <constraints nullable="false" />
+            <column name="member_until_date" type="date">
+                <constraints nullable="true" />
             </column>
 
             <column name="remark" type="varchar(160)">
                 <constraints nullable="true" />
             </column>
 
-            <column name="membership_id" type="bigint">
+            <column name="customer_id" type="bigint">
                 <constraints nullable="false" />
             </column>
 
