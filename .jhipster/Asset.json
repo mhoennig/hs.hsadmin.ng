@@ -49,7 +49,7 @@
             "otherEntityField": "admissionDocumentDate"
         }
     ],
-    "changelogDate": "20190430152139",
+    "changelogDate": "20190430154657",
     "entityTableName": "asset",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

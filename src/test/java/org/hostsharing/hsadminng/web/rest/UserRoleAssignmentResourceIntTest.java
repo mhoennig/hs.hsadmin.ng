@@ -50,9 +50,6 @@ public class UserRoleAssignmentResourceIntTest {
     private static final Long DEFAULT_ENTITY_OBJECT_ID = 1L;
     private static final Long UPDATED_ENTITY_OBJECT_ID = 2L;
 
-    private static final Long DEFAULT_USER_ID = 1L;
-    private static final Long UPDATED_USER_ID = 2L;
-
     private static final UserRole DEFAULT_ASSIGNED_ROLE = UserRole.HOSTMASTER;
     private static final UserRole UPDATED_ASSIGNED_ROLE = UserRole.ADMIN;
 
@@ -109,7 +106,6 @@ public class UserRoleAssignmentResourceIntTest {
         UserRoleAssignment userRoleAssignment = new UserRoleAssignment()
                 .entityTypeId(DEFAULT_ENTITY_TYPE_ID)
                 .entityObjectId(DEFAULT_ENTITY_OBJECT_ID)
-                .userId(DEFAULT_USER_ID)
                 .assignedRole(DEFAULT_ASSIGNED_ROLE);
         return userRoleAssignment;
     }
@@ -137,7 +133,6 @@ public class UserRoleAssignmentResourceIntTest {
         UserRoleAssignment testUserRoleAssignment = userRoleAssignmentList.get(userRoleAssignmentList.size() - 1);
         assertThat(testUserRoleAssignment.getEntityTypeId()).isEqualTo(DEFAULT_ENTITY_TYPE_ID);
         assertThat(testUserRoleAssignment.getEntityObjectId()).isEqualTo(DEFAULT_ENTITY_OBJECT_ID);
-        assertThat(testUserRoleAssignment.getUserId()).isEqualTo(DEFAULT_USER_ID);
         assertThat(testUserRoleAssignment.getAssignedRole()).isEqualTo(DEFAULT_ASSIGNED_ROLE);
     }
 
@@ -159,25 +154,6 @@ public class UserRoleAssignmentResourceIntTest {
         // Validate the UserRoleAssignment in the database
         List<UserRoleAssignment> userRoleAssignmentList = userRoleAssignmentRepository.findAll();
         assertThat(userRoleAssignmentList).hasSize(databaseSizeBeforeCreate);
-    }
-
-    @Test
-    @Transactional
-    public void checkUserIdIsRequired() throws Exception {
-        int databaseSizeBeforeTest = userRoleAssignmentRepository.findAll().size();
-        // set the field null
-        userRoleAssignment.setUserId(null);
-
-        // Create the UserRoleAssignment, which fails.
-
-        restUserRoleAssignmentMockMvc.perform(
-                post("/api/user-role-assignments")
-                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                        .content(TestUtil.convertObjectToJsonBytes(userRoleAssignment)))
-                .andExpect(status().isBadRequest());
-
-        List<UserRoleAssignment> userRoleAssignmentList = userRoleAssignmentRepository.findAll();
-        assertThat(userRoleAssignmentList).hasSize(databaseSizeBeforeTest);
     }
 
     @Test
@@ -212,7 +188,6 @@ public class UserRoleAssignmentResourceIntTest {
                 .andExpect(jsonPath("$.[*].id").value(hasItem(userRoleAssignment.getId().intValue())))
                 .andExpect(jsonPath("$.[*].entityTypeId").value(hasItem(DEFAULT_ENTITY_TYPE_ID.toString())))
                 .andExpect(jsonPath("$.[*].entityObjectId").value(hasItem(DEFAULT_ENTITY_OBJECT_ID.intValue())))
-                .andExpect(jsonPath("$.[*].userId").value(hasItem(DEFAULT_USER_ID.intValue())))
                 .andExpect(jsonPath("$.[*].assignedRole").value(hasItem(DEFAULT_ASSIGNED_ROLE.toString())));
     }
 
@@ -229,7 +204,6 @@ public class UserRoleAssignmentResourceIntTest {
                 .andExpect(jsonPath("$.id").value(userRoleAssignment.getId().intValue()))
                 .andExpect(jsonPath("$.entityTypeId").value(DEFAULT_ENTITY_TYPE_ID.toString()))
                 .andExpect(jsonPath("$.entityObjectId").value(DEFAULT_ENTITY_OBJECT_ID.intValue()))
-                .andExpect(jsonPath("$.userId").value(DEFAULT_USER_ID.intValue()))
                 .andExpect(jsonPath("$.assignedRole").value(DEFAULT_ASSIGNED_ROLE.toString()));
     }
 
@@ -340,71 +314,6 @@ public class UserRoleAssignmentResourceIntTest {
 
     @Test
     @Transactional
-    public void getAllUserRoleAssignmentsByUserIdIsEqualToSomething() throws Exception {
-        // Initialize the database
-        userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
-
-        // Get all the userRoleAssignmentList where userId equals to DEFAULT_USER_ID
-        defaultUserRoleAssignmentShouldBeFound("userId.equals=" + DEFAULT_USER_ID);
-
-        // Get all the userRoleAssignmentList where userId equals to UPDATED_USER_ID
-        defaultUserRoleAssignmentShouldNotBeFound("userId.equals=" + UPDATED_USER_ID);
-    }
-
-    @Test
-    @Transactional
-    public void getAllUserRoleAssignmentsByUserIdIsInShouldWork() throws Exception {
-        // Initialize the database
-        userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
-
-        // Get all the userRoleAssignmentList where userId in DEFAULT_USER_ID or UPDATED_USER_ID
-        defaultUserRoleAssignmentShouldBeFound("userId.in=" + DEFAULT_USER_ID + "," + UPDATED_USER_ID);
-
-        // Get all the userRoleAssignmentList where userId equals to UPDATED_USER_ID
-        defaultUserRoleAssignmentShouldNotBeFound("userId.in=" + UPDATED_USER_ID);
-    }
-
-    @Test
-    @Transactional
-    public void getAllUserRoleAssignmentsByUserIdIsNullOrNotNull() throws Exception {
-        // Initialize the database
-        userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
-
-        // Get all the userRoleAssignmentList where userId is not null
-        defaultUserRoleAssignmentShouldBeFound("userId.specified=true");
-
-        // Get all the userRoleAssignmentList where userId is null
-        defaultUserRoleAssignmentShouldNotBeFound("userId.specified=false");
-    }
-
-    @Test
-    @Transactional
-    public void getAllUserRoleAssignmentsByUserIdIsGreaterThanOrEqualToSomething() throws Exception {
-        // Initialize the database
-        userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
-
-        // Get all the userRoleAssignmentList where userId greater than or equals to DEFAULT_USER_ID
-        defaultUserRoleAssignmentShouldBeFound("userId.greaterOrEqualThan=" + DEFAULT_USER_ID);
-
-        // Get all the userRoleAssignmentList where userId greater than or equals to UPDATED_USER_ID
-        defaultUserRoleAssignmentShouldNotBeFound("userId.greaterOrEqualThan=" + UPDATED_USER_ID);
-    }
-
-    @Test
-    @Transactional
-    public void getAllUserRoleAssignmentsByUserIdIsLessThanSomething() throws Exception {
-        // Initialize the database
-        userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
-
-        // Get all the userRoleAssignmentList where userId less than or equals to DEFAULT_USER_ID
-        defaultUserRoleAssignmentShouldNotBeFound("userId.lessThan=" + DEFAULT_USER_ID);
-
-        // Get all the userRoleAssignmentList where userId less than or equals to UPDATED_USER_ID
-        defaultUserRoleAssignmentShouldBeFound("userId.lessThan=" + UPDATED_USER_ID);
-    }
-
-    @Test
-    @Transactional
     public void getAllUserRoleAssignmentsByAssignedRoleIsEqualToSomething() throws Exception {
         // Initialize the database
         userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
@@ -470,7 +379,6 @@ public class UserRoleAssignmentResourceIntTest {
                 .andExpect(jsonPath("$.[*].id").value(hasItem(userRoleAssignment.getId().intValue())))
                 .andExpect(jsonPath("$.[*].entityTypeId").value(hasItem(DEFAULT_ENTITY_TYPE_ID)))
                 .andExpect(jsonPath("$.[*].entityObjectId").value(hasItem(DEFAULT_ENTITY_OBJECT_ID.intValue())))
-                .andExpect(jsonPath("$.[*].userId").value(hasItem(DEFAULT_USER_ID.intValue())))
                 .andExpect(jsonPath("$.[*].assignedRole").value(hasItem(DEFAULT_ASSIGNED_ROLE.toString())));
 
         // Check, that the count call also returns 1
@@ -520,7 +428,6 @@ public class UserRoleAssignmentResourceIntTest {
         updatedUserRoleAssignment
                 .entityTypeId(UPDATED_ENTITY_TYPE_ID)
                 .entityObjectId(UPDATED_ENTITY_OBJECT_ID)
-                .userId(UPDATED_USER_ID)
                 .assignedRole(UPDATED_ASSIGNED_ROLE);
 
         restUserRoleAssignmentMockMvc.perform(
@@ -535,7 +442,6 @@ public class UserRoleAssignmentResourceIntTest {
         UserRoleAssignment testUserRoleAssignment = userRoleAssignmentList.get(userRoleAssignmentList.size() - 1);
         assertThat(testUserRoleAssignment.getEntityTypeId()).isEqualTo(UPDATED_ENTITY_TYPE_ID);
         assertThat(testUserRoleAssignment.getEntityObjectId()).isEqualTo(UPDATED_ENTITY_OBJECT_ID);
-        assertThat(testUserRoleAssignment.getUserId()).isEqualTo(UPDATED_USER_ID);
         assertThat(testUserRoleAssignment.getAssignedRole()).isEqualTo(UPDATED_ASSIGNED_ROLE);
     }
 

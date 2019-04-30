@@ -14,7 +14,6 @@ enum UserRole {
 entity UserRoleAssignment {
     entityTypeId String,
     entityObjectId Long,
-    userId Long required,
     assignedRole UserRole required
 }
 

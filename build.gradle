@@ -35,8 +35,6 @@ apply plugin: 'java'
 apply plugin: 'org.owasp.dependencycheck'
 sourceCompatibility=1.8
 targetCompatibility=1.8
-// Until JHipster supports JDK 9
-assert System.properties['java.specification.version'] == '1.8'
 
 apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'

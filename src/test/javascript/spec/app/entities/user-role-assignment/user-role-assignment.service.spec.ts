@@ -21,7 +21,7 @@ describe('Service Tests', () => {
             service = injector.get(UserRoleAssignmentService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new UserRoleAssignment(0, 'AAAAAAA', 0, 0, UserRole.HOSTMASTER);
+            elemDefault = new UserRoleAssignment(0, 'AAAAAAA', 0, UserRole.HOSTMASTER);
         });
 
         describe('Service methods', async () => {
@@ -57,7 +57,6 @@ describe('Service Tests', () => {
                     {
                         entityTypeId: 'BBBBBB',
                         entityObjectId: 1,
-                        userId: 1,
                         assignedRole: 'BBBBBB'
                     },
                     elemDefault
@@ -77,7 +76,6 @@ describe('Service Tests', () => {
                     {
                         entityTypeId: 'BBBBBB',
                         entityObjectId: 1,
-                        userId: 1,
                         assignedRole: 'BBBBBB'
                     },
                     elemDefault

@@ -1,0 +1,31 @@
+
+    git checkout jhipster-generated
+    git pull
+    git tag REAL-HEAD
+    git reset --hard jdl-base
+    git clean -f -d
+    git cherry-pick -n spotless
+    git reset --soft REAL-HEAD
+    git checkout REAL-HEAD src/main/jdl/customer.jdl # AND OTHERS!
+    git tag -d REAL-HEAD
+
+    # MANUAL STEP: Apply changes to the jdl file!
+
+    # (Re-) Importing
+    jhipster import-jdl src/main/jdl/customer.jdl
+    jhipster import-jdl src/main/jdl/accessrights.jdl
+    # AND OTHERS!
+
+    # add @formatter:off to src/main/java/org/hostsharing/hsadminng/config/SecurityConfiguration.java
+    # I will add this change to the commit with the spotless commit to get rid of this.
+
+    gw spotlessApply
+    git add .
+    git commit -m"..."
+
+    # MANUAL STEP:
+    # - if you've renamed any identifiers, use refactoring to rename in master as well BEFORE MERGING!
+
+    # Merge changeset into master branch
+    git checkout master
+    git merge jhipster-generated

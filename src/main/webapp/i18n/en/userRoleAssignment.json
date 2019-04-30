@@ -17,7 +17,6 @@
             },
             "entityTypeId": "Entity Type Id",
             "entityObjectId": "Entity Object Id",
-            "userId": "User Id",
             "assignedRole": "Assigned Role",
             "user": "User"
         }
