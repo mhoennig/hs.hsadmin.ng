@@ -1,0 +1,74 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-user-role-assignment-heading" jhiTranslate="hsadminNgApp.userRoleAssignment.home.createOrEditLabel">Create or edit a User Role Assignment</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!userRoleAssignment.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="userRoleAssignment.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.entityTypeId" for="field_entityTypeId">Entity Type Id</label>
+                    <input type="text" class="form-control" name="entityTypeId" id="field_entityTypeId"
+                        [(ngModel)]="userRoleAssignment.entityTypeId" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.entityObjectId" for="field_entityObjectId">Entity Object Id</label>
+                    <input type="number" class="form-control" name="entityObjectId" id="field_entityObjectId"
+                        [(ngModel)]="userRoleAssignment.entityObjectId" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.userId" for="field_userId">User Id</label>
+                    <input type="number" class="form-control" name="userId" id="field_userId"
+                        [(ngModel)]="userRoleAssignment.userId" required/>
+                    <div [hidden]="!(editForm.controls.userId?.dirty && editForm.controls.userId?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.userId?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.userId?.errors?.number" jhiTranslate="entity.validation.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole" for="field_assignedRole">Assigned Role</label>
+                    <select class="form-control" name="assignedRole" [(ngModel)]="userRoleAssignment.assignedRole" id="field_assignedRole"  required>
+                        <option value="HOSTMASTER">{{'hsadminNgApp.UserRole.HOSTMASTER' | translate}}</option>
+                        <option value="ADMIN">{{'hsadminNgApp.UserRole.ADMIN' | translate}}</option>
+                        <option value="SUPPORTER">{{'hsadminNgApp.UserRole.SUPPORTER' | translate}}</option>
+                        <option value="CONTRACTUAL_CONTACT">{{'hsadminNgApp.UserRole.CONTRACTUAL_CONTACT' | translate}}</option>
+                        <option value="FINANCIAL_CONTACT">{{'hsadminNgApp.UserRole.FINANCIAL_CONTACT' | translate}}</option>
+                        <option value="TECHNICAL_CONTACT">{{'hsadminNgApp.UserRole.TECHNICAL_CONTACT' | translate}}</option>
+                        <option value="CUSTOMER_USER">{{'hsadminNgApp.UserRole.CUSTOMER_USER' | translate}}</option>
+                    </select>
+                    <div [hidden]="!(editForm.controls.assignedRole?.dirty && editForm.controls.assignedRole?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.assignedRole?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.user" for="field_user">User</label>
+                    <select class="form-control" id="field_user" name="user" [(ngModel)]="userRoleAssignment.user" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="userOption.id === userRoleAssignment.user?.id ? userRoleAssignment.user : userOption" *ngFor="let userOption of users; trackBy: trackUserById">{{userOption.login}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

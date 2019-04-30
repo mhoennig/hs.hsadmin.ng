@@ -5,16 +5,18 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <include file="config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150324_added_entity_Customer.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150325_added_entity_Membership.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150326_added_entity_Share.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150327_added_entity_Asset.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150328_added_entity_SepaMandate.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152136_added_entity_Customer.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152137_added_entity_Membership.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152138_added_entity_Share.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152139_added_entity_Asset.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152140_added_entity_SepaMandate.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152204_added_entity_UserRoleAssignment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
-    <include file="config/liquibase/changelog/20190430150325_added_entity_constraints_Membership.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150326_added_entity_constraints_Share.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150327_added_entity_constraints_Asset.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20190430150328_added_entity_constraints_SepaMandate.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152137_added_entity_constraints_Membership.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152138_added_entity_constraints_Share.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152139_added_entity_constraints_Asset.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152140_added_entity_constraints_SepaMandate.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20190430152204_added_entity_constraints_UserRoleAssignment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 
     <!-- sample data -->

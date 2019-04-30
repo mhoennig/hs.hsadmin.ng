@@ -142,7 +142,7 @@
             "relationshipName": "sepamandate"
         }
     ],
-    "changelogDate": "20190430150324",
+    "changelogDate": "20190430152136",
     "entityTableName": "customer",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",

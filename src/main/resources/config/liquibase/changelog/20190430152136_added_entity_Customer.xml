@@ -14,7 +14,7 @@
     <!--
         Added the entity Customer.
     -->
-    <changeSet id="20190430150324-1" author="jhipster">
+    <changeSet id="20190430152136-1" author="jhipster">
         <createTable tableName="customer">
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>

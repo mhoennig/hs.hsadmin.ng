@@ -12,6 +12,7 @@
                 "share": "Share",
                 "asset": "Asset",
                 "sepaMandate": "Sepa Mandate",
+                "userRoleAssignment": "User Role Assignment",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
