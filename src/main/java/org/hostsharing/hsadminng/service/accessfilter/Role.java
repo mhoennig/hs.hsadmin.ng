@@ -1,9 +1,9 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import java.lang.reflect.Field;
-
 import static com.google.common.base.Verify.verify;
+
+import java.lang.reflect.Field;
 
 /**
  * These enum values are on the one hand used to define the minimum role required to grant access to resources,
