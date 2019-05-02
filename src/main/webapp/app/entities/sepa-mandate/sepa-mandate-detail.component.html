@@ -39,7 +39,7 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.sepaMandate.remark">Remark</span></dt>
                 <dd>
-                    <span>{{sepaMandate.remark}}</span>
+                    <span [innerHTML]="sepaMandate.remark | linebreaks"></span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.sepaMandate.customer">Customer</span></dt>
                 <dd>
