@@ -7,19 +7,19 @@
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="hsadminNgApp.membership.admissionDocumentDate">Admission Document Date</span></dt>
                 <dd>
-                    <span>{{membership.admissionDocumentDate}}</span>
+                    <span>{{membership.admissionDocumentDate | date:'mediumDate'}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.membership.cancellationDocumentDate">Cancellation Document Date</span></dt>
                 <dd>
-                    <span>{{membership.cancellationDocumentDate}}</span>
+                    <span>{{membership.cancellationDocumentDate | date:'mediumDate'}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.membership.memberFromDate">Member From Date</span></dt>
                 <dd>
-                    <span>{{membership.memberFromDate}}</span>
+                    <span>{{membership.memberFromDate | date:'mediumDate'}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.membership.memberUntilDate">Member Until Date</span></dt>
                 <dd>
-                    <span>{{membership.memberUntilDate}}</span>
+                    <span>{{membership.memberUntilDate | date:'mediumDate'}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.membership.remark">Remark</span></dt>
                 <dd>
