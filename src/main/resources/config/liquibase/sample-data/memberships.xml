@@ -19,7 +19,13 @@
     </changeSet>
 
     <changeSet id="20190502100700-2" author="mhoennig" context="sample-data">
-        <sql>UPDATE membership SET remark = replace(remark, '|', '\n')</sql>
+        <sql>
+            UPDATE membership SET remark = replace(remark, '|', '\n')
+        </sql>
+
+        <rollback>
+            DELETE FROM membership;
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>
