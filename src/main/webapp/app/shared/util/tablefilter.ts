@@ -27,7 +27,7 @@ export class TableFilter<T extends {}> {
     }
 
     buildQueryCriteria() {
-        let queryCriteria: T = {} as any;
+        const queryCriteria: T = {} as any;
         Object.keys(this.criteria).forEach(e => {
             queryCriteria[e + '.' + this.query[e]] = this.criteria[e];
         });

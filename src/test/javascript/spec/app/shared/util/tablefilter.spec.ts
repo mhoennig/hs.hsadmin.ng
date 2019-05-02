@@ -23,7 +23,7 @@ describe('TableFilter Tests', () => {
 
             // when
             filter.trigger();
-            let triggerStartedAtMillis = Date.now();
+            const triggerStartedAtMillis = Date.now();
 
             // then
             asynchronously = () => {
@@ -57,7 +57,7 @@ describe('TableFilter Tests', () => {
             filter.criteria.name = 'test value';
 
             // when
-            let actual = filter.buildQueryCriteria();
+            const actual = filter.buildQueryCriteria();
 
             // then
             expect(filter.buildQueryCriteria()).toEqual({ 'name.contains': 'test value' });
