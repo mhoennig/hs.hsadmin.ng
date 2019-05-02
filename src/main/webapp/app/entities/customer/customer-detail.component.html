@@ -63,7 +63,7 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.customer.remark">Remark</span></dt>
                 <dd>
-                    <span>{{customer.remark}}</span>
+                    <span [innerHTML]="customer.remark | linebreaks"></span>
                 </dd>
             </dl>
 
