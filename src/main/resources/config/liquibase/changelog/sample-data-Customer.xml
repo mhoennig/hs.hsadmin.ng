@@ -10,11 +10,6 @@
                   separator=";"
                   quotchar="'"
                   tableName="customer">
-            <column name="id" type="numeric"/>
-            <column name="jhi_number" type="numeric"/>
-            <column name="prefix" type="string"/>
-            <column name="name" type="string"/>
-            <column name="contractual_address" type="string"/>
         </loadData>
 
         <!-- Liquibase CSV files can contain linebreaks just as real linebreaks, but which

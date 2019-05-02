@@ -9,11 +9,18 @@
                   file="config/liquibase/sample-data/memberships.csv"
                   separator=";"
                   tableName="membership">
-            <column name="id" type="numeric"/>
-            <column name="customer" type="numeric"/>
-            <column name="jhi_from" type="date"/>
-            <column name="jhi_to" type="date"/>
         </loadData>
+
+        <!-- Liquibase CSV files can contain linebreaks just as real linebreaks, but which
+             make the CSV files hard to read. Therefore I've encoded linebreaks as '|' and
+             replace these after import with '\n'. -->
+        <sql>
+            UPDATE membership SET remark = REPLACE(remark, '|', STRINGDECODE('\n'));
+        </sql>
+
+        <rollback>
+            DELETE FROM membership;
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>

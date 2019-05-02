@@ -27,7 +27,7 @@
             <tr *ngFor="let membership of memberships ;trackBy: trackId">
                 <td><a [routerLink]="['/membership', membership.id, 'view' ]">{{membership.id}}</a></td>
                 <td>{{membership.admissionDocumentDate | date:'mediumDate'}}</td>
-                <td>{{membership.cancellationDocumentDate | date:'mediumDsate'}}</td>
+                <td>{{membership.cancellationDocumentDate | date:'mediumDate'}}</td>
                 <td>{{membership.memberFromDate | date:'mediumDate'}}</td>
                 <td>{{membership.memberUntilDate | date:'mediumDate'}}</td>
                 <td>
