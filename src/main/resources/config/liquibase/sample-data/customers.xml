@@ -20,7 +20,7 @@
 
     <changeSet id="20190403083736-3" author="mhoennig" context="sample-data">
         <sql>
-            UPDATE customer SET contractual_address = replace(contractual_address, '|', '\n')
+            UPDATE customer SET contractual_address = replace(contractual_address, '|', STRINGDECODE('\n'))
         </sql>
 
         <rollback>

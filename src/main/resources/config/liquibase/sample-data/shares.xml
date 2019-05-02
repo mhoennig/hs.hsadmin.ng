@@ -20,7 +20,7 @@
 
     <changeSet id="20190502111400-2" author="mhoennig" context="sample-data">
         <sql>
-            UPDATE share SET remark = replace(remark, '|', '\n')
+            UPDATE share SET remark = replace(remark, '|', STRINGDECODE('\n'))
         </sql>
 
         <rollback>
