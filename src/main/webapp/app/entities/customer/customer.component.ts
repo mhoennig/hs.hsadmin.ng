@@ -41,9 +41,18 @@ export class CustomerComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
-        this.filter = new TableFilter({ reference: 'equals', prefix: 'contains', name: 'contains', kind: 'equals' }, 500, () => {
-            this.loadAll();
-        });
+        this.filter = new TableFilter(
+            {
+                reference: 'reference.equals',
+                prefix: 'prefix.contains',
+                name: 'name.contains',
+                kind: 'kind.equals'
+            },
+            500,
+            () => {
+                this.loadAll();
+            }
+        );
     }
 
     loadAll() {

@@ -1,4 +1,4 @@
-import { TableFilter } from 'app/shared/util/tablefilter';
+import { queryContains, queryEquals, queryYearAsDateRange, TableFilter } from 'app/shared/util/tablefilter';
 
 /* To run these tests in IntelliJ IDEA, you need a run configuration with
     Configuration File:
@@ -8,13 +8,23 @@ import { TableFilter } from 'app/shared/util/tablefilter';
  */
 describe('TableFilter Tests', () => {
     describe('TableFilter', () => {
-        let filter: TableFilter<{ name: string; number: string }>;
+        const TEST_DEBOUNCE_MILLIS = 100;
+
+        let filter: TableFilter<{ name?: string; number?: string; date?: string }>;
         let asynchronously: () => void;
 
         beforeEach(() => {
-            filter = new TableFilter({ name: 'contains', number: 'equals' }, 100, () => {
-                asynchronously();
-            });
+            filter = new TableFilter(
+                {
+                    name: queryContains,
+                    number: queryEquals,
+                    date: queryYearAsDateRange
+                },
+                TEST_DEBOUNCE_MILLIS,
+                () => {
+                    asynchronously();
+                }
+            );
         });
 
         it('trigger() asynchronously calls the reload-handler', done => {
@@ -22,7 +32,7 @@ describe('TableFilter Tests', () => {
             filter.criteria.name = 'Test Filter Value';
 
             // when
-            filter.trigger();
+            filter.trigger({ target: { valid: true } });
             const triggerStartedAtMillis = Date.now();
 
             // then
@@ -37,10 +47,10 @@ describe('TableFilter Tests', () => {
             filter.criteria.name = 'Test Filter Value';
 
             // when
-            filter.trigger();
+            filter.trigger({ target: { valid: true } });
             let triggerStartedAtMillis = null;
             setTimeout(() => {
-                filter.trigger();
+                filter.trigger({ target: { valid: true } });
                 triggerStartedAtMillis = Date.now();
             }, 50);
 
@@ -52,7 +62,7 @@ describe('TableFilter Tests', () => {
             };
         });
 
-        it('when filter "name" is set to "test value", buildQueryCriteria() returns { "name.contains": "test value" }', () => {
+        it('when filter "name" is set, buildQueryCriteria() returns a name.contains query', () => {
             // given
             filter.criteria.name = 'test value';
 
@@ -63,17 +73,44 @@ describe('TableFilter Tests', () => {
             expect(filter.buildQueryCriteria()).toEqual({ 'name.contains': 'test value' });
         });
 
+        it('when filter "number" is set, buildQueryCriteria() returns a number.equals query', () => {
+            // given
+            filter.criteria.number = '-42';
+
+            // when
+            const actual = filter.buildQueryCriteria();
+
+            // then
+            expect(filter.buildQueryCriteria()).toEqual({ 'number.equals': '-42' });
+        });
+
+        it('when filter "date" is set to "2019", buildQueryCriteria() returns a date range query', () => {
+            // given
+            filter.criteria.date = '2019';
+
+            // when
+            const actual = filter.buildQueryCriteria();
+
+            // then
+            expect(filter.buildQueryCriteria()).toEqual({ 'date.greaterOrEqualThan': '2019-01-01', 'date.lessOrEqualThan': '2019-12-31' });
+        });
+
+        it('queryYearAsDateRange() returns null if year is not 4-digit', () => {
+            expect(queryYearAsDateRange('date', '201')).toBeNull();
+            expect(queryYearAsDateRange('date', '20191')).toBeNull();
+        });
+
         it('reset() clears criteria and calls reload-handler, considering debounce period', done => {
             // given
             filter.criteria.name = 'Test Filter Value';
 
             // when
-            filter.trigger();
+            filter.trigger({ target: { valid: true } });
             let triggerStartedAtMillis = null;
             setTimeout(() => {
                 filter.reset();
                 triggerStartedAtMillis = Date.now();
-            }, 50);
+            }, TEST_DEBOUNCE_MILLIS / 2);
 
             // then
             asynchronously = () => {

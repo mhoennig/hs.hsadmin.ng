@@ -23,11 +23,11 @@
             </tr>
             <tr>
                 <th></th>
-                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.reference" (keyup)="filter.trigger()"></th>
-                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.prefix" (keyup)="filter.trigger()"></th>
-                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.name" (keyup)="filter.trigger()"></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.reference" (keyup)="filter.trigger($event)"></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.prefix" (keyup)="filter.trigger($event)"></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.name" (keyup)="filter.trigger($event)"></th>
                 <th>
-                    <select class="form-control" [(ngModel)]="filter.criteria.kind" (change)="filter.trigger()">
+                    <select class="form-control" [(ngModel)]="filter.criteria.kind" (change)="filter.trigger($event)">
                         <option value=""></option>
                         <option value="NATURAL" jhiTranslate="{{'hsadminNgApp.CustomerKind.NATURAL'}}">NATURAL</option>
                         <option value="LEGAL" jhiTranslate="{{'hsadminNgApp.CustomerKind.LEGAL'}}">LEGAL</option>
