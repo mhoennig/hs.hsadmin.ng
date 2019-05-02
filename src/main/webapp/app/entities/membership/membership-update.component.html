@@ -63,8 +63,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.membership.remark" for="field_remark">Remark</label>
-                    <input type="text" class="form-control" name="remark" id="field_remark"
-                        [(ngModel)]="membership.remark" maxlength="160"/>
+                    <textarea class="form-control" name="remark" id="field_remark" rows="3"
+                        [(ngModel)]="membership.remark" maxlength="160"></textarea>
                     <div [hidden]="!(editForm.controls.remark?.dirty && editForm.controls.remark?.invalid)">
                         <small class="form-text text-danger"
                         [hidden]="!editForm.controls.remark?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 160 }">

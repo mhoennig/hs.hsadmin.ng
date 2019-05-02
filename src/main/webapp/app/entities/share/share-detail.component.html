@@ -23,7 +23,7 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.share.remark">Remark</span></dt>
                 <dd>
-                    <span>{{share.remark}}</span>
+                    <span [innerHTML]="share.remark | linebreaks"></span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.share.membership">Membership</span></dt>
                 <dd>

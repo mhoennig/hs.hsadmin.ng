@@ -23,7 +23,7 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.asset.remark">Remark</span></dt>
                 <dd>
-                    <span>{{asset.remark}}</span>
+                    <span [innerHTML]="asset.remark | linebreaks"></span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span></dt>
                 <dd>

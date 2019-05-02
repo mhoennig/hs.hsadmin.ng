@@ -23,7 +23,7 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.membership.remark">Remark</span></dt>
                 <dd>
-                    <span>{{membership.remark}}</span>
+                    <span [innerHTML]="membership.remark | linebreaks"></span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span></dt>
                 <dd>
