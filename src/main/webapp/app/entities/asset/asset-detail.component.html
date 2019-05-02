@@ -7,11 +7,11 @@
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="hsadminNgApp.asset.documentDate">Document Date</span></dt>
                 <dd>
-                    <span>{{asset.documentDate}}</span>
+                    <span>{{asset.documentDate | date:'mediumDate'}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.asset.valueDate">Value Date</span></dt>
                 <dd>
-                    <span>{{asset.valueDate}}</span>
+                    <span>{{asset.valueDate | date:'mediumDate'}}</span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.asset.action">Action</span></dt>
                 <dd>
