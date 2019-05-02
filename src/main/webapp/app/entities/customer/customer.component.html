@@ -29,8 +29,8 @@
                 <th>
                     <select class="form-control" [(ngModel)]="filter.criteria.kind" (change)="filter.trigger()">
                         <option value=""></option>
-                        <option>NATURAL</option>
-                        <option>LEGAL</option>
+                        <option value="NATURAL" jhiTranslate="{{'hsadminNgApp.CustomerKind.NATURAL'}}">NATURAL</option>
+                        <option value="LEGAL" jhiTranslate="{{'hsadminNgApp.CustomerKind.LEGAL'}}">LEGAL</option>
                     </select>
                 </th>
                 <th><button class="btn btn-primary float-left" (click)="filter.reset()">Reset Filter</button></th>
