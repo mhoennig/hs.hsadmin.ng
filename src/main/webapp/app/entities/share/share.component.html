@@ -26,8 +26,8 @@
             <!-- filter start: -->
             <tr>
                 <th style="width: 10%"></th>
-                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" [(ngModel)]="filter.criteria.documentDate" (keyup)="filter.trigger($event)"></th>
-                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" [(ngModel)]="filter.criteria.valueDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.documentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.valueDate" (keyup)="filter.trigger($event)"></th>
                 <th style="width: 10%">
                     <select class="form-control" [(ngModel)]="filter.criteria.action" (change)="filter.trigger($event)">
                         <option value=""></option>

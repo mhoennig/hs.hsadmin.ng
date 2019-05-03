@@ -26,10 +26,10 @@
             <!-- filter start: -->
             <tr>
                 <th style="width: 10%"></th>
-                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" [(ngModel)]="filter.criteria.admissionDocumentDate" (keyup)="filter.trigger($event)"></th>
-                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" [(ngModel)]="filter.criteria.cancellationDocumentDate" (keyup)="filter.trigger($event)"></th>
-                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" [(ngModel)]="filter.criteria.memberFromDate" (keyup)="filter.trigger($event)"></th>
-                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" [(ngModel)]="filter.criteria.memberUntilDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.admissionDocumentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.cancellationDocumentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.memberFromDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.memberUntilDate" (keyup)="filter.trigger($event)"></th>
                 <th style="width: 30%">
                     <select id="field_customer" class="form-control" name="customer" [(ngModel)]="filter.criteria.customerId"  (change)="filter.trigger($event)">
                         <option [ngValue]="null" selected></option>

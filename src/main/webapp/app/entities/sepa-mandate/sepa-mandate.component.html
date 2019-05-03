@@ -14,18 +14,40 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
-            <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.sepaMandate.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="iban"><span jhiTranslate="hsadminNgApp.sepaMandate.iban">Iban</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="bic"><span jhiTranslate="hsadminNgApp.sepaMandate.bic">Bic</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="grantingDocumentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.grantingDocumentDate">Granting Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="revokationDocumentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.revokationDocumentDate">Revokation Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="validFromDate"><span jhiTranslate="hsadminNgApp.sepaMandate.validFromDate">Valid From Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="validUntilDate"><span jhiTranslate="hsadminNgApp.sepaMandate.validUntilDate">Valid Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="lastUsedDate"><span jhiTranslate="hsadminNgApp.sepaMandate.lastUsedDate">Last Used Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="customerDisplayLabel"><span jhiTranslate="hsadminNgApp.sepaMandate.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th></th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.sepaMandate.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="iban"><span jhiTranslate="hsadminNgApp.sepaMandate.iban">Iban</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="bic"><span jhiTranslate="hsadminNgApp.sepaMandate.bic">Bic</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="grantingDocumentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.grantingDocumentDate">Granting Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="revokationDocumentDate"><span jhiTranslate="hsadminNgApp.sepaMandate.revokationDocumentDate">Revokation Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="validFromDate"><span jhiTranslate="hsadminNgApp.sepaMandate.validFromDate">Valid From Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="validUntilDate"><span jhiTranslate="hsadminNgApp.sepaMandate.validUntilDate">Valid Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="lastUsedDate"><span jhiTranslate="hsadminNgApp.sepaMandate.lastUsedDate">Last Used Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="customerDisplayLabel"><span jhiTranslate="hsadminNgApp.sepaMandate.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th></th>
             </tr>
+
+            <!-- filter start: -->
+            <tr>
+                <th style="width: 7%"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" [(ngModel)]="filter.criteria.reference" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" [(ngModel)]="filter.criteria.iban" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" [(ngModel)]="filter.criteria.bic" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.grantingDocumentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.revokationDocumentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.validFromDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.validUntilDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 7%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.lastUsedDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 17%">
+                    <select id="field_customer" class="form-control" name="customer" [(ngModel)]="filter.criteria.customerId"  (change)="filter.trigger($event)">
+                        <option [ngValue]="null" selected></option>
+                        <option [ngValue]="customerOption.id" *ngFor="let customerOption of customers; trackBy: trackId">{{customerOption.displayLabel}}</option>
+                    </select>
+                </th>
+                <th style="width: 20%"><button class="btn btn-primary float-left" (click)="filter.reset()">Reset Filter</button></th>
+            </tr>
+            <!-- filter end. -->
+
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let sepaMandate of sepaMandates ;trackBy: trackId">
