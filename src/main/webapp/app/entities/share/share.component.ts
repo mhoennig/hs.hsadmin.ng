@@ -9,9 +9,9 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { ShareService } from './share.service';
-import { TableFilter, queryYearAsDateRange, queryEquals } from 'app/shared/util/tablefilter';
 import { IMembership } from 'app/shared/model/membership.model';
 import { MembershipService } from 'app/entities/membership';
+import { TableFilter, queryYearAsDateRange, queryEquals } from 'app/shared/util/tablefilter';
 
 @Component({
     selector: 'jhi-share',
@@ -111,7 +111,7 @@ export class ShareComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: IShare) {
+    trackId(index: number, item: { id: number }) {
         return item.id;
     }
 
@@ -125,10 +125,6 @@ export class ShareComponent implements OnInit, OnDestroy {
             result.push('id');
         }
         return result;
-    }
-
-    trackMembershipById(index: number, item: IMembership) {
-        return item.id;
     }
 
     protected paginateShares(data: IShare[], headers: HttpHeaders) {
