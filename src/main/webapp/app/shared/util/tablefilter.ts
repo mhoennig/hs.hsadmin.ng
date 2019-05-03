@@ -38,12 +38,18 @@ export class TableFilter<T extends {}> {
         let queryCriteria: any = {} as any;
         Object.keys(this.criteria).forEach(name => {
             const value = this.criteria[name];
-            const queryDef = this.query[name];
-            if (typeof queryDef !== 'function') {
-                queryCriteria[queryDef] = value;
+            if (value === '--') {
+                queryCriteria[name + '.specified'] = false;
+            } else if (value === '++') {
+                queryCriteria[name + '.specified'] = true;
             } else {
-                const additionalQueryCriteria = queryDef(name, value);
-                queryCriteria = { ...queryCriteria, ...additionalQueryCriteria };
+                const queryDef = this.query[name];
+                if (typeof queryDef !== 'function') {
+                    queryCriteria[queryDef] = value;
+                } else {
+                    const additionalQueryCriteria = queryDef(name, value);
+                    queryCriteria = { ...queryCriteria, ...additionalQueryCriteria };
+                }
             }
         });
         return queryCriteria;

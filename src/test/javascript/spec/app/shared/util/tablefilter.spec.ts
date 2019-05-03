@@ -73,6 +73,28 @@ describe('TableFilter Tests', () => {
             expect(filter.buildQueryCriteria()).toEqual({ 'name.contains': 'test value' });
         });
 
+        it('when filter "name" is set to "--", buildQueryCriteria() returns a name.specified=false query', () => {
+            // given
+            filter.criteria.name = '--';
+
+            // when
+            const actual = filter.buildQueryCriteria();
+
+            // then
+            expect(filter.buildQueryCriteria()).toEqual({ 'name.specified': false });
+        });
+
+        it('when filter "name" is set to "++", buildQueryCriteria() returns a name.specified=true query', () => {
+            // given
+            filter.criteria.name = '++';
+
+            // when
+            const actual = filter.buildQueryCriteria();
+
+            // then
+            expect(filter.buildQueryCriteria()).toEqual({ 'name.specified': true });
+        });
+
         it('when filter "number" is set, buildQueryCriteria() returns a number.equals query', () => {
             // given
             filter.criteria.number = '-42';
