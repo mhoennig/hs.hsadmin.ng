@@ -62,7 +62,7 @@ export class ShareComponent implements OnInit, OnDestroy {
             },
             500,
             () => {
-                this.loadAll();
+                this.reset();
             }
         );
     }
@@ -130,8 +130,6 @@ export class ShareComponent implements OnInit, OnDestroy {
     protected paginateShares(data: IShare[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
-        this.page = 0;
-        this.shares = [];
         for (let i = 0; i < data.length; i++) {
             this.shares.push(data[i]);
         }

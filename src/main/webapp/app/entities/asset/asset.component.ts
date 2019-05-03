@@ -62,7 +62,7 @@ export class AssetComponent implements OnInit, OnDestroy {
             },
             500,
             () => {
-                this.loadAll();
+                this.reset();
             }
         );
     }
@@ -130,8 +130,6 @@ export class AssetComponent implements OnInit, OnDestroy {
     protected paginateAssets(data: IAsset[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
-        this.page = 0;
-        this.assets = [];
         for (let i = 0; i < data.length; i++) {
             this.assets.push(data[i]);
         }

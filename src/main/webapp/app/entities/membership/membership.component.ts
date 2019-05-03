@@ -62,7 +62,7 @@ export class MembershipComponent implements OnInit, OnDestroy {
             },
             500,
             () => {
-                this.loadAll();
+                this.reset();
             }
         );
     }
@@ -130,7 +130,6 @@ export class MembershipComponent implements OnInit, OnDestroy {
     protected paginateMemberships(data: IMembership[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
-        this.page = 0;
         this.memberships = [];
         for (let i = 0; i < data.length; i++) {
             this.memberships.push(data[i]);

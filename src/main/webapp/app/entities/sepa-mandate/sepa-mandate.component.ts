@@ -71,7 +71,7 @@ export class SepaMandateComponent implements OnInit, OnDestroy {
             },
             500,
             () => {
-                this.loadAll();
+                this.reset();
             }
         );
     }
@@ -139,8 +139,6 @@ export class SepaMandateComponent implements OnInit, OnDestroy {
     protected paginateSepaMandates(data: ISepaMandate[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
-        this.page = 0;
-        this.sepaMandates = [];
         for (let i = 0; i < data.length; i++) {
             this.sepaMandates.push(data[i]);
         }
