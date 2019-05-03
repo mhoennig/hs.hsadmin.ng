@@ -9,6 +9,9 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { MembershipService } from './membership.service';
+import { ICustomer } from 'app/shared/model/customer.model';
+import { CustomerService } from 'app/entities/customer';
+import { TableFilter, queryYearAsDateRange, queryEquals } from 'app/shared/util/tablefilter';
 
 @Component({
     selector: 'jhi-membership',
@@ -24,9 +27,18 @@ export class MembershipComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
+    customers: ICustomer[];
+    filter: TableFilter<{
+        admissionDocumentDate?: string;
+        cancellationDocumentDate?: string;
+        memberFromDate?: string;
+        memberUntilDate?: string;
+        customerId?: string;
+    }>;
 
     constructor(
         protected membershipService: MembershipService,
+        protected customerService: CustomerService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected parseLinks: JhiParseLinks,
@@ -40,11 +52,25 @@ export class MembershipComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
+        this.filter = new TableFilter(
+            {
+                admissionDocumentDate: queryYearAsDateRange,
+                cancellationDocumentDate: queryYearAsDateRange,
+                memberFromDate: queryYearAsDateRange,
+                memberUntilDate: queryYearAsDateRange,
+                customerId: queryEquals
+            },
+            500,
+            () => {
+                this.loadAll();
+            }
+        );
     }
 
     loadAll() {
         this.membershipService
             .query({
+                ...this.filter.buildQueryCriteria(),
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -72,13 +98,20 @@ export class MembershipComponent implements OnInit, OnDestroy {
             this.currentAccount = account;
         });
         this.registerChangeInMemberships();
+        this.customerService
+            .query()
+            .pipe(
+                filter((mayBeOk: HttpResponse<IMembership[]>) => mayBeOk.ok),
+                map((response: HttpResponse<IMembership[]>) => response.body)
+            )
+            .subscribe((res: IMembership[]) => (this.customers = res), (res: HttpErrorResponse) => this.onError(res.message));
     }
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: IMembership) {
+    trackId(index: number, item: { id: number }) {
         return item.id;
     }
 
@@ -97,6 +130,8 @@ export class MembershipComponent implements OnInit, OnDestroy {
     protected paginateMemberships(data: IMembership[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
+        this.page = 0;
+        this.memberships = [];
         for (let i = 0; i < data.length; i++) {
             this.memberships.push(data[i]);
         }
