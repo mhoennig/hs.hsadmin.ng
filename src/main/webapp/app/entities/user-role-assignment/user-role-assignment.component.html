@@ -14,13 +14,41 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
-            <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="entityTypeId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.entityTypeId">Entity Type Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="entityObjectId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.entityObjectId">Entity Object Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="assignedRole"><span jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole">Assigned Role</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="user.login"><span jhiTranslate="hsadminNgApp.userRoleAssignment.user">User</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th></th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="entityTypeId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.entityTypeId">Entity Type Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="entityObjectId"><span jhiTranslate="hsadminNgApp.userRoleAssignment.entityObjectId">Entity Object Id</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="assignedRole"><span jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole">Assigned Role</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="user.login"><span jhiTranslate="hsadminNgApp.userRoleAssignment.user">User</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th></th>
             </tr>
+
+            <!-- filter start: -->
+            <tr>
+                <th style="width: 10%"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" [(ngModel)]="filter.criteria.entityTypeId" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" [(ngModel)]="filter.criteria.entityObjectId" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%">
+                    <select class="form-control" [(ngModel)]="filter.criteria.assignedRole" (change)="filter.trigger($event)">
+                        <option value=""></option>
+                        <option value="HOSTMASTER" jhiTranslate="{{'hsadminNgApp.UserRole.HOSTMASTER'}}">HOSTMASTER</option>
+                        <option value="ADMIN" jhiTranslate="{{'hsadminNgApp.UserRole.ADMIN'}}">ADMIN</option>
+                        <option value="SUPPORTER" jhiTranslate="{{'hsadminNgApp.UserRole.SUPPORTER'}}">SUPPORTER</option>
+                        <option value="CONTRACTUAL_CONTACT" jhiTranslate="{{'hsadminNgApp.UserRole.CONTRACTUAL_CONTACT'}}">CONTRACTUAL_CONTACT</option>
+                        <option value="FINANCIAL_CONTACT" jhiTranslate="{{'hsadminNgApp.UserRole.FINANCIAL_CONTACT'}}">FINANCIAL_CONTACT</option>
+                        <option value="TECHNICAL_CONTACT" jhiTranslate="{{'hsadminNgApp.UserRole.TECHNICAL_CONTACT'}}">TECHNICAL_CONTACT</option>
+                        <option value="CUSTOMER_USER" jhiTranslate="{{'hsadminNgApp.UserRole.CUSTOMER_USER'}}">CUSTOMER_USER</option>
+                    </select>
+                </th>
+                <th style="width: 30%">
+                    <select id="field_user" class="form-control" name="user" [(ngModel)]="filter.criteria.userId"  (change)="filter.trigger($event)">
+                        <option [ngValue]="null" selected></option>
+                        <option [ngValue]="userOption.id" *ngFor="let userOption of users; trackBy: trackId">{{userOption.login}}</option>
+                    </select>
+                </th>
+                <th style="width: 20%"><button class="btn btn-primary float-left" (click)="filter.reset()">Reset Filter</button></th>
+            </tr>
+            <!-- filter end. -->
+
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let userRoleAssignment of userRoleAssignments ;trackBy: trackId">

@@ -9,6 +9,9 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { UserRoleAssignmentService } from './user-role-assignment.service';
+import { IUser } from 'app/core/user/user.model';
+import { UserService } from 'app/core/user/user.service';
+import { TableFilter, queryEquals, queryContains } from 'app/shared/util/tablefilter';
 
 @Component({
     selector: 'jhi-user-role-assignment',
@@ -24,9 +27,17 @@ export class UserRoleAssignmentComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
+    users: IUser[];
+    filter: TableFilter<{
+        entityTypeId?: string;
+        entityObjectId?: string;
+        assignedRole?: string;
+        userId?: string;
+    }>;
 
     constructor(
         protected userRoleAssignmentService: UserRoleAssignmentService,
+        protected userService: UserService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected parseLinks: JhiParseLinks,
@@ -40,11 +51,24 @@ export class UserRoleAssignmentComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
+        this.filter = new TableFilter(
+            {
+                entityTypeId: queryContains,
+                entityObjectId: queryEquals,
+                assignedRole: queryEquals,
+                userId: queryEquals
+            },
+            500,
+            () => {
+                this.loadAll();
+            }
+        );
     }
 
     loadAll() {
         this.userRoleAssignmentService
             .query({
+                ...this.filter.buildQueryCriteria(),
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -71,6 +95,13 @@ export class UserRoleAssignmentComponent implements OnInit, OnDestroy {
         this.accountService.identity().then(account => {
             this.currentAccount = account;
         });
+        this.userService
+            .query()
+            .pipe(
+                filter((mayBeOk: HttpResponse<IUser[]>) => mayBeOk.ok),
+                map((response: HttpResponse<IUser[]>) => response.body)
+            )
+            .subscribe((res: IUser[]) => (this.users = res), (res: HttpErrorResponse) => this.onError(res.message));
         this.registerChangeInUserRoleAssignments();
     }
 
@@ -78,7 +109,7 @@ export class UserRoleAssignmentComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: IUserRoleAssignment) {
+    trackId(index: number, item: { id: number }) {
         return item.id;
     }
 
@@ -97,6 +128,7 @@ export class UserRoleAssignmentComponent implements OnInit, OnDestroy {
     protected paginateUserRoleAssignments(data: IUserRoleAssignment[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
+        this.userRoleAssignments = [];
         for (let i = 0; i < data.length; i++) {
             this.userRoleAssignments.push(data[i]);
         }
