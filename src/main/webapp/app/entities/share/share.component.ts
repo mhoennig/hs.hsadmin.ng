@@ -9,6 +9,9 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { ShareService } from './share.service';
+import { IMembership } from 'app/shared/model/membership.model';
+import { MembershipService } from 'app/entities/membership';
+import { TableFilter, queryYearAsDateRange, queryEquals } from 'app/shared/util/tablefilter';
 
 @Component({
     selector: 'jhi-share',
@@ -24,9 +27,18 @@ export class ShareComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
+    memberships: IMembership[];
+    filter: TableFilter<{
+        documentDate?: string;
+        valueDate?: string;
+        action?: string;
+        quantity?: string;
+        membershipId?: string;
+    }>;
 
     constructor(
         protected shareService: ShareService,
+        protected membershipService: MembershipService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected parseLinks: JhiParseLinks,
@@ -40,11 +52,25 @@ export class ShareComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
+        this.filter = new TableFilter(
+            {
+                documentDate: queryYearAsDateRange,
+                valueDate: queryYearAsDateRange,
+                action: queryEquals,
+                quantity: queryEquals,
+                membershipId: queryEquals
+            },
+            500,
+            () => {
+                this.reset();
+            }
+        );
     }
 
     loadAll() {
         this.shareService
             .query({
+                ...this.filter.buildQueryCriteria(),
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -71,6 +97,13 @@ export class ShareComponent implements OnInit, OnDestroy {
         this.accountService.identity().then(account => {
             this.currentAccount = account;
         });
+        this.membershipService
+            .query()
+            .pipe(
+                filter((mayBeOk: HttpResponse<IMembership[]>) => mayBeOk.ok),
+                map((response: HttpResponse<IMembership[]>) => response.body)
+            )
+            .subscribe((res: IMembership[]) => (this.memberships = res), (res: HttpErrorResponse) => this.onError(res.message));
         this.registerChangeInShares();
     }
 
@@ -78,7 +111,7 @@ export class ShareComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: IShare) {
+    trackId(index: number, item: { id: number }) {
         return item.id;
     }
 

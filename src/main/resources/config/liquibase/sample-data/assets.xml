@@ -10,21 +10,21 @@
     <property name="floatType" value="float4" dbms="postgresql, h2"/>
     <property name="floatType" value="float" dbms="mysql, oracle, mssql"/>
 
-    <changeSet id="20190403083736-2" author="mhoennig" context="sample-data">
+    <changeSet id="20190502111400-1" author="mhoennig" context="sample-data">
         <loadData encoding="UTF-8"
-                  file="config/liquibase/sample-data/customers.csv"
+                  file="config/liquibase/sample-data/assets.csv"
                   separator=";"
-                  tableName="customer">
+                  tableName="asset">
         </loadData>
     </changeSet>
 
-    <changeSet id="20190403083736-3" author="mhoennig" context="sample-data">
+    <changeSet id="20190502111400-2" author="mhoennig" context="sample-data">
         <sql>
-            UPDATE customer SET contractual_address = replace(contractual_address, '|', STRINGDECODE('\n'))
+            UPDATE asset SET remark = replace(remark, '|', STRINGDECODE('\n'))
         </sql>
 
         <rollback>
-            DELETE FROM customer;
+            DELETE FROM asset;
         </rollback>
     </changeSet>
 

@@ -9,6 +9,9 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { AssetService } from './asset.service';
+import { IMembership } from 'app/shared/model/membership.model';
+import { MembershipService } from 'app/entities/membership';
+import { queryEquals, queryYearAsDateRange, TableFilter } from 'app/shared/util/tablefilter';
 
 @Component({
     selector: 'jhi-asset',
@@ -24,9 +27,18 @@ export class AssetComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
+    memberships: IMembership[];
+    filter: TableFilter<{
+        documentDate?: string;
+        valueDate?: string;
+        action?: string;
+        amount?: string;
+        membershipId?: string;
+    }>;
 
     constructor(
         protected assetService: AssetService,
+        protected membershipService: MembershipService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected parseLinks: JhiParseLinks,
@@ -40,11 +52,25 @@ export class AssetComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
+        this.filter = new TableFilter(
+            {
+                documentDate: queryYearAsDateRange,
+                valueDate: queryYearAsDateRange,
+                action: queryEquals,
+                amount: queryEquals,
+                membershipId: queryEquals
+            },
+            500,
+            () => {
+                this.reset();
+            }
+        );
     }
 
     loadAll() {
         this.assetService
             .query({
+                ...this.filter.buildQueryCriteria(),
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -71,6 +97,13 @@ export class AssetComponent implements OnInit, OnDestroy {
         this.accountService.identity().then(account => {
             this.currentAccount = account;
         });
+        this.membershipService
+            .query()
+            .pipe(
+                filter((mayBeOk: HttpResponse<IMembership[]>) => mayBeOk.ok),
+                map((response: HttpResponse<IMembership[]>) => response.body)
+            )
+            .subscribe((res: IMembership[]) => (this.memberships = res), (res: HttpErrorResponse) => this.onError(res.message));
         this.registerChangeInAssets();
     }
 
@@ -78,7 +111,7 @@ export class AssetComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: IAsset) {
+    trackId(index: number, item: { id: number }) {
         return item.id;
     }
 

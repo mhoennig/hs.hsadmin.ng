@@ -2,8 +2,8 @@
     "hsadminNgApp": {
         "CustomerKind": {
             "null": "",
-            "NATURAL": "NATURAL",
-            "LEGAL": "LEGAL"
+            "NATURAL": "natürliche Person",
+            "LEGAL": "juristische Person"
         }
     }
 }

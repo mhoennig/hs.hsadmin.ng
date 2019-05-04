@@ -14,14 +14,42 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
-            <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.asset.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="valueDate"><span jhiTranslate="hsadminNgApp.asset.valueDate">Value Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.asset.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="amount"><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="membershipDisplayLabel"><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="documentDate"><span jhiTranslate="hsadminNgApp.asset.documentDate">Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="valueDate"><span jhiTranslate="hsadminNgApp.asset.valueDate">Value Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="action"><span jhiTranslate="hsadminNgApp.asset.action">Action</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="amount"><span jhiTranslate="hsadminNgApp.asset.amount">Amount</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th><span jhiTranslate="hsadminNgApp.asset.membership">Membership</span></th>
             <th></th>
             </tr>
+
+            <!-- filter start: -->
+            <tr>
+                <th style="width: 10%"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.documentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.valueDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%">
+                    <select class="form-control" [(ngModel)]="filter.criteria.action" (change)="filter.trigger($event)">
+                        <option value=""></option>
+                        <option value="PAYMENT" jhiTranslate="{{'hsadminNgApp.AssetAction.PAYMENT'}}">PAYMENT</option>
+                        <option value="HANDOVER" jhiTranslate="{{'hsadminNgApp.AssetAction.HANDOVER'}}">HANDOVER</option>
+                        <option value="ADOPTION" jhiTranslate="{{'hsadminNgApp.AssetAction.ADOPTION'}}">ADOPTION</option>
+                        <option value="LOSS" jhiTranslate="{{'hsadminNgApp.AssetAction.LOSS'}}">LOSS</option>
+                        <option value="CLEARING" jhiTranslate="{{'hsadminNgApp.AssetAction.CLEARING'}}">CLEARING</option>
+                        <option value="PAYBACK" jhiTranslate="{{'hsadminNgApp.AssetAction.PAYBACK'}}">PAYBACK</option>
+                    </select>
+                </th>
+                <th style="width: 10%"><input type="text" class="form-control" [(ngModel)]="filter.criteria.amount" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 30%">
+                    <select id="field_membership" class="form-control" name="membership" [(ngModel)]="filter.criteria.membershipId"  (change)="filter.trigger($event)">
+                        <option [ngValue]="null" selected></option>
+                        <option [ngValue]="membershipOption.id" *ngFor="let membershipOption of memberships; trackBy: trackId">{{membershipOption.displayLabel}}</option>
+                    </select>
+                </th>
+                <th style="width: 20%"><button class="btn btn-primary float-left" (click)="filter.reset()">Reset Filter</button></th>
+            </tr>
+            <!-- filter end. -->
+
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let asset of assets ;trackBy: trackId">

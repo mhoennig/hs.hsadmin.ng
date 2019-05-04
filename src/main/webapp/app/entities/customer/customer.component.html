@@ -14,12 +14,26 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
-            <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.customer.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="prefix"><span jhiTranslate="hsadminNgApp.customer.prefix">Prefix</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="kind"><span jhiTranslate="hsadminNgApp.customer.kind">Kind</span> <fa-icon [icon]="'sort'"></fa-icon></thn></th>
-            <th></th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="reference"><span jhiTranslate="hsadminNgApp.customer.reference">Reference</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="prefix"><span jhiTranslate="hsadminNgApp.customer.prefix">Prefix</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="name"><span jhiTranslate="hsadminNgApp.customer.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="kind"><span jhiTranslate="hsadminNgApp.customer.kind">Kind</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th></th>
+            </tr>
+            <tr>
+                <th></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.reference" (keyup)="filter.trigger($event)"></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.prefix" (keyup)="filter.trigger($event)"></th>
+                <th><input type="text" class="form-control" [(ngModel)]="filter.criteria.name" (keyup)="filter.trigger($event)"></th>
+                <th>
+                    <select class="form-control" [(ngModel)]="filter.criteria.kind" (change)="filter.trigger($event)">
+                        <option value=""></option>
+                        <option value="NATURAL" jhiTranslate="{{'hsadminNgApp.CustomerKind.NATURAL'}}">NATURAL</option>
+                        <option value="LEGAL" jhiTranslate="{{'hsadminNgApp.CustomerKind.LEGAL'}}">LEGAL</option>
+                    </select>
+                </th>
+                <th><button class="btn btn-primary float-left" (click)="filter.reset()">Reset Filter</button></th>
             </tr>
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">

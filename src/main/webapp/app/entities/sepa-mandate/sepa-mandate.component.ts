@@ -9,6 +9,10 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { SepaMandateService } from './sepa-mandate.service';
+import { ICustomer } from 'app/shared/model/customer.model';
+import { CustomerService } from 'app/entities/customer';
+import { TableFilter, queryYearAsDateRange, queryEquals, queryContains } from 'app/shared/util/tablefilter';
+import { IMembership } from 'app/shared/model/membership.model';
 
 @Component({
     selector: 'jhi-sepa-mandate',
@@ -24,9 +28,22 @@ export class SepaMandateComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     totalItems: number;
+    customers: ICustomer[];
+    filter: TableFilter<{
+        reference?: string;
+        iban?: string;
+        bic?: string;
+        grantingDocumentDate?: string;
+        revokationDocumentDate?: string;
+        validFromDate?: string;
+        validUntilDate?: string;
+        lastUsedDate?: string;
+        customerId?: string;
+    }>;
 
     constructor(
         protected sepaMandateService: SepaMandateService,
+        protected customerService: CustomerService,
         protected jhiAlertService: JhiAlertService,
         protected eventManager: JhiEventManager,
         protected parseLinks: JhiParseLinks,
@@ -40,11 +57,29 @@ export class SepaMandateComponent implements OnInit, OnDestroy {
         };
         this.predicate = 'id';
         this.reverse = true;
+        this.filter = new TableFilter(
+            {
+                reference: queryContains,
+                iban: queryContains,
+                bic: queryContains,
+                grantingDocumentDate: queryYearAsDateRange,
+                revokationDocumentDate: queryYearAsDateRange,
+                validFromDate: queryYearAsDateRange,
+                validUntilDate: queryYearAsDateRange,
+                lastUsedDate: queryYearAsDateRange,
+                customerId: queryEquals
+            },
+            500,
+            () => {
+                this.reset();
+            }
+        );
     }
 
     loadAll() {
         this.sepaMandateService
             .query({
+                ...this.filter.buildQueryCriteria(),
                 page: this.page,
                 size: this.itemsPerPage,
                 sort: this.sort()
@@ -72,13 +107,20 @@ export class SepaMandateComponent implements OnInit, OnDestroy {
             this.currentAccount = account;
         });
         this.registerChangeInSepaMandates();
+        this.customerService
+            .query()
+            .pipe(
+                filter((mayBeOk: HttpResponse<IMembership[]>) => mayBeOk.ok),
+                map((response: HttpResponse<IMembership[]>) => response.body)
+            )
+            .subscribe((res: IMembership[]) => (this.customers = res), (res: HttpErrorResponse) => this.onError(res.message));
     }
 
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: ISepaMandate) {
+    trackId(index: number, item: { id: number }) {
         return item.id;
     }
 

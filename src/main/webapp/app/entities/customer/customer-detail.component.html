@@ -51,7 +51,7 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.customer.contractualAddress">Contractual Address</span></dt>
                 <dd>
-                    <span>{{customer.contractualAddress}}</span>
+                    <span [innerHTML]="customer.contractualAddress | linebreaks"></span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.customer.billingSalutation">Billing Salutation</span></dt>
                 <dd>
@@ -59,11 +59,11 @@
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.customer.billingAddress">Billing Address</span></dt>
                 <dd>
-                    <span>{{customer.billingAddress}}</span>
+                    <span [innerHTML]="customer.billingAddress | linebreaks"></span>
                 </dd>
                 <dt><span jhiTranslate="hsadminNgApp.customer.remark">Remark</span></dt>
                 <dd>
-                    <span>{{customer.remark}}</span>
+                    <span [innerHTML]="customer.remark | linebreaks"></span>
                 </dd>
             </dl>
 

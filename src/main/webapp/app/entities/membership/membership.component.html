@@ -14,20 +14,38 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
-            <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="admissionDocumentDate"><span jhiTranslate="hsadminNgApp.membership.admissionDocumentDate">Admission Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="cancellationDocumentDate"><span jhiTranslate="hsadminNgApp.membership.cancellationDocumentDate">Cancellation Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="memberFromDate"><span jhiTranslate="hsadminNgApp.membership.memberFromDate">Member From Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="memberUntilDate"><span jhiTranslate="hsadminNgApp.membership.memberUntilDate">Member Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="customerPrefix"><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="admissionDocumentDate"><span jhiTranslate="hsadminNgApp.membership.admissionDocumentDate">Admission Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="admissionDocumentDate"><span jhiTranslate="hsadminNgApp.membership.cancellationDocumentDate">Cancellation Document Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="memberFromDate"><span jhiTranslate="hsadminNgApp.membership.memberFromDate">Member From Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="memberUntilDate"><span jhiTranslate="hsadminNgApp.membership.memberUntilDate">Member Until Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th><span jhiTranslate="hsadminNgApp.membership.customer">Customer</span></th>
             <th></th>
             </tr>
+
+            <!-- filter start: -->
+            <tr>
+                <th style="width: 10%"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.admissionDocumentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.cancellationDocumentDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.memberFromDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 10%"><input type="text" class="form-control" style="max-width: 20em" minlength="4" maxlength="4" placeholder="YYYY|--|++" [(ngModel)]="filter.criteria.memberUntilDate" (keyup)="filter.trigger($event)"></th>
+                <th style="width: 30%">
+                    <select id="field_customer" class="form-control" name="customer" [(ngModel)]="filter.criteria.customerId"  (change)="filter.trigger($event)">
+                        <option [ngValue]="null" selected></option>
+                        <option [ngValue]="customerOption.id" *ngFor="let customerOption of customers; trackBy: trackId">{{customerOption.displayLabel}}</option>
+                    </select>
+                </th>
+                <th style="width: 20%"><button class="btn btn-primary float-left" (click)="filter.reset()">Reset Filter</button></th>
+            </tr>
+            <!-- filter end. -->
+
             </thead>
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let membership of memberships ;trackBy: trackId">
                 <td><a [routerLink]="['/membership', membership.id, 'view' ]">{{membership.id}}</a></td>
                 <td>{{membership.admissionDocumentDate | date:'mediumDate'}}</td>
-                <td>{{membership.cancellationDocumentDate | date:'mediumDsate'}}</td>
+                <td>{{membership.cancellationDocumentDate | date:'mediumDate'}}</td>
                 <td>{{membership.memberFromDate | date:'mediumDate'}}</td>
                 <td>{{membership.memberUntilDate | date:'mediumDate'}}</td>
                 <td>
