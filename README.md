@@ -3,8 +3,6 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-**Table of Contents** _generated with [DocToc](https://github.com/thlorenz/doctoc)_
-
 -   [Setting up the Development Environment](#setting-up-the-development-environment)
 -   [Frequent Tasks](#frequent-tasks)
     -   [Building the Application with Test Execution](#building-the-application-with-test-execution)
@@ -36,13 +34,42 @@ TODO: Instructions for setting up the dev environment from scratch.
 
 ### Starting the Application
 
-Either simply:
+To use an **H2 in-memory database** populated with sample-data.
 
     gw bootRun
 
-or with a specific port:
+To use an **H2 file-based database**, start the application with the h2file profile:
 
-    SERVER_PORT=8081 ./gradlew bootRun
+    gw bootRun -Ph2file
+    gw bootRun -Ph2file,sample-data     # populated with sample data
+
+To use a **local Postgres database**, first prepare your environment:
+
+    export HSADMINNG_DB_URL='jdbc:postgresql://localhost:5432/DBNAME'
+    export HSADMINNG_DB_USER='DBUSER'
+    export HSADMINNG_DB_PASS='DBPASS'
+
+Where `DBNAME`, `DBUSER` and `DBPASS` are replaced by your credentials.
+
+Then start the application with the pgsql profile:
+
+    gw bootRun -Ppgsql
+    gw bootRun -Ppgsql,sample-data     # populated with sample data
+
+To use a **remote Postgres database** on a hostsharing server,
+
+    autossh -M 0 -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" \
+        -f -N -L 55432:127.0.0.1:5432 "xyz00@xyz.hostsharing.net"
+
+Then prepare your environment, e.g. like this:
+
+    export HSADMINNG_DB_URL='jdbc:postgresql://localhost:55432/xyz00_hsadminng'
+    export HSADMINNG_DB_USER='xyz00_hsadminng'
+    export HSADMINNG_DB_PASS='whatever'
+
+In all cases, you can also **specify the port** to used for the application via environment:
+
+    SERVER_PORT=8081 gw bootRun ...
 
 ### Running JUnit tests with branch coverage
 

@@ -19,8 +19,22 @@
     </changeSet>
 
     <changeSet id="20190403083736-3" author="mhoennig" context="sample-data">
-        <sql>
-            UPDATE customer SET contractual_address = replace(contractual_address, '|', STRINGDECODE('\n'))
+
+        <!-- I've tried extracting this to a stored procedure, but a compatible call
+             is only possible with PostgresSQL 11.x, otherwise the call syntax
+             between H2 and PostgresSQL would be different which defeated the point.
+        -->
+
+        <sql dbms="h2">
+            UPDATE customer SET contractual_address = replace(contractual_address, '|', STRINGDECODE('\n'));
+            UPDATE customer SET billing_address = replace(billing_address, '|', STRINGDECODE('\n'));
+            UPDATE customer SET remark = replace(remark, '|', STRINGDECODE('\n'));
+        </sql>
+
+        <sql dbms="postgresql">
+            UPDATE customer SET contractual_address = replace(contractual_address, '|', '\n');
+            UPDATE customer SET billing_address = replace(billing_address, '|', '\n');
+            UPDATE customer SET remark = replace(remark, '|', E'\n');
         </sql>
 
         <rollback>

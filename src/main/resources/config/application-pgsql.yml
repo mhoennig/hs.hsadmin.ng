@@ -1,0 +1,19 @@
+# Configuration for the dev-profile using a Postgres database specified via environment.
+
+spring:
+    profiles:
+        active: dev,pgsql
+        include:
+            - dev
+            - swagger
+            # Uncomment to activate TLS for the dev profile
+            #- tls
+    datasource:
+        url: ${HSADMINNG_DB_URL}
+        username: ${HSADMINNG_DB_USER}
+        password: ${HSADMINNG_DB_PASS}
+    jpa:
+        database-platform: io.github.jhipster.domain.util.FixedPostgreSQL82Dialect
+        database: POSTGRESQL
+    liquibase:
+        contexts: dev

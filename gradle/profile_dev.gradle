@@ -8,13 +8,22 @@ dependencies {
     compile "com.h2database:h2"
 }
 
-def profiles = 'dev'
+def profiles = "";
+if (project.hasProperty('pgsql')) {
+    profiles += 'pgsql'
+} else if (project.hasProperty('h2file')) {
+    profiles += 'h2file'
+} else {
+    profiles += 'h2mem'
+}
 if (project.hasProperty('no-liquibase')) {
     profiles += ',no-liquibase'
 }
 if (project.hasProperty('tls')) {
     profiles += ',tls'
 }
+
+println 'activating profiles: ' + profiles
 
 springBoot {
     buildInfo {
