@@ -10,32 +10,19 @@
     <property name="floatType" value="float4" dbms="postgresql, h2"/>
     <property name="floatType" value="float" dbms="mysql, oracle, mssql"/>
 
-    <changeSet id="20190403083736-2" author="mhoennig" context="sample-data">
+    <changeSet id="20190505130300-1" author="mhoennig" context="sample-data">
         <loadData encoding="UTF-8"
                   file="config/liquibase/sample-data/customers.csv"
                   separator=";"
                   tableName="customer">
         </loadData>
-    </changeSet>
 
-    <changeSet id="20190403083736-3" author="mhoennig" context="sample-data">
-
-        <!-- I've tried extracting this to a stored procedure, but a compatible call
-             is only possible with PostgresSQL 11.x, otherwise the call syntax
-             between H2 and PostgresSQL would be different which defeated the point.
-        -->
-
-        <sql dbms="h2">
-            UPDATE customer SET contractual_address = replace(contractual_address, '|', STRINGDECODE('\n'));
-            UPDATE customer SET billing_address = replace(billing_address, '|', STRINGDECODE('\n'));
-            UPDATE customer SET remark = replace(remark, '|', STRINGDECODE('\n'));
-        </sql>
-
-        <sql dbms="postgresql">
-            UPDATE customer SET contractual_address = replace(contractual_address, '|', '\n');
-            UPDATE customer SET billing_address = replace(billing_address, '|', '\n');
-            UPDATE customer SET remark = replace(remark, '|', E'\n');
-        </sql>
+        <customChange class="org.hostsharing.hsadminng.liquibase.ReplaceCustomChange">
+            <param name="tableName" value="customer" />
+            <param name="columnNames" value="contractual_address,billing_address,remark" />
+            <param name="searchFor" value="|" />
+            <param name="replaceWith" value="\n" />
+        </customChange>
 
         <rollback>
             DELETE FROM customer;
