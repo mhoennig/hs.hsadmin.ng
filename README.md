@@ -41,7 +41,7 @@ To use an **H2 in-memory database** populated with sample-data.
 To use an **H2 file-based database**, start the application with the h2file profile:
 
     gw bootRun -Ph2file
-    gw bootRun -Ph2file,sample-data     # populated with sample data
+    gw bootRun -Ph2file -Psample-data     # populated with sample data
 
 To use a **local Postgres database**, first prepare your environment:
 
@@ -54,7 +54,7 @@ Where `DBNAME`, `DBUSER` and `DBPASS` are replaced by your credentials.
 Then start the application with the pgsql profile:
 
     gw bootRun -Ppgsql
-    gw bootRun -Ppgsql,sample-data     # populated with sample data
+    gw bootRun -Ppgsql -Psample-data     # populated with sample data
 
 To use a **remote Postgres database** on a hostsharing server,
 

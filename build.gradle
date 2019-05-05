@@ -165,6 +165,9 @@ liquibase {
             defaultSchemaName ''
             logLevel 'debug'
             classpath 'src/main/resources/'
+            if (project.hasProperty('sample-data')) {
+                contexts 'sample-data'
+            }
         }
         diffLog {
             driver ''
