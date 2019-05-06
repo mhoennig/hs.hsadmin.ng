@@ -71,6 +71,10 @@ In all cases, you can also **specify the port** to used for the application via 
 
     SERVER_PORT=8081 gw bootRun ...
 
+For starting the JVM of the application in **debug-mode**, add `--debug-jvm` to any of the options above, e.g.
+
+    gw bootRun -Ppgsql -Psample-data --debug-jvm
+
 ### Running JUnit tests with branch coverage
 
 #### for IntelliJ IDEA
