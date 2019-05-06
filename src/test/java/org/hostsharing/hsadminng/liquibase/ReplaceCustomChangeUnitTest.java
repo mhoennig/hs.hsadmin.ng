@@ -13,6 +13,8 @@ import liquibase.exception.CustomChangeException;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.SetupException;
 
+import com.google.common.base.VerifyException;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,6 +45,7 @@ public class ReplaceCustomChangeUnitTest {
     @Before
     public void initMocks() throws DatabaseException {
         given(database.getConnection()).willReturn(connection);
+        given(connection.getAutoCommit()).willReturn(false);
         given(connection.createStatement()).willReturn(statement);
     }
 
@@ -84,6 +87,20 @@ public class ReplaceCustomChangeUnitTest {
 
         // then
         assertThat(actual).isEqualTo("in table some_table / columns address,remark: replaced all '|' to '\\n'");
+    }
+
+    @Test
+    public void throwsValidationErrorIfAutoCommitIsOff() throws Exception {
+        // given
+        given(database.getDatabaseProductName()).willReturn(POSTGRES_DATABASE_PRODUCT_NAME);
+        final ReplaceCustomChange replaceCustomChange = givenReplaceCustomChange("some_table", "address,remark", "|", "\\n");
+        given(connection.getAutoCommit()).willReturn(true);
+
+        // when
+        final Throwable actual = catchThrowable(() -> replaceCustomChange.execute(database));
+
+        // then
+        assertThat(actual).isInstanceOf(VerifyException.class);
     }
 
     @Test

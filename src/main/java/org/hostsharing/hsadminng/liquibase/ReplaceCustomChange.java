@@ -1,6 +1,8 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.liquibase;
 
+import static com.google.common.base.Verify.verify;
+
 import liquibase.change.custom.CustomTaskChange;
 import liquibase.database.Database;
 import liquibase.database.jvm.JdbcConnection;
@@ -28,7 +30,7 @@ public class ReplaceCustomChange implements CustomTaskChange {
         final JdbcConnection conn = (JdbcConnection) database.getConnection();
         final boolean isH2 = "H2".equals(database.getDatabaseProductName());
         try {
-            conn.setAutoCommit(false);
+            verify(!conn.getAutoCommit(), "assuming auto commit to be off in Liquibase changeset");
             final Statement statement = conn.createStatement();
             for (String columnName : columnNames.split(",")) {
                 final String sql = "UPDATE " + tableName + " SET " + columnName + "= replace(" + columnName + ", '" + searchFor
@@ -36,7 +38,6 @@ public class ReplaceCustomChange implements CustomTaskChange {
                         (isH2 ? "STRINGDECODE('" + replaceWith + "')" : "E'" + replaceWith + "'") + ")";
                 statement.executeUpdate(sql);
             }
-            conn.commit();
         } catch (DatabaseException | SQLException e) {
             throw new CustomChangeException("cannot perform search&replace", e);
         }
