@@ -23,9 +23,6 @@ public class ReplaceCustomChange implements CustomTaskChange {
     private String searchFor;
     private String replaceWith;
 
-    @SuppressWarnings("unused")
-    private ResourceAccessor resourceAccessor;
-
     @Override
     public void execute(final Database database) throws CustomChangeException {
         final JdbcConnection conn = (JdbcConnection) database.getConnection();
@@ -34,8 +31,9 @@ public class ReplaceCustomChange implements CustomTaskChange {
             conn.setAutoCommit(false);
             final Statement statement = conn.createStatement();
             for (String columnName : columnNames.split(",")) {
-                final String sql = "UPDATE " + tableName + " SET " + columnName + "= replace(" + columnName + ", '|', " +
-                        (isH2 ? "STRINGDECODE('\n') " : "E'\\n'") + ")";
+                final String sql = "UPDATE " + tableName + " SET " + columnName + "= replace(" + columnName + ", '" + searchFor
+                        + "', " +
+                        (isH2 ? "STRINGDECODE('" + replaceWith + "')" : "E'" + replaceWith + "'") + ")";
                 statement.executeUpdate(sql);
             }
             conn.commit();
@@ -46,7 +44,7 @@ public class ReplaceCustomChange implements CustomTaskChange {
 
     @Override
     public String getConfirmationMessage() {
-        return "table " + tableName + " / columns " + columnNames + ": replaced all '" + searchFor + "' to '" + replaceWith
+        return "in table " + tableName + " / columns " + columnNames + ": replaced all '" + searchFor + "' to '" + replaceWith
                 + "'";
     }
 
@@ -65,33 +63,33 @@ public class ReplaceCustomChange implements CustomTaskChange {
         return null;
     }
 
-    public String getTableName() {
-        return tableName;
-    }
+    // public String getTableName() {
+    // return tableName;
+    // }
 
     public void setTableName(final String tableName) {
         this.tableName = tableName;
     }
 
-    public String getColumnNames() {
-        return columnNames;
-    }
+    // public String getColumnNames() {
+    // return columnNames;
+    // }
 
     public void setColumnNames(final String columns) {
         this.columnNames = columns;
     }
 
-    public String getSearchFor() {
-        return searchFor;
-    }
+    // public String getSearchFor() {
+    // return searchFor;
+    // }
 
     public void setSearchFor(final String searchFor) {
         this.searchFor = searchFor;
     }
 
-    public String getReplaceWith() {
-        return replaceWith;
-    }
+    // public String getReplaceWith() {
+    // return replaceWith;
+    // }
 
     public void setReplaceWith(final String replaceWith) {
         this.replaceWith = replaceWith;
