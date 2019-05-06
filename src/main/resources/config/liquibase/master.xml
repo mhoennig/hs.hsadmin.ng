@@ -3,6 +3,8 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <!-- JHipster generated entity table changesets -->
     <include file="config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20190430152136_added_entity_Customer.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20190430152137_added_entity_Membership.xml" relativeToChangelogFile="false"/>
@@ -11,6 +13,8 @@
     <include file="config/liquibase/changelog/20190430152140_added_entity_SepaMandate.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20190430154711_added_entity_UserRoleAssignment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
+
+    <!-- JHipster generated constraints changesets -->
     <include file="config/liquibase/changelog/20190430152137_added_entity_constraints_Membership.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20190430152138_added_entity_constraints_Share.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20190430152139_added_entity_constraints_Asset.xml" relativeToChangelogFile="false"/>
@@ -18,7 +22,10 @@
     <include file="config/liquibase/changelog/20190430154711_added_entity_constraints_UserRoleAssignment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 
-    <!-- sample data -->
+    <!-- historicization -->
+    <include file="config/liquibase/historicization/historicization.xml" relativeToChangelogFile="false"/>
+
+    <!-- sample data. comes after historicization triggers, historicization applies -->
     <include file="config/liquibase/sample-data/customers.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/sample-data/memberships.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/sample-data/shares.xml" relativeToChangelogFile="false"/>
