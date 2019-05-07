@@ -6,7 +6,7 @@
     <!--
         Added the constraints for entity SepaMandate.
     -->
-    <changeSet id="20190430152140-2" author="jhipster">
+    <changeSet id="20190507105336-2" author="jhipster">
         
         <addForeignKeyConstraint baseColumnNames="customer_id"
                                  baseTableName="sepa_mandate"
