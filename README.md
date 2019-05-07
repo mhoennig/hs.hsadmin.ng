@@ -258,7 +258,9 @@ A git tag `jdl-base` is assumed to sit on the base commit after the application 
     git clean -f -d
     git cherry-pick -n spotless
     git reset --soft REAL-HEAD
-    git checkout REAL-HEAD src/main/jdl/customer.jdl # AND OTHERS!
+    git checkout REAL-HEAD src/main/jdl/customer.jdl
+    git checkout REAL-HEAD src/main/jdl/accessrights.jdl
+    git checkout REAL-HEAD src/main/jdl/... # once there are more
     git tag -d REAL-HEAD
 
 #### 2. Amending and Re-Importing the JDL
