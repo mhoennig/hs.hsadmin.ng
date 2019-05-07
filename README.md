@@ -113,8 +113,9 @@ To create and push a new tag use:
     git tag HOWTO-... master
     git push origin HOWTO-...
 
-After you've moved an existing the tag to another commit, you can use:
+To moved an existing the tag to another commit (here current master again), do this:
 
+    git tag --force HOWTO-... master
     git push --force origin HOWTO-...
 
 ## Special Build Tasks
