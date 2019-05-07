@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <!-- the natural key used by the historical view must be unique -->
+    <changeSet id="20190507100000-1" author="mhoennig">
+
+        <!-- must match the GROUP BY clause in membership_history_view -->
+        <addUniqueConstraint constraintName="ux_membership" tableName="membership"
+                             columnNames="customer_id, member_from_date"/>
+
+    </changeSet>
+</databaseChangeLog>

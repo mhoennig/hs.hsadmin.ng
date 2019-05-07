@@ -6,9 +6,9 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    <!-- Table for historical user_role_assignment data. -->
-    <changeSet id="20190506150000-1" author="mhierweck,mhoennig" dbms="postgresql">
-        <createTable tableName="user_role_assignment_history">
+    <!-- Table for historical Share data. -->
+    <changeSet id="20190507193400-1" author="mhierweck,mhoennig" dbms="postgresql">
+        <createTable tableName="share_history">
 
             <!-- history-related columns -->
 
@@ -30,58 +30,67 @@
             </column>
 
             <!-- all following columns like in base table, dropping unique constraints -->
-
-            <column name="entity_type_id" type="varchar(255)">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="entity_object_id" type="bigint">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="assigned_role" type="varchar(255)">
+            <column name="document_date" type="date">
                 <constraints nullable="false" />
             </column>
 
-            <column name="user_id" type="bigint">
+            <column name="value_date" type="date">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="quantity" type="integer">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="remark" type="varchar(160)">
                 <constraints nullable="true" />
+            </column>
+
+            <column name="membership_id" type="bigint">
+                <constraints nullable="false" />
             </column>
 
         </createTable>
 
     </changeSet>
 
-    <changeSet id="20190506150000-2" author="mhierweck,mhoennig" dbms="postgresql">
+    <changeSet id="20190507193400-2" author="mhierweck,mhoennig" dbms="postgresql">
 
         <addForeignKeyConstraint baseColumnNames="history_transaction"
-                                 baseTableName="user_role_assignment_history"
-                                 constraintName="fk_user_role_assignment_history_transaction"
+                                 baseTableName="share_history"
+                                 constraintName="fk_share_history_transaction"
                                  referencedColumnNames="history_transaction"
                                  referencedTableName="history"/>
 
     </changeSet>
 
-    <changeSet id="20190506150000-3" author="mhierweck,mhoennig" dbms="postgresql">
+    <changeSet id="20190507193400-3" author="mhierweck,mhoennig" dbms="postgresql">
         <createProcedure>
-            CREATE TRIGGER user_role_assignment_historicize
-            AFTER INSERT OR DELETE OR UPDATE ON user_role_assignment
+            CREATE TRIGGER share_historicize
+            AFTER INSERT OR DELETE OR UPDATE ON share
             FOR EACH ROW EXECUTE PROCEDURE historicize();
         </createProcedure>
         <rollback>
-            DROP TRIGGER user_role_assignment_historicize
+            DROP TRIGGER share_historicize
         </rollback>
     </changeSet>
 
-    <changeSet id="20190506150000-4" author="mhierweck,mhoennig" dbms="postgresql">
-        <createView viewName="user_role_assignment_history_view" replaceIfExists="true">
+    <changeSet id="20190507193400-4" author="mhierweck,mhoennig" dbms="postgresql">
+        <createView viewName="share_history_view" replaceIfExists="true">
             SELECT *
-              FROM user_role_assignment_history
-             WHERE history_id IN (
-                SELECT max(history_id) AS history_id
-                  FROM user_role_assignment_history
-                 WHERE history_transaction &lt;= current_setting('history.transaction')::bigint
-                 GROUP BY entity_type_id, entity_object_id, assigned_role, user_id) -- must have a unique constraint
+                FROM share_history
+               WHERE history_id IN (
+                    SELECT max(history_id) AS history_id
+                      FROM share_history
+                     WHERE history_transaction &lt;= current_setting('history.transaction')::bigint
+                     GROUP BY id) -- shares are not deletable, thus id is enough
         </createView>
     </changeSet>
 
 </databaseChangeLog>
+
+

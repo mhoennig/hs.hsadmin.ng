@@ -6,9 +6,9 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    <!-- Table for historical user_role_assignment data. -->
+    <!-- Table for historical Customer data. -->
     <changeSet id="20190506150000-1" author="mhierweck,mhoennig" dbms="postgresql">
-        <createTable tableName="user_role_assignment_history">
+        <createTable tableName="customer_history">
 
             <!-- history-related columns -->
 
@@ -31,19 +31,63 @@
 
             <!-- all following columns like in base table, dropping unique constraints -->
 
-            <column name="entity_type_id" type="varchar(255)">
-                <constraints nullable="true" />
+            <column name="reference" type="integer">
+                <constraints nullable="false"/>
             </column>
 
-            <column name="entity_object_id" type="bigint">
-                <constraints nullable="true" />
+            <column name="prefix" type="varchar(3)">
+                <constraints nullable="false"/>
             </column>
 
-            <column name="assigned_role" type="varchar(255)">
+            <column name="name" type="varchar(80)">
                 <constraints nullable="false" />
             </column>
 
-            <column name="user_id" type="bigint">
+            <column name="kind" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="birth_date" type="date">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="birth_place" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="registration_court" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="registration_number" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="vat_region" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="vat_number" type="varchar(40)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="contractual_salutation" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="contractual_address" type="varchar(400)">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="billing_salutation" type="varchar(80)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="billing_address" type="varchar(400)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="remark" type="varchar(160)">
                 <constraints nullable="true" />
             </column>
 
@@ -54,8 +98,8 @@
     <changeSet id="20190506150000-2" author="mhierweck,mhoennig" dbms="postgresql">
 
         <addForeignKeyConstraint baseColumnNames="history_transaction"
-                                 baseTableName="user_role_assignment_history"
-                                 constraintName="fk_user_role_assignment_history_transaction"
+                                 baseTableName="customer_history"
+                                 constraintName="fk_customer_history_transaction"
                                  referencedColumnNames="history_transaction"
                                  referencedTableName="history"/>
 
@@ -63,24 +107,24 @@
 
     <changeSet id="20190506150000-3" author="mhierweck,mhoennig" dbms="postgresql">
         <createProcedure>
-            CREATE TRIGGER user_role_assignment_historicize
-            AFTER INSERT OR DELETE OR UPDATE ON user_role_assignment
+            CREATE TRIGGER customer_historicize
+            AFTER INSERT OR DELETE OR UPDATE ON customer
             FOR EACH ROW EXECUTE PROCEDURE historicize();
         </createProcedure>
         <rollback>
-            DROP TRIGGER user_role_assignment_historicize
+            DROP TRIGGER customer_historicize
         </rollback>
     </changeSet>
 
     <changeSet id="20190506150000-4" author="mhierweck,mhoennig" dbms="postgresql">
-        <createView viewName="user_role_assignment_history_view" replaceIfExists="true">
+        <createView viewName="customer_history_view" replaceIfExists="true">
             SELECT *
-              FROM user_role_assignment_history
+              FROM customer_history
              WHERE history_id IN (
                 SELECT max(history_id) AS history_id
-                  FROM user_role_assignment_history
+                  FROM customer_history
                  WHERE history_transaction &lt;= current_setting('history.transaction')::bigint
-                 GROUP BY entity_type_id, entity_object_id, assigned_role, user_id) -- must have a unique constraint
+                 GROUP BY name) -- must have a unique constraint
         </createView>
     </changeSet>
 

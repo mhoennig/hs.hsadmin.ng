@@ -6,9 +6,9 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    <!-- Table for historical user_role_assignment data. -->
-    <changeSet id="20190506150000-1" author="mhierweck,mhoennig" dbms="postgresql">
-        <createTable tableName="user_role_assignment_history">
+    <!-- Table for historical SepaMandate data. -->
+    <changeSet id="20190507101800-1" author="mhierweck,mhoennig" dbms="postgresql">
+        <createTable tableName="sepa_mandate_history">
 
             <!-- history-related columns -->
 
@@ -31,56 +31,81 @@
 
             <!-- all following columns like in base table, dropping unique constraints -->
 
-            <column name="entity_type_id" type="varchar(255)">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="entity_object_id" type="bigint">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="assigned_role" type="varchar(255)">
+            <column name="reference" type="varchar(40)">
                 <constraints nullable="false" />
             </column>
 
-            <column name="user_id" type="bigint">
+            <column name="iban" type="varchar(34)">
                 <constraints nullable="true" />
             </column>
+
+            <column name="bic" type="varchar(11)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="granting_document_date" type="date">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="revokation_document_date" type="date">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="valid_from_date" type="date">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="valid_until_date" type="date">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="last_used_date" type="date">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="remark" type="varchar(160)">
+                <constraints nullable="true" />
+            </column>
+
+            <column name="customer_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+
 
         </createTable>
 
     </changeSet>
 
-    <changeSet id="20190506150000-2" author="mhierweck,mhoennig" dbms="postgresql">
+    <changeSet id="20190507101800-2" author="mhierweck,mhoennig" dbms="postgresql">
 
         <addForeignKeyConstraint baseColumnNames="history_transaction"
-                                 baseTableName="user_role_assignment_history"
-                                 constraintName="fk_user_role_assignment_history_transaction"
+                                 baseTableName="sepa_mandate_history"
+                                 constraintName="fk_sepa_mandate_history_transaction"
                                  referencedColumnNames="history_transaction"
                                  referencedTableName="history"/>
 
     </changeSet>
 
-    <changeSet id="20190506150000-3" author="mhierweck,mhoennig" dbms="postgresql">
+    <changeSet id="20190507101800-3" author="mhierweck,mhoennig" dbms="postgresql">
         <createProcedure>
-            CREATE TRIGGER user_role_assignment_historicize
-            AFTER INSERT OR DELETE OR UPDATE ON user_role_assignment
+            CREATE TRIGGER sepa_mandate_historicize
+            AFTER INSERT OR DELETE OR UPDATE ON sepa_mandate
             FOR EACH ROW EXECUTE PROCEDURE historicize();
         </createProcedure>
         <rollback>
-            DROP TRIGGER user_role_assignment_historicize
+            DROP TRIGGER sepa_mandate_historicize
         </rollback>
     </changeSet>
 
-    <changeSet id="20190506150000-4" author="mhierweck,mhoennig" dbms="postgresql">
-        <createView viewName="user_role_assignment_history_view" replaceIfExists="true">
+    <changeSet id="20190507101800-4" author="mhierweck,mhoennig" dbms="postgresql">
+        <createView viewName="sepa_mandate_history_view" replaceIfExists="true">
             SELECT *
-              FROM user_role_assignment_history
+              FROM sepa_mandate_history
              WHERE history_id IN (
                 SELECT max(history_id) AS history_id
-                  FROM user_role_assignment_history
+                  FROM sepa_mandate_history
                  WHERE history_transaction &lt;= current_setting('history.transaction')::bigint
-                 GROUP BY entity_type_id, entity_object_id, assigned_role, user_id) -- must have a unique constraint
+                 GROUP BY reference) -- must have a unique constraint
         </createView>
     </changeSet>
 
