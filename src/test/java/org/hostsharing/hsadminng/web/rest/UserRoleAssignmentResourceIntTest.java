@@ -158,6 +158,44 @@ public class UserRoleAssignmentResourceIntTest {
 
     @Test
     @Transactional
+    public void checkEntityTypeIdIsRequired() throws Exception {
+        int databaseSizeBeforeTest = userRoleAssignmentRepository.findAll().size();
+        // set the field null
+        userRoleAssignment.setEntityTypeId(null);
+
+        // Create the UserRoleAssignment, which fails.
+
+        restUserRoleAssignmentMockMvc.perform(
+                post("/api/user-role-assignments")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(userRoleAssignment)))
+                .andExpect(status().isBadRequest());
+
+        List<UserRoleAssignment> userRoleAssignmentList = userRoleAssignmentRepository.findAll();
+        assertThat(userRoleAssignmentList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
+    public void checkEntityObjectIdIsRequired() throws Exception {
+        int databaseSizeBeforeTest = userRoleAssignmentRepository.findAll().size();
+        // set the field null
+        userRoleAssignment.setEntityObjectId(null);
+
+        // Create the UserRoleAssignment, which fails.
+
+        restUserRoleAssignmentMockMvc.perform(
+                post("/api/user-role-assignments")
+                        .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                        .content(TestUtil.convertObjectToJsonBytes(userRoleAssignment)))
+                .andExpect(status().isBadRequest());
+
+        List<UserRoleAssignment> userRoleAssignmentList = userRoleAssignmentRepository.findAll();
+        assertThat(userRoleAssignmentList).hasSize(databaseSizeBeforeTest);
+    }
+
+    @Test
+    @Transactional
     public void checkAssignedRoleIsRequired() throws Exception {
         int databaseSizeBeforeTest = userRoleAssignmentRepository.findAll().size();
         // set the field null

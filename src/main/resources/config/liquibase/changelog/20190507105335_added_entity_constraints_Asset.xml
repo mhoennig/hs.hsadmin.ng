@@ -6,7 +6,7 @@
     <!--
         Added the constraints for entity Asset.
     -->
-    <changeSet id="20190430152139-2" author="jhipster">
+    <changeSet id="20190507105335-2" author="jhipster">
         
         <addForeignKeyConstraint baseColumnNames="membership_id"
                                  baseTableName="asset"

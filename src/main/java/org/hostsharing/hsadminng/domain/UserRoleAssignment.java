@@ -25,10 +25,13 @@ public class UserRoleAssignment implements Serializable {
     @SequenceGenerator(name = "sequenceGenerator")
     private Long id;
 
-    @Column(name = "entity_type_id")
+    @NotNull
+    @Size(max = 32)
+    @Column(name = "entity_type_id", length = 32, nullable = false)
     private String entityTypeId;
 
-    @Column(name = "entity_object_id")
+    @NotNull
+    @Column(name = "entity_object_id", nullable = false)
     private Long entityObjectId;
 
     @NotNull

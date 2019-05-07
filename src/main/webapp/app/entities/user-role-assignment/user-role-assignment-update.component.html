@@ -12,12 +12,32 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.entityTypeId" for="field_entityTypeId">Entity Type Id</label>
                     <input type="text" class="form-control" name="entityTypeId" id="field_entityTypeId"
-                        [(ngModel)]="userRoleAssignment.entityTypeId" />
+                        [(ngModel)]="userRoleAssignment.entityTypeId" required maxlength="32"/>
+                    <div [hidden]="!(editForm.controls.entityTypeId?.dirty && editForm.controls.entityTypeId?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.entityTypeId?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.entityTypeId?.errors?.maxlength" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 32 }">
+                        This field cannot be longer than 32 characters.
+                        </small>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.entityObjectId" for="field_entityObjectId">Entity Object Id</label>
                     <input type="number" class="form-control" name="entityObjectId" id="field_entityObjectId"
-                        [(ngModel)]="userRoleAssignment.entityObjectId" />
+                        [(ngModel)]="userRoleAssignment.entityObjectId" required/>
+                    <div [hidden]="!(editForm.controls.entityObjectId?.dirty && editForm.controls.entityObjectId?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.entityObjectId?.errors?.required" jhiTranslate="entity.validation.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.entityObjectId?.errors?.number" jhiTranslate="entity.validation.number">
+                            This field should be a number.
+                        </small>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole" for="field_assignedRole">Assigned Role</label>

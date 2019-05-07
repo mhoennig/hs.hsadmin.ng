@@ -3,11 +3,19 @@
     "fields": [
         {
             "fieldName": "entityTypeId",
-            "fieldType": "String"
+            "fieldType": "String",
+            "fieldValidateRules": [
+                "required",
+                "maxlength"
+            ],
+            "fieldValidateRulesMaxlength": 32
         },
         {
             "fieldName": "entityObjectId",
-            "fieldType": "Long"
+            "fieldType": "Long",
+            "fieldValidateRules": [
+                "required"
+            ]
         },
         {
             "fieldName": "assignedRole",
@@ -27,7 +35,7 @@
             "otherEntityField": "login"
         }
     ],
-    "changelogDate": "20190430154711",
+    "changelogDate": "20190507105342",
     "entityTableName": "user_role_assignment",
     "dto": "no",
     "pagination": "infinite-scroll",

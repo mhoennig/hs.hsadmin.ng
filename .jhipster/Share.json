@@ -49,7 +49,7 @@
             "otherEntityField": "admissionDocumentDate"
         }
     ],
-    "changelogDate": "20190430154656",
+    "changelogDate": "20190507105334",
     "entityTableName": "share",
     "dto": "mapstruct",
     "pagination": "infinite-scroll",
