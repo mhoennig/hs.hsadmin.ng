@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <!-- the natural key used by the historical view must be unique -->
+    <changeSet id="201905061856-1" author="mhoennig">
+
+        <!-- must match the GROUP BY clause in user_role_assignment_history_view -->
+        <addUniqueConstraint constraintName="ux_user_role_assignment" tableName="user_role_assignment"
+                             columnNames="entity_type_id, entity_object_id, assigned_role, user_id"/>
+
+    </changeSet>
+</databaseChangeLog>
