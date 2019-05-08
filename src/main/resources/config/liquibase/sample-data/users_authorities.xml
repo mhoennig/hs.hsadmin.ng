@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="20190508133600-1" author="mhoennig" context="sample-data">
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/sample-data/users_authorities.csv"
+                  separator=";"
+                  tableName="JHI_USER_AUTHORITY">
+        </loadData>
+
+        <rollback>
+            DELETE FROM JHI_USER_AUTHORITY WHERE id >=100 AND id &lt; 1000000;
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

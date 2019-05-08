@@ -70,7 +70,7 @@ public enum Role {
     /**
      * Any user which belongs to a customer has at least this role.
      */
-    ACTUAL_CUSTOMER_USER(80),
+    ACTUAL_CUSTOMER_USER(30),
 
     /**
      * Use this to grant rights to any user, also special function users who have no

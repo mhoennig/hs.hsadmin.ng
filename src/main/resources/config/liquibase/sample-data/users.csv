@@ -1,0 +1,24 @@
+id;login;password_hash;first_name;last_name;email;image_url;activated;lang_key;created_by;last_modified_by
+101;test-supporter-a;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;A;Test Supporter;ts-a@example.com;;true;de;system;system
+102;test-supporter-b;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;B;Test Supporter;ts-b@example.com;;true;de;system;system
+103;test-supporter-c;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;C;Test Supporter;ts-c@example.com;;true;de;system;system
+104;test-admin-a;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;A;Test Admin;ta-a@example.com;;true;de;system;system
+105;test-admin-b;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;B;Test Admin;ta-b@example.com;;true;de;system;system
+106;test-hostmaster-a;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;A;Test Hostmaster;th-a@example.com;;true;de;system;system
+107;test-hostmaster-b;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;B;Test Hostmaster;th-b@example.com;;true;de;system;system
+111;aaa-test;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Anton;AAA Testuser;aaa@example.com;;true;de;system;system
+112;bbb-test;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Berta;BBB Testuser;bbb@example.com;;true;de;system;system
+113;ccc-test;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Cecilie;CCC Testuser;ccc@example.com;;true;de;system;system
+114;ddd-test;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Dieter;DDD Testuser;ddd@example.com;;true;de;system;system
+115;abc-test;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Alva;ABC Testuser;abc@example.com;;true;de;system;system
+116;bca-test;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Bert Cäsar;Adelbert;bca@example.com;;true;de;system;system
+120;test00;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 00;Test-User;test-user00@localhost;;true;de;system;system
+121;test01;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 01;Test-User;test-user01@localhost;;true;de;system;system
+122;test02;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 02;Test-User;test-user02@localhost;;true;de;system;system
+123;test03;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 03;Test-User;test-user03@localhost;;true;de;system;system
+124;test04;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 04;Test-User;test-user04@localhost;;true;de;system;system
+125;test05;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 05;Test-User;test-user05@localhost;;true;de;system;system
+126;test06;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 06;Test-User;test-user06@localhost;;true;de;system;system
+127;test07;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 07;Test-User;test-user07@localhost;;true;de;system;system
+128;test08;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 08;Test-User;test-user08@localhost;;true;de;system;system
+129;test09;$2a$10$VEjxo0jq2YG9Rbk2HmX9S.k1uZBGYUHdUcid3g/vfiEl7lwWgOH/K;Test-User 09;Test-User;test-user09@localhost;;true;de;system;system

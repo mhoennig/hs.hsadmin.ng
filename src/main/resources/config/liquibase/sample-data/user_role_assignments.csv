@@ -1,0 +1,17 @@
+id;user_id;entity_type_id;entity_object_id;assigned_role
+1001;111;customer.Customer;1;CONTRACTUAL_CONTACT
+1002;112;customer.Customer;2;CONTRACTUAL_CONTACT
+1003;113;customer.Customer;3;CONTRACTUAL_CONTACT
+1004;114;customer.Customer;4;CONTRACTUAL_CONTACT
+1005;115;customer.Customer;5;CONTRACTUAL_CONTACT
+1006;116;customer.Customer;6;CONTRACTUAL_CONTACT
+1007;120;customer.Customer;1;FINANCIAL_CONTACT
+1008;121;customer.Customer;1;TECHNICAL_CONTACT
+1009;122;customer.Customer;2;FINANCIAL_CONTACT
+1010;123;customer.Customer;2;TECHNICAL_CONTACT
+1011;124;customer.Customer;3;FINANCIAL_CONTACT
+1012;125;customer.Customer;3;TECHNICAL_CONTACT
+1013;126;customer.Customer;4;FINANCIAL_CONTACT
+1014;127;customer.Customer;4;TECHNICAL_CONTACT
+1015;128;customer.Customer;5;FINANCIAL_CONTACT
+1016;129;customer.Customer;5;TECHNICAL_CONTACT
