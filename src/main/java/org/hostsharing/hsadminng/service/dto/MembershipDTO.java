@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
@@ -17,6 +18,7 @@ import javax.validation.constraints.Size;
 /**
  * A DTO for the Membership entity.
  */
+@EntityTypeId(Membership.ENTITY_TYPE_ID)
 public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDTO> {
 
     @SelfId(resolver = MembershipService.class)

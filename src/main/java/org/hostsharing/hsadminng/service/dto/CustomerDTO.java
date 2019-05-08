@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.CustomerService;
@@ -17,6 +18,7 @@ import javax.validation.constraints.*;
 /**
  * A DTO for the Customer entity.
  */
+@EntityTypeId(Customer.ENTITY_TYPE_ID)
 public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO> {
 
     @SelfId(resolver = CustomerService.class)

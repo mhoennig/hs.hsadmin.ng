@@ -24,6 +24,7 @@ public class Asset implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String ENTITY_NAME = "asset";
+    public static final String ENTITY_TYPE_ID = "customer.asset";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")

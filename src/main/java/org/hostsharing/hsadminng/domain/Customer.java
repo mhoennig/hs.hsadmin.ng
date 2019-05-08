@@ -22,6 +22,8 @@ public class Customer implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String ENTITY_TYPE_ID = "customer.Customer";
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")

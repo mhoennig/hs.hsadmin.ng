@@ -23,6 +23,7 @@ public class Membership implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String ENTITY_NAME = "membership";
+    public static final String ENTITY_TYPE_ID = "customer.Membership";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")

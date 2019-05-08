@@ -23,6 +23,7 @@ public class Share implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String ENTITY_NAME = "share";
+    public static final String ENTITY_TYPE_ID = "customer.share";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")

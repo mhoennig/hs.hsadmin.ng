@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
@@ -17,6 +18,7 @@ import javax.validation.constraints.Size;
 /**
  * A DTO for the SepaMandate entity.
  */
+@EntityTypeId(SepaMandate.ENTITY_TYPE_ID)
 public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandateDTO> {
 
     @SelfId(resolver = SepaMandateService.class)

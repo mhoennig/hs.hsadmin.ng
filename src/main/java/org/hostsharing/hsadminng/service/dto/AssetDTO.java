@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.MembershipService;
@@ -20,6 +21,7 @@ import javax.validation.constraints.Size;
 /**
  * A DTO for the Asset entity.
  */
+@EntityTypeId(Asset.ENTITY_TYPE_ID)
 public class AssetDTO implements Serializable, AccessMappings {
 
     @SelfId(resolver = AssetService.class)

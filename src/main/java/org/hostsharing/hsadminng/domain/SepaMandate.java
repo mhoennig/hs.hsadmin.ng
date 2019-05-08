@@ -20,6 +20,8 @@ public class SepaMandate implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String ENTITY_TYPE_ID = "customer.SepaMandate";
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")

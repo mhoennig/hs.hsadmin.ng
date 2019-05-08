@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
+import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.ShareService;
@@ -19,6 +20,7 @@ import javax.validation.constraints.Size;
 /**
  * A DTO for the Share entity.
  */
+@EntityTypeId(Share.ENTITY_TYPE_ID)
 public class ShareDTO implements Serializable, AccessMappings {
 
     @SelfId(resolver = ShareService.class)
