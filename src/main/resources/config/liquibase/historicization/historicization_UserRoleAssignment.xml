@@ -31,12 +31,12 @@
 
             <!-- all following columns like in base table, dropping unique constraints -->
 
-            <column name="entity_type_id" type="varchar(255)">
-                <constraints nullable="true" />
+            <column name="entity_type_id" type="varchar(32)">
+                <constraints nullable="false" />
             </column>
 
             <column name="entity_object_id" type="bigint">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
 
             <column name="assigned_role" type="varchar(255)">

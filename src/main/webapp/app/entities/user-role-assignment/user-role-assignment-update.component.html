@@ -42,9 +42,7 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole" for="field_assignedRole">Assigned Role</label>
                     <select class="form-control" name="assignedRole" [(ngModel)]="userRoleAssignment.assignedRole" id="field_assignedRole"  required>
-                        <option value="HOSTMASTER">{{'hsadminNgApp.UserRole.HOSTMASTER' | translate}}</option>
-                        <option value="ADMIN">{{'hsadminNgApp.UserRole.ADMIN' | translate}}</option>
-                        <option value="SUPPORTER">{{'hsadminNgApp.UserRole.SUPPORTER' | translate}}</option>
+                        <!-- only list entity-dependent roles here -->
                         <option value="CONTRACTUAL_CONTACT">{{'hsadminNgApp.UserRole.CONTRACTUAL_CONTACT' | translate}}</option>
                         <option value="FINANCIAL_CONTACT">{{'hsadminNgApp.UserRole.FINANCIAL_CONTACT' | translate}}</option>
                         <option value="TECHNICAL_CONTACT">{{'hsadminNgApp.UserRole.TECHNICAL_CONTACT' | translate}}</option>
