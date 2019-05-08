@@ -321,7 +321,7 @@ Here some examples for amendments to be done:
 
 If you find more of such general cases, please add them here!
 
-#### 6. Special Aftermath for new
+#### 6. Special Aftermath for new Entities
 
 Because we have added quite some functionality, after introducing new entities, there is a lot more to amend.
 Here some issues to consider:
@@ -331,7 +331,7 @@ Here some issues to consider:
 -   internal (Angular) frontend: amend input fields for multiline, if applicable
 -   internal (Angular) frontend: check if dates are properly formatted
 -   \*Mapper: add displayLabel for entity itself and parents
--   DTOs: add access-right annotations with customized JSON serializer/deserializer
+-   \*DTO: add access-right annotations with customized JSON serializer/deserializer
 -   Validator: implement entity-based validator and call it in the generated service
 -   external API: add new type to client library
 
