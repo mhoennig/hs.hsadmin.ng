@@ -160,13 +160,13 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
                                 if (!field.equals(parentIdField)) {
                                     throw new BadRequestAlertException(
                                             "Initialization of field " + toDisplay(field)
-                                                    + " prohibited for current user roles "
+                                                    + " prohibited for current user role(s): "
                                                     + Joiner.on("+").join(roles),
                                             toDisplay(field),
                                             "initializationProhibited");
                                 } else {
                                     throw new BadRequestAlertException(
-                                            "Referencing field " + toDisplay(field) + " prohibited for current user roles "
+                                            "Referencing field " + toDisplay(field) + " prohibited for current user role(s): "
                                                     + Joiner.on("+").join(roles),
                                             toDisplay(field),
                                             "referencingProhibited");
@@ -174,7 +174,7 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
                             }
                         } else if (!Role.toBeIgnoredForUpdates(field) && !isAllowedToUpdate(getLoginUserRoles(), field)) {
                             throw new BadRequestAlertException(
-                                    "Update of field " + toDisplay(field) + " prohibited for current user roles "
+                                    "Update of field " + toDisplay(field) + " prohibited for current user role(s): "
                                             + Joiner.on("+").join(roles),
                                     toDisplay(field),
                                     "updateProhibited");

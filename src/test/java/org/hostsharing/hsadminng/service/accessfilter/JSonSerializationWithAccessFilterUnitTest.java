@@ -45,13 +45,14 @@ public class JSonSerializationWithAccessFilterUnitTest {
     @Mock
     private GivenCustomerService givenCustomerService;
 
-    private MockSecurityContext securityContext;
+    private SecurityContextMock securityContext;
 
     private final GivenDto givenDTO = createSampleDto();
 
     @Before
     public void init() {
-        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser()
+        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService)
+                .havingAuthenticatedUser()
                 .withRole(GivenCustomerDto.class, 888L, Role.ANY_CUSTOMER_USER);
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
@@ -190,6 +191,7 @@ public class JSonSerializationWithAccessFilterUnitTest {
             Arbitrary fieldWithUnimplementedType = new Arbitrary();
         }
         final GivenDtoWithUnimplementedFieldType givenDtoWithUnimplementedFieldType = new GivenDtoWithUnimplementedFieldType();
+        SecurityContextFake.havingAuthenticatedUser();
 
         // when
         final Throwable actual = catchThrowable(

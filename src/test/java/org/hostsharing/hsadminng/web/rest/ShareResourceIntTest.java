@@ -12,11 +12,11 @@ import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.ShareQueryService;
 import org.hostsharing.hsadminng.service.ShareService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -97,15 +97,15 @@ public class ShareResourceIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
-
     private MockMvc restShareMockMvc;
 
     private Share share;
 
     @Before
     public void setup() {
-        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
+        SecurityContextMock.usingMock(userRoleAssignmentService)
+                .havingAuthenticatedUser()
+                .withAuthority(AuthoritiesConstants.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final ShareResource shareResource = new ShareResource(shareService, shareQueryService);

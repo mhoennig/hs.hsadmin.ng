@@ -13,13 +13,14 @@ import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.AssetValidator;
 import org.hostsharing.hsadminng.service.MembershipValidator;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.service.mapper.AssetMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
@@ -113,22 +114,23 @@ public class AssetDTOIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
+    private SecurityContextMock securityContext;
 
     @Before
     public void init() {
         given(customerRepository.findById(SOME_CUSTOMER_ID)).willReturn(Optional.of(SOME_CUSTOMER));
         given(membershipRepository.findById(SOME_MEMBERSHIP_ID)).willReturn(Optional.of(SOME_MEMBERSHIP));
         given(assetRepository.findById(SOME_ASSET_ID)).willReturn((Optional.of(SOME_ASSET)));
-
-        securityContext = new MockSecurityContext(userRoleAssignmentService);
+        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService);
     }
 
     @Test
     public void shouldSerializePartiallyForFinancialCustomerContact() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
+
         final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
 
         // when
@@ -143,7 +145,7 @@ public class AssetDTOIntTest {
     public void shouldSerializeCompletelyForSupporter() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(Role.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
         final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
 
         // when
@@ -170,13 +172,13 @@ public class AssetDTOIntTest {
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage())
                         .isEqualTo(
-                                "Update of field AssetDTO.remark prohibited for current user roles CONTRACTUAL_CONTACT+ANYBODY"));
+                                "Update of field AssetDTO.remark prohibited for current user role(s): CONTRACTUAL_CONTACT"));
     }
 
     @Test
     public void shouldDeserializeForAdminIfRemarkIsChanged() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_ASSET_ID)
                 .withFieldValue("remark", "Updated Remark")

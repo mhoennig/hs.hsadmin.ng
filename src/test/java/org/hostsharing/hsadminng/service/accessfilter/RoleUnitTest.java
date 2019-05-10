@@ -96,6 +96,22 @@ public class RoleUnitTest {
     }
 
     @Test
+    public void isNdependend() {
+        assertThat(Role.NOBODY.isIndependent()).isFalse();
+
+        assertThat(Role.HOSTMASTER.isIndependent()).isTrue();
+        assertThat(Role.ADMIN.isIndependent()).isTrue();
+        assertThat(Role.SUPPORTER.isIndependent()).isTrue();
+
+        assertThat(Role.CONTRACTUAL_CONTACT.isIndependent()).isFalse();
+        assertThat(Role.FINANCIAL_CONTACT.isIndependent()).isFalse();
+        assertThat(Role.ACTUAL_CUSTOMER_USER.isIndependent()).isFalse();
+        assertThat(Role.ANY_CUSTOMER_USER.isIndependent()).isFalse();
+
+        assertThat(Role.ANYBODY.isIndependent()).isTrue();
+    }
+
+    @Test
     public void isIgnored() {
         for (Role role : Role.values()) {
             if (role == Role.IGNORED) {

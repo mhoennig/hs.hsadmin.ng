@@ -86,7 +86,7 @@ public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
                 return true;
             }
         }
-        return false;
+        return Role.ANYBODY.isAllowedToRead(field);
     }
 
 }

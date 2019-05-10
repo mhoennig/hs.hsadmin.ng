@@ -12,11 +12,11 @@ import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -99,15 +99,15 @@ public class AssetResourceIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
-
     private MockMvc restAssetMockMvc;
 
     private Asset asset;
 
     @Before
     public void setup() {
-        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
+        SecurityContextMock.usingMock(userRoleAssignmentService)
+                .havingAuthenticatedUser()
+                .withAuthority(AuthoritiesConstants.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final AssetResource assetResource = new AssetResource(assetService, assetQueryService);

@@ -7,8 +7,8 @@ import static org.mockito.BDDMockito.given;
 
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
 import org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextFake;
 
 import com.google.common.base.VerifyException;
 
@@ -45,7 +45,7 @@ public class UserRoleAssignmentServiceUnitTest {
     @Test
     public void getEffectiveRoleOfCurrentUserReturnsEmptySetIfUserAuthenticatedButNoRolesAssigned() {
         // given
-        new MockSecurityContext().havingAuthenticatedUser();
+        SecurityContextFake.havingAuthenticatedUser();
 
         // when
         final Set<Role> actual = userRoleAssignmentService.getEffectiveRoleOfCurrentUser("test.Something", 1L);
@@ -58,7 +58,7 @@ public class UserRoleAssignmentServiceUnitTest {
     public void getEffectiveRoleOfCurrentUserReturnsExactlyAssignedRoles() {
         // given
         final String givenUserLogin = "someUser";
-        new MockSecurityContext().havingAuthenticatedUser(givenUserLogin);
+        SecurityContextFake.havingAuthenticatedUser(givenUserLogin);
         final long givenEntityObjectId = 2L;
         final String givenEntityTypeId = "test.Something";
         given(userRoleAssignmentRepository.findByLogin(givenUserLogin)).willReturn(

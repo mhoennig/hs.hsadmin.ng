@@ -11,12 +11,11 @@ import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.dto.CustomerDTO;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.dto.SepaMandateDTO;
 import org.hostsharing.hsadminng.service.mapper.SepaMandateMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -109,15 +108,15 @@ public class SepaMandateResourceIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
-
     private MockMvc restSepaMandateMockMvc;
 
     private SepaMandate sepaMandate;
 
     @Before
     public void setup() {
-        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
+        SecurityContextMock.usingMock(userRoleAssignmentService)
+                .havingAuthenticatedUser()
+                .withAuthority(AuthoritiesConstants.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final SepaMandateResource sepaMandateResource = new SepaMandateResource(sepaMandateService, sepaMandateQueryService);
@@ -132,7 +131,7 @@ public class SepaMandateResourceIntTest {
 
     /**
      * Create an entity for this test.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -157,7 +156,7 @@ public class SepaMandateResourceIntTest {
 
     /**
      * Create an entity for tests with a specific customer.
-     *
+     * <p>
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
@@ -193,8 +192,6 @@ public class SepaMandateResourceIntTest {
         sepaMandateDTO.setRemark(null);
         sepaMandateDTO.setRevokationDocumentDate(null);
         sepaMandateDTO.setLastUsedDate(null);
-        securityContext.havingAuthenticatedUser()
-                .withRole(CustomerDTO.class, sepaMandateDTO.getCustomerId(), Role.FINANCIAL_CONTACT);
 
         restSepaMandateMockMvc.perform(
                 post("/api/sepa-mandates")

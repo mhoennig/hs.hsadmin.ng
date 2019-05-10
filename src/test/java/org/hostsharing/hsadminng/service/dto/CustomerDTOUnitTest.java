@@ -9,11 +9,12 @@ import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 
@@ -64,11 +65,11 @@ public class CustomerDTOUnitTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
+    private SecurityContextMock securityContext;
 
     @Before
     public void init() {
-        securityContext = new MockSecurityContext(userRoleAssignmentService);
+        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService);
     }
 
     @Test
@@ -111,7 +112,7 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsSupporter() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(Role.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
         CustomerDTO given = createSomeCustomerDTO(1234L);
 
         // when

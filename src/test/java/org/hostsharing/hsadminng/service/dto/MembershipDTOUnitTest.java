@@ -6,12 +6,13 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
 import static org.mockito.BDDMockito.given;
 
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializationWithAccessFilter;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -61,7 +62,7 @@ public class MembershipDTOUnitTest {
     @Mock
     private CustomerService customerService;
 
-    private MockSecurityContext securityContext;
+    private SecurityContextMock securityContext;
 
     @Before
     public void init() {
@@ -75,12 +76,12 @@ public class MembershipDTOUnitTest {
                         new CustomerDTO()
                                 .with(dto -> dto.setId(1234L))));
 
-        securityContext = new MockSecurityContext(userRoleAssignmentService);
+        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService);
     }
 
     @Test
     public void adminShouldHaveRightToCreate() throws IOException {
-        securityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
         givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
 
         // when

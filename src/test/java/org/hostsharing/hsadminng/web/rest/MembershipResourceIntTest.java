@@ -13,11 +13,11 @@ import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -105,7 +105,7 @@ public class MembershipResourceIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
+    private SecurityContextMock securityContext;
 
     private MockMvc restMembershipMockMvc;
 
@@ -113,7 +113,9 @@ public class MembershipResourceIntTest {
 
     @Before
     public void setup() {
-        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
+        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService)
+                .havingAuthenticatedUser()
+                .withAuthority(AuthoritiesConstants.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final MembershipResource membershipResource = new MembershipResource(membershipService, membershipQueryService);

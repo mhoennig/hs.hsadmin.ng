@@ -139,7 +139,7 @@ public enum Role {
      * @return true if this role is independent of a target object, false otherwise.
      */
     public boolean isIndependent() {
-        return this != NOBODY && covers(Role.SUPPORTER);
+        return this != NOBODY && (this == ANYBODY || covers(Role.SUPPORTER));
     }
 
     /**

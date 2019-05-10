@@ -14,11 +14,11 @@ import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
@@ -144,8 +144,6 @@ public class CustomerResourceIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
-
     private MockMvc restCustomerMockMvc;
 
     private Customer customer;
@@ -153,7 +151,9 @@ public class CustomerResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
+        SecurityContextMock.usingMock(userRoleAssignmentService)
+                .havingAuthenticatedUser()
+                .withAuthority(AuthoritiesConstants.ADMIN);
 
         final CustomerResource customerResource = new CustomerResource(customerService, customerQueryService);
         this.restCustomerMockMvc = MockMvcBuilders.standaloneSetup(customerResource)

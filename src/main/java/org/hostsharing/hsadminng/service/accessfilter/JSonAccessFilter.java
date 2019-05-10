@@ -4,7 +4,7 @@ package org.hostsharing.hsadminng.service.accessfilter;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Sets.union;
 import static java.util.Collections.EMPTY_SET;
-import static org.thymeleaf.util.SetUtils.singletonSet;
+import static java.util.Collections.emptySet;
 
 import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
@@ -71,7 +71,7 @@ abstract class JSonAccessFilter<T> {
         final Field parentIdField = determineFieldWithAnnotation(dto.getClass(), ParentId.class);
 
         if (parentIdField == null) {
-            return singletonSet(Role.ANYBODY);
+            return emptySet();
         }
 
         final ParentId parentIdAnnot = parentIdField.getAnnotation(ParentId.class);
@@ -88,12 +88,12 @@ abstract class JSonAccessFilter<T> {
 
     private Set<Role> getLoginUserDirectRolesFor(final Class<?> dtoClass, final Long id) {
         if (!SecurityUtils.isAuthenticated()) {
-            return singletonSet(Role.ANYBODY);
+            return emptySet();
         }
 
         final EntityTypeId entityTypeId = dtoClass.getAnnotation(EntityTypeId.class);
         if (entityTypeId == null) {
-            return singletonSet(Role.ANYBODY); // TODO mhoennig: all of such singletonSets -> emptySet
+            return emptySet();
         }
 
         return userRoleAssignmentService.getEffectiveRoleOfCurrentUser(entityTypeId.value(), id);

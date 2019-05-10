@@ -13,13 +13,14 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.repository.ShareRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.MembershipValidator;
 import org.hostsharing.hsadminng.service.ShareService;
 import org.hostsharing.hsadminng.service.ShareValidator;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
-import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
@@ -112,7 +113,7 @@ public class ShareDTOIntTest {
     @MockBean
     private UserRoleAssignmentService userRoleAssignmentService;
 
-    private MockSecurityContext securityContext;
+    private SecurityContextMock securityContext;
 
     @Before
     public void init() {
@@ -120,7 +121,7 @@ public class ShareDTOIntTest {
         given(membershipRepository.findById(SOME_MEMBERSHIP_ID)).willReturn(Optional.of(SOME_MEMBERSHIP));
         given(shareRepository.findById(SOME_SHARE_ID)).willReturn((Optional.of(SOME_SHARE)));
 
-        securityContext = new MockSecurityContext(userRoleAssignmentService);
+        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService);
     }
 
     @Test
@@ -142,7 +143,7 @@ public class ShareDTOIntTest {
     public void shouldSerializeCompletelyForSupporter() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(Role.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
         final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
@@ -169,13 +170,13 @@ public class ShareDTOIntTest {
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage())
                         .isEqualTo(
-                                "Update of field ShareDTO.remark prohibited for current user roles CONTRACTUAL_CONTACT+ANYBODY"));
+                                "Update of field ShareDTO.remark prohibited for current user role(s): CONTRACTUAL_CONTACT"));
     }
 
     @Test
     public void shouldDeserializeForAdminIfRemarkIsChanged() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SHARE_ID)
                 .withFieldValue("remark", "Updated Remark")
