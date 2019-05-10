@@ -36,6 +36,10 @@ public class CacheConfiguration {
             cm.createCache(org.hostsharing.hsadminng.repository.UserRepository.USERS_BY_LOGIN_CACHE, jcacheConfiguration);
             cm.createCache(org.hostsharing.hsadminng.repository.UserRepository.USERS_BY_EMAIL_CACHE, jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
+
+            cm.createCache(
+                    org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository.CURRENT_USER_ROLE_ASSIGNMENTS_CACHE,
+                    jcacheConfiguration);
         };
     }
 }

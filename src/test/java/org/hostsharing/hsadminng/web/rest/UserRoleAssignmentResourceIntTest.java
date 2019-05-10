@@ -10,10 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
-import org.hostsharing.hsadminng.domain.enumeration.UserRole;
 import org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentQueryService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
 
 import org.junit.Before;
@@ -50,8 +50,8 @@ public class UserRoleAssignmentResourceIntTest {
     private static final Long DEFAULT_ENTITY_OBJECT_ID = 1L;
     private static final Long UPDATED_ENTITY_OBJECT_ID = 2L;
 
-    private static final UserRole DEFAULT_ASSIGNED_ROLE = UserRole.HOSTMASTER;
-    private static final UserRole UPDATED_ASSIGNED_ROLE = UserRole.ADMIN;
+    private static final Role DEFAULT_ASSIGNED_ROLE = Role.HOSTMASTER;
+    private static final Role UPDATED_ASSIGNED_ROLE = Role.ADMIN;
 
     @Autowired
     private UserRoleAssignmentRepository userRoleAssignmentRepository;

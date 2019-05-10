@@ -4,6 +4,7 @@ package org.hostsharing.hsadminng.service.dto;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 
 import org.springframework.boot.jackson.JsonComponent;
@@ -174,16 +175,20 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
     @JsonComponent
     public static class MembershipJsonSerializer extends JsonSerializerWithAccessFilter<MembershipDTO> {
 
-        public MembershipJsonSerializer(final ApplicationContext ctx) {
-            super(ctx);
+        public MembershipJsonSerializer(
+                final ApplicationContext ctx,
+                final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 
     @JsonComponent
     public static class MembershipJsonDeserializer extends JsonDeserializerWithAccessFilter<MembershipDTO> {
 
-        public MembershipJsonDeserializer(final ApplicationContext ctx) {
-            super(ctx);
+        public MembershipJsonDeserializer(
+                final ApplicationContext ctx,
+                final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 }

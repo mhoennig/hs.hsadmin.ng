@@ -5,6 +5,7 @@ import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 
 import org.springframework.boot.jackson.JsonComponent;
@@ -22,24 +23,24 @@ import javax.validation.constraints.*;
 public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO> {
 
     @SelfId(resolver = CustomerService.class)
-    @AccessFor(read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(read = Role.ACTUAL_CUSTOMER_USER)
     private Long id;
 
     @NotNull
     @Min(value = 10000)
     @Max(value = 99999)
-    @AccessFor(init = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Role.ADMIN, read = Role.ACTUAL_CUSTOMER_USER)
     private Integer reference;
 
     @NotNull
     @Size(max = 3)
     @Pattern(regexp = "[a-z][a-z0-9]+")
-    @AccessFor(init = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Role.ADMIN, read = Role.ACTUAL_CUSTOMER_USER)
     private String prefix;
 
     @NotNull
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.ACTUAL_CUSTOMER_USER)
     private String name;
 
     @NotNull
@@ -93,7 +94,7 @@ public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO> {
     @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.SUPPORTER)
     private String remark;
 
-    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.ACTUAL_CUSTOMER_USER)
     private String displayLabel;
 
     public Long getId() {
@@ -278,16 +279,18 @@ public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO> {
     @JsonComponent
     public static class CustomerJsonSerializer extends JsonSerializerWithAccessFilter<CustomerDTO> {
 
-        public CustomerJsonSerializer(final ApplicationContext ctx) {
-            super(ctx);
+        public CustomerJsonSerializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 
     @JsonComponent
     public static class CustomerJsonDeserializer extends JsonDeserializerWithAccessFilter<CustomerDTO> {
 
-        public CustomerJsonDeserializer(final ApplicationContext ctx) {
-            super(ctx);
+        public CustomerJsonDeserializer(
+                final ApplicationContext ctx,
+                final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 }

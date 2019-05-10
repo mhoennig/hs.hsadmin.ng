@@ -124,6 +124,14 @@ public class RoleUnitTest {
     }
 
     @Test
+    public void asAuthority() {
+        assertThat(Role.HOSTMASTER.asAuthority()).isEqualTo("ROLE_HOSTMASTER");
+        assertThat(Role.ADMIN.asAuthority()).isEqualTo("ROLE_ADMIN");
+        assertThat(Role.SUPPORTER.asAuthority()).isEqualTo("ROLE_SUPPORTER");
+        assertThat(Role.CONTRACTUAL_CONTACT.asAuthority()).isEqualTo("ROLE_USER");
+    }
+
+    @Test
     public void isBroadest() {
         assertThat(Role.broadest(Role.HOSTMASTER, Role.CONTRACTUAL_CONTACT)).isEqualTo(Role.HOSTMASTER);
         assertThat(Role.broadest(Role.CONTRACTUAL_CONTACT, Role.HOSTMASTER)).isEqualTo(Role.HOSTMASTER);

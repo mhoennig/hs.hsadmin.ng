@@ -5,6 +5,7 @@ import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.ShareService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 
 import org.springframework.boot.jackson.JsonComponent;
@@ -156,16 +157,16 @@ public class ShareDTO implements Serializable, AccessMappings {
     @JsonComponent
     public static class JsonSerializer extends JsonSerializerWithAccessFilter<ShareDTO> {
 
-        public JsonSerializer(final ApplicationContext ctx) {
-            super(ctx);
+        public JsonSerializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 
     @JsonComponent
     public static class JsonDeserializer extends JsonDeserializerWithAccessFilter<ShareDTO> {
 
-        public JsonDeserializer(final ApplicationContext ctx) {
-            super(ctx);
+        public JsonDeserializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 }

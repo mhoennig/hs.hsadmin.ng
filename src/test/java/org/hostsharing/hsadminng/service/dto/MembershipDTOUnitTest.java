@@ -4,13 +4,13 @@ package org.hostsharing.hsadminng.service.dto;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.mockito.BDDMockito.given;
 
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializationWithAccessFilter;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
@@ -53,10 +53,15 @@ public class MembershipDTOUnitTest {
     private TreeNode treeNode;
 
     @Mock
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    @Mock
     private MembershipService membershipService;
 
     @Mock
     private CustomerService customerService;
+
+    private MockSecurityContext securityContext;
 
     @Before
     public void init() {
@@ -69,17 +74,23 @@ public class MembershipDTOUnitTest {
                 Optional.of(
                         new CustomerDTO()
                                 .with(dto -> dto.setId(1234L))));
+
+        securityContext = new MockSecurityContext(userRoleAssignmentService);
     }
 
     @Test
     public void adminShouldHaveRightToCreate() throws IOException {
-        givenAuthenticatedUser();
-        givenUserHavingRole(null, null, Role.ADMIN);
+        securityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
         givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
 
         // when
-        final MembershipDTO actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, MembershipDTO.class)
-                .deserialize();
+        final MembershipDTO actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                MembershipDTO.class)
+                        .deserialize();
 
         // then
         assertThat(actualDto.getCustomerId()).isEqualTo(1234L);
@@ -87,13 +98,17 @@ public class MembershipDTOUnitTest {
 
     @Test
     public void contractualContactShouldNotHaveRightToCreate() throws IOException {
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, 1234L, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CONTRACTUAL_CONTACT);
         givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, MembershipDTO.class).deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        MembershipDTO.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {

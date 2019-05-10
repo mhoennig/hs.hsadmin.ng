@@ -33,6 +33,7 @@ public class JSonAccessFilterTestFixture {
         return dto;
     }
 
+    @EntityTypeId("test.GivenCustomer")
     static class GivenCustomerDto implements FluentBuilder<GivenCustomerDto> {
 
         @SelfId(resolver = GivenService.class)
@@ -47,6 +48,7 @@ public class JSonAccessFilterTestFixture {
     static abstract class GivenCustomerService implements IdToDtoResolver<GivenCustomerDto> {
     }
 
+    @EntityTypeId("test.Given")
     static class GivenDto implements FluentBuilder<GivenDto> {
 
         @SelfId(resolver = GivenService.class)

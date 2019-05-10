@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Set;
 
 /**
  * Actual implementation of JSON serialization, where {link JsonSerializerWithAccessFilter}
@@ -28,10 +30,11 @@ public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
 
     public JSonSerializationWithAccessFilter(
             final ApplicationContext ctx,
+            final UserRoleAssignmentService userRoleAssignmentService,
             final JsonGenerator jsonGenerator,
             final SerializerProvider serializerProvider,
             final T dto) {
-        super(ctx, dto);
+        super(ctx, userRoleAssignmentService, dto);
         this.jsonGenerator = jsonGenerator;
         this.serializerProvider = serializerProvider;
     }
@@ -47,7 +50,7 @@ public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
     }
 
     private void toJSon(final Object dto, final JsonGenerator jsonGenerator, final Field field) throws IOException {
-        if (getLoginUserRole().isAllowedToRead(field)) {
+        if (isAllowedToRead(getLoginUserRoles(), field)) {
             final String fieldName = field.getName();
             // TODO: maybe replace by serializerProvider.defaultSerialize...()?
             // But that makes it difficult for parallel structure with the deserializer (clumsy API).
@@ -75,6 +78,15 @@ public class JSonSerializationWithAccessFilter<T> extends JSonAccessFilter<T> {
                 throw new NotImplementedException("property type not yet implemented: " + field);
             }
         }
+    }
+
+    private boolean isAllowedToRead(final Set<Role> roles, final Field field) {
+        for (Role role : roles) {
+            if (role.isAllowedToRead(field)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

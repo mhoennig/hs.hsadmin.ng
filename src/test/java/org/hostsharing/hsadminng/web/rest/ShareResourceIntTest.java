@@ -14,6 +14,7 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.ShareQueryService;
 import org.hostsharing.hsadminng.service.ShareService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.ShareDTO;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -92,14 +94,18 @@ public class ShareResourceIntTest {
     @Autowired
     private Validator validator;
 
+    @MockBean
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     private MockMvc restShareMockMvc;
 
     private Share share;
 
     @Before
     public void setup() {
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final ShareResource shareResource = new ShareResource(shareService, shareQueryService);

@@ -3,6 +3,8 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 import static com.google.common.base.Verify.verify;
 
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
+
 import java.lang.reflect.Field;
 
 /**
@@ -24,17 +26,17 @@ public enum Role {
     /**
      * Hostmasters are initialize/update/read and field which, except where NOBODY is allowed to.
      */
-    HOSTMASTER(1),
+    HOSTMASTER(1, AuthoritiesConstants.HOSTMASTER),
 
     /**
      * This role is for administrators, e.g. to create memberships and book shared and assets.
      */
-    ADMIN(2),
+    ADMIN(2, AuthoritiesConstants.ADMIN),
 
     /**
      * This role is for members of the support team.
      */
-    SUPPORTER(3),
+    SUPPORTER(3, AuthoritiesConstants.SUPPORTER),
 
     /**
      * This role is for contractual contacts of a customer, like a director of the company.
@@ -82,7 +84,7 @@ public enum Role {
      * This role is meant to specify that a resources can be accessed by anybody, even without login.
      * It's currently only used for technical purposes.
      */
-    ANYBODY(99),
+    ANYBODY(99, AuthoritiesConstants.ANONYMOUS),
 
     /**
      * Pseudo-role to mark init/update access as ignored because the field is display-only.
@@ -92,13 +94,21 @@ public enum Role {
     IGNORED;
 
     private final Integer level;
+    private final String authority;
 
-    Role() {
-        this.level = null;
+    Role(final int level, final String authority) {
+        this.level = level;
+        this.authority = authority;
     }
 
     Role(final int level) {
         this.level = level;
+        this.authority = AuthoritiesConstants.USER;
+    }
+
+    Role() {
+        this.level = null;
+        this.authority = null;
     }
 
     /**
@@ -114,6 +124,10 @@ public enum Role {
         return updateAccessFor.length == 1 && updateAccessFor[0].isIgnored();
     }
 
+    public String asAuthority() {
+        return authority;
+    }
+
     /**
      * @return true if the role is the IGNORED role
      */
@@ -125,7 +139,7 @@ public enum Role {
      * @return true if this role is independent of a target object, false otherwise.
      */
     public boolean isIndependent() {
-        return covers(Role.SUPPORTER);
+        return this != NOBODY && covers(Role.SUPPORTER);
     }
 
     /**

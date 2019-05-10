@@ -1,7 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
-import org.hostsharing.hsadminng.domain.enumeration.UserRole;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -37,13 +37,14 @@ public class UserRoleAssignment implements Serializable {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "assigned_role", nullable = false)
-    private UserRole assignedRole;
+    private Role assignedRole;
 
     @ManyToOne
     @JsonIgnoreProperties("requireds")
     private User user;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+
     public Long getId() {
         return id;
     }
@@ -78,16 +79,16 @@ public class UserRoleAssignment implements Serializable {
         this.entityObjectId = entityObjectId;
     }
 
-    public UserRole getAssignedRole() {
+    public Role getAssignedRole() {
         return assignedRole;
     }
 
-    public UserRoleAssignment assignedRole(UserRole assignedRole) {
+    public UserRoleAssignment assignedRole(Role assignedRole) {
         this.assignedRole = assignedRole;
         return this;
     }
 
-    public void setAssignedRole(UserRole assignedRole) {
+    public void setAssignedRole(Role assignedRole) {
         this.assignedRole = assignedRole;
     }
 
@@ -103,6 +104,7 @@ public class UserRoleAssignment implements Serializable {
     public void setUser(User user) {
         this.user = user;
     }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override

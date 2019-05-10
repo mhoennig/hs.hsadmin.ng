@@ -15,6 +15,7 @@ import org.hostsharing.hsadminng.domain.Share;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.service.MembershipQueryService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
@@ -27,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -100,14 +102,18 @@ public class MembershipResourceIntTest {
     @Autowired
     private Validator validator;
 
+    @MockBean
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     private MockMvc restMembershipMockMvc;
 
     private Membership membership;
 
     @Before
     public void setup() {
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final MembershipResource membershipResource = new MembershipResource(membershipService, membershipQueryService);

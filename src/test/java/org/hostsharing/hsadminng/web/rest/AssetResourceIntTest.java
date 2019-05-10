@@ -14,6 +14,7 @@ import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.repository.AssetRepository;
 import org.hostsharing.hsadminng.service.AssetQueryService;
 import org.hostsharing.hsadminng.service.AssetService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.AssetDTO;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -94,14 +96,18 @@ public class AssetResourceIntTest {
     @Autowired
     private Validator validator;
 
+    @MockBean
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     private MockMvc restAssetMockMvc;
 
     private Asset asset;
 
     @Before
     public void setup() {
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final AssetResource assetResource = new AssetResource(assetService, assetQueryService);

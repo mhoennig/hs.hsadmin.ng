@@ -13,6 +13,7 @@ import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
 import org.hostsharing.hsadminng.service.SepaMandateQueryService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -104,14 +106,18 @@ public class SepaMandateResourceIntTest {
     @Autowired
     private Validator validator;
 
+    @MockBean
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     private MockMvc restSepaMandateMockMvc;
 
     private SepaMandate sepaMandate;
 
     @Before
     public void setup() {
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
+        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
 
         MockitoAnnotations.initMocks(this);
         final SepaMandateResource sepaMandateResource = new SepaMandateResource(sepaMandateService, sepaMandateQueryService);
@@ -187,8 +193,8 @@ public class SepaMandateResourceIntTest {
         sepaMandateDTO.setRemark(null);
         sepaMandateDTO.setRevokationDocumentDate(null);
         sepaMandateDTO.setLastUsedDate(null);
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(CustomerDTO.class, sepaMandateDTO.getCustomerId(), Role.FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(CustomerDTO.class, sepaMandateDTO.getCustomerId(), Role.FINANCIAL_CONTACT);
 
         restSepaMandateMockMvc.perform(
                 post("/api/sepa-mandates")

@@ -3,8 +3,6 @@ package org.hostsharing.hsadminng;
 
 import org.hostsharing.hsadminng.config.ApplicationProperties;
 import org.hostsharing.hsadminng.config.DefaultProfileUtil;
-import org.hostsharing.hsadminng.security.SecurityUtils;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
 
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -59,14 +57,6 @@ public class HsadminNgApp {
             log.error(
                     "You have misconfigured your application! It should not " +
                             "run with both the 'dev' and 'cloud' profiles at the same time.");
-        }
-
-        // TODO: remove this hack once proper user roles are implemented
-        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-            // For some strange reasons, HsadminNgApp is created in locally running tests,
-            // but not on Jenkins, therefore the login user had no rights and many tests
-            // failed.
-            SecurityUtils.addUserRole(null, null, Role.HOSTMASTER);
         }
     }
 

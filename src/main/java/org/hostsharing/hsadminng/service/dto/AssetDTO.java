@@ -5,6 +5,7 @@ import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.enumeration.AssetAction;
 import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.MembershipService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 
 import org.springframework.boot.jackson.JsonComponent;
@@ -157,16 +158,16 @@ public class AssetDTO implements Serializable, AccessMappings {
     @JsonComponent
     public static class JsonSerializer extends JsonSerializerWithAccessFilter<AssetDTO> {
 
-        public JsonSerializer(final ApplicationContext ctx) {
-            super(ctx);
+        public JsonSerializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 
     @JsonComponent
     public static class JsonDeserializer extends JsonDeserializerWithAccessFilter<AssetDTO> {
 
-        public JsonDeserializer(final ApplicationContext ctx) {
-            super(ctx);
+        public JsonDeserializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 }

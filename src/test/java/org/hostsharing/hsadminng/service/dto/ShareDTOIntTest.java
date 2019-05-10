@@ -3,8 +3,6 @@ package org.hostsharing.hsadminng.service.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
 
@@ -18,7 +16,9 @@ import org.hostsharing.hsadminng.repository.ShareRepository;
 import org.hostsharing.hsadminng.service.MembershipValidator;
 import org.hostsharing.hsadminng.service.ShareService;
 import org.hostsharing.hsadminng.service.ShareValidator;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
@@ -109,19 +109,25 @@ public class ShareDTOIntTest {
     @MockBean
     private EntityManager em;
 
+    @MockBean
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     @Before
     public void init() {
         given(customerRepository.findById(SOME_CUSTOMER_ID)).willReturn(Optional.of(SOME_CUSTOMER));
         given(membershipRepository.findById(SOME_MEMBERSHIP_ID)).willReturn(Optional.of(SOME_MEMBERSHIP));
         given(shareRepository.findById(SOME_SHARE_ID)).willReturn((Optional.of(SOME_SHARE)));
+
+        securityContext = new MockSecurityContext(userRoleAssignmentService);
     }
 
     @Test
     public void shouldSerializePartiallyForFinancialCustomerContact() throws JsonProcessingException {
 
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
         final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
@@ -136,8 +142,7 @@ public class ShareDTOIntTest {
     public void shouldSerializeCompletelyForSupporter() throws JsonProcessingException {
 
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withRole(Role.SUPPORTER);
         final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
@@ -150,8 +155,7 @@ public class ShareDTOIntTest {
     @Test
     public void shouldNotDeserializeForContractualCustomerContact() {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SHARE_ID)
                 .withFieldValue("remark", "Updated Remark")
@@ -164,14 +168,14 @@ public class ShareDTOIntTest {
         assertThat(actual).isInstanceOfSatisfying(
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage())
-                        .isEqualTo("Update of field ShareDTO.remark prohibited for current user role CONTRACTUAL_CONTACT"));
+                        .isEqualTo(
+                                "Update of field ShareDTO.remark prohibited for current user roles CONTRACTUAL_CONTACT+ANYBODY"));
     }
 
     @Test
     public void shouldDeserializeForAdminIfRemarkIsChanged() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.ADMIN);
+        securityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SHARE_ID)
                 .withFieldValue("remark", "Updated Remark")

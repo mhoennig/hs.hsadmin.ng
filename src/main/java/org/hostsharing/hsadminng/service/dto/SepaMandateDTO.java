@@ -4,6 +4,7 @@ package org.hostsharing.hsadminng.service.dto;
 import org.hostsharing.hsadminng.domain.SepaMandate;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 
 import org.springframework.boot.jackson.JsonComponent;
@@ -222,16 +223,16 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
     @JsonComponent
     public static class JsonSerializer extends JsonSerializerWithAccessFilter<SepaMandateDTO> {
 
-        public JsonSerializer(final ApplicationContext ctx) {
-            super(ctx);
+        public JsonSerializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 
     @JsonComponent
     public static class JsonDeserializer extends JsonDeserializerWithAccessFilter<SepaMandateDTO> {
 
-        public JsonDeserializer(final ApplicationContext ctx) {
-            super(ctx);
+        public JsonDeserializer(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService) {
+            super(ctx, userRoleAssignmentService);
         }
     }
 }

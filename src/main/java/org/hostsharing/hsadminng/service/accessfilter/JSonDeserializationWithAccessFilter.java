@@ -3,6 +3,7 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.node.*;
+import com.google.common.base.Joiner;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
@@ -35,10 +37,11 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
 
     public JSonDeserializationWithAccessFilter(
             final ApplicationContext ctx,
+            final UserRoleAssignmentService userRoleAssignmentService,
             final JsonParser jsonParser,
             final DeserializationContext deserializationContext,
             Class<T> dtoClass) {
-        super(ctx, unchecked(dtoClass::newInstance));
+        super(ctx, userRoleAssignmentService, unchecked(dtoClass::newInstance));
         this.treeNode = unchecked(() -> jsonParser.getCodec().readTree(jsonParser));
     }
 
@@ -151,31 +154,51 @@ public class JSonDeserializationWithAccessFilter<T> extends JSonAccessFilter<T> 
                 field -> {
                     // TODO this ugly code needs cleanup
                     if (!field.equals(selfIdField)) {
-                        final Role role = getLoginUserRole();
+                        final Set<Role> roles = getLoginUserRoles();
                         if (isInitAccess()) {
-                            if (!role.isAllowedToInit(field)) {
+                            if (!isAllowedToInit(roles, field)) {
                                 if (!field.equals(parentIdField)) {
                                     throw new BadRequestAlertException(
-                                            "Initialization of field " + toDisplay(field) + " prohibited for current user role "
-                                                    + role,
+                                            "Initialization of field " + toDisplay(field)
+                                                    + " prohibited for current user roles "
+                                                    + Joiner.on("+").join(roles),
                                             toDisplay(field),
                                             "initializationProhibited");
                                 } else {
                                     throw new BadRequestAlertException(
-                                            "Referencing field " + toDisplay(field) + " prohibited for current user role "
-                                                    + role,
+                                            "Referencing field " + toDisplay(field) + " prohibited for current user roles "
+                                                    + Joiner.on("+").join(roles),
                                             toDisplay(field),
                                             "referencingProhibited");
                                 }
                             }
-                        } else if (!Role.toBeIgnoredForUpdates(field) && !getLoginUserRole().isAllowedToUpdate(field)) {
+                        } else if (!Role.toBeIgnoredForUpdates(field) && !isAllowedToUpdate(getLoginUserRoles(), field)) {
                             throw new BadRequestAlertException(
-                                    "Update of field " + toDisplay(field) + " prohibited for current user role " + role,
+                                    "Update of field " + toDisplay(field) + " prohibited for current user roles "
+                                            + Joiner.on("+").join(roles),
                                     toDisplay(field),
                                     "updateProhibited");
                         }
                     }
                 });
+    }
+
+    private boolean isAllowedToInit(final Set<Role> roles, final Field field) {
+        for (Role role : roles) {
+            if (role.isAllowedToInit(field)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isAllowedToUpdate(final Set<Role> roles, final Field field) {
+        for (Role role : roles) {
+            if (role.isAllowedToUpdate(field)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isInitAccess() {

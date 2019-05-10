@@ -3,8 +3,6 @@ package org.hostsharing.hsadminng.web.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -18,6 +16,7 @@ import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.service.CustomerQueryService;
 import org.hostsharing.hsadminng.service.CustomerService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.dto.CustomerDTO;
@@ -30,9 +29,12 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.data.repository.query.SecurityEvaluationContextExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -107,6 +109,11 @@ public class CustomerResourceIntTest {
 
     private static int otherCounter = 0;
 
+    @Bean
+    public SecurityEvaluationContextExtension securityEvaluationContextExtension() {
+        return new SecurityEvaluationContextExtension();
+    }
+
     @Autowired
     private CustomerRepository customerRepository;
 
@@ -134,19 +141,19 @@ public class CustomerResourceIntTest {
     @Autowired
     private Validator validator;
 
+    @MockBean
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     private MockMvc restCustomerMockMvc;
 
     private Customer customer;
 
     @Before
     public void setup() {
-        MockSecurityContext.givenAuthenticatedUser();
-        MockSecurityContext.givenUserHavingRole(Role.ADMIN);
-
         MockitoAnnotations.initMocks(this);
-
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.ADMIN);
+        securityContext = new MockSecurityContext(userRoleAssignmentService).havingAuthenticatedUser().withRole(Role.ADMIN);
 
         final CustomerResource customerResource = new CustomerResource(customerService, customerQueryService);
         this.restCustomerMockMvc = MockMvcBuilders.standaloneSetup(customerResource)

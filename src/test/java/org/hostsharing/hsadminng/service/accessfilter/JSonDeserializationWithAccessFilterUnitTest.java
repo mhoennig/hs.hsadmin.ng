@@ -6,10 +6,9 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
 import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.mockito.BDDMockito.given;
 
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -62,6 +61,9 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     private TreeNode treeNode;
 
     @Mock
+    private UserRoleAssignmentService userRoleAssignmentService;
+
+    @Mock
     private GivenService givenService;
 
     @Mock
@@ -70,10 +72,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Mock
     private GivenCustomerService givenCustomerService;
 
+    private MockSecurityContext givenSecurityContext;
+
     @Before
     public void init() {
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1234L, Role.ACTUAL_CUSTOMER_USER);
+        givenSecurityContext = new MockSecurityContext(userRoleAssignmentService);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenDto.class, 1234L, Role.ACTUAL_CUSTOMER_USER);
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenService.class)).willReturn(givenService);
@@ -113,7 +117,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openStringField", null)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openStringField).isNull();
@@ -129,7 +138,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openStringField", "String Value")));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openStringField).isEqualTo("String Value");
@@ -145,7 +159,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openIntegerField", 1234)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openIntegerField).isEqualTo(1234);
@@ -162,7 +181,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedBigDecimalField", SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.restrictedBigDecimalField).isEqualByComparingTo(SOME_BIG_DECIMAL);
@@ -192,7 +216,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openEnumField", TestEnum.GREEN)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.openIntegerField).isEqualTo(11);
@@ -218,7 +247,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOf(NotImplementedException.class);
@@ -227,8 +261,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeStringFieldIfRequiredRoleIsCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -236,7 +269,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "update value of restricted field")));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.restrictedField).isEqualTo("update value of restricted field");
@@ -245,8 +283,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldDeserializeUnchangedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -254,7 +291,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "initial value of restricted field")));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize();
+        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenDto.class).deserialize();
 
         // then
         assertThat(actualDto.restrictedField).isEqualTo("initial value of restricted field");
@@ -263,8 +305,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldNotDeserializeUpatedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("customerId", 888L),
@@ -272,7 +313,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -284,8 +330,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldInitializeFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("customerId", 888L),
@@ -293,7 +338,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -305,15 +355,19 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldNotCreateIfRoleRequiredByParentEntityIsNotCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 9999L, Role.CONTRACTUAL_CONTACT);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 9999L, Role.CONTRACTUAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("parentId", 1234L)));
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenChildDto.class).deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenChildDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -325,15 +379,19 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldCreateIfRoleRequiredByReferencedEntityIsCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenDto.class, 1234L, Role.CONTRACTUAL_CONTACT);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.CONTRACTUAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("parentId", 1234L)));
 
         // when
-        final GivenChildDto actualDto = new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenChildDto.class)
-                .deserialize();
+        final GivenChildDto actualDto = new JSonDeserializationWithAccessFilter<>(
+                ctx,
+                userRoleAssignmentService,
+                jsonParser,
+                null,
+                GivenChildDto.class)
+                        .deserialize();
 
         // then
         assertThat(actualDto.parentId).isEqualTo(1234L);
@@ -342,8 +400,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldNotUpdateFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+        givenSecurityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -352,7 +409,12 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDto.class).deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenDto.class).deserialize());
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -368,8 +430,13 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDtoWithMultipleSelfId.class)
-                        .deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenDtoWithMultipleSelfId.class)
+                                .deserialize());
 
         // then
         assertThat(exception).isInstanceOf(AssertionError.class)
@@ -379,14 +446,18 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldDetectUnknownFieldType() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.ADMIN);
+        givenSecurityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
         givenJSonTree(asJSon(ImmutablePair.of("unknown", new Arbitrary())));
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(ctx, jsonParser, null, GivenDtoWithUnknownFieldType.class)
-                        .deserialize());
+                () -> new JSonDeserializationWithAccessFilter<>(
+                        ctx,
+                        userRoleAssignmentService,
+                        jsonParser,
+                        null,
+                        GivenDtoWithUnknownFieldType.class)
+                                .deserialize());
 
         // then
         assertThat(exception).isInstanceOf(NotImplementedException.class)

@@ -3,8 +3,6 @@ package org.hostsharing.hsadminng.service.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenAuthenticatedUser;
-import static org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext.givenUserHavingRole;
 import static org.hostsharing.hsadminng.service.dto.SepaMandateDTOUnitTest.createSampleDTO;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
@@ -16,7 +14,9 @@ import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.repository.SepaMandateRepository;
 import org.hostsharing.hsadminng.service.MembershipValidator;
 import org.hostsharing.hsadminng.service.SepaMandateService;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
+import org.hostsharing.hsadminng.service.accessfilter.MockSecurityContext;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
@@ -98,18 +98,24 @@ public class SepaMandateDTOIntTest {
     @MockBean
     private EntityManager em;
 
+    @MockBean
+    public UserRoleAssignmentService userRoleAssignmentService;
+
+    private MockSecurityContext securityContext;
+
     @Before
     public void init() {
         given(customerRepository.findById(SOME_CUSTOMER_ID)).willReturn(Optional.of(SOME_CUSTOMER));
         given(sepaMandateRepository.findById(SOME_SEPA_MANDATE_ID)).willReturn((Optional.of(SOME_SEPA_MANDATE)));
+
+        securityContext = new MockSecurityContext(userRoleAssignmentService);
     }
 
     @Test
     public void shouldSerializePartiallyForFinancialCustomerContact() throws JsonProcessingException {
 
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
         final SepaMandateDTO given = createSampleDTO(SOME_SEPA_MANDATE_ID, SOME_CUSTOMER_ID);
 
         // when
@@ -124,8 +130,7 @@ public class SepaMandateDTOIntTest {
     public void shouldSerializeCompletelyForSupporter() throws JsonProcessingException {
 
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withRole(Role.SUPPORTER);
         final SepaMandateDTO given = createSampleDTO(SOME_SEPA_MANDATE_ID, SOME_CUSTOMER_ID);
 
         // when
@@ -138,8 +143,7 @@ public class SepaMandateDTOIntTest {
     @Test
     public void shouldNotDeserializeForContractualCustomerContact() {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SEPA_MANDATE_ID)
                 .withFieldValue("remark", "Updated Remark")
@@ -152,14 +156,13 @@ public class SepaMandateDTOIntTest {
         assertThat(actual).isInstanceOfSatisfying(
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage()).isEqualTo(
-                        "Update of field SepaMandateDTO.remark prohibited for current user role CONTRACTUAL_CONTACT"));
+                        "Update of field SepaMandateDTO.remark prohibited for current user roles CONTRACTUAL_CONTACT+ANYBODY"));
     }
 
     @Test
     public void shouldDeserializeForAdminIfRemarkIsChanged() throws IOException {
         // given
-        givenAuthenticatedUser();
-        givenUserHavingRole(Role.ADMIN);
+        securityContext.havingAuthenticatedUser().withRole(Role.ADMIN);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SEPA_MANDATE_ID)
                 .withFieldValue("remark", "Updated Remark")

@@ -1,7 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.hostsharing.hsadminng.domain.enumeration.UserRole;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 
 import io.github.jhipster.service.filter.Filter;
 import io.github.jhipster.service.filter.LongFilter;
@@ -23,7 +23,7 @@ public class UserRoleAssignmentCriteria implements Serializable {
     /**
      * Class for filtering UserRole
      */
-    public static class UserRoleFilter extends Filter<UserRole> {
+    public static class UserRoleFilter extends Filter<Role> {
     }
 
     private static final long serialVersionUID = 1L;

@@ -2,9 +2,13 @@
 package org.hostsharing.hsadminng.service.accessfilter;
 
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Sets.union;
+import static java.util.Collections.EMPTY_SET;
+import static org.thymeleaf.util.SetUtils.singletonSet;
 
 import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
@@ -14,16 +18,22 @@ import org.springframework.context.ApplicationContext;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 abstract class JSonAccessFilter<T> {
 
     private final ApplicationContext ctx;
+    private final UserRoleAssignmentService userRoleAssignmentService;
+
     final T dto;
     final Field selfIdField;
     final Field parentIdField;
 
-    JSonAccessFilter(final ApplicationContext ctx, final T dto) {
+    JSonAccessFilter(final ApplicationContext ctx, final UserRoleAssignmentService userRoleAssignmentService, final T dto) {
         this.ctx = ctx;
+        this.userRoleAssignmentService = userRoleAssignmentService;
         this.dto = dto;
         this.selfIdField = determineFieldWithAnnotation(dto.getClass(), SelfId.class);
         this.parentIdField = determineFieldWithAnnotation(dto.getClass(), ParentId.class);
@@ -45,25 +55,23 @@ abstract class JSonAccessFilter<T> {
     }
 
     /**
-     * @return the role of the login user in relation to the dto, this filter is created for.
+     * @return all roles of the login user in relation to the dto, for which this filter is created.
      */
-    Role getLoginUserRole() {
-        final Role roleOnSelf = getLoginUserRoleOnSelf();
-        if (roleOnSelf.isIndependent()) {
-            return roleOnSelf;
-        }
-        return getLoginUserRoleOnAncestorOfDtoClassIfHigher(roleOnSelf, dto);
+    Set<Role> getLoginUserRoles() {
+        final Set<Role> independentRoles = Arrays.stream(Role.values())
+                // TODO mhoennig: ugly and risky filter condition => refactor!
+                .filter(role -> role.isIndependent() && SecurityUtils.isCurrentUserInRole(role.asAuthority()))
+                .collect(Collectors.toSet());
+
+        final Set<Role> rolesOnThis = getId() != null ? getLoginUserDirectRolesFor(dto.getClass(), getId()) : EMPTY_SET;
+        return union(independentRoles, union(rolesOnThis, getLoginUserRoleOnAncestorIfHigher(dto)));
     }
 
-    private Role getLoginUserRoleOnSelf() {
-        return SecurityUtils.getLoginUserRoleFor(dto.getClass(), getId());
-    }
-
-    private Role getLoginUserRoleOnAncestorOfDtoClassIfHigher(final Role baseRole, final Object dto) {
+    private Set<Role> getLoginUserRoleOnAncestorIfHigher(final Object dto) {
         final Field parentIdField = determineFieldWithAnnotation(dto.getClass(), ParentId.class);
 
         if (parentIdField == null) {
-            return baseRole;
+            return singletonSet(Role.ANYBODY);
         }
 
         final ParentId parentIdAnnot = parentIdField.getAnnotation(ParentId.class);
@@ -72,10 +80,23 @@ abstract class JSonAccessFilter<T> {
 
         final Class<?> parentDtoClass = ReflectionUtil.<T> determineGenericInterfaceParameter(parentDtoLoader, rawType, 0);
         final Long parentId = ReflectionUtil.getValue(dto, parentIdField);
-        final Role roleOnParent = SecurityUtils.getLoginUserRoleFor(parentDtoClass, parentId);
+        final Set<Role> rolesOnParent = getLoginUserDirectRolesFor(parentDtoClass, parentId);
 
         final Object parentEntity = loadDto(parentDtoLoader, parentId);
-        return Role.broadest(baseRole, getLoginUserRoleOnAncestorOfDtoClassIfHigher(roleOnParent, parentEntity));
+        return union(rolesOnParent, getLoginUserRoleOnAncestorIfHigher(parentEntity));
+    }
+
+    private Set<Role> getLoginUserDirectRolesFor(final Class<?> dtoClass, final Long id) {
+        if (!SecurityUtils.isAuthenticated()) {
+            return singletonSet(Role.ANYBODY);
+        }
+
+        final EntityTypeId entityTypeId = dtoClass.getAnnotation(EntityTypeId.class);
+        if (entityTypeId == null) {
+            return singletonSet(Role.ANYBODY); // TODO mhoennig: all of such singletonSets -> emptySet
+        }
+
+        return userRoleAssignmentService.getEffectiveRoleOfCurrentUser(entityTypeId.value(), id);
     }
 
     @SuppressWarnings("unchecked")
