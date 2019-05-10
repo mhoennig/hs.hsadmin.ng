@@ -6,6 +6,7 @@ import static com.google.common.base.Verify.verify;
 import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 
 import java.lang.reflect.Field;
+import java.util.Optional;
 
 /**
  * These enum values are on the one hand used to define the minimum role required to grant access to resources,
@@ -94,21 +95,21 @@ public enum Role {
     IGNORED;
 
     private final Integer level;
-    private final String authority;
+    private final Optional<String> authority;
 
     Role(final int level, final String authority) {
         this.level = level;
-        this.authority = authority;
+        this.authority = Optional.of(authority);
     }
 
     Role(final int level) {
         this.level = level;
-        this.authority = AuthoritiesConstants.USER;
+        this.authority = Optional.empty();
     }
 
     Role() {
         this.level = null;
-        this.authority = null;
+        this.authority = Optional.empty();
     }
 
     /**
@@ -124,7 +125,12 @@ public enum Role {
         return updateAccessFor.length == 1 && updateAccessFor[0].isIgnored();
     }
 
-    public String asAuthority() {
+    /**
+     * @return the independent authority related 1:1 to this Role or empty if no independent authority is related 1:1
+     *
+     * @see AuthoritiesConstants
+     */
+    public Optional<String> getAuthority() {
         return authority;
     }
 
@@ -133,13 +139,6 @@ public enum Role {
      */
     public boolean isIgnored() {
         return this == Role.IGNORED;
-    }
-
-    /**
-     * @return true if this role is independent of a target object, false otherwise.
-     */
-    public boolean isIndependent() {
-        return this != NOBODY && (this == ANYBODY || covers(Role.SUPPORTER));
     }
 
     /**

@@ -59,8 +59,10 @@ abstract class JSonAccessFilter<T> {
      */
     Set<Role> getLoginUserRoles() {
         final Set<Role> independentRoles = Arrays.stream(Role.values())
-                // TODO mhoennig: ugly and risky filter condition => refactor!
-                .filter(role -> role.isIndependent() && SecurityUtils.isCurrentUserInRole(role.asAuthority()))
+                .filter(
+                        role -> role.getAuthority()
+                                .map(authority -> SecurityUtils.isCurrentUserInRole(authority))
+                                .orElse(false))
                 .collect(Collectors.toSet());
 
         final Set<Role> rolesOnThis = getId() != null ? getLoginUserDirectRolesFor(dto.getClass(), getId()) : EMPTY_SET;

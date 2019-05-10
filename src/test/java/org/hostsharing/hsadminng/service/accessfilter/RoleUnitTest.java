@@ -4,6 +4,8 @@ package org.hostsharing.hsadminng.service.accessfilter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
+
 import com.google.common.base.VerifyException;
 
 import org.junit.Test;
@@ -96,22 +98,6 @@ public class RoleUnitTest {
     }
 
     @Test
-    public void isNdependend() {
-        assertThat(Role.NOBODY.isIndependent()).isFalse();
-
-        assertThat(Role.HOSTMASTER.isIndependent()).isTrue();
-        assertThat(Role.ADMIN.isIndependent()).isTrue();
-        assertThat(Role.SUPPORTER.isIndependent()).isTrue();
-
-        assertThat(Role.CONTRACTUAL_CONTACT.isIndependent()).isFalse();
-        assertThat(Role.FINANCIAL_CONTACT.isIndependent()).isFalse();
-        assertThat(Role.ACTUAL_CUSTOMER_USER.isIndependent()).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.isIndependent()).isFalse();
-
-        assertThat(Role.ANYBODY.isIndependent()).isTrue();
-    }
-
-    @Test
     public void isIgnored() {
         for (Role role : Role.values()) {
             if (role == Role.IGNORED) {
@@ -131,20 +117,13 @@ public class RoleUnitTest {
     }
 
     @Test
-    public void isIndependent() {
-        assertThat(Role.HOSTMASTER.isIndependent()).isTrue();
-        assertThat(Role.SUPPORTER.isIndependent()).isTrue();
-
-        assertThat(Role.CONTRACTUAL_CONTACT.isIndependent()).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.isIndependent()).isFalse();
-    }
-
-    @Test
-    public void asAuthority() {
-        assertThat(Role.HOSTMASTER.asAuthority()).isEqualTo("ROLE_HOSTMASTER");
-        assertThat(Role.ADMIN.asAuthority()).isEqualTo("ROLE_ADMIN");
-        assertThat(Role.SUPPORTER.asAuthority()).isEqualTo("ROLE_SUPPORTER");
-        assertThat(Role.CONTRACTUAL_CONTACT.asAuthority()).isEqualTo("ROLE_USER");
+    public void getAuthority() {
+        assertThat(Role.NOBODY.getAuthority()).isEmpty();
+        assertThat(Role.HOSTMASTER.getAuthority()).hasValue(AuthoritiesConstants.HOSTMASTER);
+        assertThat(Role.ADMIN.getAuthority()).hasValue(AuthoritiesConstants.ADMIN);
+        assertThat(Role.SUPPORTER.getAuthority()).hasValue(AuthoritiesConstants.SUPPORTER);
+        assertThat(Role.CONTRACTUAL_CONTACT.getAuthority()).isEmpty();
+        assertThat(Role.ANYBODY.getAuthority()).hasValue(AuthoritiesConstants.ANONYMOUS);
     }
 
     @Test
