@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
-public class UserRoleAssignmentService {
+public class UserRoleAssignmentService implements IdToDtoResolver<UserRoleAssignment> {
 
     private final Logger log = LoggerFactory.getLogger(UserRoleAssignmentService.class);
 

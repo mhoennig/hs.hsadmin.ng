@@ -11,9 +11,11 @@ import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
 import org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentQueryService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.SecurityContextFake;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
 
 import org.junit.Before;
@@ -94,6 +96,8 @@ public class UserRoleAssignmentResourceIntTest {
                 .setMessageConverters(jacksonMessageConverter)
                 .setValidator(validator)
                 .build();
+
+        SecurityContextFake.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
     }
 
     /**
@@ -103,9 +107,13 @@ public class UserRoleAssignmentResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static UserRoleAssignment createEntity(EntityManager em) {
+        User user = UserResourceIntTest.createEntity(em);
+        em.persist(user);
+        em.flush();
         UserRoleAssignment userRoleAssignment = new UserRoleAssignment()
                 .entityTypeId(DEFAULT_ENTITY_TYPE_ID)
                 .entityObjectId(DEFAULT_ENTITY_OBJECT_ID)
+                .user(user)
                 .assignedRole(DEFAULT_ASSIGNED_ROLE);
         return userRoleAssignment;
     }
@@ -121,6 +129,7 @@ public class UserRoleAssignmentResourceIntTest {
         int databaseSizeBeforeCreate = userRoleAssignmentRepository.findAll().size();
 
         // Create the UserRoleAssignment
+        SecurityContextFake.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
         restUserRoleAssignmentMockMvc.perform(
                 post("/api/user-role-assignments")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -460,6 +469,7 @@ public class UserRoleAssignmentResourceIntTest {
         int databaseSizeBeforeUpdate = userRoleAssignmentRepository.findAll().size();
 
         // Update the userRoleAssignment
+        SecurityContextFake.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
         UserRoleAssignment updatedUserRoleAssignment = userRoleAssignmentRepository.findById(userRoleAssignment.getId()).get();
         // Disconnect from session so that the updates on updatedUserRoleAssignment are not directly saved in db
         em.detach(updatedUserRoleAssignment);

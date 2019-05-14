@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -118,12 +119,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openStringField", null)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);
 
         // then
         assertThat(actualDto.openStringField).isNull();
@@ -139,12 +135,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openStringField", "String Value")));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);
 
         // then
         assertThat(actualDto.openStringField).isEqualTo("String Value");
@@ -160,12 +151,9 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openIntegerField", 1234)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        // @formatter:off
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);;
+        // @formatter:on
 
         // then
         assertThat(actualDto.openIntegerField).isEqualTo(1234);
@@ -182,12 +170,8 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedBigDecimalField", SOME_BIG_DECIMAL_WITH_ANOTHER_SCALE)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);
+        ;
 
         // then
         assertThat(actualDto.restrictedBigDecimalField).isEqualByComparingTo(SOME_BIG_DECIMAL);
@@ -217,12 +201,8 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openEnumField", TestEnum.GREEN)));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);
+        ;
 
         // then
         assertThat(actualDto.openIntegerField).isEqualTo(11);
@@ -247,13 +227,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("openArrayField", Arrays.asList(11, 22, 33))));
 
         // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenDto.class).deserialize());
+        Throwable exception = catchThrowable(() -> deserializerForGivenDto().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOf(NotImplementedException.class);
@@ -271,12 +245,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "update value of restricted field")));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);
 
         // then
         assertThat(actualDto.restrictedField).isEqualTo("update value of restricted field");
@@ -294,12 +263,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "initial value of restricted field")));
 
         // when
-        GivenDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenDto.class).deserialize();
+        final GivenDto actualDto = deserializerForGivenDto().deserialize(jsonParser, null);
 
         // then
         assertThat(actualDto.restrictedField).isEqualTo("initial value of restricted field");
@@ -316,13 +280,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "updated value of restricted field")));
 
         // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenDto.class).deserialize());
+        final Throwable exception = catchThrowable(() -> deserializerForGivenDto().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -342,13 +300,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "another value of restricted field")));
 
         // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenDto.class).deserialize());
+        final Throwable exception = catchThrowable(() -> deserializerForGivenDto().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -368,12 +320,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
 
         // when
         Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenChildDto.class).deserialize());
+                () -> deserializerForGivenChildDto().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -392,13 +339,8 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("parentId", 1234L)));
 
         // when
-        final GivenChildDto actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                GivenChildDto.class)
-                        .deserialize();
+        final GivenChildDto actualDto = deserializerForGivenChildDto().deserialize(jsonParser, null);
+        ;
 
         // then
         assertThat(actualDto.parentId).isEqualTo(1234L);
@@ -416,13 +358,8 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                         ImmutablePair.of("restrictedField", "Restricted String Value")));
 
         // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenDto.class).deserialize());
+        final Throwable exception = catchThrowable(
+                () -> deserializerForGivenDto().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
@@ -437,14 +374,8 @@ public class JSonDeserializationWithAccessFilterUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("id", 1111L)));
 
         // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenDtoWithMultipleSelfId.class)
-                                .deserialize());
+        final Throwable exception = catchThrowable(
+                () -> deserializerForGivenDtoWithMultipleSelfId().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOf(AssertionError.class)
@@ -458,14 +389,8 @@ public class JSonDeserializationWithAccessFilterUnitTest {
         givenJSonTree(asJSon(ImmutablePair.of("unknown", new Arbitrary())));
 
         // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        GivenDtoWithUnknownFieldType.class)
-                                .deserialize());
+        final Throwable exception = catchThrowable(
+                () -> deserializerForGivenDtoWithUnknownFieldType().deserialize(jsonParser, null));
 
         // then
         assertThat(exception).isInstanceOf(NotImplementedException.class)
@@ -482,4 +407,30 @@ public class JSonDeserializationWithAccessFilterUnitTest {
         given(codec.readTree(jsonParser)).willReturn(new ObjectMapper().readTree(givenJSon));
     }
 
+    // We need specialied factories for the deserializer subclasses so that the generic type can be accessed via reflection.
+    // And it's down here to keep the ugly formatting out of the test cases.
+
+    public JsonDeserializerWithAccessFilter<GivenDto> deserializerForGivenDto() throws IOException {
+        return new JsonDeserializerWithAccessFilter<GivenDto>(ctx, userRoleAssignmentService) {
+            // no need to overload any method here
+        };
+    }
+
+    public JsonDeserializerWithAccessFilter<GivenChildDto> deserializerForGivenChildDto() throws IOException {
+        return new JsonDeserializerWithAccessFilter<GivenChildDto>(ctx, userRoleAssignmentService) {
+            // no need to overload any method here
+        };
+    }
+
+    private JsonDeserializer<GivenDtoWithMultipleSelfId> deserializerForGivenDtoWithMultipleSelfId() {
+        return new JsonDeserializerWithAccessFilter<GivenDtoWithMultipleSelfId>(ctx, userRoleAssignmentService) {
+            // no need to overload any method here
+        };
+    }
+
+    private JsonDeserializer<GivenDtoWithUnknownFieldType> deserializerForGivenDtoWithUnknownFieldType() {
+        return new JsonDeserializerWithAccessFilter<GivenDtoWithUnknownFieldType>(ctx, userRoleAssignmentService) {
+            // no need to overload any method here
+        };
+    }
 }

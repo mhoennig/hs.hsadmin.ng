@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-abstract class JSonAccessFilter<T> {
+abstract class JSonAccessFilter<T extends AccessMappings> {
 
     private final ApplicationContext ctx;
     private final UserRoleAssignmentService userRoleAssignmentService;

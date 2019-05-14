@@ -48,14 +48,14 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
     @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private Long customerId;
 
-    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(update = Role.IGNORED, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
     private String customerPrefix;
 
-    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
-    private String displayLabel;
-
-    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.FINANCIAL_CONTACT)
+    @AccessFor(update = Role.IGNORED, read = Role.FINANCIAL_CONTACT)
     private String customerDisplayLabel;
+
+    @AccessFor(update = Role.IGNORED, read = Role.FINANCIAL_CONTACT)
+    private String displayLabel;
 
     public Long getId() {
         return id;
@@ -121,20 +121,20 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
         this.customerPrefix = customerPrefix;
     }
 
-    public String getDisplayLabel() {
-        return displayLabel;
-    }
-
-    public void setDisplayLabel(final String displayLabel) {
-        this.displayLabel = displayLabel;
-    }
-
     public String getCustomerDisplayLabel() {
         return customerDisplayLabel;
     }
 
     public void setCustomerDisplayLabel(final String customerDisplayLabel) {
         this.customerDisplayLabel = customerDisplayLabel;
+    }
+
+    public String getDisplayLabel() {
+        return displayLabel;
+    }
+
+    public void setDisplayLabel(final String displayLabel) {
+        this.displayLabel = displayLabel;
     }
 
     @Override
@@ -168,14 +168,16 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
                 ", memberUntilDate='" + getMemberUntilDate() + "'" +
                 ", remark='" + getRemark() + "'" +
                 ", customer=" + getCustomerId() +
-                ", customer='" + getCustomerPrefix() + "'" +
+                ", customerPrefix='" + getCustomerPrefix() + "'" +
+                ", customerDisplayLabel='" + getCustomerDisplayLabel() + "'" +
+                ", displayLabel='" + getDisplayLabel() + "'" +
                 "}";
     }
 
     @JsonComponent
-    public static class MembershipJsonSerializer extends JsonSerializerWithAccessFilter<MembershipDTO> {
+    public static class JsonSerializer extends JsonSerializerWithAccessFilter<MembershipDTO> {
 
-        public MembershipJsonSerializer(
+        public JsonSerializer(
                 final ApplicationContext ctx,
                 final UserRoleAssignmentService userRoleAssignmentService) {
             super(ctx, userRoleAssignmentService);
@@ -183,9 +185,9 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
     }
 
     @JsonComponent
-    public static class MembershipJsonDeserializer extends JsonDeserializerWithAccessFilter<MembershipDTO> {
+    public static class JsonDeserializer extends JsonDeserializerWithAccessFilter<MembershipDTO> {
 
-        public MembershipJsonDeserializer(
+        public JsonDeserializer(
                 final ApplicationContext ctx,
                 final UserRoleAssignmentService userRoleAssignmentService) {
             super(ctx, userRoleAssignmentService);

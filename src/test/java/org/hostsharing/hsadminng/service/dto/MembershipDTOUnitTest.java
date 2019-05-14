@@ -1,127 +1,104 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
-import static org.mockito.BDDMockito.given;
-
-import org.hostsharing.hsadminng.security.AuthoritiesConstants;
-import org.hostsharing.hsadminng.service.CustomerService;
-import org.hostsharing.hsadminng.service.MembershipService;
-import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.JSonDeserializationWithAccessFilter;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
-import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.junit.Before;
-import org.junit.Rule;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.context.ApplicationContext;
 
-import java.io.IOException;
-import java.util.Optional;
+import java.time.LocalDate;
 
-public class MembershipDTOUnitTest {
+public class MembershipDTOUnitTest extends AccessMappingsUnitTestBase<MembershipDTO> {
 
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-    @Mock
-    private ApplicationContext ctx;
-
-    @Mock
-    private AutowireCapableBeanFactory autowireCapableBeanFactory;
-
-    @Mock
-    private JsonParser jsonParser;
-
-    @Mock
-    private ObjectCodec codec;
-
-    @Mock
-    private TreeNode treeNode;
-
-    @Mock
-    private UserRoleAssignmentService userRoleAssignmentService;
-
-    @Mock
-    private MembershipService membershipService;
-
-    @Mock
-    private CustomerService customerService;
-
-    private SecurityContextMock securityContext;
-
-    @Before
-    public void init() {
-        given(jsonParser.getCodec()).willReturn(codec);
-
-        given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
-        given(autowireCapableBeanFactory.createBean(MembershipService.class)).willReturn(membershipService);
-        given(autowireCapableBeanFactory.createBean(CustomerService.class)).willReturn(customerService);
-        given(customerService.findOne(1234L)).willReturn(
-                Optional.of(
-                        new CustomerDTO()
-                                .with(dto -> dto.setId(1234L))));
-
-        securityContext = SecurityContextMock.usingMock(userRoleAssignmentService);
+    public MembershipDTOUnitTest() {
+        super(MembershipDTO.class, MembershipDTOUnitTest::createSampleDTO, MembershipDTOUnitTest::createRandomDTO);
     }
 
     @Test
-    public void adminShouldHaveRightToCreate() throws IOException {
-        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
-        givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
-
-        // when
-        final MembershipDTO actualDto = new JSonDeserializationWithAccessFilter<>(
-                ctx,
-                userRoleAssignmentService,
-                jsonParser,
-                null,
-                MembershipDTO.class)
-                        .deserialize();
-
-        // then
-        assertThat(actualDto.getCustomerId()).isEqualTo(1234L);
+    public void shouldHaveProperAccessForAdmin() {
+        initAccessFor(MembershipDTO.class, Role.ADMIN).shouldBeExactlyFor(
+                "admissionDocumentDate",
+                "cancellationDocumentDate",
+                "memberFromDate",
+                "memberUntilDate",
+                "customerId",
+                "remark");
+        updateAccessFor(MembershipDTO.class, Role.ADMIN).shouldBeExactlyFor(
+                "cancellationDocumentDate",
+                "memberUntilDate",
+                "remark");
+        readAccessFor(MembershipDTO.class, Role.ADMIN).shouldBeForAllFields();
     }
 
     @Test
-    public void contractualContactShouldNotHaveRightToCreate() throws IOException {
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CONTRACTUAL_CONTACT);
-        givenJSonTree(asJSon(ImmutablePair.of("customerId", 1234L)));
-
-        // when
-        Throwable exception = catchThrowable(
-                () -> new JSonDeserializationWithAccessFilter<>(
-                        ctx,
-                        userRoleAssignmentService,
-                        jsonParser,
-                        null,
-                        MembershipDTO.class).deserialize());
-
-        // then
-        assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, badRequestAlertException -> {
-            assertThat(badRequestAlertException.getParam()).isEqualTo("MembershipDTO.customerId");
-            assertThat(badRequestAlertException.getErrorKey()).isEqualTo("referencingProhibited");
-        });
+    public void shouldHaveProperAccessForSupporter() {
+        initAccessFor(MembershipDTO.class, Role.SUPPORTER).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.SUPPORTER).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.SUPPORTER).shouldBeForAllFields();
     }
 
-    // --- only fixture code below ---
-
-    private void givenJSonTree(String givenJSon) throws IOException {
-        given(codec.readTree(jsonParser)).willReturn(new ObjectMapper().readTree(givenJSon));
+    @Test
+    public void shouldHaveProperAccessForContractualContact() {
+        initAccessFor(MembershipDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+                "id",
+                "admissionDocumentDate",
+                "cancellationDocumentDate",
+                "memberFromDate",
+                "memberUntilDate",
+                "customerId",
+                "customerPrefix",
+                "customerDisplayLabel",
+                "displayLabel");
     }
 
+    @Test
+    public void shouldHaveNoAccessForTechnicalContact() {
+        initAccessFor(MembershipDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+    }
+
+    @Test
+    public void shouldHaveNoAccessForNormalUsersWithinCustomerRealm() {
+        initAccessFor(MembershipDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+    }
+
+    // --- only test fixture below ---
+
+    public static MembershipDTO createSampleDTO(final Long id, final Long parentId) {
+        final MembershipDTO dto = new MembershipDTO();
+        dto.setId(id);
+        final LocalDate referenceDate = LocalDate.parse("2000-12-07");
+        dto.setAdmissionDocumentDate(referenceDate);
+        dto.setCancellationDocumentDate(referenceDate.plusDays(3500));
+        dto.setMemberFromDate(referenceDate.plusDays(4));
+        dto.setMemberUntilDate(referenceDate.plusDays(3500).plusDays(400).withDayOfYear(1).minusDays(1));
+        dto.setRemark("Some Remark");
+        dto.setCustomerId(parentId);
+        dto.setCustomerPrefix("abc");
+        dto.setCustomerDisplayLabel("ABC GmbH [abc:10001]");
+        dto.setDisplayLabel("ABC GmbH [abc:10001] 2000-12-11 - 2011-12-31");
+        return dto;
+    }
+
+    public static MembershipDTO createRandomDTO(final Long id, final Long parentId) {
+        final MembershipDTO dto = new MembershipDTO();
+        dto.setId(id);
+        final LocalDate randomDate = LocalDate.parse("2000-12-07").plusDays(RandomUtils.nextInt(1, 999));
+        dto.setAdmissionDocumentDate(randomDate);
+        dto.setCancellationDocumentDate(randomDate.plusDays(3500));
+        dto.setMemberFromDate(randomDate.plusDays(4));
+        dto.setMemberUntilDate(randomDate.plusDays(3500).plusDays(400).withDayOfYear(1).minusDays(1));
+        dto.setRemark(RandomStringUtils.randomAlphanumeric(20).toUpperCase());
+        dto.setCustomerId(parentId);
+        dto.setCustomerPrefix(RandomStringUtils.randomAlphabetic(3).toLowerCase());
+        dto.setCustomerDisplayLabel(RandomStringUtils.randomAlphabetic(13));
+        dto.setDisplayLabel(dto.getCustomerDisplayLabel() + dto.getMemberFromDate() + " - " + dto.getMemberUntilDate());
+        return dto;
+    }
 }

@@ -180,6 +180,9 @@ public class MembershipResourceIntTest {
 
         // Create the Membership
         MembershipDTO membershipDTO = membershipMapper.toDto(membership);
+        membershipDTO.setCustomerPrefix(null);
+        membershipDTO.setCustomerDisplayLabel(null);
+        membershipDTO.setDisplayLabel(null);
         restMembershipMockMvc.perform(
                 post("/api/memberships")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)

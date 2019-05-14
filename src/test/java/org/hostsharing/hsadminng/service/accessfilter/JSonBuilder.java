@@ -20,6 +20,9 @@ public class JSonBuilder {
                 json.append(prop.right);
             } else if (prop.right instanceof List) {
                 json.append(toJSonArray(prop.right));
+            } else if (prop.right instanceof String && ((String) prop.right).startsWith("{\n")) {
+                // TODO mhoennig: find better solution for adding object nodes
+                json.append(prop.right);
             } else {
                 json.append(inQuotes(prop.right));
             }
@@ -44,12 +47,23 @@ public class JSonBuilder {
     }
 
     public JSonBuilder withFieldValueIfPresent(String name, String value) {
-        json.append(value != null ? inQuotes(name) + ":" + inQuotes(value) + "," : "");
+        if (value != null) {
+            json.append(inQuotes(name) + ":" + inQuotes(value) + ",");
+        }
         return this;
     }
 
     public JSonBuilder withFieldValueIfPresent(String name, Number value) {
-        json.append(value != null ? inQuotes(name) + ":" + value + "," : "");
+        if (value != null) {
+            json.append(inQuotes(name) + ":" + value + ",");
+        }
+        return this;
+    }
+
+    public <E extends Enum<E>> JSonBuilder withFieldValueIfPresent(final String name, final E value) {
+        if (value != null) {
+            json.append(inQuotes(name) + ":" + inQuotes(value.name()) + ",");
+        }
         return this;
     }
 
@@ -74,5 +88,4 @@ public class JSonBuilder {
     private static String inQuotes(Object value) {
         return value != null ? "\"" + value.toString() + "\"" : "null";
     }
-
 }

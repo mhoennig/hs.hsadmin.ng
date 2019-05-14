@@ -49,7 +49,7 @@ public class JSonAccessFilterTestFixture {
     }
 
     @EntityTypeId("test.Given")
-    static class GivenDto implements FluentBuilder<GivenDto> {
+    static class GivenDto implements AccessMappings, FluentBuilder<GivenDto> {
 
         @SelfId(resolver = GivenService.class)
         @AccessFor(read = ANYBODY)
@@ -119,7 +119,7 @@ public class JSonAccessFilterTestFixture {
     static abstract class GivenChildService implements IdToDtoResolver<GivenChildDto> {
     }
 
-    public static class GivenChildDto implements FluentBuilder<GivenChildDto> {
+    public static class GivenChildDto implements AccessMappings, FluentBuilder<GivenChildDto> {
 
         @SelfId(resolver = GivenChildService.class)
         @AccessFor(read = Role.ANY_CUSTOMER_USER)
@@ -133,7 +133,7 @@ public class JSonAccessFilterTestFixture {
         String restrictedField;
     }
 
-    public static class GivenDtoWithMultipleSelfId {
+    public static class GivenDtoWithMultipleSelfId implements AccessMappings {
 
         @SelfId(resolver = GivenChildService.class)
         @AccessFor(read = Role.ANY_CUSTOMER_USER)
@@ -145,7 +145,7 @@ public class JSonAccessFilterTestFixture {
 
     }
 
-    public static class GivenDtoWithUnknownFieldType {
+    public static class GivenDtoWithUnknownFieldType implements AccessMappings {
 
         @SelfId(resolver = GivenChildService.class)
         @AccessFor(read = Role.ANYBODY)
