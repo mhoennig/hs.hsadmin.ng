@@ -137,9 +137,24 @@ public class ReflectionUtil {
         T get() throws Exception;
     }
 
-    public static <T> T unchecked(final ThrowingSupplier<T> supplier) {
+    /**
+     * Catches checked exceptions and wraps these into an unchecked RuntimeException.
+     * <p>
+     * Rationale: Checked exceptions are a controversial Java feature to begin with.
+     * They often mix error handling code into the normal flow of domain rules
+     * or other technical aspects which is not only hard to read but also violates
+     * the Single Responsibility Principle. Often this is even worse for expressions
+     * than it is for statements.
+     * </p>
+     *
+     * @param expression an expresion which returns a T and may throw a checked exception
+     * @param <T> the result type of the expression
+     * @return the result of the expression
+     * @throws RuntimeException which wraps a checked exception thrown by the expression
+     */
+    public static <T> T unchecked(final ThrowingSupplier<T> expression) {
         try {
-            return supplier.get();
+            return expression.get();
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }

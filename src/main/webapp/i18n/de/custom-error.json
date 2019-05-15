@@ -1,6 +1,7 @@
 {
     "error": {
         "idNotFound": "Technische Datensatz-ID nicht gefunden",
+        "unknownProperty": "Unbekannte Eigenschaft",
         "shareSubscriptionPositiveQuantity": "Zeichnungen von Geschäftsanteilen erfordern eine positive Stückzahl",
         "shareCancellationNegativeQuantity": "Kündigungen von Geschäftsanteilen erfordern eine negative Stückzahl",
         "shareTransactionImmutable": "Transaktionen mit Geschäftsanteilen sind unveränderlich",

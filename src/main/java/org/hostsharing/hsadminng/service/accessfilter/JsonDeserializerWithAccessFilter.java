@@ -163,7 +163,7 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
                     jsonFieldReader(node, field).readInto(dto);
                     updatingFields.add(field);
                 } catch (NoSuchFieldException e) {
-                    throw new RuntimeException("setting field " + fieldName + " failed", e);
+                    throw new BadRequestAlertException("Unknown property", fieldName, "unknownProperty");
                 }
             });
         }

@@ -399,6 +399,24 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                 .hasMessageContaining("GivenDtoWithUnknownFieldType.unknown");
     }
 
+    @Test
+    public void shouldDetectUnknownPropertyName() throws IOException {
+        // given
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        givenJSonTree(asJSon(ImmutablePair.of("somePropWhichDoesNotExist", "Some Value")));
+
+        // when
+        final Throwable exception = catchThrowable(
+                () -> deserializerForGivenDto().deserialize(jsonParser, null));
+
+        // then
+        assertThat(exception).isInstanceOfSatisfying(BadRequestAlertException.class, (exc) -> {
+            assertThat(exc).hasMessageStartingWith("Unknown property");
+            assertThat(exc.getParam()).isEqualTo("somePropWhichDoesNotExist");
+            assumeThat(exc.getErrorKey()).isEqualTo("unknownProperty");
+        });
+    }
+
     // --- only fixture code below ---
 
     private void givenJSonTree(String givenJSon) throws IOException {
