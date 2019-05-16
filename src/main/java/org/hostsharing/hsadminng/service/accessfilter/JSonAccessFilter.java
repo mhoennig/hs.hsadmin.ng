@@ -82,13 +82,16 @@ abstract class JSonAccessFilter<T extends AccessMappings> {
 
         final Class<?> parentDtoClass = ReflectionUtil.<T> determineGenericInterfaceParameter(parentDtoLoader, rawType, 0);
         final Long parentId = ReflectionUtil.getValue(dto, parentIdField);
+        if (parentId == null) {
+            return emptySet();
+        }
         final Set<Role> rolesOnParent = getLoginUserDirectRolesFor(parentDtoClass, parentId);
 
         final Object parentEntity = loadDto(parentDtoLoader, parentId);
         return union(rolesOnParent, getLoginUserRoleOnAncestorIfHigher(parentEntity));
     }
 
-    private Set<Role> getLoginUserDirectRolesFor(final Class<?> dtoClass, final Long id) {
+    private Set<Role> getLoginUserDirectRolesFor(final Class<?> dtoClass, final long id) {
         if (!SecurityUtils.isAuthenticated()) {
             return emptySet();
         }

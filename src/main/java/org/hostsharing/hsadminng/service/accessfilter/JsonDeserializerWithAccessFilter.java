@@ -199,36 +199,45 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
         private void checkAccessToWrittenFields(final T currentDto) {
             updatingFields.forEach(
                     field -> {
-                        // TODO this ugly code needs cleanup
                         if (!field.equals(selfIdField)) {
                             final Set<Role> roles = getLoginUserRoles();
                             if (isInitAccess()) {
-                                if (!isAllowedToInit(roles, field)) {
-                                    if (!field.equals(parentIdField)) {
-                                        throw new BadRequestAlertException(
-                                                "Initialization of field " + toDisplay(field)
-                                                        + " prohibited for current user role(s): "
-                                                        + Joiner.on("+").join(roles),
-                                                toDisplay(field),
-                                                "initializationProhibited");
-                                    } else {
-                                        throw new BadRequestAlertException(
-                                                "Referencing field " + toDisplay(field)
-                                                        + " prohibited for current user role(s): "
-                                                        + Joiner.on("+").join(roles),
-                                                toDisplay(field),
-                                                "referencingProhibited");
-                                    }
-                                }
-                            } else if (!Role.toBeIgnoredForUpdates(field) && !isAllowedToUpdate(getLoginUserRoles(), field)) {
-                                throw new BadRequestAlertException(
-                                        "Update of field " + toDisplay(field) + " prohibited for current user role(s): "
-                                                + Joiner.on("+").join(roles),
-                                        toDisplay(field),
-                                        "updateProhibited");
+                                validateInitAccess(field, roles);
+                            } else {
+                                validateUpdateAccess(field, roles);
                             }
                         }
                     });
+        }
+
+        private void validateInitAccess(Field field, Set<Role> roles) {
+            if (!Role.toBeIgnoredForUpdates(field) && !isAllowedToInit(roles, field)) {
+                if (!field.equals(parentIdField)) {
+                    throw new BadRequestAlertException(
+                            "Initialization of field " + toDisplay(field)
+                                    + " prohibited for current user role(s): "
+                                    + Joiner.on("+").join(roles),
+                            toDisplay(field),
+                            "initializationProhibited");
+                } else {
+                    throw new BadRequestAlertException(
+                            "Referencing field " + toDisplay(field)
+                                    + " prohibited for current user role(s): "
+                                    + Joiner.on("+").join(roles),
+                            toDisplay(field),
+                            "referencingProhibited");
+                }
+            }
+        }
+
+        private void validateUpdateAccess(Field field, Set<Role> roles) {
+            if (!Role.toBeIgnoredForUpdates(field) && !isAllowedToUpdate(getLoginUserRoles(), field)) {
+                throw new BadRequestAlertException(
+                        "Update of field " + toDisplay(field) + " prohibited for current user role(s): "
+                                + Joiner.on("+").join(roles),
+                        toDisplay(field),
+                        "updateProhibited");
+            }
         }
 
         private boolean isAllowedToInit(final Set<Role> roles, final Field field) {

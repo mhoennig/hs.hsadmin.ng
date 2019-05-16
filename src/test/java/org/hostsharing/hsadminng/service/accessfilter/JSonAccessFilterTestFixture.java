@@ -106,6 +106,9 @@ public class JSonAccessFilterTestFixture {
 
         @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
         int[] openArrayField;
+
+        @AccessFor(init = IGNORED, update = IGNORED, read = ANYBODY)
+        String displayLabel;
     }
 
     static abstract class GivenService implements IdToDtoResolver<GivenDto> {
