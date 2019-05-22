@@ -8,4 +8,6 @@ import java.io.Serializable;
  * {@link JsonDeserializerWithAccessFilter}.
  */
 public interface AccessMappings extends Serializable {
+
+    Long getId();
 }

@@ -197,7 +197,7 @@ public class UserRoleAssignment implements AccessMappings {
         protected JSonFieldReader<UserRoleAssignment> jsonFieldReader(final TreeNode treeNode, final Field field) {
             if ("user".equals(field.getName())) {
                 return (final UserRoleAssignment target) -> {
-                    target.setUser(userRepository.getOne(getSubNode(treeNode, "id")));
+                    target.setUser(userRepository.getOne(getSubNode(treeNode, "id").asLong()));
                 };
             }
 

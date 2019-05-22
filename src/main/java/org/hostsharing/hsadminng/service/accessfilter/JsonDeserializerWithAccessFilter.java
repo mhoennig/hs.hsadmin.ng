@@ -1,6 +1,7 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import static com.google.common.base.Verify.verify;
 import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
@@ -58,16 +59,24 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
         };
     }
 
-    protected final Long getSubNode(final TreeNode node, final String name) {
-        if (!node.isObject()) {
-            throw new IllegalArgumentException(node + " is not a JSON object");
-        }
+    /**
+     * Returns the named subnode of the given node.
+     * <p>
+     * If entities are used instead of DTOs, JHipster will generate code which sends
+     * complete entity trees to the REST endpoint. In most cases, we only need the "id",
+     * though.
+     * </p>
+     *
+     * @param node the JSON node of which a subnode is to be returned
+     * @param name the name of the subnode within 'node'
+     * @return the subnode of 'node' with the given 'name'
+     */
+    protected final JsonNode getSubNode(final TreeNode node, final String name) {
+        verify(node.isObject(), node + " is not a JSON object");
         final ObjectNode objectNode = (ObjectNode) node;
         final JsonNode subNode = objectNode.get(name);
-        if (!subNode.isNumber()) {
-            throw new IllegalArgumentException(node + "." + name + " is not a number");
-        }
-        return subNode.asLong();
+        verify(subNode.isNumber(), node + "." + name + " is not a number");
+        return subNode;
     }
 
     private Object readValueFromJSon(final TreeNode treeNode, final Field field) {
@@ -199,13 +208,11 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
         private void checkAccessToWrittenFields(final T currentDto) {
             updatingFields.forEach(
                     field -> {
-                        if (!field.equals(selfIdField)) {
-                            final Set<Role> roles = getLoginUserRoles();
-                            if (isInitAccess()) {
-                                validateInitAccess(field, roles);
-                            } else {
-                                validateUpdateAccess(field, roles);
-                            }
+                        final Set<Role> roles = getLoginUserRoles();
+                        if (isInitAccess()) {
+                            validateInitAccess(field, roles);
+                        } else {
+                            validateUpdateAccess(field, roles);
                         }
                     });
         }
@@ -265,11 +272,14 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
         private <F> boolean isActuallyUpdated(final Field field, final T dto, T currentDto) {
             final Object o1 = ReflectionUtil.getValue(dto, field);
             final Object o2 = ReflectionUtil.getValue(currentDto, field);
-            if (o1 != null && o2 != null && o1 instanceof Comparable && o2 instanceof Comparable) {
+
+            if (o1 instanceof Comparable && o2 instanceof Comparable) {
+                verify(
+                        o2 instanceof Comparable,
+                        "either neither or both objects must implement Comparable"); // $COVERAGE-IGNORE$
                 return 0 != ((Comparable) o1).compareTo(o2);
             }
             return ObjectUtils.notEqual(o1, o2);
         }
     }
-
 }

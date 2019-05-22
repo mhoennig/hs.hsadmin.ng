@@ -109,6 +109,11 @@ public class JSonAccessFilterTestFixture {
 
         @AccessFor(init = IGNORED, update = IGNORED, read = ANYBODY)
         String displayLabel;
+
+        @Override
+        public Long getId() {
+            return id;
+        }
     }
 
     static abstract class GivenService implements IdToDtoResolver<GivenDto> {
@@ -134,6 +139,11 @@ public class JSonAccessFilterTestFixture {
 
         @AccessFor(init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT }, update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
         String restrictedField;
+
+        @Override
+        public Long getId() {
+            return id;
+        }
     }
 
     public static class GivenDtoWithMultipleSelfId implements AccessMappings {
@@ -146,6 +156,10 @@ public class JSonAccessFilterTestFixture {
         @AccessFor(read = Role.ANY_CUSTOMER_USER)
         Long id2;
 
+        @Override
+        public Long getId() {
+            return id;
+        }
     }
 
     public static class GivenDtoWithUnknownFieldType implements AccessMappings {
@@ -157,8 +171,53 @@ public class JSonAccessFilterTestFixture {
         @AccessFor(init = Role.ANYBODY, read = Role.ANYBODY)
         Arbitrary unknown;
 
+        @Override
+        public Long getId() {
+            return id;
+        }
     }
 
     public static class Arbitrary {
     }
+
+    @EntityTypeId("givenParent")
+    public static class GivenParent implements AccessMappings, FluentBuilder<GivenParent> {
+
+        @SelfId(resolver = GivenParentService.class)
+        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        Long id;
+
+        @Override
+        public Long getId() {
+            return id;
+        }
+
+        public GivenParent id(final long id) {
+            this.id = id;
+            return this;
+        }
+    }
+
+    public static class GivenChild implements AccessMappings, FluentBuilder<GivenChild> {
+
+        @SelfId(resolver = GivenChildService.class)
+        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        Long id;
+
+        @AccessFor(init = Role.CONTRACTUAL_CONTACT, update = Role.CONTRACTUAL_CONTACT, read = ACTUAL_CUSTOMER_USER)
+        @ParentId(resolver = GivenParentService.class)
+        GivenParent parent;
+
+        @AccessFor(init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT }, update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
+        String restrictedField;
+
+        @Override
+        public Long getId() {
+            return id;
+        }
+    }
+
+    static abstract class GivenParentService implements IdToDtoResolver<GivenParent> {
+    }
+
 }

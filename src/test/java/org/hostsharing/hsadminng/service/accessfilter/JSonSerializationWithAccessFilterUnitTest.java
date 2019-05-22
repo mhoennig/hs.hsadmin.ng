@@ -190,6 +190,11 @@ public class JSonSerializationWithAccessFilterUnitTest {
 
             @AccessFor(read = Role.ANYBODY)
             Arbitrary fieldWithUnimplementedType = new Arbitrary();
+
+            @Override
+            public Long getId() {
+                return null;
+            }
         }
         final GivenDtoWithUnimplementedFieldType givenDtoWithUnimplementedFieldType = new GivenDtoWithUnimplementedFieldType();
         SecurityContextFake.havingAuthenticatedUser();

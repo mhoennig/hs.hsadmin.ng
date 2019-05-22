@@ -31,6 +31,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -72,6 +73,9 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     private GivenChildService givenChildService;
 
     @Mock
+    private GivenParentService givenParentService;
+
+    @Mock
     private GivenCustomerService givenCustomerService;
     private SecurityContextMock securityContext;
 
@@ -105,6 +109,9 @@ public class JSonDeserializationWithAccessFilterUnitTest {
                 Optional.of(
                         new GivenCustomerDto()
                                 .with(dto -> dto.id = 888L)));
+
+        given(autowireCapableBeanFactory.createBean(GivenChildService.class)).willReturn(givenChildService);
+        given(autowireCapableBeanFactory.createBean(GivenParentService.class)).willReturn(givenParentService);
 
         given(jsonParser.getCodec()).willReturn(codec);
     }
@@ -347,6 +354,26 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     }
 
     @Test
+    public void shouldResolveParentIdFromIdOfSerializedSubEntity() throws IOException {
+        // given
+        securityContext.havingAuthenticatedUser()
+                .withRole(GivenParent.class, 1234L, Role.CONTRACTUAL_CONTACT);
+        givenJSonTree(
+                asJSon(
+                        ImmutablePair.of(
+                                "parent",
+                                asJSon(
+                                        ImmutablePair.of("id", 1234L)))));
+        given(givenParentService.findOne(1234L)).willReturn(Optional.of(new GivenParent().id(1234)));
+
+        // when
+        final GivenChild actualDto = deserializerFor(GivenChild.class).deserialize(jsonParser, null);
+
+        // then
+        assertThat(actualDto.parent.id).isEqualTo(1234L);
+    }
+
+    @Test
     public void shouldNotUpdateFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
@@ -415,6 +442,34 @@ public class JSonDeserializationWithAccessFilterUnitTest {
             assertThat(exc.getParam()).isEqualTo("somePropWhichDoesNotExist");
             assumeThat(exc.getErrorKey()).isEqualTo("unknownProperty");
         });
+    }
+
+    @Test
+    public void shouldNotDeserializeArrayValue() throws IOException {
+        // given
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        givenJSonTree(asJSon(ImmutablePair.of("openStringField", Arrays.asList(1, 2))));
+
+        // when
+        final Throwable exception = catchThrowable(
+                () -> deserializerFor(GivenDto.class).deserialize(jsonParser, null));
+
+        // then
+        assertThat(exception).isInstanceOf(NotImplementedException.class);
+    }
+
+    @Test
+    public void shouldNotDeserializeObjectValue() throws IOException {
+        // given
+        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        givenJSonTree("{ \"openStringField\": {\"a\": 1, \"b\": 2 } }");
+
+        // when
+        final Throwable exception = catchThrowable(
+                () -> deserializerFor(GivenDto.class).deserialize(jsonParser, null));
+
+        // then
+        assertThat(exception).isInstanceOf(NotImplementedException.class);
     }
 
     @Test
@@ -496,4 +551,28 @@ public class JSonDeserializationWithAccessFilterUnitTest {
             // no need to overload any method here
         };
     }
+
+    public JsonDeserializerWithAccessFilter<GivenChild> deserializerFor(
+            final Class<GivenChild> clazz,
+            final GivenChild... qualifier) {
+        return new JsonDeserializerWithAccessFilter<GivenChild>(ctx, userRoleAssignmentService) {
+
+            @Override
+            protected JSonFieldReader<GivenChild> jsonFieldReader(final TreeNode treeNode, final Field field) {
+                if ("parent".equals(field.getName())) {
+                    return (final GivenChild target) -> {
+                        final long id = getSubNode(treeNode, "id").asLong();
+                        target.parent = givenParentService.findOne(id)
+                                .orElseThrow(
+                                        () -> new BadRequestAlertException(
+                                                GivenParent.class.getSimpleName() + "#" + id + " not found",
+                                                String.valueOf(id),
+                                                "idNotFound"));
+                    };
+                }
+                return super.jsonFieldReader(treeNode, field);
+            }
+        };
+    }
+
 }
