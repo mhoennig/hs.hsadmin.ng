@@ -10,6 +10,7 @@
     <!-- historicization for initial JHipster tables -->
     <include file="config/liquibase/historicization/historicization.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/historicization/historicization_User.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/historicization/historicization_UserAuthority.xml" relativeToChangelogFile="false"/>
 
     <!-- sample data. comes after historicization triggers, thus historicization applies -->
     <include file="config/liquibase/sample-data/users.xml" relativeToChangelogFile="false"/>
