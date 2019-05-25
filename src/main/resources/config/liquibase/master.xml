@@ -7,7 +7,11 @@
     <!-- initial JHipster tables (user etc.) -->
     <include file="config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
 
-    <!-- sample data. comes after historicization triggers, historicization applies -->
+    <!-- historicization for initial JHipster tables -->
+    <include file="config/liquibase/historicization/historicization.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/historicization/historicization_User.xml" relativeToChangelogFile="false"/>
+
+    <!-- sample data. comes after historicization triggers, thus historicization applies -->
     <include file="config/liquibase/sample-data/users.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/sample-data/users_authorities.xml" relativeToChangelogFile="false"/>
 
@@ -32,8 +36,7 @@
     <include file="config/liquibase/changelog/constraints_UserRoleAssignment.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/constraints_Membership.xml" relativeToChangelogFile="false"/>
 
-    <!-- historicization -->
-    <include file="config/liquibase/historicization/historicization.xml" relativeToChangelogFile="false"/>
+    <!-- historicization for hsadmin specific tables -->
     <include file="config/liquibase/historicization/historicization_UserRoleAssignment.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/historicization/historicization_Customer.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/historicization/historicization_Membership.xml" relativeToChangelogFile="false"/>

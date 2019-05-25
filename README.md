@@ -56,7 +56,7 @@ Then start the application with the pgsql profile:
     gw bootRun -Ppgsql
     gw bootRun -Ppgsql -Psample-data     # populated with sample data
 
-To use a **remote Postgres database** on a hostsharing server,
+To use a **remote Postgres database** on a Hostsharing server,
 
     autossh -M 0 -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" \
         -f -N -L 55432:127.0.0.1:5432 "xyz00@xyz.hostsharing.net"
