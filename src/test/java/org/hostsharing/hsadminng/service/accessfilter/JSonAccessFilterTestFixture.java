@@ -56,13 +56,13 @@ public class JSonAccessFilterTestFixture {
         Long id;
 
         @ParentId(resolver = GivenCustomerService.class)
-        @AccessFor(init = ACTUAL_CUSTOMER_USER, update = ACTUAL_CUSTOMER_USER, read = ACTUAL_CUSTOMER_USER)
+        @AccessFor(init = ANY_CUSTOMER_USER, update = ANY_CUSTOMER_USER, read = ANY_CUSTOMER_USER)
         Long customerId;
 
         @AccessFor(
-                init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT },
-                update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT },
-                read = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
+                init = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
+                update = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
+                read = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT })
         String restrictedField;
 
         @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
@@ -133,11 +133,18 @@ public class JSonAccessFilterTestFixture {
         @AccessFor(read = Role.ANY_CUSTOMER_USER)
         Long id;
 
-        @AccessFor(init = Role.CONTRACTUAL_CONTACT, update = Role.CONTRACTUAL_CONTACT, read = ACTUAL_CUSTOMER_USER)
+        @AccessFor(
+                init = Role.CUSTOMER_CONTRACTUAL_CONTACT,
+                update = Role.CUSTOMER_CONTRACTUAL_CONTACT,
+                read = ANY_CUSTOMER_USER)
         @ParentId(resolver = GivenService.class)
         Long parentId;
 
-        @AccessFor(init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT }, update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
+        @AccessFor(
+                init = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
+                update = {
+                        CUSTOMER_TECHNICAL_CONTACT,
+                        CUSTOMER_FINANCIAL_CONTACT })
         String restrictedField;
 
         @Override
@@ -204,11 +211,18 @@ public class JSonAccessFilterTestFixture {
         @AccessFor(read = Role.ANY_CUSTOMER_USER)
         Long id;
 
-        @AccessFor(init = Role.CONTRACTUAL_CONTACT, update = Role.CONTRACTUAL_CONTACT, read = ACTUAL_CUSTOMER_USER)
+        @AccessFor(
+                init = Role.CUSTOMER_CONTRACTUAL_CONTACT,
+                update = Role.CUSTOMER_CONTRACTUAL_CONTACT,
+                read = ANY_CUSTOMER_USER)
         @ParentId(resolver = GivenParentService.class)
         GivenParent parent;
 
-        @AccessFor(init = { TECHNICAL_CONTACT, FINANCIAL_CONTACT }, update = { TECHNICAL_CONTACT, FINANCIAL_CONTACT })
+        @AccessFor(
+                init = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
+                update = {
+                        CUSTOMER_TECHNICAL_CONTACT,
+                        CUSTOMER_FINANCIAL_CONTACT })
         String restrictedField;
 
         @Override

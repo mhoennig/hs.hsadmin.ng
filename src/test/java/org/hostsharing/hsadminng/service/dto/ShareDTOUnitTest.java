@@ -32,9 +32,9 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(ShareDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(ShareDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
-        readAccessFor(ShareDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(ShareDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(ShareDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
+        readAccessFor(ShareDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
                 "id",
                 "membershipId",
                 "documentDate",
@@ -46,9 +46,9 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(ShareDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(ShareDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(ShareDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(ShareDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(ShareDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        readAccessFor(ShareDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
     }
 
     @Test

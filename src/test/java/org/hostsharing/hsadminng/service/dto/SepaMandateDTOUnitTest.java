@@ -55,7 +55,7 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(SepaMandateDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
                 "grantingDocumentDate",
                 "bic",
                 "validUntilDate",
@@ -63,10 +63,10 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
                 "validFromDate",
                 "iban",
                 "reference");
-        updateAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        updateAccessFor(SepaMandateDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
                 "validUntilDate",
                 "revokationDocumentDate");
-        readAccessFor(SepaMandateDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        readAccessFor(SepaMandateDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
                 "grantingDocumentDate",
                 "bic",
                 "id",
@@ -82,9 +82,9 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(SepaMandateDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(SepaMandateDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(SepaMandateDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(SepaMandateDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(SepaMandateDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        readAccessFor(SepaMandateDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
     }
 
     @Test

@@ -75,7 +75,7 @@ public class UserRoleAssignmentUnitTest {
     public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, CUSTOMER_ID, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         UserRoleAssignment given = createSomeUserRoleAssignment(USER_ROLE_ASSIGNMENT_ID);
 
         // when
@@ -115,7 +115,7 @@ public class UserRoleAssignmentUnitTest {
                         "user",
                         JSonBuilder.asJSon(
                                 of("id", USER_ID))),
-                of("assignedRole", Role.TECHNICAL_CONTACT.name()));
+                of("assignedRole", Role.CUSTOMER_TECHNICAL_CONTACT.name()));
 
         // when
         UserRoleAssignment actual = objectMapper.readValue(json, UserRoleAssignment.class);
@@ -125,7 +125,7 @@ public class UserRoleAssignmentUnitTest {
         expected.setId(USER_ROLE_ASSIGNMENT_ID);
         expected.setEntityTypeId(Customer.ENTITY_TYPE_ID);
         expected.setEntityObjectId(CUSTOMER_ID);
-        expected.setAssignedRole(Role.TECHNICAL_CONTACT);
+        expected.setAssignedRole(Role.CUSTOMER_TECHNICAL_CONTACT);
         expected.setUser(expectedUser);
         assertThat(actual).isEqualToComparingFieldByField(expected);
     }
@@ -148,7 +148,7 @@ public class UserRoleAssignmentUnitTest {
         given.setEntityTypeId(Customer.ENTITY_TYPE_ID);
         given.setEntityObjectId(CUSTOMER_ID);
         given.setUser(new User().id(USER_ID));
-        given.setAssignedRole(Role.TECHNICAL_CONTACT);
+        given.setAssignedRole(Role.CUSTOMER_TECHNICAL_CONTACT);
         return given;
     }
 }

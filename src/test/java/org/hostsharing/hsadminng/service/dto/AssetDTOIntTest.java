@@ -129,7 +129,7 @@ public class AssetDTOIntTest {
 
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_FINANCIAL_CONTACT);
 
         final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
 
@@ -158,7 +158,8 @@ public class AssetDTOIntTest {
     @Test
     public void shouldNotDeserializeForContractualCustomerContact() {
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_ASSET_ID)
                 .withFieldValue("remark", "Updated Remark")
@@ -172,7 +173,7 @@ public class AssetDTOIntTest {
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage())
                         .isEqualTo(
-                                "Update of field AssetDTO.remark prohibited for current user role(s): CONTRACTUAL_CONTACT"));
+                                "Update of field AssetDTO.remark prohibited for current user role(s): CUSTOMER_CONTRACTUAL_CONTACT"));
     }
 
     @Test

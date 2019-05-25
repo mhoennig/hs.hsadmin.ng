@@ -116,7 +116,8 @@ public class SepaMandateDTOIntTest {
     public void shouldSerializePartiallyForFinancialCustomerContact() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_FINANCIAL_CONTACT);
         final SepaMandateDTO given = createSampleDTO(SOME_SEPA_MANDATE_ID, SOME_CUSTOMER_ID);
 
         // when
@@ -144,7 +145,8 @@ public class SepaMandateDTOIntTest {
     @Test
     public void shouldNotDeserializeForContractualCustomerContact() {
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SEPA_MANDATE_ID)
                 .withFieldValue("remark", "Updated Remark")
@@ -157,7 +159,7 @@ public class SepaMandateDTOIntTest {
         assertThat(actual).isInstanceOfSatisfying(
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage()).isEqualTo(
-                        "Update of field SepaMandateDTO.remark prohibited for current user role(s): CONTRACTUAL_CONTACT"));
+                        "Update of field SepaMandateDTO.remark prohibited for current user role(s): CUSTOMER_CONTRACTUAL_CONTACT"));
     }
 
     @Test

@@ -23,53 +23,56 @@ import javax.validation.constraints.Size;
 public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandateDTO> {
 
     @SelfId(resolver = SepaMandateService.class)
-    @AccessFor(read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private Long id;
 
     @NotNull
     @Size(max = 40)
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private String reference;
 
     @Size(max = 34)
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private String iban;
 
     @Size(max = 11)
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private String bic;
 
     @NotNull
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate grantingDocumentDate;
 
     @AccessFor(
             init = Role.ADMIN,
-            update = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            update = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate revokationDocumentDate;
 
     @NotNull
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate validFromDate;
 
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            update = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            update = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate validUntilDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(
+            init = Role.ADMIN,
+            update = Role.ADMIN,
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate lastUsedDate;
 
     @Size(max = 160)
@@ -78,11 +81,11 @@ public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandate
 
     @ParentId(resolver = CustomerService.class)
     @AccessFor(
-            init = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT },
-            read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private Long customerId;
 
-    @AccessFor(update = Role.IGNORED, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(update = Role.IGNORED, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private String customerDisplayLabel;
 
     public Long getId() {

@@ -157,7 +157,7 @@ public class JSonSerializationWithAccessFilterUnitTest {
     public void shouldSerializeRestrictedFieldIfRequiredRoleIsCoveredByUser() throws IOException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_FINANCIAL_CONTACT);
 
         // when
         serialize(givenDTO);

@@ -43,9 +43,9 @@
                     <label class="form-control-label" jhiTranslate="hsadminNgApp.userRoleAssignment.assignedRole" for="field_assignedRole">Assigned Role</label>
                     <select class="form-control" name="assignedRole" [(ngModel)]="userRoleAssignment.assignedRole" id="field_assignedRole"  required>
                         <!-- only list entity-dependent roles here -->
-                        <option value="CONTRACTUAL_CONTACT">{{'hsadminNgApp.UserRole.CONTRACTUAL_CONTACT' | translate}}</option>
-                        <option value="FINANCIAL_CONTACT">{{'hsadminNgApp.UserRole.FINANCIAL_CONTACT' | translate}}</option>
-                        <option value="TECHNICAL_CONTACT">{{'hsadminNgApp.UserRole.TECHNICAL_CONTACT' | translate}}</option>
+                        <option value="CONTRACTUAL_CONTACT">{{'hsadminNgApp.UserRole.CUSTOMER_CONTRACTUAL_CONTACT' | translate}}</option>
+                        <option value="FINANCIAL_CONTACT">{{'hsadminNgApp.UserRole.CUSTOMER_FINANCIAL_CONTACT' | translate}}</option>
+                        <option value="TECHNICAL_CONTACT">{{'hsadminNgApp.UserRole.CUSTOMER_TECHNICAL_CONTACT' | translate}}</option>
                         <option value="CUSTOMER_USER">{{'hsadminNgApp.UserRole.CUSTOMER_USER' | translate}}</option>
                     </select>
                     <div [hidden]="!(editForm.controls.assignedRole?.dirty && editForm.controls.assignedRole?.invalid)">

@@ -65,23 +65,23 @@ public class UserRoleAssignmentServiceUnitTest {
                 Arrays.asList(
                         new UserRoleAssignment().entityTypeId("test.SomethingElse")
                                 .entityObjectId(givenEntityObjectId)
-                                .assignedRole(Role.CONTRACTUAL_CONTACT),
+                                .assignedRole(Role.CUSTOMER_CONTRACTUAL_CONTACT),
                         new UserRoleAssignment().entityTypeId(givenEntityTypeId)
                                 .entityObjectId(givenEntityObjectId)
-                                .assignedRole(Role.FINANCIAL_CONTACT),
+                                .assignedRole(Role.CUSTOMER_FINANCIAL_CONTACT),
                         new UserRoleAssignment().entityTypeId(givenEntityTypeId)
                                 .entityObjectId(givenEntityObjectId)
-                                .assignedRole(Role.TECHNICAL_CONTACT),
+                                .assignedRole(Role.CUSTOMER_TECHNICAL_CONTACT),
                         new UserRoleAssignment().entityTypeId(givenEntityTypeId)
                                 .entityObjectId(3L)
-                                .assignedRole(Role.CONTRACTUAL_CONTACT)));
+                                .assignedRole(Role.CUSTOMER_CONTRACTUAL_CONTACT)));
 
         // when
         final Set<Role> actual = userRoleAssignmentService
                 .getEffectiveRoleOfCurrentUser(givenEntityTypeId, givenEntityObjectId);
 
         // then
-        assertThat(actual).containsExactlyInAnyOrder(Role.FINANCIAL_CONTACT, Role.TECHNICAL_CONTACT);
+        assertThat(actual).containsExactlyInAnyOrder(Role.CUSTOMER_FINANCIAL_CONTACT, Role.CUSTOMER_TECHNICAL_CONTACT);
     }
 
     @Test

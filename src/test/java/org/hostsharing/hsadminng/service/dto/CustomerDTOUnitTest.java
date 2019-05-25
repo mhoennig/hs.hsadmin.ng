@@ -76,7 +76,7 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         CustomerDTO given = createSomeCustomerDTO(1234L);
 
         // when
@@ -91,7 +91,7 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsTechnicalCustomerUser() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.TECHNICAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CUSTOMER_TECHNICAL_CONTACT);
         CustomerDTO given = createSomeCustomerDTO(1234L);
 
         // when
@@ -125,7 +125,7 @@ public class CustomerDTOUnitTest {
     @Test
     public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         given(customerRepository.findById(1234L)).willReturn(Optional.of(new Customer().id(1234L)));
         String json = "{\"id\":1234,\"contractualSalutation\":\"Hallo Updated\",\"billingSalutation\":\"Moin Updated\"}";
 

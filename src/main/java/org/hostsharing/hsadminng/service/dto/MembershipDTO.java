@@ -23,21 +23,27 @@ import javax.validation.constraints.Size;
 public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDTO> {
 
     @SelfId(resolver = MembershipService.class)
-    @AccessFor(read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private Long id;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate admissionDocumentDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(
+            init = Role.ADMIN,
+            update = Role.ADMIN,
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate cancellationDocumentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate memberFromDate;
 
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(
+            init = Role.ADMIN,
+            update = Role.ADMIN,
+            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private LocalDate memberUntilDate;
 
     @Size(max = 160)
@@ -45,16 +51,16 @@ public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDT
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
-    @AccessFor(init = Role.ADMIN, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private Long customerId;
 
-    @AccessFor(update = Role.IGNORED, read = { Role.CONTRACTUAL_CONTACT, Role.FINANCIAL_CONTACT })
+    @AccessFor(update = Role.IGNORED, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
     private String customerPrefix;
 
-    @AccessFor(update = Role.IGNORED, read = Role.FINANCIAL_CONTACT)
+    @AccessFor(update = Role.IGNORED, read = Role.CUSTOMER_FINANCIAL_CONTACT)
     private String customerDisplayLabel;
 
-    @AccessFor(update = Role.IGNORED, read = Role.FINANCIAL_CONTACT)
+    @AccessFor(update = Role.IGNORED, read = Role.CUSTOMER_FINANCIAL_CONTACT)
     private String displayLabel;
 
     public Long getId() {

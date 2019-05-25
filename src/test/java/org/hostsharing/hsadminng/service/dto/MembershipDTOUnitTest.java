@@ -40,9 +40,9 @@ public class MembershipDTOUnitTest extends AccessMappingsUnitTestBase<Membership
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(MembershipDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(MembershipDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
-        readAccessFor(MembershipDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(MembershipDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
                 "id",
                 "admissionDocumentDate",
                 "cancellationDocumentDate",
@@ -56,9 +56,9 @@ public class MembershipDTOUnitTest extends AccessMappingsUnitTestBase<Membership
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(MembershipDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(MembershipDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(MembershipDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(MembershipDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
     }
 
     @Test

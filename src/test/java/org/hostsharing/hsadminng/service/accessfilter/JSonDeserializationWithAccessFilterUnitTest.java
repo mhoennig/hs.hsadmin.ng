@@ -83,7 +83,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void init() {
         securityContext = SecurityContextMock.usingMock(userRoleAssignmentService)
                 .havingAuthenticatedUser()
-                .withRole(GivenDto.class, 1234L, Role.ACTUAL_CUSTOMER_USER);
+                .withRole(GivenDto.class, 1234L, Role.ANY_CUSTOMER_USER);
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenService.class)).willReturn(givenService);
@@ -244,7 +244,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldDeserializeStringFieldIfRequiredRoleIsCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_FINANCIAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -262,7 +262,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldDeserializeUnchangedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.FINANCIAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_FINANCIAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -320,7 +320,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldNotCreateIfRoleRequiredByParentEntityIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 9999L, Role.CONTRACTUAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 9999L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("parentId", 1234L)));
@@ -340,7 +340,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldCreateIfRoleRequiredByReferencedEntityIsCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.CONTRACTUAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("parentId", 1234L)));
@@ -357,7 +357,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldResolveParentIdFromIdOfSerializedSubEntity() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenParent.class, 1234L, Role.CONTRACTUAL_CONTACT);
+                .withRole(GivenParent.class, 1234L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of(

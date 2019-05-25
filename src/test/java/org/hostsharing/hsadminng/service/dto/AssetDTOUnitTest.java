@@ -33,9 +33,9 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeForNothing();
-        readAccessFor(AssetDTO.class, Role.CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(AssetDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(AssetDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
+        readAccessFor(AssetDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
                 "id",
                 "membershipId",
                 "documentDate",
@@ -47,9 +47,9 @@ public class AssetDTOUnitTest extends AccessMappingsUnitTestBase<AssetDTO> {
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(AssetDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(AssetDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(AssetDTO.class, Role.TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(AssetDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        updateAccessFor(AssetDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        readAccessFor(AssetDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
     }
 
     @Test
