@@ -1,10 +1,13 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Supporter;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -17,7 +20,7 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
 
     @Test
     public void shouldHaveProperAccessForAdmin() {
-        initAccessFor(SepaMandateDTO.class, Role.ADMIN).shouldBeExactlyFor(
+        initAccessFor(SepaMandateDTO.class, Role.of(Admin.class)).shouldBeExactlyFor(
                 "grantingDocumentDate",
                 "bic",
                 "remark",
@@ -28,17 +31,17 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
                 "revokationDocumentDate",
                 "lastUsedDate",
                 "reference");
-        updateAccessFor(SepaMandateDTO.class, Role.ADMIN).shouldBeExactlyFor(
+        updateAccessFor(SepaMandateDTO.class, Role.of(Admin.class)).shouldBeExactlyFor(
                 "remark",
                 "validUntilDate",
                 "revokationDocumentDate",
                 "lastUsedDate");
-        readAccessFor(SepaMandateDTO.class, Role.ADMIN).shouldBeForAllFields();
+        readAccessFor(SepaMandateDTO.class, Role.of(Admin.class)).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForSupporter() {
-        initAccessFor(SepaMandateDTO.class, Role.SUPPORTER).shouldBeExactlyFor(
+        initAccessFor(SepaMandateDTO.class, Role.of(Supporter.class)).shouldBeExactlyFor(
                 "grantingDocumentDate",
                 "bic",
                 "validUntilDate",
@@ -46,16 +49,16 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
                 "validFromDate",
                 "iban",
                 "reference");
-        updateAccessFor(SepaMandateDTO.class, Role.SUPPORTER).shouldBeExactlyFor(
+        updateAccessFor(SepaMandateDTO.class, Role.of(Supporter.class)).shouldBeExactlyFor(
                 "remark",
                 "validUntilDate",
                 "revokationDocumentDate");
-        readAccessFor(SepaMandateDTO.class, Role.SUPPORTER).shouldBeForAllFields();
+        readAccessFor(SepaMandateDTO.class, Role.of(Supporter.class)).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(SepaMandateDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(SepaMandateDTO.class, Role.of(CustomerContractualContact.class)).shouldBeExactlyFor(
                 "grantingDocumentDate",
                 "bic",
                 "validUntilDate",
@@ -63,10 +66,10 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
                 "validFromDate",
                 "iban",
                 "reference");
-        updateAccessFor(SepaMandateDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        updateAccessFor(SepaMandateDTO.class, Role.of(CustomerContractualContact.class)).shouldBeExactlyFor(
                 "validUntilDate",
                 "revokationDocumentDate");
-        readAccessFor(SepaMandateDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        readAccessFor(SepaMandateDTO.class, Role.of(CustomerContractualContact.class)).shouldBeExactlyFor(
                 "grantingDocumentDate",
                 "bic",
                 "id",
@@ -82,16 +85,16 @@ public class SepaMandateDTOUnitTest extends AccessMappingsUnitTestBase<SepaManda
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(SepaMandateDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(SepaMandateDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(SepaMandateDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(SepaMandateDTO.class, Role.of(CustomerTechnicalContact.class)).shouldBeForNothing();
+        updateAccessFor(SepaMandateDTO.class, Role.of(CustomerTechnicalContact.class)).shouldBeForNothing();
+        readAccessFor(SepaMandateDTO.class, Role.of(CustomerTechnicalContact.class)).shouldBeForNothing();
     }
 
     @Test
     public void shouldHaveNoAccessForNormalUsersWithinCustomerRealm() {
-        initAccessFor(SepaMandateDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
-        updateAccessFor(SepaMandateDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
-        readAccessFor(SepaMandateDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        initAccessFor(SepaMandateDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
+        updateAccessFor(SepaMandateDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
+        readAccessFor(SepaMandateDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
     }
 
     // --- only test fixture below ---

@@ -1,26 +1,18 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
-import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
-import static org.mockito.BDDMockito.given;
-
-import org.hostsharing.hsadminng.security.AuthoritiesConstants;
-import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,6 +28,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonBuilder.asJSon;
+import static org.mockito.BDDMockito.given;
 
 @SuppressWarnings("ALL")
 public class JSonDeserializationWithAccessFilterUnitTest {
@@ -83,7 +82,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void init() {
         securityContext = SecurityContextMock.usingMock(userRoleAssignmentService)
                 .havingAuthenticatedUser()
-                .withRole(GivenDto.class, 1234L, Role.ANY_CUSTOMER_USER);
+                .withRole(GivenDto.class, 1234L, Role.AnyCustomerUser.ROLE);
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenService.class)).willReturn(givenService);
@@ -244,7 +243,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldDeserializeStringFieldIfRequiredRoleIsCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_FINANCIAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 888L, Role.CustomerFinancialContact.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -262,7 +261,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldDeserializeUnchangedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_FINANCIAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 888L, Role.CustomerFinancialContact.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -280,7 +279,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldNotDeserializeUpatedStringFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+                .withRole(GivenCustomerDto.class, 888L, Role.ActualCustomerUser.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("customerId", 888L),
@@ -297,10 +296,10 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     }
 
     @Test
-    public void shouldInitializeFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
+    public void shouldNotInitializeFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+                .withRole(GivenCustomerDto.class, 888L, Role.ActualCustomerUser.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("customerId", 888L),
@@ -320,7 +319,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldNotCreateIfRoleRequiredByParentEntityIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 9999L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 9999L, Role.CustomerContractualContact.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("parentId", 1234L)));
@@ -340,7 +339,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldCreateIfRoleRequiredByReferencedEntityIsCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+                .withRole(GivenCustomerDto.class, 888L, Role.CustomerContractualContact.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("parentId", 1234L)));
@@ -357,7 +356,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldResolveParentIdFromIdOfSerializedSubEntity() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenParent.class, 1234L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+                .withRole(GivenParent.class, 1234L, Role.CustomerContractualContact.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of(
@@ -377,7 +376,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     public void shouldNotUpdateFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.ACTUAL_CUSTOMER_USER);
+                .withRole(GivenCustomerDto.class, 888L, Role.ActualCustomerUser.ROLE);
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("id", 1234L),
@@ -475,7 +474,7 @@ public class JSonDeserializationWithAccessFilterUnitTest {
     @Test
     public void shouldIgnorePropertyToIgnoreForInit() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        securityContext.havingAuthenticatedUser().withAuthority(Admin.ROLE.authority());
         givenJSonTree(
                 asJSon(
                         ImmutablePair.of("displayLabel", "Some Value")));

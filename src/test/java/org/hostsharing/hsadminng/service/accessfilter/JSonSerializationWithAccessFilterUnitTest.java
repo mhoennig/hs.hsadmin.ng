@@ -1,18 +1,9 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
-import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-
 import com.fasterxml.jackson.core.JsonGenerator;
-
 import org.apache.commons.lang3.NotImplementedException;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +15,13 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 public class JSonSerializationWithAccessFilterUnitTest {
 
@@ -53,7 +51,7 @@ public class JSonSerializationWithAccessFilterUnitTest {
     public void init() {
         securityContext = SecurityContextMock.usingMock(userRoleAssignmentService)
                 .havingAuthenticatedUser()
-                .withRole(GivenCustomerDto.class, 888L, Role.ANY_CUSTOMER_USER);
+                .withRole(GivenCustomerDto.class, 888L, Role.AnyCustomerUser.ROLE);
 
         given(ctx.getAutowireCapableBeanFactory()).willReturn(autowireCapableBeanFactory);
         given(autowireCapableBeanFactory.createBean(GivenCustomerService.class)).willReturn(givenCustomerService);
@@ -157,7 +155,8 @@ public class JSonSerializationWithAccessFilterUnitTest {
     public void shouldSerializeRestrictedFieldIfRequiredRoleIsCoveredByUser() throws IOException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.CUSTOMER_FINANCIAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(GivenCustomerDto.class, 888L, Role.of(Role.CustomerFinancialContact.class));
 
         // when
         serialize(givenDTO);
@@ -170,7 +169,7 @@ public class JSonSerializationWithAccessFilterUnitTest {
     public void shouldNotSerializeRestrictedFieldIfRequiredRoleIsNotCoveredByUser() throws IOException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.ANY_CUSTOMER_USER);
+        securityContext.havingAuthenticatedUser().withRole(GivenCustomerDto.class, 888L, Role.AnyCustomerUser.ROLE);
 
         // when
         serialize(givenDTO);
@@ -188,7 +187,7 @@ public class JSonSerializationWithAccessFilterUnitTest {
         }
         class GivenDtoWithUnimplementedFieldType implements AccessMappings {
 
-            @AccessFor(read = Role.ANYBODY)
+            @AccessFor(read = Role.Anybody.class)
             Arbitrary fieldWithUnimplementedType = new Arbitrary();
 
             @Override
@@ -208,7 +207,7 @@ public class JSonSerializationWithAccessFilterUnitTest {
 
     // --- fixture code below ---
 
-    public <T extends AccessMappings> void serialize(final T dto) throws IOException {
+    private <T extends AccessMappings> void serialize(final T dto) throws IOException {
         // @formatter:off
         new JsonSerializerWithAccessFilter<T>(ctx, userRoleAssignmentService) {}
             .serialize(dto, jsonGenerator, null);

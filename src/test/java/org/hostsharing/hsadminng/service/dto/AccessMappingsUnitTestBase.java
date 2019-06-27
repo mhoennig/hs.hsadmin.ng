@@ -1,14 +1,9 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import static org.apache.commons.lang3.StringUtils.removeEnd;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
-
+import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
-
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.springframework.boot.jackson.JsonComponent;
 
@@ -20,6 +15,10 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * Usually base classes for unit tests are not a good idea, but because
@@ -117,7 +116,7 @@ public abstract class AccessMappingsUnitTestBase<D> {
         private final String[] namesOfFieldsWithAccessForAnnotation;
         private final String[] namesOfAccessibleFields;
 
-        AccessRightsMatcher(final Class dtoClass, final Role role, final Function<AccessFor, Role[]> access) {
+        AccessRightsMatcher(final Class dtoClass, final Role role, final Function<AccessFor, Class<? extends Role>[]> access) {
             this.dtoClass = dtoClass;
             this.role = role;
 
@@ -159,10 +158,14 @@ public abstract class AccessMappingsUnitTestBase<D> {
             return fieldsWithAccessForAnnotation;
         }
 
-        private static boolean allows(final Field field, final Function<AccessFor, Role[]> access, final Role role) {
+        private static boolean allows(
+                final Field field,
+                final Function<AccessFor, Class<? extends Role>[]> access,
+                final Role role) {
             if (field.isAnnotationPresent(AccessFor.class)) {
                 final AccessFor accessFor = field.getAnnotation(AccessFor.class);
-                return role.coversAny(access.apply(accessFor));
+                Class<? extends Role>[] roleClasses = access.apply(accessFor);
+                return role.coversAny(roleClasses);
             }
             return false;
         }

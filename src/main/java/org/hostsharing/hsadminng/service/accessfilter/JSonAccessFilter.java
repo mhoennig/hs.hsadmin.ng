@@ -1,26 +1,27 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Sets.union;
-import static java.util.Collections.EMPTY_SET;
-import static java.util.Collections.emptySet;
-
 import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
-
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Sets.union;
+import static java.util.Collections.EMPTY_SET;
+import static java.util.Collections.emptySet;
 
 abstract class JSonAccessFilter<T extends AccessMappings> {
 
@@ -58,11 +59,15 @@ abstract class JSonAccessFilter<T extends AccessMappings> {
      * @return all roles of the login user in relation to the dto, for which this filter is created.
      */
     Set<Role> getLoginUserRoles() {
-        final Set<Role> independentRoles = Arrays.stream(Role.values())
-                .filter(
-                        role -> role.getAuthority()
-                                .map(authority -> SecurityUtils.isCurrentUserInRole(authority))
-                                .orElse(false))
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return emptySet();
+        }
+        final Set<Role> independentRoles = authentication
+                .getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(Role::of)
                 .collect(Collectors.toSet());
 
         final Set<Role> rolesOnThis = getId() != null ? getLoginUserDirectRolesFor(dto.getClass(), getId()) : EMPTY_SET;
@@ -93,14 +98,10 @@ abstract class JSonAccessFilter<T extends AccessMappings> {
     }
 
     private Set<Role> getLoginUserDirectRolesFor(final Class<?> dtoClass, final long id) {
-        if (!SecurityUtils.isAuthenticated()) {
-            return emptySet();
-        }
+        verify(SecurityUtils.isAuthenticated());
 
         final EntityTypeId entityTypeId = dtoClass.getAnnotation(EntityTypeId.class);
-        if (entityTypeId == null) {
-            return emptySet();
-        }
+        verify(entityTypeId != null, "@" + EntityTypeId.class.getSimpleName() + " missing on " + dtoClass.getName());
 
         return userRoleAssignmentService.getEffectiveRoleOfCurrentUser(entityTypeId.value(), id);
     }

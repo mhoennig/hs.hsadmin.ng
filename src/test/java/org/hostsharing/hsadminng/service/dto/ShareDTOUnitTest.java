@@ -1,12 +1,14 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-import org.hostsharing.hsadminng.service.util.RandomUtil;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
+import org.hostsharing.hsadminng.service.util.RandomUtil;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -19,22 +21,22 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
 
     @Test
     public void shouldHaveProperAccessForAdmin() {
-        initAccessFor(ShareDTO.class, Role.ADMIN).shouldBeExactlyFor(
+        initAccessFor(ShareDTO.class, Admin.ROLE).shouldBeExactlyFor(
                 "membershipId",
                 "documentDate",
                 "quantity",
                 "action",
                 "valueDate",
                 "remark");
-        updateAccessFor(ShareDTO.class, Role.ADMIN).shouldBeExactlyFor("remark");
-        readAccessFor(ShareDTO.class, Role.ADMIN).shouldBeForAllFields();
+        updateAccessFor(ShareDTO.class, Admin.ROLE).shouldBeExactlyFor("remark");
+        readAccessFor(ShareDTO.class, Admin.ROLE).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(ShareDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(ShareDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
-        readAccessFor(ShareDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(ShareDTO.class, CustomerContractualContact.ROLE).shouldBeForNothing();
+        updateAccessFor(ShareDTO.class, CustomerContractualContact.ROLE).shouldBeForNothing();
+        readAccessFor(ShareDTO.class, CustomerContractualContact.ROLE).shouldBeExactlyFor(
                 "id",
                 "membershipId",
                 "documentDate",
@@ -46,21 +48,21 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(ShareDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(ShareDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(ShareDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(ShareDTO.class, CustomerTechnicalContact.ROLE).shouldBeForNothing();
+        updateAccessFor(ShareDTO.class, CustomerTechnicalContact.ROLE).shouldBeForNothing();
+        readAccessFor(ShareDTO.class, CustomerTechnicalContact.ROLE).shouldBeForNothing();
     }
 
     @Test
     public void shouldHaveNoAccessForNormalUsersWithinCustomerRealm() {
-        initAccessFor(ShareDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
-        updateAccessFor(ShareDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
-        readAccessFor(ShareDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        initAccessFor(ShareDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
+        updateAccessFor(ShareDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
+        readAccessFor(ShareDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
     }
 
     // --- only test fixture below ---
 
-    public static ShareDTO createSampleDTO(final Long id, final Long parentId) {
+    private static ShareDTO createSampleDTO(final Long id, final Long parentId) {
         final ShareDTO dto = new ShareDTO();
         dto.setId(id);
         dto.setMembershipId(parentId);
@@ -73,7 +75,7 @@ public class ShareDTOUnitTest extends AccessMappingsUnitTestBase<ShareDTO> {
         return dto;
     }
 
-    public static ShareDTO createRandomDTO(final Long id, final Long parentId) {
+    private static ShareDTO createRandomDTO(final Long id, final Long parentId) {
         final ShareDTO dto = new ShareDTO();
         dto.setId(id);
         dto.setMembershipId(parentId);

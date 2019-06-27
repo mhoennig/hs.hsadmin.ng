@@ -1,11 +1,9 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
 import org.hostsharing.hsadminng.domain.Share;
@@ -13,24 +11,20 @@ import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.repository.CustomerRepository;
 import org.hostsharing.hsadminng.repository.MembershipRepository;
 import org.hostsharing.hsadminng.repository.ShareRepository;
-import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.MembershipValidator;
 import org.hostsharing.hsadminng.service.ShareService;
 import org.hostsharing.hsadminng.service.ShareValidator;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerFinancialContact;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.ShareMapper;
 import org.hostsharing.hsadminng.service.mapper.ShareMapperImpl;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,11 +37,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 
 @JsonTest
 @SpringBootTest(
@@ -129,7 +127,7 @@ public class ShareDTOIntTest {
 
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_FINANCIAL_CONTACT);
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, CustomerFinancialContact.ROLE);
         final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
@@ -144,7 +142,7 @@ public class ShareDTOIntTest {
     public void shouldSerializeCompletelyForSupporter() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withAuthority(Role.Supporter.ROLE.authority());
         final ShareDTO given = createSomeShareDTO(SOME_SHARE_ID);
 
         // when
@@ -158,7 +156,7 @@ public class ShareDTOIntTest {
     public void shouldNotDeserializeForContractualCustomerContact() {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, CustomerContractualContact.ROLE);
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SHARE_ID)
                 .withFieldValue("remark", "Updated Remark")
@@ -172,13 +170,13 @@ public class ShareDTOIntTest {
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage())
                         .isEqualTo(
-                                "Update of field ShareDTO.remark prohibited for current user role(s): CUSTOMER_CONTRACTUAL_CONTACT"));
+                                "Update of field ShareDTO.remark prohibited for current user role(s): CustomerContractualContact"));
     }
 
     @Test
     public void shouldDeserializeForAdminIfRemarkIsChanged() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        securityContext.havingAuthenticatedUser().withAuthority(Role.Admin.ROLE.authority());
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_SHARE_ID)
                 .withFieldValue("remark", "Updated Remark")

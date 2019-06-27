@@ -3,6 +3,11 @@ package org.hostsharing.hsadminng.service.accessfilter;
 
 public class SecurityContextFake extends SecurityContextDouble<SecurityContextFake> {
 
+    public static SecurityContextFake havingUnauthenticatedUser() {
+        final SecurityContextFake securityContext = new SecurityContextFake();
+        return securityContext;
+    }
+
     public static SecurityContextFake havingAuthenticatedUser() {
         return havingAuthenticatedUser("dummyUser");
     }

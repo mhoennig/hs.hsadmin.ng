@@ -1,11 +1,9 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.domain.Asset;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.Membership;
@@ -20,17 +18,14 @@ import org.hostsharing.hsadminng.service.MembershipValidator;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerFinancialContact;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.AssetMapper;
 import org.hostsharing.hsadminng.service.mapper.AssetMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
 import org.hostsharing.hsadminng.service.mapper.MembershipMapperImpl;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,12 +38,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import javax.persistence.EntityManager;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 
 @JsonTest
 @SpringBootTest(
@@ -129,7 +128,7 @@ public class AssetDTOIntTest {
 
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_FINANCIAL_CONTACT);
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.of(CustomerFinancialContact.class));
 
         final AssetDTO given = createSomeAssetDTO(SOME_ASSET_ID);
 
@@ -159,7 +158,7 @@ public class AssetDTOIntTest {
     public void shouldNotDeserializeForContractualCustomerContact() {
         // given
         securityContext.havingAuthenticatedUser()
-                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+                .withRole(CustomerDTO.class, SOME_CUSTOMER_ID, Role.of(CustomerContractualContact.class));
         final String json = new JSonBuilder()
                 .withFieldValue("id", SOME_ASSET_ID)
                 .withFieldValue("remark", "Updated Remark")
@@ -173,7 +172,7 @@ public class AssetDTOIntTest {
                 BadRequestAlertException.class,
                 bre -> assertThat(bre.getMessage())
                         .isEqualTo(
-                                "Update of field AssetDTO.remark prohibited for current user role(s): CUSTOMER_CONTRACTUAL_CONTACT"));
+                                "Update of field AssetDTO.remark prohibited for current user role(s): CustomerContractualContact"));
     }
 
     @Test

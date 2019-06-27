@@ -1,23 +1,18 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
 import org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository;
-import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentQueryService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextFake;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,9 +28,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 
-import javax.persistence.EntityManager;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Test class for the UserRoleAssignmentResource REST controller.
@@ -43,7 +43,7 @@ import javax.persistence.EntityManager;
  * @see UserRoleAssignmentResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = HsadminNgApp.class)
+@SpringBootTest(classes = { HsadminNgApp.class })
 public class UserRoleAssignmentResourceIntTest {
 
     private static final String DEFAULT_ENTITY_TYPE_ID = "AAAAAAAAAA";
@@ -52,8 +52,8 @@ public class UserRoleAssignmentResourceIntTest {
     private static final Long DEFAULT_ENTITY_OBJECT_ID = 1L;
     private static final Long UPDATED_ENTITY_OBJECT_ID = 2L;
 
-    private static final Role DEFAULT_ASSIGNED_ROLE = Role.HOSTMASTER;
-    private static final Role UPDATED_ASSIGNED_ROLE = Role.ADMIN;
+    private static final Role DEFAULT_ASSIGNED_ROLE = CustomerTechnicalContact.ROLE;
+    private static final Role UPDATED_ASSIGNED_ROLE = CustomerContractualContact.ROLE;
 
     @Autowired
     private UserRoleAssignmentRepository userRoleAssignmentRepository;
@@ -97,7 +97,7 @@ public class UserRoleAssignmentResourceIntTest {
                 .setValidator(validator)
                 .build();
 
-        SecurityContextFake.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
+        SecurityContextFake.havingAuthenticatedUser().withAuthority(Role.Supporter.ROLE.authority());
     }
 
     /**
@@ -110,12 +110,11 @@ public class UserRoleAssignmentResourceIntTest {
         User user = UserResourceIntTest.createEntity(em);
         em.persist(user);
         em.flush();
-        UserRoleAssignment userRoleAssignment = new UserRoleAssignment()
+        return new UserRoleAssignment()
                 .entityTypeId(DEFAULT_ENTITY_TYPE_ID)
                 .entityObjectId(DEFAULT_ENTITY_OBJECT_ID)
                 .user(user)
                 .assignedRole(DEFAULT_ASSIGNED_ROLE);
-        return userRoleAssignment;
     }
 
     @Before
@@ -129,7 +128,7 @@ public class UserRoleAssignmentResourceIntTest {
         int databaseSizeBeforeCreate = userRoleAssignmentRepository.findAll().size();
 
         // Create the UserRoleAssignment
-        SecurityContextFake.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        SecurityContextFake.havingAuthenticatedUser().withAuthority(Admin.ROLE.authority());
         restUserRoleAssignmentMockMvc.perform(
                 post("/api/user-role-assignments")
                         .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -142,6 +141,7 @@ public class UserRoleAssignmentResourceIntTest {
         UserRoleAssignment testUserRoleAssignment = userRoleAssignmentList.get(userRoleAssignmentList.size() - 1);
         assertThat(testUserRoleAssignment.getEntityTypeId()).isEqualTo(DEFAULT_ENTITY_TYPE_ID);
         assertThat(testUserRoleAssignment.getEntityObjectId()).isEqualTo(DEFAULT_ENTITY_OBJECT_ID);
+        assertThat(testUserRoleAssignment.getAssignedRole().name()).isEqualTo(DEFAULT_ASSIGNED_ROLE.name());
         assertThat(testUserRoleAssignment.getAssignedRole()).isEqualTo(DEFAULT_ASSIGNED_ROLE);
     }
 
@@ -233,9 +233,9 @@ public class UserRoleAssignmentResourceIntTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(userRoleAssignment.getId().intValue())))
-                .andExpect(jsonPath("$.[*].entityTypeId").value(hasItem(DEFAULT_ENTITY_TYPE_ID.toString())))
+                .andExpect(jsonPath("$.[*].entityTypeId").value(hasItem(DEFAULT_ENTITY_TYPE_ID)))
                 .andExpect(jsonPath("$.[*].entityObjectId").value(hasItem(DEFAULT_ENTITY_OBJECT_ID.intValue())))
-                .andExpect(jsonPath("$.[*].assignedRole").value(hasItem(DEFAULT_ASSIGNED_ROLE.toString())));
+                .andExpect(jsonPath("$.[*].assignedRole").value(hasItem(DEFAULT_ASSIGNED_ROLE.name())));
     }
 
     @Test
@@ -249,9 +249,9 @@ public class UserRoleAssignmentResourceIntTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
                 .andExpect(jsonPath("$.id").value(userRoleAssignment.getId().intValue()))
-                .andExpect(jsonPath("$.entityTypeId").value(DEFAULT_ENTITY_TYPE_ID.toString()))
+                .andExpect(jsonPath("$.entityTypeId").value(DEFAULT_ENTITY_TYPE_ID))
                 .andExpect(jsonPath("$.entityObjectId").value(DEFAULT_ENTITY_OBJECT_ID.intValue()))
-                .andExpect(jsonPath("$.assignedRole").value(DEFAULT_ASSIGNED_ROLE.toString()));
+                .andExpect(jsonPath("$.assignedRole").value(DEFAULT_ASSIGNED_ROLE.name()));
     }
 
     @Test
@@ -366,10 +366,10 @@ public class UserRoleAssignmentResourceIntTest {
         userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
 
         // Get all the userRoleAssignmentList where assignedRole equals to DEFAULT_ASSIGNED_ROLE
-        defaultUserRoleAssignmentShouldBeFound("assignedRole.equals=" + DEFAULT_ASSIGNED_ROLE);
+        defaultUserRoleAssignmentShouldBeFound("assignedRole.equals=" + DEFAULT_ASSIGNED_ROLE.name());
 
         // Get all the userRoleAssignmentList where assignedRole equals to UPDATED_ASSIGNED_ROLE
-        defaultUserRoleAssignmentShouldNotBeFound("assignedRole.equals=" + UPDATED_ASSIGNED_ROLE);
+        defaultUserRoleAssignmentShouldNotBeFound("assignedRole.equals=" + UPDATED_ASSIGNED_ROLE.name());
     }
 
     @Test
@@ -379,10 +379,11 @@ public class UserRoleAssignmentResourceIntTest {
         userRoleAssignmentRepository.saveAndFlush(userRoleAssignment);
 
         // Get all the userRoleAssignmentList where assignedRole in DEFAULT_ASSIGNED_ROLE or UPDATED_ASSIGNED_ROLE
-        defaultUserRoleAssignmentShouldBeFound("assignedRole.in=" + DEFAULT_ASSIGNED_ROLE + "," + UPDATED_ASSIGNED_ROLE);
+        defaultUserRoleAssignmentShouldBeFound(
+                "assignedRole.in=" + DEFAULT_ASSIGNED_ROLE.name() + "," + UPDATED_ASSIGNED_ROLE.name());
 
         // Get all the userRoleAssignmentList where assignedRole equals to UPDATED_ASSIGNED_ROLE
-        defaultUserRoleAssignmentShouldNotBeFound("assignedRole.in=" + UPDATED_ASSIGNED_ROLE);
+        defaultUserRoleAssignmentShouldNotBeFound("assignedRole.in=" + UPDATED_ASSIGNED_ROLE.name());
     }
 
     @Test
@@ -426,7 +427,7 @@ public class UserRoleAssignmentResourceIntTest {
                 .andExpect(jsonPath("$.[*].id").value(hasItem(userRoleAssignment.getId().intValue())))
                 .andExpect(jsonPath("$.[*].entityTypeId").value(hasItem(DEFAULT_ENTITY_TYPE_ID)))
                 .andExpect(jsonPath("$.[*].entityObjectId").value(hasItem(DEFAULT_ENTITY_OBJECT_ID.intValue())))
-                .andExpect(jsonPath("$.[*].assignedRole").value(hasItem(DEFAULT_ASSIGNED_ROLE.toString())));
+                .andExpect(jsonPath("$.[*].assignedRole").value(hasItem(DEFAULT_ASSIGNED_ROLE.name())));
 
         // Check, that the count call also returns 1
         restUserRoleAssignmentMockMvc.perform(get("/api/user-role-assignments/count?sort=id,desc&" + filter))
@@ -469,7 +470,7 @@ public class UserRoleAssignmentResourceIntTest {
         int databaseSizeBeforeUpdate = userRoleAssignmentRepository.findAll().size();
 
         // Update the userRoleAssignment
-        SecurityContextFake.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        SecurityContextFake.havingAuthenticatedUser().withAuthority(Admin.ROLE.authority());
         UserRoleAssignment updatedUserRoleAssignment = userRoleAssignmentRepository.findById(userRoleAssignment.getId()).get();
         // Disconnect from session so that the updates on updatedUserRoleAssignment are not directly saved in db
         em.detach(updatedUserRoleAssignment);
@@ -490,6 +491,7 @@ public class UserRoleAssignmentResourceIntTest {
         UserRoleAssignment testUserRoleAssignment = userRoleAssignmentList.get(userRoleAssignmentList.size() - 1);
         assertThat(testUserRoleAssignment.getEntityTypeId()).isEqualTo(UPDATED_ENTITY_TYPE_ID);
         assertThat(testUserRoleAssignment.getEntityObjectId()).isEqualTo(UPDATED_ENTITY_OBJECT_ID);
+        assertThat(testUserRoleAssignment.getAssignedRole().name()).isEqualTo(UPDATED_ASSIGNED_ROLE.name());
         assertThat(testUserRoleAssignment.getAssignedRole()).isEqualTo(UPDATED_ASSIGNED_ROLE);
     }
 

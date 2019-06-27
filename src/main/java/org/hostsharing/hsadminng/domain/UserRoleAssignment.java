@@ -1,22 +1,25 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
-import org.hostsharing.hsadminng.repository.UserRepository;
-import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.accessfilter.*;
-
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.TreeNode;
-
+import org.hostsharing.hsadminng.repository.UserRepository;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
+import org.hostsharing.hsadminng.service.accessfilter.*;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Supporter;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.lang.reflect.Field;
 import java.util.Objects;
 
-import javax.persistence.*;
-import javax.validation.constraints.*;
+import static org.hostsharing.hsadminng.service.util.ReflectionUtil.of;
 
 /**
  * A UserRoleAssignment.
@@ -24,41 +27,44 @@ import javax.validation.constraints.*;
 @Entity
 @Table(name = "user_role_assignment")
 @EntityTypeId(UserRoleAssignment.ENTITY_TYPE_ID)
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.ANY,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class UserRoleAssignment implements AccessMappings {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String ENTITY_TYPE_ID = "rights.UserRoleAssignment";
+    private static final String USER_FIELD_NAME = "user";
 
-    static final String USER_FIELD_NAME = "user";
+    public static final String ENTITY_TYPE_ID = "rights.UserRoleAssignment";
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
     @SelfId(resolver = UserRoleAssignmentService.class)
-    @AccessFor(read = Role.SUPPORTER)
+    @AccessFor(read = Supporter.class)
     private Long id;
 
     @NotNull
     @Size(max = 32)
     @Column(name = "entity_type_id", length = 32, nullable = false)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Admin.class, read = Supporter.class)
     private String entityTypeId;
 
     @NotNull
     @Column(name = "entity_object_id", nullable = false)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Admin.class, read = Supporter.class)
     private Long entityObjectId;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
     @Column(name = "assigned_role", nullable = false)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
-    private Role assignedRole;
+    @AccessFor(init = Admin.class, update = Admin.class, read = Supporter.class)
+    private String assignedRole;
 
     @ManyToOne
     @JsonIgnoreProperties("requireds")
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Admin.class, read = Supporter.class)
     private User user;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -103,16 +109,16 @@ public class UserRoleAssignment implements AccessMappings {
     }
 
     public Role getAssignedRole() {
-        return assignedRole;
+        return assignedRole != null ? Role.of(assignedRole) : null;
     }
 
     public UserRoleAssignment assignedRole(Role assignedRole) {
-        this.assignedRole = assignedRole;
+        this.assignedRole = of(assignedRole, Role::name);
         return this;
     }
 
     public void setAssignedRole(Role assignedRole) {
-        this.assignedRole = assignedRole;
+        this.assignedRole = of(assignedRole, Role::name);
     }
 
     public User getUser() {
@@ -154,9 +160,9 @@ public class UserRoleAssignment implements AccessMappings {
     public String toString() {
         return "UserRoleAssignment{" +
                 "id=" + getId() +
-                ", entityTypeId='" + getEntityTypeId() + "'" +
-                ", entityObjectId=" + getEntityObjectId() +
-                ", assignedRole='" + getAssignedRole() + "'" +
+                ", entityTypeId='" + entityTypeId + "'" +
+                ", entityObjectId=" + entityObjectId +
+                ", assignedRole='" + assignedRole + "'" +
                 "}";
     }
 
@@ -172,9 +178,8 @@ public class UserRoleAssignment implements AccessMappings {
         @Override
         protected JSonFieldWriter<UserRoleAssignment> jsonFieldWriter(final Field field) {
             if (USER_FIELD_NAME.equals(field.getName())) {
-                return (final UserRoleAssignment dto, final JsonGenerator jsonGenerator) -> {
-                    jsonGenerator.writeNumberField(USER_FIELD_NAME, dto.getUser().getId());
-                };
+                return (final UserRoleAssignment dto, final JsonGenerator jsonGenerator) -> jsonGenerator
+                        .writeNumberField(USER_FIELD_NAME, dto.getUser().getId());
             }
             return super.jsonFieldWriter(field);
         }
@@ -196,9 +201,8 @@ public class UserRoleAssignment implements AccessMappings {
         @Override
         protected JSonFieldReader<UserRoleAssignment> jsonFieldReader(final TreeNode treeNode, final Field field) {
             if ("user".equals(field.getName())) {
-                return (final UserRoleAssignment target) -> {
-                    target.setUser(userRepository.getOne(getSubNode(treeNode, "id").asLong()));
-                };
+                return (final UserRoleAssignment target) -> target
+                        .setUser(userRepository.getOne(getSubNode(treeNode, "id").asLong()));
             }
 
             return super.jsonFieldReader(treeNode, field);

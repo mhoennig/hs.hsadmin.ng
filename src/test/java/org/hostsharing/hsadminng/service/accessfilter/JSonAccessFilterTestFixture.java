@@ -1,16 +1,15 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
-
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.dto.FluentBuilder;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
 
 public class JSonAccessFilterTestFixture {
 
@@ -37,10 +36,10 @@ public class JSonAccessFilterTestFixture {
     static class GivenCustomerDto implements FluentBuilder<GivenCustomerDto> {
 
         @SelfId(resolver = GivenService.class)
-        @AccessFor(read = ANYBODY)
+        @AccessFor(read = Anybody.class)
         Long id;
 
-        @AccessFor(update = IGNORED, read = ANYBODY)
+        @AccessFor(update = Ignored.class, read = Anybody.class)
         String displayLabel;
 
     }
@@ -52,62 +51,62 @@ public class JSonAccessFilterTestFixture {
     static class GivenDto implements AccessMappings, FluentBuilder<GivenDto> {
 
         @SelfId(resolver = GivenService.class)
-        @AccessFor(read = ANYBODY)
+        @AccessFor(read = Anybody.class)
         Long id;
 
         @ParentId(resolver = GivenCustomerService.class)
-        @AccessFor(init = ANY_CUSTOMER_USER, update = ANY_CUSTOMER_USER, read = ANY_CUSTOMER_USER)
+        @AccessFor(init = AnyCustomerUser.class, update = AnyCustomerUser.class, read = AnyCustomerUser.class)
         Long customerId;
 
         @AccessFor(
-                init = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
-                update = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
-                read = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT })
+                init = { CustomerTechnicalContact.class, CustomerFinancialContact.class },
+                update = { CustomerTechnicalContact.class, CustomerFinancialContact.class },
+                read = { CustomerTechnicalContact.class, CustomerFinancialContact.class })
         String restrictedField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         String openStringField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         Integer openIntegerField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         int openPrimitiveIntField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         Long openLongField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         long openPrimitiveLongField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         Boolean openBooleanField;
 
-        @AccessFor(read = ANYBODY)
+        @AccessFor(read = Anybody.class)
         boolean openPrimitiveBooleanField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         LocalDate openLocalDateField;
         transient String openLocalDateFieldAsString;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         LocalDate openLocalDateField2;
         transient String openLocalDateField2AsString;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         TestEnum openEnumField;
         transient String openEnumFieldAsString;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         BigDecimal openBigDecimalField;
 
-        @AccessFor(init = SUPPORTER, update = SUPPORTER, read = SUPPORTER)
+        @AccessFor(init = Supporter.class, update = Supporter.class, read = Supporter.class)
         BigDecimal restrictedBigDecimalField;
 
-        @AccessFor(init = ANYBODY, update = ANYBODY, read = ANYBODY)
+        @AccessFor(init = Anybody.class, update = Anybody.class, read = Anybody.class)
         int[] openArrayField;
 
-        @AccessFor(init = IGNORED, update = IGNORED, read = ANYBODY)
+        @AccessFor(init = Ignored.class, update = Ignored.class, read = Anybody.class)
         String displayLabel;
 
         @Override
@@ -130,21 +129,21 @@ public class JSonAccessFilterTestFixture {
     public static class GivenChildDto implements AccessMappings, FluentBuilder<GivenChildDto> {
 
         @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        @AccessFor(read = AnyCustomerUser.class)
         Long id;
 
         @AccessFor(
-                init = Role.CUSTOMER_CONTRACTUAL_CONTACT,
-                update = Role.CUSTOMER_CONTRACTUAL_CONTACT,
-                read = ANY_CUSTOMER_USER)
+                init = CustomerContractualContact.class,
+                update = CustomerContractualContact.class,
+                read = AnyCustomerUser.class)
         @ParentId(resolver = GivenService.class)
         Long parentId;
 
         @AccessFor(
-                init = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
+                init = { CustomerTechnicalContact.class, CustomerFinancialContact.class },
                 update = {
-                        CUSTOMER_TECHNICAL_CONTACT,
-                        CUSTOMER_FINANCIAL_CONTACT })
+                        CustomerTechnicalContact.class,
+                        CustomerFinancialContact.class })
         String restrictedField;
 
         @Override
@@ -156,11 +155,11 @@ public class JSonAccessFilterTestFixture {
     public static class GivenDtoWithMultipleSelfId implements AccessMappings {
 
         @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        @AccessFor(read = AnyCustomerUser.class)
         Long id;
 
         @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        @AccessFor(read = AnyCustomerUser.class)
         Long id2;
 
         @Override
@@ -172,10 +171,10 @@ public class JSonAccessFilterTestFixture {
     public static class GivenDtoWithUnknownFieldType implements AccessMappings {
 
         @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANYBODY)
+        @AccessFor(read = Anybody.class)
         Long id;
 
-        @AccessFor(init = Role.ANYBODY, read = Role.ANYBODY)
+        @AccessFor(init = Anybody.class, read = Anybody.class)
         Arbitrary unknown;
 
         @Override
@@ -184,14 +183,14 @@ public class JSonAccessFilterTestFixture {
         }
     }
 
-    public static class Arbitrary {
+    static class Arbitrary {
     }
 
     @EntityTypeId("givenParent")
     public static class GivenParent implements AccessMappings, FluentBuilder<GivenParent> {
 
         @SelfId(resolver = GivenParentService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        @AccessFor(read = AnyCustomerUser.class)
         Long id;
 
         @Override
@@ -208,21 +207,21 @@ public class JSonAccessFilterTestFixture {
     public static class GivenChild implements AccessMappings, FluentBuilder<GivenChild> {
 
         @SelfId(resolver = GivenChildService.class)
-        @AccessFor(read = Role.ANY_CUSTOMER_USER)
+        @AccessFor(read = AnyCustomerUser.class)
         Long id;
 
         @AccessFor(
-                init = Role.CUSTOMER_CONTRACTUAL_CONTACT,
-                update = Role.CUSTOMER_CONTRACTUAL_CONTACT,
-                read = ANY_CUSTOMER_USER)
+                init = CustomerContractualContact.class,
+                update = CustomerContractualContact.class,
+                read = AnyCustomerUser.class)
         @ParentId(resolver = GivenParentService.class)
         GivenParent parent;
 
         @AccessFor(
-                init = { CUSTOMER_TECHNICAL_CONTACT, CUSTOMER_FINANCIAL_CONTACT },
+                init = { CustomerTechnicalContact.class, CustomerFinancialContact.class },
                 update = {
-                        CUSTOMER_TECHNICAL_CONTACT,
-                        CUSTOMER_FINANCIAL_CONTACT })
+                        CustomerTechnicalContact.class,
+                        CustomerFinancialContact.class })
         String restrictedField;
 
         @Override

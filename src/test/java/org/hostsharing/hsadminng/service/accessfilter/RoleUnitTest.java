@@ -1,118 +1,113 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.ThrowableAssert.catchThrowable;
-
-import org.hostsharing.hsadminng.security.AuthoritiesConstants;
-
 import com.google.common.base.VerifyException;
-
+import org.hostsharing.hsadminng.security.AuthoritiesConstants;
+import org.hostsharing.hsadminng.service.accessfilter.Role.*;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 
 public class RoleUnitTest {
 
     @Test
     public void allUserRolesShouldCoverSameRequiredRole() {
-        assertThat(Role.HOSTMASTER.covers(Role.HOSTMASTER)).isTrue();
-        assertThat(Role.ADMIN.covers(Role.ADMIN)).isTrue();
-        assertThat(Role.SUPPORTER.covers(Role.SUPPORTER)).isTrue();
+        assertThat(Hostmaster.ROLE.covers(Hostmaster.class)).isTrue();
+        assertThat(Admin.ROLE.covers(Admin.class)).isTrue();
+        assertThat(Supporter.ROLE.covers(Supporter.class)).isTrue();
 
-        assertThat(Role.CUSTOMER_CONTRACTUAL_CONTACT.covers(Role.CUSTOMER_CONTRACTUAL_CONTACT)).isTrue();
-        assertThat(Role.CUSTOMER_FINANCIAL_CONTACT.covers(Role.CUSTOMER_FINANCIAL_CONTACT)).isTrue();
-        assertThat(Role.CUSTOMER_TECHNICAL_CONTACT.covers(Role.CUSTOMER_TECHNICAL_CONTACT)).isTrue();
+        assertThat(Role.CustomerContractualContact.ROLE.covers(Role.CustomerContractualContact.class)).isTrue();
+        assertThat(CustomerFinancialContact.ROLE.covers(CustomerFinancialContact.class)).isTrue();
+        assertThat(CustomerTechnicalContact.ROLE.covers(CustomerTechnicalContact.class)).isTrue();
 
-        assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.ACTUAL_CUSTOMER_USER))).isTrue();
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.ANY_CUSTOMER_USER))).isTrue();
+        assertThat(ActualCustomerUser.ROLE.covers((ActualCustomerUser.class))).isTrue();
+        assertThat(AnyCustomerUser.ROLE.covers((Role.AnyCustomerUser.class))).isTrue();
     }
 
     @Test
     public void lowerUserRolesShouldNotCoverHigherRequiredRoles() {
-        assertThat(Role.HOSTMASTER.covers(Role.NOBODY)).isFalse();
-        assertThat(Role.ADMIN.covers(Role.HOSTMASTER)).isFalse();
-        assertThat(Role.SUPPORTER.covers(Role.ADMIN)).isFalse();
+        assertThat(Hostmaster.ROLE.covers(Nobody.class)).isFalse();
+        assertThat(Admin.ROLE.covers(Hostmaster.class)).isFalse();
+        assertThat(Supporter.ROLE.covers(Admin.class)).isFalse();
 
-        assertThat(Role.ANY_CUSTOMER_CONTACT.covers(Role.SUPPORTER)).isFalse();
-        assertThat(Role.ANY_CUSTOMER_CONTACT.covers(Role.CUSTOMER_CONTRACTUAL_CONTACT)).isFalse();
-        assertThat(Role.CUSTOMER_FINANCIAL_CONTACT.covers(Role.CUSTOMER_CONTRACTUAL_CONTACT)).isFalse();
-        assertThat(Role.CUSTOMER_FINANCIAL_CONTACT.covers(Role.CUSTOMER_TECHNICAL_CONTACT)).isFalse();
-        assertThat(Role.CUSTOMER_TECHNICAL_CONTACT.covers(Role.CUSTOMER_CONTRACTUAL_CONTACT)).isFalse();
-        assertThat(Role.CUSTOMER_TECHNICAL_CONTACT.covers(Role.CUSTOMER_FINANCIAL_CONTACT)).isFalse();
+        assertThat(AnyCustomerContact.ROLE.covers(Supporter.class)).isFalse();
+        assertThat(AnyCustomerContact.ROLE.covers(Role.CustomerContractualContact.class)).isFalse();
+        assertThat(CustomerFinancialContact.ROLE.covers(Role.CustomerContractualContact.class)).isFalse();
+        assertThat(CustomerFinancialContact.ROLE.covers(CustomerTechnicalContact.class)).isFalse();
+        assertThat(CustomerTechnicalContact.ROLE.covers(Role.CustomerContractualContact.class)).isFalse();
+        assertThat(CustomerTechnicalContact.ROLE.covers(CustomerFinancialContact.class)).isFalse();
 
-        assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.ANY_CUSTOMER_CONTACT))).isFalse();
-        assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.CUSTOMER_CONTRACTUAL_CONTACT))).isFalse();
-        assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.CUSTOMER_TECHNICAL_CONTACT))).isFalse();
-        assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.CUSTOMER_FINANCIAL_CONTACT))).isFalse();
+        assertThat(ActualCustomerUser.ROLE.covers((AnyCustomerContact.class))).isFalse();
+        assertThat(ActualCustomerUser.ROLE.covers((Role.CustomerContractualContact.class))).isFalse();
+        assertThat(ActualCustomerUser.ROLE.covers((CustomerTechnicalContact.class))).isFalse();
+        assertThat(ActualCustomerUser.ROLE.covers((CustomerFinancialContact.class))).isFalse();
 
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.ACTUAL_CUSTOMER_USER))).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.ANY_CUSTOMER_CONTACT))).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.CUSTOMER_CONTRACTUAL_CONTACT))).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.CUSTOMER_TECHNICAL_CONTACT))).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.CUSTOMER_FINANCIAL_CONTACT))).isFalse();
+        assertThat(AnyCustomerUser.ROLE.covers((ActualCustomerUser.class))).isFalse();
+        assertThat(AnyCustomerUser.ROLE.covers((AnyCustomerContact.class))).isFalse();
+        assertThat(AnyCustomerUser.ROLE.covers((Role.CustomerContractualContact.class))).isFalse();
+        assertThat(AnyCustomerUser.ROLE.covers((CustomerTechnicalContact.class))).isFalse();
+        assertThat(AnyCustomerUser.ROLE.covers((CustomerFinancialContact.class))).isFalse();
 
-        assertThat(Role.ANYBODY.covers((Role.ANY_CUSTOMER_USER))).isFalse();
+        assertThat(Anybody.ROLE.covers((Role.AnyCustomerUser.class))).isFalse();
     }
 
     @Test
     public void higherUserRolesShouldCoverLowerRequiredRoles() {
-        assertThat(Role.HOSTMASTER.covers(Role.SUPPORTER)).isTrue();
-        assertThat(Role.ADMIN.covers(Role.SUPPORTER)).isTrue();
+        assertThat(Hostmaster.ROLE.covers(Supporter.class)).isTrue();
+        assertThat(Admin.ROLE.covers(Supporter.class)).isTrue();
 
-        assertThat(Role.SUPPORTER.covers(Role.ANY_CUSTOMER_CONTACT)).isTrue();
+        assertThat(Supporter.ROLE.covers(AnyCustomerContact.class)).isTrue();
 
-        assertThat(Role.CUSTOMER_CONTRACTUAL_CONTACT.covers(Role.ANY_CUSTOMER_CONTACT)).isTrue();
-        assertThat(Role.CUSTOMER_CONTRACTUAL_CONTACT.covers(Role.CUSTOMER_FINANCIAL_CONTACT)).isTrue();
-        assertThat(Role.CUSTOMER_CONTRACTUAL_CONTACT.covers(Role.CUSTOMER_TECHNICAL_CONTACT)).isTrue();
-        assertThat(Role.CUSTOMER_TECHNICAL_CONTACT.covers(Role.ANY_CUSTOMER_USER)).isTrue();
+        assertThat(Role.CustomerContractualContact.ROLE.covers(AnyCustomerContact.class)).isTrue();
+        assertThat(Role.CustomerContractualContact.ROLE.covers(CustomerFinancialContact.class)).isTrue();
+        assertThat(Role.CustomerContractualContact.ROLE.covers(CustomerTechnicalContact.class)).isTrue();
+        assertThat(CustomerTechnicalContact.ROLE.covers(Role.AnyCustomerUser.class)).isTrue();
 
-        assertThat(Role.ACTUAL_CUSTOMER_USER.covers((Role.ANY_CUSTOMER_USER))).isTrue();
-        assertThat(Role.ANY_CUSTOMER_USER.covers((Role.ANYBODY))).isTrue();
+        assertThat(ActualCustomerUser.ROLE.covers((Role.AnyCustomerUser.class))).isTrue();
+        assertThat(AnyCustomerUser.ROLE.covers((Anybody.class))).isTrue();
     }
 
     @Test
     public void financialContactShouldNotCoverAnyOtherRealRoleRequirement() {
-        assertThat(Role.CUSTOMER_FINANCIAL_CONTACT.covers(Role.ANY_CUSTOMER_USER)).isFalse();
-        assertThat(Role.CUSTOMER_FINANCIAL_CONTACT.covers(Role.ACTUAL_CUSTOMER_USER)).isFalse();
-        assertThat(Role.CUSTOMER_FINANCIAL_CONTACT.covers(Role.ANY_CUSTOMER_USER)).isFalse();
+        assertThat(CustomerFinancialContact.ROLE.covers(Role.AnyCustomerUser.class)).isFalse();
+        assertThat(CustomerFinancialContact.ROLE.covers(ActualCustomerUser.class)).isFalse();
+        assertThat(CustomerFinancialContact.ROLE.covers(Role.AnyCustomerUser.class)).isFalse();
     }
 
     @Test
     public void ignoredCoversNothingAndIsNotCovered() {
-        assertThat(Role.IGNORED.covers(Role.HOSTMASTER)).isFalse();
-        assertThat(Role.IGNORED.covers(Role.ANYBODY)).isFalse();
-        assertThat(Role.IGNORED.covers(Role.IGNORED)).isFalse();
-        assertThat(Role.HOSTMASTER.covers(Role.IGNORED)).isFalse();
-        assertThat(Role.ANYBODY.covers(Role.IGNORED)).isFalse();
+        assertThat(Ignored.ROLE.covers(Hostmaster.class)).isFalse();
+        assertThat(Ignored.ROLE.covers(Anybody.class)).isFalse();
+        assertThat(Ignored.ROLE.covers(Ignored.class)).isFalse();
+        assertThat(Hostmaster.ROLE.covers(Ignored.class)).isFalse();
+        assertThat(Anybody.ROLE.covers(Ignored.class)).isFalse();
     }
 
     @Test
     public void coversAny() {
-        assertThat(Role.HOSTMASTER.coversAny(Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT)).isTrue();
+        assertThat(Hostmaster.ROLE.coversAny(Role.CustomerContractualContact.class, CustomerFinancialContact.class)).isTrue();
         assertThat(
-                Role.CUSTOMER_CONTRACTUAL_CONTACT.coversAny(Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT))
-                        .isTrue();
+                Role.CustomerContractualContact.ROLE.coversAny(
+                        Role.CustomerContractualContact.class,
+                        CustomerFinancialContact.class))
+                                .isTrue();
         assertThat(
-                Role.CUSTOMER_FINANCIAL_CONTACT.coversAny(Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT))
-                        .isTrue();
+                CustomerFinancialContact.ROLE.coversAny(
+                        Role.CustomerContractualContact.class,
+                        CustomerFinancialContact.class))
+                                .isTrue();
 
-        assertThat(Role.ANY_CUSTOMER_USER.coversAny(Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT))
+        assertThat(Role.AnyCustomerUser.ROLE.coversAny(Role.CustomerContractualContact.class, CustomerFinancialContact.class))
                 .isFalse();
 
-        assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny())).isInstanceOf(VerifyException.class);
-        assertThat(catchThrowable(() -> Role.HOSTMASTER.coversAny((Role[]) null))).isInstanceOf(VerifyException.class);
-    }
-
-    @Test
-    public void isIgnored() {
-        for (Role role : Role.values()) {
-            if (role == Role.IGNORED) {
-                assertThat(role.isIgnored()).isTrue();
-            } else {
-                assertThat(role.isIgnored()).isFalse();
-            }
-        }
+        assertThat(catchThrowable(Hostmaster.ROLE::coversAny)).isInstanceOf(VerifyException.class);
+        assertThat(
+                catchThrowable(
+                        () -> Hostmaster.ROLE.coversAny(
+                                (Class<Role>[]) null))).isInstanceOf(VerifyException.class);
     }
 
     @Test
@@ -125,54 +120,54 @@ public class RoleUnitTest {
 
     @Test
     public void getAuthority() {
-        assertThat(Role.NOBODY.getAuthority()).isEmpty();
-        assertThat(Role.HOSTMASTER.getAuthority()).hasValue(AuthoritiesConstants.HOSTMASTER);
-        assertThat(Role.ADMIN.getAuthority()).hasValue(AuthoritiesConstants.ADMIN);
-        assertThat(Role.SUPPORTER.getAuthority()).hasValue(AuthoritiesConstants.SUPPORTER);
-        assertThat(Role.CUSTOMER_CONTRACTUAL_CONTACT.getAuthority()).isEmpty();
-        assertThat(Role.ANYBODY.getAuthority()).hasValue(AuthoritiesConstants.ANONYMOUS);
+        assertThat(Nobody.ROLE.authority()).isEqualTo(AuthoritiesConstants.USER);
+        assertThat(Hostmaster.ROLE.authority()).isEqualTo(AuthoritiesConstants.HOSTMASTER);
+        assertThat(Admin.ROLE.authority()).isEqualTo(AuthoritiesConstants.ADMIN);
+        assertThat(Supporter.ROLE.authority()).isEqualTo(AuthoritiesConstants.SUPPORTER);
+        assertThat(Role.CustomerContractualContact.ROLE.authority()).isEqualTo(AuthoritiesConstants.USER);
+        assertThat(Anybody.ROLE.authority()).isEqualTo(AuthoritiesConstants.ANONYMOUS);
     }
 
     @Test
     public void isBroadest() {
-        assertThat(Role.broadest(Role.HOSTMASTER, Role.CUSTOMER_CONTRACTUAL_CONTACT)).isEqualTo(Role.HOSTMASTER);
-        assertThat(Role.broadest(Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.HOSTMASTER)).isEqualTo(Role.HOSTMASTER);
-        assertThat(Role.broadest(Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.ANY_CUSTOMER_USER))
-                .isEqualTo(Role.CUSTOMER_CONTRACTUAL_CONTACT);
+        assertThat(Role.broadest(Hostmaster.ROLE, Role.CustomerContractualContact.ROLE)).isEqualTo(Hostmaster.ROLE);
+        assertThat(Role.broadest(Role.CustomerContractualContact.ROLE, Hostmaster.ROLE)).isEqualTo(Hostmaster.ROLE);
+        assertThat(Role.broadest(Role.CustomerContractualContact.ROLE, Role.AnyCustomerUser.ROLE))
+                .isEqualTo(Role.CustomerContractualContact.ROLE);
     }
 
     @Test
     public void isAllowedToInit() {
-        assertThat(Role.HOSTMASTER.isAllowedToInit(someFieldWithoutAccessForAnnotation)).isFalse();
-        assertThat(Role.SUPPORTER.isAllowedToInit(someFieldWithoutAccessForAnnotation)).isFalse();
-        assertThat(Role.ADMIN.isAllowedToInit(someFieldWithAccessForAnnotation)).isTrue();
+        assertThat(Hostmaster.ROLE.isAllowedToInit(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Supporter.ROLE.isAllowedToInit(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Admin.ROLE.isAllowedToInit(someFieldWithAccessForAnnotation)).isTrue();
     }
 
     @Test
     public void isAllowedToUpdate() {
-        assertThat(Role.HOSTMASTER.isAllowedToUpdate(someFieldWithoutAccessForAnnotation)).isFalse();
-        assertThat(Role.ANY_CUSTOMER_CONTACT.isAllowedToUpdate(someFieldWithAccessForAnnotation)).isFalse();
-        assertThat(Role.SUPPORTER.isAllowedToUpdate(someFieldWithAccessForAnnotation)).isTrue();
+        assertThat(Hostmaster.ROLE.isAllowedToUpdate(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(AnyCustomerContact.ROLE.isAllowedToUpdate(someFieldWithAccessForAnnotation)).isFalse();
+        assertThat(Supporter.ROLE.isAllowedToUpdate(someFieldWithAccessForAnnotation)).isTrue();
     }
 
     @Test
     public void isAllowedToRead() {
-        assertThat(Role.HOSTMASTER.isAllowedToRead(someFieldWithoutAccessForAnnotation)).isFalse();
-        assertThat(Role.ANY_CUSTOMER_USER.isAllowedToRead(someFieldWithAccessForAnnotation)).isFalse();
-        assertThat(Role.ANY_CUSTOMER_CONTACT.isAllowedToRead(someFieldWithAccessForAnnotation)).isTrue();
+        assertThat(Hostmaster.ROLE.isAllowedToRead(someFieldWithoutAccessForAnnotation)).isFalse();
+        assertThat(Role.AnyCustomerUser.ROLE.isAllowedToRead(someFieldWithAccessForAnnotation)).isFalse();
+        assertThat(AnyCustomerContact.ROLE.isAllowedToRead(someFieldWithAccessForAnnotation)).isTrue();
     }
 
     // --- only test fixture below ---
 
-    static class TestDto {
+    private static class TestDto {
 
-        @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.ANY_CUSTOMER_CONTACT)
+        @AccessFor(init = Admin.class, update = Supporter.class, read = AnyCustomerContact.class)
         private Integer someFieldWithAccessForAnnotation;
 
-        @AccessFor(update = Role.IGNORED, read = Role.ANY_CUSTOMER_CONTACT)
+        @AccessFor(update = Ignored.class, read = AnyCustomerContact.class)
         private Integer someFieldWithAccessForAnnotationToBeIgnoredForUpdates;
 
-        @AccessFor(update = { Role.IGNORED, Role.SUPPORTER }, read = Role.ANY_CUSTOMER_CONTACT)
+        @AccessFor(update = { Ignored.class, Supporter.class }, read = AnyCustomerContact.class)
         private Integer someFieldWithAccessForAnnotationToBeIgnoredForUpdatesAmongOthers;
 
         private Integer someFieldWithoutAccessForAnnotation;

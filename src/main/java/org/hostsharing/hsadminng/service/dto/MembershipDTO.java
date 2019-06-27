@@ -6,15 +6,14 @@ import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
-
+import org.hostsharing.hsadminng.service.accessfilter.Role.*;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import java.time.LocalDate;
-import java.util.Objects;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * A DTO for the Membership entity.
@@ -23,44 +22,44 @@ import javax.validation.constraints.Size;
 public class MembershipDTO implements AccessMappings, FluentBuilder<MembershipDTO> {
 
     @SelfId(resolver = MembershipService.class)
-    @AccessFor(read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private Long id;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate admissionDocumentDate;
 
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate cancellationDocumentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate memberFromDate;
 
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate memberUntilDate;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Admin.class, read = Supporter.class)
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private Long customerId;
 
-    @AccessFor(update = Role.IGNORED, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(update = Ignored.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String customerPrefix;
 
-    @AccessFor(update = Role.IGNORED, read = Role.CUSTOMER_FINANCIAL_CONTACT)
+    @AccessFor(update = Ignored.class, read = CustomerFinancialContact.class)
     private String customerDisplayLabel;
 
-    @AccessFor(update = Role.IGNORED, read = Role.CUSTOMER_FINANCIAL_CONTACT)
+    @AccessFor(update = Ignored.class, read = CustomerFinancialContact.class)
     private String displayLabel;
 
     public Long getId() {

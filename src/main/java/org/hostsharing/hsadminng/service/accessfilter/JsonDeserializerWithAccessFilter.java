@@ -1,13 +1,6 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import static com.google.common.base.Verify.verify;
-import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
-
-import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
-import org.hostsharing.hsadminng.service.util.ReflectionUtil;
-import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -15,9 +8,11 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.google.common.base.Joiner;
-
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
+import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
+import org.hostsharing.hsadminng.service.util.ReflectionUtil;
+import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Field;
@@ -25,6 +20,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.google.common.base.Verify.verify;
+import static org.hostsharing.hsadminng.service.util.ReflectionUtil.unchecked;
 
 public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings> extends JsonDeserializer<T> {
 
@@ -85,31 +83,30 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
 
     private Object readValueFromJSon(final TreeNode treeNode, final String fieldName, final Class<?> fieldClass) {
         // FIXME can be removed? final TreeNode fieldNode = treeNode.get(fieldName);
-        final TreeNode fieldNode = treeNode;
-        if (fieldNode instanceof NullNode) {
+        if (treeNode instanceof NullNode) {
             return null;
         }
-        if (fieldNode instanceof TextNode) {
-            return ((TextNode) fieldNode).asText();
+        if (treeNode instanceof TextNode) {
+            return ((TextNode) treeNode).asText();
         }
-        if (fieldNode instanceof IntNode) {
-            return ((IntNode) fieldNode).asInt();
+        if (treeNode instanceof IntNode) {
+            return ((IntNode) treeNode).asInt();
         }
-        if (fieldNode instanceof LongNode) {
-            return ((LongNode) fieldNode).asLong();
+        if (treeNode instanceof LongNode) {
+            return ((LongNode) treeNode).asLong();
         }
-        if (fieldNode instanceof DoubleNode) {
+        if (treeNode instanceof DoubleNode) {
             // TODO: we need to figure out, why DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS does not work
-            return ((DoubleNode) fieldNode).asDouble();
+            return ((DoubleNode) treeNode).asDouble();
         }
-        if (fieldNode instanceof ArrayNode && LocalDate.class.isAssignableFrom(fieldClass)) {
+        if (treeNode instanceof ArrayNode && LocalDate.class.isAssignableFrom(fieldClass)) {
             return LocalDate.of(
-                    ((ArrayNode) fieldNode).get(0).asInt(),
-                    ((ArrayNode) fieldNode).get(1).asInt(),
-                    ((ArrayNode) fieldNode).get(2).asInt());
+                    ((ArrayNode) treeNode).get(0).asInt(),
+                    ((ArrayNode) treeNode).get(1).asInt(),
+                    ((ArrayNode) treeNode).get(2).asInt());
         }
         throw new NotImplementedException(
-                "JSon node type not implemented: " + fieldNode.getClass() + " -> " + fieldName + ": " + fieldClass);
+                "JSon node type not implemented: " + treeNode.getClass() + " -> " + fieldName + ": " + fieldClass);
     }
 
     private void writeValueToDto(final T dto, final Field field, final Object value) {
@@ -223,25 +220,29 @@ public abstract class JsonDeserializerWithAccessFilter<T extends AccessMappings>
                     throw new BadRequestAlertException(
                             "Initialization of field " + toDisplay(field)
                                     + " prohibited for current user role(s): "
-                                    + Joiner.on("+").join(roles),
+                                    + asString(roles),
                             toDisplay(field),
                             "initializationProhibited");
                 } else {
                     throw new BadRequestAlertException(
                             "Referencing field " + toDisplay(field)
                                     + " prohibited for current user role(s): "
-                                    + Joiner.on("+").join(roles),
+                                    + asString(roles),
                             toDisplay(field),
                             "referencingProhibited");
                 }
             }
         }
 
+        private String asString(Set<Role> roles) {
+            return Joiner.on("+").join(roles.stream().map(Role::name).toArray());
+        }
+
         private void validateUpdateAccess(Field field, Set<Role> roles) {
             if (!Role.toBeIgnoredForUpdates(field) && !isAllowedToUpdate(getLoginUserRoles(), field)) {
                 throw new BadRequestAlertException(
                         "Update of field " + toDisplay(field) + " prohibited for current user role(s): "
-                                + Joiner.on("+").join(roles),
+                                + asString(roles),
                         toDisplay(field),
                         "updateProhibited");
             }

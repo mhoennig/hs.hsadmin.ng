@@ -1,17 +1,14 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.BDDMockito.given;
-
+import com.google.common.base.VerifyException;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
 import org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerFinancialContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextFake;
-
-import com.google.common.base.VerifyException;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -21,6 +18,10 @@ import org.mockito.junit.MockitoRule;
 
 import java.util.Arrays;
 import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.BDDMockito.given;
 
 public class UserRoleAssignmentServiceUnitTest {
 
@@ -65,23 +66,24 @@ public class UserRoleAssignmentServiceUnitTest {
                 Arrays.asList(
                         new UserRoleAssignment().entityTypeId("test.SomethingElse")
                                 .entityObjectId(givenEntityObjectId)
-                                .assignedRole(Role.CUSTOMER_CONTRACTUAL_CONTACT),
+                                .assignedRole(CustomerContractualContact.ROLE),
                         new UserRoleAssignment().entityTypeId(givenEntityTypeId)
                                 .entityObjectId(givenEntityObjectId)
-                                .assignedRole(Role.CUSTOMER_FINANCIAL_CONTACT),
+                                .assignedRole(CustomerFinancialContact.ROLE),
                         new UserRoleAssignment().entityTypeId(givenEntityTypeId)
                                 .entityObjectId(givenEntityObjectId)
-                                .assignedRole(Role.CUSTOMER_TECHNICAL_CONTACT),
+                                .assignedRole(CustomerTechnicalContact.ROLE),
                         new UserRoleAssignment().entityTypeId(givenEntityTypeId)
                                 .entityObjectId(3L)
-                                .assignedRole(Role.CUSTOMER_CONTRACTUAL_CONTACT)));
+                                .assignedRole(CustomerContractualContact.ROLE)));
 
         // when
         final Set<Role> actual = userRoleAssignmentService
                 .getEffectiveRoleOfCurrentUser(givenEntityTypeId, givenEntityObjectId);
 
         // then
-        assertThat(actual).containsExactlyInAnyOrder(Role.CUSTOMER_FINANCIAL_CONTACT, Role.CUSTOMER_TECHNICAL_CONTACT);
+        assertThat(actual)
+                .containsExactlyInAnyOrder(Role.of(CustomerFinancialContact.class), Role.of(CustomerTechnicalContact.class));
     }
 
     @Test

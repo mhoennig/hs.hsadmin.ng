@@ -1,25 +1,17 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import static org.apache.commons.lang3.tuple.ImmutablePair.of;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
 import org.hostsharing.hsadminng.repository.UserRepository;
 import org.hostsharing.hsadminng.repository.UserRoleAssignmentRepository;
-import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,6 +27,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.util.Optional;
 
+import static org.apache.commons.lang3.tuple.ImmutablePair.of;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
+
 @JsonTest
 @SpringBootTest(
         classes = {
@@ -45,9 +42,9 @@ import java.util.Optional;
 @RunWith(SpringRunner.class)
 public class UserRoleAssignmentUnitTest {
 
-    public static final long USER_ROLE_ASSIGNMENT_ID = 1234L;
-    public static final long CUSTOMER_ID = 888L;
-    public static final long USER_ID = 42L;
+    private static final long USER_ROLE_ASSIGNMENT_ID = 1234L;
+    private static final long CUSTOMER_ID = 888L;
+    private static final long USER_ID = 42L;
 
     @Rule
     public MockitoRule mockito = MockitoJUnit.rule();
@@ -75,7 +72,11 @@ public class UserRoleAssignmentUnitTest {
     public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, CUSTOMER_ID, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser()
+                .withRole(
+                        CustomerDTO.class,
+                        CUSTOMER_ID,
+                        Role.CustomerContractualContact.ROLE);
         UserRoleAssignment given = createSomeUserRoleAssignment(USER_ROLE_ASSIGNMENT_ID);
 
         // when
@@ -89,7 +90,7 @@ public class UserRoleAssignmentUnitTest {
     public void testSerializationAsSupporter() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.SUPPORTER);
+        securityContext.havingAuthenticatedUser().withAuthority(Role.Supporter.ROLE.authority());
         UserRoleAssignment given = createSomeUserRoleAssignment(USER_ROLE_ASSIGNMENT_ID);
 
         // when
@@ -102,7 +103,7 @@ public class UserRoleAssignmentUnitTest {
     @Test
     public void testDeserializeAsAdmin() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withAuthority(AuthoritiesConstants.ADMIN);
+        securityContext.havingAuthenticatedUser().withAuthority(Role.Admin.ROLE.authority());
         given(userRoleAssignmentRepository.findById(USER_ROLE_ASSIGNMENT_ID))
                 .willReturn(Optional.of(new UserRoleAssignment().id(USER_ROLE_ASSIGNMENT_ID)));
         final User expectedUser = new User().id(USER_ID);
@@ -115,7 +116,7 @@ public class UserRoleAssignmentUnitTest {
                         "user",
                         JSonBuilder.asJSon(
                                 of("id", USER_ID))),
-                of("assignedRole", Role.CUSTOMER_TECHNICAL_CONTACT.name()));
+                of("assignedRole", Role.CustomerTechnicalContact.ROLE.name()));
 
         // when
         UserRoleAssignment actual = objectMapper.readValue(json, UserRoleAssignment.class);
@@ -125,9 +126,15 @@ public class UserRoleAssignmentUnitTest {
         expected.setId(USER_ROLE_ASSIGNMENT_ID);
         expected.setEntityTypeId(Customer.ENTITY_TYPE_ID);
         expected.setEntityObjectId(CUSTOMER_ID);
-        expected.setAssignedRole(Role.CUSTOMER_TECHNICAL_CONTACT);
+        expected.setAssignedRole(Role.CustomerTechnicalContact.ROLE);
         expected.setUser(expectedUser);
         assertThat(actual).isEqualToComparingFieldByField(expected);
+    }
+
+    @Test
+    public void getAssignedRoleHandlesNullValue() {
+        assertThat(new UserRoleAssignment().assignedRole(null).getAssignedRole()).isNull();
+        assertThat(new UserRoleAssignment().assignedRole(Role.Admin.ROLE).getAssignedRole()).isEqualTo(Role.Admin.ROLE);
     }
 
     // --- only test fixture below ---
@@ -148,7 +155,7 @@ public class UserRoleAssignmentUnitTest {
         given.setEntityTypeId(Customer.ENTITY_TYPE_ID);
         given.setEntityObjectId(CUSTOMER_ID);
         given.setUser(new User().id(USER_ID));
-        given.setAssignedRole(Role.CUSTOMER_TECHNICAL_CONTACT);
+        given.setAssignedRole(Role.CustomerTechnicalContact.ROLE);
         return given;
     }
 }

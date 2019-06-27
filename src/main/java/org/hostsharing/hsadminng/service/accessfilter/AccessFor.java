@@ -1,6 +1,8 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import org.hostsharing.hsadminng.service.accessfilter.Role.Nobody;
+
 import java.lang.annotation.*;
 
 @Documented
@@ -8,9 +10,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AccessFor {
 
-    Role[] init() default Role.NOBODY;
+    Class<? extends Role>[] init() default Nobody.class;
 
-    Role[] update() default Role.NOBODY;
+    Class<? extends Role>[] update() default Nobody.class;
 
-    Role[] read() default Role.NOBODY;
+    Class<? extends Role>[] read() default Nobody.class;
 }

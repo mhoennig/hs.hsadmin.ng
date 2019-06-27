@@ -1,10 +1,13 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.hostsharing.hsadminng.service.accessfilter.Role;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.Supporter;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -17,32 +20,32 @@ public class MembershipDTOUnitTest extends AccessMappingsUnitTestBase<Membership
 
     @Test
     public void shouldHaveProperAccessForAdmin() {
-        initAccessFor(MembershipDTO.class, Role.ADMIN).shouldBeExactlyFor(
+        initAccessFor(MembershipDTO.class, Admin.ROLE).shouldBeExactlyFor(
                 "admissionDocumentDate",
                 "cancellationDocumentDate",
                 "memberFromDate",
                 "memberUntilDate",
                 "customerId",
                 "remark");
-        updateAccessFor(MembershipDTO.class, Role.ADMIN).shouldBeExactlyFor(
+        updateAccessFor(MembershipDTO.class, Admin.ROLE).shouldBeExactlyFor(
                 "cancellationDocumentDate",
                 "memberUntilDate",
                 "remark");
-        readAccessFor(MembershipDTO.class, Role.ADMIN).shouldBeForAllFields();
+        readAccessFor(MembershipDTO.class, Admin.ROLE).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForSupporter() {
-        initAccessFor(MembershipDTO.class, Role.SUPPORTER).shouldBeForNothing();
-        updateAccessFor(MembershipDTO.class, Role.SUPPORTER).shouldBeForNothing();
-        readAccessFor(MembershipDTO.class, Role.SUPPORTER).shouldBeForAllFields();
+        initAccessFor(MembershipDTO.class, Supporter.ROLE).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Supporter.ROLE).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Supporter.ROLE).shouldBeForAllFields();
     }
 
     @Test
     public void shouldHaveProperAccessForContractualContact() {
-        initAccessFor(MembershipDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(MembershipDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeForNothing();
-        readAccessFor(MembershipDTO.class, Role.CUSTOMER_CONTRACTUAL_CONTACT).shouldBeExactlyFor(
+        initAccessFor(MembershipDTO.class, CustomerContractualContact.ROLE).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, CustomerContractualContact.ROLE).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, CustomerContractualContact.ROLE).shouldBeExactlyFor(
                 "id",
                 "admissionDocumentDate",
                 "cancellationDocumentDate",
@@ -56,21 +59,21 @@ public class MembershipDTOUnitTest extends AccessMappingsUnitTestBase<Membership
 
     @Test
     public void shouldHaveNoAccessForTechnicalContact() {
-        initAccessFor(MembershipDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
-        updateAccessFor(MembershipDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
-        readAccessFor(MembershipDTO.class, Role.CUSTOMER_TECHNICAL_CONTACT).shouldBeForNothing();
+        initAccessFor(MembershipDTO.class, CustomerTechnicalContact.ROLE).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, CustomerTechnicalContact.ROLE).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, CustomerTechnicalContact.ROLE).shouldBeForNothing();
     }
 
     @Test
     public void shouldHaveNoAccessForNormalUsersWithinCustomerRealm() {
-        initAccessFor(MembershipDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
-        updateAccessFor(MembershipDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
-        readAccessFor(MembershipDTO.class, Role.ANY_CUSTOMER_USER).shouldBeForNothing();
+        initAccessFor(MembershipDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
+        updateAccessFor(MembershipDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
+        readAccessFor(MembershipDTO.class, Role.AnyCustomerUser.ROLE).shouldBeForNothing();
     }
 
     // --- only test fixture below ---
 
-    public static MembershipDTO createSampleDTO(final Long id, final Long parentId) {
+    static MembershipDTO createSampleDTO(final Long id, final Long parentId) {
         final MembershipDTO dto = new MembershipDTO();
         dto.setId(id);
         final LocalDate referenceDate = LocalDate.parse("2000-12-07");

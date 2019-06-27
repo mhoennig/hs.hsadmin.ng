@@ -32,37 +32,37 @@ public class JSonBuilder {
     }
 
     public JSonBuilder withFieldValue(String name, String value) {
-        json.append(inQuotes(name) + ":" + (value != null ? inQuotes(value) : "null") + ",");
+        json.append(inQuotes(name)).append(":").append(value != null ? inQuotes(value) : "null").append(",");
         return this;
     }
 
     public JSonBuilder withFieldValue(String name, Number value) {
-        json.append(inQuotes(name) + ":" + (value != null ? value : "null") + ",");
+        json.append(inQuotes(name)).append(":").append(value != null ? value : "null").append(",");
         return this;
     }
 
     public JSonBuilder toJSonNullFieldDefinition(String name) {
-        json.append(inQuotes(name) + ":null,");
+        json.append(inQuotes(name)).append(":null,");
         return this;
     }
 
     public JSonBuilder withFieldValueIfPresent(String name, String value) {
         if (value != null) {
-            json.append(inQuotes(name) + ":" + inQuotes(value) + ",");
+            json.append(inQuotes(name)).append(":").append(inQuotes(value)).append(",");
         }
         return this;
     }
 
     public JSonBuilder withFieldValueIfPresent(String name, Number value) {
         if (value != null) {
-            json.append(inQuotes(name) + ":" + value + ",");
+            json.append(inQuotes(name)).append(":").append(value).append(",");
         }
         return this;
     }
 
-    public <E extends Enum<E>> JSonBuilder withFieldValueIfPresent(final String name, final E value) {
+    public <E extends Enum<E>> JSonBuilder withFieldValueIfPresent(final String name, final Role value) {
         if (value != null) {
-            json.append(inQuotes(name) + ":" + inQuotes(value.name()) + ",");
+            json.append(inQuotes(name)).append(":").append(inQuotes(value.name())).append(",");
         }
         return this;
     }

@@ -7,17 +7,16 @@ import org.hostsharing.hsadminng.service.AssetService;
 import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
-
+import org.hostsharing.hsadminng.service.accessfilter.Role.*;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 
 /**
  * A DTO for the Asset entity.
@@ -26,34 +25,34 @@ import javax.validation.constraints.Size;
 public class AssetDTO implements Serializable, AccessMappings {
 
     @SelfId(resolver = AssetService.class)
-    @AccessFor(read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private Long id;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate documentDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate valueDate;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private AssetAction action;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private BigDecimal amount;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Admin.class, read = Supporter.class)
     private String remark;
 
     @ParentId(resolver = MembershipService.class)
-    @AccessFor(init = Role.ADMIN, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(init = Admin.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private Long membershipId;
 
-    @AccessFor(update = Role.IGNORED, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(update = Ignored.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String membershipDisplayLabel;
 
     public Long getId() {

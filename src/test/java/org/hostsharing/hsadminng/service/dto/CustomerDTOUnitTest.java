@@ -1,10 +1,8 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
@@ -14,13 +12,11 @@ import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
+import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,6 +31,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 
 @JsonTest
 @SpringBootTest(
@@ -76,7 +76,7 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsContractualCustomerContact() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.of(CustomerContractualContact.class));
         CustomerDTO given = createSomeCustomerDTO(1234L);
 
         // when
@@ -91,7 +91,7 @@ public class CustomerDTOUnitTest {
     public void testSerializationAsTechnicalCustomerUser() throws JsonProcessingException {
 
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CUSTOMER_TECHNICAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.of(CustomerTechnicalContact.class));
         CustomerDTO given = createSomeCustomerDTO(1234L);
 
         // when
@@ -125,7 +125,7 @@ public class CustomerDTOUnitTest {
     @Test
     public void testDeserializeAsContractualCustomerContact() throws IOException {
         // given
-        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.CUSTOMER_CONTRACTUAL_CONTACT);
+        securityContext.havingAuthenticatedUser().withRole(CustomerDTO.class, 1234L, Role.of(CustomerContractualContact.class));
         given(customerRepository.findById(1234L)).willReturn(Optional.of(new Customer().id(1234L)));
         String json = "{\"id\":1234,\"contractualSalutation\":\"Hallo Updated\",\"billingSalutation\":\"Moin Updated\"}";
 

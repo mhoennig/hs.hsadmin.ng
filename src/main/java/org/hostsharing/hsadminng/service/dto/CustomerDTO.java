@@ -7,14 +7,14 @@ import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
-
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
-import javax.validation.constraints.*;
+import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
 
 /**
  * A DTO for the Customer entity.
@@ -23,99 +23,99 @@ import javax.validation.constraints.*;
 public class CustomerDTO implements AccessMappings, FluentBuilder<CustomerDTO> {
 
     @SelfId(resolver = CustomerService.class)
-    @AccessFor(read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(read = AnyCustomerUser.class)
     private Long id;
 
     @NotNull
     @Min(value = 10000)
     @Max(value = 99999)
-    @AccessFor(init = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Admin.class, read = AnyCustomerUser.class)
     private Integer reference;
 
     @NotNull
     @Size(max = 3)
     @Pattern(regexp = "[a-z][a-z0-9]+")
-    @AccessFor(init = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Admin.class, read = AnyCustomerUser.class)
     private String prefix;
 
     @NotNull
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Admin.class, update = Admin.class, read = AnyCustomerUser.class)
     private String name;
 
     @NotNull
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.CUSTOMER_CONTRACTUAL_CONTACT)
+    @AccessFor(init = Admin.class, update = Admin.class, read = CustomerContractualContact.class)
     private CustomerKind kind;
 
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate birthDate;
 
     @Size(max = 80)
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String birthPlace;
 
     @Size(max = 80)
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String registrationCourt;
 
     @Size(max = 80)
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String registrationNumber;
 
     @NotNull
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private VatRegion vatRegion;
 
     @Size(max = 40)
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String vatNumber;
 
     @Size(max = 80)
-    @AccessFor(init = Role.ADMIN, update = Role.CUSTOMER_CONTRACTUAL_CONTACT, read = Role.CUSTOMER_CONTRACTUAL_CONTACT)
+    @AccessFor(init = Admin.class, update = CustomerContractualContact.class, read = CustomerContractualContact.class)
     private String contractualSalutation;
 
     @NotNull
     @Size(max = 400)
-    @AccessFor(init = Role.ADMIN, update = Role.ADMIN, read = Role.CUSTOMER_CONTRACTUAL_CONTACT)
+    @AccessFor(init = Admin.class, update = Admin.class, read = CustomerContractualContact.class)
     private String contractualAddress;
 
     @Size(max = 80)
     @AccessFor(
-            init = Role.ADMIN,
-            update = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = Role.CUSTOMER_CONTRACTUAL_CONTACT)
+            init = Admin.class,
+            update = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = CustomerContractualContact.class)
     private String billingSalutation;
 
     @Size(max = 400)
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String billingAddress;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Supporter.class, read = Supporter.class)
     private String remark;
 
-    @AccessFor(init = Role.ANYBODY, update = Role.ANYBODY, read = Role.ANY_CUSTOMER_USER)
+    @AccessFor(init = Anybody.class, update = Anybody.class, read = AnyCustomerUser.class)
     private String displayLabel;
 
     public Long getId() {

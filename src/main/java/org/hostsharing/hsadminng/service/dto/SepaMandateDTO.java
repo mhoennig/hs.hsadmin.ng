@@ -6,15 +6,14 @@ import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.SepaMandateService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
-
+import org.hostsharing.hsadminng.service.accessfilter.Role.*;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import java.time.LocalDate;
-import java.util.Objects;
-
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * A DTO for the SepaMandate entity.
@@ -23,69 +22,69 @@ import javax.validation.constraints.Size;
 public class SepaMandateDTO implements AccessMappings, FluentBuilder<SepaMandateDTO> {
 
     @SelfId(resolver = SepaMandateService.class)
-    @AccessFor(read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private Long id;
 
     @NotNull
     @Size(max = 40)
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String reference;
 
     @Size(max = 34)
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String iban;
 
     @Size(max = 11)
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String bic;
 
     @NotNull
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate grantingDocumentDate;
 
     @AccessFor(
-            init = Role.ADMIN,
-            update = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate revokationDocumentDate;
 
     @NotNull
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate validFromDate;
 
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            update = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            update = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate validUntilDate;
 
     @AccessFor(
-            init = Role.ADMIN,
-            update = Role.ADMIN,
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = Admin.class,
+            update = Admin.class,
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private LocalDate lastUsedDate;
 
     @Size(max = 160)
-    @AccessFor(init = Role.ADMIN, update = Role.SUPPORTER, read = Role.SUPPORTER)
+    @AccessFor(init = Admin.class, update = Supporter.class, read = Supporter.class)
     private String remark;
 
     @ParentId(resolver = CustomerService.class)
     @AccessFor(
-            init = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT },
-            read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+            init = { CustomerContractualContact.class, CustomerFinancialContact.class },
+            read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private Long customerId;
 
-    @AccessFor(update = Role.IGNORED, read = { Role.CUSTOMER_CONTRACTUAL_CONTACT, Role.CUSTOMER_FINANCIAL_CONTACT })
+    @AccessFor(update = Ignored.class, read = { CustomerContractualContact.class, CustomerFinancialContact.class })
     private String customerDisplayLabel;
 
     public Long getId() {
