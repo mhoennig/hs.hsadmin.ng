@@ -1,9 +1,18 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import org.apache.commons.lang3.NotImplementedException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,13 +24,6 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hostsharing.hsadminng.service.accessfilter.JSonAccessFilterTestFixture.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 public class JSonSerializationWithAccessFilterUnitTest {
 

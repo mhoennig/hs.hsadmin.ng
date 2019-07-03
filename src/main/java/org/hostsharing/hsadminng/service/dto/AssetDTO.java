@@ -8,15 +8,17 @@ import org.hostsharing.hsadminng.service.MembershipService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.hostsharing.hsadminng.service.accessfilter.Role.*;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * A DTO for the Asset entity.

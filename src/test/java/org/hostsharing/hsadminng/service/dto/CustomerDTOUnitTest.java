@@ -1,8 +1,10 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
@@ -17,6 +19,10 @@ import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalCont
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapper;
 import org.hostsharing.hsadminng.service.mapper.CustomerMapperImpl;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,10 +37,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
 
 @JsonTest
 @SpringBootTest(

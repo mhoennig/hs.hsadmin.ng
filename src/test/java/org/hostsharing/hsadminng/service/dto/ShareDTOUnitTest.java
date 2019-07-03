@@ -1,14 +1,15 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.hostsharing.hsadminng.domain.enumeration.ShareAction;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
 import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualContact;
 import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
 import org.hostsharing.hsadminng.service.util.RandomUtil;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 
 import java.time.LocalDate;

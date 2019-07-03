@@ -1,20 +1,22 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
+import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.enumeration.CustomerKind;
 import org.hostsharing.hsadminng.domain.enumeration.VatRegion;
 import org.hostsharing.hsadminng.service.CustomerService;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
 
-import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
-import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
+import javax.validation.constraints.*;
 
 /**
  * A DTO for the Customer entity.

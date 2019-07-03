@@ -1,12 +1,18 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
+import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Sets.union;
+import static java.util.Collections.EMPTY_SET;
+import static java.util.Collections.emptySet;
+
 import org.hostsharing.hsadminng.security.SecurityUtils;
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.dto.MembershipDTO;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 import org.hostsharing.hsadminng.web.rest.errors.BadRequestAlertException;
+
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.Authentication;
@@ -17,11 +23,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Sets.union;
-import static java.util.Collections.EMPTY_SET;
-import static java.util.Collections.emptySet;
 
 abstract class JSonAccessFilter<T extends AccessMappings> {
 

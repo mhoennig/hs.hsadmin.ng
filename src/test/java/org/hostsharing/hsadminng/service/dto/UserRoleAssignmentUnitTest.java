@@ -1,8 +1,11 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.apache.commons.lang3.tuple.ImmutablePair.of;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
@@ -12,6 +15,10 @@ import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.JSonBuilder;
 import org.hostsharing.hsadminng.service.accessfilter.Role;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextMock;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,11 +33,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.Optional;
-
-import static org.apache.commons.lang3.tuple.ImmutablePair.of;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
 
 @JsonTest
 @SpringBootTest(

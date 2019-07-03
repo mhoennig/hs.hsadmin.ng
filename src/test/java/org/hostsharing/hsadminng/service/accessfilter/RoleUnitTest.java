@@ -1,15 +1,17 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import com.google.common.base.VerifyException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.ThrowableAssert.catchThrowable;
+
 import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.accessfilter.Role.*;
+
+import com.google.common.base.VerifyException;
+
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 
 public class RoleUnitTest {
 

@@ -1,25 +1,28 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.domain;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.TreeNode;
+import static org.hostsharing.hsadminng.service.util.ReflectionUtil.of;
+
 import org.hostsharing.hsadminng.repository.UserRepository;
 import org.hostsharing.hsadminng.service.UserRoleAssignmentService;
 import org.hostsharing.hsadminng.service.accessfilter.*;
 import org.hostsharing.hsadminng.service.accessfilter.Role.Admin;
 import org.hostsharing.hsadminng.service.accessfilter.Role.Supporter;
+
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.TreeNode;
+
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.ApplicationContext;
+
+import java.lang.reflect.Field;
+import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.lang.reflect.Field;
-import java.util.Objects;
-
-import static org.hostsharing.hsadminng.service.util.ReflectionUtil.of;
 
 /**
  * A UserRoleAssignment.

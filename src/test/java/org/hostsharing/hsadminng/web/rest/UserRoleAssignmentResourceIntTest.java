@@ -1,6 +1,12 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.web.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import org.hostsharing.hsadminng.HsadminNgApp;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
@@ -13,6 +19,7 @@ import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerContractualCo
 import org.hostsharing.hsadminng.service.accessfilter.Role.CustomerTechnicalContact;
 import org.hostsharing.hsadminng.service.accessfilter.SecurityContextFake;
 import org.hostsharing.hsadminng.web.rest.errors.ExceptionTranslator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,14 +35,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Validator;
 
-import javax.persistence.EntityManager;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hostsharing.hsadminng.web.rest.TestUtil.createFormattingConversionService;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import javax.persistence.EntityManager;
 
 /**
  * Test class for the UserRoleAssignmentResource REST controller.

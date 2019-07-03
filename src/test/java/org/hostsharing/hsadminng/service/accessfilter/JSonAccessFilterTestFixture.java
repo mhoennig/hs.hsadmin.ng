@@ -1,15 +1,16 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
+
 import org.hostsharing.hsadminng.service.IdToDtoResolver;
 import org.hostsharing.hsadminng.service.dto.FluentBuilder;
 
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
-import static org.hostsharing.hsadminng.service.accessfilter.Role.*;
 
 public class JSonAccessFilterTestFixture {
 

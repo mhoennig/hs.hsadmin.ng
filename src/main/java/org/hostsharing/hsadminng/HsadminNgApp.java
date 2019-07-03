@@ -3,6 +3,7 @@ package org.hostsharing.hsadminng;
 
 import org.hostsharing.hsadminng.config.ApplicationProperties;
 import org.hostsharing.hsadminng.config.DefaultProfileUtil;
+import org.hostsharing.hsadminng.service.accessfilter.Role;
 
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -32,6 +33,9 @@ public class HsadminNgApp {
 
     public HsadminNgApp(Environment env) {
         this.env = env;
+
+        // TODO mhoennig rather use @PostConstruct or something more decentral
+        Role.init();
     }
 
     /**

@@ -1,19 +1,22 @@
 // Licensed under Apache-2.0
 package org.hostsharing.hsadminng.service.accessfilter;
 
-import org.apache.commons.lang3.ArrayUtils;
+import static com.google.common.base.Verify.verify;
+import static org.hostsharing.hsadminng.service.util.ReflectionUtil.initialize;
+
 import org.hostsharing.hsadminng.domain.Customer;
 import org.hostsharing.hsadminng.domain.User;
 import org.hostsharing.hsadminng.domain.UserRoleAssignment;
 import org.hostsharing.hsadminng.security.AuthoritiesConstants;
 import org.hostsharing.hsadminng.service.util.ReflectionUtil;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Verify.verify;
-import static org.hostsharing.hsadminng.service.util.ReflectionUtil.initialize;
 
 /**
  * These enum values are used to specify the minimum role required to grant access to resources,
@@ -32,6 +35,8 @@ import static org.hostsharing.hsadminng.service.util.ReflectionUtil.initialize;
  * </p>
  */
 public abstract class Role {
+
+    private static final Logger log = LoggerFactory.getLogger(Role.class);
 
     // TODO mhoennig: We need to make sure that the classes are loaded
     // and thus the static initializers were called
@@ -85,8 +90,24 @@ public abstract class Role {
             T newRole = (T) ReflectionUtil.newInstance(initializedRoleClass);
             rolesByClass.put(initializedRoleClass, newRole);
             rolesByName.put(newRole.name(), newRole);
+            log.info("Role registered: {} as {}", initializedRoleClass, newRole.name());
             return newRole;
         }
+    }
+
+    public static void init() {
+        Role.of(Anybody.class);
+        Role.of(Hostmaster.class);
+        Role.of(Admin.class);
+        Role.of(Supporter.class);
+        Role.of(AnyCustomerContact.class);
+        Role.of(CustomerContractualContact.class);
+        Role.of(CustomerTechnicalContact.class);
+        Role.of(CustomerFinancialContact.class);
+        Role.of(AnyCustomerUser.class);
+        Role.of(ActualCustomerUser.class);
+        Role.of(Ignored.class);
+        Role.of(Nobody.class);
     }
 
     @Override
@@ -224,12 +245,12 @@ public abstract class Role {
         }
     }
 
-    public static class AnyCustomerUser extends DependentRole {
+    public static class AnyCustomerUser extends IndependentRole {
 
         public static final Role ROLE = Role.of(AnyCustomerUser.class);
 
         AnyCustomerUser() {
-            super(Anybody.class);
+            super(AuthoritiesConstants.USER, Anybody.class);
         }
     }
 
