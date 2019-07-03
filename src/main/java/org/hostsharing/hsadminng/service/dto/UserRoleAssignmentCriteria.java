@@ -18,12 +18,6 @@ import java.util.Objects;
  */
 public class UserRoleAssignmentCriteria implements Serializable {
 
-    /**
-     * Class for filtering UserRole
-     */
-    private static class UserRoleFilter extends Filter<String> {
-    }
-
     private static final long serialVersionUID = 1L;
 
     private LongFilter id;
@@ -32,7 +26,7 @@ public class UserRoleAssignmentCriteria implements Serializable {
 
     private LongFilter entityObjectId;
 
-    private UserRoleFilter assignedRole;
+    private StringFilter assignedRole;
 
     private LongFilter userId;
 
@@ -60,11 +54,11 @@ public class UserRoleAssignmentCriteria implements Serializable {
         this.entityObjectId = entityObjectId;
     }
 
-    public UserRoleFilter getAssignedRole() {
+    public StringFilter getAssignedRole() {
         return assignedRole;
     }
 
-    public void setAssignedRole(UserRoleFilter assignedRole) {
+    public void setAssignedRole(StringFilter assignedRole) {
         this.assignedRole = assignedRole;
     }
 
