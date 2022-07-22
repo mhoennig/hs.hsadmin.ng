@@ -78,7 +78,7 @@ DROP VIEW IF EXISTS package_rv;
 CREATE OR REPLACE VIEW package_rv AS
     SELECT DISTINCT target.*
       FROM package AS target
-     JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds()) AS allowedObjId
+     JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'package', currentSubjectIds()) AS allowedObjId
           ON target.uuid = allowedObjId;
 GRANT ALL PRIVILEGES ON package_rv TO restricted;
 

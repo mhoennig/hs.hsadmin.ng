@@ -56,7 +56,7 @@ DROP VIEW IF EXISTS domain_rv;
 CREATE OR REPLACE VIEW domain_rv AS
     SELECT DISTINCT target.*
       FROM Domain AS target
-      JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds()) AS allowedObjId
+      JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'domain', currentSubjectIds()) AS allowedObjId
            ON target.uuid = allowedObjId;
 GRANT ALL PRIVILEGES ON domain_rv TO restricted;
 

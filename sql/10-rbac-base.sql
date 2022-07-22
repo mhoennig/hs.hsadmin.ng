@@ -39,7 +39,7 @@ CREATE TABLE RbacGrants
 (
     ascendantUuid uuid references RbacReference (uuid) ON DELETE CASCADE,
     descendantUuid uuid references RbacReference (uuid) ON DELETE CASCADE,
-    -- apply bool not null, -- alternative 1 to implement assumable roles
+    follow boolean not null default true,
     primary key (ascendantUuid, descendantUuid)
 );
 CREATE INDEX ON RbacGrants (ascendantUuid);
@@ -254,23 +254,19 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE PROCEDURE grantRoleToRole(subRoleId uuid, superRoleId uuid
-        -- , doapply bool = true -- assumeV1
-        )
+CREATE OR REPLACE PROCEDURE grantRoleToRole(subRoleId uuid, superRoleId uuid, doFollow bool = true )
     LANGUAGE plpgsql AS $$
 BEGIN
     perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
     perform assertReferenceType('subRoleId (descendant)',  subRoleId, 'RbacRole');
-
-    RAISE NOTICE 'granting subRole % to superRole %', subRoleId, superRoleId; -- TODO: remove
 
     IF ( isGranted(subRoleId, superRoleId) ) THEN
         RAISE EXCEPTION 'Cyclic role grant detected between % and %', subRoleId, superRoleId;
     END IF;
 
     -- INSERT INTO RbacGrants (ascendantUuid, descendantUuid, apply) VALUES (superRoleId, subRoleId, doapply); -- assumeV1
-    INSERT INTO RbacGrants (ascendantUuid, descendantUuid) VALUES (superRoleId, subRoleId)
-        ON CONFLICT DO NOTHING ; -- TODO: remove
+    INSERT INTO RbacGrants (ascendantUuid, descendantUuid, follow)VALUES (superRoleId, subRoleId, doFollow)
+    ON CONFLICT DO NOTHING ; -- TODO: remove?
 END; $$;
 
 CREATE OR REPLACE PROCEDURE revokeRoleFromRole(subRoleId uuid, superRoleId uuid)
@@ -298,40 +294,52 @@ END; $$;
 abort;
 set local session authorization default;
 
+CREATE OR REPLACE FUNCTION nextLevel(level integer, maxDepth integer)
+    RETURNS INTEGER
+    LANGUAGE plpgsql AS $$
+    BEGIN
+        IF (level > maxDepth) THEN
+            RAISE WARNING 'Role assignment depth exceeded %/%.', level, maxDepth;
+        END IF;
+        RETURN level+1;
+    END;
+$$;
+
+
 CREATE OR REPLACE FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
             requiredOp RbacOp,
-            -- objectTable varchar, -- TODO: maybe another optimization? but test perforamance for joins!
+            forObjectTable varchar, -- TODO: test perforamance in joins!
             subjectIds uuid[],
-            maxDepth integer = 8,
             maxObjects integer = 16000)
     RETURNS SETOF uuid
     RETURNS NULL ON NULL INPUT
     LANGUAGE plpgsql AS $$
     DECLARE
-        foundRows bigint;
+        foundRows     bigint;
     BEGIN
-         RETURN QUERY SELECT DISTINCT perm.objectUuid
+        RETURN QUERY SELECT DISTINCT perm.objectUuid
           FROM (
                WITH RECURSIVE grants AS (
                    SELECT descendantUuid, ascendantUuid, 1 AS level
                        FROM RbacGrants
-                       WHERE ascendantUuid = ANY(subjectIds)
-                   UNION ALL
-                   SELECT "grant".descendantUuid, "grant".ascendantUuid, level + 1 AS level
+                       WHERE follow AND ascendantUuid = ANY(subjectIds)
+                   UNION DISTINCT
+                   SELECT "grant".descendantUuid, "grant".ascendantUuid, level+1 AS level
                         FROM RbacGrants "grant"
                         INNER JOIN grants recur ON recur.descendantUuid = "grant".ascendantUuid
-                   WHERE level <= maxDepth
+                       WHERE follow
                ) SELECT descendantUuid
                FROM grants
-               -- LIMIT maxObjects+1
            ) as granted
-         JOIN RbacPermission perm ON granted.descendantUuid=perm.uuid AND perm.op IN ('*', requiredOp);
+         JOIN RbacPermission perm
+             ON granted.descendantUuid=perm.uuid AND perm.op IN ('*', requiredOp)
+         JOIN RbacObject obj ON obj.uuid=perm.objectUuid AND obj.objectTable=forObjectTable;
 
          foundRows = lastRowCount();
          IF foundRows > maxObjects THEN
              RAISE EXCEPTION 'Too many accessible objects, limit is %, found %.', maxObjects, foundRows
                  USING
-                     ERRCODE = 'P0003', -- 'HS-ADMIN-NG:ACC-OBJ-EXC',
+                     ERRCODE = 'P0003',
                      HINT = 'Please assume a sub-role and try again.';
          END IF;
     END;
@@ -340,9 +348,9 @@ $$;
 abort;
 set local session authorization restricted;
 begin transaction;
-set local statement_timeout TO '60s';
+set local statement_timeout TO '5s';
 select count(*)
-  from queryAccessibleObjectUuidsOfSubjectIds('view', ARRAY[findRbacUser('mike@hostsharing.net')], 4, 10000);
+  from queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', ARRAY[findRbacUser('mike@hostsharing.net')],  10000);
 end transaction;
 
 ---
@@ -510,27 +518,20 @@ CREATE OR REPLACE FUNCTION isGranted(granteeId uuid, grantedId uuid)
     RETURNS bool
     RETURNS NULL ON NULL INPUT
     LANGUAGE sql AS $$
-SELECT granteeId=grantedId OR granteeId IN (
-    WITH RECURSIVE grants AS (
-        SELECT
-            descendantUuid,
-            ascendantUuid
-        FROM
-            RbacGrants
-        WHERE
-                descendantUuid = grantedId
-        UNION ALL
-        SELECT
-            "grant".descendantUuid,
-            "grant".ascendantUuid
-        FROM
-            RbacGrants "grant"
+        SELECT granteeId=grantedId OR granteeId IN (
+            WITH RECURSIVE grants AS (
+                SELECT descendantUuid, ascendantUuid
+                FROM RbacGrants
+                WHERE descendantUuid = grantedId
+                UNION ALL
+                SELECT "grant".descendantUuid, "grant".ascendantUuid
+                FROM RbacGrants "grant"
                 INNER JOIN grants recur ON recur.ascendantUuid = "grant".descendantUuid
-    ) SELECT
-        ascendantUuid
-    FROM
-        grants
-);
+            ) SELECT
+                ascendantUuid
+            FROM
+                grants
+        );
 $$;
 
 CREATE OR REPLACE FUNCTION isPermissionGrantedToSubject(permissionId uuid, subjectId uuid)
@@ -617,17 +618,17 @@ DECLARE
 BEGIN
     BEGIN
         currentSubject := current_setting('hsadminng.assumedRoles');
-    EXCEPTION WHEN OTHERS THEN
-        RETURN NULL;
-    END;
-    IF (currentSubject = '') THEN
-        RETURN NULL;
-    END IF;
-    RETURN string_to_array(currentSubject, ';');
-END; $$;
+        EXCEPTION WHEN OTHERS THEN
+            RETURN ARRAY[]::varchar[];
+        END;
+        IF (currentSubject = '') THEN
+            RETURN ARRAY[]::varchar[];
+        END IF;
+        RETURN string_to_array(currentSubject, ';');
+    END; $$;
 
 
--- ROLLBACK;
+ROLLBACK;
 SET SESSION AUTHORIZATION DEFAULT;
 CREATE OR REPLACE FUNCTION currentSubjectIds()
     RETURNS uuid[]
@@ -641,17 +642,36 @@ DECLARE
 BEGIN
     currentUserId := currentUserId();
     assumedRoles := assumedRoles();
-    IF ( assumedRoles IS NULL ) THEN
-        RETURN currentUserId;
+    IF ( CARDINALITY(assumedRoles) = 0 ) THEN
+        RETURN ARRAY[currentUserId];
     END IF;
 
     RAISE NOTICE 'assuming roles: %', assumedRoles;
 
     SELECT ARRAY_AGG(uuid) FROM RbacRole WHERE name = ANY(assumedRoles) INTO assumedRoleIds;
-    FOREACH assumedRoleId IN ARRAY assumedRoleIds LOOP
-        IF ( NOT isGranted(currentUserId, assumedRoleId) ) THEN
-            RAISE EXCEPTION 'user % has no permission to assume role %', currentUser(), assumedRoleId;
-        END IF;
-    END LOOP;
+    IF assumedRoleIds IS NOT NULL THEN
+        FOREACH assumedRoleId IN ARRAY assumedRoleIds LOOP
+            IF ( NOT isGranted(currentUserId, assumedRoleId) ) THEN
+                RAISE EXCEPTION 'user % has no permission to assume role %', currentUser(), assumedRoleId;
+            END IF;
+        END LOOP;
+    END IF;
     RETURN assumedRoleIds;
+END; $$;
+
+rollback;
+set session authorization default;
+CREATE OR REPLACE FUNCTION maxGrantDepth()
+    RETURNS integer
+    STABLE LEAKPROOF
+    LANGUAGE plpgsql AS $$
+DECLARE
+    maxGrantDepth VARCHAR(63);
+BEGIN
+    BEGIN
+        maxGrantDepth := current_setting('hsadminng.maxGrantDepth');
+    EXCEPTION WHEN OTHERS THEN
+        maxGrantDepth := NULL;
+    END;
+    RETURN coalesce(maxGrantDepth, '8')::integer;
 END; $$;

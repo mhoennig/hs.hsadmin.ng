@@ -71,7 +71,7 @@ DROP VIEW IF EXISTS unixuser_rv;
 CREATE OR REPLACE VIEW unixuser_rv AS
     SELECT DISTINCT target.*
      FROM unixuser AS target
-     JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds()) AS allowedObjId
+     JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'unixuser', currentSubjectIds()) AS allowedObjId
           ON target.uuid = allowedObjId;
 GRANT ALL PRIVILEGES ON unixuser_rv TO restricted;
 

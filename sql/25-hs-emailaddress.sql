@@ -81,7 +81,7 @@ DROP VIEW IF EXISTS EMailAddress_rv;
 CREATE OR REPLACE VIEW EMailAddress_rv AS
     SELECT DISTINCT target.*
     FROM EMailAddress AS target
-    JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds()) AS allowedObjId
+    JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()) AS allowedObjId
          ON target.uuid = allowedObjId;
 GRANT ALL PRIVILEGES ON EMailAddress_rv TO restricted;
 

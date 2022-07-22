@@ -38,7 +38,7 @@ BEGIN
 
     -- ... also a customer admin role is created and granted to the customer owner role
     customerAdminRoleId = createRole('customer#'||NEW.prefix||'.admin');
-    call grantRoleToRole(customerAdminRoleId, customerOwnerRoleId);
+    call grantRoleToRole(customerAdminRoleId, customerOwnerRoleId, false);
     -- ... to which a permission with view and add- ops is assigned
     call grantPermissionsToRole(customerAdminRoleId,
         createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view', 'add-package']));
@@ -88,12 +88,11 @@ CREATE TRIGGER deleteRbacRulesForCustomer_Trigger
 
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS cust_view;
 DROP VIEW IF EXISTS customer_rv;
 CREATE OR REPLACE VIEW customer_rv AS
     SELECT DISTINCT target.*
       FROM customer AS target
-      JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds()) AS allowedObjId
+      JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'customer', currentSubjectIds()) AS allowedObjId
            ON target.uuid = allowedObjId;
 GRANT ALL PRIVILEGES ON customer_rv TO restricted;
 
