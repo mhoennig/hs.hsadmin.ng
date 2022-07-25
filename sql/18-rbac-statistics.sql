@@ -1,5 +1,5 @@
 
-DROP VIEW "RbacStatisticsV";
+DROP VIEW IF EXISTS "RbacStatisticsV";
 CREATE VIEW "RbacStatisticsV" AS
     SELECT no, to_char("count", '9 999 999 999') as "count", "table"
       FROM (

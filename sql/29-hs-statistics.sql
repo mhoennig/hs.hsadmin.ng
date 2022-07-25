@@ -5,7 +5,7 @@
 
 DROP VIEW IF EXISTS "BusinessTableStatisticsV";
 CREATE VIEW "BusinessTableStatisticsV" AS
-SELECT no, to_char("count", '999 999 999') as "count", to_char("required", '999 999 999') as "required", to_char("count"::float/"required"::float, '990.9') as  "factor", "table"
+SELECT no, to_char("count", '999 999 999') as "count", to_char("required", '999 999 999') as "required", to_char("count"::float/"required"::float, '990.999') as  "factor", "table"
 FROM (select 1 as no, count(*) as "count", 7000 as "required",  'customers' as "table"
       from customer
       UNION
@@ -22,3 +22,5 @@ FROM (select 1 as no, count(*) as "count", 7000 as "required",  'customers' as "
       from emailaddress
      ) totals
 ORDER BY totals.no;
+
+SELECT * FROM "BusinessTableStatisticsV";

@@ -17,40 +17,62 @@ CREATE TRIGGER createRbacObjectForCustomer_Trigger
     BEFORE INSERT ON customer
     FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
 
+CREATE OR REPLACE FUNCTION customerOwner(customerName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('customer', customerName, 'owner');
+end; $$;
+
+CREATE OR REPLACE FUNCTION customerAdmin(customerName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('customer', customerName, 'admin');
+end; $$;
+
+CREATE OR REPLACE FUNCTION customerTenant(customerName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('customer', customerName, 'tenant');
+end; $$;
+
+
 CREATE OR REPLACE FUNCTION createRbacRulesForCustomer()
     RETURNS trigger
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-    adminUserNameUuid      uuid;
-    customerOwnerRoleId    uuid;
-    customerAdminRoleId    uuid;
+    customerOwnerUuid uuid;
+    customerAdminUuid uuid;
 BEGIN
     IF TG_OP <> 'INSERT' THEN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
     END IF;
 
-    -- an owner role is created and assigned to the administrators group
-    customerOwnerRoleId = createRole('customer#'||NEW.prefix||'.owner');
-    call grantRoleToRole(customerOwnerRoleId, getRoleId('administrators', 'create'));
-    -- ... and permissions for all ops are assigned
-    call grantPermissionsToRole(customerOwnerRoleId,
-        createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']));
+    -- the owner role with full access for Hostsharing administrators
+    customerOwnerUuid = createRole(
+            customerOwner(NEW.prefix),
+            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+            beneathRole('administrators')
+        );
 
-    -- ... also a customer admin role is created and granted to the customer owner role
-    customerAdminRoleId = createRole('customer#'||NEW.prefix||'.admin');
-    call grantRoleToRole(customerAdminRoleId, customerOwnerRoleId, false);
-    -- ... to which a permission with view and add- ops is assigned
-    call grantPermissionsToRole(customerAdminRoleId,
-        createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view', 'add-package']));
-    -- if a admin user is given for the customer,
-    IF (NEW.adminUserName IS NOT NULL) THEN
-        -- ... the customer admin role is also assigned to the admin user of the customer
-        adminUserNameUuid = findRoleId(NEW.adminUserName);
-        IF ( adminUserNameUuid IS NULL ) THEN
-            adminUserNameUuid = createRbacUser(NEW.adminUserName);
-        END IF;
-        call grantRoleToUser(customerAdminRoleId, adminUserNameUuid);
-    END IF;
+    -- the admin role for the customer's admins, who can view and add products
+    customerAdminUuid = createRole(
+            customerAdmin(NEW.prefix),
+            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view', 'add-package']),
+            -- NO auto follow for customer owner to avoid exploding permissions for administrators
+            withUser(NEW.adminUserName, 'create') -- implicitly ignored if null
+        );
+
+    -- allow the customer owner role (thus administrators) to assume the customer admin role
+    call grantRoleToRole(customerAdminUuid, customerOwnerUuid, FALSE);
+
+    -- the tenant role which later can be used by owners+admins of sub-objects
+    perform createRole(
+            customerTenant(NEW.prefix),
+            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view'])
+        );
 
     RETURN NEW;
 END; $$;
@@ -109,7 +131,7 @@ DO LANGUAGE plpgsql $$
     BEGIN
         SET hsadminng.currentUser TO '';
 
-        FOR t IN 0..9999 LOOP
+        FOR t IN 0..69 LOOP
                 currentTask = 'creating RBAC test customer #' || t;
                 SET LOCAL hsadminng.currentUser TO 'mike@hostsharing.net';
                 SET LOCAL hsadminng.assumedRoles = '';

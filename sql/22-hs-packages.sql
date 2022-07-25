@@ -11,6 +11,28 @@ CREATE TABLE IF NOT EXISTS package (
     customerUuid uuid REFERENCES customer(uuid)
 );
 
+CREATE OR REPLACE FUNCTION packageOwner(packageName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('package', packageName, 'owner');
+end; $$;
+
+CREATE OR REPLACE FUNCTION packageAdmin(packageName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('package', packageName, 'admin');
+end; $$;
+
+CREATE OR REPLACE FUNCTION packageTenant(packageName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('package', packageName, 'tenant');
+end; $$;
+
+
 DROP TRIGGER IF EXISTS createRbacObjectForPackage_Trigger ON package;
 CREATE TRIGGER createRbacObjectForPackage_Trigger
     BEFORE INSERT ON package
@@ -21,8 +43,8 @@ CREATE OR REPLACE FUNCTION createRbacRulesForPackage()
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
     parentCustomer customer;
-    packageOwnerRoleId uuid;
-    packageTenantRoleId uuid;
+    packageOwnerRoleUuid uuid;
+    packageAdminRoleUuid uuid;
 BEGIN
     IF TG_OP <> 'INSERT' THEN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
@@ -30,21 +52,27 @@ BEGIN
 
     SELECT * FROM customer AS c WHERE c.uuid=NEW.customerUuid INTO parentCustomer;
 
-    -- an owner role is created and assigned to the customer's admin group
-    packageOwnerRoleId = createRole('package#'||NEW.name||'.owner');
-    call grantRoleToRole(packageOwnerRoleId, getRoleId('customer#'||parentCustomer.prefix||'.admin', 'fail'));
+    -- an owner role is created and assigned to the customer's admin role
+    packageOwnerRoleUuid = createRole(
+        packageOwner(NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        beneathRole(customerAdmin(parentCustomer.prefix))
+        );
 
-    -- ... and permissions for all ops are assigned
-    call grantPermissionsToRole(packageOwnerRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']));
+    -- an owner role is created and assigned to the package owner role
+    packageAdminRoleUuid = createRole(
+        packageAdmin(NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-unixuser']),
+        beneathRole(packageOwnerRoleUuid)
+        );
 
-    -- ... also a package tenant role is created and assigned to the package owner as well
-    packageTenantRoleId = createRole('package#'||NEW.name||'.tenant');
-    call grantRoleToRole(packageTenantRoleId, packageOwnerRoleId);
-
-    -- ... to which a permission with view operation is assigned
-    call grantPermissionsToRole(packageTenantRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view']));
+    -- and a package tenant role is created and assigned to the package admin as well
+    perform createRole(
+        packageTenant(NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY ['view']),
+        beneathRole(packageAdminRoleUuid),
+        beingItselfA(customerTenant(parentCustomer.prefix))
+        );
 
     RETURN NEW;
 END; $$;
@@ -96,7 +124,7 @@ DO LANGUAGE plpgsql $$
         SET hsadminng.currentUser TO '';
 
         FOR cust IN (SELECT * FROM customer) LOOP
-            FOR t IN 0..9 LOOP
+            FOR t IN 0..randominrange(1, 2) LOOP
                 pacName = cust.prefix || TO_CHAR(t, 'fm00');
                 currentTask = 'creating RBAC test package #'|| pacName || ' for customer ' || cust.prefix || ' #' || cust.uuid;
                 RAISE NOTICE 'task: %', currentTask;

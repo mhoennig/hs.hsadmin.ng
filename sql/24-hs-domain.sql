@@ -16,12 +16,35 @@ CREATE TRIGGER createRbacObjectForDomain_Trigger
     BEFORE INSERT ON Domain
     FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
 
+CREATE OR REPLACE FUNCTION domainOwner(unixUserName varchar, domainName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('domain', unixUserName || '/' || domainName, 'owner');
+end; $$;
+
+CREATE OR REPLACE FUNCTION domainAdmin(unixUserName varchar, domainName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('domain', unixUserName || '/' || domainName, 'admin');
+end; $$;
+
+CREATE OR REPLACE FUNCTION domainTenant(unixUserName varchar, domainName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('domain', unixUserName || '/' || domainName, 'tenant');
+end; $$;
+
+
 CREATE OR REPLACE FUNCTION createRbacRulesForDomain()
     RETURNS trigger
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-    parentUser        unixuser;
-    domainOwnerRoleId uuid;
+    parentUser unixuser;
+    domainOwnerRoleUuid uuid;
+    domainAdminRoleUuid uuid;
 BEGIN
     IF TG_OP <> 'INSERT' THEN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
@@ -29,13 +52,27 @@ BEGIN
 
     SELECT * FROM unixuser WHERE uuid=NEW.unixUserUuid into parentUser;
 
-    -- an owner role is created and assigned to the unix user admin
-    RAISE NOTICE 'creating domain owner role: %', 'domain#'||NEW.name||'.owner';
-    domainOwnerRoleId = getRoleId('domain#'||NEW.name||'.owner', 'create');
-        call grantRoleToRole(domainOwnerRoleId, getRoleId('unixuser#'||parentUser.name||'.admin', 'fail'));
-    -- ... and permissions for all ops are assigned
-    call grantPermissionsToRole(domainOwnerRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']));
+    -- a domain owner role is created and assigned to the unixuser's admin role
+    domainOwnerRoleUuid = createRole(
+        domainOwner(parentUser.name, NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        beneathRole(unixUserAdmin(parentUser.name))
+        );
+
+    -- a domain admin role is created and assigned to the domain's owner role
+    domainAdminRoleUuid = createRole(
+        domainAdmin(parentUser.name, NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-emailaddress']),
+        beneathRole(domainOwnerRoleUuid)
+        );
+
+    -- and a domain tenant role is created and assigned to the domain's admiin role
+    perform createRole(
+        domainTenant(parentUser.name, NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        beneathRole(domainAdminRoleUuid),
+        beingItselfA(createUnixUserTenantRoleIfNotExists(parentUser))
+        );
 
     RETURN NEW;
 END; $$;
@@ -74,7 +111,7 @@ DO LANGUAGE plpgsql $$
 
         FOR uu IN (SELECT * FROM unixuser) LOOP
             IF ( random() < 0.3 ) THEN
-                FOR t IN 0..2 LOOP
+                FOR t IN 0..1 LOOP
                     currentTask = 'creating RBAC test Domain #' || t || ' for UnixUser ' || uu.name|| ' #' || uu.uuid;
                     RAISE NOTICE 'task: %', currentTask;
 
@@ -85,7 +122,7 @@ DO LANGUAGE plpgsql $$
                     SET LOCAL hsadminng.currentTask TO currentTask;
 
                     INSERT INTO Domain (name, unixUserUuid)
-                        VALUES ('dom-' || t || '.' || pac.name || '.example.org' , uu.uuid);
+                        VALUES ('dom-' || t || '.' || uu.name || '.example.org' , uu.uuid);
 
                     COMMIT;
                 END LOOP;

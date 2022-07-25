@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="run all up to statistics" type="DatabaseScript" editBeforeRun="true">
+    <script-file value="$PROJECT_DIR$/sql/00-util.sql" />
+    <script-file value="$PROJECT_DIR$/sql/10-rbac-base.sql" />
+    <script-file value="$PROJECT_DIR$/sql/12-rbac-role-builder.sql" />
+    <script-file value="$PROJECT_DIR$/sql/18-rbac-statistics.sql" />
+    <script-file value="$PROJECT_DIR$/sql/20-hs-base.sql" />
+    <script-file value="$PROJECT_DIR$/sql/21-hs-customer.sql" />
+    <script-file value="$PROJECT_DIR$/sql/22-hs-packages.sql" />
+    <script-file value="$PROJECT_DIR$/sql/23-hs-unixuser.sql" />
+    <script-file value="$PROJECT_DIR$/sql/24-hs-domain.sql" />
+    <script-file value="$PROJECT_DIR$/sql/25-hs-emailaddress.sql" />
+    <script-file value="$PROJECT_DIR$/sql/29-hs-statistics.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="58980aaf-09d7-4782-a6fa-859aa1fc3986" namespace="database/&quot;postgres&quot;/schema/&quot;public&quot;" />
+    <method v="2" />
+  </configuration>
+</component>

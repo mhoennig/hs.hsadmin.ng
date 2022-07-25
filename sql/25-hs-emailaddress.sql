@@ -16,35 +16,51 @@ CREATE TRIGGER createRbacObjectForEMailAddress_Trigger
     BEFORE INSERT ON EMailAddress
     FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
 
+CREATE OR REPLACE FUNCTION emailAddressOwner(emailAddress varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('emailaddress', emailAddress, 'owner');
+end; $$;
+
+CREATE OR REPLACE FUNCTION emailAddressAdmin(emailAddress varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('emailaddress', emailAddress, 'admin');
+end; $$;
+
 CREATE OR REPLACE FUNCTION createRbacRulesForEMailAddress()
     RETURNS trigger
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-    eMailAddress             varchar;
-    parentDomain             domain;
-    eMailAddressOwnerRoleId  uuid;
-    eMailAddressTenantRoleId uuid;
+    parentDomain              record;
+    eMailAddress              varchar;
+    eMailAddressOwnerRoleUuid uuid;
 BEGIN
     IF TG_OP <> 'INSERT' THEN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
     END IF;
 
-    SELECT * FROM domain WHERE uuid=NEW.domainUuid into parentDomain;
+    SELECT d.name as name, u.name as unixUserName FROM domain d
+             LEFT JOIN unixuser u ON u.uuid = d.unixuseruuid
+             WHERE d.uuid=NEW.domainUuid into parentDomain;
     eMailAddress = NEW.localPart || '@' || parentDomain.name;
 
-    -- an owner role is created and assigned to the domain owner
-    eMailAddressOwnerRoleId = getRoleId('emailaddress#'||eMailAddress||'.owner', 'create');
-    call grantRoleToRole(eMailAddressOwnerRoleId, getRoleId('domain#'||parentDomain.name||'.owner', 'fail'));
-    -- ... and permissions for all ops are assigned
-    call grantPermissionsToRole(eMailAddressOwnerRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']));
+    -- an owner role is created and assigned to the domains's admin group
+    eMailAddressOwnerRoleUuid = createRole(
+        emailAddressOwner(eMailAddress),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        beneathRole(domainAdmin( parentDomain.unixUserName, parentDomain.name))
+        );
 
-    -- a tenant role is created and assigned to a user with the new email address
-    eMailAddressTenantRoleId = getRoleId('emailaddress#'||eMailAddress||'.tenant', 'create');
-    call grantRoleToUser(eMailAddressTenantRoleId, getRbacUserId(eMailAddress, 'create'));
-    -- ... and permissions for all ops are assigned
-    call grantPermissionsToRole(eMailAddressTenantRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*'])); -- TODO '*' -> 'edit', 'view'
+    -- and an admin role is created and assigned to the unixuser owner as well
+    perform createRole(
+        emailAddressAdmin(eMailAddress),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit']),
+        beneathRole(eMailAddressOwnerRoleUuid),
+        beingItselfA(domainTenant(parentDomain.unixUserName, parentDomain.name))
+        );
 
     RETURN NEW;
 END; $$;
@@ -58,22 +74,6 @@ CREATE TRIGGER createRbacRulesForEMailAddress_Trigger
 
 
 -- create RBAC restricted view
-
-abort;
-set session authorization default ;
-START TRANSACTION;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-    SET LOCAL hsadminng.assumedRoles = 'customer#bbb.owner;customer#bbc.owner';
-    -- SET LOCAL hsadminng.assumedRoles = 'package#bbb00.owner;package#bbb01.owner';
-
-    select count(*) from queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds(), 7) as a
-        join rbacobject as o on a=o.uuid;
-
-    /* SELECT DISTINCT target.*
-        FROM EMailAddress AS target
-             JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', currentSubjectIds()) AS allowedObjId
-                  ON target.uuid = allowedObjId;*/
-END TRANSACTION;
 
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
@@ -99,7 +99,7 @@ DO LANGUAGE plpgsql $$
         SET hsadminng.currentUser TO '';
 
         FOR dom IN (SELECT * FROM domain) LOOP
-            FOR t IN 0..5 LOOP
+            FOR t IN 0..4 LOOP
                 currentTask = 'creating RBAC test EMailAddress #' || t || ' for Domain ' || dom.name;
                 RAISE NOTICE 'task: %', currentTask;
 
@@ -111,7 +111,7 @@ DO LANGUAGE plpgsql $$
                 SET LOCAL hsadminng.currentTask TO currentTask;
 
                 INSERT INTO EMailAddress (localPart, domainUuid)
-                    VALUES ('local' || t, dom.uuid);
+                   VALUES ('local' || t, dom.uuid);
 
                 COMMIT;
             END LOOP;

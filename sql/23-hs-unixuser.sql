@@ -11,6 +11,49 @@ CREATE TABLE IF NOT EXISTS UnixUser (
     packageUuid uuid REFERENCES package(uuid)
 );
 
+CREATE OR REPLACE FUNCTION unixUserOwner(unixUserName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('unixuser', unixUserName, 'owner');
+end; $$;
+
+CREATE OR REPLACE FUNCTION unixUserAdmin(unixUserName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('unixuser', unixUserName, 'admin');
+end; $$;
+
+CREATE OR REPLACE FUNCTION unixUserTenant(unixUserName varchar)
+    RETURNS varchar
+    LANGUAGE plpgsql STRICT AS $$
+begin
+    return roleName('unixuser', unixUserName, 'tenant');
+end; $$;
+
+CREATE OR REPLACE FUNCTION createUnixUserTenantRoleIfNotExists(unixUser UnixUser)
+    RETURNS uuid
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
+DECLARE
+    unixUserTenantRoleName varchar;
+    unixUserTenantRoleUuid uuid;
+BEGIN
+    unixUserTenantRoleName = unixUserTenant(unixUser.name);
+    unixUserTenantRoleUuid = findRoleId(unixUserTenantRoleName);
+    IF unixUserTenantRoleUuid IS NOT NULL THEN
+        RETURN unixUserTenantRoleUuid;
+    END IF;
+
+    RETURN createRole(
+        unixUserTenantRoleName,
+        grantingPermissions(forObjectUuid => unixUser.uuid, permitOps => ARRAY['edit', 'add-domain']),
+        beneathRole(unixUserAdmin(unixUser.name))
+        );
+END; $$;
+
+
 DROP TRIGGER IF EXISTS createRbacObjectForUnixUser_Trigger ON UnixUser;
 CREATE TRIGGER createRbacObjectForUnixUser_Trigger
     BEFORE INSERT ON UnixUser
@@ -23,7 +66,6 @@ DECLARE
     parentPackage package;
     unixuserOwnerRoleId uuid;
     unixuserAdminRoleId uuid;
-    unixuserTenantRoleId uuid;
 BEGIN
     IF TG_OP <> 'INSERT' THEN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
@@ -31,26 +73,22 @@ BEGIN
 
     SELECT * FROM package WHERE uuid=NEW.packageUuid into parentPackage;
 
-    -- an owner role is created and assigned to the package owner group
-    unixuserOwnerRoleId = createRole('unixuser#'||NEW.name||'.owner');
-    call grantRoleToRole(unixuserOwnerRoleId, getRoleId('package#'||parentPackage.name||'.owner', 'fail'));
-    -- ... and permissions for all ops are assigned
-    call grantPermissionsToRole(unixuserOwnerRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']));
+    -- an owner role is created and assigned to the package's admin group
+    unixuserOwnerRoleId = createRole(
+        unixUserOwner(NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        beneathRole(packageAdmin(parentPackage.name))
+        );
 
-    -- ... also a unixuser admin role is created and assigned to the unixuser owner as well
-    unixuserAdminRoleId = createRole('unixuser#'||NEW.name||'.admin');
-    call grantRoleToRole(unixuserAdminRoleId, unixuserOwnerRoleId);
-    -- ... to which a permission with view operation is assigned
-    call grantPermissionsToRole(unixuserAdminRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-domain']));
+    -- and a unixuser admin role is created and assigned to the unixuser owner as well
+    unixuserAdminRoleId = createRole(
+        unixUserAdmin(NEW.name),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-domain']),
+        beneathRole(unixuserOwnerRoleId),
+        beingItselfA(packageTenant(parentPackage.name))
+        );
 
-    -- ... also a unixuser tenant role is created and assigned to the unixuser admin
-    unixuserTenantRoleId = createRole('unixuser#'||NEW.name||'.tenant');
-    call grantRoleToRole(unixuserTenantRoleId, unixuserAdminRoleId);
-    -- ... to which a permission with view operation is assigned
-    call grantPermissionsToRole(unixuserTenantRoleId,
-                                createPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view']));
+    -- a tenent role is only created on demand
 
     RETURN NEW;
 END; $$;

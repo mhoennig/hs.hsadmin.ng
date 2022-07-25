@@ -35,4 +35,15 @@ ELSE
         RETURN partial;
 END IF;
 END; $$;
-SELECT * FROM intToVarChar(211, 4);
+
+select * from intToVarChar(211, 4);
+
+CREATE OR REPLACE FUNCTION randomInRange(min INTEGER, max INTEGER)
+    RETURNS INT
+    RETURNS NULL ON NULL INPUT
+    language 'plpgsql' AS $$
+BEGIN
+    RETURN floor(random() * (max-min + 1) + min);
+END; $$;
+
+select * from randomInRange(0, 4);

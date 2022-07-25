@@ -45,7 +45,7 @@ CREATE TABLE RbacGrants
 CREATE INDEX ON RbacGrants (ascendantUuid);
 CREATE INDEX ON RbacGrants (descendantUuid);
 
-DROP DOMAIN IF EXISTS RbacOp CASCADE;
+-- DROP DOMAIN IF EXISTS RbacOp CASCADE;
 CREATE DOMAIN RbacOp AS VARCHAR(67)
     CHECK(
           VALUE = '*'
@@ -56,7 +56,7 @@ CREATE DOMAIN RbacOp AS VARCHAR(67)
        OR VALUE ~ '^add-[a-z]+$'
         );
 
-DROP TABLE IF EXISTS RbacObject;
+-- DROP TABLE IF EXISTS RbacObject;
 CREATE TABLE RbacObject
 (
     uuid uuid UNIQUE DEFAULT uuid_generate_v4(),
@@ -80,7 +80,7 @@ BEGIN
 END; $$;
 
 
-DROP TABLE IF EXISTS RbacPermission;
+-- DROP TABLE IF EXISTS RbacPermission;
 CREATE TABLE RbacPermission
 (   uuid uuid primary key references RbacReference (uuid) ON DELETE CASCADE,
     objectUuid uuid not null,
@@ -111,12 +111,14 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION findRbacUser(userName varchar) -- TODO: rename to ...Id
+CREATE OR REPLACE FUNCTION findRbacUserId(userName varchar)
     RETURNS uuid
     RETURNS NULL ON NULL INPUT
     LANGUAGE sql AS $$
         SELECT uuid FROM RbacUser WHERE name = userName
 $$;
+
+CREATE TYPE RbacWhenNotExists AS ENUM ('fail', 'create');
 
 CREATE OR REPLACE FUNCTION getRbacUserId(userName varchar, whenNotExists RbacWhenNotExists)
     RETURNS uuid
@@ -125,7 +127,7 @@ CREATE OR REPLACE FUNCTION getRbacUserId(userName varchar, whenNotExists RbacWhe
 DECLARE
     userUuid uuid;
 BEGIN
-    userUuid = findRbacUser(userName);
+    userUuid = findRbacUserId(userName);
     IF ( userUuid IS NULL ) THEN
         IF ( whenNotExists = 'fail') THEN
             RAISE EXCEPTION 'RbacUser with name="%" not found', userName;
@@ -168,8 +170,6 @@ CREATE OR REPLACE FUNCTION findRoleId(roleName varchar)
     LANGUAGE sql AS $$
         SELECT uuid FROM RbacRole WHERE name = roleName
 $$;
-
-CREATE TYPE RbacWhenNotExists AS ENUM ('fail', 'create');
 
 CREATE OR REPLACE FUNCTION getRoleId(roleName varchar, whenNotExists RbacWhenNotExists)
     RETURNS uuid
@@ -265,7 +265,7 @@ BEGIN
     END IF;
 
     -- INSERT INTO RbacGrants (ascendantUuid, descendantUuid, apply) VALUES (superRoleId, subRoleId, doapply); -- assumeV1
-    INSERT INTO RbacGrants (ascendantUuid, descendantUuid, follow)VALUES (superRoleId, subRoleId, doFollow)
+    INSERT INTO RbacGrants (ascendantUuid, descendantUuid, follow) VALUES (superRoleId, subRoleId, doFollow)
     ON CONFLICT DO NOTHING ; -- TODO: remove?
 END; $$;
 
@@ -288,7 +288,7 @@ BEGIN
 
     -- INSERT INTO RbacGrants (ascendantUuid, descendantUuid, apply) VALUES (userId, roleId, true); -- assumeV1
     INSERT INTO RbacGrants (ascendantUuid, descendantUuid) VALUES (userId, roleId)
-        ON CONFLICT DO NOTHING ; -- TODO: remove
+        ON CONFLICT DO NOTHING ; -- TODO: remove?
 END; $$;
 
 abort;
@@ -306,9 +306,12 @@ CREATE OR REPLACE FUNCTION nextLevel(level integer, maxDepth integer)
 $$;
 
 
+abort;
+set local session authorization default;
+
 CREATE OR REPLACE FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
             requiredOp RbacOp,
-            forObjectTable varchar, -- TODO: test perforamance in joins!
+            forObjectTable varchar, -- TODO: test performance in joins!
             subjectIds uuid[],
             maxObjects integer = 16000)
     RETURNS SETOF uuid
@@ -327,7 +330,7 @@ CREATE OR REPLACE FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
                    SELECT "grant".descendantUuid, "grant".ascendantUuid, level+1 AS level
                         FROM RbacGrants "grant"
                         INNER JOIN grants recur ON recur.descendantUuid = "grant".ascendantUuid
-                       WHERE follow
+                        WHERE follow
                ) SELECT descendantUuid
                FROM grants
            ) as granted
@@ -345,12 +348,18 @@ CREATE OR REPLACE FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
     END;
 $$;
 
+SET SESSION AUTHORIZATION DEFAULT;
+CREATE ROLE admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+CREATE ROLE restricted;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
+
 abort;
 set local session authorization restricted;
 begin transaction;
-set local statement_timeout TO '5s';
+set local statement_timeout TO '15s';
 select count(*)
-  from queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', ARRAY[findRbacUser('mike@hostsharing.net')],  10000);
+  from queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', ARRAY[findRbacUserId('mike@hostsharing.net')],  10000);
 end transaction;
 
 ---
@@ -389,7 +398,7 @@ set local session authorization restricted;
 begin transaction;
 -- set local statement_timeout TO '5s';
 set local statement_timeout TO '5min';
-select count(*) from queryRequiredPermissionsOfSubjectIds('view', ARRAY[findRbacUser('mike@hostsharing.net')]);
+select count(*) from queryRequiredPermissionsOfSubjectIds('view', ARRAY[findRbacUserId('mike@hostsharing.net')]);
 end transaction;
 
 ---
@@ -424,7 +433,7 @@ abort;
 set local session authorization restricted;
 begin transaction;
     set local statement_timeout TO '5s';
-    select count(*) from queryAllPermissionsOfSubjectIds(ARRAY[findRbacUser('mike@hostsharing.net')]);
+    select count(*) from queryAllPermissionsOfSubjectIds(ARRAY[findRbacUserId('mike@hostsharing.net')]);
 end transaction;
 
 ---
@@ -564,17 +573,9 @@ CREATE OR REPLACE FUNCTION isPermissionGrantedToSubject(permissionId uuid, subje
     );
 $$;
 
-SET SESSION AUTHORIZATION DEFAULT;
-CREATE ROLE admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
-CREATE ROLE restricted;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
-
-
 -- ========================================================
--- Current User
+-- current user + assumed roles
 -- --------------------------------------------------------
-
 
 CREATE OR REPLACE FUNCTION currentUser()
     RETURNS varchar(63)
