@@ -30,18 +30,17 @@ package RBAC {
 
     ' forward declarations    
     entity RbacUser
-    entity RbacObject
     
     together {
         
         entity RbacRole
         entity RbacPermission
-        enum RbacOperation
+ 
         
         RbacUser -[hidden]> RbacRole
         RbacRole -[hidden]> RbacUser
     }
-    
+   
     together {
         entity RbacGrant
         enum RbacReferenceType
@@ -54,8 +53,8 @@ package RBAC {
         descendantUuid: uuid(RbackReference)
         auto
     }
-    RbacGrant o-> RbacReference
-    RbacGrant o-> RbacReference
+    RbacGrant o-u-> RbacReference
+    RbacGrant o-u-> RbacReference
     
     enum RbacReferenceType {
         RbacUser
@@ -85,6 +84,11 @@ package RBAC {
         name : varchar
     }
     RbacRole o-- RbacReference
+ 
+    together {   
+        enum RbacOperation
+        entity RbacObject
+    }
     
     entity RbacPermission {
         *uuid : uuid(RbacReference)
