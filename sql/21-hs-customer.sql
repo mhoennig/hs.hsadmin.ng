@@ -131,7 +131,7 @@ DO LANGUAGE plpgsql $$
     BEGIN
         SET hsadminng.currentUser TO '';
 
-        FOR t IN 0..69 LOOP
+        FOR t IN 0..6999 LOOP
                 currentTask = 'creating RBAC test customer #' || t;
                 SET LOCAL hsadminng.currentUser TO 'mike@hostsharing.net';
                 SET LOCAL hsadminng.assumedRoles = '';

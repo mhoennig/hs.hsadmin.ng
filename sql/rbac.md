@@ -141,6 +141,11 @@ An *RbacReference* is a generalization of all entity types which participate in 
 
 The primary key of the *RbacReference* and its referred object is always identical.
 
+#### RbacReferenceType
+
+The enum *RbacReferenceType* describes the type of reference.
+It's only needed to make it easier to find the referred object in *RbacUser*, *RbacRole* or *RbacPermission*.
+
 #### RbacUser
 
 An *RbacUser* is a type of RBAC-subject which references a login account outside this system, identified by a name (usually an email-address).
@@ -167,16 +172,17 @@ An *RbacPermission* allows a specific *RbacOperation* on a specific *RbacObject*
 An *RbacOperation* determines, <u>what</u> an *RbacPermission* allows to do.
 It can be one of:
 
-- **add-...** - permits creating new instances of specific entity types underneath the object specified by the permission, e.g. "add-package"
-- **view** - permits reading the contents of the object specified by the permission
-- **edit** - change the contents of the object specified by the permission
-- **delete** - delete the object specified by the permission
+- **'add-...'** - permits creating new instances of specific entity types underneath the object specified by the permission, e.g. "add-package"
+- **'view'** - permits reading the contents of the object specified by the permission
+- **'edit'** - change the contents of the object specified by the permission
+- **'delete'** - delete the object specified by the permission
+- **'\*'**
 
 This list is extensible according to the needs of the access rule system.
 
-Please notice, that there is no **create-...** operation to create new instances of related business-object-types.
+Please notice, that there is no **create** operation to create new instances of unrelated business-object-types.
 For such a singleton business-object-type, e.g. *Organization" or "Hostsharing" has to be defined, and its single entity is referred in the permission.
-By this, the foreign key in *RbacPermission* can be defined as `NOT NULL`. 
+Only with this rule, the foreign key in *RbacPermission* can be defined as `NOT NULL`. 
 
 #### RbacGrant
 
@@ -186,17 +192,51 @@ The core SQL queries to determine access rights are all recursive queries on the
 
 ### Role naming
 
-Automatically generated roles are named as such:
+The naming pattern of a role is important to be able to address specific roles.
+E.g. if a new package is added, the admin-role of the related customer has to be addressed.
 
-#### business-table#business-object-name.tenant
-This role is assigned to users who manage objects underneath the object which is accessible through the role.
-This rule usually gets only view permissions assigned.
+There can be global roles like 'administrators'.
+Most roles, though, are specific for certain business-objects and automatically generated as such:
 
-**Example**
+    business-object-table#business-object-name.relative-role
 
-'dd'
 
-## Example Users, Roles, Permissions and Business-Objects 
+Where *business-object-table* is the name of the SQL table of the business object (e.g *customer* or 'package'),
+*business-object-name* is generated from an immutable business key(e.g. a prefix like 'xyz' or 'xyz00')
+and the *relative-role*' describes the role relative to the referenced business-object as follows:
+
+#### owner
+
+The owner-role is granted to the subject which created the business object.
+E.g. for a new *customer* it would be granted to 'administrators' and for a new *package* to the 'customer#...admin'. 
+
+Whoever has the owner-role assigned can do everything with the related business-object, including deleting (or deactivating) it.
+
+In most cases, the permissions to other operations than 'delete' are granted through the 'admin' role.
+By this, all roles ob sub-objects, which are assigned to the 'admin' role, are also granted to the 'owner'.
+
+#### admin
+
+The admin-role is granted to a role of those subjects who manage the business object.
+E.g. a 'package' is manged by the admin of the customer.
+
+Whoever has the admin-role assigned, do everything with the related business-object, including deleting (or deactivating) it.
+
+In most cases, the permissions to the 'view' operation is granted through the 'tenant' role.
+By this, all roles ob sub-objects, which are assigned to the 'tenent' role, are also granted to the 'admin'.
+
+
+#### tenant
+
+The tenant-role is granted to everybody who needs to be able to view the business-object.
+Usually all owners, admins and tenants of sub-objects get this role granted.
+
+Some business-objects only have very limited data directly in the main business-object and store more sensitive data in special sub-objects (e.g. 'customer-details') to which tenants of sub-objects of the main-object (e.g. package admins) do not get view permission.
+
+
+## Example Users, Roles, Permissions and Business-Objects
+
+The following diagram shows how users, roles and permissions could be granted access to operations on business objects. 
 
 ```plantuml
 @startuml
@@ -270,6 +310,66 @@ PermPackXyz00_AddUser o--> PackXyz00
 @enduml
 ```
 
+## Business-Object-Tables, Triggers and Views
+
+To support the RBAC system, for each business-object-table, some more artifacts are created in the database:
+
+- a `BEFORE INSERT TRIGGER` which creates the related *RbacObject* instance,
+- an `AFTER INSERT TRIGGER` which creates the related *RbacRole*s, *RbacPermission*s together with their related *RbacReference*s as well as *RbacGrant*s,
+- a restricted view (e.g. *customer_rv*) through which restricted users can access the underlying data.
+
+Not yet implemented, but planned are these actions:
+
+- an `ON DELETE ... DO INSTEAD` rule to allow `SQL DELETE` if applicable for the business-object-table and the user has 'delete' permission,
+- an `ON UPDATE ... DO INSTEAD` rule to allow `SQL UPDATE` if the user has 'edit' right,
+- an `ON INSERT ... DO INSTEAD` rule to allow `SQL INSERT` if the user has 'add-..' right to the parent-business-object.
+
+The restricted view takes the current user from a session property and applies the hierarchy of its roles all the way down to the permissions related to the respective business-object-table.
+This way, each user can only view the data they have 'view'-permission for, only create those they have 'add-...'-permission, only update those they have 'edit'- and only delete those they have 'delete'-permission to.
+
+### Current User
+
+The current use is taken from the session variable `hsadminng.currentUser` which contains the name of the user as stored in the 
+*RbacUser*s table. Example:
+
+    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
+
+That user is also used for historicization and audit log, but which is a different topic.
+
+### Assuming Roles
+
+If the session variable `hsadminng.assumedRoles` is set to a non-empty value, its content is interpreted as a list of semicolon-separated role names.
+Example:
+
+    SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+
+In this case, not the current user but the assumed roles are used as a starting point for any further queries.
+Roles which are not granted to the current user, directly or indirectly, cannot be assumed.
+
+
+### Example
+
+A full example is shown here:
+
+    BEGIN TRANSACTION;
+        SET SESSION SESSION AUTHORIZATION restricted;
+        SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
+        SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+        
+        SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
+          FROM emailaddress_rv ema
+          JOIN domain_rv dom ON dom.uuid = ema.domainuuid
+          JOIN unixuser_rv uu ON uu.uuid = dom.unixuseruuid
+          JOIN package_rv p ON p.uuid = uu.packageuuid
+          JOIN customer_rv c ON c.uuid = p.customeruuid;
+    END TRANSACTION;
+
+
+
+## Roles and Their Assignments for Certain Business Objects
+
+To give you an overview of the business-object-types for the following role-examples,
+check this diagram:
 
 ```plantuml
 @startuml
@@ -282,24 +382,152 @@ hide circle
 ' use right-angled line routing
 ' skinparam linetype ortho
 
-package rbacPerms {
-    cust
-}
+entity EMailAddress
 
-package rbacRoles {
-    entity administrators
-    entity custXXX
-}
+entity Domain
+Domain o-- "*" EMailAddress
 
-package rbacUsers {
-    entity adminMike
-    adminMike <-- administrators
+entity UnixUser
+UnixUser o-- "*" Domain
 
-    entity adminSven
-    entity custXXX
-    entity pacAdmXXX00
-}
+entity Package
+Package o.. "*" UnixUser
+
+entity Customer
+Customer o-- "*" Package
 
 @enduml
 ```
+
+It's mostly an example hierarchy of business-object-types, but resembles a part of Hostsharing's actual hosting infrastructure.
+
+The following diagrams show which roles are created for each business-object-type
+and how they relate to roles from other business-object-types.
+
+### Customer Roles
+
+The highest level of the business-object-type-hierarchy is the *Customer*.
+
+```plantuml
+@startuml
+' left to right direction
+top to bottom direction
+
+' hide the ugly E in a circle left to the entity name
+hide circle
+
+' use right-angled line routing
+' skinparam linetype ortho
+
+entity "BObj customer#xyz" as boCustXyz
+
+together {
+    entity "Perm customer#xyz *" as permCustomerXyzAll
+    permCustomerXyzAll --> boCustXyz
+    
+    entity "Perm customer#xyz add-package" as permCustomerXyzAddPack
+    permCustomerXyzAddPack --> boCustXyz
+
+    entity "Perm customer#xyz view" as permCustomerXyzView
+    permCustomerXyzView --> boCustXyz
+}
+
+entity "Role customer#xyz.tenant" as roleCustXyzTenant 
+roleCustXyzTenant --> permCustomerXyzView
+
+entity "Role customer#xyz.admin" as roleCustXyzAdmin
+roleCustXyzAdmin --> roleCustXyzTenant
+roleCustXyzAdmin --> permCustomerXyzAddPack
+
+entity "Role customer#xyz.owner" as roleCustXyzOwner
+roleCustXyzOwner ..> roleCustXyzAdmin
+roleCustXyzOwner --> permCustomerXyzAll
+
+entity "Role administrators" as roleAdmins
+roleAdmins --> roleCustXyzOwner
+
+@enduml
+```
+
+As you can see, there something special:
+From the 'Role customer#xyz.owner' to the 'Role customer#xyz.admin' there is a dashed line, whereas all other lines are solid lines.
+Solid lines means, that one role is granted to another and followed in all queries to the restricted views.
+The dashed line means that one role is granted to another but not automatically followed in queries to the restricted views.
+
+The reason here is that otherwise simply too many objects would be accessible to those with the 'administrators' role and all queries would be slowed down vastly.
+
+Grants which are not followed are still valid grants for `hsadminng.assumedRoles`.
+Thus, if you want to access anything below a customer, assume its role first.
+
+There is actually another speciality in the customer roles:
+For all others, a user defined by the customer gets the owner role assigned, just for the customer, the owners role is assigned to the 'administrators'.
+
+
+### Package Roles
+
+One example of the business-object-type-level right below is the *Package*.
+
+```plantuml
+@startuml
+' left to right direction
+top to bottom direction
+
+' hide the ugly E in a circle left to the entity name
+hide circle
+
+' use right-angled line routing
+' skinparam linetype ortho
+
+entity "BObj pacage#xyz00" as boPacXyz00
+
+together {
+    entity "Perm pacage#xyz00 *" as permPackageXyzAll
+    permPackageXyzAll --> boPacXyz00
+    
+    entity "Perm pacage#xyz00 add-unixuser" as permPacXyz00AddUser
+    permPacXyz00AddUser --> boPacXyz00
+
+    entity "Perm pacage#xyz00 edit" as permPacXyz00Edit
+    permPacXyz00Edit --> boPacXyz00
+
+    entity "Perm pacage#xyz00 view" as permPacXyz00View
+    permPacXyz00View --> boPacXyz00
+}
+
+package {
+    entity "Role customer#xyz.tenant" as roleCustXyzTenant
+    entity "Role customer#xyz.admin" as roleCustXyzAdmin    
+    entity "Role customer#xyz.owner" as roleCustXyzOwner
+}
+
+package {
+    entity "Role pacage#xyz00.owner" as rolePacXyz00Owner
+    entity "Role pacage#xyz00.admin" as rolePacXyz00Admin
+    entity "Role pacage#xyz00.tenant" as rolePacXyz00Tenant
+}
+
+rolePacXyz00Tenant --> permPacXyz00View
+rolePacXyz00Tenant --> roleCustXyzTenant
+
+rolePacXyz00Owner --> rolePacXyz00Admin
+rolePacXyz00Owner --> permPackageXyzAll
+    
+roleCustXyzAdmin --> rolePacXyz00Owner
+roleCustXyzAdmin --> roleCustXyzTenant
+
+roleCustXyzOwner ..> roleCustXyzAdmin
+    
+rolePacXyz00Admin --> rolePacXyz00Tenant
+rolePacXyz00Admin --> permPacXyz00AddUser
+rolePacXyz00Admin --> permPacXyz00Edit
+
+entity "Role administrators" as roleAdmins
+roleAdmins --> roleCustXyzOwner
+
+@enduml
+```
+
+Initially, the customer's admin role gets the package owner role granted.
+They can use the package's admin role to hand over most management functionality to a third party.
+The 'administrators' can get access through an assumed customer's admin role or directly by assuming the package's owner or admin role.
 
