@@ -34,6 +34,16 @@ Remove the PostgreSQL container:
 
 After the PostgreSQL container is removed, you need to create it again as shown in "Create and run ..." above.
 
+Given the container is running, to create a backup in ~/backup, run:
+
+    docker exec -i hsadmin-ng-postgres /usr/bin/pg_dump --clean --create -U postgres postgres | gzip -9 > ~/backup/hsadmin-ng-postgres2.sql.gz 
+
+
+Again, given the container is running, to restore the backup from ~/backup, run:
+
+    gunzip --stdout --keep ~/backup/hsadmin-ng-postgres.sql.gz | docker exec -i hsadmin-ng-postgres psql -U postgres -d postgres
+
+
 ### Markdown with PlantUML plugin
 
 Can you see the following diagram?
