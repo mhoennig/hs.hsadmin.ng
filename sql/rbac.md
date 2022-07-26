@@ -419,6 +419,9 @@ hide circle
 ' use right-angled line routing
 ' skinparam linetype ortho
 
+' needs PlantUML 1.2021.14 as Markdown plugin
+allow_mixing 
+
 entity "BObj customer#xyz" as boCustXyz
 
 together {
@@ -443,8 +446,15 @@ entity "Role customer#xyz.owner" as roleCustXyzOwner
 roleCustXyzOwner ..> roleCustXyzAdmin
 roleCustXyzOwner --> permCustomerXyzAll
 
+actor "Customer XYZ Admin" as actorCustXyzAdmin
+actorCustXyzAdmin --> roleCustXyzAdmin
+
 entity "Role administrators" as roleAdmins
 roleAdmins --> roleCustXyzOwner
+
+actor "Any Hostmaster" as actorHostmaster
+actorHostmaster --> roleAdmins
+
 
 @enduml
 ```
@@ -460,7 +470,7 @@ Grants which are not followed are still valid grants for `hsadminng.assumedRoles
 Thus, if you want to access anything below a customer, assume its role first.
 
 There is actually another speciality in the customer roles:
-For all others, a user defined by the customer gets the owner role assigned, just for the customer, the owners role is assigned to the 'administrators'.
+For all others, a user defined by the customer gets the owner role assigned, just for the customer, the owner's role is assigned to the 'administrators' role.
 
 
 ### Package Roles
@@ -478,19 +488,22 @@ hide circle
 ' use right-angled line routing
 ' skinparam linetype ortho
 
-entity "BObj pacage#xyz00" as boPacXyz00
+' needs PlantUML 1.2021.14 as Markdown plugin
+allow_mixing 
+
+entity "BObj package#xyz00" as boPacXyz00
 
 together {
-    entity "Perm pacage#xyz00 *" as permPackageXyzAll
+    entity "Perm package#xyz00 *" as permPackageXyzAll
     permPackageXyzAll --> boPacXyz00
     
-    entity "Perm pacage#xyz00 add-unixuser" as permPacXyz00AddUser
+    entity "Perm package#xyz00 add-unixuser" as permPacXyz00AddUser
     permPacXyz00AddUser --> boPacXyz00
 
-    entity "Perm pacage#xyz00 edit" as permPacXyz00Edit
+    entity "Perm package#xyz00 edit" as permPacXyz00Edit
     permPacXyz00Edit --> boPacXyz00
 
-    entity "Perm pacage#xyz00 view" as permPacXyz00View
+    entity "Perm package#xyz00 view" as permPacXyz00View
     permPacXyz00View --> boPacXyz00
 }
 
@@ -501,9 +514,9 @@ package {
 }
 
 package {
-    entity "Role pacage#xyz00.owner" as rolePacXyz00Owner
-    entity "Role pacage#xyz00.admin" as rolePacXyz00Admin
-    entity "Role pacage#xyz00.tenant" as rolePacXyz00Tenant
+    entity "Role package#xyz00.owner" as rolePacXyz00Owner
+    entity "Role package#xyz00.admin" as rolePacXyz00Admin
+    entity "Role package#xyz00.tenant" as rolePacXyz00Tenant
 }
 
 rolePacXyz00Tenant --> permPacXyz00View
@@ -521,13 +534,22 @@ rolePacXyz00Admin --> rolePacXyz00Tenant
 rolePacXyz00Admin --> permPacXyz00AddUser
 rolePacXyz00Admin --> permPacXyz00Edit
 
+actor "Package XYZ00 Admin" as actorPacXyzAdmin
+actorPacXyzAdmin -l-> rolePacXyz00Admin
+
+actor "Customer XYZ Admin" as actorCustXyzAdmin
+actorCustXyzAdmin --> roleCustXyzAdmin
+
 entity "Role administrators" as roleAdmins
 roleAdmins --> roleCustXyzOwner
+
+actor "Any Hostmaster" as actorHostmaster
+actorHostmaster --> roleAdmins
 
 @enduml
 ```
 
-Initially, the customer's admin role gets the package owner role granted.
+Initially, the customer's admin role is assigned to the package owner role.
 They can use the package's admin role to hand over most management functionality to a third party.
 The 'administrators' can get access through an assumed customer's admin role or directly by assuming the package's owner or admin role.
 
