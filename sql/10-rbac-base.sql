@@ -29,10 +29,21 @@ CREATE TABLE RbacUser
     name varchar(63) not null unique
 );
 
+-- DROP TABLE IF EXISTS RbacObject;
+CREATE TABLE RbacObject
+(
+    uuid uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    objectTable varchar(64) not null,
+    unique (objectTable, uuid)
+);
+
+CREATE TYPE RbacRoleType AS ENUM ('owner', 'admin', 'tenant');
+
 CREATE TABLE RbacRole
 (
     uuid uuid primary key references RbacReference (uuid) ON DELETE CASCADE,
-    name varchar(63) not null unique
+    objectUuid uuid references RbacObject(uuid) not null,
+    roleType RbacRoleType not null
 );
 
 CREATE TABLE RbacGrants
@@ -55,14 +66,6 @@ CREATE DOMAIN RbacOp AS VARCHAR(67)
        OR VALUE = 'assume'
        OR VALUE ~ '^add-[a-z]+$'
         );
-
--- DROP TABLE IF EXISTS RbacObject;
-CREATE TABLE RbacObject
-(
-    uuid uuid UNIQUE DEFAULT uuid_generate_v4(),
-    objectTable varchar(64) not null,
-    unique (objectTable, uuid)
-);
 
 CREATE OR REPLACE FUNCTION createRbacObject()
     RETURNS trigger
@@ -144,7 +147,51 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION createRole(roleName varchar)
+CREATE TYPE RbacRoleDescriptor AS
+    (
+      objectTable     varchar(63), -- TODO: needed? remove?
+      objectUuid      uuid,
+      roleType        RbacRoleType
+  );
+
+-- TODO: this ...
+CREATE OR REPLACE FUNCTION roleDescriptor(objectTable varchar(63), objectUuid uuid, roleType RbacRoleType )
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    STABLE LEAKPROOF
+    LANGUAGE plpgsql AS $$
+BEGIN
+    RETURN ROW(objectTable, objectUuid, roleType);
+END; $$;
+
+CREATE FUNCTION new_emp() RETURNS emp AS $$
+SELECT text 'None' AS name,
+       1000.0 AS salary,
+       25 AS age,
+       point '(2,2)' AS cubicle;
+$$ LANGUAGE SQL;
+
+DO LANGUAGE plpgsql $$
+DECLARE
+    roleDesc RbacRoleDescriptor;
+BEGIN
+    select * FROM roleDescriptor('global', gen_random_uuid(), 'admin') into roleDesc;
+    RAISE NOTICE 'result: % % %', roleDesc.objecttable, roleDesc.objectuuid, roleDesc.roletype;
+END; $$;
+
+-- TODO: ... or that?
+CREATE OR REPLACE FUNCTION roleDescriptor(objectTable varchar(63), objectUuid uuid, roleType RbacRoleType )
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    -- STABLE LEAKPROOF
+    LANGUAGE sql AS $$
+        SELECT objectTable, objectUuid, roleType::RbacRoleType;
+    $$;
+
+
+
+
+CREATE OR REPLACE FUNCTION createRole(roleDescriptor RbacRoleDescriptor)
     RETURNS uuid
     RETURNS NULL ON NULL INPUT
     LANGUAGE plpgsql AS $$
@@ -152,10 +199,7 @@ declare
     referenceId uuid;
 BEGIN
     INSERT INTO RbacReference (type) VALUES ('RbacRole') RETURNING uuid INTO referenceId;
-    INSERT INTO RbacRole (uuid, name) VALUES (referenceId, roleName);
-    IF (referenceId IS NULL) THEN
-        RAISE EXCEPTION 'referenceId for roleName "%" is unexpectedly null', roleName;
-    end if;
+    INSERT INTO RbacRole (uuid, objectUuid, roleType) VALUES (referenceId, roleDescriptor.objectUuid, roleDescriptor.roleType);
     return referenceId;
 END;
 $$;
@@ -168,27 +212,27 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION findRoleId(roleName varchar)
+CREATE OR REPLACE FUNCTION findRoleId(roleDescriptor RbacRoleDescriptor)
     RETURNS uuid
     RETURNS NULL ON NULL INPUT
     LANGUAGE sql AS $$
-        SELECT uuid FROM RbacRole WHERE name = roleName
+        SELECT uuid FROM RbacRole WHERE objectUuid = roleDescriptor.objectUuid AND roleType = roleDescriptor.roleType;
 $$;
 
-CREATE OR REPLACE FUNCTION getRoleId(roleName varchar, whenNotExists RbacWhenNotExists)
+CREATE OR REPLACE FUNCTION getRoleId(roleDescriptor RbacRoleDescriptor, whenNotExists RbacWhenNotExists)
     RETURNS uuid
     RETURNS NULL ON NULL INPUT
     LANGUAGE plpgsql AS $$
 DECLARE
     roleUuid uuid;
 BEGIN
-    roleUuid = findRoleId(roleName);
+    roleUuid = findRoleId(roleDescriptor);
     IF ( roleUuid IS NULL ) THEN
         IF ( whenNotExists = 'fail') THEN
-            RAISE EXCEPTION 'RbacRole with name="%" not found', roleName;
+            RAISE EXCEPTION 'RbacRole "%#%.%" not found', roleDescriptor.objectTable, roleDescriptor.objectUuid, roleDescriptor.roleType;
         END IF;
         IF ( whenNotExists = 'create') THEN
-            roleUuid = createRole(roleName);
+            roleUuid = createRole(roleDescriptor);
         END IF;
     END IF;
     return roleUuid;
@@ -204,6 +248,7 @@ DECLARE
     refId uuid;
     permissionIds uuid[] = ARRAY[]::uuid[];
 BEGIN
+    RAISE NOTICE 'createPermission for: % %', forObjectUuid, permitOps;
     IF ( forObjectUuid IS NULL ) THEN
         RAISE EXCEPTION 'forObjectUuid must not be null';
     END IF;
@@ -214,16 +259,20 @@ BEGIN
     FOR i IN array_lower(permitOps, 1)..array_upper(permitOps, 1) LOOP
         refId = (SELECT uuid FROM RbacPermission WHERE objectUuid=forObjectUuid AND op=permitOps[i]);
         IF (refId IS NULL) THEN
+            RAISE NOTICE 'createPermission: % %', forObjectUuid, permitOps[i];
             INSERT INTO RbacReference ("type") VALUES ('RbacPermission') RETURNING uuid INTO refId;
             INSERT INTO RbacPermission (uuid, objectUuid, op) VALUES (refId, forObjectUuid, permitOps[i]);
         END IF;
+        RAISE NOTICE 'addPermission: %', refId;
         permissionIds = permissionIds || refId;
     END LOOP;
+
+    RAISE NOTICE 'createPermissions returning: %', permissionIds;
     return permissionIds;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION findPermissionId(forObjectTable varchar, forObjectUuid uuid, forOp RbacOp)
+CREATE OR REPLACE FUNCTION findPermissionId(forObjectUuid uuid, forOp RbacOp)
     RETURNS uuid
     RETURNS NULL ON NULL INPUT
     STABLE LEAKPROOF
@@ -248,6 +297,7 @@ END; $$;
 CREATE OR REPLACE PROCEDURE grantPermissionsToRole(roleUuid uuid, permissionIds uuid[])
     LANGUAGE plpgsql AS $$
 BEGIN
+    RAISE NOTICE 'grantPermissionsToRole: % -> %', roleUuid, permissionIds;
     FOR i IN array_lower(permissionIds, 1)..array_upper(permissionIds, 1) LOOP
         perform assertReferenceType('roleId (ascendant)', roleUuid, 'RbacRole');
         perform assertReferenceType('permissionId (descendant)',  permissionIds[i], 'RbacPermission');
@@ -294,21 +344,6 @@ BEGIN
     INSERT INTO RbacGrants (ascendantUuid, descendantUuid) VALUES (userId, roleId)
         ON CONFLICT DO NOTHING ; -- TODO: remove?
 END; $$;
-
-abort;
-set local session authorization default;
-
-CREATE OR REPLACE FUNCTION nextLevel(level integer, maxDepth integer)
-    RETURNS INTEGER
-    LANGUAGE plpgsql AS $$
-    BEGIN
-        IF (level > maxDepth) THEN
-            RAISE WARNING 'Role assignment depth exceeded %/%.', level, maxDepth;
-        END IF;
-        RETURN level+1;
-    END;
-$$;
-
 
 abort;
 set local session authorization default;
@@ -444,7 +479,7 @@ begin transaction;
 end transaction;
 
 ---
-
+/*
 CREATE OR REPLACE FUNCTION queryAllPermissionsOfSubjectId(subjectId uuid) -- TODO: remove?
     RETURNS SETOF RbacPermission
     RETURNS NULL ON NULL INPUT
@@ -469,7 +504,7 @@ CREATE OR REPLACE FUNCTION queryAllPermissionsOfSubjectId(subjectId uuid) -- TOD
         FROM
             grants
     );
-$$;
+$$;*/
 
 ---
 
@@ -643,43 +678,39 @@ CREATE OR REPLACE FUNCTION currentSubjectIds()
     STABLE LEAKPROOF
     LANGUAGE plpgsql AS $$
 DECLARE
-    assumedRoles VARCHAR(63)[];
-    currentUserId uuid;
-    assumedRoleIds uuid[];
-    assumedRoleId uuid;
+    currentUserId           uuid;
+    roleNames               VARCHAR(63)[];
+    roleName                VARCHAR(63);
+    objectTableToAssume     VARCHAR(63);
+    objectNameToAssume      VARCHAR(63);
+    objectUuidToAssume      uuid;
+    roleTypeToAssume        RbacRoleType;
+    roleIdsToAssume         uuid[];
+    roleUuidToAssume        uuid;
 BEGIN
     currentUserId := currentUserId();
-    assumedRoles := assumedRoles();
-    IF ( CARDINALITY(assumedRoles) = 0 ) THEN
+    roleNames := assumedRoles();
+    IF ( CARDINALITY(roleNames) = 0 ) THEN
         RETURN ARRAY[currentUserId];
     END IF;
 
-    RAISE NOTICE 'assuming roles: %', assumedRoles;
+    RAISE NOTICE 'assuming roles: %', roleNames;
 
-    SELECT ARRAY_AGG(uuid) FROM RbacRole WHERE name = ANY(assumedRoles) INTO assumedRoleIds;
-    IF assumedRoleIds IS NOT NULL THEN
-        FOREACH assumedRoleId IN ARRAY assumedRoleIds LOOP
-            IF ( NOT isGranted(currentUserId, assumedRoleId) ) THEN
-                RAISE EXCEPTION 'user % has no permission to assume role %', currentUser(), assumedRoleId;
-            END IF;
-        END LOOP;
-    END IF;
-    RETURN assumedRoleIds;
-END; $$;
+    FOREACH roleName IN ARRAY roleNames LOOP
+        roleName = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
+        objectTableToAssume = split_part(roleName, '#', 1);
+        objectNameToAssume = split_part(roleName, '#', 2);
+        roleTypeToAssume = split_part(roleName, '#', 3);
 
-rollback;
-set session authorization default;
-CREATE OR REPLACE FUNCTION maxGrantDepth()
-    RETURNS integer
-    STABLE LEAKPROOF
-    LANGUAGE plpgsql AS $$
-DECLARE
-    maxGrantDepth VARCHAR(63);
-BEGIN
-    BEGIN
-        maxGrantDepth := current_setting('hsadminng.maxGrantDepth');
-    EXCEPTION WHEN OTHERS THEN
-        maxGrantDepth := NULL;
-    END;
-    RETURN coalesce(maxGrantDepth, '8')::integer;
+        -- TODO: either the result needs to be cached at least per transaction or we need to get rid of SELCT in a loop
+        SELECT uuid AS roleuuidToAssume
+          FROM RbacRole r
+         WHERE r.objectUuid=objectUuidToAssume AND r.roleType=roleTypeToAssume INTO roleUuidToAssume;
+        IF ( NOT isGranted(currentUserId, roleUuidToAssume) ) THEN
+            RAISE EXCEPTION 'user % has no permission to assume role %', currentUser(), roleUuidToAssume;
+        END IF;
+        roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
+    END LOOP;
+
+    RETURN roleIdsToAssume;
 END; $$;

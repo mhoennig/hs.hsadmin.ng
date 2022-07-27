@@ -16,25 +16,28 @@ CREATE TRIGGER createRbacObjectForDomain_Trigger
     BEFORE INSERT ON Domain
     FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
 
-CREATE OR REPLACE FUNCTION domainOwner(unixUserName varchar, domainName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION domainOwner(dom Domain)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('domain', unixUserName || '/' || domainName, 'owner');
+    return roleDescriptor('domain', dom.uuid, 'owner');
 end; $$;
 
-CREATE OR REPLACE FUNCTION domainAdmin(unixUserName varchar, domainName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION domainAdmin(dom Domain)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('domain', unixUserName || '/' || domainName, 'admin');
+    return roleDescriptor('domain', dom.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION domainTenant(unixUserName varchar, domainName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION domainTenant(dom Domain)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('domain', unixUserName || '/' || domainName, 'tenant');
+    return roleDescriptor('domain', dom.uuid, 'tenant');
 end; $$;
 
 
@@ -42,7 +45,8 @@ CREATE OR REPLACE FUNCTION createRbacRulesForDomain()
     RETURNS trigger
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-    parentUser unixuser;
+    parentUser    UnixUser;
+    parentPackage package;
     domainOwnerRoleUuid uuid;
     domainAdminRoleUuid uuid;
 BEGIN
@@ -50,25 +54,26 @@ BEGIN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
     END IF;
 
-    SELECT * FROM unixuser WHERE uuid=NEW.unixUserUuid into parentUser;
+    SELECT * FROM UnixUser WHERE uuid=NEW.unixUserUuid into parentUser;
+    SELECT * FROM Package WHERE uuid=parentUser.packageuuid into parentPackage;
 
     -- a domain owner role is created and assigned to the unixuser's admin role
     domainOwnerRoleUuid = createRole(
-        domainOwner(parentUser.name, NEW.name),
+        domainOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
-        beneathRole(unixUserAdmin(parentUser.name))
+        beneathRole(packageAdmin(parentPackage))
         );
 
     -- a domain admin role is created and assigned to the domain's owner role
     domainAdminRoleUuid = createRole(
-        domainAdmin(parentUser.name, NEW.name),
+        domainAdmin(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-emailaddress']),
         beneathRole(domainOwnerRoleUuid)
         );
 
     -- and a domain tenant role is created and assigned to the domain's admiin role
     perform createRole(
-        domainTenant(parentUser.name, NEW.name),
+        domainTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
         beneathRole(domainAdminRoleUuid),
         beingItselfA(createUnixUserTenantRoleIfNotExists(parentUser))

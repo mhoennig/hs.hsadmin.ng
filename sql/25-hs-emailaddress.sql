@@ -16,50 +16,51 @@ CREATE TRIGGER createRbacObjectForEMailAddress_Trigger
     BEFORE INSERT ON EMailAddress
     FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
 
-CREATE OR REPLACE FUNCTION emailAddressOwner(emailAddress varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION emailAddressOwner(emAddr EMailAddress)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('emailaddress', emailAddress, 'owner');
+    return roleDescriptor('emailaddress', emAddr.uuid, 'owner');
 end; $$;
 
-CREATE OR REPLACE FUNCTION emailAddressAdmin(emailAddress varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION emailAddressAdmin(emAddr EMailAddress)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('emailaddress', emailAddress, 'admin');
+    return roleDescriptor('emailaddress', emAddr.uuid, 'admin');
 end; $$;
 
 CREATE OR REPLACE FUNCTION createRbacRulesForEMailAddress()
     RETURNS trigger
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-    parentDomain              record;
-    eMailAddress              varchar;
+    parentDomain              Domain;
     eMailAddressOwnerRoleUuid uuid;
 BEGIN
     IF TG_OP <> 'INSERT' THEN
         RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
     END IF;
 
-    SELECT d.name as name, u.name as unixUserName FROM domain d
-             LEFT JOIN unixuser u ON u.uuid = d.unixuseruuid
-             WHERE d.uuid=NEW.domainUuid into parentDomain;
-    eMailAddress = NEW.localPart || '@' || parentDomain.name;
+    SELECT d.*
+      FROM domain d
+      LEFT JOIN unixuser u ON u.uuid = d.unixuseruuid
+     WHERE d.uuid=NEW.domainUuid INTO parentDomain;
 
     -- an owner role is created and assigned to the domains's admin group
     eMailAddressOwnerRoleUuid = createRole(
-        emailAddressOwner(eMailAddress),
+        emailAddressOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
-        beneathRole(domainAdmin( parentDomain.unixUserName, parentDomain.name))
+        beneathRole(domainAdmin( parentDomain))
         );
 
     -- and an admin role is created and assigned to the unixuser owner as well
     perform createRole(
-        emailAddressAdmin(eMailAddress),
+        emailAddressAdmin(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit']),
         beneathRole(eMailAddressOwnerRoleUuid),
-        beingItselfA(domainTenant(parentDomain.unixUserName, parentDomain.name))
+        beingItselfA(domainTenant(parentDomain))
         );
 
     RETURN NEW;

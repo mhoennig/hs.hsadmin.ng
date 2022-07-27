@@ -4,8 +4,6 @@
 -- Role-Hierarcy helper functions
 -- --------------------------------------------------------
 
-CREATE TYPE RbacRoleType AS ENUM ('owner', 'admin', 'tenant');
-
 -- PERMISSIONS --------------------------------------------
 
 -- drop type RbacPermissions;
@@ -29,27 +27,27 @@ CREATE TYPE RbacSuperRoles AS
     roleUuids uuid[]
 );
 
--- drop function beneathRoles(roleName varchar);
-CREATE OR REPLACE FUNCTION beneathRoles(roleNames varchar[])
+-- drop function beneathRoles(roleDescriptors RbacRoleDescriptor[])
+CREATE OR REPLACE FUNCTION beneathRoles(roleDescriptors RbacRoleDescriptor[])
     RETURNS RbacSuperRoles
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-    superRoleName varchar;
+    superRoleDescriptor RbacRoleDescriptor;
     superRoleUuids uuid[] := ARRAY[]::uuid[];
 BEGIN
-    FOREACH superRoleName IN ARRAY roleNames LOOP
-        superRoleUuids := superRoleUuids || getRoleId(superRoleName, 'fail');
+    FOREACH superRoleDescriptor IN ARRAY roleDescriptors LOOP
+        superRoleUuids := superRoleUuids || getRoleId(superRoleDescriptor, 'fail');
     END LOOP;
 
     RETURN ROW(superRoleUuids)::RbacSuperRoles;
 END; $$;
 
--- drop function beneathRole(roleName varchar);
-CREATE OR REPLACE FUNCTION beneathRole(roleName varchar)
+-- drop function beneathRole(roleDescriptor RbacRoleDescriptor)
+CREATE OR REPLACE FUNCTION beneathRole(roleDescriptor RbacRoleDescriptor)
     RETURNS RbacSuperRoles
     LANGUAGE plpgsql STRICT AS $$
 BEGIN
-    RETURN beneathRoles(ARRAY[roleName]);
+    RETURN beneathRoles(ARRAY[roleDescriptor]);
 END; $$;
 
 -- drop function beneathRole(roleUuid uuid);
@@ -83,12 +81,12 @@ BEGIN
     RETURN ROW(ARRAY[roleUuid]::uuid[])::RbacSubRoles;
 END; $$;
 
--- drop FUNCTION beingItselfA(roleName varchar)
-CREATE OR REPLACE FUNCTION beingItselfA(roleName varchar)
+-- drop FUNCTION beingItselfA(roleDescriptor RbacRoleDescriptor)
+CREATE OR REPLACE FUNCTION beingItselfA(roleDescriptor RbacRoleDescriptor)
     RETURNS RbacSubRoles
     LANGUAGE plpgsql STRICT AS $$
 BEGIN
-    RETURN beingItselfA(getRoleId(roleName, 'fail'));
+    RETURN beingItselfA(getRoleId(roleDescriptor, 'fail'));
 END; $$;
 
 -- USERS --------------------------------------------------
@@ -126,20 +124,11 @@ END; $$;
 
 -- ROLE NAME BUILDER --------------------------------------
 
-CREATE OR REPLACE FUNCTION roleName(objectTable varchar, objectName varchar, roleType RbacRoleType )
-    RETURNS varchar
-    RETURNS NULL ON NULL INPUT
-    STABLE LEAKPROOF
-    LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN objectTable || '#' || objectName || '.' || roleType;
-END; $$;
-
 
 -- CREATE ROLE MAIN FUNCTION ------------------------------
 
 CREATE OR REPLACE FUNCTION createRole(
-    roleName varchar,
+    roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     superRoles RbacSuperRoles,
     subRoles RbacSubRoles = null,
@@ -154,8 +143,9 @@ DECLARE
     subRoleUuid uuid;
     userUuid uuid;
 BEGIN
-    RAISE NOTICE 'creating role: %', roleName;
-    roleUuid = createRole(roleName);
+    RAISE NOTICE 'will createRole for %', roleDescriptor;
+    RAISE NOTICE 'will createRole for % % %', roleDescriptor.objecttable, roleDescriptor.objectuuid, roleDescriptor.roletype;
+    roleUuid = createRole(roleDescriptor);
 
     call grantPermissionsToRole(roleUuid, permissions.permissionUuids);
 
@@ -181,7 +171,7 @@ BEGIN
 END; $$;
 
 CREATE OR REPLACE FUNCTION createRole(
-    roleName varchar,
+    roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     users RbacUsers = null
 )
@@ -189,11 +179,11 @@ CREATE OR REPLACE FUNCTION createRole(
     CALLED ON NULL INPUT
     LANGUAGE plpgsql AS $$
 BEGIN
-    RETURN createRole(roleName, permissions, null, null, users);
+    RETURN createRole(roleDescriptor, permissions, null, null, users);
 END; $$;
 
 CREATE OR REPLACE FUNCTION createRole(
-    roleName varchar,
+    roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     subRoles RbacSubRoles,
     users RbacUsers = null
@@ -202,7 +192,7 @@ CREATE OR REPLACE FUNCTION createRole(
     CALLED ON NULL INPUT
     LANGUAGE plpgsql AS $$
 BEGIN
-    RETURN createRole(roleName, permissions, null, subRoles, users);
+    RETURN createRole(roleDescriptor, permissions, null, subRoles, users);
 END; $$;
 
 

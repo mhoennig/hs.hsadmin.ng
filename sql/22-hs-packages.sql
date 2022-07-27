@@ -11,25 +11,30 @@ CREATE TABLE IF NOT EXISTS package (
     customerUuid uuid REFERENCES customer(uuid)
 );
 
-CREATE OR REPLACE FUNCTION packageOwner(packageName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION packageOwner(pac package)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
+declare
+    roleDesc RbacRoleDescriptor;
 begin
-    return roleName('package', packageName, 'owner');
+    return roleDescriptor('package', pac.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION packageAdmin(packageName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION packageAdmin(pac package)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('package', packageName, 'admin');
+    return roleDescriptor('package', pac.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION packageTenant(packageName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION packageTenant(pac package)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('package', packageName, 'tenant');
+    return roleDescriptor('package', pac.uuid, 'tenant');
 end; $$;
 
 
@@ -54,24 +59,24 @@ BEGIN
 
     -- an owner role is created and assigned to the customer's admin role
     packageOwnerRoleUuid = createRole(
-        packageOwner(NEW.name),
+        packageOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
-        beneathRole(customerAdmin(parentCustomer.prefix))
+        beneathRole(customerAdmin(parentCustomer))
         );
 
     -- an owner role is created and assigned to the package owner role
     packageAdminRoleUuid = createRole(
-        packageAdmin(NEW.name),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-unixuser']),
+        packageAdmin(NEW),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-unixuser', 'add-domain']),
         beneathRole(packageOwnerRoleUuid)
         );
 
     -- and a package tenant role is created and assigned to the package admin as well
     perform createRole(
-        packageTenant(NEW.name),
+        packageTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY ['view']),
         beneathRole(packageAdminRoleUuid),
-        beingItselfA(customerTenant(parentCustomer.prefix))
+        beingItselfA(customerTenant(parentCustomer))
         );
 
     RETURN NEW;

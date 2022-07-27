@@ -12,25 +12,28 @@ CREATE TABLE IF NOT EXISTS UnixUser (
     packageUuid uuid REFERENCES package(uuid)
 );
 
-CREATE OR REPLACE FUNCTION unixUserOwner(unixUserName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION unixUserOwner(uu UnixUser)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('unixuser', unixUserName, 'owner');
+    return roleDescriptor('unixuser', uu.uuid, 'owner');
 end; $$;
 
-CREATE OR REPLACE FUNCTION unixUserAdmin(unixUserName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION unixUserAdmin(uu UnixUser)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('unixuser', unixUserName, 'admin');
+    return roleDescriptor('unixuser', uu.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION unixUserTenant(unixUserName varchar)
-    RETURNS varchar
-    LANGUAGE plpgsql STRICT AS $$
+CREATE OR REPLACE FUNCTION unixUserTenant(uu UnixUser)
+    RETURNS RbacRoleDescriptor
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
 begin
-    return roleName('unixuser', unixUserName, 'tenant');
+    return roleDescriptor('unixuser', uu.uuid, 'tenant');
 end; $$;
 
 CREATE OR REPLACE FUNCTION createUnixUserTenantRoleIfNotExists(unixUser UnixUser)
@@ -38,19 +41,19 @@ CREATE OR REPLACE FUNCTION createUnixUserTenantRoleIfNotExists(unixUser UnixUser
     RETURNS NULL ON NULL INPUT
     LANGUAGE plpgsql AS $$
 DECLARE
-    unixUserTenantRoleName varchar;
+    unixUserTenantRoleDesc RbacRoleDescriptor;
     unixUserTenantRoleUuid uuid;
 BEGIN
-    unixUserTenantRoleName = unixUserTenant(unixUser.name);
-    unixUserTenantRoleUuid = findRoleId(unixUserTenantRoleName);
+    unixUserTenantRoleDesc = unixUserTenant(unixUser);
+    unixUserTenantRoleUuid = findRoleId(unixUserTenantRoleDesc);
     IF unixUserTenantRoleUuid IS NOT NULL THEN
         RETURN unixUserTenantRoleUuid;
     END IF;
 
     RETURN createRole(
-        unixUserTenantRoleName,
-        grantingPermissions(forObjectUuid => unixUser.uuid, permitOps => ARRAY['edit', 'add-domain']),
-        beneathRole(unixUserAdmin(unixUser.name))
+        unixUserTenantRoleDesc,
+        grantingPermissions(forObjectUuid => unixUser.uuid, permitOps => ARRAY['view']),
+        beneathRole(unixUserAdmin(unixUser))
         );
 END; $$;
 
@@ -76,17 +79,17 @@ BEGIN
 
     -- an owner role is created and assigned to the package's admin group
     unixuserOwnerRoleId = createRole(
-        unixUserOwner(NEW.name),
+        unixUserOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
-        beneathRole(packageAdmin(parentPackage.name))
+        beneathRole(packageAdmin(parentPackage))
         );
 
     -- and a unixuser admin role is created and assigned to the unixuser owner as well
     unixuserAdminRoleId = createRole(
-        unixUserAdmin(NEW.name),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-domain']),
+        unixUserAdmin(NEW),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit']),
         beneathRole(unixuserOwnerRoleId),
-        beingItselfA(packageTenant(parentPackage.name))
+        beingItselfA(packageTenant(parentPackage))
         );
 
     -- a tenent role is only created on demand

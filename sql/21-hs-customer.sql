@@ -17,25 +17,25 @@ CREATE TRIGGER createRbacObjectForCustomer_Trigger
     BEFORE INSERT ON customer
     FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
 
-CREATE OR REPLACE FUNCTION customerOwner(customerName varchar)
-    RETURNS varchar
+CREATE OR REPLACE FUNCTION customerOwner(customer customer)
+    RETURNS RbacRoleDescriptor
     LANGUAGE plpgsql STRICT AS $$
 begin
-    return roleName('customer', customerName, 'owner');
+    return roleDescriptor('customer', customer.uuid, 'owner');
 end; $$;
 
-CREATE OR REPLACE FUNCTION customerAdmin(customerName varchar)
-    RETURNS varchar
+CREATE OR REPLACE FUNCTION customerAdmin(customer customer)
+    RETURNS RbacRoleDescriptor
     LANGUAGE plpgsql STRICT AS $$
 begin
-    return roleName('customer', customerName, 'admin');
+    return roleDescriptor('customer', customer.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION customerTenant(customerName varchar)
-    RETURNS varchar
+CREATE OR REPLACE FUNCTION customerTenant(customer customer)
+    RETURNS RbacRoleDescriptor
     LANGUAGE plpgsql STRICT AS $$
 begin
-    return roleName('customer', customerName, 'tenant');
+    return roleDescriptor('customer', customer.uuid, 'tenant');
 end; $$;
 
 
@@ -52,14 +52,14 @@ BEGIN
 
     -- the owner role with full access for Hostsharing administrators
     customerOwnerUuid = createRole(
-            customerOwner(NEW.prefix),
+            customerOwner(NEW),
             grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
-            beneathRole('administrators')
+            beneathRole(hostsharingAdmin())
         );
 
     -- the admin role for the customer's admins, who can view and add products
     customerAdminUuid = createRole(
-            customerAdmin(NEW.prefix),
+            customerAdmin(NEW),
             grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view', 'add-package']),
             -- NO auto follow for customer owner to avoid exploding permissions for administrators
             withUser(NEW.adminUserName, 'create') -- implicitly ignored if null
@@ -70,7 +70,7 @@ BEGIN
 
     -- the tenant role which later can be used by owners+admins of sub-objects
     perform createRole(
-            customerTenant(NEW.prefix),
+            customerTenant(NEW),
             grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['view'])
         );
 
@@ -130,7 +130,7 @@ DO LANGUAGE plpgsql $$
     BEGIN
         SET hsadminng.currentUser TO '';
 
-        FOR t IN 0..6999 LOOP
+        FOR t IN 0..9 LOOP
                 currentTask = 'creating RBAC test customer #' || t;
                 SET LOCAL hsadminng.currentUser TO 'mike@hostsharing.net';
                 SET LOCAL hsadminng.assumedRoles = '';
