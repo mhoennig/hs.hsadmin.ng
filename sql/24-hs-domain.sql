@@ -86,27 +86,15 @@ CREATE TRIGGER createRbacRulesForDomain_Trigger
 
 
 -- create RBAC-restricted view
-
--- automatically updatable, but slow with WHERE IN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE Domain ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS domain_rv;
 CREATE OR REPLACE VIEW domain_rv AS
     SELECT DISTINCT target.*
       FROM Domain AS target
-      WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'domain', currentSubjectIds()));
+      WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'domain', currentSubjectIds()));
 GRANT ALL PRIVILEGES ON domain_rv TO restricted;
 
--- not automatically updatable, but fast with JOIN
-SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE Domain ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS domain_rv;
-CREATE OR REPLACE VIEW domain_rv AS
-    SELECT DISTINCT target.*
-      FROM Domain AS target
-      JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'domain', currentSubjectIds()) AS allowedObjId
-           ON target.uuid = allowedObjId;
-GRANT ALL PRIVILEGES ON domain_rv TO restricted;
 
 -- generate Domain test data
 

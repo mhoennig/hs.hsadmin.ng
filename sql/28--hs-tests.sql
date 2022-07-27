@@ -1,15 +1,6 @@
 ABORT;
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 
--- there are some random ractors in test data generation, thus a range has to be accepted
-CREATE OR REPLACE PROCEDURE expectBetween(actualCount integer, expectedFrom integer, expectedTo integer)
-    LANGUAGE plpgsql AS $$
-BEGIN
-    IF NOT actualCount BETWEEN expectedFrom AND expectedTo THEN
-        RAISE EXCEPTION 'count expected to be between % and %, but got %', expectedFrom, expectedTo, actualCount;
-    END IF;
-END; $$;
-
 DO LANGUAGE plpgsql $$
 DECLARE
     resultCount integer;
@@ -90,8 +81,8 @@ BEGIN
     SET SESSION SESSION AUTHORIZATION restricted;
     SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = 'customer#aae.admin;customer#aaf.admin';
-    SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
-    -- SELECT count(*) INTO resultCount
+    -- SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
+    SELECT count(*) INTO resultCount
       FROM emailaddress_rv ema
       JOIN domain_rv dom ON dom.uuid = ema.domainuuid
       JOIN unixuser_rv uu ON uu.uuid = dom.unixuseruuid

@@ -107,26 +107,13 @@ CREATE TRIGGER deleteRbacRulesForCustomer_Trigger
 
 
 -- create RBAC restricted view
-
--- automatically updatable, but slow with WHERE IN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS customer_rv;
 CREATE OR REPLACE VIEW customer_rv AS
     SELECT DISTINCT target.*
       FROM customer AS target
-     WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'customer', currentSubjectIds()));
-GRANT ALL PRIVILEGES ON customer_rv TO restricted;
-
--- not automatically updatable, but fast with JOIN
-SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS customer_rv;
-CREATE OR REPLACE VIEW customer_rv AS
-    SELECT DISTINCT target.*
-      FROM customer AS target
-      JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'customer', currentSubjectIds()) AS allowedObjId
-           ON target.uuid = allowedObjId;
+     WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'customer', currentSubjectIds()));
 GRANT ALL PRIVILEGES ON customer_rv TO restricted;
 
 

@@ -47,3 +47,17 @@ BEGIN
 END; $$;
 
 select * from randomInRange(0, 4);
+
+
+-- ========================================================
+-- Test helpers
+-- --------------------------------------------------------
+
+-- there are some random ractors in test data generation, thus a range has to be accepted
+CREATE OR REPLACE PROCEDURE expectBetween(actualCount integer, expectedFrom integer, expectedTo integer)
+    LANGUAGE plpgsql AS $$
+BEGIN
+    IF NOT actualCount BETWEEN expectedFrom AND expectedTo THEN
+        RAISE EXCEPTION 'count expected to be between % and %, but got %', expectedFrom, expectedTo, actualCount;
+    END IF;
+END; $$;

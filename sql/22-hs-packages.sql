@@ -99,28 +99,14 @@ CREATE TRIGGER deleteRbacRulesForPackage_Trigger
     FOR EACH ROW EXECUTE PROCEDURE deleteRbacRulesForPackage();
 
 -- create RBAC-restricted view
-
--- automatically updatable, but slow with WHERE IN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE package ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS package_rv;
 CREATE OR REPLACE VIEW package_rv AS
     SELECT DISTINCT target.*
       FROM package AS target
-     WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'package', currentSubjectIds()));
+     WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'package', currentSubjectIds()));
 GRANT ALL PRIVILEGES ON package_rv TO restricted;
-
--- not automatically updatable, but fast with JOIN
-SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE package ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS package_rv;
-CREATE OR REPLACE VIEW package_rv AS
-    SELECT DISTINCT target.*
-      FROM package AS target
-     JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'package', currentSubjectIds()) AS allowedObjId
-          ON target.uuid = allowedObjId;
-GRANT ALL PRIVILEGES ON package_rv TO restricted;
-
 
 
 -- generate Package test data

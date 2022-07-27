@@ -74,25 +74,13 @@ CREATE TRIGGER createRbacRulesForEMailAddress_Trigger
 
 
 -- create RBAC-restricted view
-
--- automatically updatable, but slow with WHERE IN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS EMailAddress_rv;
 CREATE OR REPLACE VIEW EMailAddress_rv AS
     SELECT DISTINCT target.*
     FROM EMailAddress AS target
-    WHERE target.uuid IN (SELECT DISTINCT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()));
-GRANT ALL PRIVILEGES ON EMailAddress_rv TO restricted;
-
--- not automatically updatable, but fast with JOIN
-SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS EMailAddress_rv;
-CREATE OR REPLACE VIEW EMailAddress_rv AS
-    SELECT target.*
-      FROM EMailAddress AS target
-     WHERE target.uuid IN (SELECT DISTINCT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()));
+    WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()));
 GRANT ALL PRIVILEGES ON EMailAddress_rv TO restricted;
 
 -- generate EMailAddress test data

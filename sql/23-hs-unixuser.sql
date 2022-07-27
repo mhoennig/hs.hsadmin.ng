@@ -8,6 +8,7 @@ SET SESSION SESSION AUTHORIZATION DEFAULT ;
 CREATE TABLE IF NOT EXISTS UnixUser (
     uuid uuid UNIQUE REFERENCES RbacObject(uuid),
     name character varying(32),
+    comment character varying(96),
     packageUuid uuid REFERENCES package(uuid)
 );
 
@@ -102,26 +103,13 @@ CREATE TRIGGER createRbacRulesForUnixUser_Trigger
 
 
 -- create RBAC-restricted view
-
--- automatically updatable, but slow with WHERE IN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE unixuser ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS unixuser_rv;
 CREATE OR REPLACE VIEW unixuser_rv AS
     SELECT DISTINCT target.*
       FROM unixuser AS target
-    WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'unixuser', currentSubjectIds()));
-GRANT ALL PRIVILEGES ON unixuser_rv TO restricted;
-
--- not automatically updatable, but fast with JOIN
-SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE unixuser ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS unixuser_rv;
-CREATE OR REPLACE VIEW unixuser_rv AS
-    SELECT DISTINCT target.*
-     FROM unixuser AS target
-     JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'unixuser', currentSubjectIds()) AS allowedObjId
-          ON target.uuid = allowedObjId;
+    WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'unixuser', currentSubjectIds()));
 GRANT ALL PRIVILEGES ON unixuser_rv TO restricted;
 
 
