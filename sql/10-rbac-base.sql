@@ -83,10 +83,14 @@ END; $$;
 -- DROP TABLE IF EXISTS RbacPermission;
 CREATE TABLE RbacPermission
 (   uuid uuid primary key references RbacReference (uuid) ON DELETE CASCADE,
-    objectUuid uuid not null,
+    objectUuid uuid not null references RbacObject,
     op RbacOp not null,
     unique (objectUuid, op)
 );
+
+-- SET SESSION SESSION AUTHORIZATION DEFAULT;
+-- alter table rbacpermission add constraint rbacpermission_objectuuid_fkey foreign key (objectUuid) references rbacobject(uuid);
+-- alter table rbacpermission drop constraint rbacpermission_objectuuid;
 
 CREATE OR REPLACE FUNCTION hasPermission(forObjectUuid uuid, forOp RbacOp)
     RETURNS bool
@@ -311,9 +315,9 @@ set local session authorization default;
 
 CREATE OR REPLACE FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
             requiredOp RbacOp,
-            forObjectTable varchar, -- TODO: test performance in joins!
+            forObjectTable varchar, -- reduces the result set, but is not really faster when used in restricted view
             subjectIds uuid[],
-            maxObjects integer = 16000)
+            maxObjects integer = 8000)
     RETURNS SETOF uuid
     RETURNS NULL ON NULL INPUT
     LANGUAGE plpgsql AS $$
@@ -336,7 +340,8 @@ CREATE OR REPLACE FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
            ) as granted
          JOIN RbacPermission perm
              ON granted.descendantUuid=perm.uuid AND perm.op IN ('*', requiredOp)
-         JOIN RbacObject obj ON obj.uuid=perm.objectUuid AND obj.objectTable=forObjectTable;
+        JOIN RbacObject obj ON obj.uuid=perm.objectUuid AND obj.objectTable=forObjectTable
+        LIMIT maxObjects+1;
 
          foundRows = lastRowCount();
          IF foundRows > maxObjects THEN
@@ -350,8 +355,10 @@ $$;
 
 SET SESSION AUTHORIZATION DEFAULT;
 CREATE ROLE admin;
+GRANT USAGE ON SCHEMA public TO admin;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
 CREATE ROLE restricted;
+GRANT USAGE ON SCHEMA public TO restricted;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
 
 abort;

@@ -101,8 +101,19 @@ CREATE TRIGGER createRbacRulesForUnixUser_Trigger
 -- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForUnixUser()
 
 
--- create RBAC restricted view
+-- create RBAC-restricted view
 
+-- automatically updatable, but slow with WHERE IN
+SET SESSION SESSION AUTHORIZATION DEFAULT;
+ALTER TABLE unixuser ENABLE ROW LEVEL SECURITY;
+DROP VIEW IF EXISTS unixuser_rv;
+CREATE OR REPLACE VIEW unixuser_rv AS
+    SELECT DISTINCT target.*
+      FROM unixuser AS target
+    WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'unixuser', currentSubjectIds()));
+GRANT ALL PRIVILEGES ON unixuser_rv TO restricted;
+
+-- not automatically updatable, but fast with JOIN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE unixuser ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS unixuser_rv;
@@ -118,13 +129,19 @@ GRANT ALL PRIVILEGES ON unixuser_rv TO restricted;
 
 DO LANGUAGE plpgsql $$
     DECLARE
-        pac package;
+        pac record;
         pacAdmin varchar;
         currentTask varchar;
     BEGIN
         SET hsadminng.currentUser TO '';
 
-        FOR pac IN (SELECT * FROM package) LOOP
+        FOR pac IN (
+            SELECT p.uuid, p.name
+              FROM package p
+              JOIN customer c ON p.customeruuid = c.uuid
+             -- WHERE c.reference >= 18000
+            ) LOOP
+
             FOR t IN 0..9 LOOP
                 currentTask = 'creating RBAC test unixuser #' || t || ' for package ' || pac.name|| ' #' || pac.uuid;
                 RAISE NOTICE 'task: %', currentTask;

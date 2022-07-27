@@ -98,8 +98,19 @@ CREATE TRIGGER deleteRbacRulesForPackage_Trigger
     BEFORE DELETE ON customer
     FOR EACH ROW EXECUTE PROCEDURE deleteRbacRulesForPackage();
 
--- create RBAC restricted view
+-- create RBAC-restricted view
 
+-- automatically updatable, but slow with WHERE IN
+SET SESSION SESSION AUTHORIZATION DEFAULT;
+ALTER TABLE package ENABLE ROW LEVEL SECURITY;
+DROP VIEW IF EXISTS package_rv;
+CREATE OR REPLACE VIEW package_rv AS
+    SELECT DISTINCT target.*
+      FROM package AS target
+     WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'package', currentSubjectIds()));
+GRANT ALL PRIVILEGES ON package_rv TO restricted;
+
+-- not automatically updatable, but fast with JOIN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE package ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS package_rv;
@@ -124,6 +135,8 @@ DO LANGUAGE plpgsql $$
         SET hsadminng.currentUser TO '';
 
         FOR cust IN (SELECT * FROM customer) LOOP
+            -- CONTINUE WHEN cust.reference < 18000;
+
             FOR t IN 0..randominrange(1, 2) LOOP
                 pacName = cust.prefix || TO_CHAR(t, 'fm00');
                 currentTask = 'creating RBAC test package #'|| pacName || ' for customer ' || cust.prefix || ' #' || cust.uuid;

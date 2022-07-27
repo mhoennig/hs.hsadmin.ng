@@ -73,39 +73,51 @@ CREATE TRIGGER createRbacRulesForEMailAddress_Trigger
 -- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForEMailAddress()
 
 
--- create RBAC restricted view
+-- create RBAC-restricted view
 
+-- automatically updatable, but slow with WHERE IN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS EMailAddress_rv;
 CREATE OR REPLACE VIEW EMailAddress_rv AS
     SELECT DISTINCT target.*
     FROM EMailAddress AS target
-    JOIN queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()) AS allowedObjId
-         ON target.uuid = allowedObjId;
+    WHERE target.uuid IN (SELECT DISTINCT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()));
 GRANT ALL PRIVILEGES ON EMailAddress_rv TO restricted;
 
+-- not automatically updatable, but fast with JOIN
+SET SESSION SESSION AUTHORIZATION DEFAULT;
+ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
+DROP VIEW IF EXISTS EMailAddress_rv;
+CREATE OR REPLACE VIEW EMailAddress_rv AS
+    SELECT target.*
+      FROM EMailAddress AS target
+     WHERE target.uuid IN (SELECT DISTINCT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()));
+GRANT ALL PRIVILEGES ON EMailAddress_rv TO restricted;
 
 -- generate EMailAddress test data
 
 DO LANGUAGE plpgsql $$
     DECLARE
-        pac package;
-        uu unixuser;
-        dom domain;
+        dom record;
         pacAdmin varchar;
         currentTask varchar;
     BEGIN
         SET hsadminng.currentUser TO '';
 
-        FOR dom IN (SELECT * FROM domain) LOOP
+        FOR dom IN (
+            SELECT d.uuid, d.name, p.name as packageName
+              FROM domain d
+              JOIN unixuser u ON u.uuid = d.unixuseruuid
+              JOIN package p ON u.packageuuid = p.uuid
+              JOIN customer c ON p.customeruuid = c.uuid
+             -- WHERE c.reference >= 18000
+                  ) LOOP
             FOR t IN 0..4 LOOP
                 currentTask = 'creating RBAC test EMailAddress #' || t || ' for Domain ' || dom.name;
                 RAISE NOTICE 'task: %', currentTask;
 
-                SELECT * FROM unixuser WHERE uuid=dom.unixuserUuid INTO uu;
-                SELECT * FROM package WHERE uuid=uu.packageUuid INTO pac;
-                pacAdmin = 'admin@' || pac.name || '.example.com';
+                pacAdmin = 'admin@' || dom.packageName || '.example.com';
                 SET LOCAL hsadminng.currentUser TO pacAdmin;
                 SET LOCAL hsadminng.assumedRoles = '';
                 SET LOCAL hsadminng.currentTask TO currentTask;

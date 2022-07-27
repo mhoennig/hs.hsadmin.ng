@@ -85,8 +85,19 @@ CREATE TRIGGER createRbacRulesForDomain_Trigger
 -- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForDomain()
 
 
--- create RBAC restricted view
+-- create RBAC-restricted view
 
+-- automatically updatable, but slow with WHERE IN
+SET SESSION SESSION AUTHORIZATION DEFAULT;
+ALTER TABLE Domain ENABLE ROW LEVEL SECURITY;
+DROP VIEW IF EXISTS domain_rv;
+CREATE OR REPLACE VIEW domain_rv AS
+    SELECT DISTINCT target.*
+      FROM Domain AS target
+      WHERE target.uuid IN (SELECT uuid FROM queryAccessibleObjectUuidsOfSubjectIds( 'view', 'domain', currentSubjectIds()));
+GRANT ALL PRIVILEGES ON domain_rv TO restricted;
+
+-- not automatically updatable, but fast with JOIN
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 ALTER TABLE Domain ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS domain_rv;
@@ -97,19 +108,24 @@ CREATE OR REPLACE VIEW domain_rv AS
            ON target.uuid = allowedObjId;
 GRANT ALL PRIVILEGES ON domain_rv TO restricted;
 
-
 -- generate Domain test data
 
 DO LANGUAGE plpgsql $$
     DECLARE
-        uu unixuser;
+        uu record;
         pac package;
         pacAdmin varchar;
         currentTask varchar;
     BEGIN
         SET hsadminng.currentUser TO '';
 
-        FOR uu IN (SELECT * FROM unixuser) LOOP
+        FOR uu IN (
+            SELECT u.uuid, u.name, u.packageuuid, c.reference
+              FROM unixuser u
+              JOIN package p ON u.packageuuid = p.uuid
+              JOIN customer c ON p.customeruuid = c.uuid
+             -- WHERE c.reference >= 18000
+              ) LOOP
             IF ( random() < 0.3 ) THEN
                 FOR t IN 0..1 LOOP
                     currentTask = 'creating RBAC test Domain #' || t || ' for UnixUser ' || uu.name|| ' #' || uu.uuid;
