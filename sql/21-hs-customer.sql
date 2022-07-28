@@ -105,10 +105,25 @@ CREATE TRIGGER deleteRbacRulesForCustomer_Trigger
     BEFORE DELETE ON customer
     FOR EACH ROW EXECUTE PROCEDURE deleteRbacRulesForCustomer();
 
+-- create a restricted view to access the textual customer ids a idName
+SET SESSION SESSION AUTHORIZATION DEFAULT;
+-- ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
+DROP VIEW IF EXISTS customer_iv;
+CREATE OR REPLACE VIEW customer_iv AS
+SELECT DISTINCT target.uuid, target.prefix as idName
+  FROM customer AS target;
+-- TODO: Is it ok that everybody has access to this information?
+GRANT ALL PRIVILEGES ON customer_iv TO restricted;
+
+CREATE OR REPLACE FUNCTION customerUuidByIdName(idName varchar)
+    RETURNS uuid
+    LANGUAGE sql STRICT AS $$
+        SELECT uuid FROM customer_iv iv WHERE iv.idName=customerUuidByIdName.idName;
+    $$;
 
 -- create RBAC restricted view
 SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS customer_rv;
 CREATE OR REPLACE VIEW customer_rv AS
     SELECT DISTINCT target.*

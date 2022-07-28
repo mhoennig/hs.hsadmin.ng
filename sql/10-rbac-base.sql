@@ -670,6 +670,21 @@ BEGIN
         RETURN string_to_array(currentSubject, ';');
     END; $$;
 
+CREATE OR REPLACE FUNCTION findUuidByIdName(objectTable varchar, objectIdName varchar)
+    RETURNS uuid
+    RETURNS NULL ON NULL INPUT
+    LANGUAGE plpgsql AS $$
+DECLARE
+
+BEGIN
+    /*sql = 'E ' || baseTable || '_historicize' ||
+                       ' AFTER INSERT OR DELETE OR UPDATE ON ' || baseTable ||
+                       '   FOR EACH ROW EXECUTE PROCEDURE historicize()';
+    RAISE NOTICE 'sql: %', createTriggerSQL;
+    EXECUTE createTriggerSQ*/
+
+    RETURN customerUuidByIdName(objectIdName);
+END; $$;
 
 ROLLBACK;
 SET SESSION AUTHORIZATION DEFAULT;
@@ -701,6 +716,8 @@ BEGIN
         objectTableToAssume = split_part(roleName, '#', 1);
         objectNameToAssume = split_part(roleName, '#', 2);
         roleTypeToAssume = split_part(roleName, '#', 3);
+
+        objectUuidToAssume = findUuidByIdName(objectTableToAssume, objectNameToAssume);
 
         -- TODO: either the result needs to be cached at least per transaction or we need to get rid of SELCT in a loop
         SELECT uuid AS roleuuidToAssume

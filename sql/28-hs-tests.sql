@@ -61,7 +61,7 @@ BEGIN
       FROM unixuser_rv uu
       JOIN package_rv p ON p.uuid = uu.packageuuid
       JOIN customer_rv c ON c.uuid = p.customeruuid;
-    call expectBetween(resultCount, 30, 50);
+    call expectBetween(resultCount, 40, 60);
 
     -- hostsharing admin assuming two customer admin roles and listing all accessible domains
     -- ABORT; START TRANSACTION;
@@ -74,7 +74,7 @@ BEGIN
        JOIN unixuser_rv uu ON uu.uuid = dom.unixuseruuid
        JOIN package_rv p ON p.uuid = uu.packageuuid
        JOIN customer_rv c ON c.uuid = p.customeruuid;
-    call expectBetween(resultCount, 30, 50);
+    call expectBetween(resultCount, 20, 40);
 
     -- hostsharing admin assuming two customer admin roles and listing all accessible email addresses
     -- ABORT; START TRANSACTION;
