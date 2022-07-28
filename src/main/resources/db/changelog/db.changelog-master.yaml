@@ -9,4 +9,8 @@ databaseChangeLog:
         file: db/changelog/2022-07-28-004-uuid-ossp-extension.sql
     - include:
         file: db/changelog/2022-07-28-005-rbac-base.sql
+    - include:
+        file: db/changelog/2022-07-28-020-rbac-role-builder.sql
+    - include:
+        file: db/changelog/2022-07-28-030-rbac-statistics.sql
 

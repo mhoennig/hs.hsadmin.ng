@@ -1,12 +1,14 @@
+--liquibase formatted sql
 
+-- ==================================================================
+-- PERMISSIONS
+--changeset rbac-role-builder-permissions:1 endDelimiter:--//
+-- ------------------------------------------------------------------
 
--- ========================================================
--- Role-Hierarcy helper functions
--- --------------------------------------------------------
+/*
 
--- PERMISSIONS --------------------------------------------
+ */
 
--- drop type RbacPermissions;
 CREATE TYPE RbacPermissions AS
 (
     permissionUuids uuid[]
@@ -19,15 +21,18 @@ BEGIN
     RETURN ROW(createPermissions(forObjectUuid, permitOps))::RbacPermissions;
 END; $$;
 
--- SUPER ROLES --------------------------------------------
+--//
 
--- drop type RbacSuperRoles;
+--changeset rbac-role-builder-super-roles:1 endDelimiter:--//
+
+/*
+
+ */
 CREATE TYPE RbacSuperRoles AS
 (
     roleUuids uuid[]
 );
 
--- drop function beneathRoles(roleDescriptors RbacRoleDescriptor[])
 CREATE OR REPLACE FUNCTION beneathRoles(roleDescriptors RbacRoleDescriptor[])
     RETURNS RbacSuperRoles
     LANGUAGE plpgsql STRICT AS $$
@@ -42,7 +47,6 @@ BEGIN
     RETURN ROW(superRoleUuids)::RbacSuperRoles;
 END; $$;
 
--- drop function beneathRole(roleDescriptor RbacRoleDescriptor)
 CREATE OR REPLACE FUNCTION beneathRole(roleDescriptor RbacRoleDescriptor)
     RETURNS RbacSuperRoles
     LANGUAGE plpgsql STRICT AS $$
@@ -50,7 +54,6 @@ BEGIN
     RETURN beneathRoles(ARRAY[roleDescriptor]);
 END; $$;
 
--- drop function beneathRole(roleUuid uuid);
 CREATE OR REPLACE FUNCTION beneathRole(roleUuid uuid)
     RETURNS RbacSuperRoles
     LANGUAGE plpgsql STRICT AS $$
@@ -58,7 +61,6 @@ BEGIN
     RETURN ROW(ARRAY[roleUuid]::uuid[])::RbacSuperRoles;
 END; $$;
 
--- drop function asTopLevelRole(roleName varchar);
 CREATE OR REPLACE FUNCTION asTopLevelRole()
     RETURNS RbacSuperRoles
     LANGUAGE plpgsql STRICT AS $$
@@ -66,8 +68,16 @@ BEGIN
     RETURN ROW(ARRAY[]::uuid[])::RbacSuperRoles;
 END; $$;
 
--- SUB ROLES ----------------------------------------------
+--//
 
+-- =================================================================
+-- SUB ROLES
+--changeset rbac-role-builder-sub-roles:1 endDelimiter:--//
+-- -----------------------------------------------------------------
+
+/*
+
+ */
 CREATE TYPE RbacSubRoles AS
 (
     roleUuids uuid[]
@@ -89,15 +99,20 @@ BEGIN
     RETURN beingItselfA(getRoleId(roleDescriptor, 'fail'));
 END; $$;
 
--- USERS --------------------------------------------------
+--//
 
--- drop type RbacUsers;
+-- =================================================================
+-- USERS
+--changeset rbac-role-builder-users:1 endDelimiter:--//
+-- -----------------------------------------------------------------
+
+/*
+*/
 CREATE TYPE RbacUsers AS
 (
     userUuids uuid[]
 );
 
--- drop function withUsers(userNames varchar);
 CREATE OR REPLACE FUNCTION withUsers(userNames varchar[])
     RETURNS RbacUsers
     LANGUAGE plpgsql STRICT AS $$
@@ -113,7 +128,6 @@ BEGIN
 END; $$;
 
 
--- DROP FUNCTION withUser(userName varchar, whenNotExists RbacWhenNotExists);
 CREATE OR REPLACE FUNCTION withUser(userName varchar, whenNotExists RbacWhenNotExists = 'fail')
     RETURNS RbacUsers
     RETURNS NULL ON NULL INPUT
@@ -122,11 +136,15 @@ BEGIN
     RETURN ROW(ARRAY[getRbacUserId(userName, whenNotExists )]);
 END; $$;
 
--- ROLE NAME BUILDER --------------------------------------
+--//
 
+-- =================================================================
+-- CREATE ROLE
+--changeset rbac-role-builder-create-role:1 endDelimiter:--//
+-- -----------------------------------------------------------------
 
--- CREATE ROLE MAIN FUNCTION ------------------------------
-
+/*
+*/
 CREATE OR REPLACE FUNCTION createRole(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
@@ -195,4 +213,4 @@ BEGIN
     RETURN createRole(roleDescriptor, permissions, null, subRoles, users);
 END; $$;
 
-
+--//

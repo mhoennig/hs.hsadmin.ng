@@ -1,12 +1,3 @@
-
--- ========================================================
--- RBAC
--- --------------------------------------------------------
-
-SET SESSION SESSION AUTHORIZATION DEFAULT;
-
--- https://arctype.com/blog/postgres-uuid/#creating-a-uuid-primary-key-using-uuid-osp-postgresql-example
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 --liquibase formatted sql
 
 --changeset rbac-base-reference:1 endDelimiter:--//
