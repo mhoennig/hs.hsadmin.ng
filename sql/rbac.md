@@ -553,3 +553,83 @@ Initially, the customer's admin role is assigned to the package owner role.
 They can use the package's admin role to hand over most management functionality to a third party.
 The 'administrators' can get access through an assumed customer's admin role or directly by assuming the package's owner or admin role.
 
+## Performance
+
+We did not define maximum response time in our requirements,
+but set a target of 7.000 customers, 15.000 packages, 150.000 Unix users, 100.000 domains and 500.000 email-addresses.
+
+For such a dataset the response time for typical queries from a UI should be acceptable.
+Also, when adding data beyond these quantities, increase in response time should be roughly linear or below.
+For this, we increased the dataset by 14% and then by another 25%, ending up with 10.000 customers, almost 25.000 packages, over 174.000 unix users, over 120.000 domains and almost 750.000 email-addresses.
+
+The performance test suite comprised 8 SELECT queries issued by an administrator, mostly with two assumed customer owner roles.
+The tests started with finding a specific customer and ended with listing all accessible email-addresses joined with their domains, unix-users, packages and customers.
+
+Find the SQL script here: `28-hs-tests.sql`.
+
+### Two View Query Variants
+
+We have tested two variants of the query for the restricted view,
+both utilizing a PostgreSQL function like this:
+
+    FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
+            requiredOp RbacOp,
+            forObjectTable varchar,
+            subjectIds uuid[],
+            maxObjects integer = 16000)
+        RETURNS SETOF uuid
+
+The function returns all object uuids for which the given subjectIds (user o assumed roles) have a permission or required operation.
+
+Let's have a look at the two view queries:
+
+#### Using WHERE ... IN
+
+    CREATE OR REPLACE VIEW customer_rv AS
+        SELECT DISTINCT target.*
+          FROM customer AS target
+         WHERE target.uuid IN (
+            SELECT uuid
+              FROM queryAccessibleObjectUuidsOfSubjectIds( 
+                'view', 'customer', currentSubjectIds()));
+
+This view should be automatically updatable.
+Where, for updates, we actually have to check for 'edit' instead of 'view' operation, which makes it a bit more complicated.
+
+With the larger dataset, the test suite initially needed over 7 seconds with this view query.
+At this point the second variant was tried.
+
+But after the initial query, the execution time was drastically reduced,
+even with different query values. 
+Looks like the query optimizer needed some statistics to find the best path.
+
+#### Using A JOIN
+
+    CREATE OR REPLACE VIEW customer_rv AS
+        SELECT DISTINCT target.*
+          FROM customer AS target
+          JOIN queryAccessibleObjectUuidsOfSubjectIds( 
+                'view', 'customer', currentSubjectIds()) AS allowedObjId
+            ON target.uuid = allowedObjId;
+
+This view cannot is not updatable automatically,
+but it was quite fast from the beginning.
+
+### Performance Results
+
+The following table shows the average between the second and the third repeat of the test-suite:
+
+|         Dataset | using JOIN | using WHERE IN |
+|----------------:|-----------:|---------------:|
+|  7000 customers |      670ms |         1040ms |
+| 10000 customers |     1050ms |         1125ms |
+|            +43% |       +57% |            +8% |
+
+The JOIN-variant is still faster, but the growth in execution time exceeded the growth of the dataset.
+
+The WHERE-IN-variant is about 50% slower on the smaller dataset, but almost keeps its performance on the larger dataset.
+ 
+Both variants a viable option, depending on other needs, e.g. updatable views. 
+
+
+
