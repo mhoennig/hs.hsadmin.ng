@@ -12,7 +12,7 @@ spring:
         properties:
             hibernate:
                 default_schema: public
-                dialect: org.hibernate.dialect.PostgreSQLDialect
+                dialect: net.hostsharing.hsadminng.config.PostgreSQL95CustomDialect
         hibernate:
             ddl-auto: none
         show-sql: true
@@ -29,9 +29,5 @@ logging:
     level:
         liquibase: INFO
 
-    #    spring.datasource.driver-class-name=org.postgresql.Driver
-#    spring.datasource.url=${DB_URL}
-#    spring.datasource.username=${DB_USERNAME}
-#    spring.datasource.password=${DB_PASSWORD}
-
-#    spring.jpa.properties.hibernate.default-schema=public
+liquibase:
+    contexts: dev,tc

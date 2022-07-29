@@ -1,5 +1,7 @@
-package net.hostsharing.hsadminng;
+package net.hostsharing.hsadminng.controller;
 
+import net.hostsharing.hsadminng.context.Context;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -15,6 +17,9 @@ public class TestController {
     @PersistenceContext
     private EntityManager em;
 
+    @Autowired
+    private Context context;
+
     @ResponseBody
     @RequestMapping(value = "/api/ping", method = RequestMethod.GET)
     public String ping() {
@@ -25,8 +30,8 @@ public class TestController {
     @ResponseBody
     @RequestMapping(value = "/api/currentUser", method = RequestMethod.GET)
     public String currentUser() {
-        em.createNativeQuery("SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';").executeUpdate();
-        em.createNativeQuery("SET LOCAL hsadminng.assumedRoles = '';").executeUpdate();
+        context.setCurrentUser("mike@hostsharing.net");
+
         final var query = em.createNativeQuery("select currentUser()");
         return query.getSingleResult() + "\n";
     }
