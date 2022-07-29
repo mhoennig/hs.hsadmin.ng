@@ -21,6 +21,14 @@ begin
     return row (createPermissions(forObjectUuid, permitOps))::RbacPermissions;
 end; $$;
 
+create or replace function withoutPermissions()
+    returns RbacPermissions
+    language plpgsql
+    strict as $$
+begin
+    return row (array[]::uuid[]);
+end; $$;
+
 --//
 
 --changeset rbac-role-builder-super-roles:1 endDelimiter:--//

@@ -45,9 +45,12 @@ declare
     objectId uuid;
 begin
     insert
-        into RbacReference (type) values ('RbacUser') returning uuid into objectId;
+        into RbacReference (type)
+        values ('RbacUser')
+        returning uuid into objectId;
     insert
-        into RbacUser (uuid, name) values (objectid, userName);
+        into RbacUser (uuid, name)
+        values (objectid, userName);
     return objectId;
 end;
 $$;
@@ -103,7 +106,9 @@ declare
 begin
     if TG_OP = 'INSERT' then
         insert
-            into RbacObject (objectTable) values (TG_TABLE_NAME) returning uuid into objectUuid;
+            into RbacObject (objectTable)
+            values (TG_TABLE_NAME)
+            returning uuid into objectUuid;
         NEW.uuid = objectUuid;
         return NEW;
     else
@@ -153,9 +158,12 @@ declare
     referenceId uuid;
 begin
     insert
-        into RbacReference (type) values ('RbacRole') returning uuid into referenceId;
+        into RbacReference (type)
+        values ('RbacRole')
+        returning uuid into referenceId;
     insert
-        into RbacRole (uuid, objectUuid, roleType) values (referenceId, roleDescriptor.objectUuid, roleDescriptor.roleType);
+        into RbacRole (uuid, objectUuid, roleType)
+        values (referenceId, roleDescriptor.objectUuid, roleDescriptor.roleType);
     return referenceId;
 end;
 $$;
@@ -254,9 +262,12 @@ begin
             if (refId is null) then
                 raise notice 'createPermission: % %', forObjectUuid, permitOps[i];
                 insert
-                    into RbacReference ("type") values ('RbacPermission') returning uuid into refId;
+                    into RbacReference ("type")
+                    values ('RbacPermission')
+                    returning uuid into refId;
                 insert
-                    into RbacPermission (uuid, objectUuid, op) values (refId, forObjectUuid, permitOps[i]);
+                    into RbacPermission (uuid, objectUuid, op)
+                    values (refId, forObjectUuid, permitOps[i]);
             end if;
             raise notice 'addPermission: %', refId;
             permissionIds = permissionIds || refId;
@@ -357,14 +368,16 @@ create or replace procedure grantPermissionsToRole(roleUuid uuid, permissionIds 
     language plpgsql as $$
 begin
     raise notice 'grantPermissionsToRole: % -> %', roleUuid, permissionIds;
+    if cardinality(permissionIds) = 0 then return; end if;
+
     for i in array_lower(permissionIds, 1)..array_upper(permissionIds, 1)
         loop
             perform assertReferenceType('roleId (ascendant)', roleUuid, 'RbacRole');
             perform assertReferenceType('permissionId (descendant)', permissionIds[i], 'RbacPermission');
 
-            -- INSERT INTO RbacGrants (ascendantUuid, descendantUuid, apply) VALUES (roleId, permissionIds[i], true); -- assumeV1
             insert
-                into RbacGrants (ascendantUuid, descendantUuid) values (roleUuid, permissionIds[i]);
+                into RbacGrants (ascendantUuid, descendantUuid, follow)
+                values (roleUuid, permissionIds[i], true);
         end loop;
 end;
 $$;
@@ -379,7 +392,6 @@ begin
         raise exception 'Cyclic role grant detected between % and %', subRoleId, superRoleId;
     end if;
 
-    -- INSERT INTO RbacGrants (ascendantUuid, descendantUuid, apply) VALUES (superRoleId, subRoleId, doapply); -- assumeV1
     insert
         into RbacGrants (ascendantUuid, descendantUuid, follow)
         values (superRoleId, subRoleId, doFollow)
@@ -403,10 +415,9 @@ begin
     perform assertReferenceType('roleId (ascendant)', roleId, 'RbacRole');
     perform assertReferenceType('userId (descendant)', userId, 'RbacUser');
 
-    -- INSERT INTO RbacGrants (ascendantUuid, descendantUuid, apply) VALUES (userId, roleId, true); -- assumeV1
     insert
-        into RbacGrants (ascendantUuid, descendantUuid)
-        values (userId, roleId)
+        into RbacGrants (ascendantUuid, descendantUuid, follow)
+        values (userId, roleId, true)
     on conflict do nothing; -- TODO: remove?
 end; $$;
 --//
@@ -646,10 +657,10 @@ end; $$;
 --changeset rbac-base-pgsql-roles:1 endDelimiter:--//
 -- ------------------------------------------------------------------
 
-CREATE ROLE admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+create role admin;
+grant all privileges on all tables in schema public to admin;
 
-CREATE ROLE restricted;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
+create role restricted;
+grant all privileges on all tables in schema public to restricted;
 
 --//
