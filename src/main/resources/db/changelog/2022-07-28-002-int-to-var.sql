@@ -15,11 +15,11 @@ create or replace function intToVarChar(i integer, len integer)
 declare
     partial varchar;
 begin
-    select chr(ascii('a') + i%26) into partial;
+    select chr(ascii('a') + i % 26) into partial;
     if len > 1 then
-        return intToVarChar(i/26, len-1) || partial;
+        return intToVarChar(i / 26, len - 1) || partial;
     else
         return partial;
     end if;
-END; $$;
+end; $$;
 --//

@@ -1,152 +1,159 @@
-
 -- ========================================================
 -- UnixUser example with RBAC
 -- --------------------------------------------------------
 
-SET SESSION SESSION AUTHORIZATION DEFAULT ;
+set session session authorization default;
 
-CREATE TABLE IF NOT EXISTS UnixUser (
-    uuid uuid UNIQUE REFERENCES RbacObject(uuid),
-    name character varying(32),
-    comment character varying(96),
-    packageUuid uuid REFERENCES package(uuid)
+create table if not exists UnixUser
+(
+    uuid        uuid unique references RbacObject (uuid),
+    name        character varying(32),
+    comment     character varying(96),
+    packageUuid uuid references package (uuid)
 );
 
-CREATE OR REPLACE FUNCTION unixUserOwner(uu UnixUser)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function unixUserOwner(uu UnixUser)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('unixuser', uu.uuid, 'owner');
 end; $$;
 
-CREATE OR REPLACE FUNCTION unixUserAdmin(uu UnixUser)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function unixUserAdmin(uu UnixUser)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('unixuser', uu.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION unixUserTenant(uu UnixUser)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function unixUserTenant(uu UnixUser)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('unixuser', uu.uuid, 'tenant');
 end; $$;
 
-CREATE OR REPLACE FUNCTION createUnixUserTenantRoleIfNotExists(unixUser UnixUser)
-    RETURNS uuid
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
-DECLARE
+create or replace function createUnixUserTenantRoleIfNotExists(unixUser UnixUser)
+    returns uuid
+    returns null on null input
+    language plpgsql as $$
+declare
     unixUserTenantRoleDesc RbacRoleDescriptor;
     unixUserTenantRoleUuid uuid;
-BEGIN
+begin
     unixUserTenantRoleDesc = unixUserTenant(unixUser);
     unixUserTenantRoleUuid = findRoleId(unixUserTenantRoleDesc);
-    IF unixUserTenantRoleUuid IS NOT NULL THEN
-        RETURN unixUserTenantRoleUuid;
-    END IF;
+    if unixUserTenantRoleUuid is not null then
+        return unixUserTenantRoleUuid;
+    end if;
 
-    RETURN createRole(
+    return createRole(
         unixUserTenantRoleDesc,
-        grantingPermissions(forObjectUuid => unixUser.uuid, permitOps => ARRAY['view']),
+        grantingPermissions(forObjectUuid => unixUser.uuid, permitOps => array ['view']),
         beneathRole(unixUserAdmin(unixUser))
         );
-END; $$;
+end; $$;
 
 
-DROP TRIGGER IF EXISTS createRbacObjectForUnixUser_Trigger ON UnixUser;
-CREATE TRIGGER createRbacObjectForUnixUser_Trigger
-    BEFORE INSERT ON UnixUser
-    FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
+drop trigger if exists createRbacObjectForUnixUser_Trigger on UnixUser;
+create trigger createRbacObjectForUnixUser_Trigger
+    before insert
+    on UnixUser
+    for each row
+execute procedure createRbacObject();
 
-CREATE OR REPLACE FUNCTION createRbacRulesForUnixUser()
-    RETURNS trigger
-    LANGUAGE plpgsql STRICT AS $$
-DECLARE
-    parentPackage package;
+create or replace function createRbacRulesForUnixUser()
+    returns trigger
+    language plpgsql
+    strict as $$
+declare
+    parentPackage       package;
     unixuserOwnerRoleId uuid;
     unixuserAdminRoleId uuid;
-BEGIN
-    IF TG_OP <> 'INSERT' THEN
-        RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
-    END IF;
+begin
+    if TG_OP <> 'INSERT' then
+        raise exception 'invalid usage of TRIGGER AFTER INSERT';
+    end if;
 
-    SELECT * FROM package WHERE uuid=NEW.packageUuid into parentPackage;
+    select * from package where uuid = NEW.packageUuid into parentPackage;
 
     -- an owner role is created and assigned to the package's admin group
     unixuserOwnerRoleId = createRole(
         unixUserOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(packageAdmin(parentPackage))
         );
 
     -- and a unixuser admin role is created and assigned to the unixuser owner as well
     unixuserAdminRoleId = createRole(
         unixUserAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
         beneathRole(unixuserOwnerRoleId),
         beingItselfA(packageTenant(parentPackage))
         );
 
     -- a tenent role is only created on demand
 
-    RETURN NEW;
-END; $$;
+    return NEW;
+end; $$;
 
-DROP TRIGGER IF EXISTS createRbacRulesForUnixUser_Trigger ON UnixUser;
-CREATE TRIGGER createRbacRulesForUnixUser_Trigger
-    AFTER INSERT ON UnixUser
-    FOR EACH ROW EXECUTE PROCEDURE createRbacRulesForUnixUser();
+drop trigger if exists createRbacRulesForUnixUser_Trigger on UnixUser;
+create trigger createRbacRulesForUnixUser_Trigger
+    after insert
+    on UnixUser
+    for each row
+execute procedure createRbacRulesForUnixUser();
 
 -- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForUnixUser()
 
 
 -- create RBAC-restricted view
-SET SESSION SESSION AUTHORIZATION DEFAULT;
+set session session authorization default;
 -- ALTER TABLE unixuser ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS unixuser_rv;
-CREATE OR REPLACE VIEW unixuser_rv AS
-    SELECT DISTINCT target.*
-      FROM unixuser AS target
-    WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'unixuser', currentSubjectIds()));
-GRANT ALL PRIVILEGES ON unixuser_rv TO restricted;
+drop view if exists unixuser_rv;
+create or replace view unixuser_rv as
+select distinct target.*
+    from unixuser as target
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'unixuser', currentSubjectIds()));
+grant all privileges on unixuser_rv to restricted;
 
 
 -- generate UnixUser test data
 
-DO LANGUAGE plpgsql $$
-    DECLARE
-        pac record;
-        pacAdmin varchar;
+do language plpgsql $$
+    declare
+        pac         record;
+        pacAdmin    varchar;
         currentTask varchar;
-    BEGIN
-        SET hsadminng.currentUser TO '';
+    begin
+        set hsadminng.currentUser to '';
 
-        FOR pac IN (
-            SELECT p.uuid, p.name
-              FROM package p
-              JOIN customer c ON p.customeruuid = c.uuid
-             -- WHERE c.reference >= 18000
-            ) LOOP
+        for pac in (select p.uuid, p.name
+                        from package p
+                                 join customer c on p.customeruuid = c.uuid
+            -- WHERE c.reference >= 18000
+        )
+            loop
 
-            FOR t IN 0..9 LOOP
-                currentTask = 'creating RBAC test unixuser #' || t || ' for package ' || pac.name|| ' #' || pac.uuid;
-                RAISE NOTICE 'task: %', currentTask;
-                pacAdmin = 'admin@' || pac.name || '.example.com';
-                SET LOCAL hsadminng.currentUser TO 'mike@hostsharing.net'; -- TODO: use a package-admin
-                SET LOCAL hsadminng.assumedRoles = '';
-                SET LOCAL hsadminng.currentTask TO currentTask;
+                for t in 0..9
+                    loop
+                        currentTask = 'creating RBAC test unixuser #' || t || ' for package ' || pac.name || ' #' || pac.uuid;
+                        raise notice 'task: %', currentTask;
+                        pacAdmin = 'admin@' || pac.name || '.example.com';
+                        set local hsadminng.currentUser to 'mike@hostsharing.net'; -- TODO: use a package-admin
+                        set local hsadminng.assumedRoles = '';
+                        set local hsadminng.currentTask to currentTask;
 
-                INSERT INTO unixuser (name, packageUuid)
-                VALUES (pac.name||'-'|| intToVarChar(t, 4), pac.uuid);
+                        insert
+                            into unixuser (name, packageUuid)
+                            values (pac.name || '-' || intToVarChar(t, 4), pac.uuid);
 
-                COMMIT;
-            END LOOP;
-        END LOOP;
+                        commit;
+                    end loop;
+            end loop;
 
-    END;
+    end;
 $$;

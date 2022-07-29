@@ -9,17 +9,18 @@
 
  */
 
-CREATE TYPE RbacPermissions AS
+create type RbacPermissions as
 (
     permissionUuids uuid[]
 );
 
-CREATE OR REPLACE FUNCTION grantingPermissions(forObjectUuid uuid, permitOps RbacOp[])
-    RETURNS RbacPermissions
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    RETURN ROW(createPermissions(forObjectUuid, permitOps))::RbacPermissions;
-END; $$;
+create or replace function grantingPermissions(forObjectUuid uuid, permitOps RbacOp[])
+    returns RbacPermissions
+    language plpgsql
+    strict as $$
+begin
+    return row (createPermissions(forObjectUuid, permitOps))::RbacPermissions;
+end; $$;
 
 --//
 
@@ -28,45 +29,50 @@ END; $$;
 /*
 
  */
-CREATE TYPE RbacSuperRoles AS
+create type RbacSuperRoles as
 (
     roleUuids uuid[]
 );
 
-CREATE OR REPLACE FUNCTION beneathRoles(roleDescriptors RbacRoleDescriptor[])
-    RETURNS RbacSuperRoles
-    LANGUAGE plpgsql STRICT AS $$
-DECLARE
+create or replace function beneathRoles(roleDescriptors RbacRoleDescriptor[])
+    returns RbacSuperRoles
+    language plpgsql
+    strict as $$
+declare
     superRoleDescriptor RbacRoleDescriptor;
-    superRoleUuids uuid[] := ARRAY[]::uuid[];
-BEGIN
-    FOREACH superRoleDescriptor IN ARRAY roleDescriptors LOOP
-        superRoleUuids := superRoleUuids || getRoleId(superRoleDescriptor, 'fail');
-    END LOOP;
+    superRoleUuids      uuid[] := array []::uuid[];
+begin
+    foreach superRoleDescriptor in array roleDescriptors
+        loop
+            superRoleUuids := superRoleUuids || getRoleId(superRoleDescriptor, 'fail');
+        end loop;
 
-    RETURN ROW(superRoleUuids)::RbacSuperRoles;
-END; $$;
+    return row (superRoleUuids)::RbacSuperRoles;
+end; $$;
 
-CREATE OR REPLACE FUNCTION beneathRole(roleDescriptor RbacRoleDescriptor)
-    RETURNS RbacSuperRoles
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    RETURN beneathRoles(ARRAY[roleDescriptor]);
-END; $$;
+create or replace function beneathRole(roleDescriptor RbacRoleDescriptor)
+    returns RbacSuperRoles
+    language plpgsql
+    strict as $$
+begin
+    return beneathRoles(array [roleDescriptor]);
+end; $$;
 
-CREATE OR REPLACE FUNCTION beneathRole(roleUuid uuid)
-    RETURNS RbacSuperRoles
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    RETURN ROW(ARRAY[roleUuid]::uuid[])::RbacSuperRoles;
-END; $$;
+create or replace function beneathRole(roleUuid uuid)
+    returns RbacSuperRoles
+    language plpgsql
+    strict as $$
+begin
+    return row (array [roleUuid]::uuid[])::RbacSuperRoles;
+end; $$;
 
-CREATE OR REPLACE FUNCTION asTopLevelRole()
-    RETURNS RbacSuperRoles
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    RETURN ROW(ARRAY[]::uuid[])::RbacSuperRoles;
-END; $$;
+create or replace function asTopLevelRole()
+    returns RbacSuperRoles
+    language plpgsql
+    strict as $$
+begin
+    return row (array []::uuid[])::RbacSuperRoles;
+end; $$;
 
 --//
 
@@ -78,26 +84,28 @@ END; $$;
 /*
 
  */
-CREATE TYPE RbacSubRoles AS
+create type RbacSubRoles as
 (
     roleUuids uuid[]
 );
 
 -- drop FUNCTION beingItselfA(roleUuid uuid)
-CREATE OR REPLACE FUNCTION beingItselfA(roleUuid uuid)
-    RETURNS RbacSubRoles
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    RETURN ROW(ARRAY[roleUuid]::uuid[])::RbacSubRoles;
-END; $$;
+create or replace function beingItselfA(roleUuid uuid)
+    returns RbacSubRoles
+    language plpgsql
+    strict as $$
+begin
+    return row (array [roleUuid]::uuid[])::RbacSubRoles;
+end; $$;
 
 -- drop FUNCTION beingItselfA(roleDescriptor RbacRoleDescriptor)
-CREATE OR REPLACE FUNCTION beingItselfA(roleDescriptor RbacRoleDescriptor)
-    RETURNS RbacSubRoles
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    RETURN beingItselfA(getRoleId(roleDescriptor, 'fail'));
-END; $$;
+create or replace function beingItselfA(roleDescriptor RbacRoleDescriptor)
+    returns RbacSubRoles
+    language plpgsql
+    strict as $$
+begin
+    return beingItselfA(getRoleId(roleDescriptor, 'fail'));
+end; $$;
 
 --//
 
@@ -108,33 +116,35 @@ END; $$;
 
 /*
 */
-CREATE TYPE RbacUsers AS
+create type RbacUsers as
 (
     userUuids uuid[]
 );
 
-CREATE OR REPLACE FUNCTION withUsers(userNames varchar[])
-    RETURNS RbacUsers
-    LANGUAGE plpgsql STRICT AS $$
-DECLARE
-    userName varchar;
-    userUuids uuid[] := ARRAY[]::uuid[];
-BEGIN
-    FOREACH userName IN ARRAY userNames LOOP
-        userUuids := userUuids || getRbacUserId(userName, 'fail');
-    END LOOP;
+create or replace function withUsers(userNames varchar[])
+    returns RbacUsers
+    language plpgsql
+    strict as $$
+declare
+    userName  varchar;
+    userUuids uuid[] := array []::uuid[];
+begin
+    foreach userName in array userNames
+        loop
+            userUuids := userUuids || getRbacUserId(userName, 'fail');
+        end loop;
 
-    RETURN ROW(userUuids)::RbacUsers;
-END; $$;
+    return row (userUuids)::RbacUsers;
+end; $$;
 
 
-CREATE OR REPLACE FUNCTION withUser(userName varchar, whenNotExists RbacWhenNotExists = 'fail')
-    RETURNS RbacUsers
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN ROW(ARRAY[getRbacUserId(userName, whenNotExists )]);
-END; $$;
+create or replace function withUser(userName varchar, whenNotExists RbacWhenNotExists = 'fail')
+    returns RbacUsers
+    returns null on null input
+    language plpgsql as $$
+begin
+    return row (array [getRbacUserId(userName, whenNotExists)]);
+end; $$;
 
 --//
 
@@ -145,72 +155,75 @@ END; $$;
 
 /*
 */
-CREATE OR REPLACE FUNCTION createRole(
+create or replace function createRole(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     superRoles RbacSuperRoles,
     subRoles RbacSubRoles = null,
     users RbacUsers = null
 )
-    RETURNS uuid
-    CALLED ON NULL INPUT
-    LANGUAGE plpgsql AS $$
-DECLARE
-    roleUuid uuid;
+    returns uuid
+    called on null input
+    language plpgsql as $$
+declare
+    roleUuid      uuid;
     superRoleUuid uuid;
-    subRoleUuid uuid;
-    userUuid uuid;
-BEGIN
-    RAISE NOTICE 'will createRole for %', roleDescriptor;
-    RAISE NOTICE 'will createRole for % % %', roleDescriptor.objecttable, roleDescriptor.objectuuid, roleDescriptor.roletype;
+    subRoleUuid   uuid;
+    userUuid      uuid;
+begin
+    raise notice 'will createRole for %', roleDescriptor;
+    raise notice 'will createRole for % % %', roleDescriptor.objecttable, roleDescriptor.objectuuid, roleDescriptor.roletype;
     roleUuid = createRole(roleDescriptor);
 
     call grantPermissionsToRole(roleUuid, permissions.permissionUuids);
 
-    IF superRoles IS NOT NULL THEN
-        FOREACH superRoleUuid IN ARRAY superRoles.roleuUids LOOP
-            call grantRoleToRole(roleUuid, superRoleUuid);
-        END LOOP;
-    END IF;
+    if superRoles is not null then
+        foreach superRoleUuid in array superRoles.roleuUids
+            loop
+                call grantRoleToRole(roleUuid, superRoleUuid);
+            end loop;
+    end if;
 
-    IF subRoles IS NOT NULL THEN
-        FOREACH subRoleUuid IN ARRAY subRoles.roleuUids LOOP
-            call grantRoleToRole(subRoleUuid, roleUuid);
-        END LOOP;
-    END IF;
+    if subRoles is not null then
+        foreach subRoleUuid in array subRoles.roleuUids
+            loop
+                call grantRoleToRole(subRoleUuid, roleUuid);
+            end loop;
+    end if;
 
-    IF users IS NOT NULL THEN
-        FOREACH userUuid IN ARRAY users.useruUids LOOP
-            call grantRoleToUser(roleUuid, userUuid);
-        END LOOP;
-    END IF;
+    if users is not null then
+        foreach userUuid in array users.useruUids
+            loop
+                call grantRoleToUser(roleUuid, userUuid);
+            end loop;
+    end if;
 
-    RETURN roleUuid;
-END; $$;
+    return roleUuid;
+end; $$;
 
-CREATE OR REPLACE FUNCTION createRole(
+create or replace function createRole(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     users RbacUsers = null
 )
-    RETURNS uuid
-    CALLED ON NULL INPUT
-    LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN createRole(roleDescriptor, permissions, null, null, users);
-END; $$;
+    returns uuid
+    called on null input
+    language plpgsql as $$
+begin
+    return createRole(roleDescriptor, permissions, null, null, users);
+end; $$;
 
-CREATE OR REPLACE FUNCTION createRole(
+create or replace function createRole(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     subRoles RbacSubRoles,
     users RbacUsers = null
 )
-    RETURNS uuid
-    CALLED ON NULL INPUT
-    LANGUAGE plpgsql AS $$
-BEGIN
-    RETURN createRole(roleDescriptor, permissions, null, subRoles, users);
-END; $$;
+    returns uuid
+    called on null input
+    language plpgsql as $$
+begin
+    return createRole(roleDescriptor, permissions, null, subRoles, users);
+end; $$;
 
 --//

@@ -12,9 +12,9 @@
 create or replace function randomInRange(min integer, max integer)
     returns integer
     returns null on null input
-    language 'plpgsql' AS $$
+    language 'plpgsql' as $$
 begin
-    return floor(random() * (max-min + 1) + min);
+    return floor(random() * (max - min + 1) + min);
 end; $$;
 --//
 

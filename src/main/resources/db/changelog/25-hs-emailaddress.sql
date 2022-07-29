@@ -1,123 +1,131 @@
-
 -- ========================================================
 -- EMailAddress example with RBAC
 -- --------------------------------------------------------
 
-SET SESSION SESSION AUTHORIZATION DEFAULT ;
+set session session authorization default;
 
-CREATE TABLE IF NOT EXISTS EMailAddress (
-    uuid uuid UNIQUE REFERENCES RbacObject(uuid),
-    localPart character varying(64),
-    domainUuid uuid REFERENCES domain(uuid)
+create table if not exists EMailAddress
+(
+    uuid       uuid unique references RbacObject (uuid),
+    localPart  character varying(64),
+    domainUuid uuid references domain (uuid)
 );
 
-DROP TRIGGER IF EXISTS createRbacObjectForEMailAddress_Trigger ON EMailAddress;
-CREATE TRIGGER createRbacObjectForEMailAddress_Trigger
-    BEFORE INSERT ON EMailAddress
-    FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
+drop trigger if exists createRbacObjectForEMailAddress_Trigger on EMailAddress;
+create trigger createRbacObjectForEMailAddress_Trigger
+    before insert
+    on EMailAddress
+    for each row
+execute procedure createRbacObject();
 
-CREATE OR REPLACE FUNCTION emailAddressOwner(emAddr EMailAddress)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function emailAddressOwner(emAddr EMailAddress)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('emailaddress', emAddr.uuid, 'owner');
 end; $$;
 
-CREATE OR REPLACE FUNCTION emailAddressAdmin(emAddr EMailAddress)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function emailAddressAdmin(emAddr EMailAddress)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('emailaddress', emAddr.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION createRbacRulesForEMailAddress()
-    RETURNS trigger
-    LANGUAGE plpgsql STRICT AS $$
-DECLARE
+create or replace function createRbacRulesForEMailAddress()
+    returns trigger
+    language plpgsql
+    strict as $$
+declare
     parentDomain              Domain;
     eMailAddressOwnerRoleUuid uuid;
-BEGIN
-    IF TG_OP <> 'INSERT' THEN
-        RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
-    END IF;
+begin
+    if TG_OP <> 'INSERT' then
+        raise exception 'invalid usage of TRIGGER AFTER INSERT';
+    end if;
 
-    SELECT d.*
-      FROM domain d
-      LEFT JOIN unixuser u ON u.uuid = d.unixuseruuid
-     WHERE d.uuid=NEW.domainUuid INTO parentDomain;
+    select d.*
+        from domain d
+                 left join unixuser u on u.uuid = d.unixuseruuid
+        where d.uuid = NEW.domainUuid
+        into parentDomain;
 
     -- an owner role is created and assigned to the domains's admin group
     eMailAddressOwnerRoleUuid = createRole(
         emailAddressOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
-        beneathRole(domainAdmin( parentDomain))
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
+        beneathRole(domainAdmin(parentDomain))
         );
 
     -- and an admin role is created and assigned to the unixuser owner as well
     perform createRole(
         emailAddressAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
         beneathRole(eMailAddressOwnerRoleUuid),
         beingItselfA(domainTenant(parentDomain))
         );
 
-    RETURN NEW;
-END; $$;
+    return NEW;
+end; $$;
 
-DROP TRIGGER IF EXISTS createRbacRulesForEMailAddress_Trigger ON EMailAddress;
-CREATE TRIGGER createRbacRulesForEMailAddress_Trigger
-    AFTER INSERT ON EMailAddress
-    FOR EACH ROW EXECUTE PROCEDURE createRbacRulesForEMailAddress();
+drop trigger if exists createRbacRulesForEMailAddress_Trigger on EMailAddress;
+create trigger createRbacRulesForEMailAddress_Trigger
+    after insert
+    on EMailAddress
+    for each row
+execute procedure createRbacRulesForEMailAddress();
 
 -- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForEMailAddress()
 
 
 -- create RBAC-restricted view
-SET SESSION SESSION AUTHORIZATION DEFAULT;
+set session session authorization default;
 -- ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS EMailAddress_rv;
-CREATE OR REPLACE VIEW EMailAddress_rv AS
-    SELECT DISTINCT target.*
-    FROM EMailAddress AS target
-    WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'emailaddress', currentSubjectIds()));
-GRANT ALL PRIVILEGES ON EMailAddress_rv TO restricted;
+drop view if exists EMailAddress_rv;
+create or replace view EMailAddress_rv as
+select distinct target.*
+    from EMailAddress as target
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'emailaddress', currentSubjectIds()));
+grant all privileges on EMailAddress_rv to restricted;
 
 -- generate EMailAddress test data
 
-DO LANGUAGE plpgsql $$
-    DECLARE
-        dom record;
-        pacAdmin varchar;
+do language plpgsql $$
+    declare
+        dom         record;
+        pacAdmin    varchar;
         currentTask varchar;
-    BEGIN
-        SET hsadminng.currentUser TO '';
+    begin
+        set hsadminng.currentUser to '';
 
-        FOR dom IN (
-            SELECT d.uuid, d.name, p.name as packageName
-              FROM domain d
-              JOIN unixuser u ON u.uuid = d.unixuseruuid
-              JOIN package p ON u.packageuuid = p.uuid
-              JOIN customer c ON p.customeruuid = c.uuid
-             -- WHERE c.reference >= 18000
-                  ) LOOP
-            FOR t IN 0..4 LOOP
-                currentTask = 'creating RBAC test EMailAddress #' || t || ' for Domain ' || dom.name;
-                RAISE NOTICE 'task: %', currentTask;
+        for dom in (select d.uuid, d.name, p.name as packageName
+                        from domain d
+                                 join unixuser u on u.uuid = d.unixuseruuid
+                                 join package p on u.packageuuid = p.uuid
+                                 join customer c on p.customeruuid = c.uuid
+            -- WHERE c.reference >= 18000
+        )
+            loop
+                for t in 0..4
+                    loop
+                        currentTask = 'creating RBAC test EMailAddress #' || t || ' for Domain ' || dom.name;
+                        raise notice 'task: %', currentTask;
 
-                pacAdmin = 'admin@' || dom.packageName || '.example.com';
-                SET LOCAL hsadminng.currentUser TO pacAdmin;
-                SET LOCAL hsadminng.assumedRoles = '';
-                SET LOCAL hsadminng.currentTask TO currentTask;
+                        pacAdmin = 'admin@' || dom.packageName || '.example.com';
+                        set local hsadminng.currentUser to pacAdmin;
+                        set local hsadminng.assumedRoles = '';
+                        set local hsadminng.currentTask to currentTask;
 
-                INSERT INTO EMailAddress (localPart, domainUuid)
-                   VALUES ('local' || t, dom.uuid);
+                        insert
+                            into EMailAddress (localPart, domainUuid)
+                            values ('local' || t, dom.uuid);
 
-                COMMIT;
-            END LOOP;
-        END LOOP;
-    END;
+                        commit;
+                    end loop;
+            end loop;
+    end;
 $$;
 
 

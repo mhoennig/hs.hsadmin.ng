@@ -1,22 +1,21 @@
-
-
-
-CREATE TABLE Hostsharing
+create table Hostsharing
 (
-    uuid uuid PRIMARY KEY REFERENCES RbacObject(uuid)
+    uuid uuid primary key references RbacObject (uuid)
 );
-CREATE UNIQUE INDEX Hostsharing_Singleton ON Hostsharing ((0));
+create unique index Hostsharing_Singleton on Hostsharing ((0));
 
 
-INSERT INTO RbacObject (objecttable) VALUES ('hostsharing');
-INSERT INTO Hostsharing (uuid) VALUES ((SELECT uuid FROM RbacObject WHERE objectTable='hostsharing'));
+insert
+into RbacObject (objecttable) values ('hostsharing');
+insert
+    into Hostsharing (uuid) values ((select uuid from RbacObject where objectTable = 'hostsharing'));
 
-CREATE OR REPLACE FUNCTION hostsharingAdmin()
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    STABLE LEAKPROOF
-    LANGUAGE sql AS $$
-SELECT 'global', (SELECT uuid FROM RbacObject WHERE objectTable='hostsharing'), 'admin'::RbacRoleType;
+create or replace function hostsharingAdmin()
+    returns RbacRoleDescriptor
+    returns null on null input
+    stable leakproof
+    language sql as $$
+select 'global', (select uuid from RbacObject where objectTable = 'hostsharing'), 'admin'::RbacRoleType;
 $$;
 
 -- create administrators role with two assigned users
@@ -32,7 +31,7 @@ do language plpgsql $$
 $$;
 
 
-BEGIN TRANSACTION;
-SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-select * from RbacUser where uuid=currentUserId();
-END TRANSACTION;
+begin transaction;
+set local hsadminng.currentUser = 'mike@hostsharing.net';
+select * from RbacUser where uuid = currentUserId();
+end transaction;

@@ -1,149 +1,161 @@
-
 -- ========================================================
 -- Package example with RBAC
 -- --------------------------------------------------------
 
-SET SESSION SESSION AUTHORIZATION DEFAULT ;
+set session session authorization default;
 
-CREATE TABLE IF NOT EXISTS package (
-    uuid uuid UNIQUE REFERENCES RbacObject(uuid),
-    name character varying(5),
-    customerUuid uuid REFERENCES customer(uuid)
+create table if not exists package
+(
+    uuid         uuid unique references RbacObject (uuid),
+    name         character varying(5),
+    customerUuid uuid references customer (uuid)
 );
 
-CREATE OR REPLACE FUNCTION packageOwner(pac package)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function packageOwner(pac package)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 declare
     roleDesc RbacRoleDescriptor;
 begin
     return roleDescriptor('package', pac.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION packageAdmin(pac package)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function packageAdmin(pac package)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('package', pac.uuid, 'admin');
 end; $$;
 
-CREATE OR REPLACE FUNCTION packageTenant(pac package)
-    RETURNS RbacRoleDescriptor
-    RETURNS NULL ON NULL INPUT
-    LANGUAGE plpgsql AS $$
+create or replace function packageTenant(pac package)
+    returns RbacRoleDescriptor
+    returns null on null input
+    language plpgsql as $$
 begin
     return roleDescriptor('package', pac.uuid, 'tenant');
 end; $$;
 
 
-DROP TRIGGER IF EXISTS createRbacObjectForPackage_Trigger ON package;
-CREATE TRIGGER createRbacObjectForPackage_Trigger
-    BEFORE INSERT ON package
-    FOR EACH ROW EXECUTE PROCEDURE createRbacObject();
+drop trigger if exists createRbacObjectForPackage_Trigger on package;
+create trigger createRbacObjectForPackage_Trigger
+    before insert
+    on package
+    for each row
+execute procedure createRbacObject();
 
-CREATE OR REPLACE FUNCTION createRbacRulesForPackage()
-    RETURNS trigger
-    LANGUAGE plpgsql STRICT AS $$
-DECLARE
-    parentCustomer customer;
+create or replace function createRbacRulesForPackage()
+    returns trigger
+    language plpgsql
+    strict as $$
+declare
+    parentCustomer       customer;
     packageOwnerRoleUuid uuid;
     packageAdminRoleUuid uuid;
-BEGIN
-    IF TG_OP <> 'INSERT' THEN
-        RAISE EXCEPTION 'invalid usage of TRIGGER AFTER INSERT';
-    END IF;
+begin
+    if TG_OP <> 'INSERT' then
+        raise exception 'invalid usage of TRIGGER AFTER INSERT';
+    end if;
 
-    SELECT * FROM customer AS c WHERE c.uuid=NEW.customerUuid INTO parentCustomer;
+    select * from customer as c where c.uuid = NEW.customerUuid into parentCustomer;
 
     -- an owner role is created and assigned to the customer's admin role
     packageOwnerRoleUuid = createRole(
         packageOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['*']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(customerAdmin(parentCustomer))
         );
 
     -- an owner role is created and assigned to the package owner role
     packageAdminRoleUuid = createRole(
         packageAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY['edit', 'add-unixuser', 'add-domain']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit', 'add-unixuser', 'add-domain']),
         beneathRole(packageOwnerRoleUuid)
         );
 
     -- and a package tenant role is created and assigned to the package admin as well
     perform createRole(
         packageTenant(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => ARRAY ['view']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
         beneathRole(packageAdminRoleUuid),
         beingItselfA(customerTenant(parentCustomer))
         );
 
-    RETURN NEW;
-END; $$;
+    return NEW;
+end; $$;
 
-DROP TRIGGER IF EXISTS createRbacRulesForPackage_Trigger ON package;
-CREATE TRIGGER createRbacRulesForPackage_Trigger
-    AFTER INSERT ON package
-    FOR EACH ROW EXECUTE PROCEDURE createRbacRulesForPackage();
+drop trigger if exists createRbacRulesForPackage_Trigger on package;
+create trigger createRbacRulesForPackage_Trigger
+    after insert
+    on package
+    for each row
+execute procedure createRbacRulesForPackage();
 
-CREATE OR REPLACE FUNCTION deleteRbacRulesForPackage()
-    RETURNS trigger
-    LANGUAGE plpgsql STRICT AS $$
-BEGIN
-    IF TG_OP = 'DELETE' THEN
+create or replace function deleteRbacRulesForPackage()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    if TG_OP = 'DELETE' then
         --  TODO
-    ELSE
-        RAISE EXCEPTION 'invalid usage of TRIGGER BEFORE DELETE';
-    END IF;
-END; $$;
+    else
+        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
+    end if;
+end; $$;
 
-DROP TRIGGER IF EXISTS deleteRbacRulesForPackage_Trigger ON customer;
-CREATE TRIGGER deleteRbacRulesForPackage_Trigger
-    BEFORE DELETE ON customer
-    FOR EACH ROW EXECUTE PROCEDURE deleteRbacRulesForPackage();
+drop trigger if exists deleteRbacRulesForPackage_Trigger on customer;
+create trigger deleteRbacRulesForPackage_Trigger
+    before delete
+    on customer
+    for each row
+execute procedure deleteRbacRulesForPackage();
 
 -- create RBAC-restricted view
-SET SESSION SESSION AUTHORIZATION DEFAULT;
+set session session authorization default;
 -- ALTER TABLE package ENABLE ROW LEVEL SECURITY;
-DROP VIEW IF EXISTS package_rv;
-CREATE OR REPLACE VIEW package_rv AS
-    SELECT DISTINCT target.*
-      FROM package AS target
-     WHERE target.uuid IN (SELECT queryAccessibleObjectUuidsOfSubjectIds( 'view', 'package', currentSubjectIds()));
-GRANT ALL PRIVILEGES ON package_rv TO restricted;
+drop view if exists package_rv;
+create or replace view package_rv as
+select distinct target.*
+    from package as target
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'package', currentSubjectIds()));
+grant all privileges on package_rv to restricted;
 
 
 -- generate Package test data
 
-DO LANGUAGE plpgsql $$
-    DECLARE
-        cust customer;
-        pacName varchar;
+do language plpgsql $$
+    declare
+        cust        customer;
+        pacName     varchar;
         currentTask varchar;
-        custAdmin varchar;
-    BEGIN
-        SET hsadminng.currentUser TO '';
+        custAdmin   varchar;
+    begin
+        set hsadminng.currentUser to '';
 
-        FOR cust IN (SELECT * FROM customer) LOOP
-            -- CONTINUE WHEN cust.reference < 18000;
+        for cust in (select * from customer)
+            loop
+                -- CONTINUE WHEN cust.reference < 18000;
 
-            FOR t IN 0..randominrange(1, 2) LOOP
-                pacName = cust.prefix || TO_CHAR(t, 'fm00');
-                currentTask = 'creating RBAC test package #'|| pacName || ' for customer ' || cust.prefix || ' #' || cust.uuid;
-                RAISE NOTICE 'task: %', currentTask;
+                for t in 0..randominrange(1, 2)
+                    loop
+                        pacName = cust.prefix || to_char(t, 'fm00');
+                        currentTask = 'creating RBAC test package #' || pacName || ' for customer ' || cust.prefix || ' #' ||
+                                      cust.uuid;
+                        raise notice 'task: %', currentTask;
 
-                custAdmin = 'admin@' || cust.prefix || '.example.com';
-                SET LOCAL hsadminng.currentUser TO custAdmin;
-                SET LOCAL hsadminng.assumedRoles = '';
-                SET LOCAL hsadminng.currentTask TO currentTask;
+                        custAdmin = 'admin@' || cust.prefix || '.example.com';
+                        set local hsadminng.currentUser to custAdmin;
+                        set local hsadminng.assumedRoles = '';
+                        set local hsadminng.currentTask to currentTask;
 
-                insert into package (name, customerUuid)
-                VALUES (pacName, cust.uuid);
+                        insert
+                            into package (name, customerUuid)
+                            values (pacName, cust.uuid);
 
-                COMMIT;
-            END LOOP;
-        END LOOP;
-    END;
+                        commit;
+                    end loop;
+            end loop;
+    end;
 $$;
 
