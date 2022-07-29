@@ -1,5 +1,16 @@
 # hsadminNg Development
 
+<!-- generated TOC begin: -->
+- [Setting up the Development Environment](#setting-up-the-development-environment)
+    - [SDKMAN](#sdkman)
+    - [PostgreSQL Server](#postgresql-server)
+    - [Markdown with PlantUML plugin](#markdown-with-plantuml-plugin)
+    - [Other Tools](#other-tools)
+- [Running the SQL files](#running-the-sql-files)
+    - [For RBAC](#for-rbac)
+    - [For Historization](#for-historization)
+<!-- generated TOC end. -->
+
 ## Setting up the Development Environment
 
 All instructions assume that you're using a current Linux operating system.
@@ -26,10 +37,20 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
     pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
     gw bootRun      # compiles and runs the application on localhost:8080
 
-    curl http://localhost:8080/api/ping # will reply with "pong" 
-    curl http://localhost:8080/api/currentUser # will set+retrieve a current user
+    # the following command should reply with "pong":
+    curl http://localhost:8080/api/ping
+
+    # the following command should return a JSON array with just the customer aac:
+    curl \
+        -H 'current-user: mike@hostsharing.net' \
+        -H 'assumed-roles: customer#aac.admin' \
+        http://localhost:8080/api/customer
 
 The latter `curl` command actually goes through the database server.
+
+<big>&#9432;</big>
+If you want a formatted JSON output, you can pipe the result to `jq` or similar too.s
+
 
 If you still need to install some of these tools, find some hints in the next chapters. 
 
@@ -121,9 +142,16 @@ Again, given the container is running, to restore the backup from ~/backup, run:
     pg-sql-restore <~/backup/hsadmin-ng-postgres.sql.gz
 
 
-### Markdown with PlantUML plugin
+### Markdown
 
-Can you see the following diagram?
+To generate the TOC (Table of Contents), a little bash script from a
+[Blog Article](https://medium.com/@acrodriguez/one-liner-to-generate-a-markdown-toc-f5292112fd14) was used.
+
+To render the Markdown files, especially to watch embedded PlantUML diagrams, you can use one of the following methods:
+
+#### Render Markdown embedded PlantUML
+
+Can you see the following diagram right in your IDE?
 
 ```plantuml
 @startuml
@@ -135,7 +163,7 @@ me -> you: Install some tooling!
 
 If not, you need to install some tooling.
 
-#### for IntelliJ IDEA (or derived products)
+##### for IntelliJ IDEA (or derived products)
 
 You just need the bundled Markdown plugin enabled and install and activate the PlantUML plugin in its settings:
 
@@ -149,7 +177,7 @@ sudo apt install graphviz
 ```
 
 
-#### Ubuntu Linux command line
+##### Ubuntu Linux command line
 
 ```sh
 sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra pandoc-plantuml-filter
@@ -159,10 +187,13 @@ sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive
 pandoc --filter pandoc-plantuml rbac.md -o rbac.pdf
 ```
 
-#### for other IDEs / operating systems
+##### for other IDEs / operating systems
 
 If you have figured out how it works, please add instructions above this section.
 
+### Other Tools
+
+**jq**: a JSON formatter, on Debian'oid systems you can install it with `sudo apt-get install jq`
 
 ## Running the SQL files
 
