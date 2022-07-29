@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.customer;
+package net.hostsharing.hsadminng.hscustomer;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

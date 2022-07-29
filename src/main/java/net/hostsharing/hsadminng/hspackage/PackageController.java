@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.customer;
+package net.hostsharing.hsadminng.hspackage;
 
 import net.hostsharing.hsadminng.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,26 +12,26 @@ import javax.transaction.Transactional;
 import java.util.List;
 
 @Controller
-public class CustomerController {
+public class PackageController {
 
     @Autowired
     private Context context;
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private PackageRepository packageRepository;
 
     @ResponseBody
-    @RequestMapping(value = "/api/customer", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/package", method = RequestMethod.GET)
     @Transactional
-    public List<CustomerEntity> listCustomers(
-            @RequestHeader(value = "current-user") String userName,
-            @RequestHeader(value="assumed-roles", required=false) String assumedRoles
+    public List<PackageEntity> listPackages(
+        @RequestHeader(value = "current-user") String userName,
+        @RequestHeader(value = "assumed-roles", required = false) String assumedRoles
     ) {
         context.setCurrentUser(userName);
-        if ( assumedRoles != null && !assumedRoles.isBlank() ) {
+        if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return customerRepository.findAll();
+        return packageRepository.findAll();
     }
 
 }

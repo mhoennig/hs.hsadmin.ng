@@ -2,13 +2,15 @@
 
 <!-- generated TOC begin: -->
 - [Setting up the Development Environment](#setting-up-the-development-environment)
-    - [SDKMAN](#sdkman)
-    - [PostgreSQL Server](#postgresql-server)
-    - [Markdown with PlantUML plugin](#markdown-with-plantuml-plugin)
-    - [Other Tools](#other-tools)
+  - [SDKMAN](#sdkman)
+  - [PostgreSQL Server](#postgresql-server)
+  - [Markdown](#markdown)
+    - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
+  - [Other Tools](#other-tools)
 - [Running the SQL files](#running-the-sql-files)
-    - [For RBAC](#for-rbac)
-    - [For Historization](#for-historization)
+  - [For RBAC](#for-rbac)
+  - [For Historization](#for-historization)
+
 <!-- generated TOC end. -->
 
 ## Setting up the Development Environment
@@ -40,11 +42,16 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
     # the following command should reply with "pong":
     curl http://localhost:8080/api/ping
 
-    # the following command should return a JSON array with just the customer aac:
+    # the following command should return a JSON array with just all customers:
     curl \
         -H 'current-user: mike@hostsharing.net' \
-        -H 'assumed-roles: customer#aac.admin' \
         http://localhost:8080/api/customer
+
+    # the following command should return a JSON array with just all packages visible for the admin of the customer aab:
+    curl \
+        -H 'current-user: mike@hostsharing.net' \
+        -H 'assumed-roles: customer#aab.admin' \
+        http://localhost:8080/api/package
 
 The latter `curl` command actually goes through the database server.
 
