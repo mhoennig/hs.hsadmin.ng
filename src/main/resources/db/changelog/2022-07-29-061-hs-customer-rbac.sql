@@ -104,6 +104,7 @@ create trigger createRbacRolesForCustomer_Trigger
 execute procedure createRbacRolesForCustomer();
 --//
 
+
 -- ============================================================================
 --changeset hs-customer-rbac-ROLES-REMOVAL:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
@@ -116,8 +117,6 @@ create or replace function deleteRbacRulesForCustomer()
     returns trigger
     language plpgsql
     strict as $$
-declare
-    objectTable varchar = 'customer';
 begin
     if TG_OP = 'DELETE' then
         call deleteRole(findRoleId(customerOwner(OLD)));

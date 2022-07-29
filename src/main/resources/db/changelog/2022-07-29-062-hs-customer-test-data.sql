@@ -1,7 +1,23 @@
+--liquibase formatted sql
+
+
 -- ============================================================================
 --changeset hs-customer-TEST-DATA-GENERATOR:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
+/*
+    Generates a customer reference number for a given test data counter.
+ */
+create or replace function testCustomerReference(customerCount integer)
+    returns integer
+    returns null on null input
+    language plpgsql as $$
+begin
+    return 10000 + customerCount;
+end; $$;
 
+/*
+    Creates test data for the customer main table.
+ */
 create or replace procedure createCustomerTestData(
     startCount integer,         -- count of auto generated rows before the run
     endCount integer,           -- count of auto generated rows after the run
@@ -25,7 +41,7 @@ begin
             set local hsadminng.currentTask to currentTask;
 
             -- When a new customer is created,
-            custReference = 10000 + t;
+            custReference = testCustomerReference(t);
             custRowId = uuid_generate_v4();
             custPrefix = intToVarChar(t, 3);
             custAdminName = 'admin@' || custPrefix || '.example.com';
