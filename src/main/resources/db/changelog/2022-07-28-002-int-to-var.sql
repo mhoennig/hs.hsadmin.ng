@@ -1,7 +1,9 @@
 --liquibase formatted sql
 
+-- ============================================================================
+-- INT-TO-VAR
 --changeset int-to-var:1 endDelimiter:--//
-
+-- ----------------------------------------------------------------------------
 /*
     Returns a textual representation of an integer number to be used as generated test data.
 

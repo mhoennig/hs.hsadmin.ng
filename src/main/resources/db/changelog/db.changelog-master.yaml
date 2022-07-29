@@ -13,4 +13,7 @@ databaseChangeLog:
         file: db/changelog/2022-07-28-020-rbac-role-builder.sql
     - include:
         file: db/changelog/2022-07-28-030-rbac-statistics.sql
+    - include:
+        file: db/changelog/2022-07-29-050-hs-base.sql
+
 

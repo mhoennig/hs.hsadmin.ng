@@ -1,7 +1,10 @@
 --liquibase formatted sql
 
---changeset uuid-ossp-extension:1 endDelimiter:--//
 
+-- ============================================================================
+-- UUID-OSSP-EXTENSION
+--changeset uuid-ossp-extension:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
     Makes improved uuid generation available.
  */

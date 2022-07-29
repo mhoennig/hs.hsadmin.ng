@@ -1,7 +1,10 @@
 --liquibase formatted sql
 
---changeset random-in-range:1 endDelimiter:--//
 
+-- ============================================================================
+-- RANDOM-IN-RANGE
+--changeset random-in-range:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
     Returns a random integer in the given range (both included),
     to be used for test data generation.

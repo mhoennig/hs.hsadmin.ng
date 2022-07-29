@@ -639,3 +639,17 @@ begin
     return roleIdsToAssume;
 end; $$;
 --//
+
+
+-- ============================================================================
+-- PGSQL-ROLES
+--changeset rbac-base-pgsql-roles:1 endDelimiter:--//
+-- ------------------------------------------------------------------
+
+CREATE ROLE admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
+
+CREATE ROLE restricted;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO restricted;
+
+--//
