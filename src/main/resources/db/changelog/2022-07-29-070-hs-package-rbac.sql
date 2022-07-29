@@ -139,7 +139,34 @@ execute procedure deleteRbacRulesForPackage();
 
 
 -- ============================================================================
---changeset hs-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-package-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates a view to the package main table which maps the identifying name
+    (in this case, actually the column `name`) to the objectUuid.
+ */
+drop view if exists package_iv;
+create or replace view package_iv as
+select distinct target.uuid, target.name as idName
+    from package as target;
+-- TODO: Is it ok that everybody has access to this information?
+grant all privileges on package_iv to restricted;
+
+/*
+    Returns the objectUuid for a given identifying name (in this case, actually the column `name`).
+ */
+create or replace function packageUuidByIdName(idName varchar)
+    returns uuid
+    language sql
+    strict as $$
+select uuid from package_iv iv where iv.idName = packageUuidByIdName.idName;
+$$;
+--//
+
+
+-- ============================================================================
+--changeset hs-package-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
