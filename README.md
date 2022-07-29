@@ -2,17 +2,68 @@
 
 ## Setting up the Development Environment
 
+All instructions assume that you're using a current Linux operating system.
+Everything is tested on Ubuntu Linux 22.04.
+
+To be able to build and run the Java Spring Boot application, you need the following tools:
+
+- Docker 20.x
+- PostgreSQL Server 13.7-bullseye (see instructions below to install and run in Docker)
+- Java JDK 17.x
+- Gradle in some not too outdated version (7.4 will be installed via wrapper)
+
+You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
+
+If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
+
+    cd your-hsadmin-ng-directory
+    
+    gradle wrapper  # downloads Gradle 7.5 into the project
+    source .alias   # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
+
+    gw test         # compiles and runs unit- and integration-tests
+    
+    pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
+    gw bootRun      # compiles and runs the application on localhost:8080
+
+    curl http://localhost:8080/api/ping # will reply with "pong" 
+    curl http://localhost:8080/api/currentUser # will set+retrieve a current user
+
+The latter `curl` command actually goes through the database server.
+
+If you still need to install some of these tools, find some hints in the next chapters. 
+
+
+### SDKMAN
+
+*SdkMan* is not necessary, but helpful to install and switch between different versions of SDKs (Software-Development-Kits) and development tools in general, e.g. *JDK* and *Gradle*.
+
+You can get it from: https://sdkman.io/.
+
+<big>**&#9888;**</big>
+Yeah, the `curl ... | bash` install method looks quite scary;
+but in a development environment you're downloading executables all the time,
+e.g. through `npm`, `Maven` or `Gradle` when downloading dependencies.
+Thus, maybe you should at least use a separate Linux account for development.
+
+Once it's installed, you can install *JDK* and *Gradle*:
+
+    sdk install java 17.0.3-tem
+    sdk install gradle
+
+    sdk use java 17.0.3-tem # use this to switch between installed JDK versions
+
+
 ### PostgreSQL Server
 
-So far the spike contains almost only PostgreSQL Code. 
-All you need so far, is a PostgreSQL database, for now with full admin rights.
-The easiest way to set it up is using docker.
+You could use any PostgreSQL Server (from version 13 on) installed on your machine.
+You might amend the port and user settings in `src/main/resources/application.yml`, though.
 
-(Find the mentioned aliases in `.aliases`.)
+But the easiest way to run PostgreSQL is via Docker.
 
 Initially, pull an image compatible to current PostgreSQL version of Hostsharing:
 
-    docker pull postgres:13.7-bullseye
+    docker pull postgres:13.7-bullseye 
 
 <big>**&#9888;**</big>
 If we switch the version, please also amend the documentation as well as the aliases file. Thanks! 
@@ -117,17 +168,19 @@ If you have figured out how it works, please add instructions above this section
 
 ### For RBAC
 
-If you run the numbered SQL files from the `sql` folder in the defined order, a working RBAC system is built up in the database including test data and some simple tests.
+The Schema is automatically created via *Liquibase*, a database migration library.
+Currently, also some test data is automatically created.
 
-To increase the amount of test data, simply increase the number of generated customers in `21-hs-customer.sql`.
+To increase the amount of test data, increase the number of generated customers in `2022-07-28-051-hs-customer.sql` and run that
 
 If you already have data, e.g. for customers 0..999 (thus with reference numbers 10000..10999) and want to add another 1000 customers, amend the for loop to 1000...1999 and also uncomment and amend the `CONTINUE WHEN` or `WHERE` conditions in the other test data generators, using the first new customer reference number (in the example that's 11000).
 
 ### For Historization
 
-You can explore the historization prototype as follows:
+The historization is not yet integrated into the *Liquibase*-scripts.
+You can explore the prototype as follows:
 
 - start with an empty database
   (the example tables are currently not compatible with RBAC),
-- then run `historization.sql,`
-- finally run `examples.sql`.
+- then run `historization.sql` in the database,
+- finally run `examples.sql` in the database.
