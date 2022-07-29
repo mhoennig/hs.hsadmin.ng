@@ -15,5 +15,11 @@ databaseChangeLog:
         file: db/changelog/2022-07-28-030-rbac-statistics.sql
     - include:
         file: db/changelog/2022-07-29-050-hs-base.sql
+    - include:
+        file: db/changelog/2022-07-29-060-hs-customer.sql
+    - include:
+        file: db/changelog/2022-07-29-061-hs-customer-rbac.sql
+    - include:
+        file: db/changelog/2022-07-29-062-hs-customer-test-data.sql
 
 

@@ -1,23 +1,23 @@
--- ========================================================
--- Customer example with RBAC
--- --------------------------------------------------------
+--liquibase formatted sql
 
-set session session authorization default;
+-- ============================================================================
+--changeset hs-customer-rbac-CREATE-OBJECT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
-create table if not exists customer
-(
-    uuid          uuid unique references RbacObject (uuid),
-    reference     int not null unique check (reference between 10000 and 99999),
-    prefix        character(3) unique,
-    adminUserName varchar(63)
-);
-
+/*
+    Creates the related RbacObject through a BEFORE INSERT TRIGGER.
+ */
 drop trigger if exists createRbacObjectForCustomer_Trigger on customer;
 create trigger createRbacObjectForCustomer_Trigger
     before insert
     on customer
     for each row
 execute procedure createRbacObject();
+--//
+
+-- ============================================================================
+--changeset hs-customer-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 create or replace function customerOwner(customer customer)
     returns RbacRoleDescriptor
@@ -42,9 +42,18 @@ create or replace function customerTenant(customer customer)
 begin
     return roleDescriptor('customer', customer.uuid, 'tenant');
 end; $$;
+--//
 
 
-create or replace function createRbacRulesForCustomer()
+-- ============================================================================
+--changeset hs-customer-rbac-ROLES-CREATION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates the roles and their assignments for a new customer for the AFTER INSERT TRIGGER.
+ */
+
+create or replace function createRbacRolesForCustomer()
     returns trigger
     language plpgsql
     strict as $$
@@ -83,12 +92,25 @@ begin
     return NEW;
 end; $$;
 
-drop trigger if exists createRbacRulesForCustomer_Trigger on customer;
-create trigger createRbacRulesForCustomer_Trigger
+/*
+    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
+ */
+
+drop trigger if exists createRbacRolesForCustomer_Trigger on customer;
+create trigger createRbacRolesForCustomer_Trigger
     after insert
     on customer
     for each row
-execute procedure createRbacRulesForCustomer();
+execute procedure createRbacRolesForCustomer();
+--//
+
+-- ============================================================================
+--changeset hs-customer-rbac-ROLES-REMOVAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Deletes the roles and their assignments of a deleted customer for the BEFORE DELETE TRIGGER.
+ */
 
 create or replace function deleteRbacRulesForCustomer()
     returns trigger
@@ -98,16 +120,17 @@ declare
     objectTable varchar = 'customer';
 begin
     if TG_OP = 'DELETE' then
-
-        -- delete the owner role (for admininstrators)
-        call deleteRole(findRoleId(objectTable || '#' || NEW.prefix || '.owner'));
-
-        -- delete the customer admin role
-        call deleteRole(findRoleId(objectTable || '#' || NEW.prefix || '.admin'));
+        call deleteRole(findRoleId(customerOwner(OLD)));
+        call deleteRole(findRoleId(customerAdmin(OLD)));
+        call deleteRole(findRoleId(customerTenant(OLD)));
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
 end; $$;
+
+/*
+    An BEFORE DELETE TRIGGER which deletes the role structure of a customer.
+ */
 
 drop trigger if exists deleteRbacRulesForCustomer_Trigger on customer;
 create trigger deleteRbacRulesForCustomer_Trigger
@@ -115,10 +138,16 @@ create trigger deleteRbacRulesForCustomer_Trigger
     on customer
     for each row
 execute procedure deleteRbacRulesForCustomer();
+--//
 
--- create a restricted view to access the textual customer ids a idName
-set session session authorization default;
--- ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
+-- ============================================================================
+--changeset hs-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates a view to the customer main table which maps the identifying name
+    (in this case, the prefix) to the objectUuid.
+ */
 drop view if exists customer_iv;
 create or replace view customer_iv as
 select distinct target.uuid, target.prefix as idName
@@ -126,58 +155,30 @@ select distinct target.uuid, target.prefix as idName
 -- TODO: Is it ok that everybody has access to this information?
 grant all privileges on customer_iv to restricted;
 
+/*
+    Returns the objectUuid for a given identifying name (in this case the prefix).
+ */
 create or replace function customerUuidByIdName(idName varchar)
     returns uuid
     language sql
     strict as $$
 select uuid from customer_iv iv where iv.idName = customerUuidByIdName.idName;
 $$;
+--//
 
--- create RBAC restricted view
+
+-- ============================================================================
+--changeset hs-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a view to the customer main table with row-level limitatation
+    based on the 'view' permission of the current user or assumed roles.
+ */
 set session session authorization default;
--- ALTER TABLE customer ENABLE ROW LEVEL SECURITY;
 drop view if exists customer_rv;
 create or replace view customer_rv as
 select distinct target.*
     from customer as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', currentSubjectIds()));
 grant all privileges on customer_rv to restricted;
-
-
--- generate Customer test data
-
-set session session authorization default;
-do language plpgsql $$
-    declare
-        currentTask   varchar;
-        custReference integer;
-        custRowId     uuid;
-        custPrefix    varchar;
-        custAdminName varchar;
-    begin
-        set hsadminng.currentUser to '';
-
-        for t in 0..9
-            loop
-                currentTask = 'creating RBAC test customer #' || t;
-                set local hsadminng.currentUser to 'mike@hostsharing.net';
-                set local hsadminng.assumedRoles = '';
-                set local hsadminng.currentTask to currentTask;
-
-                -- When a new customer is created,
-                custReference = 10000 + t;
-                custRowId = uuid_generate_v4();
-                custPrefix = intToVarChar(t, 3);
-                custAdminName = 'admin@' || custPrefix || '.example.com';
-
-                raise notice 'creating customer %:%', custReference, custPrefix;
-                insert
-                    into customer (reference, prefix, adminUserName)
-                    values (custReference, custPrefix, custAdminName);
-
-                commit;
-
-            end loop;
-
-    end;
-$$;
+--//
