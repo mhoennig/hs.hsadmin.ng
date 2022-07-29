@@ -583,7 +583,7 @@ begin
 end; $$;
 
 create or replace function pureIdentifier(rawIdentifier varchar)
-    returns uuid
+    returns varchar
     returns null on null input
     language plpgsql as $$
 begin
@@ -596,11 +596,14 @@ create or replace function findUuidByIdName(objectTable varchar, objectIdName va
     language plpgsql as $$
 declare
     sql varchar;
+    uuid uuid;
 begin
     objectTable := pureIdentifier(objectTable);
     objectIdName := pureIdentifier(objectIdName);
-    sql := objectTable || 'UuidByIdName(' || objectIdName || ');';
-    execute sql;
+    sql := format('select * from %sUuidByIdName(%L);', objectTable, objectIdName);
+    raise notice 'sql: %', sql;
+    execute sql into uuid;
+    return uuid;
 end; $$;
 
 create or replace function currentSubjectIds()
