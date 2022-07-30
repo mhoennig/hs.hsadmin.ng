@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hspackage;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hscustomer.CustomerEntity;
+import net.hostsharing.hsadminng.hscustomer.TestCustomer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,10 +23,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(PackageController.class)
 class PackageControllerRestTest {
 
-    final CustomerEntity cust = new CustomerEntity(UUID.randomUUID(), "xyz", 10001, "xyz@example.com");
-    final PackageEntity pac00 = new PackageEntity(UUID.randomUUID(), "xyz00", cust);
-    final PackageEntity pac01 = new PackageEntity(UUID.randomUUID(), "xyz01", cust);
-    final PackageEntity pac02 = new PackageEntity(UUID.randomUUID(), "xyz02", cust);
     @Autowired
     MockMvc mockMvc;
     @MockBean
@@ -38,25 +34,25 @@ class PackageControllerRestTest {
     void findAll() throws Exception {
 
         // given
-        final var givenPacs = asList(pac00, pac01, pac02);
+        final var givenPacs = asList(TestPackage.xxx00, TestPackage.xxx01, TestPackage.xxx02);
         when(packageRepositoryMock.findAll()).thenReturn(givenPacs);
 
         // when
         final var pacs = mockMvc.perform(MockMvcRequestBuilders
                 .get("/api/packages")
                 .header("current-user", "mike@hostsharing.net")
-                .header("assumed-roles", "customer#xyz.admin")
+                .header("assumed-roles", "customer#xxx.admin")
                 .accept(MediaType.APPLICATION_JSON))
 
             // then
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(3)))
-            .andExpect(jsonPath("$[0].name", is("xyz00")))
-            .andExpect(jsonPath("$[1].uuid", is(pac01.getUuid().toString())))
-            .andExpect(jsonPath("$[2].customer.prefix", is("xyz")));
+            .andExpect(jsonPath("$[0].name", is("xxx00")))
+            .andExpect(jsonPath("$[1].uuid", is(TestPackage.xxx01.getUuid().toString())))
+            .andExpect(jsonPath("$[2].customer.prefix", is("xxx")));
 
         verify(contextMock).setCurrentUser("mike@hostsharing.net");
-        verify(contextMock).assumeRoles("customer#xyz.admin");
+        verify(contextMock).assumeRoles("customer#xxx.admin");
     }
 
 }

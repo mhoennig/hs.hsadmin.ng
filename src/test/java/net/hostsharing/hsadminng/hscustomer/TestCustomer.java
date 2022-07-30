@@ -4,11 +4,11 @@ import static java.util.UUID.randomUUID;
 
 public class TestCustomer {
 
-    static final CustomerEntity xxx = customer("xxx", 10001, "xxx@example.com");
-    static final CustomerEntity yyy = customer("yyy", 10002, "yyy@example.com");
+    public static final CustomerEntity xxx = hsCustomer("xxx", 10001, "xxx@example.com");
+    static final CustomerEntity yyy = hsCustomer("yyy", 10002, "yyy@example.com");
 
 
-    static public CustomerEntity customer(final String prefix, final int reference, final String adminName) {
+    static public CustomerEntity hsCustomer(final String prefix, final int reference, final String adminName) {
         return new CustomerEntity(randomUUID(), prefix, reference, adminName);
     }
 }
