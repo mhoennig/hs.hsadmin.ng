@@ -1,5 +1,8 @@
 # hsadminNg Development
 
+This documents gives an overview of the development environment and tools.
+For architecture consider the files in the `doc` and `adr` folder.
+
 <!-- generated TOC begin: -->
 - [Setting up the Development Environment](#setting-up-the-development-environment)
   - [SDKMAN](#sdkman)
@@ -10,17 +13,16 @@
 - [Running the SQL files](#running-the-sql-files)
   - [For RBAC](#for-rbac)
   - [For Historization](#for-historization)
-
 <!-- generated TOC end. -->
 
 ## Setting up the Development Environment
 
-All instructions assume that you're using a current Linux operating system.
-Everything is tested on Ubuntu Linux 22.04.
+All instructions assume that you're using a current _Linux_ or _MacOS_ operating system.
+Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
-- Docker 20.x
+- Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
 - PostgreSQL Server 13.7-bullseye (see instructions below to install and run in Docker)
 - Java JDK 17.x
 - Gradle in some not too outdated version (7.4 will be installed via wrapper)
@@ -32,7 +34,7 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
     cd your-hsadmin-ng-directory
     
     gradle wrapper  # downloads Gradle 7.5 into the project
-    source .alias   # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
+    source .aliases # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
 
     gw test         # compiles and runs unit- and integration-tests
     
@@ -56,8 +58,7 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
 The latter `curl` command actually goes through the database server.
 
 <big>&#9432;</big>
-If you want a formatted JSON output, you can pipe the result to `jq` or similar too.s
-
+If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
 If you still need to install some of these tools, find some hints in the next chapters. 
 
@@ -65,6 +66,7 @@ If you still need to install some of these tools, find some hints in the next ch
 ### SDKMAN
 
 *SdkMan* is not necessary, but helpful to install and switch between different versions of SDKs (Software-Development-Kits) and development tools in general, e.g. *JDK* and *Gradle*.
+It is available for _Linux_ and _MacOS_, _WSL_, _Cygwin_, _Solaris_ and _FreeBSD_.
 
 You can get it from: https://sdkman.io/.
 
@@ -159,6 +161,7 @@ To render the Markdown files, especially to watch embedded PlantUML diagrams, yo
 #### Render Markdown embedded PlantUML
 
 Can you see the following diagram right in your IDE?
+I mean a real graphic diagram, not just some markup code.
 
 ```plantuml
 @startuml
@@ -200,7 +203,9 @@ If you have figured out how it works, please add instructions above this section
 
 ### Other Tools
 
-**jq**: a JSON formatter, on Debian'oid systems you can install it with `sudo apt-get install jq`
+**jq**: a JSON formatter. 
+On _Debian_'oid systems you can install it with `sudo apt-get install jq`.
+On _MacOS_ you can install it with `brew install jq`, given you have _brew_ installed.
 
 ## Running the SQL files
 
