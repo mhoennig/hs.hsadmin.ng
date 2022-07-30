@@ -21,7 +21,7 @@ public class PackageController {
     private PackageRepository packageRepository;
 
     @ResponseBody
-    @RequestMapping(value = "/api/package", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/packages", method = RequestMethod.GET)
     @Transactional
     public List<PackageEntity> listPackages(
         @RequestHeader(value = "current-user") String userName,

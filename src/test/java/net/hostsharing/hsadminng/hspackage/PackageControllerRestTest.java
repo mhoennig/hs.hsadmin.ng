@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PackageController.class)
-class PackageControllerTest {
+class PackageControllerRestTest {
 
     final CustomerEntity cust = new CustomerEntity(UUID.randomUUID(), "xyz", 10001, "xyz@example.com");
     final PackageEntity pac00 = new PackageEntity(UUID.randomUUID(), "xyz00", cust);
@@ -30,9 +30,9 @@ class PackageControllerTest {
     @Autowired
     MockMvc mockMvc;
     @MockBean
-    private Context contextMock;
+    Context contextMock;
     @MockBean
-    private PackageRepository packageRepositoryMock;
+    PackageRepository packageRepositoryMock;
 
     @Test
     void findAll() throws Exception {
@@ -43,7 +43,7 @@ class PackageControllerTest {
 
         // when
         final var pacs = mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/package")
+                .get("/api/packages")
                 .header("current-user", "mike@hostsharing.net")
                 .header("assumed-roles", "customer#xyz.admin")
                 .accept(MediaType.APPLICATION_JSON))
