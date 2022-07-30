@@ -21,7 +21,7 @@ public class CustomerController {
     private CustomerRepository customerRepository;
 
     @ResponseBody
-    @RequestMapping(value = "/api/customer", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/customers", method = RequestMethod.GET)
     @Transactional
     public List<CustomerEntity> listCustomers(
             @RequestHeader(value = "current-user") String userName,

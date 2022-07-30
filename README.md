@@ -47,13 +47,13 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
     # the following command should return a JSON array with just all customers:
     curl \
         -H 'current-user: mike@hostsharing.net' \
-        http://localhost:8080/api/customer
+        http://localhost:8080/api/customers
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer aab:
     curl \
         -H 'current-user: mike@hostsharing.net' \
         -H 'assumed-roles: customer#aab.admin' \
-        http://localhost:8080/api/package
+        http://localhost:8080/api/packages
 
 The latter `curl` command actually goes through the database server.
 
