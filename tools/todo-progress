@@ -1,0 +1,22 @@
+#!/bin/bash
+declare -a required=(gnuplot sponge)
+for cmd in "${required[@]}"; do
+    command -v $cmd >/dev/null 2>&1 || { echo >&2 "Required '$cmd' not installed => aborting."; exit 1; }
+done
+
+let budget=`grep '^| ... |' <TODO.md | rev | cut -d'|' -f4 | rev | grep -o '[[:digit:]]*' | total`
+let effort=`grep '^| ... |' <TODO.md | rev | cut -d'|' -f3 | rev | grep -o '[[:digit:]]*' | total`
+let output=`grep '^| ... |' <TODO.md | rev | cut -d'|' -f2 | rev | grep -o '[[:digit:]]*' | total`
+let remainder=$(expr $budget - $output)
+
+echo '<!-- generated todo-progress begin: -->' >.todo-progress.md
+sed -e '1,/todo-progress begin:/d' -e '/todo-progress end./,$d' TODO.md >>.todo-progress.md
+echo "| $(date --iso-8601) | $(printf "%6d" $budget) | $(printf "%7d" $effort) | $(printf "%8d" $output) | $(printf "%10d" $remainder) |" >>.todo-progress.md
+echo '<!-- generated todo-progress end. -->' >>.todo-progress.md
+uniq <.todo-progress.md | sponge .todo-progress.md
+sed -i -e '/todo-progress begin:/,/todo-progress end./!b' -e '/todo-progress end./!d;r .todo-progress.md' -e 'd' TODO.md
+
+sed -e's/^|//' <.todo-progress.md | tr '|' ';' | grep -v '|---'  >.todo-progress.csv
+gnuplot tools/todo-progress.gnuplot
+rm .todo-progress.md .todo-progress.csv
+

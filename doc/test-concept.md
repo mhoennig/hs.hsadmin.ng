@@ -11,22 +11,11 @@
 
 ### General Issues
 
-The following test concept uses the terms "double" and "mock" (maybe in inflected form like "mocking" or "mocked"), "whitebox-test" and "blackbox-tests" which I would like to define first.
+The following test concept uses terms like "double" and "mock" (maybe in inflected form like "mocking" or "mocked"), "whitebox-test" and "blackbox-tests" and "test-fixture".
+Please look up their definition in the [glossary](glossary.md)
 
-#### Test-Doubles, Dummies, Fakes, Mocks, Spies and Stubs
-
-A "double" is a general term for something which replaces a real implementation of a dependency of the unit under test.
-This can be a "dummy", a "fake", a "mock", a "spy" or a "stub".
-Often the term "mock" is used in a generic way, because typical mocking libraries like *Mockito* can also be used as dummies or spies and can replace fakes.
-
-A fake would be a double without using any library, but rather a manual fake implementation of a dependency.
 Where our APIs should be designed in a way that it's possible, using a mocking library like *Mockito* often leads to shorter test code.
 
-#### Whitebox- and Blackbox-Tests
-
-A whitebox-test knows and considers the internals of an implementation, e.g. it knows which dependencies it needs and can test special, implementation-dependent cases.
-
-A blackbox-test does not know and not consider such internals of an implementation, it just tests externally observable behaviour.
 
 ### Kinds of Tests
 
@@ -35,7 +24,9 @@ Depending on the concrete aspects which we want to test, we are using different 
 #### Unit-Tests
 
 In this project a *Unit* for *UnitTests* can be a single method (function), a class or even a group of classes which express a common concept.
-The unit are whitebox-tests and count into test-code-coverage.
+
+The unit are technically whitebox-tests and count into test-code-coverage.
+But the whitebox-knowledge should only be used for the text-fixture.
 
 Unit-Test in this project are implemented with *JUnit Jupiter*, *Mockito* and *AssertJ*.
 
