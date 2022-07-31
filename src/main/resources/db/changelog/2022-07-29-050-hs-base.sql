@@ -9,19 +9,44 @@
     Otherwise these columns needed to be nullable and
     many queries would be more complicated.
  */
-create table Hostsharing
+create table Global
 (
-    uuid uuid primary key references RbacObject (uuid)
+    uuid uuid primary key references RbacObject (uuid),
+    name varchar(63)
 );
-create unique index Hostsharing_Singleton on Hostsharing ((0));
+create unique index Global_Singleton on Global ((0));
 
 /**
   A single row to be referenced as a global object.
  */
 insert
-    into RbacObject (objecttable) values ('hostsharing');
+    into RbacObject (objecttable) values ('global');
 insert
-    into Hostsharing (uuid) values ((select uuid from RbacObject where objectTable = 'hostsharing'));
+    into Global (uuid, name) values ((select uuid from RbacObject where objectTable = 'global'), 'hostsharing');
+--//
+
+-- ============================================================================
+--changeset hs-base-GLOBAL-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates a view to the global object table which maps the identifying name to the objectUuid.
+ */
+drop view if exists global_iv;
+create or replace view global_iv as
+select distinct target.uuid, target.name as idName
+    from global as target;
+grant all privileges on global_iv to restricted;
+
+/*
+    Returns the objectUuid for a given identifying name (in this case the prefix).
+ */
+create or replace function globalUuidByIdName(idName varchar)
+    returns uuid
+    language sql
+    strict as $$
+select uuid from global_iv iv where iv.idName = globalUuidByIdName.idName;
+$$;
 --//
 
 -- ============================================================================
@@ -35,12 +60,12 @@ create or replace function hostsharingAdmin()
     returns null on null input
     stable leakproof
     language sql as $$
-    select 'global', (select uuid from RbacObject where objectTable = 'hostsharing'), 'admin'::RbacRoleType;
+select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType;
 $$;
 select createRole(hostsharingAdmin());
 
 -- ============================================================================
---changeset hs-base-ADMIN-USERS:1 context:dev endDelimiter:--//
+--changeset hs-base-ADMIN-USERS:1 context:dev,test,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Create two users and assign both to the administrators role.
@@ -58,7 +83,7 @@ $$;
 
 
 -- ============================================================================
---changeset hs-base-hostsharing-TEST:1 context:dev runAlways:true endDelimiter:--//
+--changeset hs-base-hostsharing-TEST:1 context:dev,test,tc runAlways:true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -69,16 +94,16 @@ do language plpgsql $$
     declare
         userName varchar;
     begin
-        set local hsadminng.currentUser = 'mike@hostsharing.net';
-        select userName from RbacUser where uuid = currentUserId() into userName;
-        if userName <> 'mike@hostsharing.net' then
-            raise exception 'fetching initial currentUser failed';
-        end if;
-
         set local hsadminng.currentUser = 'sven@hostsharing.net';
         select userName from RbacUser where uuid = currentUserId() into userName;
         if userName <> 'sven@hostsharing.net' then
-            raise exception 'fetching changed currentUser failed';
+            raise exception 'setting or fetching initial currentUser failed, got: %', userName;
+        end if;
+
+        set local hsadminng.currentUser = 'mike@hostsharing.net';
+        select userName from RbacUser where uuid = currentUserId() into userName;
+        if userName = 'mike@hostsharing.net' then
+            raise exception 'currentUser should not change in one transaction, but did change, got: %', userName;
         end if;
     end; $$;
 --//

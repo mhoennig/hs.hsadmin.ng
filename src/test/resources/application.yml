@@ -4,7 +4,8 @@ spring:
             platform: postgres
 
     datasource:
-        url: jdbc:tc:postgresql:12.9-alpine:///spring_boot_testcontainers
+        url: jdbc:tc:postgresql:13.7-bullseye:///spring_boot_testcontainers
+        url-local: jdbc:postgresql://localhost:5432/postgres
         username: postgres
         password: password
 
@@ -23,11 +24,8 @@ spring:
 
     liquibase:
         change-log: classpath:/db/changelog/db.changelog-master.yaml
-        contexts: test
+        contexts: tc,test,dev
 
 logging:
     level:
         liquibase: INFO
-
-liquibase:
-    contexts: dev,tc

@@ -601,8 +601,12 @@ begin
     objectTable := pureIdentifier(objectTable);
     objectIdName := pureIdentifier(objectIdName);
     sql := format('select * from %sUuidByIdName(%L);', objectTable, objectIdName);
-    raise notice 'sql: %', sql;
-    execute sql into uuid;
+    begin
+        raise notice 'sql: %', sql;
+        execute sql into uuid;
+    exception when OTHERS then
+        raise exception 'function %UuidByIdName(...) not found, add identity view support for table %', objectTable, objectTable;
+    end;
     return uuid;
 end; $$;
 
@@ -622,8 +626,12 @@ declare
     roleUuidToAssume    uuid;
 begin
     currentUserId := currentUserId();
+    if currentUserId is null then
+        raise exception 'user % does not exist', currentUser();
+    end if;
+
     roleNames := assumedRoles();
-    if (cardinality(roleNames) = 0) then
+    if cardinality(roleNames) = 0 then
         return array [currentUserId];
     end if;
 
@@ -645,7 +653,7 @@ begin
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
             if (not isGranted(currentUserId, roleUuidToAssume)) then
-                raise exception 'user % has no permission to assume role %', currentUser(), roleUuidToAssume;
+                raise exception 'user % (%) has no permission to assume role % (%)', currentUser(), currentUserId, roleName, roleUuidToAssume;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
         end loop;
