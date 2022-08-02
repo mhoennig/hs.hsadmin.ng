@@ -51,13 +51,20 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer aab:
     curl \
-        -H 'current-user: mike@hostsharing.net' \
-        -H 'assumed-roles: customer#aab.admin' \
+        -H 'current-user: mike@hostsharing.net' -H 'assumed-roles: customer#aab.admin' \
         http://localhost:8080/api/packages
 
-The latter `curl` command actually goes through the database server.
+    # add a new customer
+    curl \
+        -H 'current-user: mike@hostsharing.net' -H "Content-Type: application/json" \
+        -d '{ "prefix":"baa", "reference":80001, "adminUserName":"admin@baa.example.com" }' \
+        -X POST http://localhost:8080/api/customers
 
-<big>&#9432;</big>
+<big>**&#9432;**</big>
+'mike@hostsharing.net' and 'sven@hostsharing.net' are Hostsharing hostmaster accounts coming from the example data which is automatically inserted in Testcontainers and Development environments.
+Also try for example 'admin@aaa.example.com' or 'unknown@example.org'.
+
+<big>**&#9432;**</big>
 If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
 If you still need to install some of these tools, find some hints in the next chapters. 
@@ -245,3 +252,26 @@ If the persistent database and the temporary database show different results, on
    e.g. from a previous run of tests or manually applied.
    It's best to run `pg-sql-reset && gw bootRun` before each test run, to have a clean database.
    
+## How to Amend Liquibase SQL Changesets?
+
+Liquibase changesets are meant to be immutable and based on each other.
+That means, once a changeset is written, it never changes, not even a whitespace or comment.
+Liquibase is a *database migration tool*, not a *database initialization tool*.
+
+This, if you need to add change a table, stored procedure or whatever, 
+create a new changeset and apply `ALTER`, `DROP`, `CREATE OR REPLACE` or whatever SQL commands to perform your changes.
+These changes will be automatically applied once the application starts up again.
+This way, any staging or production database will always match the application code. 
+
+But, during initial development that can be a big hassle because the database structure changes a lot in that stage.
+Also, the actual structure of the database won't be easily recognized anymore through lots of migration changesets.
+
+Therefore, during initial development, it's good approach just to amend the existing changesets and delete the database:
+
+```shell
+pg-sql-reset
+gw bootRun
+```
+
+<big>**&#9888;**</big>
+Just don't forget switching to the migration mode, once there is a production database!

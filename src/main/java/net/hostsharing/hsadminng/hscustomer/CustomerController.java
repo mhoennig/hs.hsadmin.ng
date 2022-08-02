@@ -2,16 +2,14 @@ package net.hostsharing.hsadminng.hscustomer;
 
 import net.hostsharing.hsadminng.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.UUID;
 
-@Controller
+@RestController
+
 public class CustomerController {
 
     @Autowired
@@ -20,18 +18,35 @@ public class CustomerController {
     @Autowired
     private CustomerRepository customerRepository;
 
-    @ResponseBody
-    @RequestMapping(value = "/api/customers", method = RequestMethod.GET)
+    @GetMapping(value = "/api/customers")
     @Transactional
     public List<CustomerEntity> listCustomers(
-            @RequestHeader(value = "current-user") String userName,
-            @RequestHeader(value="assumed-roles", required=false) String assumedRoles
+        @RequestHeader(value = "current-user") String userName,
+        @RequestHeader(value = "assumed-roles", required = false) String assumedRoles
     ) {
         context.setCurrentUser(userName);
-        if ( assumedRoles != null && !assumedRoles.isBlank() ) {
+        if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
         return customerRepository.findAll();
+    }
+
+    @PostMapping(value = "/api/customers")
+    @ResponseStatus
+    @Transactional
+    public CustomerEntity addCustomer(
+        @RequestHeader(value = "current-user") String userName,
+        @RequestHeader(value = "assumed-roles", required = false) String assumedRoles,
+        @RequestBody CustomerEntity customer
+    ) {
+        context.setCurrentUser(userName);
+        if (assumedRoles != null && !assumedRoles.isBlank()) {
+            context.assumeRoles(assumedRoles);
+        }
+        if (customer.getUuid() == null) {
+            customer.setUuid(UUID.randomUUID());
+        }
+        return customerRepository.save(customer);
     }
 
 }

@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hscustomer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "customer_rv")
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerEntity {
