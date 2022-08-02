@@ -44,6 +44,7 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.0.0-rc1'
 }
 
 dependencyManagement {
