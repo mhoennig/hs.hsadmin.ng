@@ -227,3 +227,21 @@ You can explore the prototype as follows:
   (the example tables are currently not compatible with RBAC),
 - then run `historization.sql` in the database,
 - finally run `examples.sql` in the database.
+
+## How To
+
+### How to Use a Persistent Database for Integration Tests?
+
+Usually, the `DataJpaTest` integration tests run against a database in a temporary docker container.
+As soon as the test ends, the database is gone; this might make debugging difficult.
+
+Alternatively
+
+If the persistent database and the temporary database show different results, one of these reasons could be the cause:
+
+1. You might have some changesets only running in either context,
+   check the `context: ...` in the changeset control lines.
+2. You might have changes in the database which interfere with the tests,
+   e.g. from a previous run of tests or manually applied.
+   It's best to run `pg-sql-reset && gw bootRun` before each test run, to have a clean database.
+   

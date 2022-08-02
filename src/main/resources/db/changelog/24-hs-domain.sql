@@ -100,7 +100,7 @@ set session session authorization default;
 -- ALTER TABLE Domain ENABLE ROW LEVEL SECURITY;
 drop view if exists domain_rv;
 create or replace view domain_rv as
-select distinct target.*
+select target.*
     from Domain as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'domain', currentSubjectIds()));
 grant all privileges on domain_rv to restricted;

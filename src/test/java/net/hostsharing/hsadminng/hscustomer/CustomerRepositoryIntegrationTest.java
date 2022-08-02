@@ -6,15 +6,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.core.NestedRuntimeException;
 import org.springframework.orm.jpa.JpaSystemException;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.UUID;
 
+import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -30,153 +30,179 @@ class CustomerRepositoryIntegrationTest {
     @Autowired EntityManager em;
 
     @Nested
-    class FindAll {
-
-        private final Given given = new Given();
-        private When<List<CustomerEntity>> when;
-        private final Then then = new Then();
+    class CreateCustomer {
 
         @Test
-        public void hostsharingAdminWithoutAssumedRoleCanViewAllCustomers() {
-            given.currentUser("mike@hostsharing.net");
+        public void hostsharingAdmin_withoutAssumedRole_canCreateNewCustomer() {
+            // given
+            currentUser("mike@hostsharing.net");
 
-            when(() -> customerRepository.findAll());
+            // when
+            final var newCustomer = new CustomerEntity(
+                UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
+            final var result = customerRepository.save(newCustomer);
 
-            then.exactlyTheseCustomersAreReturned("aaa", "aab", "aac");
+            // then
+            assertThat(result).isNotNull().extracting(CustomerEntity::getUuid).isNotNull();
+            assertThatCustomerIsPersisted(result);
         }
 
         @Test
-        public void hostsharingAdminWithAssumedHostsharingAdminRoleCanViewAllCustomers() {
-            given.currentUser("mike@hostsharing.net").
-                and().assumedRoles("global#hostsharing.admin");
+        public void hostsharingAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
+            // given
+            currentUser("mike@hostsharing.net");
+            assumedRoles("customer#aaa.admin");
 
-            when(() -> customerRepository.findAll());
+            // when
+            final var attempt = attempt(em, () -> {
+                final var newCustomer = new CustomerEntity(
+                    UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
+                return customerRepository.save(newCustomer);
+            });
 
-            then.exactlyTheseCustomersAreReturned("aaa", "aab", "aac");
+            // then
+            attempt.assertExceptionWithRootCauseMessage(
+                PersistenceException.class,
+                "add-customer not permitted for customer#aaa.admin");
         }
 
         @Test
-        public void customerAdminWithoutAssumedRoleCanViewOnlyItsOwnCustomer() {
-            given.currentUser("admin@aaa.example.com");
+        public void customerAdmin_withoutAssumedRole_cannotCreateNewCustomer() {
+            // given
+            currentUser("admin@aaa.example.com");
 
-            when(() -> customerRepository.findAll());
+            // when
+            final var attempt = attempt(em, () -> {
+                final var newCustomer = new CustomerEntity(
+                    UUID.randomUUID(), "yyy", 90002, "admin@yyy.example.com");
+                return customerRepository.save(newCustomer);
+            });
 
-            then.exactlyTheseCustomersAreReturned("aaa");
+            // then
+            attempt.assertExceptionWithRootCauseMessage(
+                PersistenceException.class,
+                "add-customer not permitted for admin@aaa.example.com");
+
+        }
+
+        private void assertThatCustomerIsPersisted(final CustomerEntity saved) {
+            final var found = customerRepository.findById(saved.getUuid());
+            assertThat(found).hasValue(saved);
+        }
+    }
+
+    @Nested
+    class FindAllCustomers {
+
+        @Test
+        public void hostsharingAdmin_withoutAssumedRole_canViewAllCustomers() {
+            // given
+            currentUser("mike@hostsharing.net");
+
+            // when
+            final var result = customerRepository.findAll();
+
+            // then
+            exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
         }
 
         @Test
-        public void customerAdminWithAssumedOwnedPackageAdminRoleCanViewOnlyItsOwnCustomer() {
-            given.currentUser("admin@aaa.example.com").
-                and().assumedRoles("package#aaa00.admin");
+        public void hostsharingAdmin_withAssumedHostsharingAdminRole_canViewAllCustomers() {
+            given:
+            currentUser("mike@hostsharing.net");
+            assumedRoles("global#hostsharing.admin");
 
-            when(() -> customerRepository.findAll());
+            // when
+            final var result = customerRepository.findAll();
 
-            then.exactlyTheseCustomersAreReturned("aaa");
+            then:
+            exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
+        }
+
+        @Test
+        public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
+            // given:
+            currentUser("admin@aaa.example.com");
+
+            // when:
+            final var result = customerRepository.findAll();
+
+            // then:
+            exactlyTheseCustomersAreReturned(result, "aaa");
+        }
+
+        @Test
+        public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
+            currentUser("admin@aaa.example.com");
+            assumedRoles("package#aaa00.admin");
+
+            final var result = customerRepository.findAll();
+
+            exactlyTheseCustomersAreReturned(result, "aaa");
         }
 
         @Test
         public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyCustomer() {
-            given.currentUser("admin@aaa.example.com").
-                and().assumedRoles("package#aab00.admin");
+            // given:
+            currentUser("admin@aaa.example.com");
+            assumedRoles("package#aab00.admin");
 
-            when(() -> customerRepository.findAll());
+            // when
+            final var attempt = attempt(
+                em,
+                () -> customerRepository.findAll());
 
-            then.expectJpaSystemExceptionHasBeenThrown().
-                and()
-                .expectRootCauseMessageMatches(
-                    ".* user admin@aaa.example.com .* has no permission to assume role package#aab00#admin .*");
+            // then
+            attempt.assertExceptionWithRootCauseMessage(
+                JpaSystemException.class,
+                "user admin@aaa.example.com .* has no permission to assume role package#aab00#admin");
         }
 
         @Test
         void unknownUser_withoutAssumedRole_cannotViewAnyCustomers() {
-            given.currentUser("unknown@example.org");
+            currentUser("unknown@example.org");
 
-            when(() -> customerRepository.findAll());
+            final var attempt = attempt(
+                em,
+                () -> customerRepository.findAll());
 
-            then.expectJpaSystemExceptionHasBeenThrown().
-                and().expectRootCauseMessageMatches(".* user unknown@example.org does not exist.*");
+            attempt.assertExceptionWithRootCauseMessage(
+                JpaSystemException.class,
+                "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
         @Test
         @Transactional
-        void unknownUserWithAssumedCustomerRoleCannotViewAnyCustomers() {
-            given.currentUser("unknown@example.org").
-                and().assumedRoles("customer#aaa.admin");
+        void unknownUser_withAssumedCustomerRole_cannotViewAnyCustomers() {
+            currentUser("unknown@example.org");
+            assumedRoles("customer#aaa.admin");
 
-            when(() -> customerRepository.findAll());
+            final var attempt = attempt(
+                em,
+                () -> customerRepository.findAll());
 
-            then.expectJpaSystemExceptionHasBeenThrown().
-                and().expectRootCauseMessageMatches(".* user unknown@example.org does not exist.*");
+            attempt.assertExceptionWithRootCauseMessage(
+                JpaSystemException.class,
+                "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
-        void when(final Supplier<List<CustomerEntity>> code) {
-            try {
-                when = new When<>(code.get());
-            } catch (final NestedRuntimeException exc) {
-                when = new When<>(exc);
-            }
-        }
-
-        private class Then {
-
-            Then and() {
-                return this;
-            }
-
-            void exactlyTheseCustomersAreReturned(final String... customerPrefixes) {
-                assertThat(when.actualResult)
-                    .hasSize(customerPrefixes.length)
-                    .extracting(CustomerEntity::getPrefix)
-                    .containsExactlyInAnyOrder(customerPrefixes);
-            }
-
-            Then expectJpaSystemExceptionHasBeenThrown() {
-                assertThat(when.actualException).isInstanceOf(JpaSystemException.class);
-                return this;
-            }
-
-            void expectRootCauseMessageMatches(final String expectedMessage) {
-                assertThat(firstRootCauseMessageLineOf(when.actualException)).matches(expectedMessage);
-            }
-        }
     }
 
-    private String firstRootCauseMessageLineOf(final NestedRuntimeException exception) {
-        return Optional.ofNullable(exception.getRootCause())
-            .map(Throwable::getMessage)
-            .map(message -> message.split("\\r|\\n|\\r\\n", 0)[0])
-            .orElse(null);
+    void currentUser(final String currentUser) {
+        context.setCurrentUser(currentUser);
+        assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
     }
 
-    private class Given {
-
-        Given and() {
-            return this;
-        }
-
-        Given currentUser(final String currentUser) {
-            context.setCurrentUser(currentUser);
-            assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
-            return this;
-        }
-
-        void assumedRoles(final String assumedRoles) {
-            context.assumeRoles(assumedRoles);
-            assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
-        }
+    void assumedRoles(final String assumedRoles) {
+        context.assumeRoles(assumedRoles);
+        assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
     }
 
-    private static class When<T> {
-
-        T actualResult;
-        NestedRuntimeException actualException;
-
-        When(final T actualResult) {
-            this.actualResult = actualResult;
-        }
-
-        When(final NestedRuntimeException exception) {
-            this.actualException = exception;
-        }
+    void exactlyTheseCustomersAreReturned(final List<CustomerEntity> actualResult, final String... customerPrefixes) {
+        assertThat(actualResult)
+            .hasSize(customerPrefixes.length)
+            .extracting(CustomerEntity::getPrefix)
+            .containsExactlyInAnyOrder(customerPrefixes);
     }
+
 }

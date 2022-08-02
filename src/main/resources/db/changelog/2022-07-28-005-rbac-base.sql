@@ -1,6 +1,8 @@
 --liquibase formatted sql
 
---changeset rbac-base-reference:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-REFERENCE:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -27,7 +29,9 @@ end; $$;
 
 --//
 
---changeset rbac-base-user:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-USER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -86,7 +90,9 @@ $$;
 
 --//
 
---changeset rbac-base-object:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-OBJECT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -119,7 +125,9 @@ end; $$;
 
 --//
 
---changeset rbac-base-role:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-ROLE:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -203,7 +211,9 @@ begin
 end;
 $$;
 
---changeset rbac-base-permission:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -217,7 +227,6 @@ create domain RbacOp as varchar(67)
             or VALUE ~ '^add-[a-z]+$'
         );
 
--- DROP TABLE IF EXISTS RbacPermission;
 create table RbacPermission
 (
     uuid       uuid primary key references RbacReference (uuid) on delete cascade,
@@ -226,11 +235,7 @@ create table RbacPermission
     unique (objectUuid, op)
 );
 
--- SET SESSION SESSION AUTHORIZATION DEFAULT;
--- alter table rbacpermission add constraint rbacpermission_objectuuid_fkey foreign key (objectUuid) references rbacobject(uuid);
--- alter table rbacpermission drop constraint rbacpermission_objectuuid;
-
-create or replace function hasPermission(forObjectUuid uuid, forOp RbacOp)
+create or replace function permissionExists(forObjectUuid uuid, forOp RbacOp)
     returns bool
     language sql as $$
 select exists(
@@ -291,7 +296,9 @@ $$;
 
 --//
 
---changeset rbac-base-grants:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-GRANTS:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -305,8 +312,6 @@ create table RbacGrants
 create index on RbacGrants (ascendantUuid);
 create index on RbacGrants (descendantUuid);
 
-
---//
 
 create or replace function findGrantees(grantedId uuid)
     returns setof RbacReference
@@ -377,7 +382,8 @@ begin
 
             insert
                 into RbacGrants (ascendantUuid, descendantUuid, follow)
-                values (roleUuid, permissionIds[i], true);
+                values (roleUuid, permissionIds[i], true)
+            on conflict do nothing; -- allow granting multiple times
         end loop;
 end;
 $$;
@@ -395,7 +401,7 @@ begin
     insert
         into RbacGrants (ascendantUuid, descendantUuid, follow)
         values (superRoleId, subRoleId, doFollow)
-    on conflict do nothing; -- TODO: remove?
+    on conflict do nothing; -- allow granting multiple times
 end; $$;
 
 create or replace procedure revokeRoleFromRole(subRoleId uuid, superRoleId uuid)
@@ -418,11 +424,13 @@ begin
     insert
         into RbacGrants (ascendantUuid, descendantUuid, follow)
         values (userId, roleId, true)
-    on conflict do nothing; -- TODO: remove?
+    on conflict do nothing; -- allow granting multiple times
 end; $$;
 --//
 
---changeset rbac-base-query-accessible-object-uuids:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -467,7 +475,9 @@ $$;
 
 --//
 
---changeset rbac-base-query-granted-permissions:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-QUERY-GRANTED-PERMISSIONS:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -494,7 +504,9 @@ $$;
 
 --//
 
---changeset rbac-base-query-users-with-permission-for-object:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-base-QUERY-USERS-WITH-PERMISSION-FOR-OBJECT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -520,7 +532,9 @@ $$;
 
 --//
 
---changeset rbac-current-user:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-CURRENT-USER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -553,13 +567,16 @@ declare
 begin
     currentUser := currentUser();
     currentUserId = (select uuid from RbacUser where name = currentUser);
+    if currentUserId is null then
+        raise exception 'hsadminng.currentUser defined as %, but does not exists', currentUser;
+    end if;
     return currentUserId;
 end; $$;
-
-
 --//
 
---changeset rbac-assumed-roles:1 endDelimiter:--//
+-- ============================================================================
+--changeset rbac-ASSUMED-ROLES:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 /*
 
  */
@@ -595,7 +612,7 @@ create or replace function findUuidByIdName(objectTable varchar, objectIdName va
     returns null on null input
     language plpgsql as $$
 declare
-    sql varchar;
+    sql  varchar;
     uuid uuid;
 begin
     objectTable := pureIdentifier(objectTable);
@@ -604,10 +621,26 @@ begin
     begin
         raise notice 'sql: %', sql;
         execute sql into uuid;
-    exception when OTHERS then
-        raise exception 'function %UuidByIdName(...) not found, add identity view support for table %', objectTable, objectTable;
+    exception
+        when others then
+            raise exception 'function %UuidByIdName(...) not found, add identity view support for table %', objectTable, objectTable;
     end;
     return uuid;
+end ; $$;
+
+create or replace function currentSubjects()
+    returns varchar(63)[]
+    stable leakproof
+    language plpgsql as $$
+declare
+    assumedRoles  varchar(63)[];
+begin
+    assumedRoles := assumedRoles();
+    if array_length(assumedRoles(), 1) > 0 then
+        return assumedRoles();
+    else
+        return array[currentUser()]::varchar(63)[];
+    end if;
 end; $$;
 
 create or replace function currentSubjectIds()
@@ -664,9 +697,8 @@ end; $$;
 
 
 -- ============================================================================
--- PGSQL-ROLES
---changeset rbac-base-pgsql-roles:1 endDelimiter:--//
--- ------------------------------------------------------------------
+--changeset rbac-base-PGSQL-ROLES:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 create role admin;
 grant all privileges on all tables in schema public to admin;
@@ -675,3 +707,4 @@ create role restricted;
 grant all privileges on all tables in schema public to restricted;
 
 --//
+

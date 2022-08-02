@@ -115,7 +115,7 @@ set session session authorization default;
 -- ALTER TABLE unixuser ENABLE ROW LEVEL SECURITY;
 drop view if exists unixuser_rv;
 create or replace view unixuser_rv as
-select distinct target.*
+select target.*
     from unixuser as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'unixuser', currentSubjectIds()));
 grant all privileges on unixuser_rv to restricted;

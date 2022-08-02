@@ -16,6 +16,8 @@ create table Global
 );
 create unique index Global_Singleton on Global ((0));
 
+grant select on global to restricted;
+
 /**
   A single row to be referenced as a global object.
  */
@@ -24,6 +26,23 @@ insert
 insert
     into Global (uuid, name) values ((select uuid from RbacObject where objectTable = 'global'), 'hostsharing');
 --//
+
+
+-- ============================================================================
+--changeset rhs-base-HAS-GLOBAL-PERMISSION:1 endDelimiter:--//
+-- ------------------------------------------------------------------
+
+create or replace function hasGlobalPermission(op RbacOp)
+    returns boolean
+    language sql as
+$$
+    -- TODO: this could to be optimized
+select (select uuid from global) in
+       (select queryAccessibleObjectUuidsOfSubjectIds(
+                   op, 'global', currentSubjectIds()));
+$$;
+--//
+
 
 -- ============================================================================
 --changeset hs-base-GLOBAL-IDENTITY-VIEW:1 endDelimiter:--//
@@ -34,7 +53,7 @@ insert
  */
 drop view if exists global_iv;
 create or replace view global_iv as
-select distinct target.uuid, target.name as idName
+select target.uuid, target.name as idName
     from global as target;
 grant all privileges on global_iv to restricted;
 
@@ -65,7 +84,7 @@ $$;
 select createRole(hostsharingAdmin());
 
 -- ============================================================================
---changeset hs-base-ADMIN-USERS:1 context:dev,test,tc endDelimiter:--//
+--changeset hs-base-ADMIN-USERS:1 context:dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Create two users and assign both to the administrators role.
@@ -83,7 +102,7 @@ $$;
 
 
 -- ============================================================================
---changeset hs-base-hostsharing-TEST:1 context:dev,test,tc runAlways:true endDelimiter:--//
+--changeset hs-base-hostsharing-TEST:1 context:dev,tc runAlways:true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*

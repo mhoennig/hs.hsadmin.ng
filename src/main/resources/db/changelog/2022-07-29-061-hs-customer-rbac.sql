@@ -149,7 +149,7 @@ execute procedure deleteRbacRulesForCustomer();
  */
 drop view if exists customer_iv;
 create or replace view customer_iv as
-select distinct target.uuid, target.prefix as idName
+select target.uuid, target.prefix as idName
     from customer as target;
 -- TODO: Is it ok that everybody has access to this information?
 grant all privileges on customer_iv to restricted;
@@ -176,8 +176,51 @@ $$;
 set session session authorization default;
 drop view if exists customer_rv;
 create or replace view customer_rv as
-select distinct target.*
+select target.*
     from customer as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', currentSubjectIds()));
 grant all privileges on customer_rv to restricted;
 --//
+
+
+-- ============================================================================
+--changeset hs-customer-rbac-ADD-CUSTOMER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a global permission for add-customer and assigns it to the hostsharing admins role.
+ */
+do language plpgsql $$
+    declare
+        addCustomerPermissions uuid[];
+        hostsharingObjectUuid  uuid;
+        hsAdminRoleUuid        uuid ;
+    begin
+        hsAdminRoleUuid := findRoleId(hostsharingAdmin());
+        hostsharingObjectUuid := (select uuid from global);
+        addCustomerPermissions := createPermissions(hostsharingObjectUuid, array ['add-customer']);
+        call grantPermissionsToRole(hsAdminRoleUuid, addCustomerPermissions);
+    end;
+$$;
+
+/**
+    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
+ */
+create or replace function addCustomerNotAllowedForCurrentSubjects()
+    returns trigger
+    language PLPGSQL
+as $$
+begin
+    raise exception 'add-customer not permitted for %', array_to_string(currentSubjects());
+end; $$;
+
+/**
+    Checks if the user or assumed roles are allowed to add a new customer.
+ */
+create trigger customer_insert_trigger
+    before insert
+    on customer
+    for each row
+    when ( currentUser() <> 'mike@hostsharing.net' or not hasGlobalPermission('add-customer') )
+execute procedure addCustomerNotAllowedForCurrentSubjects();
+--//
+

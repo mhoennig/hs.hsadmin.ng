@@ -85,7 +85,7 @@ set session session authorization default;
 -- ALTER TABLE EMailAddress ENABLE ROW LEVEL SECURITY;
 drop view if exists EMailAddress_rv;
 create or replace view EMailAddress_rv as
-select distinct target.*
+select target.*
     from EMailAddress as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'emailaddress', currentSubjectIds()));
 grant all privileges on EMailAddress_rv to restricted;

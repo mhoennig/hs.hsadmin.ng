@@ -175,7 +175,7 @@ $$;
  */
 drop view if exists package_rv;
 create or replace view package_rv as
-select distinct target.*
+select target.*
     from package as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'package', currentSubjectIds()));
 grant all privileges on package_rv to restricted;
