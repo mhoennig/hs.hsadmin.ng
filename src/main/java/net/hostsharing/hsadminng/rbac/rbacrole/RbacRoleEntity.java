@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 import org.springframework.data.annotation.Immutable;
 
 import javax.persistence.*;
@@ -33,4 +34,7 @@ public class RbacRoleEntity {
 
     @Column(name="objectidname")
     private String objectIdName;
+
+    @Formula("objectTable||'#'||objectIdName||'.'||roleType")
+    private String roleName;
 }
