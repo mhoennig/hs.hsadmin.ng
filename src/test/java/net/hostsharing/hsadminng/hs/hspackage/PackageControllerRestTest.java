@@ -1,7 +1,6 @@
-package net.hostsharing.hsadminng.hspackage;
+package net.hostsharing.hsadminng.hs.hspackage;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hscustomer.TestCustomer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -9,8 +8,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import java.util.UUID;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.hasSize;

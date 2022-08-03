@@ -1,6 +1,8 @@
-package net.hostsharing.hsadminng.hscustomer;
+package net.hostsharing.hsadminng.hs.hscustomer;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.hscustomer.CustomerEntity;
+import net.hostsharing.hsadminng.hs.hscustomer.CustomerRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

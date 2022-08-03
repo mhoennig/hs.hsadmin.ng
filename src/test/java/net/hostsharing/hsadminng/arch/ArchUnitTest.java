@@ -39,16 +39,16 @@ public class ArchUnitTest {
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsPackagesRule = classes()
-        .that().resideInAPackage("..hs*")
+        .that().resideInAPackage("..hs.(*)..")
         .should().onlyBeAccessed().byClassesThat()
-        .resideInAnyPackage("..hs*");
+        .resideInAnyPackage("..hs.(*)..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsPackagePackageRule = classes()
-        .that().resideInAPackage("..hspackage..")
+        .that().resideInAPackage("..hs.hspackage..")
         .should().onlyBeAccessed().byClassesThat()
-        .resideInAnyPackage("..hspackage..");
+        .resideInAnyPackage("..hs.hspackage..");
 
     @Test
     public void everythingShouldBeFreeOfCycles() {

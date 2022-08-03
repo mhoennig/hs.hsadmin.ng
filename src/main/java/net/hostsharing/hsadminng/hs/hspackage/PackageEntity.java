@@ -1,9 +1,9 @@
-package net.hostsharing.hsadminng.hspackage;
+package net.hostsharing.hsadminng.hs.hspackage;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.hostsharing.hsadminng.hscustomer.CustomerEntity;
+import net.hostsharing.hsadminng.hs.hscustomer.CustomerEntity;
 
 import javax.persistence.*;
 import java.util.UUID;

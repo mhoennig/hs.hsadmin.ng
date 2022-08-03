@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hscustomer;
+package net.hostsharing.hsadminng.hs.hscustomer;
 
 import net.hostsharing.hsadminng.context.Context;
 import org.springframework.beans.factory.annotation.Autowired;

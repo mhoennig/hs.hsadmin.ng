@@ -23,7 +23,7 @@ public class RestResponseEntityExceptionHandler
         final RuntimeException exc, final WebRequest request) {
 
         return new ResponseEntity<>(
-            new CustomErrorResponse(exc, HttpStatus.CONFLICT), HttpStatus.CONFLICT);
+            new CustomErrorResponse(request.getContextPath(), exc, HttpStatus.CONFLICT), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(JpaSystemException.class)
@@ -31,7 +31,7 @@ public class RestResponseEntityExceptionHandler
         final RuntimeException exc, final WebRequest request) {
 
         return new ResponseEntity<>(
-            new CustomErrorResponse(exc, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
+            new CustomErrorResponse(request.getContextPath(), exc, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
     }
 }
 
@@ -41,13 +41,19 @@ class CustomErrorResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
     private final LocalDateTime timestamp;
 
-    private final HttpStatus status;
+    private final String path;
+
+    private final int status;
+
+    private final String error;
 
     private final String message;
 
-    public CustomErrorResponse(final RuntimeException exc, final HttpStatus status) {
+    public CustomErrorResponse(final String path, final RuntimeException exc, final HttpStatus status) {
         this.timestamp = LocalDateTime.now();
-        this.status = status;
+        this.path = path;
+        this.status = status.value();
+        this.error = status.getReasonPhrase();
         this.message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
     }
 
