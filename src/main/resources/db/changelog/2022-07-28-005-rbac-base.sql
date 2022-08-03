@@ -151,12 +151,10 @@ create type RbacRoleDescriptor as
 create or replace function roleDescriptor(objectTable varchar(63), objectUuid uuid, roleType RbacRoleType)
     returns RbacRoleDescriptor
     returns null on null input
-    -- STABLE LEAKPROOF
+    stable leakproof
     language sql as $$
 select objectTable, objectUuid, roleType::RbacRoleType;
 $$;
-
-
 
 create or replace function createRole(roleDescriptor RbacRoleDescriptor)
     returns uuid
@@ -346,6 +344,22 @@ select granteeId = grantedId or granteeId in (with recursive grants as (select d
                                               select ascendantUuid
                                                   from grants);
 $$;
+
+create or replace function isGranted(granteeIds uuid[], grantedId uuid)
+    returns bool
+    returns null on null input
+    language plpgsql as $$
+declare
+    granteeId uuid;
+begin
+    -- TODO: needs optimization
+    foreach granteeId in array granteeIds loop
+            if isGranted(granteeId, grantedId) then
+                return true;
+            end if;
+        end loop;
+    return false;
+end; $$;
 
 create or replace function isPermissionGrantedToSubject(permissionId uuid, subjectId uuid)
     returns BOOL
@@ -607,6 +621,7 @@ begin
     return regexp_replace(rawIdentifier, '\W+', '');
 end; $$;
 
+-- TODO: rename to findObjectUuidByIdName
 create or replace function findUuidByIdName(objectTable varchar, objectIdName varchar)
     returns uuid
     returns null on null input
@@ -628,18 +643,38 @@ begin
     return uuid;
 end ; $$;
 
+create or replace function findIdNameByObjectUuid(objectTable varchar, objectUuid uuid)
+    returns varchar
+    returns null on null input
+    language plpgsql as $$
+declare
+    sql     varchar;
+    idName varchar;
+begin
+    objectTable := pureIdentifier(objectTable);
+    sql := format('select * from %sIdNameByUuid(%L::uuid);', objectTable, objectUuid);
+    begin
+        raise notice 'sql: %', sql;
+        execute sql into idName;
+    exception
+        when others then
+            raise exception 'function %IdNameByUuid(...) not found, add identity view support for table %', objectTable, objectTable;
+    end;
+    return idName;
+end ; $$;
+
 create or replace function currentSubjects()
     returns varchar(63)[]
     stable leakproof
     language plpgsql as $$
 declare
-    assumedRoles  varchar(63)[];
+    assumedRoles varchar(63)[];
 begin
     assumedRoles := assumedRoles();
     if array_length(assumedRoles(), 1) > 0 then
         return assumedRoles();
     else
-        return array[currentUser()]::varchar(63)[];
+        return array [currentUser()]::varchar(63)[];
     end if;
 end; $$;
 
@@ -708,3 +743,20 @@ grant all privileges on all tables in schema public to restricted;
 
 --//
 
+
+-- ============================================================================
+--changeset rbac-base-ROLE-RESTRICTED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a view to the role table with row-level limitation
+    based on the grants of the current user or assumed roles.
+ */
+drop view if exists rbacrole_rv;
+create or replace view rbacrole_rv as
+select r.*, o.objectTable,
+       findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+    from rbacrole as r
+    join rbacobject as o on o.uuid=r.objectuuid
+    where isGranted(currentSubjectIds(), r.uuid);
+grant all privileges on rbacrole_rv to restricted;
+--//

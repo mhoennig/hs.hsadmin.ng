@@ -163,6 +163,16 @@ create or replace function customerUuidByIdName(idName varchar)
     strict as $$
 select uuid from customer_iv iv where iv.idName = customerUuidByIdName.idName;
 $$;
+
+/*
+    Returns the identifying name for a given objectUuid (in this case the prefix).
+ */
+create or replace function customerIdNameByUuid(uuid uuid)
+    returns varchar
+    language sql
+    strict as $$
+select idName from customer_iv iv where iv.uuid = customerIdNameByUuid.uuid;
+$$;
 --//
 
 
@@ -170,7 +180,7 @@ $$;
 --changeset hs-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Creates a view to the customer main table with row-level limitatation
+    Creates a view to the customer main table with row-level limitation
     based on the 'view' permission of the current user or assumed roles.
  */
 set session session authorization default;

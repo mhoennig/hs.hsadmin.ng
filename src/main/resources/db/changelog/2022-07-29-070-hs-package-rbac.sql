@@ -162,6 +162,16 @@ create or replace function packageUuidByIdName(idName varchar)
     strict as $$
 select uuid from package_iv iv where iv.idName = packageUuidByIdName.idName;
 $$;
+
+/*
+    Returns the identifying name for a given objectUuid (in this case the name).
+ */
+create or replace function packageIdNameByUuid(uuid uuid)
+    returns varchar
+    language sql
+    strict as $$
+select idName from package_iv iv where iv.uuid = packageIdNameByUuid.uuid;
+$$;
 --//
 
 

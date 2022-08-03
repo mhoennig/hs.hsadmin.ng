@@ -58,13 +58,23 @@ select target.uuid, target.name as idName
 grant all privileges on global_iv to restricted;
 
 /*
-    Returns the objectUuid for a given identifying name (in this case the prefix).
+    Returns the objectUuid for a given identifying name (in this case the idName).
  */
 create or replace function globalUuidByIdName(idName varchar)
     returns uuid
     language sql
     strict as $$
 select uuid from global_iv iv where iv.idName = globalUuidByIdName.idName;
+$$;
+
+/*
+    Returns the identifying name for a given objectUuid (in this case the idName).
+ */
+create or replace function globalIdNameByUuid(uuid uuid)
+    returns varchar
+    language sql
+    strict as $$
+select idName from global_iv iv where iv.uuid = globalIdNameByUuid.uuid;
 $$;
 --//
 
