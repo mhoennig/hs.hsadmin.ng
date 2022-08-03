@@ -60,12 +60,13 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
         -d '{ "prefix":"baa", "reference":80001, "adminUserName":"admin@baa.example.com" }' \
         -X POST http://localhost:8080/api/customers
 
-<big>**&#9432;**</big>
-'mike@hostsharing.net' and 'sven@hostsharing.net' are Hostsharing hostmaster accounts coming from the example data which is automatically inserted in Testcontainers and Development environments.
+If you wonder who 'mike@hostsharing.net' and 'sven@hostsharing.net' are and where the data comes from:
+Mike and Sven are just example Hostsharing hostmaster accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
 Also try for example 'admin@aaa.example.com' or 'unknown@example.org'.
 
-<big>**&#9432;**</big>
 If you want a formatted JSON output, you can pipe the result to `jq` or similar.
+
+And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
 
 If you still need to install some of these tools, find some hints in the next chapters. 
 
