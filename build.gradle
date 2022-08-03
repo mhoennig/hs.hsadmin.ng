@@ -25,12 +25,10 @@ ext {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-    implementation 'org.springframework.boot:spring-boot-starter-hateoas'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
     implementation 'org.liquibase:liquibase-core'
-    implementation 'org.springframework.data:spring-data-rest-hal-explorer'
     implementation 'com.vladmihalcea:hibernate-types-55:2.17.1'
 
     compileOnly 'org.projectlombok:lombok'
