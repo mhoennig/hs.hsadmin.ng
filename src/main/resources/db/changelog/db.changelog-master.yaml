@@ -10,6 +10,10 @@ databaseChangeLog:
     - include:
         file: db/changelog/2022-07-28-005-rbac-base.sql
     - include:
+        file: db/changelog/2022-07-28-006-rbac-current.sql
+    - include:
+        file: db/changelog/2022-07-28-007-rbac-views.sql
+    - include:
         file: db/changelog/2022-07-28-020-rbac-role-builder.sql
     - include:
         file: db/changelog/2022-07-28-030-rbac-statistics.sql

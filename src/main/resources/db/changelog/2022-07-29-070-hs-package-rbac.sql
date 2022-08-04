@@ -168,6 +168,7 @@ $$;
  */
 create or replace function packageIdNameByUuid(uuid uuid)
     returns varchar
+    stable leakproof
     language sql
     strict as $$
 select idName from package_iv iv where iv.uuid = packageIdNameByUuid.uuid;

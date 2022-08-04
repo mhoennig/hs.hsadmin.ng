@@ -501,36 +501,37 @@ $$;
 --changeset rbac-base-QUERY-GRANTED-PERMISSIONS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-
+    Returns all permissions accessible to the given subject UUID (user or role).
  */
-create or replace function queryGrantedPermissionsOfSubjectIds(requiredOp RbacOp, subjectIds uuid[])
+create or replace function queryPermissionsGrantedToSubjectId(subjectId uuid)
     returns setof RbacPermission
     strict
     language sql as $$
-select distinct *
+-- @formatter:off
+select *
     from RbacPermission
-    where op = '*'
-       or op = requiredOp
-        and uuid in (with recursive grants as (select distinct descendantUuid,
-                                                               ascendantUuid
-                                                   from RbacGrants
-                                                   where ascendantUuid = any (subjectIds)
-                                               union all
-                                               select "grant".descendantUuid,
-                                                      "grant".ascendantUuid
-                                                   from RbacGrants "grant"
-                                                            inner join grants recur on recur.descendantUuid = "grant".ascendantUuid)
-                     select descendantUuid
-                         from grants);
+    where uuid in (
+            with recursive grants as (
+                select distinct descendantUuid, ascendantUuid
+                    from RbacGrants
+                    where ascendantUuid = subjectId
+                union all
+                select "grant".descendantUuid, "grant".ascendantUuid
+                    from RbacGrants "grant"
+                    inner join grants recur on recur.descendantUuid = "grant".ascendantUuid
+            )
+            select descendantUuid
+                from grants
+        );
+-- @formatter:on
 $$;
-
 --//
 
 -- ============================================================================
 --changeset rbac-base-QUERY-USERS-WITH-PERMISSION-FOR-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-
+    Returns all user UUIDs which have any permission for the given object UUID.
  */
 
 create or replace function queryAllRbacUsersWithPermissionsFor(objectId uuid)
@@ -554,190 +555,6 @@ $$;
 
 --//
 
--- ============================================================================
---changeset rbac-CURRENT-USER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-
- */
-create or replace function currentUser()
-    returns varchar(63)
-    stable leakproof
-    language plpgsql as $$
-declare
-    currentUser varchar(63);
-begin
-    begin
-        currentUser := current_setting('hsadminng.currentUser');
-    exception
-        when others then
-            currentUser := null;
-    end;
-    if (currentUser is null or currentUser = '') then
-        raise exception 'hsadminng.currentUser must be defined, please use "SET LOCAL ...;"';
-    end if;
-    return currentUser;
-end; $$;
-
-create or replace function currentUserId()
-    returns uuid
-    stable leakproof
-    language plpgsql as $$
-declare
-    currentUser   varchar(63);
-    currentUserId uuid;
-begin
-    currentUser := currentUser();
-    currentUserId = (select uuid from RbacUser where name = currentUser);
-    if currentUserId is null then
-        raise exception 'hsadminng.currentUser defined as %, but does not exists', currentUser;
-    end if;
-    return currentUserId;
-end; $$;
---//
-
--- ============================================================================
---changeset rbac-ASSUMED-ROLES:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-
- */
-create or replace function assumedRoles()
-    returns varchar(63)[]
-    stable leakproof
-    language plpgsql as $$
-declare
-    currentSubject varchar(63);
-begin
-    begin
-        currentSubject := current_setting('hsadminng.assumedRoles');
-    exception
-        when others then
-            return array []::varchar[];
-    end;
-    if (currentSubject = '') then
-        return array []::varchar[];
-    end if;
-    return string_to_array(currentSubject, ';');
-end; $$;
-
-create or replace function pureIdentifier(rawIdentifier varchar)
-    returns varchar
-    returns null on null input
-    language plpgsql as $$
-begin
-    return regexp_replace(rawIdentifier, '\W+', '');
-end; $$;
-
--- TODO: rename to findObjectUuidByIdName
-create or replace function findUuidByIdName(objectTable varchar, objectIdName varchar)
-    returns uuid
-    returns null on null input
-    language plpgsql as $$
-declare
-    sql  varchar;
-    uuid uuid;
-begin
-    objectTable := pureIdentifier(objectTable);
-    objectIdName := pureIdentifier(objectIdName);
-    sql := format('select * from %sUuidByIdName(%L);', objectTable, objectIdName);
-    begin
-        raise notice 'sql: %', sql;
-        execute sql into uuid;
-    exception
-        when others then
-            raise exception 'function %UuidByIdName(...) not found, add identity view support for table %', objectTable, objectTable;
-    end;
-    return uuid;
-end ; $$;
-
-create or replace function findIdNameByObjectUuid(objectTable varchar, objectUuid uuid)
-    returns varchar
-    returns null on null input
-    language plpgsql as $$
-declare
-    sql     varchar;
-    idName varchar;
-begin
-    objectTable := pureIdentifier(objectTable);
-    sql := format('select * from %sIdNameByUuid(%L::uuid);', objectTable, objectUuid);
-    begin
-        raise notice 'sql: %', sql;
-        execute sql into idName;
-    exception
-        when others then
-            raise exception 'function %IdNameByUuid(...) not found, add identity view support for table %', objectTable, objectTable;
-    end;
-    return idName;
-end ; $$;
-
-create or replace function currentSubjects()
-    returns varchar(63)[]
-    stable leakproof
-    language plpgsql as $$
-declare
-    assumedRoles varchar(63)[];
-begin
-    assumedRoles := assumedRoles();
-    if array_length(assumedRoles(), 1) > 0 then
-        return assumedRoles();
-    else
-        return array [currentUser()]::varchar(63)[];
-    end if;
-end; $$;
-
-create or replace function currentSubjectIds()
-    returns uuid[]
-    stable leakproof
-    language plpgsql as $$
-declare
-    currentUserId       uuid;
-    roleNames           varchar(63)[];
-    roleName            varchar(63);
-    objectTableToAssume varchar(63);
-    objectNameToAssume  varchar(63);
-    objectUuidToAssume  uuid;
-    roleTypeToAssume    RbacRoleType;
-    roleIdsToAssume     uuid[];
-    roleUuidToAssume    uuid;
-begin
-    currentUserId := currentUserId();
-    if currentUserId is null then
-        raise exception 'user % does not exist', currentUser();
-    end if;
-
-    roleNames := assumedRoles();
-    if cardinality(roleNames) = 0 then
-        return array [currentUserId];
-    end if;
-
-    raise notice 'assuming roles: %', roleNames;
-
-    foreach roleName in array roleNames
-        loop
-            roleName = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
-            objectTableToAssume = split_part(roleName, '#', 1);
-            objectNameToAssume = split_part(roleName, '#', 2);
-            roleTypeToAssume = split_part(roleName, '#', 3);
-
-            objectUuidToAssume = findUuidByIdName(objectTableToAssume, objectNameToAssume);
-
-            -- TODO: either the result needs to be cached at least per transaction or we need to get rid of SELCT in a loop
-            select uuid as roleuuidToAssume
-                from RbacRole r
-                where r.objectUuid = objectUuidToAssume
-                  and r.roleType = roleTypeToAssume
-                into roleUuidToAssume;
-            if (not isGranted(currentUserId, roleUuidToAssume)) then
-                raise exception 'user % (%) has no permission to assume role % (%)', currentUser(), currentUserId, roleName, roleUuidToAssume;
-            end if;
-            roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
-        end loop;
-
-    return roleIdsToAssume;
-end; $$;
---//
-
 
 -- ============================================================================
 --changeset rbac-base-PGSQL-ROLES:1 endDelimiter:--//
@@ -749,22 +566,4 @@ grant all privileges on all tables in schema public to admin;
 create role restricted;
 grant all privileges on all tables in schema public to restricted;
 
---//
-
-
--- ============================================================================
---changeset rbac-base-ROLE-RESTRICTED-VIEW:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Creates a view to the role table with row-level limitation
-    based on the grants of the current user or assumed roles.
- */
-drop view if exists rbacrole_rv;
-create or replace view rbacrole_rv as
-select DISTINCT r.*, o.objectTable,
-       findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
-    from rbacrole as r
-    join rbacobject as o on o.uuid=r.objectuuid
-    where isGranted(currentSubjectIds(), r.uuid);
-grant all privileges on rbacrole_rv to restricted;
 --//
