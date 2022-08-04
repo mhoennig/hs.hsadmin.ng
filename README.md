@@ -1,350 +1,332 @@
 # hsadminNg Development
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+This documents gives an overview of the development environment and tools.
+For architecture consider the files in the `doc` and `adr` folder.
 
--   [Setting up the Development Environment](#setting-up-the-development-environment)
--   [Frequent Tasks](#frequent-tasks)
-    -   [Building the Application with Test Execution](#building-the-application-with-test-execution)
-    -   [Starting the Application](#starting-the-application)
-    -   [Running JUnit tests with branch coverage](#running-junit-tests-with-branch-coverage)
--   [HOWTO Commits](#howto-commits)
-    -   [Creating HOWTO Commits](#creating-howto-commits)
--   [Special Build Tasks](#special-build-tasks)
-    -   [Spotless Formatting](#spotless-formatting)
-    -   [Mutation Testing PiTest](#mutation-testing-pitest)
-    -   [Git Workflow for JHipster Generator](#git-workflow-for-jhipster-generator)
-    -   [Generating the Table of Contents for Markdown](#generating-the-table-of-contents-for-markdown)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- generated TOC begin: -->
+- [Setting up the Development Environment](#setting-up-the-development-environment)
+  - [SDKMAN](#sdkman)
+  - [PostgreSQL Server](#postgresql-server)
+  - [Markdown](#markdown)
+    - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
+  - [Other Tools](#other-tools)
+- [Running the SQL files](#running-the-sql-files)
+  - [For RBAC](#for-rbac)
+  - [For Historization](#for-historization)
+<!-- generated TOC end. -->
 
 ## Setting up the Development Environment
 
-You'll often need to execute `./gradlew`, therefore we suggest to define this alias:
+All instructions assume that you're using a current _Linux_ or _MacOS_ operating system.
+Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 
-    alias gw='./gradlew'
+To be able to build and run the Java Spring Boot application, you need the following tools:
 
-TODO: Instructions for setting up the dev environment from scratch.
+- Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
+- PostgreSQL Server 13.7-bullseye (see instructions below to install and run in Docker)
+- Java JDK 17.x
+- Gradle in some not too outdated version (7.4 will be installed via wrapper)
 
-## Frequent Tasks
+You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
-### Building the Application with Test Execution
+If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
 
-    gw build
+    cd your-hsadmin-ng-directory
+    
+    gradle wrapper  # downloads Gradle 7.5 into the project
+    source .aliases # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
 
-### Starting the Application
+    gw test         # compiles and runs unit- and integration-tests
+    
+    pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
+    gw bootRun      # compiles and runs the application on localhost:8080
 
-To use an **H2 in-memory database** populated with sample-data.
+    # the following command should reply with "pong":
+    curl http://localhost:8080/api/ping
 
-    gw bootRun
+    # the following command should return a JSON array with just all customers:
+    curl \
+        -H 'current-user: mike@hostsharing.net' \
+        http://localhost:8080/api/customers
 
-To use an **H2 file-based database**, start the application with the h2file profile:
+    # the following command should return a JSON array with just all packages visible for the admin of the customer aab:
+    curl \
+        -H 'current-user: mike@hostsharing.net' -H 'assumed-roles: customer#aab.admin' \
+        http://localhost:8080/api/packages
 
-    gw bootRun -Ph2file
-    gw bootRun -Ph2file -Psample-data     # populated with sample data
+    # add a new customer
+    curl \
+        -H 'current-user: mike@hostsharing.net' -H "Content-Type: application/json" \
+        -d '{ "prefix":"baa", "reference":80001, "adminUserName":"admin@baa.example.com" }' \
+        -X POST http://localhost:8080/api/customers
 
-To use a **local Postgres database**, first prepare your environment:
+If you wonder who 'mike@hostsharing.net' and 'sven@hostsharing.net' are and where the data comes from:
+Mike and Sven are just example Hostsharing hostmaster accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
+Also try for example 'admin@aaa.example.com' or 'unknown@example.org'.
 
-    export HSADMINNG_DB_URL='jdbc:postgresql://localhost:5432/DBNAME'
-    export HSADMINNG_DB_USER='DBUSER'
-    export HSADMINNG_DB_PASS='DBPASS'
+If you want a formatted JSON output, you can pipe the result to `jq` or similar.
 
-Where `DBNAME`, `DBUSER` and `DBPASS` are replaced by your credentials.
+And to see the full, currently implemented, API, open http://localhost:8080/swagger-ui/index.html.
 
-Then start the application with the pgsql profile:
+If you still need to install some of these tools, find some hints in the next chapters. 
 
-    gw bootRun -Ppgsql
-    gw bootRun -Ppgsql -Psample-data     # populated with sample data
 
-To use a **remote Postgres database** on a Hostsharing server,
+### SDKMAN
 
-    autossh -M 0 -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" \
-        -f -N -L 55432:127.0.0.1:5432 "xyz00@xyz.hostsharing.net"
+*SdkMan* is not necessary, but helpful to install and switch between different versions of SDKs (Software-Development-Kits) and development tools in general, e.g. *JDK* and *Gradle*.
+It is available for _Linux_ and _MacOS_, _WSL_, _Cygwin_, _Solaris_ and _FreeBSD_.
 
-Then prepare your environment, e.g. like this:
+You can get it from: https://sdkman.io/.
 
-    export HSADMINNG_DB_URL='jdbc:postgresql://localhost:55432/xyz00_hsadminng'
-    export HSADMINNG_DB_USER='xyz00_hsadminng'
-    export HSADMINNG_DB_PASS='whatever'
+<big>**&#9888;**</big>
+Yeah, the `curl ... | bash` install method looks quite scary;
+but in a development environment you're downloading executables all the time,
+e.g. through `npm`, `Maven` or `Gradle` when downloading dependencies.
+Thus, maybe you should at least use a separate Linux account for development.
 
-In all cases, you can also **specify the port** to used for the application via environment:
+Once it's installed, you can install *JDK* and *Gradle*:
 
-    SERVER_PORT=8081 gw bootRun ...
+    sdk install java 17.0.3-tem
+    sdk install gradle
 
-For starting the JVM of the application in **debug-mode**, add `--debug-jvm` to any of the options above, e.g.
+    sdk use java 17.0.3-tem # use this to switch between installed JDK versions
 
-    gw bootRun -Ppgsql -Psample-data --debug-jvm
 
-### Running JUnit tests with branch coverage
+### PostgreSQL Server
 
-#### for IntelliJ IDEA
+You could use any PostgreSQL Server (from version 13 on) installed on your machine.
+You might amend the port and user settings in `src/main/resources/application.yml`, though.
 
-see: https://confluence.jetbrains.com/display/IDEADEV/IDEA+Coverage+Runner
+But the easiest way to run PostgreSQL is via Docker.
 
-Either apply it to specific test configurations or,
-better, delete the previous test configurations and amend the JUnit template.
+Initially, pull an image compatible to current PostgreSQL version of Hostsharing:
 
-## HOWTO Commits
+    docker pull postgres:13.7-bullseye 
 
-There are git tags on some commits which show how to add certain features.
+<big>**&#9888;**</big>
+If we switch the version, please also amend the documentation as well as the aliases file. Thanks! 
 
-Find all of such tags with:
+Create and run a container with the given PostgreSQL version:
 
-    git tag | grep HOWTO
+    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:13.7-bullseye
 
-### Creating HOWTO Commits
+    # or via alias: 
+    pg-sql-run
 
-If you want to add such a commit, make sure that it contains no clutter
-(no changes which are not necessary for whatever the commit is about to explain),
-and is complete with all unit tests, code coverage, pitest and other checks.
-Otherwise the next developer would run into the same problems again.
+To check if the PostgreSQL container is running, the following command should list a container with the name "hsadmin-ng-postgres": 
 
-One way to keep the commit clean, is to develop it on a local branch.
-If any other changes (e.g. bugfixes, API extensions etc.) are necessary,
-apply these only to the master or cherry-pick just these to the master,
-then rebase your local branch. Do not forget to run all checks locally:
+    docker container ls 
 
-    gw clean check pitest # might need over an hour
+Stop the PostgreSQL container:
+    
+    docker stop hsadmin-ng-postgres
+    # or via alias: pg-sql-stop
 
-(Check the PiTest section for speeding up mutation testing.)
+Start the PostgreSQL container again:
 
-To create and push a new tag use:
+    docker container start hsadmin-ng-postgres
+    # or via alias: pg-sql-start
 
-    git tag HOWTO-... master
-    git push origin HOWTO-...
+Remove the PostgreSQL container:
 
-To moved an existing the tag to another commit (here current master again), do this:
+    docker rm hsadmin-ng-postgres
+    
+    # or via alias:
+    pg-sql-remove
 
-    git tag --force HOWTO-... master
-    git push --force origin HOWTO-...
+To reset to a clean database, use:
 
-## Special Build Tasks
+    pg-sql-stop; pg-sql-remove; pg-sql-run
 
-Besides common build tasks like `build`, `test` or `bootRun` this projects has some not so common tasks which are explained in this section.
+    # or via alias:
+    pg-sql-reset
 
-### Spotless Formatting
+After the PostgreSQL container is removed, you need to create it again as shown in "Create and run ..." above.
 
-To make sure that no IDE auto-formatter destroys the git history of any file and
-especially to avoid merge conflicts from JHipster generated files after these had been changed,
-we are using a standard formatter enforced by _spotless_, which is based on the standard Eclipse formatter.
+Given the container is running, to create a backup in ~/backup, run:
 
-The rules can be checked and applied with these commands:
+    docker exec -i hsadmin-ng-postgres /usr/bin/pg_dump --clean --create -U postgres postgres | gzip -9 > ~/backup/hsadmin-ng-postgres.sql.gz
 
-    gw spotlessCheck
-    gw spotlessApply
+    # or via alias:
+    pg-sql-backup >~/backup/hsadmin-ng-postgres.sql.gz
 
-The spotlessCheck task is included as an early step in our Jenkins build pipeline.
-Therefore wrong formatting is automatically detected.
 
-Our configuration can be found under the directory `cfg/spotless`.
-Currently we only have specific rules for _\*.java_-files and their import-order.
+Again, given the container is running, to restore the backup from ~/backup, run:
 
-#### Our Changes to the Standard Eclipse Formatter
+    gunzip --stdout --keep ~/backup/hsadmin-ng-postgres.sql.gz | docker exec -i hsadmin-ng-postgres psql -U postgres -d postgres
 
-We amended the Standard Eclipse Formatter in these respects:
+    # or via alias:
+    pg-sql-restore <~/backup/hsadmin-ng-postgres.sql.gz
 
--   Lines of code are never joined, thus the developer has control about linebreaks,
-    which is important for readability in some implementations like toString().
--   Lines in comments are never joined either, because that often destroys readable stucture.
--   Parts of files can be excluded from getting formatted, by using `@formatter:off` and `@formatter:on` in a comment.
-    See for example in class `SecurityConfiguration`.
 
-#### Pre-Commit Hook
+### Markdown
 
-If you like, you could add this code to the _pre-commit or \_pre_push_ hook\_ in your `.git/hooks` directory:
+To generate the TOC (Table of Contents), a little bash script from a
+[Blog Article](https://medium.com/@acrodriguez/one-liner-to-generate-a-markdown-toc-f5292112fd14) was used.
 
-    if  ! ./gradlew spotlessCheck; then
-        exit 1
-    fi
+To render the Markdown files, especially to watch embedded PlantUML diagrams, you can use one of the following methods:
 
-#### The Tagged Spotless Commit
+#### Render Markdown embedded PlantUML
 
-The commit which introduces the spotless configuration is tagged.
-Through this tag it can easily be cherry-picked in the JHipster workflow.
+Can you see the following diagram right in your IDE?
+I mean a real graphic diagram, not just some markup code.
 
-If you need to amend the commit tagged 'spotless', e.g. to change the spotless configuration,
-it can be done with these steps:
+```plantuml
+@startuml
+me -> you: Can you see this diagram?
+you -> me: Sorry, I don't :-(
+me -> you: Install some tooling!
+@enduml
+```
 
-    git tag REAL-HEAD
-    git reset --hard spotless^
-    git cherry-pick -n spotless
-    ...
-    git add .
-    # do NOT run: gw spotlessApply yet!
-    # for the case you have a commit hook which runs spotlessCheck:
-    git commit --no-verify
-    git tag --force spotless
-    git push --no-verify origin spotless
-    git reset --hard REAL-HEAD
-    git tag -d REAL-HEAD
+If not, you need to install some tooling.
 
-### Mutation Testing PiTest
+##### for IntelliJ IDEA (or derived products)
 
-    ./gradlew pitest
+You just need the bundled Markdown plugin enabled and install and activate the PlantUML plugin in its settings:
 
-Runs (almost) all JUnit tests under mutation testing.
-Mutation testing is a means to determine the quality of the tests.
+jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown 
 
-On Jenkins, the results can be found in the build artifacts under:
+You might also need to install Graphviz on your operating system.
+For Debian-based Linux systems this might work:
 
--   https://ci.hostsharing.net/job/hsadmin-ng-pitest/XX/artifact/build/reports/pitest/index.html
+```sh
+sudo apt install graphviz
+```
 
-Where XX is the build number. Or for the latest build under:
 
--   https://ci.hostsharing.net/job/hsadmin-ng-pitest/lastCompletedBuild/artifact/build/reports/pitest/index.html
+##### Ubuntu Linux command line
 
-#### Some Background Information on Mutation Testing
+```sh
+sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra pandoc-plantuml-filter
+```
 
-PiTest does it with these steps:
+```sh
+pandoc --filter pandoc-plantuml rbac.md -o rbac.pdf
+```
 
--   initially PiTest checks which production code is executed by which tests
--   if the tests don't pass, it stops
--   otherwise the production code is 'mutated' and PiTest checks whether this makes a test fail ('mutant killed')
--   Finally it checks thresholds for coverage and mutant killing.
+##### for other IDEs / operating systems
 
-More information about can be found here:
+If you have figured out how it works, please add instructions above this section.
 
--   PiTest: http://pitest.org/
--   gradle-plugin: https://gradle-pitest-plugin.solidsoft.info/
+### Other Tools
 
-#### How to Configure PiTest
+**jq**: a JSON formatter. 
+On _Debian_'oid systems you can install it with `sudo apt-get install jq`.
+On _MacOS_ you can install it with `brew install jq`, given you have _brew_ installed.
 
-These thresholds can be configured in `build.gradle`,
-but we should generally not lower these.
+## Running the SQL files
 
-There is also a list of excluded files, all generated by JHipster or MapStruct, not containing any changes by us.
+### For RBAC
 
-As you might figure, mutation testing is CPU-hungry.
-To limit load in our Jenkins build server, it only uses 2 CPU threads, thus it needs over an hour.
+The Schema is automatically created via *Liquibase*, a database migration library.
+Currently, also some test data is automatically created.
 
-If you want to spend more CPU threads on your local system, you can change that via command line:
+To increase the amount of test data, increase the number of generated customers in `2022-07-28-051-hs-customer.sql` and run that
 
-    gw pitest -Doverride.pitest.threads=7
+If you already have data, e.g. for customers 0..999 (thus with reference numbers 10000..10999) and want to add another 1000 customers, amend the for loop to 1000...1999 and also uncomment and amend the `CONTINUE WHEN` or `WHERE` conditions in the other test data generators, using the first new customer reference number (in the example that's 11000).
 
-I suggest to leave one CPU thread for other tasks or your might lag extremely.
+### For Historization
 
-### Git Workflow for JHipster Generator
+The historization is not yet integrated into the *Liquibase*-scripts.
+You can explore the prototype as follows:
 
-The following workflow steps make sure that
+- start with an empty database
+  (the example tables are currently not compatible with RBAC),
+- then run `historization.sql` in the database,
+- finally run `examples.sql` in the database.
 
--   JHipster re-imports work properly,
--   the git history of changes to the JDL-files, the generated code and the master is comprehensible,
--   and merging newly generated code to the master branch is smooth.
+## Coding Guidelines
 
-It uses a git branch `jhipster-generated` to track the history of the JDL model file and the generated source code.
-Applying commits which contain non-generated changes to that branch breaks the normal git history for generated files.
-Therefore, this documentation is also not available in that branch.
-Thus:
+### Directory and Package Structure
 
-**MANUAL STEP before starting:** Copy this workflow documentation, because this file will be gone once you switched the branch.
+Generally, the standard Java directory structure is used, where productive and test code are sparated like this:
 
-| WARNING: The following steps are just a guideline. You should understand what you are doing! |
-| -------------------------------------------------------------------------------------------- |
+```
+src
+    main/
+        java/
+            net.hostsharing.hasadminng/
+        resources/
+        
+    test/
+        java/
+            net.hostsharing.hasadminng/
+        resources/
+```
 
+The Java package structure below contains:
 
-#### 1. Preparing the `jhipster-generated` git Branch
+- config and global (utility) packages,
+  these should not access any other packages within the project
+- rbac, containing all packages related to the RBAC subsystem
+- hs, containing Hostsharing business object related packages
 
-This step assumes that the latest `*.jdl` files are on the `HEAD` of the `jhipster-generated` git branch.
-On a re-import of a JDL-file, JHipster does not remove any generated classes which belong to entities deleted from the JDL-file.
-Therefore, the project has to be reset to a clean state before changes to the JDL file can be re-imported.
-We have not yet finally tested a simplified workflow for just adding new entities or properties.
+Underneath of rbac and hs, the structure is business oriented, NOT technical / layer -oriented.
 
-A git tag `jdl-base` is assumed to sit on the base commit after the application was generated, but before any entities were imported.
+Some of these rules are checked with *ArchUnit* unit tests.
 
-    git checkout jhipster-generated
-    git pull
-    git tag REAL-HEAD
-    git reset --hard jdl-base
-    git clean -f -d
-    git cherry-pick -n spotless
-    git reset --soft REAL-HEAD
-    git checkout REAL-HEAD src/main/jdl/customer.jdl
-    git checkout REAL-HEAD src/main/jdl/accessrights.jdl
-    git checkout REAL-HEAD src/main/jdl/... # once there are more
-    git tag -d REAL-HEAD
+### Spotless Code Formatting
 
-#### 2. Amending and Re-Importing the JDL
+Code formatting for Java is checked via *spotless*.
+The formatting style can be checked with this command:
 
-**MANUAL STEP:** First apply all necessary changes to the JDL files.
-Then re-import like this:
+```shell
+gw spotlessCheck
+```
 
-    # (Re-) Importing
-    jhipster import-jdl src/main/jdl/customer.jdl
-    jhipster import-jdl src/main/jdl/accessrights.jdl
-    jhipster import-jdl src/main/jdl/... # once there are more
+This task is also included in `gw build`.
 
-For smoothly being able to merge, we need the same formatting in the generated code as on the master:
+To apply formatting rules, use:
 
-    gw spotlessApply
+```shell
+gw spotlessApply
+```
 
-#### 3. Committing our Changes
 
-    git add .
-    git commit -m"..."
+## How To
 
-#### 4. Merging our Changes to the `master` Branch
+### How to Use a Persistent Database for Integration Tests?
 
-    git checkout master
-    git pull
+Usually, the `DataJpaTest` integration tests run against a database in a temporary docker container.
+As soon as the test ends, the database is gone; this might make debugging difficult.
 
-**MANUAL STEP:** If you've renamed any identifiers, use the refactoring feature of your IDE to rename in master as well.
-To avoid oodles of merge-conflicts, you need to do that **BEFORE MERGING!**
-Commit any of such changes, if any.
+Alternatively
 
-Now we can finally merge our changes to master.
+If the persistent database and the temporary database show different results, one of these reasons could be the cause:
 
-    git merge jhipster-generated
+1. You might have some changesets only running in either context,
+   check the `context: ...` in the changeset control lines.
+2. You might have changes in the database which interfere with the tests,
+   e.g. from a previous run of tests or manually applied.
+   It's best to run `pg-sql-reset && gw bootRun` before each test run, to have a clean database.
+   
+## How to Amend Liquibase SQL Changesets?
 
-It's a good idea doing this step in an IDE because it makes conflict resolving much easier.
-Typical merge conflicts stem from:
+Liquibase changesets are meant to be immutable and based on each other.
+That means, once a changeset is written, it never changes, not even a whitespace or comment.
+Liquibase is a *database migration tool*, not a *database initialization tool*.
 
--   Random numbers in test data of `*IntTest.java` files.
--   Timestamps in Liquibase-xml-Files.
+This, if you need to add change a table, stored procedure or whatever, 
+create a new changeset and apply `ALTER`, `DROP`, `CREATE OR REPLACE` or whatever SQL commands to perform your changes.
+These changes will be automatically applied once the application starts up again.
+This way, any staging or production database will always match the application code. 
 
-Now, I suggest to run all tests locally:
+But, during initial development that can be a big hassle because the database structure changes a lot in that stage.
+Also, the actual structure of the database won't be easily recognized anymore through lots of migration changesets.
 
-    gw clean test
+Therefore, during initial development, it's good approach just to amend the existing changesets and delete the database:
 
-Once everything works again, we can push our new version:
+```shell
+pg-sql-reset
+gw bootRun
+```
 
-    git push
+<big>**&#9888;**</big>
+Just don't forget switching to the migration mode, once there is a production database!
 
-#### 5. General Aftermath
+## Further Documentation
 
-Think about which additional code could be effected by your JDL-changes!
-Files which are not at all in the `jhipster-generated` branch, don't show conflicts even though they might need changes.
-
-Here some examples for amendments to be done:
-
--   in `historicization_*.xml`: the columns or their constraints
--   `sampledata/*.xml/csv`
-
-If you find more of such general cases, please add them here!
-
-#### 6. Special Aftermath for new Entities
-
-Because we have added quite some functionality, after introducing new entities, there is a lot more to amend.
-Here some issues to consider:
-
--   add sample-data for the new entity
--   internal (Angular) frontend: add table filters
--   internal (Angular) frontend: amend input fields for multiline, if applicable
--   internal (Angular) frontend: check if dates are properly formatted
--   \*Mapper: add displayLabel for entity itself and parents
--   \*DTO: add access-right annotations with customized JSON serializer/deserializer
--   Validator: implement entity-based validator and call it in the generated service
--   external API: add new type to client library
-
-WARNING: This list is most likely incomplete. Pleas add any new found issue!
-
-For many of these issues look for HOWTO-commits in git or HOWTO comments in the source code.
-
-### Generating the Table of Contents for Markdown
-
-This README file contains a table of contents generated by _doctoc_.
-It's quite simple to use:
-
-npm install -g doctoc
-doctoc --maxlevel 3 README.md
-
-Further information can be found [https://github.com/thlorenz/doctoc/blob/master/README.md](on the _doctoc_ github page).
+- the `doc` directory contains architecture concepts and a glossary
+- TODO.md tracks requirements and progress for the contract of the initial project,
+  please do not amend anything in this document

@@ -1,0 +1,31 @@
+databaseChangeLog:
+    - include:
+        file: db/changelog/2022-07-28-001-last-row-count.sql
+    - include:
+        file: db/changelog/2022-07-28-002-int-to-var.sql
+    - include:
+        file: db/changelog/2022-07-28-003-random-in-range.sql
+    - include:
+        file: db/changelog/2022-07-28-004-uuid-ossp-extension.sql
+    - include:
+        file: db/changelog/2022-07-28-005-rbac-base.sql
+    - include:
+        file: db/changelog/2022-07-28-020-rbac-role-builder.sql
+    - include:
+        file: db/changelog/2022-07-28-030-rbac-statistics.sql
+    - include:
+        file: db/changelog/2022-07-29-050-hs-base.sql
+    - include:
+        file: db/changelog/2022-07-29-060-hs-customer.sql
+    - include:
+        file: db/changelog/2022-07-29-061-hs-customer-rbac.sql
+    - include:
+        file: db/changelog/2022-07-29-062-hs-customer-test-data.sql
+    - include:
+        file: db/changelog/2022-07-29-070-hs-package.sql
+    - include:
+          file: db/changelog/2022-07-29-070-hs-package-rbac.sql
+    - include:
+          file: db/changelog/2022-07-29-070-hs-package-test-data.sql
+
+

@@ -1,0 +1,9 @@
+alias gw='./gradlew'
+alias pg-sql-run='docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:13.7-bullseye'
+alias pg-sql-stop='docker stop hsadmin-ng-postgres'
+alias pg-sql-start='docker container start hsadmin-ng-postgres'
+alias pg-sql-remove='docker rm hsadmin-ng-postgres'
+alias pg-sql-reset='pg-sql-stop; pg-sql-remove; pg-sql-run'
+alias pg-sql-backup='docker exec -i hsadmin-ng-postgres /usr/bin/pg_dump --clean --create -U postgres postgres | gzip -9'
+alias pg-sql-restore='gunzip --stdout | docker exec -i hsadmin-ng-postgres psql -U postgres -d postgres'
+

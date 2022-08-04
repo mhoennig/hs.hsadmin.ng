@@ -1,0 +1,31 @@
+spring:
+    sql:
+        init:
+            platform: postgres
+
+    datasource:
+        url: jdbc:tc:postgresql:13.7-bullseye:///spring_boot_testcontainers
+        url-local: jdbc:postgresql://localhost:5432/postgres
+        username: postgres
+        password: password
+
+    jpa:
+        properties:
+            hibernate:
+                default_schema: public
+                dialect: net.hostsharing.hsadminng.config.PostgreSQL95CustomDialect
+        hibernate:
+            ddl-auto: none
+        show-sql: true
+
+    test:
+        database:
+            replace: none
+
+    liquibase:
+        change-log: classpath:/db/changelog/db.changelog-master.yaml
+        contexts: tc,test,dev
+
+logging:
+    level:
+        liquibase: INFO

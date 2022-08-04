@@ -1,0 +1,19 @@
+spring:
+
+    datasource:
+        driver-class-name: org.postgresql.Driver
+        password: password
+        url: jdbc:postgresql://localhost:5432/postgres
+        username: postgres
+
+    sql:
+        init:
+            mode: never
+
+    jpa:
+        properties:
+            hibernate:
+                dialect: net.hostsharing.hsadminng.config.PostgreSQL95CustomDialect
+
+liquibase:
+    contexts: dev
