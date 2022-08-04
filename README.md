@@ -33,7 +33,7 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
 
     cd your-hsadmin-ng-directory
     
-    gradle wrapper  # downloads Gradle 7.5 into the project
+    gradle wrapper  # downloads the configured Gradle version into the project
     source .aliases # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
 
     gw test         # compiles and runs unit- and integration-tests
@@ -302,14 +302,20 @@ In case of suppression, a note must be added to explain why it does not apply to
 See also: https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html.
 
 
-## How To
+## How to Run the Appplication on a Different Port 
+
+By default, `gw bootRun` starts the application on port 8080.
+
+This port can be changed in
+[src/main/resources/application.yml](src/main/resources/application.yml) through the property `server.port`.
 
 ### How to Use a Persistent Database for Integration Tests?
 
 Usually, the `DataJpaTest` integration tests run against a database in a temporary docker container.
 As soon as the test ends, the database is gone; this might make debugging difficult.
 
-Alternatively
+Alternatively, a persistent database could be used by amending the
+[resources/application.yml](src/main/resources/application.yml) through the property `spring.datasource.url` in [src/test/resources/application.yml](src/test/resources/application.yml) , e.g. to the JDBC-URL from [src/main/resources/application.yml](src/main/resources/application.yml).
 
 If the persistent database and the temporary database show different results, one of these reasons could be the cause:
 
