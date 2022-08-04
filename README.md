@@ -324,3 +324,9 @@ gw bootRun
 
 <big>**&#9888;**</big>
 Just don't forget switching to the migration mode, once there is a production database!
+
+## Further Documentation
+
+- the `doc` directory contains architecture concepts and a glossary
+- TODO.md tracks requirements and progress for the contract of the initial project,
+  please do not amend anything in this document
