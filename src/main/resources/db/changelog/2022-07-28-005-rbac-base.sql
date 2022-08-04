@@ -111,11 +111,18 @@ declare
     objectUuid uuid;
 begin
     if TG_OP = 'INSERT' then
-        insert
-            into RbacObject (objectTable)
-            values (TG_TABLE_NAME)
-            returning uuid into objectUuid;
-        NEW.uuid = objectUuid;
+        if NEW.uuid is null then
+            insert
+                into RbacObject (objectTable)
+                values (TG_TABLE_NAME)
+                returning uuid into objectUuid;
+            NEW.uuid = objectUuid;
+        else
+            insert
+                into RbacObject (uuid, objectTable)
+                values (NEW.uuid, TG_TABLE_NAME)
+                returning uuid into objectUuid;
+        end if;
         return NEW;
     else
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
@@ -138,7 +145,8 @@ create table RbacRole
 (
     uuid       uuid primary key references RbacReference (uuid) on delete cascade,
     objectUuid uuid references RbacObject (uuid) not null,
-    roleType   RbacRoleType                      not null
+    roleType   RbacRoleType                      not null,
+    unique (objectUuid, roleType)
 );
 
 create type RbacRoleDescriptor as
@@ -753,7 +761,7 @@ grant all privileges on all tables in schema public to restricted;
  */
 drop view if exists rbacrole_rv;
 create or replace view rbacrole_rv as
-select r.*, o.objectTable,
+select DISTINCT r.*, o.objectTable,
        findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
     from rbacrole as r
     join rbacobject as o on o.uuid=r.objectuuid

@@ -22,13 +22,14 @@ public class CustomerController {
     @Transactional
     public List<CustomerEntity> listCustomers(
         @RequestHeader(value = "current-user") String userName,
-        @RequestHeader(value = "assumed-roles", required = false) String assumedRoles
+        @RequestHeader(value = "assumed-roles", required = false) String assumedRoles,
+        @RequestParam(required = false) String prefix
     ) {
         context.setCurrentUser(userName);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return customerRepository.findAll();
+        return customerRepository.findCustomerByOptionalPrefix(prefix);
     }
 
     @PostMapping(value = "/api/customers")
@@ -48,5 +49,4 @@ public class CustomerController {
         }
         return customerRepository.save(customer);
     }
-
 }

@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,13 +27,13 @@ class CustomerControllerRestTest {
     CustomerRepository customerRepositoryMock;
 
     @Test
-    void apiCustomersWillReturnCustomersFromRepository() throws Exception {
+    void apiCustomersWillReturnAllCustomersFromRepositoryIfNoCriteriaGiven() throws Exception {
 
         // given
-        when(customerRepositoryMock.findAll()).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
+        when(customerRepositoryMock.findCustomerByOptionalPrefix(null)).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
 
         // when
-        final var pacs = mockMvc.perform(MockMvcRequestBuilders
+        mockMvc.perform(MockMvcRequestBuilders
                 .get("/api/customers")
                 .header("current-user", "mike@hostsharing.net")
                 .accept(MediaType.APPLICATION_JSON))
@@ -43,5 +43,24 @@ class CustomerControllerRestTest {
             .andExpect(jsonPath("$", hasSize(2)))
             .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix())))
             .andExpect(jsonPath("$[1].reference", is(TestCustomer.yyy.getReference())));
+    }
+
+    @Test
+    void apiCustomersWillReturnMatchingCustomersFromRepositoryIfCriteriaGiven() throws Exception {
+
+        // given
+        when(customerRepositoryMock.findCustomerByOptionalPrefix("x")).thenReturn(asList(TestCustomer.xxx));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                .get("/api/customers")
+                .header("current-user", "mike@hostsharing.net")
+                .param("prefix", "x")
+                .accept(MediaType.APPLICATION_JSON))
+
+            // then
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix())));
     }
 }

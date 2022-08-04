@@ -1,8 +1,6 @@
 package net.hostsharing.hsadminng.hs.hscustomer;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.hscustomer.CustomerEntity;
-import net.hostsharing.hsadminng.hs.hscustomer.CustomerRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,13 +38,17 @@ class CustomerRepositoryIntegrationTest {
             currentUser("mike@hostsharing.net");
 
             // when
-            final var newCustomer = new CustomerEntity(
-                UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
-            final var result = customerRepository.save(newCustomer);
+
+            final var attempt = attempt(em, () -> {
+                final var newCustomer = new CustomerEntity(
+                    UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
+                return customerRepository.save(newCustomer);
+            });
 
             // then
-            assertThat(result).isNotNull().extracting(CustomerEntity::getUuid).isNotNull();
-            assertThatCustomerIsPersisted(result);
+            assertThat(attempt.wasSuccessful()).isTrue();
+            assertThat(attempt.returnedResult()).isNotNull().extracting(CustomerEntity::getUuid).isNotNull();
+            assertThatCustomerIsPersisted(attempt.returnedResult());
         }
 
         @Test
@@ -88,8 +90,8 @@ class CustomerRepositoryIntegrationTest {
         }
 
         private void assertThatCustomerIsPersisted(final CustomerEntity saved) {
-            final var found = customerRepository.findById(saved.getUuid());
-            assertThat(found).hasValue(saved);
+            final var found = customerRepository.findByUuid(saved.getUuid());
+            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
         }
     }
 
@@ -102,7 +104,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("mike@hostsharing.net");
 
             // when
-            final var result = customerRepository.findAll();
+            final var result = customerRepository.findCustomerByOptionalPrefix(null);
 
             // then
             exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
@@ -115,7 +117,7 @@ class CustomerRepositoryIntegrationTest {
             assumedRoles("global#hostsharing.admin");
 
             // when
-            final var result = customerRepository.findAll();
+            final var result = customerRepository.findCustomerByOptionalPrefix(null);
 
             then:
             exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
@@ -127,7 +129,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
 
             // when:
-            final var result = customerRepository.findAll();
+            final var result = customerRepository.findCustomerByOptionalPrefix(null);
 
             // then:
             exactlyTheseCustomersAreReturned(result, "aaa");
@@ -138,7 +140,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
             assumedRoles("package#aaa00.admin");
 
-            final var result = customerRepository.findAll();
+            final var result = customerRepository.findCustomerByOptionalPrefix(null);
 
             exactlyTheseCustomersAreReturned(result, "aaa");
         }
@@ -152,7 +154,7 @@ class CustomerRepositoryIntegrationTest {
             // when
             final var attempt = attempt(
                 em,
-                () -> customerRepository.findAll());
+                () -> customerRepository.findCustomerByOptionalPrefix(null));
 
             // then
             attempt.assertExceptionWithRootCauseMessage(
@@ -166,7 +168,7 @@ class CustomerRepositoryIntegrationTest {
 
             final var attempt = attempt(
                 em,
-                () -> customerRepository.findAll());
+                () -> customerRepository.findCustomerByOptionalPrefix(null));
 
             attempt.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
@@ -181,13 +183,41 @@ class CustomerRepositoryIntegrationTest {
 
             final var attempt = attempt(
                 em,
-                () -> customerRepository.findAll());
+                () -> customerRepository.findCustomerByOptionalPrefix(null));
 
             attempt.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
+    }
+
+    @Nested
+    class FindByPrefixLike {
+
+        @Test
+        public void hostsharingAdmin_withoutAssumedRole_canViewAllCustomers() {
+            // given
+            currentUser("mike@hostsharing.net");
+
+            // when
+            final var result = customerRepository.findCustomerByOptionalPrefix("aab");
+
+            // then
+            exactlyTheseCustomersAreReturned(result, "aab");
+        }
+
+        @Test
+        public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
+            // given:
+            currentUser("admin@aaa.example.com");
+
+            // when:
+            final var result = customerRepository.findCustomerByOptionalPrefix("aab");
+
+            // then:
+            exactlyTheseCustomersAreReturned(result);
+        }
     }
 
     void currentUser(final String currentUser) {
