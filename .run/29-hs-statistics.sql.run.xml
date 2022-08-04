@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="29-hs-statistics.sql" type="DatabaseScript" editBeforeRun="true" nameIsGenerated="true">
-    <script-file value="$PROJECT_DIR$/sql/29-hs-statistics.sql" />
-    <script-mode>FILE</script-mode>
-    <data-source id="58980aaf-09d7-4782-a6fa-859aa1fc3986" namespace="database/&quot;postgres&quot;/schema/&quot;public&quot;" />
-    <method v="2" />
-  </configuration>
-</component>
