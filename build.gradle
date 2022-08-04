@@ -72,3 +72,13 @@ spotless {
         toggleOffOn()
     }
 }
+project.tasks.check.dependsOn(spotlessCheck)
+
+dependencyCheck {
+    cveValidForHours=4
+    format = 'ALL'
+    suppressionFile = 'etc/owasp-dependency-check-suppression.xml'
+    failOnError = true
+    failBuildOnCVSS = 7
+}
+project.tasks.check.dependsOn(dependencyCheckAnalyze)

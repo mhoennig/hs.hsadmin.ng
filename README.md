@@ -266,6 +266,7 @@ Underneath of rbac and hs, the structure is business oriented, NOT technical / l
 
 Some of these rules are checked with *ArchUnit* unit tests.
 
+
 ### Spotless Code Formatting
 
 Code formatting for Java is checked via *spotless*.
@@ -275,13 +276,30 @@ The formatting style can be checked with this command:
 gw spotlessCheck
 ```
 
-This task is also included in `gw build`.
+This task is also included in `gw build` and `gw check`.
 
 To apply formatting rules, use:
 
 ```shell
 gw spotlessApply
 ```
+
+### OWASP Security Vulnerability Check
+
+An OWASP security vulnerability is configured and can be utilized by running:
+
+```shell
+gw dependencyCheckAnalyze
+```
+
+This task is also included in `gw build` and `gw check`.
+It is configured in [build.gradle](build.gradle).
+
+Often vulnerability reports don't apply to our use cases.
+Therefore, reports can be [suppressed](./etc/owasp-dependency-check-suppression.xml).
+In case of suppression, a note must be added to explain why it does not apply to us.
+
+See also: https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html.
 
 
 ## How To

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes><![CDATA[
+            We don't use the Spring HTTP invoker which causes this vulnerability due to Java deserialization.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework/spring-web@.*$</packageUrl>
+        <cve>CVE-2016-1000027</cve>
+    </suppress>
+</suppressions>
