@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.hscustomer;
 
-import net.hostsharing.hsadminng.hs.hscustomer.CustomerEntity;
 
 import static java.util.UUID.randomUUID;
 

@@ -14,4 +14,3 @@ public interface RbacRoleRepository extends Repository<RbacRoleEntity, UUID> {
      */
     List<RbacRoleEntity> findAll();
 }
-

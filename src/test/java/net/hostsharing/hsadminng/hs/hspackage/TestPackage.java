@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.hspackage;
 
 import net.hostsharing.hsadminng.hs.hscustomer.CustomerEntity;
-import net.hostsharing.hsadminng.hs.hspackage.PackageEntity;
 import net.hostsharing.hsadminng.hs.hscustomer.TestCustomer;
 
 import static java.util.UUID.randomUUID;

@@ -23,13 +23,13 @@ This document is just for tracking the initial development project and thus only
 
 | ID  | Beschreibung                                               |   Budget | Aufwand | Leistung |
 |:----|:-----------------------------------------------------------|---------:|--------:|---------:|
-| DEV | Aufbau der Entwicklungsumgebung (bis inkl. Unit-Tests)     |       16 |         |          |
-| ATN | Entwurf des Authorisierungs-Systems                        |       40 |     100 |       36 |
+| DEV | Aufbau der Entwicklungsumgebung (bis inkl. Unit-Tests)     |       16 |      12 |       16 |
+| ATN | Entwurf des Authorisierungs-Systems                        |       40 |      68 |       36 |
 | ATZ | Auswahl und Implementierung des Authentifizierungs-Systems |       20 |         |          |
-| ITS | Aufbau einer Umgebung für Integrationstests (*1)           |        4 |       4 |       20 |
-| ATS | Aufbau einer Umgebung für Akzeptanzteste (*1)              |       16 |       3 |        4 |
+| ITS | Aufbau einer Umgebung für Integrationstests (*1)           |        4 |       4 |        4 |
+| ATS | Aufbau einer Umgebung für Akzeptanztests (*1)              |       16 |       3 |          |
 | PIP | Aufbau einer Build- und Testpipeline                       |       20 |         |          |
-| ARC | Aufbau einer Architekturkontrolle                          |        8 |         |          |
+| ARC | Aufbau einer Architekturkontrolle                          |        8 |       2 |        2 |
 |     |                                                            |          |         |          |
 
 (*1: ITS+ATS sind aufgesplittet aus TST mit 20 geplanten Stunden entstanden)

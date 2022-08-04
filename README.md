@@ -236,6 +236,54 @@ You can explore the prototype as follows:
 - then run `historization.sql` in the database,
 - finally run `examples.sql` in the database.
 
+## Coding Guidelines
+
+### Directory and Package Structure
+
+Generally, the standard Java directory structure is used, where productive and test code are sparated like this:
+
+```
+src
+    main/
+        java/
+            net.hostsharing.hasadminng/
+        resources/
+        
+    test/
+        java/
+            net.hostsharing.hasadminng/
+        resources/
+```
+
+The Java package structure below contains:
+
+- config and global (utility) packages,
+  these should not access any other packages within the project
+- rbac, containing all packages related to the RBAC subsystem
+- hs, containing Hostsharing business object related packages
+
+Underneath of rbac and hs, the structure is business oriented, NOT technical / layer -oriented.
+
+Some of these rules are checked with *ArchUnit* unit tests.
+
+### Spotless Code Formatting
+
+Code formatting for Java is checked via *spotless*.
+The formatting style can be checked with this command:
+
+```shell
+gw spotlessCheck
+```
+
+This task is also included in `gw build`.
+
+To apply formatting rules, use:
+
+```shell
+gw spotlessApply
+```
+
+
 ## How To
 
 ### How to Use a Persistent Database for Integration Tests?
