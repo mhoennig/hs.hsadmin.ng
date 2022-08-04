@@ -30,7 +30,7 @@ class CustomerControllerRestTest {
     void apiCustomersWillReturnAllCustomersFromRepositoryIfNoCriteriaGiven() throws Exception {
 
         // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefix(null)).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -49,7 +49,7 @@ class CustomerControllerRestTest {
     void apiCustomersWillReturnMatchingCustomersFromRepositoryIfCriteriaGiven() throws Exception {
 
         // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefix("x")).thenReturn(asList(TestCustomer.xxx));
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike("x")).thenReturn(asList(TestCustomer.xxx));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders

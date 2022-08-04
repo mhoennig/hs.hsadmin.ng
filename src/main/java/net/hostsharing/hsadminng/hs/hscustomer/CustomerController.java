@@ -29,11 +29,10 @@ public class CustomerController {
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return customerRepository.findCustomerByOptionalPrefix(prefix);
+        return customerRepository.findCustomerByOptionalPrefixLike(prefix);
     }
 
     @PostMapping(value = "/api/customers")
-    @ResponseStatus
     @Transactional
     public CustomerEntity addCustomer(
         @RequestHeader(value = "current-user") String userName,

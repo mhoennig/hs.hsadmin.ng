@@ -9,7 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static java.util.Arrays.asList;
+import java.util.List;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
@@ -28,11 +29,11 @@ class PackageControllerRestTest {
     PackageRepository packageRepositoryMock;
 
     @Test
-    void findAll() throws Exception {
+    void listPackagesWithoutNameParameter() throws Exception {
 
         // given
-        final var givenPacs = asList(TestPackage.xxx00, TestPackage.xxx01, TestPackage.xxx02);
-        when(packageRepositoryMock.findAll()).thenReturn(givenPacs);
+        final var givenPacs = List.of(TestPackage.xxx00, TestPackage.xxx01, TestPackage.xxx02);
+        when(packageRepositoryMock.findAllByOptionalNameLike(null)).thenReturn(givenPacs);
 
         // when
         final var pacs = mockMvc.perform(MockMvcRequestBuilders
@@ -52,4 +53,26 @@ class PackageControllerRestTest {
         verify(contextMock).assumeRoles("customer#xxx.admin");
     }
 
+    @Test
+    void listPackagesWithNameParameter() throws Exception {
+
+        // given
+        final var givenPacs = List.of(TestPackage.xxx01);
+        when(packageRepositoryMock.findAllByOptionalNameLike("xxx01")).thenReturn(givenPacs);
+
+        // when
+        final var pacs = mockMvc.perform(MockMvcRequestBuilders
+                .get("/api/packages?name=xxx01")
+                .header("current-user", "mike@hostsharing.net")
+                .header("assumed-roles", "customer#xxx.admin")
+                .accept(MediaType.APPLICATION_JSON))
+
+            // then
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].name", is("xxx01")));
+
+        verify(contextMock).setCurrentUser("mike@hostsharing.net");
+        verify(contextMock).assumeRoles("customer#xxx.admin");
+    }
 }

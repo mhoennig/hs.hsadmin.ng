@@ -14,7 +14,7 @@ public interface CustomerRepository extends Repository<CustomerEntity, UUID> {
     Optional<CustomerEntity> findByUuid(UUID id);
 
     @Query("SELECT c FROM CustomerEntity c WHERE :prefix is null or c.prefix like concat(:prefix, '%')")
-    List<CustomerEntity> findCustomerByOptionalPrefix(@Param("prefix") String prefix);
+    List<CustomerEntity> findCustomerByOptionalPrefixLike(@Param("prefix") String prefix);
 
     CustomerEntity save(final CustomerEntity entity);
 

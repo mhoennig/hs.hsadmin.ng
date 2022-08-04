@@ -104,7 +104,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("mike@hostsharing.net");
 
             // when
-            final var result = customerRepository.findCustomerByOptionalPrefix(null);
+            final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             // then
             exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
@@ -117,7 +117,7 @@ class CustomerRepositoryIntegrationTest {
             assumedRoles("global#hostsharing.admin");
 
             // when
-            final var result = customerRepository.findCustomerByOptionalPrefix(null);
+            final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             then:
             exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
@@ -129,7 +129,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
 
             // when:
-            final var result = customerRepository.findCustomerByOptionalPrefix(null);
+            final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             // then:
             exactlyTheseCustomersAreReturned(result, "aaa");
@@ -140,7 +140,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
             assumedRoles("package#aaa00.admin");
 
-            final var result = customerRepository.findCustomerByOptionalPrefix(null);
+            final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             exactlyTheseCustomersAreReturned(result, "aaa");
         }
@@ -154,7 +154,7 @@ class CustomerRepositoryIntegrationTest {
             // when
             final var attempt = attempt(
                 em,
-                () -> customerRepository.findCustomerByOptionalPrefix(null));
+                () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             // then
             attempt.assertExceptionWithRootCauseMessage(
@@ -168,7 +168,7 @@ class CustomerRepositoryIntegrationTest {
 
             final var attempt = attempt(
                 em,
-                () -> customerRepository.findCustomerByOptionalPrefix(null));
+                () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             attempt.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
@@ -183,7 +183,7 @@ class CustomerRepositoryIntegrationTest {
 
             final var attempt = attempt(
                 em,
-                () -> customerRepository.findCustomerByOptionalPrefix(null));
+                () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             attempt.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
@@ -201,7 +201,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("mike@hostsharing.net");
 
             // when
-            final var result = customerRepository.findCustomerByOptionalPrefix("aab");
+            final var result = customerRepository.findCustomerByOptionalPrefixLike("aab");
 
             // then
             exactlyTheseCustomersAreReturned(result, "aab");
@@ -213,7 +213,7 @@ class CustomerRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
 
             // when:
-            final var result = customerRepository.findCustomerByOptionalPrefix("aab");
+            final var result = customerRepository.findCustomerByOptionalPrefixLike("aab");
 
             // then:
             exactlyTheseCustomersAreReturned(result);

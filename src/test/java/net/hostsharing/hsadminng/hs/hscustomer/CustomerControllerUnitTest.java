@@ -27,7 +27,7 @@ class CustomerControllerUnitTest {
     void apiCustomersWillReturnCustomersFromRepository() throws Exception {
 
         // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefix(null)).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
 
         // when
         final var pacs = customerController.listCustomers("mike@hostsharing.net", null, null);
@@ -42,7 +42,7 @@ class CustomerControllerUnitTest {
     void findAllWithAssumedCustomerAdminRole() throws Exception {
 
         // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefix(null)).thenReturn(singletonList(TestCustomer.yyy));
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(singletonList(TestCustomer.yyy));
 
         // when
         final var pacs = customerController.listCustomers("mike@hostsharing.net", "customer#yyy.admin", null);
