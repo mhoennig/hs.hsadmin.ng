@@ -23,7 +23,7 @@ create or replace procedure createPackageTestData(
             loop
                 CONTINUE WHEN cust.reference < minCustomerReference;
 
-                for t in 0..randominrange(1, 2)
+                for t in 0..2
                     loop
                         pacName = cust.prefix || to_char(t, 'fm00');
                         currentTask = 'creating RBAC test package #' || pacName || ' for customer ' || cust.prefix || ' #' ||
@@ -59,4 +59,3 @@ do language plpgsql $$
     end;
 $$;
 --//
-

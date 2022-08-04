@@ -179,7 +179,6 @@ declare
     userUuid      uuid;
 begin
     raise notice 'will createRole for %', roleDescriptor;
-    raise notice 'will createRole for % % %', roleDescriptor.objecttable, roleDescriptor.objectuuid, roleDescriptor.roletype;
     roleUuid = createRole(roleDescriptor);
 
     call grantPermissionsToRole(roleUuid, permissions.permissionUuids);

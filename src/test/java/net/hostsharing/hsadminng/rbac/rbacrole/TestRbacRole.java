@@ -1,0 +1,14 @@
+package net.hostsharing.hsadminng.rbac.rbacrole;
+
+import static java.util.UUID.randomUUID;
+
+public class TestRbacRole {
+
+    public static final RbacRoleEntity hostmasterRole = rbacRole("global", "hostsharing", RbacRoleType.admin);
+    static final RbacRoleEntity customerXxxOwner = rbacRole("customer", "xxx", RbacRoleType.owner);
+    static final RbacRoleEntity customerXxxAdmin = rbacRole("customer", "xxx", RbacRoleType.admin);
+
+    static public RbacRoleEntity rbacRole(final String objectTable, final String objectIdName, final RbacRoleType roleType) {
+        return new RbacRoleEntity(randomUUID(), randomUUID(), objectTable, objectIdName, roleType, objectTable+'#'+objectIdName+'.'+roleType);
+    }
+}

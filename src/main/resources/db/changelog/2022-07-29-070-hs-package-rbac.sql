@@ -24,7 +24,7 @@ create or replace function packageOwner(pac package)
     returns null on null input
     language plpgsql as $$
 begin
-    return roleDescriptor('package', pac.uuid, 'admin');
+    return roleDescriptor('package', pac.uuid, 'owner');
 end; $$;
 
 create or replace function packageAdmin(pac package)
