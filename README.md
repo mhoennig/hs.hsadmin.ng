@@ -183,9 +183,7 @@ If not, you need to install some tooling.
 
 ##### for IntelliJ IDEA (or derived products)
 
-You just need the bundled Markdown plugin enabled and install and activate the PlantUML plugin in its settings:
-
-jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown 
+You just need the bundled Markdown plugin enabled and install and activate the PlantUML plugin in its [settings](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown). 
 
 You might also need to install Graphviz on your operating system.
 For Debian-based Linux systems this might work:
