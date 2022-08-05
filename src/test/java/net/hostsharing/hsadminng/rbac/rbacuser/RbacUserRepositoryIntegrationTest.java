@@ -268,6 +268,18 @@ class RbacUserRepositoryIntegrationTest {
         }
 
         @Test
+        public void customerAdmin_withoutAssumedRole_canNotViewPermissionsOfUnrelatedUsers() {
+            // given
+            currentUser("admin@aaa.example.com");
+
+            // when
+            final var result = rbacUserRepository.findPermissionsOfUser("aab00@aab.example.com");
+
+            // then
+            noRbacPermissionsAreReturned(result);
+        }
+
+        @Test
         public void packetAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
             currentUser("aaa00@aaa.example.com");
@@ -303,6 +315,14 @@ class RbacUserRepositoryIntegrationTest {
             .extracting(RbacUserEntity::getName)
             .containsExactlyInAnyOrder(expectedUserNames);
     }
+
+    void noRbacPermissionsAreReturned(
+        final List<RbacUserPermission> actualResult) {
+        assertThat(actualResult)
+            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+            .containsExactlyInAnyOrder();
+    }
+
 
     void exactlyTheseRbacPermissionsAreReturned(
         final List<RbacUserPermission> actualResult,
