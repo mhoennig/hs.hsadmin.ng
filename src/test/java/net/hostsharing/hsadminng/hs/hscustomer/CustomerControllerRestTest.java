@@ -9,10 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static java.util.Arrays.asList;
+import java.util.List;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,10 +29,12 @@ class CustomerControllerRestTest {
     CustomerRepository customerRepositoryMock;
 
     @Test
-    void apiCustomersWillReturnAllCustomersFromRepositoryIfNoCriteriaGiven() throws Exception {
+    void listCustomersWillReturnAllCustomersFromRepositoryIfNoCriteriaGiven() throws Exception {
 
         // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(asList(TestCustomer.xxx, TestCustomer.yyy));
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(List.of(
+            TestCustomer.xxx,
+            TestCustomer.yyy));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -42,14 +46,19 @@ class CustomerControllerRestTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(2)))
             .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix())))
-            .andExpect(jsonPath("$[1].reference", is(TestCustomer.yyy.getReference())));
+            .andExpect(jsonPath("$[1].reference", is(TestCustomer.yyy.getReference()))
+            );
+
+        // then
+        verify(contextMock).setCurrentUser("mike@hostsharing.net");
+        verify(contextMock, never()).assumeRoles(anyString());
     }
 
     @Test
-    void apiCustomersWillReturnMatchingCustomersFromRepositoryIfCriteriaGiven() throws Exception {
+    void listCustomersWillReturnMatchingCustomersFromRepositoryIfCriteriaGiven() throws Exception {
 
         // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefixLike("x")).thenReturn(asList(TestCustomer.xxx));
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike("x")).thenReturn(List.of(TestCustomer.xxx));
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -61,6 +70,36 @@ class CustomerControllerRestTest {
             // then
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(1)))
-            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix())));
+            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix()))
+            );
+
+        // then
+        verify(contextMock).setCurrentUser("mike@hostsharing.net");
+        verify(contextMock, never()).assumeRoles(anyString());
     }
+
+    @Test
+    void listCustomersWillReturnAllCustomersForGivenAssumedRoles() throws Exception {
+
+        // given
+        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(List.of(TestCustomer.yyy));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                .get("/api/customers")
+                .header("current-user", "mike@hostsharing.net")
+                .header("assumed-roles", "admin@yyy.example.com")
+                .accept(MediaType.APPLICATION_JSON))
+
+            // then
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.yyy.getPrefix()))
+            );
+
+        // then
+        verify(contextMock).setCurrentUser("mike@hostsharing.net");
+        verify(contextMock).assumeRoles("admin@yyy.example.com");
+    }
+
 }

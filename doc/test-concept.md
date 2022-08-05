@@ -43,7 +43,7 @@ These Tests are always named `...UnitTest` and can automatically run in the buil
 
 #### REST-Tests
 
-At the level of REST-Controllers, *Spring's* `WebMvcTest`, a special kind of Unit-Test, are utilized.
+At the level of REST-Controllers, *Spring's* `WebMvcTest`, a special kind of Unit-Test, are utilized to replace simple unit tests.
 Such tests issue REST-requests through a mocked REST-Layer and therefore use the controllers similar to a real client.
 Otherwise, the implementation technologies are like those of Unit-Tests.
 
