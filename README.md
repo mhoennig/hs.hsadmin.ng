@@ -23,8 +23,10 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
 - Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
-- PostgreSQL Server 13.7-bullseye (see instructions below to install and run in Docker)
-- Java JDK 17.x
+- PostgreSQL Server 13.7-bullseye 
+  (see instructions below to install and run in Docker)
+- Java JDK at least recent enough to run Gradle
+  (JDK 17.x will be automatically installed by Gradle toolchain support)
 - Gradle in some not too outdated version (7.4 will be installed via wrapper)
 
 You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
@@ -207,6 +209,17 @@ pandoc --filter pandoc-plantuml rbac.md -o rbac.pdf
 
 If you have figured out how it works, please add instructions above this section.
 
+### IDE Specific Settings
+
+#### IntelliJ IDEA
+
+Go to [Gradle Settings}(jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Build+Tools--Gradle) and select "Build and run using" and "Run tests using" both to "gradle".
+Otherwise, settings from `build.gradle`, like compiler arguments, are not applied when compiling through *IntelliJ IDEA*.
+
+Go to [Annotations Processors](jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Compiler--Annotation+Processors) and activate annotation processing.
+Otherwise, *IntelliJ IDEA* can't see *Lombok* generated classes 
+and will show false errors (missing identifiers).
+
 ### Other Tools
 
 **jq**: a JSON formatter. 
@@ -238,7 +251,46 @@ You can explore the prototype as follows:
 
 ### Directory and Package Structure
 
-Generally, the standard Java directory structure is used, where productive and test code are sparated like this:
+#### General Directory Structure
+
+.aliases
+
+build/
+
+build.gradle
+
+doc/
+
+.editorconfig
+
+etc/
+
+.git/
+
+.gitattributes
+
+.gitignore
+
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+.idea/
+LICENSE.md
+out/
+README.md
+.run/
+settings.gradle
+sql/
+src/
+TODO.md
+TODO-progress.png
+tools/
+
+
+#### Source Code Package Structure
+
+For the source code itself, the general standard Java directory structure is used, where productive and test code are separated like this:
 
 ```
 src

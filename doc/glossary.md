@@ -62,3 +62,13 @@ A whitebox-test knows and considers the internals of an implementation, e.g. it 
 
 A "double" is a general term for something which replaces a real implementation of a dependency of the unit under test.
 This can be a "dummy", a "fake", a "mock", a "spy" or a "stub".
+
+
+#### Test-Fixture
+
+Generally a test-fixture refers to all code within a test 
+which is needed to setup the test environment and extract results, 
+but which is not part of the test-cases.
+
+In other words: The code which is needed to bind test-cases to the actual unit under test,
+is called test-fixture.

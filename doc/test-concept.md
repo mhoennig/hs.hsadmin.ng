@@ -9,12 +9,15 @@
 - [System-Integration-Tests](#system-integration-tests)
 <!-- generated TOC end. -->
 
-### General Issues
+### General Concepts
 
 The following test concept uses terms like "double" and "mock" (maybe in inflected form like "mocking" or "mocked"), "whitebox-test" and "blackbox-tests" and "test-fixture".
 Please look up their definition in the [glossary](glossary.md)
 
 Where our APIs should be designed in a way that it's possible, using a mocking library like *Mockito* often leads to shorter test code.
+
+Most important for a test is, to clearly express what it actually is testing.
+For this, it might help to wrap test setup and assertions into test fixture 
 
 
 ### Kinds of Tests
@@ -26,7 +29,7 @@ Depending on the concrete aspects which we want to test, we are using different 
 In this project a *Unit* for *UnitTests* can be a single method (function), a class or even a group of classes which express a common concept.
 
 The unit are technically whitebox-tests and count into test-code-coverage.
-But the whitebox-knowledge should only be used for the text-fixture.
+But the whitebox-knowledge should only be used for the [test-fixture](./glossary.md#test-fixture).
 
 Unit-Test in this project are implemented with *JUnit Jupiter*, *Mockito* and *AssertJ*.
 
@@ -65,9 +68,16 @@ Such tests are implemented with *JUnit Jupiter* through some sort of `@SpringBoo
 *Mockito* can also be used for this kind of tests, to separate multiple integrations.
 
 Integration-Tests are relatively slow and therefore should focus on the integration.
-Internal issues should be tested through Unit-Tests.
+Java-internal issues should be tested through Unit-Tests.
 
 These Tests are always named `...IntegrationTest` and can automatically run in the build-process.
+
+##### DataJpaTest / Database-Integration-Tests
+
+In this project, a major part of the program logic is coded in the database as stored procedures, functions and triggers.
+
+This program logic is tested through *integration tests* using `DataJpaTest`
+because pure unit tests in the database are not only cumbersome but also easily lead to large test gaps. 
 
 
 #### Acceptance-Tests
