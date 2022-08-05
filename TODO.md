@@ -27,12 +27,13 @@ This document is just for tracking the initial development project and thus only
 | ATN | Entwurf des Authorisierungs-Systems                        |       40 |      68 |       36 |
 | ATZ | Auswahl und Implementierung des Authentifizierungs-Systems |       20 |         |          |
 | ITS | Aufbau einer Umgebung für Integrationstests (*1)           |        4 |       4 |        4 |
-| ATS | Aufbau einer Umgebung für Akzeptanztests (*1)              |       16 |       3 |          |
+| ATS | Aufbau einer Umgebung für Akzeptanztests (*1, *2)          |       16 |       3 |          |
 | PIP | Aufbau einer Build- und Testpipeline                       |       20 |         |          |
 | ARC | Aufbau einer Architekturkontrolle                          |        8 |       2 |        2 |
 |     |                                                            |          |         |          |
 
 (*1: ITS+ATS sind aufgesplittet aus TST mit 20 geplanten Stunden entstanden)
+(*2: laut Besprechung am 3. August 2022 als SpringBootTests mit JUnit)
 
 ### Leistungen bezogen auf fachliche Objekte
 
@@ -41,7 +42,8 @@ This document is just for tracking the initial development project and thus only
 | ROL | Rollen                 | Hostmaster     | Scrulojtx    |     26 |      10 |        5 |
 | USR | LDAP-User              | Hostmaster     | Scrufojtex   |     29 |      10 |        5 |
 | USR | LDAP-User              | LDAP-User      | rufojex      |     20 |      10 |          |
-| GRP | Gruppen                | Hostmaster     | scrulojtx    |     26 |         |          |
+| PRM | Permissions (*1)       | dynamisch      | SCR-l---X    |     15 |      12 |          |
+| GRP | Gruppen (*1)           | Hostmaster     | scrulojtx    |      1 |       1 |        1 |
 | CBD | Customer Base          | Sachbearbeiter | ScruLojia    |     20 |      10 |        4 |
 | CBD | Customer Base          | Kunde          | sr           |      5 |       1 |          |
 | MSV | Managed Virtual Server | Hostmaster     | crudfoj      |     20 |         |          |
@@ -64,6 +66,10 @@ This document is just for tracking the initial development project and thus only
 | DUM | Database-User MariaDB  | Admin          | -            |      0 |         |          |
 | DUM | Database-User MariaDB  | Admin          | -            |      9 |         |          |
 |     |                        |                |              |        |         |          |
+| n/a | Not Assigned           | -              | -            |     10 |         |          |
+|     |                        |                |              |        |         |          |
+
+(*1: GRP: Gruppen wurde durch PRM: Permissions ersetzt)
 
 **Ops Agenda**: **S**: Schema, **V**: View, **C**: Create, **R**: Read, **U**: Update, **D**: Delete, **L**: List, **F**: Filter, **O**: Optimistic Locking, **J**: Journal (Audit), **H**: Historization, **U**: Undo, **I**: Inactivate, **T**: Tombstone, **A**: Archive, **E**: Event, **X**: Extraordinary
 
