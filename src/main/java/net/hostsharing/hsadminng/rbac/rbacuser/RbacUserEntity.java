@@ -14,30 +14,6 @@ import java.util.UUID;
 @Immutable
 @NoArgsConstructor
 @AllArgsConstructor
-//@SqlResultSetMapping(
-//    name = "rbacUserPermissionMapping",
-//    classes = {
-//        @ConstructorResult(
-//            targetClass = RbacUserPermission.class,
-//            columns = {
-//                @ColumnResult(name = "roleUuid", type = UUID.class),
-//                @ColumnResult(name = "oleName", type = String.class),
-//                @ColumnResult(name = "permissionUuid", type = UUID.class),
-//                @ColumnResult(name = "op", type=String.class),
-//                @ColumnResult(name = "objectTable", type=String.class),
-//                @ColumnResult(name = "objectIdName", type =String.class),
-//                @ColumnResult(name = "objectUuid", type = UUID.class),
-//                @ColumnResult(name = "campId", type = Integer.class),
-//                @ColumnResult(name = "userCount", type = Byte.class)
-//            }
-//        )
-//    }
-//)
-//@NamedNativeQuery(
-//    name = "grantedPermissions",
-//    query = "SELECT * FROM grantedPermissions(:userName)",
-//    resultSetMapping = "rbacUserPermissionMapping"
-//)
 public class RbacUserEntity {
 
     @Id

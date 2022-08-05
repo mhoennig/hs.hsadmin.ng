@@ -61,31 +61,45 @@ grant all privileges on RbacOwnGrantedPermissions_rv to restricted;
 /*
     Returns all permissions granted to the given user,
     which are also visible to the current user or assumed roles.
+
+
  */
 create or replace function grantedPermissions(userName varchar)
     returns table(roleUuid uuid, roleName text, permissionUuid uuid, op RbacOp, objectTable varchar, objectIdName varchar, objectUuid uuid)
     returns null on null input
     language plpgsql as $$
+declare
+    targetUserId uuid;
+    currentUserId uuid;
 begin
     -- @formatter:off
     if cardinality(assumedRoles()) > 0 then
-        raise exception 'grantedPermissions(...) does not support assumed roles';
+        raise exception '[400] grantedPermissions(...) does not support assumed roles';
+    end if;
+
+    targetUserId := findRbacUserId(userName);
+    currentUserId := currentUserId();
+
+    if hasGlobalRoleGranted(targetUserId) and not hasGlobalRoleGranted(currentUserId) then
+        raise exception '[403] permissions of user "%" are not accessible to user "%"', userName, currentUser();
     end if;
 
     return query select
         xp.roleUuid,
-        (xp.objecttable || '#' || xp.objectidname || '.' || xp.roletype) as roleName,
-        xp.permissionUuid, xp.op, xp.objecttable, xp.objectIdName, xp.objectuuid
+        (xp.roleObjectTable || '#' || xp.roleObjectIdName || '.' || xp.roleType) as roleName,
+        xp.permissionUuid, xp.op, xp.permissionObjectTable, xp.permissionObjectIdName, xp.permissionObjectUuid
         from (select
-                  r.uuid as roleUuid, r.roletype,
-                  p.uuid as permissionUuid, p.op, o.objecttable,
-                  findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName,
-                  o.uuid as objectuuid
-                  from queryPermissionsGrantedToSubjectId( findRbacUserId(userName)) p
-                           join rbacgrants g on g.descendantuuid = p.uuid
-                           join rbacobject o on o.uuid = p.objectuuid
-                           join rbacrole r on r.uuid = g.ascendantuuid
-                  where isGranted(currentUserId(), r.uuid)
+                  r.uuid as roleUuid, r.roletype, ro.objectTable as roleObjectTable,
+                  findIdNameByObjectUuid(ro.objectTable, ro.uuid) as roleObjectIdName,
+                  p.uuid as permissionUuid, p.op, po.objecttable as permissionObjectTable,
+                  findIdNameByObjectUuid(po.objectTable, po.uuid) as permissionObjectIdName,
+                  po.uuid as permissionObjectUuid
+              from queryPermissionsGrantedToSubjectId( targetUserId) as p
+              join rbacgrants as g on g.descendantUuid = p.uuid
+              join rbacobject as po on po.uuid = p.objectUuid
+              join rbacrole_rv as r on r.uuid = g.ascendantUuid
+              join rbacobject as ro on ro.uuid = r.objectUuid
+              where isGranted(targetUserId, r.uuid)
              ) xp;
     -- @formatter:on
 end; $$;

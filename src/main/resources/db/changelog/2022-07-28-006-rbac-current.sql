@@ -21,7 +21,7 @@ begin
             currentUser := null;
     end;
     if (currentUser is null or currentUser = '') then
-        raise exception 'hsadminng.currentUser must be defined, please use "SET LOCAL ...;"';
+        raise exception '[401] hsadminng.currentUser must be defined, please use "SET LOCAL ...;"';
     end if;
     return currentUser;
 end; $$;
@@ -37,7 +37,7 @@ begin
     currentUser := currentUser();
     currentUserId = (select uuid from RbacUser where name = currentUser);
     if currentUserId is null then
-        raise exception 'hsadminng.currentUser defined as %, but does not exists', currentUser;
+        raise exception '[401] hsadminng.currentUser defined as %, but does not exists', currentUser;
     end if;
     return currentUserId;
 end; $$;
@@ -150,7 +150,7 @@ declare
 begin
     currentUserId := currentUserId();
     if currentUserId is null then
-        raise exception 'user % does not exist', currentUser();
+        raise exception '[401] user % does not exist', currentUser();
     end if;
 
     roleNames := assumedRoles();
@@ -176,7 +176,7 @@ begin
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
             if (not isGranted(currentUserId, roleUuidToAssume)) then
-                raise exception 'user % (%) has no permission to assume role % (%)', currentUser(), currentUserId, roleName, roleUuidToAssume;
+                raise exception '[403] user % (%) has no permission to assume role % (%)', currentUser(), currentUserId, roleName, roleUuidToAssume;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
         end loop;

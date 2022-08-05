@@ -159,7 +159,7 @@ class CustomerRepositoryIntegrationTest {
             // then
             attempt.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
-                "user admin@aaa.example.com .* has no permission to assume role package#aab00#admin");
+                "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
         }
 
         @Test

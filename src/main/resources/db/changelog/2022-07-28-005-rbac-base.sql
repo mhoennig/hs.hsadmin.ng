@@ -391,6 +391,19 @@ select exists(
            );
 $$;
 
+create or replace function hasGlobalRoleGranted(userUuid uuid)
+    returns bool
+    stable leakproof
+    language sql as $$
+select exists(
+           select r.uuid
+                from RbacGrants as g
+                join RbacRole as r on r.uuid = g.descendantuuid
+                join RbacObject as o on o.uuid = r.objectuuid
+                where g.ascendantuuid = userUuid and o.objecttable = 'global'
+           );
+$$;
+
 create or replace procedure grantPermissionsToRole(roleUuid uuid, permissionIds uuid[])
     language plpgsql as $$
 begin
@@ -417,7 +430,7 @@ begin
     perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
 
     if (isGranted(subRoleId, superRoleId)) then
-        raise exception 'Cyclic role grant detected between % and %', subRoleId, superRoleId;
+        raise exception '[400] Cyclic role grant detected between % and %', subRoleId, superRoleId;
     end if;
 
     insert
@@ -487,7 +500,7 @@ begin
 
     foundRows = lastRowCount();
     if foundRows > maxObjects then
-        raise exception 'Too many accessible objects, limit is %, found %.', maxObjects, foundRows
+        raise exception '[400] Too many accessible objects, limit is %, found %.', maxObjects, foundRows
             using
                 errcode = 'P0003',
                 hint = 'Please assume a sub-role and try again.';

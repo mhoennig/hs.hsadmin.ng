@@ -13,6 +13,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler
@@ -22,16 +23,39 @@ public class RestResponseEntityExceptionHandler
     protected ResponseEntity<CustomErrorResponse> handleConflict(
         final RuntimeException exc, final WebRequest request) {
 
-        return new ResponseEntity<>(
-            new CustomErrorResponse(request.getContextPath(), exc, HttpStatus.CONFLICT), HttpStatus.CONFLICT);
+        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        return errorResponse(request, HttpStatus.CONFLICT, message);
     }
 
     @ExceptionHandler(JpaSystemException.class)
     protected ResponseEntity<CustomErrorResponse> handleJpaExceptions(
         final RuntimeException exc, final WebRequest request) {
+        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        return errorResponse(request, httpStatus(message).orElse(HttpStatus.FORBIDDEN), message);
+    }
 
+    private Optional<HttpStatus> httpStatus(final String message) {
+        if (message.startsWith("ERROR: [")) {
+            for (HttpStatus status : HttpStatus.values()) {
+                if (message.startsWith("ERROR: [" + status.value() + "]")) {
+                    return Optional.of(status);
+                }
+            }
+            return Optional.of(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return Optional.empty();
+    }
+
+    private static ResponseEntity<CustomErrorResponse> errorResponse(
+        final WebRequest request,
+        final HttpStatus conflict,
+        final String message) {
         return new ResponseEntity<>(
-            new CustomErrorResponse(request.getContextPath(), exc, HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
+            new CustomErrorResponse(request.getContextPath(), conflict, message), conflict);
+    }
+
+    private String firstLine(final String message) {
+        return message.split("\\r|\\n|\\r\\n", 0)[0];
     }
 }
 
@@ -49,15 +73,11 @@ class CustomErrorResponse {
 
     private final String message;
 
-    public CustomErrorResponse(final String path, final RuntimeException exc, final HttpStatus status) {
+    public CustomErrorResponse(final String path, final HttpStatus status, final String message) {
         this.timestamp = LocalDateTime.now();
         this.path = path;
         this.status = status.value();
         this.error = status.getReasonPhrase();
-        this.message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
-    }
-
-    private String firstLine(final String message) {
-        return message.split("\\r|\\n|\\r\\n", 0)[0];
+        this.message = message;
     }
 }

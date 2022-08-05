@@ -220,7 +220,7 @@ create or replace function addCustomerNotAllowedForCurrentSubjects()
     language PLPGSQL
 as $$
 begin
-    raise exception 'add-customer not permitted for %', array_to_string(currentSubjects(), ';', 'null');
+    raise exception '[403] add-customer not permitted for %', array_to_string(currentSubjects(), ';', 'null');
 end; $$;
 
 /**

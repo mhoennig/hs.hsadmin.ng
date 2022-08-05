@@ -12,10 +12,11 @@ create or replace procedure createPackageTestData(
 )
     language plpgsql as $$
     declare
-        cust        customer;
-        pacName     varchar;
-        currentTask varchar;
-        custAdmin   varchar;
+        cust            customer;
+        pacName         varchar;
+        currentTask     varchar;
+        custAdmin       varchar;
+        pac             package;
     begin
         set hsadminng.currentUser to '';
 
@@ -37,7 +38,13 @@ create or replace procedure createPackageTestData(
 
                         insert
                             into package (name, customerUuid)
-                            values (pacName, cust.uuid);
+                            values (pacName, cust.uuid)
+                            returning * into pac;
+
+                        call grantRoleToUser(
+                            findRoleId(packageAdmin(pac)),
+                            createRbacUser(pacName || '@' || cust.prefix || '.example.com'));
+
                     end loop;
             end loop;
 

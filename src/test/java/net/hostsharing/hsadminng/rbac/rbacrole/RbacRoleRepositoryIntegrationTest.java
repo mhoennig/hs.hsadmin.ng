@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.test.Array;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ class RbacRoleRepositoryIntegrationTest {
     @Nested
     class FindAllRbacRoles {
 
-        private static final String[] ALL_TEST_DATA_ROLES = new String[] {
+        private static final String[] ALL_TEST_DATA_ROLES = Array.of(
             // @formatter:off
             "global#hostsharing.admin",
                 "customer#aaa.admin", "customer#aaa.owner", "customer#aaa.tenant",
@@ -45,7 +46,7 @@ class RbacRoleRepositoryIntegrationTest {
                     "package#aac01.admin", "package#aac01.owner", "package#aac01.tenant",
                     "package#aac02.admin", "package#aac02.owner", "package#aac02.tenant"
             // @formatter:on
-        };
+        );
 
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canViewAllRbacRoles() {
@@ -116,7 +117,7 @@ class RbacRoleRepositoryIntegrationTest {
             // then
             attempt.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
-                "user admin@aaa.example.com .* has no permission to assume role package#aab00#admin");
+                "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
         }
 
         @Test
@@ -159,11 +160,10 @@ class RbacRoleRepositoryIntegrationTest {
         assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
     }
 
-    void exactlyTheseRbacRolesAreReturned(final Iterable<RbacRoleEntity> actualResult, final String... rbacRoleNames) {
+    void exactlyTheseRbacRolesAreReturned(final Iterable<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
         assertThat(actualResult)
-            //.hasSize(rbacRoleNames.length)
             .extracting(RbacRoleEntity::getRoleName)
-            .containsExactlyInAnyOrder(rbacRoleNames);
+            .containsExactlyInAnyOrder(expectedRoleNames);
     }
 
 }

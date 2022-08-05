@@ -71,9 +71,11 @@ public class JpaAttempt<T> {
 
     public void assertExceptionWithRootCauseMessage(
         final Class<? extends RuntimeException> expectedExceptionClass,
-        final String expectedRootCauseMessage) {
-        assertThat(
-            firstRootCauseMessageLineOf(caughtException(expectedExceptionClass)))
-            .matches(".*" + expectedRootCauseMessage + ".*");
+        final String... expectedRootCauseMessages) {
+        assertThat(wasSuccessful()).isFalse();
+        final String firstRootCauseMessageLine = firstRootCauseMessageLineOf(caughtException(expectedExceptionClass));
+        for ( String expectedRootCauseMessage: expectedRootCauseMessages ) {
+            assertThat(firstRootCauseMessageLine).contains(expectedRootCauseMessage);
+        }
     }
 }
