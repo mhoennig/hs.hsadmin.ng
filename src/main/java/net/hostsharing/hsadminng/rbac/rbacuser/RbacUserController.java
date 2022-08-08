@@ -6,14 +6,20 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.generated.api.v1.api.RbacusersApi;
+import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserPermissionResource;
+import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserResource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.List;
 
+import static net.hostsharing.hsadminng.Mapper.mapList;
+
 @RestController
-public class RbacUserController {
+public class RbacUserController implements RbacusersApi {
 
     @Autowired
     private Context context;
@@ -21,18 +27,9 @@ public class RbacUserController {
     @Autowired
     private RbacUserRepository rbacUserRepository;
 
-    @GetMapping(value = "/api/rbacusers")
-    @Operation(description = "List accessible RBAC users with optional filter by name.",
-        responses = {
-            @ApiResponse(responseCode = "200",
-                content = @Content(array = @ArraySchema(
-                    schema = @Schema(implementation = RbacUserEntity.class)))),
-            @ApiResponse(responseCode = "401",
-                description = "if the 'current-user' cannot be identified"),
-            @ApiResponse(responseCode = "403",
-                description = "if the 'current-user' is not allowed to assume any of the roles from 'assumed-roles'") })
+    @Override
     @Transactional
-    public List<RbacUserEntity> listUsers(
+    public ResponseEntity<List<RbacUserResource>> listUsers(
         @RequestHeader(name = "current-user") String currentUserName,
         @RequestHeader(name = "assumed-roles", required = false) String assumedRoles,
         @RequestParam(name="name", required = false) String userName
@@ -41,19 +38,12 @@ public class RbacUserController {
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return rbacUserRepository.findByOptionalNameLike(userName);
+        return ResponseEntity.ok(mapList(rbacUserRepository.findByOptionalNameLike(userName), RbacUserResource.class));
     }
 
-    @GetMapping(value = "/api/rbacuser/{userName}/permissions")
-    @Operation(description = "List all visible permissions granted to the given user; reduced ", responses = {
-        @ApiResponse(responseCode = "200",
-            content = @Content(array = @ArraySchema( schema = @Schema(implementation = RbacUserPermission.class)))),
-        @ApiResponse(responseCode = "401",
-            description = "if the 'current-user' cannot be identified"),
-        @ApiResponse(responseCode = "403",
-            description = "if the 'current-user' is not allowed to view permissions of the given user") })
+    @Override
     @Transactional
-    public List<RbacUserPermission> listUserPermissions(
+    public ResponseEntity<List<RbacUserPermissionResource>> listUserPermissions(
         @RequestHeader(name = "current-user") String currentUserName,
         @RequestHeader(name = "assumed-roles", required = false) String assumedRoles,
         @PathVariable(name= "userName") String userName
@@ -62,6 +52,6 @@ public class RbacUserController {
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return rbacUserRepository.findPermissionsOfUser(userName);
+        return ResponseEntity.ok(mapList(rbacUserRepository.findPermissionsOfUser(userName), RbacUserPermissionResource.class));
     }
 }

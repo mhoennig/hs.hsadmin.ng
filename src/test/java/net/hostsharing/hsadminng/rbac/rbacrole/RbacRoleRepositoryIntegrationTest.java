@@ -12,6 +12,8 @@ import org.springframework.orm.jpa.JpaSystemException;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
+import java.util.List;
+
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -160,7 +162,7 @@ class RbacRoleRepositoryIntegrationTest {
         assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
     }
 
-    void exactlyTheseRbacRolesAreReturned(final Iterable<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
+    void exactlyTheseRbacRolesAreReturned(final List<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
         assertThat(actualResult)
             .extracting(RbacRoleEntity::getRoleName)
             .containsExactlyInAnyOrder(expectedRoleNames);

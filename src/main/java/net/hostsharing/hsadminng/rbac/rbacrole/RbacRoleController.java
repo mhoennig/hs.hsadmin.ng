@@ -1,16 +1,20 @@
 package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.generated.api.v1.api.RbacrolesApi;
+import net.hostsharing.hsadminng.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
+import java.util.List;
+
+import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
 
-public class RbacRoleController {
+public class RbacRoleController implements RbacrolesApi {
 
     @Autowired
     private Context context;
@@ -18,17 +22,13 @@ public class RbacRoleController {
     @Autowired
     private RbacRoleRepository rbacRoleRepository;
 
-    @GetMapping(value = "/api/rbacroles")
+    @Override
     @Transactional
-    public Iterable<RbacRoleEntity> listCustomers(
-        @RequestHeader(value = "current-user") String userName,
-        @RequestHeader(value = "assumed-roles", required = false) String assumedRoles
-    ) {
-        context.setCurrentUser(userName);
+    public ResponseEntity<List<RbacRoleResource>> listRoles(final String currentUser, final String assumedRoles) {
+        context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return rbacRoleRepository.findAll();
+        return ResponseEntity.ok(mapList(rbacRoleRepository.findAll(), RbacRoleResource.class));
     }
-
 }

@@ -39,7 +39,7 @@ class RbacUserControllerRestTest {
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/rbacusers")
+                .get("/api/rbac-users")
                 .header("current-user", "mike@hostsharing.net")
                 .accept(MediaType.APPLICATION_JSON))
 
@@ -59,7 +59,7 @@ class RbacUserControllerRestTest {
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/rbacusers")
+                .get("/api/rbac-users")
                 .param("name", "admin@aaa")
                 .header("current-user", "mike@hostsharing.net")
                 .accept(MediaType.APPLICATION_JSON))
