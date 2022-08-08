@@ -7,10 +7,10 @@ This document is just for tracking the initial development project and thus only
 
 | ID  | Beschreibung                                                |  Budget | Aufwand | Leistung |
 |:----|:------------------------------------------------------------|--------:|--------:|---------:|
-| PRE | Vorbesprechungen bis inkl. KickOff-Meeting                  |       8 |       4 |        4 |
-| PRJ | Zweiwöchige Projektbesprechungen                            |      12 |       2 |        2 |
+| PRE | Vorbesprechungen bis inkl. KickOff-Meeting                  |       8 |       8 |        8 |
+| PRJ | Zweiwöchige Projektbesprechungen                            |      12 |       3 |        3 |
 | RET | Vierwöchige Retrospektiven (optional)                       |       6 |         |          |
-| TRA | Einarbeitung von Mitarbeitern des Auftraggebers (Training)  |      12 |         |          |
+| TRA | Einarbeitung von Mitarbeitern des Auftraggebers (Training)  |      12 |       2 |        2 |
 | E2E | Unterstützung beim Aufbau der E2E-System-Integrations-Tests |      40 |         |          |
 | MIG | Unterstützung bei der Datenmigration                        |      16 |         |          |
 | INS | Unterstützung ei der Inbetriebnahme / Einführung            |      16 |         |          |
@@ -88,6 +88,7 @@ In der folgenden Tabelle sind Aufwand und Leistung akkumulierte Werte.
 | 2022-07-24 |    553 |       8 |        0 |         553 |
 | 2022-07-31 |    553 |     143 |       40 |         513 |
 | 2022-08-04 |    553 |     147 |       78 |         475 |
+| 2022-08-07 |    553 |     167 |       86 |         467 |
 <!-- generated todo-progress end. -->
 
 
