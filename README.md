@@ -351,8 +351,38 @@ In case of suppression, a note must be added to explain why it does not apply to
 
 See also: https://jeremylong.github.io/DependencyCheck/dependency-check-gradle/index.html.
 
+### Dependency-License-Compatibility
 
-## How to Run the Appplication on a Different Port 
+The `gw check` phase depends on a dependency-license-compatibility check.
+If any dependency violates the configured [list of allowed licenses](etc/allowed-licenses.json), the build will fail.
+New licenses can be added to that list after a legal investigation.
+
+<big>**&#9888;**</big>
+*GPL* (*GNU General Public License*) is only allowed with classpath exception.
+Do <u>not</u> use any dependencies under *GPL* without this exception,
+except if these offer an alternative license which is allowed. 
+
+To run just the dependency-license-compatibility check, use:
+
+```shell
+gw checkLicense
+```
+
+If the check fails, a report can be found here: The generated license can be found under [dependencies-without-allowed-license.json](/build/reports/dependency-license/dependencies-without-allowed-license.json).
+
+And to generate a report, use:
+
+```shell
+gw generateLicenseReport
+```
+
+The generated license can be found here: [index.html](build/reports/dependency-license/index.html).
+
+More information can be found on the [project's website](https://github.com/jk1/Gradle-License-Report).
+
+## How To ...
+
+### How to Run the Application on a Different Port 
 
 By default, `gw bootRun` starts the application on port 8080.
 

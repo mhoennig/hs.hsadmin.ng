@@ -1,0 +1,32 @@
+{
+    "allowedLicenses": [
+        { "moduleLicense": "Apache 2.0" },
+        { "moduleLicense": "Apache License, Version 2.0" },
+        { "moduleLicense": "The Apache Software License, Version 2.0" },
+
+        { "moduleLicense": "BSD License" },
+        { "moduleLicense": "BSD-2-Clause" },
+
+        { "moduleLicense": "CDDL 1.1" },
+        { "moduleLicense": "CDDL/GPLv2+CE" },
+        { "moduleLicense": "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0" },
+
+        { "moduleLicense": "EDL 1.0" },
+        { "moduleLicense": "Eclipse Distribution License 1.0" },
+
+        { "moduleLicense": "Eclipse Public License - v 1.0" },
+        { "moduleLicense": "Eclipse Public License - v 2.0" },
+        { "moduleLicense": "Eclipse Public License - v. 2.0" },
+        { "moduleLicense": "Eclipse Public License - v1.0" },
+        { "moduleLicense": "Eclipse Public License v 2.0" },
+        { "moduleLicense": "Eclipse Public License v. 2.0" },
+
+        { "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception" },
+        { "moduleLicense": "GPL2 w/ CPE" },
+
+        { "moduleLicense": "MIT License" },
+        { "moduleLicense": "MIT" },
+        { "moduleLicense": "The MIT License (MIT)" },
+        { "moduleLicense": "The MIT License" }
+    ]
+}
