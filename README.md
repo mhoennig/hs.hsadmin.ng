@@ -253,39 +253,74 @@ You can explore the prototype as follows:
 
 #### General Directory Structure
 
-.aliases
+`.aliases`
+    Shell-aliases for common tasks.
 
-build/
+`build/`
+    Output directory for gradle build results. Ignored by git.
 
-build.gradle
+`build.gradle`
+    Gradle build-file. Contains dependencies and build configurations.
 
-doc/
+`doc/`
+    Contains project documentation.
 
-.editorconfig
+`.editorconfig`
+    Rules for indentation etc. considered by many code editors.
 
-etc/
+`etc/`
+    Miscellaneous configurations, as long as these don't need to be in the rood directory. 
 
-.git/
+`.git/`
+    Git repository. Do not temper with this!
 
-.gitattributes
+`.gitattributes`
+    Git configurations regarding text file format conversion between operating systems. 
 
-.gitignore
+`.gitignore`
+    Git configuration regarding which files and directories should be ignored (not checked in).
 
-.gradle/
-gradle/
-gradlew
-gradlew.bat
-.idea/
-LICENSE.md
-out/
-README.md
-.run/
-settings.gradle
-sql/
-src/
-TODO.md
-TODO-progress.png
-tools/
+`.gradle/`
+    Config files created by `gradle wrapper`. Ignored by git.
+
+`gradle/`
+    The gradle distribution downloaded by `gradle wrapper`. Ignored by git.
+
+`gradlew` and `gradlew.bat` use these batches to run gradle for builds etc. 
+
+`.idea/` (optional)
+    Config and cache files created by *IntelliJ IDEA*. Ignore by git.
+
+`LICENSE.md`
+    Contains the license used for this software.
+
+`out/` (optional)
+    Build output created by *IntelliJ IDEA". Ignored by git. 
+
+`README.md`
+    Contains an overview about how to build the project and the used tools. 
+
+`.run/` (optional)
+    Created by *IntelliJ IDEA* to contain run and debug configurations.
+
+`settings.gradle`
+    Configuration file for gradle.
+
+`sql/`
+    Contains SQL scripts for experiments and useful tasks.
+    Most of this will sooner or later be moved to Liquibase-scripts.
+
+`src/`
+    The actual source-code, see [Source Code Package Structure](#source-code-package-structure) for details.
+
+`TODO.md`
+    Requirements of initial project. Do not touch!
+
+`TODO-progress.png`
+    Generated diagram image of the project progress.
+
+`tools/`
+    Some shell-scripts to useful tasks.
 
 
 #### Source Code Package Structure
