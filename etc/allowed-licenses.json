@@ -1,6 +1,7 @@
 {
     "allowedLicenses": [
         { "moduleLicense": "Apache 2.0" },
+        { "moduleLicense": "Apache License 2.0" },
         { "moduleLicense": "Apache License, Version 2.0" },
         { "moduleLicense": "The Apache Software License, Version 2.0" },
 
@@ -21,6 +22,7 @@
         { "moduleLicense": "Eclipse Public License v 2.0" },
         { "moduleLicense": "Eclipse Public License v. 2.0" },
 
+        { "moduleLicense": "GNU Library General Public License v2.1 or later" },
         { "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception" },
         { "moduleLicense": "GPL2 w/ CPE" },
 

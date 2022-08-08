@@ -360,7 +360,8 @@ New licenses can be added to that list after a legal investigation.
 <big>**&#9888;**</big>
 *GPL* (*GNU General Public License*) is only allowed with classpath exception.
 Do <u>not</u> use any dependencies under *GPL* without this exception,
-except if these offer an alternative license which is allowed. 
+except if these offer an alternative license which is allowed.
+*LGPL* (*GNU <u>Library</u> General Public License*) is also allowed.
 
 To run just the dependency-license-compatibility check, use:
 
