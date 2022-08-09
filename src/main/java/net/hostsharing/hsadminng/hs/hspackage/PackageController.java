@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hspackage;
 
+import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.PackagesApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.PackageResource;
@@ -52,14 +53,9 @@ public class PackageController implements PackagesApi {
             context.assumeRoles(assumedRoles);
         }
         final var current = packageRepository.findByUuid(packageUuid);
-        if (body.getDescription() != null) {
-            body.getDescription().ifPresent(current::setDescription);
-        } else {
-            body.toString();
-        }
+        OptionalFromJson.of(body.getDescription()).ifPresent(current::setDescription);
         final var saved = packageRepository.save(current);
         final var mapped = map(saved, PackageResource.class);
         return ResponseEntity.ok(mapped);
     }
-
 }
