@@ -182,6 +182,40 @@ paths:
                                 type: array
                                 items:
                                     $ref: '#/components/schemas/Package'
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
+    /api/packages/{packageUUID}:
+        patch:
+            tags:
+                - packages
+            operationId: updatePackage
+            parameters:
+                -   $ref: '#/components/parameters/currentUser'
+                -   $ref: '#/components/parameters/assumedRoles'
+                -   name: packageUUID
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                        format: uuid
+            requestBody:
+                content:
+                    'application/json':
+                        schema:
+                            $ref: '#/components/schemas/PackageUpdate'
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        'application/json':
+                            schema:
+                                $ref: '#/components/schemas/Package'
+                "401":
+                    $ref: '#/components/responses/Unauthorized'
+                "403":
+                    $ref: '#/components/responses/Forbidden'
 
 components:
 
@@ -290,10 +324,20 @@ components:
                 uuid:
                     type: string
                     format: uuid
-                name:
-                    type: string
                 customer:
                     $ref: '#/components/schemas/Customer'
+                name:
+                    type: string
+                description:
+                    type: string
+                    maxLength: 80
+        PackageUpdate:
+            type: object
+            properties:
+                description:
+                    type: string
+                    maxLength: 80
+                    nullable: true
         Error:
             type: object
             properties:

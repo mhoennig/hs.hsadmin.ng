@@ -37,8 +37,8 @@ create or replace procedure createPackageTestData(
                         set local hsadminng.currentTask to currentTask;
 
                         insert
-                            into package (name, customerUuid)
-                            values (pacName, cust.uuid)
+                            into package (customerUuid, name, description)
+                            values (cust.uuid, pacName, 'Here can add your own description of package ' || pacName || '.')
                             returning * into pac;
 
                         call grantRoleToUser(

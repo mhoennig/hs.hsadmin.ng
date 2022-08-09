@@ -10,4 +10,8 @@ public interface PackageRepository extends Repository<PackageEntity, UUID> {
 
     @Query("SELECT p FROM PackageEntity p WHERE :name is null or p.name like concat(:name, '%')")
     List<PackageEntity> findAllByOptionalNameLike(final String name);
+
+    PackageEntity findByUuid(UUID packageUuid);
+
+    PackageEntity save(PackageEntity current);
 }

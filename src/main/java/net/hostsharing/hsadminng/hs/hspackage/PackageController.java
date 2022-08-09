@@ -3,13 +3,16 @@ package net.hostsharing.hsadminng.hs.hspackage;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.PackagesApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.PackageResource;
+import net.hostsharing.hsadminng.generated.api.v1.model.PackageUpdateResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.UUID;
 
+import static net.hostsharing.hsadminng.Mapper.map;
 import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
@@ -34,6 +37,29 @@ public class PackageController implements PackagesApi {
         }
         final var result = packageRepository.findAllByOptionalNameLike(name);
         return ResponseEntity.ok(mapList(result, PackageResource.class));
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<PackageResource> updatePackage(
+        final String currentUser,
+        final String assumedRoles,
+        final UUID packageUuid,
+        final PackageUpdateResource body) {
+
+        context.setCurrentUser(currentUser);
+        if (assumedRoles != null && !assumedRoles.isBlank()) {
+            context.assumeRoles(assumedRoles);
+        }
+        final var current = packageRepository.findByUuid(packageUuid);
+        if (body.getDescription() != null) {
+            body.getDescription().ifPresent(current::setDescription);
+        } else {
+            body.toString();
+        }
+        final var saved = packageRepository.save(current);
+        final var mapped = map(saved, PackageResource.class);
+        return ResponseEntity.ok(mapped);
     }
 
 }

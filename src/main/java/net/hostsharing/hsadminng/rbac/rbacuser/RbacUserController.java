@@ -1,10 +1,5 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacusersApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserPermissionResource;

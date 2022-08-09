@@ -9,5 +9,4 @@ public class HsadminNgApplication {
     public static void main(String[] args) {
         SpringApplication.run(HsadminNgApplication.class, args);
     }
-
 }

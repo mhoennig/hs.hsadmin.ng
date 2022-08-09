@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '2.7.2'
-    id 'io.openapiprocessor.openapi-processor' version '2021.3'
+    id 'io.openapiprocessor.openapi-processor' version '2022.2'
     id 'io.spring.dependency-management' version '1.0.12.RELEASE'
     id 'com.github.jk1.dependency-license-report' version '2.1'
     id "org.owasp.dependencycheck" version "7.1.1"
@@ -46,7 +46,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
     implementation 'org.liquibase:liquibase-core'
     implementation 'com.vladmihalcea:hibernate-types-55:2.17.1'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.3'// https://mvnrepository.com/artifact/org.modelmapper/modelmapper
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.3'
     implementation 'org.modelmapper:modelmapper:3.1.0'
 
     compileOnly 'org.projectlombok:lombok'
@@ -62,6 +62,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.0.0-rc1'
+    testImplementation 'io.rest-assured:spring-mock-mvc'
 }
 
 dependencyManagement {
@@ -80,11 +81,12 @@ tasks.named('test') {
 
 openapiProcessor {
     spring {
-        processor 'io.openapiprocessor:openapi-processor-spring:2021.4'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
         apiPath "$projectDir/src/main/resources/api-definition.yaml"
         targetDir "$projectDir/build/generated/sources/openapi"
         mapping "$projectDir/src/main/resources/api-mappings.yaml"
         showWarnings true
+        openApiNullable true
     }
 }
 sourceSets.main.java.srcDir 'build/generated/sources/openapi'
@@ -92,12 +94,12 @@ compileJava.dependsOn('processSpring')
 
 spotless {
     java {
-        removeUnusedImports()
+        // removeUnusedImports() TODO: reactivate once it can deal with multi-line-strings
+        indentWithSpaces(4)
         endWithNewline()
         toggleOffOn()
 
-        // target 'src/main/java**/*.java', 'src/test/java**/*.java' // not generated
-        target project.fileTree(project.rootDir) {
+        target fileTree(rootDir) {
             include '**/*.java'
             exclude '**/generated/**/*.java'
         }

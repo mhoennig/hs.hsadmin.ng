@@ -12,6 +12,6 @@ public class TestPackage {
     public static final PackageEntity xxx02 = hsPackage(TestCustomer.xxx, "xxx02");
 
     public static PackageEntity hsPackage(final CustomerEntity customer, final String name) {
-        return new PackageEntity(randomUUID(), name, customer);
+        return new PackageEntity(randomUUID(), customer, name, "initial description of package " + name);
     }
 }

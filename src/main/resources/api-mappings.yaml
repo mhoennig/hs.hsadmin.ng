@@ -12,3 +12,6 @@ map:
         - type: array => java.util.List
         - type: string:uuid => java.util.UUID
 
+    paths:
+        /api/packages/{packageUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable
