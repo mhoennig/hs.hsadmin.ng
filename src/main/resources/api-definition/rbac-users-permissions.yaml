@@ -1,0 +1,27 @@
+get:
+    tags:
+        - rbacusers
+    description: 'List all visible permissions granted to the given user; reduced '
+    operationId: listUserPermissions
+    parameters:
+        - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
+        - $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
+        - name: userName
+          in: path
+          required: true
+          schema:
+              type: string
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUserPermission'
+
+        "401":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'

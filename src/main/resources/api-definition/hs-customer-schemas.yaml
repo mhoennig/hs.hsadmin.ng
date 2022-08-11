@@ -1,0 +1,19 @@
+
+components:
+
+    schemas:
+
+        Customer:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                prefix:
+                    type: string
+                reference:
+                    type: integer
+                    format: int32
+                adminUserName:
+                    type: string
+

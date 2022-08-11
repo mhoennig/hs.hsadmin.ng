@@ -1,0 +1,39 @@
+get:
+    tags:
+        - rbacusers
+    description: List accessible RBAC users with optional filter by name.
+    operationId: listUsers
+    parameters:
+        - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
+        - $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
+        - name: name
+          in: query
+          required: false
+          schema:
+              type: string
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
+        "401":
+            description: if the 'current-user' cannot be identified
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
+        "403":
+            description: if the 'current-user' is not allowed to assume any of the roles
+                from 'assumed-roles'
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'

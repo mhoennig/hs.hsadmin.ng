@@ -1,0 +1,26 @@
+
+components:
+
+    schemas:
+
+        RbacRole:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                objectUuid:
+                    type: string
+                    format: uuid
+                objectTable:
+                    type: string
+                objectIdName:
+                    type: string
+                roleType:
+                    type: string
+                    enum:
+                        - owner
+                        - admin
+                        - tenant
+                roleName:
+                    type: string

@@ -1,0 +1,25 @@
+
+components:
+
+    schemas:
+
+        Package:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                customer:
+                    $ref: './api-definition/hs-customers-schemas.yaml#/components/schemas/Customer'
+                name:
+                    type: string
+                description:
+                    type: string
+                    maxLength: 80
+        PackageUpdate:
+            type: object
+            properties:
+                description:
+                    type: string
+                    maxLength: 80
+                    nullable: true

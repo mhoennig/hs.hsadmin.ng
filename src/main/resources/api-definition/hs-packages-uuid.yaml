@@ -1,0 +1,29 @@
+patch:
+    tags:
+        - packages
+    operationId: updatePackage
+    parameters:
+        -   $ref: '#/components/parameters/currentUser'
+        -   $ref: '#/components/parameters/assumedRoles'
+        -   name: packageUUID
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: '#/components/schemas/PackageUpdate'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: '#/components/schemas/Package'
+        "401":
+            $ref: '#/components/responses/Unauthorized'
+        "403":
+            $ref: '#/components/responses/Forbidden'
