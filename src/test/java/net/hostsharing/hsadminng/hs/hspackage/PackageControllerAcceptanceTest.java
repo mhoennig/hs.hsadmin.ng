@@ -3,14 +3,12 @@ package net.hostsharing.hsadminng.hs.hspackage;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 
 import javax.transaction.Transactional;
 import java.util.UUID;
@@ -24,8 +22,6 @@ import static org.hamcrest.Matchers.is;
     webEnvironment = WebEnvironment.RANDOM_PORT,
     classes = HsadminNgApplication.class
 )
-// classes = { PackageController.class, JsonObjectMapperConfiguration.class },
-@Import(JsonObjectMapperConfiguration.class)
 @Transactional
 class PackageControllerAcceptanceTest {
 
@@ -36,7 +32,7 @@ class PackageControllerAcceptanceTest {
     class ListPackages {
 
         @Test
-        void withoutNameParameter() throws Exception {
+        void withoutNameParameter() {
             // @formatter:off
             RestAssured
                 .given()
@@ -57,7 +53,7 @@ class PackageControllerAcceptanceTest {
         }
 
         @Test
-        void withNameParameter() throws Exception {
+        void withNameParameter() {
             // @formatter:off
             RestAssured
                 .given()
@@ -78,7 +74,7 @@ class PackageControllerAcceptanceTest {
     class UpdatePackage {
 
         @Test
-        void withDescriptionUpdatesDescription() throws Exception {
+        void withDescriptionUpdatesDescription() {
 
             assumeThat(getDescriptionOfPackage("aaa00"))
                 .isEqualTo("Here can add your own description of package aaa00.");
@@ -109,7 +105,7 @@ class PackageControllerAcceptanceTest {
         }
 
         @Test
-        void withNullDescriptionUpdatesDescriptionToNull() throws Exception {
+        void withNullDescriptionUpdatesDescriptionToNull() {
 
             assumeThat(getDescriptionOfPackage("aaa01"))
                 .isEqualTo("Here can add your own description of package aaa01.");
@@ -137,7 +133,7 @@ class PackageControllerAcceptanceTest {
         }
 
         @Test
-        void withoutDescriptionDoesNothing() throws Exception {
+        void withoutDescriptionDoesNothing() {
 
             assumeThat(getDescriptionOfPackage("aaa02"))
                 .isEqualTo("Here can add your own description of package aaa02.");

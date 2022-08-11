@@ -34,22 +34,6 @@ class PackageControllerRestTest {
     @MockBean
     PackageRepository packageRepositoryMock;
 
-    //    @Autowired
-    //    ObjectMapper objectMapper;
-    //
-    //    @Autowired
-    //    private Jackson2ObjectMapperBuilder jacksonObjectMapper;
-    //
-    //    @Autowired
-    //    private PackageController restController;
-
-    //    @Before
-    //    public void init(){
-    //
-    //        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    //        objectMapper.registerModule(new JsonNullableModule());
-    //    }
-
     @Nested
     class ListPackages {
 
@@ -61,7 +45,7 @@ class PackageControllerRestTest {
             when(packageRepositoryMock.findAllByOptionalNameLike(null)).thenReturn(givenPacs);
 
             // when
-            final var pacs = mockMvc.perform(MockMvcRequestBuilders
+            mockMvc.perform(MockMvcRequestBuilders
                     .get("/api/packages")
                     .header("current-user", "mike@hostsharing.net")
                     .header("assumed-roles", "customer#xxx.admin")
@@ -86,7 +70,7 @@ class PackageControllerRestTest {
             when(packageRepositoryMock.findAllByOptionalNameLike("xxx01")).thenReturn(givenPacs);
 
             // when
-            final var pacs = mockMvc.perform(MockMvcRequestBuilders
+            mockMvc.perform(MockMvcRequestBuilders
                     .get("/api/packages?name=xxx01")
                     .header("current-user", "mike@hostsharing.net")
                     .header("assumed-roles", "customer#xxx.admin")
@@ -114,7 +98,7 @@ class PackageControllerRestTest {
             when(packageRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            final var pacs = mockMvc.perform(MockMvcRequestBuilders
+            mockMvc.perform(MockMvcRequestBuilders
                     .patch("/api/packages/" + givenPac.getUuid().toString())
                     .header("current-user", "mike@hostsharing.net")
                     .header("assumed-roles", "customer#xxx.admin")
@@ -146,7 +130,7 @@ class PackageControllerRestTest {
             when(packageRepositoryMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            final var pacs = mockMvc.perform(MockMvcRequestBuilders
+            mockMvc.perform(MockMvcRequestBuilders
                     .patch("/api/packages/" + givenPac.getUuid().toString())
                     .header("current-user", "mike@hostsharing.net")
                     .header("assumed-roles", "customer#xxx.admin")
@@ -161,8 +145,8 @@ class PackageControllerRestTest {
             verify(contextMock).setCurrentUser("mike@hostsharing.net");
             verify(contextMock).assumeRoles("customer#xxx.admin");
             verify(packageRepositoryMock).save(argThat(entity ->
-                entity.getDescription() == givenPac.getDescription() &&
-                    entity.getUuid().equals(givenPac.getUuid())));
+                givenPac.getDescription().equals(entity.getDescription()) &&
+                    givenPac.getUuid().equals(entity.getUuid())));
         }
     }
 }
