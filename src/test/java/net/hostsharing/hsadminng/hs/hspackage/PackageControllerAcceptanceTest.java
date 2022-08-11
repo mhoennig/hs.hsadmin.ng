@@ -38,8 +38,9 @@ class PackageControllerAcceptanceTest {
                 .given()
                     .header("current-user", "mike@hostsharing.net")
                     .header("assumed-roles", "customer#aaa.admin")
+                    .port(port)
                 .when()
-                    .get("http://localhost:" + port + "/api/packages")
+                    .get("http://localhost/api/packages")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -59,8 +60,9 @@ class PackageControllerAcceptanceTest {
                 .given()
                     .header("current-user", "mike@hostsharing.net")
                     .header("assumed-roles", "customer#aaa.admin")
+                    .port(port)
                 .when()
-                    .get("http://localhost:" + port + "/api/packages?name=aaa01")
+                    .get("http://localhost/api/packages?name=aaa01")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -92,8 +94,9 @@ class PackageControllerAcceptanceTest {
                                 "description": "%s"
                             }
                           """, randomDescription))
+                    .port(port)
                 .when()
-                    .patch("http://localhost:" + port + "/api/packages/" + getUuidOfPackage("aaa00"))
+                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("aaa00"))
                 .then()
                     .assertThat()
                     .statusCode(200)
@@ -113,22 +116,23 @@ class PackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                .header("current-user", "mike@hostsharing.net")
-                .header("assumed-roles", "customer#aaa.admin")
-                .contentType(ContentType.JSON)
-                .body("""
-                        {
-                            "description": null
-                        }
-                      """)
+                    .header("current-user", "mike@hostsharing.net")
+                    .header("assumed-roles", "customer#aaa.admin")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "description": null
+                            }
+                          """)
+                    .port(port)
                 .when()
-                .patch("http://localhost:" + port + "/api/packages/" + getUuidOfPackage("aaa01"))
+                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("aaa01"))
                 .then()
-                .assertThat()
-                .statusCode(200)
-                .contentType("application/json")
-                .body("name", is("aaa01"))
-                .body("description", equalTo(null));
+                    .assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("name", is("aaa01"))
+                    .body("description", equalTo(null));
             // @formatter:on
         }
 
@@ -145,8 +149,9 @@ class PackageControllerAcceptanceTest {
                     .header("assumed-roles", "customer#aaa.admin")
                     .contentType(ContentType.JSON)
                     .body("{}")
+                    .port(port)
                 .when()
-                    .patch("http://localhost:" + port + "/api/packages/" + getUuidOfPackage("aaa02"))
+                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("aaa02"))
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -162,8 +167,9 @@ class PackageControllerAcceptanceTest {
             .given()
                 .header("current-user", "mike@hostsharing.net")
                 .header("assumed-roles", "customer#aaa.admin")
+                .port(port)
             .when()
-                .get("http://localhost:" + port + "/api/packages?name=" + packageName)
+                .get("http://localhost/api/packages?name={packageName}", packageName)
             .then()
                 .statusCode(200)
                 .contentType("application/json")
@@ -175,14 +181,16 @@ class PackageControllerAcceptanceTest {
         // @formatter:off
         return RestAssured
             .given()
-            .header("current-user", "mike@hostsharing.net")
-            .header("assumed-roles", "customer#aaa.admin")
+                .header("current-user", "mike@hostsharing.net")
+                .header("assumed-roles", "customer#aaa.admin")
+                .accept("application/json") //
+                .port(port)
             .when()
-            .get("http://localhost:" + port + "/api/packages?name=" + packageName)
+                .get("http://localhost/api/packages?name={packageName}", packageName)
             .then()
-            .statusCode(200)
-            .contentType("application/json")
-            .extract().path("[0].description");
+                .statusCode(200)
+                .contentType("application/json")
+                .extract().path("[0].description");
         // @formatter:om
     }
 }
