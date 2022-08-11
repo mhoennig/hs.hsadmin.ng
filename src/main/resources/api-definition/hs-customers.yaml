@@ -47,7 +47,7 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './api-definition/hs-customer-schemas/components.yaml#/schemas/Customer'
+                        $ref: './api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
         "401":
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":

@@ -3,8 +3,8 @@ patch:
         - packages
     operationId: updatePackage
     parameters:
-        -   $ref: '#/components/parameters/currentUser'
-        -   $ref: '#/components/parameters/assumedRoles'
+        -   $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
+        -   $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
         -   name: packageUUID
             in: path
             required: true
@@ -15,15 +15,15 @@ patch:
         content:
             'application/json':
                 schema:
-                    $ref: '#/components/schemas/PackageUpdate'
+                    $ref: './api-definition/hs-package-schemas.yaml#/components/schemas/PackageUpdate'
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: '#/components/schemas/Package'
+                        $ref: './api-definition/hs-package-schemas.yaml#/components/schemas/Package'
         "401":
-            $ref: '#/components/responses/Unauthorized'
+            $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: '#/components/responses/Forbidden'
+            $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'

@@ -10,7 +10,7 @@ components:
                     type: string
                     format: uuid
                 customer:
-                    $ref: './api-definition/hs-customers-schemas.yaml#/components/schemas/Customer'
+                    $ref: './api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
                 name:
                     type: string
                 description:
