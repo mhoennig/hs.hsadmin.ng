@@ -3,9 +3,11 @@ package net.hostsharing.hsadminng.hs.hspackage;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.context.Context;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -26,7 +28,12 @@ import static org.hamcrest.Matchers.is;
 class PackageControllerAcceptanceTest {
 
     @LocalServerPort
-    private Integer port;
+    Integer port;
+    @Autowired
+    Context context;
+
+    @Autowired
+    PackageRepository packageRepository;
 
     @Nested
     class ListPackages {
@@ -178,19 +185,8 @@ class PackageControllerAcceptanceTest {
     }
 
     String getDescriptionOfPackage(final String packageName) {
-        // @formatter:off
-        return RestAssured
-            .given()
-                .header("current-user", "mike@hostsharing.net")
-                .header("assumed-roles", "customer#aaa.admin")
-                .accept("application/json") //
-                .port(port)
-            .when()
-                .get("http://localhost/api/packages?name={packageName}", packageName)
-            .then()
-                .statusCode(200)
-                .contentType("application/json")
-                .extract().path("[0].description");
-        // @formatter:om
+        context.setCurrentUser("mike@hostsharing.net");
+        context.assumeRoles("customer#aaa.admin");
+        return packageRepository.findAllByOptionalNameLike(packageName).get(0).getDescription();
     }
 }
