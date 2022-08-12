@@ -36,19 +36,21 @@ class CustomerRepositoryIntegrationTest {
         public void hostsharingAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
             currentUser("mike@hostsharing.net");
+            final var count = customerRepository.count();
 
             // when
 
-            final var attempt = attempt(em, () -> {
+            final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
                     UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
-            assertThat(attempt.wasSuccessful()).isTrue();
-            assertThat(attempt.returnedResult()).isNotNull().extracting(CustomerEntity::getUuid).isNotNull();
-            assertThatCustomerIsPersisted(attempt.returnedResult());
+            assertThat(result.wasSuccessful()).isTrue();
+            assertThat(result.returnedValue()).isNotNull().extracting(CustomerEntity::getUuid).isNotNull();
+            assertThatCustomerIsPersisted(result.returnedValue());
+            assertThat(customerRepository.count()).isEqualTo(count + 1);
         }
 
         @Test
@@ -58,14 +60,14 @@ class CustomerRepositoryIntegrationTest {
             assumedRoles("customer#aaa.admin");
 
             // when
-            final var attempt = attempt(em, () -> {
+            final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
                     UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 PersistenceException.class,
                 "add-customer not permitted for customer#aaa.admin");
         }
@@ -76,14 +78,14 @@ class CustomerRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
 
             // when
-            final var attempt = attempt(em, () -> {
+            final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
                     UUID.randomUUID(), "yyy", 90002, "admin@yyy.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 PersistenceException.class,
                 "add-customer not permitted for admin@aaa.example.com");
 
@@ -152,12 +154,12 @@ class CustomerRepositoryIntegrationTest {
             assumedRoles("package#aab00.admin");
 
             // when
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             // then
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
         }
@@ -166,11 +168,11 @@ class CustomerRepositoryIntegrationTest {
         void unknownUser_withoutAssumedRole_cannotViewAnyCustomers() {
             currentUser("unknown@example.org");
 
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
@@ -181,11 +183,11 @@ class CustomerRepositoryIntegrationTest {
             currentUser("unknown@example.org");
             assumedRoles("customer#aaa.admin");
 
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }

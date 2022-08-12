@@ -21,19 +21,28 @@ get:
                         items:
                             $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
         "401":
-            description: if the 'current-user' cannot be identified
-            content:
-                'application/json':
-                    schema:
-                        type: array
-                        items:
-                            $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
+            $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            description: if the 'current-user' is not allowed to assume any of the roles
-                from 'assumed-roles'
+            $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+
+post:
+    tags:
+        - rbacusers
+    description: Create a new RBAC user.
+    operationId: createUser
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
+    responses:
+        "201":
+            description: Created
             content:
                 'application/json':
                     schema:
-                        type: array
-                        items:
-                            $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
+                        $ref: './api-definition/rbac-user-schemas.yaml#/components/schemas/RbacUser'
+        "409":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Conflict'
+

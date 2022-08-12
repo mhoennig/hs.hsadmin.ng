@@ -85,12 +85,12 @@ class PackageRepositoryIntegrationTest {
             assumedRoles("package#aab00.admin");
 
             // when
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> packageRepository.findAllByOptionalNameLike(null));
 
             // then
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
         }
@@ -99,11 +99,11 @@ class PackageRepositoryIntegrationTest {
         void unknownUser_withoutAssumedRole_cannotViewAnyPackages() {
             currentUser("unknown@example.org");
 
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> packageRepository.findAllByOptionalNameLike(null));
 
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
@@ -114,11 +114,11 @@ class PackageRepositoryIntegrationTest {
             currentUser("unknown@example.org");
             assumedRoles("customer#aaa.admin");
 
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> packageRepository.findAllByOptionalNameLike(null));
 
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
@@ -140,7 +140,6 @@ class PackageRepositoryIntegrationTest {
             .extracting(PackageEntity::getName)
             .isEmpty();
     }
-
 
     void exactlyThesePackagesAreReturned(final List<PackageEntity> actualResult, final String... packageNames) {
         assertThat(actualResult)

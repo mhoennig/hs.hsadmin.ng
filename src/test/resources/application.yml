@@ -14,6 +14,7 @@ spring:
             hibernate:
                 default_schema: public
                 dialect: net.hostsharing.hsadminng.config.PostgreSQL95CustomDialect
+                format_sql: false
         hibernate:
             ddl-auto: none
         show-sql: true
@@ -29,3 +30,6 @@ spring:
 logging:
     level:
         liquibase: INFO
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+        X.org.springframework.jdbc.core: TRACE

@@ -2,21 +2,26 @@ package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.test.Array;
+import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.test.annotation.Commit;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.UUID;
 
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, RbacUserRepository.class })
+@ComponentScan(basePackageClasses = { RbacUserRepository.class, Context.class, JpaAttempt.class })
 class RbacUserRepositoryIntegrationTest {
 
     @Autowired
@@ -25,7 +30,58 @@ class RbacUserRepositoryIntegrationTest {
     @Autowired
     RbacUserRepository rbacUserRepository;
 
+    @Autowired
+    JpaAttempt jpaAttempt;
+
     @Autowired EntityManager em;
+
+    @Nested
+    class CreateUser {
+
+        @Test
+        public void anyoneCanCreateTheirOwnUser() {
+            // given
+            final var givenNewUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+
+            // when
+            final var result = rbacUserRepository.create(
+                new RbacUserEntity(null, givenNewUserName));
+
+            // then the persisted user is returned
+            assertThat(result).isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
+
+            // and the new user entity can be fetched by the user itself
+            currentUser(givenNewUserName);
+            assertThat(em.find(RbacUserEntity.class, result.getUuid()))
+                .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
+        }
+
+        @Test
+        @Commit
+        @Transactional(propagation = Propagation.NOT_SUPPORTED)
+        void anyoneCanCreateTheirOwnUser_committed() {
+
+            // given:
+            final var givenUuid = UUID.randomUUID();
+            final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+
+            // when:
+            final var result = jpaAttempt.transacted(() -> {
+                currentUser("admin@aaa.example.com");
+                return rbacUserRepository.create(new RbacUserEntity(givenUuid, newUserName));
+            });
+
+            // then:
+            assertThat(result.wasSuccessful()).isTrue();
+            assertThat(result.returnedValue()).isNotNull()
+                .extracting(RbacUserEntity::getUuid).isEqualTo(givenUuid);
+            jpaAttempt.transacted(() -> {
+                currentUser(newUserName);
+                assertThat(em.find(RbacUserEntity.class, givenUuid))
+                    .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(newUserName);
+            });
+        }
+    }
 
     @Nested
     class FindByOptionalNameLike {
@@ -210,7 +266,8 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("admin@aaa.example.com");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(result,
+            exactlyTheseRbacPermissionsAreReturned(
+                result,
                 // @formatter:off
                 "customer#aaa.admin -> customer#aaa: add-package",
                 "customer#aaa.admin -> customer#aaa: view",
@@ -256,7 +313,8 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(result,
+            exactlyTheseRbacPermissionsAreReturned(
+                result,
                 // @formatter:off
                 "customer#aaa.tenant -> customer#aaa: view",
                 // "customer#aaa.admin -> customer#aaa: view" - Not permissions through the customer admin!
@@ -288,7 +346,8 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(result,
+            exactlyTheseRbacPermissionsAreReturned(
+                result,
                 // @formatter:off
                 "customer#aaa.tenant -> customer#aaa: view",
                 // "customer#aaa.admin -> customer#aaa: view" - Not permissions through the customer admin!
@@ -322,7 +381,6 @@ class RbacUserRepositoryIntegrationTest {
             .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
             .containsExactlyInAnyOrder();
     }
-
 
     void exactlyTheseRbacPermissionsAreReturned(
         final List<RbacUserPermission> actualResult,

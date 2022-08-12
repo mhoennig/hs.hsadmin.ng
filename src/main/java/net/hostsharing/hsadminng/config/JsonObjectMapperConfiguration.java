@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.config;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,6 @@ public class JsonObjectMapperConfiguration {
     @Primary
     public Jackson2ObjectMapperBuilder customObjectMapper() {
         return new Jackson2ObjectMapperBuilder()
-            .modules(new JsonNullableModule());
+            .modules(new JsonNullableModule(), new JavaTimeModule());
     }
 }

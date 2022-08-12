@@ -17,4 +17,5 @@ public interface CustomerRepository extends Repository<CustomerEntity, UUID> {
 
     CustomerEntity save(final CustomerEntity entity);
 
+    long count();
 }

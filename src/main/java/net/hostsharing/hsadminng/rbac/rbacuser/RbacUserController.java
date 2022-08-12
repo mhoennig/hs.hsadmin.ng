@@ -7,10 +7,14 @@ import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.UUID;
 
+import static net.hostsharing.hsadminng.Mapper.map;
 import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
@@ -20,14 +24,35 @@ public class RbacUserController implements RbacusersApi {
     private Context context;
 
     @Autowired
+    private EntityManager em;
+
+    @Autowired
     private RbacUserRepository rbacUserRepository;
 
     @Override
     @Transactional
+    public ResponseEntity<RbacUserResource> createUser(
+        @RequestBody final RbacUserResource body
+    ) {
+        if (body.getUuid() == null) {
+            body.setUuid(UUID.randomUUID());
+        }
+        final var saved = map(body, RbacUserEntity.class);
+        rbacUserRepository.create(saved);
+        final var uri =
+            MvcUriComponentsBuilder.fromController(getClass())
+                .path("/api/rbac-users/{id}")
+                .buildAndExpand(saved.getUuid())
+                .toUri();
+        return ResponseEntity.created(uri).body(map(saved, RbacUserResource.class));
+    }
+
+    @Override
+    @Transactional
     public ResponseEntity<List<RbacUserResource>> listUsers(
-        @RequestHeader(name = "current-user") String currentUserName,
-        @RequestHeader(name = "assumed-roles", required = false) String assumedRoles,
-        @RequestParam(name="name", required = false) String userName
+        @RequestHeader(name = "current-user") final String currentUserName,
+        @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
+        @RequestParam(name = "name", required = false) final String userName
     ) {
         context.setCurrentUser(currentUserName);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
@@ -39,9 +64,9 @@ public class RbacUserController implements RbacusersApi {
     @Override
     @Transactional
     public ResponseEntity<List<RbacUserPermissionResource>> listUserPermissions(
-        @RequestHeader(name = "current-user") String currentUserName,
-        @RequestHeader(name = "assumed-roles", required = false) String assumedRoles,
-        @PathVariable(name= "userName") String userName
+        @RequestHeader(name = "current-user") final String currentUserName,
+        @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
+        @PathVariable(name = "userName") final String userName
     ) {
         context.setCurrentUser(currentUserName);
         if (assumedRoles != null && !assumedRoles.isBlank()) {

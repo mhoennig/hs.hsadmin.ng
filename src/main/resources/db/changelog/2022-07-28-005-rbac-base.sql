@@ -59,6 +59,22 @@ begin
 end;
 $$;
 
+create or replace function createRbacUser(refUuid uuid, userName varchar)
+    returns uuid
+    called on null input
+    language plpgsql as $$
+begin
+    insert
+        into RbacReference as r (uuid, type)
+        values ( coalesce(refUuid, uuid_generate_v4()), 'RbacUser')
+        returning r.uuid into refUuid;
+    insert
+        into RbacUser (uuid, name)
+        values (refUuid, userName);
+    return refUuid;
+end;
+$$;
+
 create or replace function findRbacUserId(userName varchar)
     returns uuid
     returns null on null input

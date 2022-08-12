@@ -14,7 +14,13 @@ components:
                     schema:
                         $ref: '#/components/schemas/Error'
         Forbidden:
-            description: The current user or none of the assumed or roles is granted access to the .
+            description: The current user or none of the assumed or roles is granted access to the resource.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+        Conflict:
+            description: The request could not be completed due to a conflict with the current state of the target resource.
             content:
                 application/json:
                     schema:

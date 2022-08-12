@@ -9,11 +9,17 @@
  */
 drop view if exists rbacrole_rv;
 create or replace view rbacrole_rv as
-select DISTINCT r.*, o.objectTable,
-       findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
-    from rbacrole as r
-    join rbacobject as o on o.uuid=r.objectuuid
-    where isGranted(currentSubjectIds(), r.uuid);
+select *
+       -- @formatter:off
+        from (
+            select r.*, o.objectTable,
+                   findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                from rbacrole as r
+                join rbacobject as o on o.uuid = r.objectuuid
+                where isGranted(currentSubjectIds(), r.uuid)
+        ) as unordered
+        -- @formatter:on
+        order by objectIdName;
 grant all privileges on rbacrole_rv to restricted;
 --//
 
@@ -27,12 +33,57 @@ grant all privileges on rbacrole_rv to restricted;
  */
 drop view if exists RbacUser_rv;
 create or replace view RbacUser_rv as
-select u.*
-    from RbacUser as u
-             join RbacGrants as g on g.ascendantuuid = u.uuid
-             join rbacrole_rv as r on r.uuid = g.descendantuuid;
+    select distinct *
+        -- @formatter:off
+        from (
+            select usersInRolesOfCurrentUser.*
+                from RbacUser as usersInRolesOfCurrentUser
+                 join RbacGrants as g on g.ascendantuuid = usersInRolesOfCurrentUser.uuid
+                 join rbacrole_rv as r on r.uuid = g.descendantuuid
+            union
+            select users.*
+                from RbacUser as users
+                where cardinality(assumedRoles()) = 0 and  currentUserId() = users.uuid
+        ) as unordered
+        -- @formatter:on
+        order by unordered.name;
 grant all privileges on RbacUser_rv to restricted;
 --//
+
+-- ============================================================================
+--changeset rbac-views-USER-RV-INSERT-TRIGGER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/**
+    Instead of insert trigger function for RbacUser_rv.
+ */
+create or replace function insertRbacUser()
+    returns trigger
+    language plpgsql as $$
+declare
+    refUuid uuid;
+    newUser RbacUser;
+begin
+    insert
+        into RbacReference as r (uuid, type)
+        values( new.uuid, 'RbacUser')
+        returning r.uuid into refUuid;
+    insert
+        into RbacUser (uuid, name)
+        values (refUuid, new.name)
+        returning * into newUser;
+    return newUser;
+end;
+$$;
+
+/*
+    Creates an instead of insert trigger for the RbacUser_rv view.
+ */
+create trigger insertRbacUser_Trigger
+    instead of insert
+    on RbacUser_rv
+    for each row
+execute function insertRbacUser();
 
 
 -- ============================================================================

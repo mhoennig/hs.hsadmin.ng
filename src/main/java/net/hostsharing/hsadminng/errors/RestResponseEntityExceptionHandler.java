@@ -34,6 +34,13 @@ public class RestResponseEntityExceptionHandler
         return errorResponse(request, httpStatus(message).orElse(HttpStatus.FORBIDDEN), message);
     }
 
+    @ExceptionHandler(Throwable.class)
+    protected ResponseEntity<CustomErrorResponse> handleOtherExceptions(
+        final RuntimeException exc, final WebRequest request) {
+        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        return errorResponse(request, httpStatus(message).orElse(HttpStatus.FORBIDDEN), message);
+    }
+
     private Optional<HttpStatus> httpStatus(final String message) {
         if (message.startsWith("ERROR: [")) {
             for (HttpStatus status : HttpStatus.values()) {
@@ -48,10 +55,10 @@ public class RestResponseEntityExceptionHandler
 
     private static ResponseEntity<CustomErrorResponse> errorResponse(
         final WebRequest request,
-        final HttpStatus conflict,
+        final HttpStatus httpStatus,
         final String message) {
         return new ResponseEntity<>(
-            new CustomErrorResponse(request.getContextPath(), conflict, message), conflict);
+            new CustomErrorResponse(request.getContextPath(), httpStatus, message), httpStatus);
     }
 
     private String firstLine(final String message) {
