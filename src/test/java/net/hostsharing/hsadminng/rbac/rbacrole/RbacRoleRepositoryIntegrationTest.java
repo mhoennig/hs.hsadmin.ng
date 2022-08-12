@@ -8,10 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-
 import java.util.List;
 
 import static net.hostsharing.test.JpaAttempt.attempt;
@@ -19,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ComponentScan(basePackageClasses = { Context.class, RbacRoleRepository.class })
+@DirtiesContext
 class RbacRoleRepositoryIntegrationTest {
 
     @Autowired
@@ -76,7 +76,7 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        public void RbacRoleAdmin_withoutAssumedRole_canViewOnlyItsOwnRbacRole() {
+        public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnRbacRole() {
             // given:
             currentUser("admin@aaa.example.com");
 
@@ -96,7 +96,7 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        public void RbacRoleAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnRbacRole() {
+        public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnRbacRole() {
             currentUser("admin@aaa.example.com");
             assumedRoles("package#aaa00.admin");
 
@@ -106,18 +106,18 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        public void RbacRoleAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyRbacRole() {
+        public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyRbacRole() {
             // given:
             currentUser("admin@aaa.example.com");
             assumedRoles("package#aab00.admin");
 
             // when
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> rbacRoleRepository.findAll());
 
             // then
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
         }
@@ -126,30 +126,53 @@ class RbacRoleRepositoryIntegrationTest {
         void unknownUser_withoutAssumedRole_cannotViewAnyRbacRoles() {
             currentUser("unknown@example.org");
 
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> rbacRoleRepository.findAll());
 
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
         @Test
-        @Transactional
         void unknownUser_withAssumedRbacRoleRole_cannotViewAnyRbacRoles() {
             currentUser("unknown@example.org");
             assumedRoles("RbacRole#aaa.admin");
 
-            final var attempt = attempt(
+            final var result = attempt(
                 em,
                 () -> rbacRoleRepository.findAll());
 
-            attempt.assertExceptionWithRootCauseMessage(
+            result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
                 "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
+    }
 
+    @Nested
+    class FindByName {
+
+        @Test
+        void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByName() {
+            currentUser("admin@aaa.example.com");
+
+            final var result = rbacRoleRepository.findByRoleName("customer#aaa.admin");
+
+            assertThat(result).isNotNull();
+            assertThat(result.getObjectTable()).isEqualTo("customer");
+            assertThat(result.getObjectIdName()).isEqualTo("aaa");
+            assertThat(result.getRoleType()).isEqualTo(RbacRoleType.admin);
+        }
+
+        @Test
+        void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByName() {
+            currentUser("admin@aaa.example.com");
+
+            final var result = rbacRoleRepository.findByRoleName("customer#bbb.admin");
+
+            assertThat(result).isNull();
+        }
     }
 
     void currentUser(final String currentUser) {

@@ -13,4 +13,6 @@ public interface RbacRoleRepository extends Repository<RbacRoleEntity, UUID> {
      * @return all entities
      */
     List<RbacRoleEntity> findAll();
+
+    RbacRoleEntity findByRoleName(String roleName);
 }
