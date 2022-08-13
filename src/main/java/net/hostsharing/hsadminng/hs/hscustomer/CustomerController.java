@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -47,6 +48,7 @@ public class CustomerController implements CustomersApi {
         final String currentUser,
         final String assumedRoles,
         final CustomerResource customer) {
+
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
@@ -54,10 +56,15 @@ public class CustomerController implements CustomersApi {
         if (customer.getUuid() == null) {
             customer.setUuid(UUID.randomUUID());
         }
-        return ResponseEntity.ok(
-            map(
-                customerRepository.save(map(customer, CustomerEntity.class)),
-                CustomerResource.class));
+
+        final var saved = customerRepository.save(map(customer, CustomerEntity.class));
+
+        final var uri =
+            MvcUriComponentsBuilder.fromController(getClass())
+                .path("/api/rbac-users/{id}")
+                .buildAndExpand(customer.getUuid())
+                .toUri();
+        return ResponseEntity.created(uri).body(map(saved, CustomerResource.class));
     }
 
 }

@@ -19,6 +19,9 @@ paths:
     /api/rbac-roles:
         $ref: "./api-definition/rbac-roles.yaml"
 
+    /api/rbac-grants:
+        $ref: "./api-definition/rbac-grants.yaml"
+
     # HS
 
     /api/customers:

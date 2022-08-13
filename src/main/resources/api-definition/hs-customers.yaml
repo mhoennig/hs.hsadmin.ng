@@ -42,8 +42,8 @@ post:
                     $ref: './api-definition/api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
         required: true
     responses:
-        "200":
-            description: OK
+        "201":
+            description: Created
             content:
                 'application/json':
                     schema:
@@ -52,3 +52,5 @@ post:
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+        "409":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Conflict'
