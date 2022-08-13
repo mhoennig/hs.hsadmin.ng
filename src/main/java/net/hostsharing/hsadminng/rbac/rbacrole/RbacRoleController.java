@@ -24,11 +24,15 @@ public class RbacRoleController implements RbacrolesApi {
 
     @Override
     @Transactional
-    public ResponseEntity<List<RbacRoleResource>> listRoles(final String currentUser, final String assumedRoles) {
+    public ResponseEntity<List<RbacRoleResource>> listRoles(
+        final String currentUser,
+        final String assumedRoles) {
+
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
         return ResponseEntity.ok(mapList(rbacRoleRepository.findAll(), RbacRoleResource.class));
     }
+
 }

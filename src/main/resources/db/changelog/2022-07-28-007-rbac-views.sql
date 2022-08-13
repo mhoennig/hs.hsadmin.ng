@@ -25,6 +25,72 @@ grant all privileges on rbacrole_rv to restricted;
 
 
 -- ============================================================================
+--changeset rbac-views-GRANT-RESTRICTED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a view to the grants table with row-level limitation
+    based on the direct grants of the current user.
+ */
+drop view if exists rbacgrants_rv;
+create or replace view rbacgrants_rv as
+select userName, objectTable||'#'||objectIdName||'.'||roletype as roleIdName,
+       managed, assumed, empowered,
+       ascendantUuid as userUuid,
+       descendantUuid as roleUuid,
+       objectTable, objectUuid, objectIdName, roleType
+       -- @formatter:off
+    from (
+             select g.*, u.name as userName, o.objecttable, r.objectuuid, r.roletype,
+                    findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                 from rbacgrants as g
+                 join rbacrole as r on r.uuid = g.descendantUuid
+                 join rbacobject o on o.uuid = r.objectuuid
+                 join rbacuser u on u.uuid = g.ascendantuuid
+                 where isGranted(currentSubjectIds(), r.uuid)
+         ) as unordered
+         -- @formatter:on
+    order by objectIdName;
+grant all privileges on rbacrole_rv to restricted;
+--//
+
+
+-- ============================================================================
+--changeset rbac-views-GRANTS-RV-INSERT-TRIGGER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/**
+    Instead of insert trigger function for RbacGrants_RV.
+ */
+create or replace function insertRbacGrant()
+    returns trigger
+    language plpgsql as $$
+declare
+    newGrant RbacGrants_RV;
+begin
+    if new.managed then
+        raise exception '[400] Managed grants cannot be inserted via RBacGrants_RV.';
+    end if;
+
+    call grantRoleToUser(new.roleUuid, new.userUuid,
+        ROW(false, new.assumed, new.empowered));
+    select grv.*
+        from RbacGrants_RV grv
+        where grv.userUuid=new.userUuid and grv.roleUuid=new.roleUuid
+        into newGrant;
+    return newGrant;
+end; $$;
+
+/*
+    Creates an instead of insert trigger for the RbacGrants_rv view.
+ */
+create trigger insertRbacGrant_Trigger
+    instead of insert
+    on RbacGrants_rv
+    for each row
+execute function insertRbacGrant();
+
+
+-- ============================================================================
 --changeset rbac-views-USER-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*

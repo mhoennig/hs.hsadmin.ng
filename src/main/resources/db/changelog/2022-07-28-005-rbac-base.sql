@@ -66,7 +66,7 @@ create or replace function createRbacUser(refUuid uuid, userName varchar)
 begin
     insert
         into RbacReference as r (uuid, type)
-        values ( coalesce(refUuid, uuid_generate_v4()), 'RbacUser')
+        values (coalesce(refUuid, uuid_generate_v4()), 'RbacUser')
         returning r.uuid into refUuid;
     insert
         into RbacUser (uuid, name)
@@ -206,6 +206,33 @@ begin
 end;
 $$;
 
+create or replace function findRoleId(roleIdName varchar)
+    returns uuid
+    returns null on null input
+    language plpgsql as $$
+declare
+    roleParts                 text;
+    roleTypeFromRoleIdName    RbacRoleType;
+    objectNameFromRoleIdName  text;
+    objectTableFromRoleIdName text;
+    objectUuidOfRole          uuid;
+    roleUuid                  uuid;
+begin
+    -- TODO: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
+    roleParts = overlay(roleIdName placing '#' from length(roleIdName) + 1 - strpos(reverse(roleIdName), '.'));
+    objectTableFromRoleIdName = split_part(roleParts, '#', 1);
+    objectNameFromRoleIdName = split_part(roleParts, '#', 2);
+    roleTypeFromRoleIdName = split_part(roleParts, '#', 3);
+    objectUuidOfRole = findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
+
+    select uuid
+        from RbacRole
+        where objectUuid = objectUuidOfRole
+          and roleType = roleTypeFromRoleIdName
+        into roleUuid;
+    return roleUuid;
+end; $$;
+
 create or replace function findRoleId(roleDescriptor RbacRoleDescriptor)
     returns uuid
     returns null on null input
@@ -322,13 +349,15 @@ $$;
 --changeset rbac-base-GRANTS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-
+    Table to store grants / role- or permission assignments to users or roles.
  */
 create table RbacGrants
 (
     ascendantUuid  uuid references RbacReference (uuid) on delete cascade,
     descendantUuid uuid references RbacReference (uuid) on delete cascade,
-    follow         boolean not null default true,
+    managed        boolean not null default false, -- created by system (true) vs. user (false)
+    assumed        boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
+    empowered      boolean not null default false, -- true: allows grant+revoke for descendant role
     primary key (ascendantUuid, descendantUuid)
 );
 create index on RbacGrants (ascendantUuid);
@@ -377,7 +406,8 @@ declare
     granteeId uuid;
 begin
     -- TODO: needs optimization
-    foreach granteeId in array granteeIds loop
+    foreach granteeId in array granteeIds
+        loop
             if isGranted(granteeId, grantedId) then
                 return true;
             end if;
@@ -413,10 +443,11 @@ create or replace function hasGlobalRoleGranted(userUuid uuid)
     language sql as $$
 select exists(
            select r.uuid
-                from RbacGrants as g
-                join RbacRole as r on r.uuid = g.descendantuuid
-                join RbacObject as o on o.uuid = r.objectuuid
-                where g.ascendantuuid = userUuid and o.objecttable = 'global'
+               from RbacGrants as g
+                        join RbacRole as r on r.uuid = g.descendantuuid
+                        join RbacObject as o on o.uuid = r.objectuuid
+               where g.ascendantuuid = userUuid
+                 and o.objecttable = 'global'
            );
 $$;
 
@@ -432,14 +463,14 @@ begin
             perform assertReferenceType('permissionId (descendant)', permissionIds[i], 'RbacPermission');
 
             insert
-                into RbacGrants (ascendantUuid, descendantUuid, follow)
-                values (roleUuid, permissionIds[i], true)
+                into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
+                values (roleUuid, permissionIds[i], true, true, false)
             on conflict do nothing; -- allow granting multiple times
         end loop;
 end;
 $$;
 
-create or replace procedure grantRoleToRole(subRoleId uuid, superRoleId uuid, doFollow bool = true)
+create or replace procedure grantRoleToRole(subRoleId uuid, superRoleId uuid, doAssume bool = true)
     language plpgsql as $$
 begin
     perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
@@ -450,8 +481,8 @@ begin
     end if;
 
     insert
-        into RbacGrants (ascendantUuid, descendantUuid, follow)
-        values (superRoleId, subRoleId, doFollow)
+        into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
+        values (superRoleId, subRoleId, true, doAssume, false)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 
@@ -466,16 +497,45 @@ begin
     end if;
 end; $$;
 
-create or replace procedure grantRoleToUser(roleId uuid, userId uuid)
+create or replace procedure grantRoleToUser(roleUuid uuid, userUuid uuid)
     language plpgsql as $$
 begin
-    perform assertReferenceType('roleId (ascendant)', roleId, 'RbacRole');
-    perform assertReferenceType('userId (descendant)', userId, 'RbacUser');
+    perform assertReferenceType('roleId (descendant)', roleUuid, 'RbacRole');
+    perform assertReferenceType('userId (ascendant)', userUuid, 'RbacUser');
 
     insert
-        into RbacGrants (ascendantUuid, descendantUuid, follow)
-        values (userId, roleId, true)
-    on conflict do nothing; -- allow granting multiple times
+        into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
+        values (userUuid, roleUuid, true, true, true);
+    -- TODO: What should happen on mupltiple grants? What if options are not the same?
+    -- on conflict do nothing; -- allow granting multiple times
+end; $$;
+
+/*
+    Attributes of a grant assignment.
+ */
+create type RbacGrantOptions as
+(
+    managed   boolean, -- created by system (true) vs. user (false)
+    assumed   boolean, -- auto assumed (true) vs. needs assumeRoles (false)
+    empowered boolean  -- true: allows grant+revoke for descendant role
+);
+
+create or replace procedure grantRoleToUser(roleUuid uuid, userUuid uuid, grantOptions RbacGrantOptions)
+    language plpgsql as $$
+begin
+    perform assertReferenceType('roleId (descendant)', roleUuid, 'RbacRole');
+    perform assertReferenceType('userId (ascendant)', userUuid, 'RbacUser');
+
+    if not isGranted(currentSubjectIds(), roleUuid) then
+        raise exception '[403] Access to role uuid % forbidden for %', roleUuid, currentSubjects();
+    end if;
+
+    insert
+        into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
+        values (userUuid, roleUuid, grantOptions.managed, grantOptions.assumed, grantOptions.empowered);
+    -- TODO: What should happen on mupltiple grants? What if options are not the same?
+    --      Most powerful or latest grant wins? What about managed?
+    -- on conflict do nothing; -- allow granting multiple times
 end; $$;
 --//
 
@@ -499,14 +559,14 @@ begin
     return query select distinct perm.objectUuid
                      from (with recursive grants as (select descendantUuid, ascendantUuid, 1 as level
                                                          from RbacGrants
-                                                         where follow
+                                                         where assumed
                                                            and ascendantUuid = any (subjectIds)
                                                      union
                                                      distinct
                                                      select "grant".descendantUuid, "grant".ascendantUuid, level + 1 as level
                                                          from RbacGrants "grant"
                                                                   inner join grants recur on recur.descendantUuid = "grant".ascendantUuid
-                                                         where follow)
+                                                         where assumed)
                            select descendantUuid
                                from grants) as granted
                               join RbacPermission perm
@@ -536,7 +596,7 @@ create or replace function queryPermissionsGrantedToSubjectId(subjectId uuid)
     returns setof RbacPermission
     strict
     language sql as $$
--- @formatter:off
+    -- @formatter:off
 select *
     from RbacPermission
     where uuid in (

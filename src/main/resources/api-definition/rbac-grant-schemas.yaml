@@ -1,0 +1,21 @@
+
+components:
+
+    schemas:
+
+        RbacGrant:
+            type: object
+            properties:
+                userUuid:
+                    type: string
+                    format: uuid
+                roleUuid:
+                    type: string
+                    format: uuid
+                assumed:
+                    type: boolean
+                empowered:
+                    type: boolean
+            required:
+                - userUuid
+                - roleUuid

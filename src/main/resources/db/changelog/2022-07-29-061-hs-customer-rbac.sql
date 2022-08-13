@@ -76,7 +76,7 @@ begin
     customerAdminUuid = createRole(
         customerAdmin(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view', 'add-package']),
-        -- NO auto follow for customer owner to avoid exploding permissions for administrators
+        -- NO auto assume for customer owner to avoid exploding permissions for administrators
         withUser(NEW.adminUserName, 'create') -- implicitly ignored if null
         );
 

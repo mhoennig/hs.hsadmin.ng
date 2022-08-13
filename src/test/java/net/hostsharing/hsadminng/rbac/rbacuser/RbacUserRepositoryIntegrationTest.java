@@ -371,6 +371,7 @@ class RbacUserRepositoryIntegrationTest {
 
     void exactlyTheseRbacUsersAreReturned(final List<RbacUserEntity> actualResult, final String... expectedUserNames) {
         assertThat(actualResult)
+            .filteredOn(u -> !u.getName().startsWith("test-user-"))
             .extracting(RbacUserEntity::getName)
             .containsExactlyInAnyOrder(expectedUserNames);
     }

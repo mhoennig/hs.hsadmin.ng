@@ -32,7 +32,7 @@ class PackageRepositoryIntegrationTest {
     class FindAllByOptionalNameLike {
 
         @Test
-        public void hostsharingAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotFollowed() {
+        public void hostsharingAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             // given
             currentUser("mike@hostsharing.net");
 
@@ -44,7 +44,7 @@ class PackageRepositoryIntegrationTest {
         }
 
         @Test
-        public void hostsharingAdmin_withAssumedHostsharingAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotFollowed() {
+        public void hostsharingAdmin_withAssumedHostsharingAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             given:
             currentUser("mike@hostsharing.net");
             assumedRoles("global#hostsharing.admin");

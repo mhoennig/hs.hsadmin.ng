@@ -461,12 +461,12 @@ actorHostmaster --> roleAdmins
 
 As you can see, there something special:
 From the 'Role customer#xyz.owner' to the 'Role customer#xyz.admin' there is a dashed line, whereas all other lines are solid lines.
-Solid lines means, that one role is granted to another and followed in all queries to the restricted views.
-The dashed line means that one role is granted to another but not automatically followed in queries to the restricted views.
+Solid lines means, that one role is granted to another and automatically assumed in all queries to the restricted views.
+The dashed line means that one role is granted to another but not automatically assumed in queries to the restricted views.
 
 The reason here is that otherwise simply too many objects would be accessible to those with the 'administrators' role and all queries would be slowed down vastly.
 
-Grants which are not followed are still valid grants for `hsadminng.assumedRoles`.
+Grants which are not automatically assumed are still valid grants for `hsadminng.assumedRoles`.
 Thus, if you want to access anything below a customer, assume its role first.
 
 There is actually another speciality in the customer roles:
@@ -632,4 +632,47 @@ The WHERE-IN-variant is about 50% slower on the smaller dataset, but almost keep
 Both variants a viable option, depending on other needs, e.g. updatable views. 
 
 
+## Access Control to RBAC-Objects
 
+Access Control for business objects checked according to the assigned roles.
+But we decided not to create such roles and permissions for the RBAC-Objects itself.
+It would have overcomplicated the system and the necessary information can easily be added to the RBAC-Objects itself, mostly the `RbacGrant`s.
+
+### RbacUser
+
+Users can self-register, thus to create a new RbacUser entity, no login is required.
+But such a user has no access-rights except viewing itself.
+
+Users can view themselves.
+And any user can view all other users as long as they have the same roles assigned.
+As an exception, users which are assigned to global roles are not visible by other users.
+
+At least an indirect lookup of known user-names (e.g. email address of the user) is possible 
+by users who have an empowered assignment of any role.
+Otherwise, it would not be possible to assign roles to new users.
+
+### RbacRole
+
+All roles are system-defined and cannot be created or modified by any external API.
+
+Users can view only the roles to which they are assigned.
+
+## RbacGrant
+
+Grant can be `empowered`, this means that the grantee user can grant the granted role to other users
+and revoke grants to that role.
+(TODO: access control part not yet implemented)
+
+Grants can be `managed`, which means they are created and deleted by system-defined rules.
+If a grant is not managed, it was created by an empowered user and can be deleted by empowered users.
+
+Grants can be `assumed`, which means that they are immediately active.
+If a grant is not assumed, the grantee user needs to use `assumeRoles` to activate it.
+
+Users can see only grants of roles to which they are (directly?) assigned themselves.
+
+TODO: If a user grants an indirect role to another user, that grant would not be visible to the user.
+But if we make indirect grants visible, this would reveal too much information.
+We also cannot keep the granting user in the grant because grants must survive deleted users,
+e.g. if after an account was transferred to another user.
+ 

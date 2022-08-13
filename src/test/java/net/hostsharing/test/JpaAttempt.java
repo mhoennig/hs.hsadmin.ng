@@ -49,6 +49,13 @@ public class JpaAttempt {
         }
     }
 
+    public static JpaResult<Void> attempt(final EntityManager em, final Runnable code) {
+        return attempt(em, () -> {
+            code.run();
+            return null;
+        });
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public <T> JpaResult<T> transacted(final Supplier<T> code) {
         return attempt(em, code);

@@ -17,6 +17,9 @@ public interface RbacUserRepository extends Repository<RbacUserEntity, UUID> {
         """)
     List<RbacUserEntity> findByOptionalNameLike(String userName);
 
+    @Query(value = "select uuid from rbacuser where name=:userName", nativeQuery = true)
+    UUID findUuidByName(String userName);
+
     RbacUserEntity findByUuid(UUID uuid);
 
     @Query(value = "select * from grantedPermissions(:userName)", nativeQuery = true)

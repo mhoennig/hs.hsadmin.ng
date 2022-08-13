@@ -15,8 +15,7 @@ import javax.transaction.Transactional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -56,7 +55,12 @@ class RbacUserControllerAcceptanceTest {
                     .body("[0].name", is("aaa00@aaa.example.com"))
                     .body("[1].name", is("aaa01@aaa.example.com"))
                     .body("[2].name", is("aaa02@aaa.example.com"))
-                    .body("size()", is(14));
+                    .body("[3].name", is("aab00@aab.example.com"))
+                    // ...
+                    .body("[11].name", is("admin@aac.example.com"))
+                    .body("[12].name", is("mike@hostsharing.net"))
+                    .body("[13].name", is("sven@hostsharing.net"))
+                    .body("size()", greaterThanOrEqualTo(14));
             // @formatter:on
         }
 
