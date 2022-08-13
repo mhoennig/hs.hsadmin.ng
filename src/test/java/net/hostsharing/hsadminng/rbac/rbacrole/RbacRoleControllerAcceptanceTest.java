@@ -37,8 +37,33 @@ class RbacRoleControllerAcceptanceTest {
     RbacRoleRepository rbacRoleRepository;
 
     @Test
-    @Accepts({ "ROL:*:L:List" })
-    void returnsRbacRolesForAssumedPackageAdmin() {
+    @Accepts({ "ROL:L(List)" })
+    void hostsharingAdmin_withoutAssumedRole_canViewPackageAdminRoles() {
+
+        // @formatter:off
+        RestAssured
+            .given()
+            .header("current-user", "mike@hostsharing.net")
+            .port(port)
+            .when()
+            .get("http://localhost/api/rbac-roles")
+            .then().assertThat()
+            .statusCode(200)
+            .contentType("application/json")
+            .body("[0].roleName", is("customer#aaa.owner"))
+            .body("[1].roleName", is("customer#aaa.admin"))
+            .body("[2].roleName", is("customer#aaa.tenant"))
+            .body("[3].roleName", is("package#aaa00.owner"))
+            .body("[4].roleName", is("package#aaa00.tenant"))
+            // ...
+            .body("[36].roleName", is("global#hostsharing.admin"))
+            .body( "size()", is(37));
+        // @formatter:on
+    }
+
+    @Test
+    @Accepts({ "ROL:L(List)", "ROL:X(Access Control)" })
+    void hostsharingAdmin_withAssumedPackageAdminRole_canViewPackageAdminRoles() {
 
         // @formatter:off
         RestAssured
@@ -53,7 +78,29 @@ class RbacRoleControllerAcceptanceTest {
                 .contentType("application/json")
                 .body("[0].roleName", is("customer#aaa.tenant"))
                 .body("[1].roleName", is("package#aaa00.admin"))
-                .body("[2].roleName", is("package#aaa00.tenant"));
+                .body("[2].roleName", is("package#aaa00.tenant"))
+                .body("size()", is(3));
+        // @formatter:on
+    }
+
+    @Test
+    @Accepts({ "ROL:L(List)", "ROL:X(Access Control)" })
+    void packageAdmin_withoutAssumedRole_canViewPackageAdminRoles() {
+
+        // @formatter:off
+        RestAssured
+            .given()
+            .header("current-user", "aaa00@aaa.example.com")
+            .port(port)
+            .when()
+            .get("http://localhost/api/rbac-roles")
+            .then().assertThat()
+            .statusCode(200)
+            .contentType("application/json")
+            .body("[0].roleName", is("customer#aaa.tenant"))
+            .body("[1].roleName", is("package#aaa00.admin"))
+            .body("[2].roleName", is("package#aaa00.tenant"))
+            .body("size()", is(3));;
         // @formatter:on
     }
 

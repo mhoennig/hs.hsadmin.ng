@@ -52,25 +52,6 @@ class RbacGrantControllerAcceptanceTest {
     JpaAttempt jpaAttempt;
 
     @Test
-    @Accepts({ "ROL:L(List)" })
-    void returnsRbacGrantsForPackageAdmin() {
-
-        RestAssured // @formatter:off
-            .given()
-                .header("current-user", "aaa00@aaa.example.com")
-                .port(port)
-            .when()
-                .get("http://localhost/api/rbac-roles")
-            .then().assertThat()
-                .statusCode(200)
-                .contentType("application/json")
-                .body("[0].roleName", is("customer#aaa.tenant"))
-                .body("[1].roleName", is("package#aaa00.admin"))
-                .body("[2].roleName", is("package#aaa00.tenant"));
-            // @formatter:on
-    }
-
-    @Test
     @Accepts({ "ROL:C(Create)" })
     void packageAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
 
