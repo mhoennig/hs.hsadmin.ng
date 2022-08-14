@@ -12,7 +12,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 import javax.persistence.EntityManager;
 
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -50,14 +50,15 @@ class RbacRoleControllerAcceptanceTest {
             .then().assertThat()
             .statusCode(200)
             .contentType("application/json")
-            .body("[0].roleName", is("customer#aaa.owner"))
-            .body("[1].roleName", is("customer#aaa.admin"))
+            .body("[0].roleName", is("customer#aaa.admin"))
+            .body("[1].roleName", is("customer#aaa.owner"))
             .body("[2].roleName", is("customer#aaa.tenant"))
-            .body("[3].roleName", is("package#aaa00.owner"))
-            .body("[4].roleName", is("package#aaa00.tenant"))
             // ...
-            .body("[36].roleName", is("global#hostsharing.admin"))
-            .body( "size()", is(37));
+            .body("", hasItem(hasEntry("roleName", "global#hostsharing.admin")))
+            .body("", hasItem(hasEntry("roleName", "customer#aab.admin")))
+            .body("", hasItem(hasEntry("roleName", "package#aab00.admin")))
+            .body("", hasItem(hasEntry("roleName", "unixuser#aab00-aaaa.owner")))
+            .body( "size()", is(73)); // increases with new test data
         // @formatter:on
     }
 
@@ -69,17 +70,18 @@ class RbacRoleControllerAcceptanceTest {
         RestAssured
             .given()
                 .header("current-user", "mike@hostsharing.net")
-                .header("assumed-roles", "package#aaa00.admin")
+                .header("assumed-roles", "package#aab00.admin")
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac-roles")
             .then().assertThat()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("[0].roleName", is("customer#aaa.tenant"))
-                .body("[1].roleName", is("package#aaa00.admin"))
-                .body("[2].roleName", is("package#aaa00.tenant"))
-                .body("size()", is(3));
+                .body("[0].roleName", is("customer#aab.tenant"))
+                .body("[1].roleName", is("package#aab00.admin"))
+                .body("[2].roleName", is("package#aab00.tenant"))
+                .body("[3].roleName", is("unixuser#aab00-aaaa.admin"))
+                .body("size()", is(7)); // increases with new test data
         // @formatter:on
     }
 
@@ -90,17 +92,18 @@ class RbacRoleControllerAcceptanceTest {
         // @formatter:off
         RestAssured
             .given()
-            .header("current-user", "aaa00@aaa.example.com")
+            .header("current-user", "aac00@aac.example.com")
             .port(port)
             .when()
             .get("http://localhost/api/rbac-roles")
             .then().assertThat()
             .statusCode(200)
             .contentType("application/json")
-            .body("[0].roleName", is("customer#aaa.tenant"))
-            .body("[1].roleName", is("package#aaa00.admin"))
-            .body("[2].roleName", is("package#aaa00.tenant"))
-            .body("size()", is(3));;
+            .body("[0].roleName", is("customer#aac.tenant"))
+            .body("[1].roleName", is("package#aac00.admin"))
+            .body("[2].roleName", is("package#aac00.tenant"))
+            .body("[3].roleName", is("unixuser#aac00-aaaa.admin"))
+            .body("size()", is(7)); // increases with new test data
         // @formatter:on
     }
 

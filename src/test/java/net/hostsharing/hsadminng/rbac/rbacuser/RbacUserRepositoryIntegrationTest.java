@@ -237,7 +237,7 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(result, ALL_USER_PERMISSIONS);
+            allTheseRbacPermissionsAreReturned(result, ALL_USER_PERMISSIONS);
         }
 
         @Test
@@ -266,7 +266,7 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("admin@aaa.example.com");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(
+            allTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
                 "customer#aaa.admin -> customer#aaa: add-package",
@@ -276,14 +276,25 @@ class RbacUserRepositoryIntegrationTest {
                 "package#aaa00.admin -> package#aaa00: add-domain",
                 "package#aaa00.admin -> package#aaa00: add-unixuser",
                 "package#aaa00.tenant -> package#aaa00: view",
+                "unixuser#aaa00-aaaa.owner -> unixuser#aaa00-aaaa: *",
 
                 "package#aaa01.admin -> package#aaa01: add-domain",
                 "package#aaa01.admin -> package#aaa01: add-unixuser",
                 "package#aaa01.tenant -> package#aaa01: view",
+                "unixuser#aaa01-aaaa.owner -> unixuser#aaa01-aaaa: *",
 
                 "package#aaa02.admin -> package#aaa02: add-domain",
                 "package#aaa02.admin -> package#aaa02: add-unixuser",
-                "package#aaa02.tenant -> package#aaa02: view"
+                "package#aaa02.tenant -> package#aaa02: view",
+                "unixuser#aaa02-aaaa.owner -> unixuser#aaa02-aaaa: *"
+                // @formatter:on
+            );
+            noneOfTheseRbacPermissionsAreReturned(
+                result,
+                // @formatter:off
+                "customer#aab.admin -> customer#aab: add-package",
+                "customer#aab.admin -> customer#aab: view",
+                "customer#aab.tenant -> customer#aab: view"
                 // @formatter:on
             );
         }
@@ -313,14 +324,29 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(
+            allTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
                 "customer#aaa.tenant -> customer#aaa: view",
                 // "customer#aaa.admin -> customer#aaa: view" - Not permissions through the customer admin!
                 "package#aaa00.admin -> package#aaa00: add-unixuser",
                 "package#aaa00.admin -> package#aaa00: add-domain",
-                "package#aaa00.tenant -> package#aaa00: view"
+                "package#aaa00.tenant -> package#aaa00: view",
+                "unixuser#aaa00-aaaa.owner -> unixuser#aaa00-aaaa: *",
+                "unixuser#aaa00-aaab.owner -> unixuser#aaa00-aaab: *"
+                // @formatter:on
+            );
+            noneOfTheseRbacPermissionsAreReturned(
+                result,
+                // @formatter:off
+                "customer#aab.admin -> customer#aab: add-package",
+                "customer#aab.admin -> customer#aab: view",
+                "customer#aab.tenant -> customer#aab: view",
+                "package#aab00.admin -> package#aab00: add-unixuser",
+                "package#aab00.admin -> package#aab00: add-domain",
+                "package#aab00.tenant -> package#aab00: view",
+                "unixuser#aab00-aaaa.owner -> unixuser#aab00-aaaa: *",
+                "unixuser#aab00-aaab.owner -> unixuser#aab00-aaab: *"
                 // @formatter:on
             );
         }
@@ -346,7 +372,7 @@ class RbacUserRepositoryIntegrationTest {
             final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
 
             // then
-            exactlyTheseRbacPermissionsAreReturned(
+            allTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
                 "customer#aaa.tenant -> customer#aaa: view",
@@ -354,6 +380,22 @@ class RbacUserRepositoryIntegrationTest {
                 "package#aaa00.admin -> package#aaa00: add-unixuser",
                 "package#aaa00.admin -> package#aaa00: add-domain",
                 "package#aaa00.tenant -> package#aaa00: view"
+                // @formatter:on
+            );
+            noneOfTheseRbacPermissionsAreReturned(
+                result,
+                // @formatter:off
+                // no customer admin permissions
+                "customer#aaa.admin -> customer#aaa: add-package",
+                // no permissions on other customer's objects
+                "customer#aab.admin -> customer#aab: add-package",
+                "customer#aab.admin -> customer#aab: view",
+                "customer#aab.tenant -> customer#aab: view",
+                "package#aab00.admin -> package#aab00: add-unixuser",
+                "package#aab00.admin -> package#aab00: add-domain",
+                "package#aab00.tenant -> package#aab00: view",
+                "unixuser#aab00-aaaa.owner -> unixuser#aab00-aaaa: *",
+                "unixuser#aab00-aaab.owner -> unixuser#aab00-aaab: *"
                 // @formatter:on
             );
         }
@@ -389,6 +431,22 @@ class RbacUserRepositoryIntegrationTest {
         assertThat(actualResult)
             .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
             .containsExactlyInAnyOrder(expectedRoleNames);
+    }
+
+    void allTheseRbacPermissionsAreReturned(
+        final List<RbacUserPermission> actualResult,
+        final String... expectedRoleNames) {
+        assertThat(actualResult)
+            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+            .contains(expectedRoleNames);
+    }
+
+    void noneOfTheseRbacPermissionsAreReturned(
+        final List<RbacUserPermission> actualResult,
+        final String... unexpectedRoleNames) {
+        assertThat(actualResult)
+            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+            .doesNotContain(unexpectedRoleNames);
     }
 
 }

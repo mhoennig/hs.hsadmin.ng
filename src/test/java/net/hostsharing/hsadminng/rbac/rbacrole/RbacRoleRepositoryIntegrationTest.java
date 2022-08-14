@@ -59,7 +59,7 @@ class RbacRoleRepositoryIntegrationTest {
             final var result = rbacRoleRepository.findAll();
 
             // then
-            exactlyTheseRbacRolesAreReturned(result, ALL_TEST_DATA_ROLES);
+            allTheseRbacRolesAreReturned(result, ALL_TEST_DATA_ROLES);
         }
 
         @Test
@@ -72,7 +72,7 @@ class RbacRoleRepositoryIntegrationTest {
             final var result = rbacRoleRepository.findAll();
 
             then:
-            exactlyTheseRbacRolesAreReturned(result, ALL_TEST_DATA_ROLES);
+            allTheseRbacRolesAreReturned(result, ALL_TEST_DATA_ROLES);
         }
 
         @Test
@@ -84,13 +84,33 @@ class RbacRoleRepositoryIntegrationTest {
             final var result = rbacRoleRepository.findAll();
 
             // then:
-            exactlyTheseRbacRolesAreReturned(
+            allTheseRbacRolesAreReturned(
                 result,
                 // @formatter:off
-                "customer#aaa.admin", "customer#aaa.tenant",
-                    "package#aaa00.admin", "package#aaa00.owner", "package#aaa00.tenant",
-                    "package#aaa01.admin", "package#aaa01.owner", "package#aaa01.tenant",
-                    "package#aaa02.admin", "package#aaa02.owner", "package#aaa02.tenant"
+                "customer#aaa.admin",
+                "customer#aaa.tenant",
+                "package#aaa00.admin",
+                "package#aaa00.owner",
+                "package#aaa00.tenant",
+                "package#aaa01.admin",
+                "package#aaa01.owner",
+                "package#aaa01.tenant",
+                // ...
+                "unixuser#aaa00-aaaa.admin",
+                "unixuser#aaa00-aaaa.owner",
+                // ..
+                "unixuser#aaa01-aaaa.admin",
+                "unixuser#aaa01-aaaa.owner"
+                // @formatter:on
+            );
+            noneOfTheseRbacRolesIsReturned(
+                result,
+                // @formatter:off
+                "global#hostsharing.admin",
+                "customer#aaa.owner",
+                "package#aab00.admin",
+                "package#aab00.owner",
+                "package#aab00.tenant"
                 // @formatter:on
             );
         }
@@ -102,7 +122,15 @@ class RbacRoleRepositoryIntegrationTest {
 
             final var result = rbacRoleRepository.findAll();
 
-            exactlyTheseRbacRolesAreReturned(result, "customer#aaa.tenant", "package#aaa00.tenant", "package#aaa00.admin");
+            exactlyTheseRbacRolesAreReturned(
+                result,
+                "customer#aaa.tenant",
+                "package#aaa00.admin",
+                "package#aaa00.tenant",
+                "unixuser#aaa00-aaaa.admin",
+                "unixuser#aaa00-aaaa.owner",
+                "unixuser#aaa00-aaab.admin",
+                "unixuser#aaa00-aaab.owner");
         }
 
         @Test
@@ -189,6 +217,18 @@ class RbacRoleRepositoryIntegrationTest {
         assertThat(actualResult)
             .extracting(RbacRoleEntity::getRoleName)
             .containsExactlyInAnyOrder(expectedRoleNames);
+    }
+
+    void allTheseRbacRolesAreReturned(final List<RbacRoleEntity> actualResult, final String... expectedRoleNames) {
+        assertThat(actualResult)
+            .extracting(RbacRoleEntity::getRoleName)
+            .contains(expectedRoleNames);
+    }
+
+    void noneOfTheseRbacRolesIsReturned(final List<RbacRoleEntity> actualResult, final String... unexpectedRoleNames) {
+        assertThat(actualResult)
+            .extracting(RbacRoleEntity::getRoleName)
+            .doesNotContain(unexpectedRoleNames);
     }
 
 }

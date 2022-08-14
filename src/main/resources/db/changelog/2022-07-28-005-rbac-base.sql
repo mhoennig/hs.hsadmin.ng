@@ -629,19 +629,21 @@ create or replace function queryAllRbacUsersWithPermissionsFor(objectId uuid)
     language sql as $$
 select *
     from RbacUser
-    where uuid in (with recursive grants as (select descendantUuid,
-                                                    ascendantUuid
-                                                 from RbacGrants
-                                                 where descendantUuid = objectId
-                                             union all
-                                             select "grant".descendantUuid,
-                                                    "grant".ascendantUuid
-                                                 from RbacGrants "grant"
-                                                          inner join grants recur on recur.ascendantUuid = "grant".descendantUuid)
-                   select ascendantUuid
-                       from grants);
+    where uuid in (
+        -- @formatter:off
+        with recursive grants as (
+            select descendantUuid, ascendantUuid
+                from RbacGrants
+                where descendantUuid = objectId
+            union all
+            select "grant".descendantUuid, "grant".ascendantUuid
+                from RbacGrants "grant"
+                inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
+        )
+        -- @formatter:on
+        select ascendantUuid
+            from grants);
 $$;
-
 --//
 
 

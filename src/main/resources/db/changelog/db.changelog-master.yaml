@@ -30,6 +30,12 @@ databaseChangeLog:
     - include:
           file: db/changelog/2022-07-29-070-hs-package-rbac.sql
     - include:
-          file: db/changelog/2022-07-29-070-hs-package-test-data.sql
+        file: db/changelog/2022-07-29-070-hs-package-test-data.sql
+    - include:
+        file: db/changelog/2022-08-14-080-hs-unixuser.sql
+    - include:
+        file: db/changelog/2022-08-14-081-hs-unixuser-rbac.sql
+    - include:
+        file: db/changelog/2022-08-14-082-hs-unixuser-test-data.sql
 
 

@@ -19,7 +19,7 @@ select *
                 where isGranted(currentSubjectIds(), r.uuid)
         ) as unordered
         -- @formatter:on
-        order by objectIdName;
+        order by objectTable || '#' || objectIdName || '.' || roleType;
 grant all privileges on rbacrole_rv to restricted;
 --//
 
@@ -49,7 +49,7 @@ select userName, objectTable||'#'||objectIdName||'.'||roletype as roleIdName,
                  where isGranted(currentSubjectIds(), r.uuid)
          ) as unordered
          -- @formatter:on
-    order by objectIdName;
+    order by roleIdName;
 grant all privileges on rbacrole_rv to restricted;
 --//
 

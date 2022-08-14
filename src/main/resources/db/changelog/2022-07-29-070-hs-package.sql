@@ -9,6 +9,6 @@ create table if not exists package
     uuid         uuid unique references RbacObject (uuid),
     customerUuid uuid references customer (uuid),
     name         varchar(5),
-    description  varchar(80)
+    description  varchar(96)
 );
 --//
