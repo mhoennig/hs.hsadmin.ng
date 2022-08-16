@@ -12,6 +12,6 @@ import java.util.UUID;
 @NoArgsConstructor
 public class RbacGrantId implements Serializable {
 
-    private UUID userUuid;
-    private UUID roleUuid;
+    private UUID granteeUserUuid;
+    private UUID grantedRoleUuid;
 }

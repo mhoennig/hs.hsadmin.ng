@@ -77,7 +77,8 @@ begin
         customerAdmin(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view', 'add-package']),
         -- NO auto assume for customer owner to avoid exploding permissions for administrators
-        withUser(NEW.adminUserName, 'create') -- implicitly ignored if null
+        withUser(NEW.adminUserName, 'create'), -- implicitly ignored if null
+        grantedByRole(hostsharingAdmin())
         );
 
     -- allow the customer owner role (thus administrators) to assume the customer admin role

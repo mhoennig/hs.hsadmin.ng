@@ -6,16 +6,14 @@ components:
         RbacGrant:
             type: object
             properties:
-                userUuid:
-                    type: string
-                    format: uuid
-                roleUuid:
-                    type: string
-                    format: uuid
                 assumed:
                     type: boolean
-                empowered:
-                    type: boolean
+                grantedRoleUuid:
+                    type: string
+                    format: uuid
+                granteeUserUuid:
+                    type: string
+                    format: uuid
             required:
-                - userUuid
-                - roleUuid
+                - grantedRoleUuid
+                - granteeUserUuid

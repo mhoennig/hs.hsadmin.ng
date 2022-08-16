@@ -33,23 +33,25 @@ grant all privileges on rbacrole_rv to restricted;
  */
 drop view if exists rbacgrants_rv;
 create or replace view rbacgrants_rv as
-select userName, objectTable||'#'||objectIdName||'.'||roletype as roleIdName,
-       managed, assumed, empowered,
-       ascendantUuid as userUuid,
-       descendantUuid as roleUuid,
-       objectTable, objectUuid, objectIdName, roleType
-       -- @formatter:off
-    from (
-             select g.*, u.name as userName, o.objecttable, r.objectuuid, r.roletype,
+    -- @formatter:off
+    select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || '.' || r.roletype as grantedByRoleIdName,
+           g.objectTable || '#' || g.objectIdName || '.' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
+           g.grantedByRoleUuid, g.descendantUuid as grantedRoleUuid, g.ascendantUuid as userUuid,
+           g.objectTable, g.objectUuid, g.objectIdName, g.roleType as grantedRoleType
+        from (
+             select g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
+                    u.name as userName, o.objecttable, r.objectuuid, r.roletype,
                     findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
                  from rbacgrants as g
                  join rbacrole as r on r.uuid = g.descendantUuid
                  join rbacobject o on o.uuid = r.objectuuid
                  join rbacuser u on u.uuid = g.ascendantuuid
                  where isGranted(currentSubjectIds(), r.uuid)
-         ) as unordered
-         -- @formatter:on
-    order by roleIdName;
+         ) as g
+        join RbacRole as r on r.uuid = grantedByRoleUuid
+        join RbacObject as o on o.uuid = r.objectUuid
+    order by grantedRoleIdName;
+    -- @formatter:on
 grant all privileges on rbacrole_rv to restricted;
 --//
 
@@ -67,15 +69,10 @@ create or replace function insertRbacGrant()
 declare
     newGrant RbacGrants_RV;
 begin
-    if new.managed then
-        raise exception '[400] Managed grants cannot be inserted via RBacGrants_RV.';
-    end if;
-
-    call grantRoleToUser(new.roleUuid, new.userUuid,
-        ROW(false, new.assumed, new.empowered));
+    call grantRoleToUser(assumedRoleUuid(), new.grantedRoleUuid, new.userUuid, new.assumed);
     select grv.*
         from RbacGrants_RV grv
-        where grv.userUuid=new.userUuid and grv.roleUuid=new.roleUuid
+        where grv.userUuid=new.userUuid and grv.grantedRoleUuid=new.grantedRoleUuid
         into newGrant;
     return newGrant;
 end; $$;
@@ -88,6 +85,33 @@ create trigger insertRbacGrant_Trigger
     on RbacGrants_rv
     for each row
 execute function insertRbacGrant();
+--/
+
+
+-- ============================================================================
+--changeset rbac-views-GRANTS-RV-DELETE-TRIGGER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/**
+    Instead of delete trigger function for RbacGrants_RV.
+ */
+create or replace function deleteRbacGrant()
+    returns trigger
+    language plpgsql as $$
+begin
+    call revokeRoleFromUser(assumedRoleUuid(), old.grantedRoleUuid, old.userUuid);
+    return null;
+end; $$;
+
+/*
+    Creates an instead of delete trigger for the RbacGrants_rv view.
+ */
+create trigger deleteRbacGrant_Trigger
+    instead of delete
+    on RbacGrants_rv
+    for each row
+execute function deleteRbacGrant();
+--/
 
 
 -- ============================================================================
@@ -220,3 +244,4 @@ begin
              ) xp;
     -- @formatter:on
 end; $$;
+--//

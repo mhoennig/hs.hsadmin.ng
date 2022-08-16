@@ -18,24 +18,27 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RbacGrantEntity {
+    @Column(name = "grantedbyroleidname", updatable = false, insertable = false)
+    private String grantedByRoleIdName;
+
+    @Column(name = "grantedroleidname", updatable = false, insertable = false)
+    private String grantedRoleIdName;
 
     @Column(name = "username", updatable = false, insertable = false)
-    private String userName;
+    private String granteeUserName;
 
-    @Column(name = "roleidname", updatable = false, insertable = false)
-    private String roleIdName;
-
-    private boolean managed;
     private boolean assumed;
-    private boolean empowered;
+
+    @Column(name = "grantedbyroleuuid", updatable = false, insertable = false)
+    private UUID grantedByRoleUuid;
+
+    @Id
+    @Column(name = "grantedroleuuid")
+    private UUID grantedRoleUuid;
 
     @Id
     @Column(name = "useruuid")
-    private UUID userUuid;
-
-    @Id
-    @Column(name = "roleuuid")
-    private UUID roleUuid;
+    private UUID granteeUserUuid;
 
     @Column(name = "objecttable", updatable = false, insertable = false)
     private String objectTable;
@@ -46,15 +49,12 @@ public class RbacGrantEntity {
     @Column(name = "objectidname", updatable = false, insertable = false)
     private String objectIdName;
 
-    @Column(name = "roletype", updatable = false, insertable = false)
+    @Column(name = "grantedroletype", updatable = false, insertable = false)
     @Enumerated(EnumType.STRING)
-    private RbacRoleType roleType;
+    private RbacRoleType grantedRoleType;
 
     public String toDisplay() {
-        return "grant( " + userName + " -> " + roleIdName + ": " +
-            (managed ? "managed " : "") +
-            (assumed ? "assumed " : "") +
-            (empowered ? "empowered " : "") +
-            ")";
+        return "{ grant " + (assumed ? "assumed " : "") +
+            "role " + grantedRoleIdName + " to user " + granteeUserName + " by role " + grantedByRoleIdName + " }";
     }
 }

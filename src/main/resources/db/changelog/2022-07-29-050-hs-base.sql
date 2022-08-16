@@ -104,8 +104,8 @@ do language plpgsql $$
         admins uuid ;
     begin
         admins = findRoleId(hostsharingAdmin());
-        call grantRoleToUser(admins, createRbacUser('mike@hostsharing.net'));
-        call grantRoleToUser(admins, createRbacUser('sven@hostsharing.net'));
+        call grantRoleToUserUnchecked(admins, admins, createRbacUser('mike@hostsharing.net'));
+        call grantRoleToUserUnchecked(admins, admins, createRbacUser('sven@hostsharing.net'));
     end;
 $$;
 --//

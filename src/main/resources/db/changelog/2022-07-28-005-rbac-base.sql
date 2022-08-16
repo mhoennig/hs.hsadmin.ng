@@ -353,11 +353,10 @@ $$;
  */
 create table RbacGrants
 (
-    ascendantUuid  uuid references RbacReference (uuid) on delete cascade,
-    descendantUuid uuid references RbacReference (uuid) on delete cascade,
-    managed        boolean not null default false, -- created by system (true) vs. user (false)
-    assumed        boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
-    empowered      boolean not null default false, -- true: allows grant+revoke for descendant role
+    grantedByRoleUuid   uuid references RbacRole (uuid) on delete cascade,
+    ascendantUuid       uuid references RbacReference (uuid) on delete cascade,
+    descendantUuid      uuid references RbacReference (uuid) on delete cascade,
+    assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
     primary key (ascendantUuid, descendantUuid)
 );
 create index on RbacGrants (ascendantUuid);
@@ -463,8 +462,8 @@ begin
             perform assertReferenceType('permissionId (descendant)', permissionIds[i], 'RbacPermission');
 
             insert
-                into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
-                values (roleUuid, permissionIds[i], true, true, false)
+                into RbacGrants (ascendantUuid, descendantUuid, assumed)
+                values (roleUuid, permissionIds[i], true)
             on conflict do nothing; -- allow granting multiple times
         end loop;
 end;
@@ -476,13 +475,13 @@ begin
     perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
     perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
 
-    if (isGranted(subRoleId, superRoleId)) then
+    if isGranted(subRoleId, superRoleId) then
         raise exception '[400] Cyclic role grant detected between % and %', subRoleId, superRoleId;
     end if;
 
     insert
-        into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
-        values (superRoleId, subRoleId, true, doAssume, false)
+        into RbacGrants (ascendantuuid, descendantUuid, assumed)
+        values (superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 
@@ -496,48 +495,6 @@ begin
         delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
     end if;
 end; $$;
-
-create or replace procedure grantRoleToUser(roleUuid uuid, userUuid uuid)
-    language plpgsql as $$
-begin
-    perform assertReferenceType('roleId (descendant)', roleUuid, 'RbacRole');
-    perform assertReferenceType('userId (ascendant)', userUuid, 'RbacUser');
-
-    insert
-        into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
-        values (userUuid, roleUuid, true, true, true);
-    -- TODO: What should happen on mupltiple grants? What if options are not the same?
-    -- on conflict do nothing; -- allow granting multiple times
-end; $$;
-
-/*
-    Attributes of a grant assignment.
- */
-create type RbacGrantOptions as
-(
-    managed   boolean, -- created by system (true) vs. user (false)
-    assumed   boolean, -- auto assumed (true) vs. needs assumeRoles (false)
-    empowered boolean  -- true: allows grant+revoke for descendant role
-);
-
-create or replace procedure grantRoleToUser(roleUuid uuid, userUuid uuid, grantOptions RbacGrantOptions)
-    language plpgsql as $$
-begin
-    perform assertReferenceType('roleId (descendant)', roleUuid, 'RbacRole');
-    perform assertReferenceType('userId (ascendant)', userUuid, 'RbacUser');
-
-    if not isGranted(currentSubjectIds(), roleUuid) then
-        raise exception '[403] Access to role uuid % forbidden for %', roleUuid, currentSubjects();
-    end if;
-
-    insert
-        into RbacGrants (ascendantUuid, descendantUuid, managed, assumed, empowered)
-        values (userUuid, roleUuid, grantOptions.managed, grantOptions.assumed, grantOptions.empowered);
-    -- TODO: What should happen on mupltiple grants? What if options are not the same?
-    --      Most powerful or latest grant wins? What about managed?
-    -- on conflict do nothing; -- allow granting multiple times
-end; $$;
---//
 
 -- ============================================================================
 --changeset rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS:1 endDelimiter:--//

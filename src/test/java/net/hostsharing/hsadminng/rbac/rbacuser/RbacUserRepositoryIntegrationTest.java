@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.Commit;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ComponentScan(basePackageClasses = { RbacUserRepository.class, Context.class, JpaAttempt.class })
+@DirtiesContext
 class RbacUserRepositoryIntegrationTest {
 
     @Autowired
@@ -58,7 +60,7 @@ class RbacUserRepositoryIntegrationTest {
 
         @Test
         @Commit
-        @Transactional(propagation = Propagation.NOT_SUPPORTED)
+        @Transactional(propagation = Propagation.NEVER)
         void anyoneCanCreateTheirOwnUser_committed() {
 
             // given:

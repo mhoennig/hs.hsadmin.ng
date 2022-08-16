@@ -4,8 +4,7 @@ import junit.framework.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
 import java.util.Optional;
@@ -32,20 +31,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JpaAttempt {
 
     @Autowired
-    private final EntityManager em;
-
-    public JpaAttempt(final EntityManager em) {
-        this.em = em;
-    }
+    private TransactionTemplate transactionTemplate;
 
     public static <T> JpaResult<T> attempt(final EntityManager em, final Supplier<T> code) {
         try {
-            final var result = new JpaResult<T>(code.get(), null);
+            final var result = JpaResult.forValue(code.get());
             em.flush();
             em.clear();
             return result;
-        } catch (RuntimeException exc) {
-            return new JpaResult<T>(null, exc);
+        } catch (final RuntimeException exc) {
+            return JpaResult.forException(exc);
         }
     }
 
@@ -56,27 +51,48 @@ public class JpaAttempt {
         });
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public <T> JpaResult<T> transacted(final Supplier<T> code) {
-        return attempt(em, code);
+        try {
+            return JpaResult.forValue(
+                transactionTemplate.execute(transactionStatus -> code.get()));
+        } catch (final RuntimeException exc) {
+            return JpaResult.forException(exc);
+        }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void transacted(final Runnable code) {
-        attempt(em, () -> {
-            code.run();
-            return null;
-        });
+    public JpaResult<Void> transacted(final Runnable code) {
+        try {
+            transactionTemplate.execute(transactionStatus -> {
+                code.run();
+                return null;
+            });
+            return JpaResult.forVoidValue();
+        } catch (final RuntimeException exc) {
+
+            return new JpaResult<>(null, exc);
+        }
     }
 
     public static class JpaResult<T> {
 
-        final T result;
-        final RuntimeException exception;
+        private final T result;
+        private final RuntimeException exception;
 
-        public JpaResult(final T result, final RuntimeException exception) {
+        private JpaResult(final T result, final RuntimeException exception) {
             this.result = result;
             this.exception = exception;
+        }
+
+        static JpaResult<Void> forVoidValue() {
+            return new JpaResult<>(null, null);
+        }
+
+        public static <T> JpaResult<T> forValue(final T value) {
+            return new JpaResult<>(value, null);
+        }
+
+        public static <T> JpaResult<T> forException(final RuntimeException exception) {
+            return new JpaResult<>(null, exception);
         }
 
         public boolean wasSuccessful() {

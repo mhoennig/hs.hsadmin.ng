@@ -23,6 +23,7 @@ begin
     if (currentUser is null or currentUser = '') then
         raise exception '[401] hsadminng.currentUser must be defined, please use "SET LOCAL ...;"';
     end if;
+    raise debug 'currentUser: %', currentUser;
     return currentUser;
 end; $$;
 

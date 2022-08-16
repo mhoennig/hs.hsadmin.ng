@@ -15,19 +15,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.CoreMatchers.containsString;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Accepts({ "ROL:S(Schema)" })
+@Transactional(propagation = Propagation.NEVER)
 class RbacGrantControllerAcceptanceTest {
 
     @LocalServerPort
@@ -57,23 +60,25 @@ class RbacGrantControllerAcceptanceTest {
 
         // given
         final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
-        final String givenPackageAdmin = "aaa00@aaa.example.com";
+        final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+        final String givenAssumedRole = "package#aaa00.admin";
         final var givenOwnPackageAdminRole = "package#aaa00.admin";
+
         // when
         RestAssured // @formatter:off
             .given()
-                .header("current-user", givenPackageAdmin)
+                .header("current-user", givenCurrentUserPackageAdmin)
+                .header("assumed-roles", givenAssumedRole)
                 .contentType(ContentType.JSON)
                 .body("""
                       {
-                        "userUuid": "%s",
-                        "roleUuid": "%s",
                         "assumed": true,
-                        "empowered": false
+                        "grantedRoleUuid": "%s",
+                        "granteeUserUuid": "%s"
                       }
                       """.formatted(
-                        createRBacUser(givenNewUserName).getUuid().toString(),
-                        findRbacRoleByName(givenOwnPackageAdminRole).getUuid().toString())
+                        findRbacRoleByName(givenOwnPackageAdminRole).getUuid().toString(),
+                        createRBacUser(givenNewUserName).getUuid().toString())
                 )
                 .port(port)
             .when()
@@ -83,9 +88,11 @@ class RbacGrantControllerAcceptanceTest {
             // @formatter:on
 
         // then
-        assertThat(findAllGrantsOfUser(givenPackageAdmin))
+        assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
             .extracting(RbacGrantEntity::toDisplay)
-            .contains("grant( " + givenNewUserName + " -> " + givenOwnPackageAdminRole + ": assumed )");
+            .contains("{ grant assumed role " + givenOwnPackageAdminRole +
+                " to user " + givenNewUserName +
+                " by role " + givenAssumedRole + " }");
     }
 
     @Test
@@ -94,35 +101,38 @@ class RbacGrantControllerAcceptanceTest {
 
         // given
         final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
-        final String givenPackageAdmin = "aaa00@aaa.example.com";
+        final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+        final String givenAssumedRole = "package#aaa00.admin";
         final var givenAlienPackageAdminRole = "package#aab00.admin";
 
         // when
         RestAssured // @formatter:off
             .given()
-            .header("current-user", givenPackageAdmin)
-            .contentType(ContentType.JSON)
-            .body("""
-                      {
-                        "userUuid": "%s",
-                        "roleUuid": "%s",
-                        "assumed": true,
-                        "empowered": false
-                      }
-                      """.formatted(
-                createRBacUser(givenNewUserName).getUuid().toString(),
-                findRbacRoleByName(givenAlienPackageAdminRole).getUuid().toString())
-            )
-            .port(port)
+                .header("current-user", givenCurrentUserPackageAdmin)
+                .header("assumed-roles", givenAssumedRole)
+                .contentType(ContentType.JSON)
+                .body("""
+                          {
+                            "assumed": true,
+                            "grantedRoleUuid": "%s",
+                            "granteeUserUuid": "%s"
+                          }
+                          """.formatted(
+                    findRbacRoleByName(givenAlienPackageAdminRole).getUuid().toString(),
+                    createRBacUser(givenNewUserName).getUuid().toString())
+                )
+                .port(port)
             .when()
-            .post("http://localhost/api/rbac-grants")
+                .post("http://localhost/api/rbac-grants")
             .then().assertThat()
-            .statusCode(403);
+                .body("message", containsString("Access to granted role"))
+                .body("message", containsString("forbidden for {package#aaa00.admin}"))
+                .statusCode(403);
             // @formatter:on
 
         // then
-        assertThat(findAllGrantsOfUser(givenPackageAdmin))
-            .extracting(RbacGrantEntity::getUserName)
+        assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
+            .extracting(RbacGrantEntity::getGranteeUserName)
             .doesNotContain(givenNewUserName);
     }
 
@@ -134,9 +144,9 @@ class RbacGrantControllerAcceptanceTest {
     }
 
     RbacUserEntity createRBacUser(final String userName) {
-        return jpaAttempt.transacted(() -> {
-            return rbacUserRepository.create(new RbacUserEntity(UUID.randomUUID(), userName));
-        }).returnedValue();
+        return jpaAttempt.transacted(() ->
+            rbacUserRepository.create(new RbacUserEntity(UUID.randomUUID(), userName))
+        ).returnedValue();
     }
 
     RbacRoleEntity findRbacRoleByName(final String roleName) {
@@ -145,5 +155,4 @@ class RbacGrantControllerAcceptanceTest {
             return rbacRoleRepository.findByRoleName(roleName);
         }).returnedValue();
     }
-
 }

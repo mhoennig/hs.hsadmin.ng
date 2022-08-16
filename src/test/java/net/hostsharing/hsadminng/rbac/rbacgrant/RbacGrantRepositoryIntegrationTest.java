@@ -3,7 +3,9 @@ package net.hostsharing.hsadminng.rbac.rbacgrant;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserEntity;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserRepository;
+import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,15 +13,18 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.UUID;
 
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, RbacGrantRepository.class })
+@ComponentScan(basePackageClasses = { RbacGrantRepository.class, Context.class, JpaAttempt.class })
 @DirtiesContext
 @Accepts({ "GRT:S(Schema)" })
 class RbacGrantRepositoryIntegrationTest {
@@ -39,6 +44,9 @@ class RbacGrantRepositoryIntegrationTest {
     @Autowired
     EntityManager em;
 
+    @Autowired
+    JpaAttempt jpaAttempt;
+
     @Nested
     class FindAllRbacGrants {
 
@@ -54,7 +62,7 @@ class RbacGrantRepositoryIntegrationTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                 result,
-                "grant( aaa00@aaa.example.com -> package#aaa00.admin: managed assumed empowered )");
+                "{ grant assumed role package#aaa00.admin to user aaa00@aaa.example.com by role customer#aaa.admin }");
         }
 
         @Test
@@ -69,28 +77,26 @@ class RbacGrantRepositoryIntegrationTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                 result,
-                "grant( admin@aaa.example.com -> customer#aaa.admin: managed assumed empowered )",
-                "grant( aaa00@aaa.example.com -> package#aaa00.admin: managed assumed empowered )",
-                "grant( aaa01@aaa.example.com -> package#aaa01.admin: managed assumed empowered )",
-                "grant( aaa02@aaa.example.com -> package#aaa02.admin: managed assumed empowered )");
+                "{ grant assumed role customer#aaa.admin to user admin@aaa.example.com by role global#hostsharing.admin }",
+                "{ grant assumed role package#aaa00.admin to user aaa00@aaa.example.com by role customer#aaa.admin }",
+                "{ grant assumed role package#aaa01.admin to user aaa01@aaa.example.com by role customer#aaa.admin }",
+                "{ grant assumed role package#aaa02.admin to user aaa02@aaa.example.com by role customer#aaa.admin }");
         }
 
         @Test
         @Accepts({ "GRT:L(List)" })
-        public void customerAdmin_withAssumedRole_cannotViewRbacGrants() {
+        public void customerAdmin_withAssumedRole_canOnlyViewRbacGrantsVisibleByAssumedRole() {
             // given:
             currentUser("admin@aaa.example.com");
-            assumedRoles("package#aab00.admin");
+            assumedRoles("package#aaa00.admin");
 
             // when
-            final var result = attempt(
-                em,
-                () -> rbacGrantRepository.findAll());
+            final var result = rbacGrantRepository.findAll();
 
             // then
-            result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
+            exactlyTheseRbacGrantsAreReturned(
+                result,
+                "{ grant assumed role package#aaa00.admin to user aaa00@aaa.example.com by role customer#aaa.admin }");
         }
     }
 
@@ -102,24 +108,72 @@ class RbacGrantRepositoryIntegrationTest {
         public void customerAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
             // given
             currentUser("admin@aaa.example.com");
-            final var userUuid = rbacUserRepository.findUuidByName("aac00@aac.example.com");
-            final var roleUuid = rbacRoleRepository.findByRoleName("package#aaa00.admin").getUuid();
+            assumedRoles("customer#aaa.admin");
+            final var givenArbitraryUserUuid = rbacUserRepository.findUuidByName("aac00@aac.example.com");
+            final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName("package#aaa00.admin").getUuid();
 
             // when
             final var grant = RbacGrantEntity.builder()
-                .userUuid(userUuid).roleUuid(roleUuid)
-                .assumed(true).empowered(false)
+                .granteeUserUuid(givenArbitraryUserUuid).grantedRoleUuid(givenOwnPackageRoleUuid)
+                .assumed(true)
                 .build();
             final var attempt = attempt(em, () ->
                 rbacGrantRepository.save(grant)
             );
 
             // then
-            assertThat(attempt.wasSuccessful()).isTrue();
+            assertThat(attempt.caughtException()).isNull();
             assertThat(rbacGrantRepository.findAll())
                 .extracting(RbacGrantEntity::toDisplay)
-                .contains("grant( aac00@aac.example.com -> package#aaa00.admin: assumed )");
+                .contains("{ grant assumed role package#aaa00.admin to user aac00@aac.example.com by role customer#aaa.admin }");
         }
+
+        @Test
+        @Accepts({ "GRT:C(Create)" })
+        @Transactional(propagation = Propagation.NEVER)
+        public void packageAdmin_canNotGrantPackageOwnerRole() {
+            // given
+            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {}
+            final var given = jpaAttempt.transacted(() -> {
+                // to find the uuids of we need to have access rights to these
+                currentUser("admin@aaa.example.com");
+                return new Given(
+                    createNewUser(), // eigene Transaktion?
+                    rbacRoleRepository.findByRoleName("package#aaa00.owner").getUuid()
+                );
+            }).returnedValue();
+
+            // when
+            final var attempt = jpaAttempt.transacted(() -> {
+                // now we try to use these uuids as a less privileged user
+                currentUser("aaa00@aaa.example.com");
+                assumedRoles("package#aaa00.admin");
+                final var grant = RbacGrantEntity.builder()
+                    .granteeUserUuid(given.arbitraryUser.getUuid())
+                    .grantedRoleUuid(given.packageOwnerRoleUuid)
+                    .assumed(true)
+                    .build();
+                rbacGrantRepository.save(grant);
+            });
+
+            // then
+            attempt.assertExceptionWithRootCauseMessage(
+                JpaSystemException.class,
+                "ERROR: [403] Access to granted role " + given.packageOwnerRoleUuid
+                    + " forbidden for {package#aaa00.admin}");
+            jpaAttempt.transacted(() -> {
+                currentUser(given.arbitraryUser.getName());
+                assertThat(rbacGrantRepository.findAll())
+                    .extracting(RbacGrantEntity::toDisplay)
+                    .hasSize(0);
+                // "{ grant assumed role package#aaa00.admin to user aac00@aac.example.com by role customer#aaa.admin }");
+            });
+        }
+    }
+
+    private RbacUserEntity createNewUser() {
+        return rbacUserRepository.create(
+            new RbacUserEntity(null, "test-user-" + System.currentTimeMillis() + "@example.com"));
     }
 
     void currentUser(final String currentUser) {
@@ -134,7 +188,7 @@ class RbacGrantRepositoryIntegrationTest {
 
     void exactlyTheseRbacGrantsAreReturned(final List<RbacGrantEntity> actualResult, final String... expectedGrant) {
         assertThat(actualResult)
-            .filteredOn(g -> !g.getUserName().startsWith("test-user-")) // ignore test-users created by other tests
+            .filteredOn(g -> !g.getGranteeUserName().startsWith("test-user-")) // ignore test-users created by other tests
             .extracting(RbacGrantEntity::toDisplay)
             .containsExactlyInAnyOrder(expectedGrant);
     }

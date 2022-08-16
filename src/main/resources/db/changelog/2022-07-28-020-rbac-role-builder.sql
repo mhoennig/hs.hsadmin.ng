@@ -26,7 +26,7 @@ create or replace function withoutPermissions()
     language plpgsql
     strict as $$
 begin
-    return row (array[]::uuid[]);
+    return row (array []::uuid[]);
 end; $$;
 
 --//
@@ -167,7 +167,8 @@ create or replace function createRole(
     permissions RbacPermissions,
     superRoles RbacSuperRoles,
     subRoles RbacSubRoles = null,
-    users RbacUsers = null
+    users RbacUsers = null,
+    grantingRoleUuid uuid = null
 )
     returns uuid
     called on null input
@@ -200,7 +201,7 @@ begin
     if users is not null then
         foreach userUuid in array users.useruUids
             loop
-                call grantRoleToUser(roleUuid, userUuid);
+                call grantRoleToUserUnchecked(grantingRoleUuid, roleUuid, userUuid);
             end loop;
     end if;
 
@@ -210,26 +211,47 @@ end; $$;
 create or replace function createRole(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
-    users RbacUsers = null
+    users RbacUsers = null,
+    grantingRoleUuid uuid = null
 )
     returns uuid
     called on null input
     language plpgsql as $$
 begin
-    return createRole(roleDescriptor, permissions, null, null, users);
+    return createRole(roleDescriptor, permissions, null, null, users, grantingRoleUuid);
 end; $$;
 
 create or replace function createRole(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacPermissions,
     subRoles RbacSubRoles,
-    users RbacUsers = null
+    users RbacUsers = null,
+    grantingRoleUuid uuid = null
 )
     returns uuid
     called on null input
     language plpgsql as $$
 begin
-    return createRole(roleDescriptor, permissions, null, subRoles, users);
+    return createRole(roleDescriptor, permissions, null, subRoles, users, grantingRoleUuid);
 end; $$;
-
 --//
+
+-- =================================================================
+-- CREATE ROLE
+--changeset rbac-role-builder-GRANTED-BY-ROLE:1 endDelimiter:--//
+-- -----------------------------------------------------------------
+
+/*
+    Used in role-builder-DSL to convert a role descriptor to it's uuid
+    for use as `grantedByRoleUuid`.
+*/
+create or replace function grantedByRole(roleDescriptor RbacRoleDescriptor)
+    returns uuid
+    strict leakproof
+    language plpgsql as $$
+begin
+    return getRoleId(roledescriptor, 'fail');
+end; $$;
+--//
+
+

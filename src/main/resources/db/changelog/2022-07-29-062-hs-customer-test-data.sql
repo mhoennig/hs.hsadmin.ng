@@ -37,8 +37,8 @@ begin
         loop
             currentTask = 'creating RBAC test customer #' || t;
             set local hsadminng.currentUser to 'mike@hostsharing.net';
-            set local hsadminng.assumedRoles = '';
-            set local hsadminng.currentTask to currentTask;
+            set local hsadminng.assumedRoles to 'global#hostsharing.admin';
+            execute format('set local hsadminng.currentTask to %L', currentTask);
 
             -- When a new customer is created,
             custReference = testCustomerReference(t);
