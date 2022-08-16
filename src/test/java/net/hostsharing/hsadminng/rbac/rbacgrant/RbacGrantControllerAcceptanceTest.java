@@ -11,6 +11,7 @@ import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserEntity;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserRepository;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,18 +55,21 @@ class RbacGrantControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Test
-    @Accepts({ "ROL:C(Create)" })
-    void packageAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
+    @Nested
+    class GrantRoleToUser {
 
-        // given
-        final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
-        final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
-        final String givenAssumedRole = "package#aaa00.admin";
-        final var givenOwnPackageAdminRole = "package#aaa00.admin";
+        @Test
+        @Accepts({ "GRT:C(Create)" })
+        void packageAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
 
-        // when
-        RestAssured // @formatter:off
+            // given
+            final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
+            final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+            final String givenAssumedRole = "package#aaa00.admin";
+            final var givenOwnPackageAdminRole = "package#aaa00.admin";
+
+            // when
+            RestAssured // @formatter:off
             .given()
                 .header("current-user", givenCurrentUserPackageAdmin)
                 .header("assumed-roles", givenAssumedRole)
@@ -87,26 +91,26 @@ class RbacGrantControllerAcceptanceTest {
                 .statusCode(201);
             // @formatter:on
 
-        // then
-        assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
-            .extracting(RbacGrantEntity::toDisplay)
-            .contains("{ grant assumed role " + givenOwnPackageAdminRole +
-                " to user " + givenNewUserName +
-                " by role " + givenAssumedRole + " }");
-    }
+            // then
+            assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
+                .extracting(RbacGrantEntity::toDisplay)
+                .contains("{ grant assumed role " + givenOwnPackageAdminRole +
+                    " to user " + givenNewUserName +
+                    " by role " + givenAssumedRole + " }");
+        }
 
-    @Test
-    @Accepts({ "ROL:C(Create)", "ROL:X(Access Control)" })
-    void packageAdmin_canNotGrantAlienPackageAdminRole_toArbitraryUser() {
+        @Test
+        @Accepts({ "GRT:C(Create)", "GRT:X(Access Control)" })
+        void packageAdmin_canNotGrantAlienPackageAdminRole_toArbitraryUser() {
 
-        // given
-        final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
-        final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
-        final String givenAssumedRole = "package#aaa00.admin";
-        final var givenAlienPackageAdminRole = "package#aab00.admin";
+            // given
+            final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
+            final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+            final String givenAssumedRole = "package#aaa00.admin";
+            final var givenAlienPackageAdminRole = "package#aab00.admin";
 
-        // when
-        RestAssured // @formatter:off
+            // when
+            RestAssured // @formatter:off
             .given()
                 .header("current-user", givenCurrentUserPackageAdmin)
                 .header("assumed-roles", givenAssumedRole)
@@ -130,10 +134,11 @@ class RbacGrantControllerAcceptanceTest {
                 .statusCode(403);
             // @formatter:on
 
-        // then
-        assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
-            .extracting(RbacGrantEntity::getGranteeUserName)
-            .doesNotContain(givenNewUserName);
+            // then
+            assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
+                .extracting(RbacGrantEntity::getGranteeUserName)
+                .doesNotContain(givenNewUserName);
+        }
     }
 
     List<RbacGrantEntity> findAllGrantsOfUser(final String userName) {

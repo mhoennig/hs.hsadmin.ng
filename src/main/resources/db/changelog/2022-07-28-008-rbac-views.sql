@@ -99,8 +99,8 @@ create or replace function deleteRbacGrant()
     returns trigger
     language plpgsql as $$
 begin
-    call revokeRoleFromUser(assumedRoleUuid(), old.grantedRoleUuid, old.userUuid);
-    return null;
+    call revokeRoleFromUser(old.grantedByRoleUuid, old.grantedRoleUuid, old.userUuid);
+    return old;
 end; $$;
 
 /*

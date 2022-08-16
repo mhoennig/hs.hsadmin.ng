@@ -10,4 +10,5 @@ public interface RbacGrantRepository extends Repository<RbacGrantEntity, RbacGra
 
     void save(final RbacGrantEntity grant);
 
+    void delete(final RbacGrantEntity grant);
 }

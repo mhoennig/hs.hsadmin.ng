@@ -4,6 +4,7 @@ import junit.framework.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Wraps the 'when' part of a DataJpaTest to improve readability of tests.
@@ -62,6 +64,7 @@ public class JpaAttempt {
 
     public JpaResult<Void> transacted(final Runnable code) {
         try {
+            transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
             transactionTemplate.execute(transactionStatus -> {
                 code.run();
                 return null;
@@ -115,6 +118,10 @@ public class JpaAttempt {
             throw new AssertionFailedError("expected " + expectedExceptionClass + " but got " + exception);
         }
 
+        public Throwable caughtExceptionsRootCause() {
+            return exception == null ? null : NestedExceptionUtils.getRootCause(exception);
+        }
+
         public void assertExceptionWithRootCauseMessage(
             final Class<? extends RuntimeException> expectedExceptionClass,
             final String... expectedRootCauseMessages) {
@@ -123,6 +130,10 @@ public class JpaAttempt {
             for (String expectedRootCauseMessage : expectedRootCauseMessages) {
                 assertThat(firstRootCauseMessageLine).contains(expectedRootCauseMessage);
             }
+        }
+
+        public void assertSuccessful() {
+            assertThat(exception).isNull();;
         }
 
         private String firstRootCauseMessageLineOf(final RuntimeException exception) {

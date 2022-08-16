@@ -79,6 +79,7 @@ begin
         raise exception '[403] Revoking role % is forbidden for %.', grantedRoleUuid, currentSubjects();
     end if;
 
+    --raise exception 'isGranted(%, %)', currentSubjectIds(), grantedByRoleUuid;
     if NOT isGranted(currentSubjectIds(), grantedByRoleUuid) then
         raise exception '[403] Revoking role granted by % is forbidden for %.', grantedByRoleUuid, currentSubjects();
     end if;
