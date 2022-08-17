@@ -3,11 +3,13 @@ package net.hostsharing.hsadminng.arch;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import net.hostsharing.hsadminng.Accepts;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 @AnalyzeClasses(packages = ArchUnitTest.NET_HOSTSHARING_HSADMINNG)
@@ -49,6 +51,20 @@ public class ArchUnitTest {
         .that().resideInAPackage("..hs.hspackage..")
         .should().onlyBeAccessed().byClassesThat()
         .resideInAnyPackage("..hs.hspackage..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule acceptsAnnotationOnMethodsRule = methods()
+        .that().areAnnotatedWith(Accepts.class)
+        .should().beDeclaredInClassesThat().haveSimpleNameEndingWith("AcceptanceTest")
+        .orShould().beDeclaredInClassesThat().haveSimpleNameNotContaining("AcceptanceTest$");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule acceptsAnnotationOnClasesRule = classes()
+        .that().areAnnotatedWith(Accepts.class)
+        .should().haveSimpleNameEndingWith("AcceptanceTest")
+        .orShould().haveSimpleNameNotContaining("AcceptanceTest$");
 
     @Test
     public void everythingShouldBeFreeOfCycles() {

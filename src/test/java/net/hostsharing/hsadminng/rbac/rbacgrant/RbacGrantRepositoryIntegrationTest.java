@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 @DataJpaTest
 @ComponentScan(basePackageClasses = { RbacGrantRepository.class, Context.class, JpaAttempt.class })
 @DirtiesContext
-@Accepts({ "GRT:S(Schema)" })
 class RbacGrantRepositoryIntegrationTest {
 
     @Autowired
@@ -133,9 +132,7 @@ class RbacGrantRepositoryIntegrationTest {
         @Transactional(propagation = Propagation.NEVER)
         public void packageAdmin_canNotGrantPackageOwnerRole() {
             // given
-            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {
-
-            }
+            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {}
             final var given = jpaAttempt.transacted(() -> {
                 // to find the uuids of we need to have access rights to these
                 currentUser("admin@aaa.example.com");

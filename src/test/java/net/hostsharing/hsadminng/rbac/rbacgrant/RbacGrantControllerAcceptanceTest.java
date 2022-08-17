@@ -30,7 +30,7 @@ import static org.hamcrest.CoreMatchers.containsString;
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
-@Accepts({ "ROL:S(Schema)" })
+@Accepts({ "GRT:S(Schema)" })
 @Transactional(propagation = Propagation.NEVER)
 class RbacGrantControllerAcceptanceTest {
 
