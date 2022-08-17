@@ -5,9 +5,9 @@ import net.hostsharing.hsadminng.generated.api.v1.api.RbacrolesApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
 import java.util.List;
 
 import static net.hostsharing.hsadminng.Mapper.mapList;
@@ -23,7 +23,7 @@ public class RbacRoleController implements RbacrolesApi {
     private RbacRoleRepository rbacRoleRepository;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<RbacRoleResource>> listRoles(
         final String currentUser,
         final String assumedRoles) {

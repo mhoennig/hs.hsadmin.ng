@@ -90,7 +90,8 @@ openapiProcessor {
     }
 }
 sourceSets.main.java.srcDir 'build/generated/sources/openapi'
-compileJava.dependsOn('processSpring')
+project.tasks.processResources.dependsOn('processSpring')
+project.tasks.compileJava.dependsOn('processSpring')
 
 spotless {
     java {

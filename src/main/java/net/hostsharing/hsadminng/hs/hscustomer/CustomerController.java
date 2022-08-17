@@ -5,10 +5,10 @@ import net.hostsharing.hsadminng.generated.api.v1.api.CustomersApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +26,7 @@ public class CustomerController implements CustomersApi {
     private CustomerRepository customerRepository;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<CustomerResource>> listCustomers(
         String userName,
         String assumedRoles,

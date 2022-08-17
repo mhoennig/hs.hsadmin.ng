@@ -2,16 +2,15 @@ package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacgrantsApi;
-import net.hostsharing.hsadminng.generated.api.v1.api.RbacrolesApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacGrantResource;
-import net.hostsharing.hsadminng.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import javax.transaction.Transactional;
 import java.util.List;
+import java.util.UUID;
 
 import static net.hostsharing.hsadminng.Mapper.map;
 import static net.hostsharing.hsadminng.Mapper.mapList;
@@ -27,7 +26,7 @@ public class RbacGrantController implements RbacgrantsApi {
     private RbacGrantRepository rbacGrantRepository;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<RbacGrantResource>> listUserGrants(
         final String currentUser,
         final String assumedRoles) {

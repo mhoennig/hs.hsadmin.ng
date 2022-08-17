@@ -6,11 +6,11 @@ import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserPermissionResour
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,7 +48,7 @@ public class RbacUserController implements RbacusersApi {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly=true)
     public ResponseEntity<List<RbacUserResource>> listUsers(
         @RequestHeader(name = "current-user") final String currentUserName,
         @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
@@ -62,7 +62,7 @@ public class RbacUserController implements RbacusersApi {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly=true)
     public ResponseEntity<List<RbacUserPermissionResource>> listUserPermissions(
         @RequestHeader(name = "current-user") final String currentUserName,
         @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,

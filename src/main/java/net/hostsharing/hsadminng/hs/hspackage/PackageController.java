@@ -7,9 +7,9 @@ import net.hostsharing.hsadminng.generated.api.v1.model.PackageResource;
 import net.hostsharing.hsadminng.generated.api.v1.model.PackageUpdateResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +26,7 @@ public class PackageController implements PackagesApi {
     private PackageRepository packageRepository;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<PackageResource>> listPackages(
         String userName,
         String assumedRoles,

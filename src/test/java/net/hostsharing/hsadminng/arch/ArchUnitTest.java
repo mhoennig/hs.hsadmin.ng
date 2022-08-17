@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 @AnalyzeClasses(packages = ArchUnitTest.NET_HOSTSHARING_HSADMINNG)
@@ -65,6 +64,22 @@ public class ArchUnitTest {
         .that().areAnnotatedWith(Accepts.class)
         .should().haveSimpleNameEndingWith("AcceptanceTest")
         .orShould().haveSimpleNameNotContaining("AcceptanceTest$");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule doNotUseJavaxTransactionAnnotationAtClassLevel = noClasses()
+        .should().beAnnotatedWith(javax.transaction.Transactional.class.getName())
+        .as("Use @%s instead of @%s." .formatted(
+            org.springframework.transaction.annotation.Transactional.class.getName(),
+            javax.transaction.Transactional.class));
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule doNotUseJavaxTransactionAnnotationAtMethodLevel = noMethods()
+        .should().beAnnotatedWith(javax.transaction.Transactional.class)
+        .as("Use @%s instead of @%s." .formatted(
+            org.springframework.transaction.annotation.Transactional.class.getName(),
+            javax.transaction.Transactional.class.getName()));
 
     @Test
     public void everythingShouldBeFreeOfCycles() {

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +58,6 @@ class RbacUserRepositoryIntegrationTest {
         }
 
         @Test
-        @Commit
         @Transactional(propagation = Propagation.NEVER)
         void anyoneCanCreateTheirOwnUser_committed() {
 

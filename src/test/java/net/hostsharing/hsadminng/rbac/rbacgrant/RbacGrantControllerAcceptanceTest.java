@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.CoreMatchers.containsString;
 
 @SpringBootTest(
@@ -31,7 +32,7 @@ import static org.hamcrest.CoreMatchers.containsString;
     classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Accepts({ "GRT:S(Schema)" })
-@Transactional(propagation = Propagation.NEVER)
+@Transactional(readOnly = true, propagation = Propagation.NEVER)
 class RbacGrantControllerAcceptanceTest {
 
     @LocalServerPort
@@ -64,8 +65,8 @@ class RbacGrantControllerAcceptanceTest {
 
             // given
             final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
-            final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
-            final String givenAssumedRole = "package#aaa00.admin";
+            final var givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+            final var givenAssumedRole = "package#aaa00.admin";
             final var givenOwnPackageAdminRole = "package#aaa00.admin";
 
             // when
@@ -105,8 +106,8 @@ class RbacGrantControllerAcceptanceTest {
 
             // given
             final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
-            final String givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
-            final String givenAssumedRole = "package#aaa00.admin";
+            final var givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+            final var givenAssumedRole = "package#aaa00.admin";
             final var givenAlienPackageAdminRole = "package#aab00.admin";
 
             // when
