@@ -1,0 +1,30 @@
+delete:
+    tags:
+        - rbacgrants
+    operationId: revokeRoleFromUser
+    parameters:
+        - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
+        - $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
+        - name: grantedRoleUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the granted role.
+        - name: granteeUserUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the user to whom the role was granted.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: './api-definition/error-responses.yaml#/components/responses/NotFound'

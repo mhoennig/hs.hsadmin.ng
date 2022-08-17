@@ -142,6 +142,83 @@ class RbacGrantControllerAcceptanceTest {
         }
     }
 
+    @Nested
+    class RevokeRoleFromUser {
+
+        @Test
+        @Accepts({ "GRT:D(Delete)" })
+        @Transactional(propagation = Propagation.NEVER)
+        void packageAdmin_canRevokePackageAdminRole_grantedByPackageAdmin_toArbitraryUser() {
+
+            // given
+            final var givenNewUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
+            final var givenNewUserNameUuid = createRBacUser(givenNewUserName).getUuid();
+            final var givenCurrentUserPackageAdmin = "aaa00@aaa.example.com";
+            final var givenAssumedRole = "package#aaa00.admin";
+            final var givenOwnPackageAdminRole = "package#aaa00.admin";
+            final var givenOwnPackageAdminRoleUuid = findRbacRoleByName(givenOwnPackageAdminRole).getUuid();
+            final var expectedGrant = "{ grant assumed role " + givenOwnPackageAdminRole +
+                " to user " + givenNewUserName +
+                " by role " + givenAssumedRole + " }";
+
+            // and given a grant
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", givenCurrentUserPackageAdmin)
+                    .header("assumed-roles", givenAssumedRole)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "assumed": true,
+                            "grantedRoleUuid": "%s",
+                            "granteeUserUuid": "%s"
+                          }
+                          """.formatted(
+                        givenOwnPackageAdminRoleUuid.toString(),
+                        givenNewUserNameUuid.toString())
+                    )
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/rbac-grants")
+                .then().assertThat()
+                    .statusCode(201); // @formatter:on
+            assumeThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
+                .extracting(RbacGrantEntity::toDisplay)
+                .contains(expectedGrant);
+
+            // when
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", givenCurrentUserPackageAdmin)
+                    .header("assumed-roles", givenAssumedRole)
+                    .contentType(ContentType.JSON)
+                    .body("""
+                          {
+                            "assumed": true,
+                            "grantedRoleUuid": "%s",
+                            "granteeUserUuid": "%s"
+                          }
+                          """.formatted(
+                        givenOwnPackageAdminRoleUuid.toString(),
+                        givenNewUserNameUuid.toString())
+                    )
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/rbac-grants/%s/%s".formatted(
+                        givenOwnPackageAdminRoleUuid, givenNewUserNameUuid
+                    ) )
+                .then().assertThat()
+                    .statusCode(204); // @formatter:on
+
+            // then
+            assertThat(findAllGrantsOfUser(givenCurrentUserPackageAdmin))
+                .extracting(RbacGrantEntity::toDisplay)
+                .doesNotContain("{ grant assumed role " + givenOwnPackageAdminRole +
+                    " to user " + givenNewUserName +
+                    " by role " + givenAssumedRole + " }");
+        }
+    }
+
     List<RbacGrantEntity> findAllGrantsOfUser(final String userName) {
         return jpaAttempt.transacted(() -> {
             context.setCurrentUser(userName);

@@ -132,7 +132,9 @@ class RbacGrantRepositoryIntegrationTest {
         @Transactional(propagation = Propagation.NEVER)
         public void packageAdmin_canNotGrantPackageOwnerRole() {
             // given
-            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {}
+            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {
+
+            }
             final var given = jpaAttempt.transacted(() -> {
                 // to find the uuids of we need to have access rights to these
                 currentUser("admin@aaa.example.com");
@@ -184,7 +186,7 @@ class RbacGrantRepositoryIntegrationTest {
             currentUser("admin@aaa.example.com");
             assumedRoles("customer#aaa.admin");
             final var revokeAttempt = attempt(em, () -> {
-                rbacGrantRepository.delete(grant);
+                rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
             });
 
             // then
@@ -207,7 +209,7 @@ class RbacGrantRepositoryIntegrationTest {
             currentUser("aaa00@aaa.example.com");
             assumedRoles("package#aaa00.admin");
             final var revokeAttempt = attempt(em, () -> {
-                rbacGrantRepository.delete(grant);
+                rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
             });
 
             // then
@@ -231,7 +233,7 @@ class RbacGrantRepositoryIntegrationTest {
             currentUser("aaa00@aaa.example.com");
             assumedRoles("package#aaa00.admin");
             final var revokeAttempt = attempt(em, () -> {
-                rbacGrantRepository.delete(grant);
+                rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
             });
 
             // then

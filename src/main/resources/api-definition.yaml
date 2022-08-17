@@ -22,6 +22,9 @@ paths:
     /api/rbac-grants:
         $ref: "./api-definition/rbac-grants.yaml"
 
+    /api/rbac-grants/{grantedRoleUuid}/{granteeUserUuid}:
+        $ref: "./api-definition/rbac-grants-id.yaml"
+
     # HS
 
     /api/customers:

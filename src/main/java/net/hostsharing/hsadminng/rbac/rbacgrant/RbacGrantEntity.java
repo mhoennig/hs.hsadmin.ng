@@ -53,6 +53,10 @@ public class RbacGrantEntity {
     @Enumerated(EnumType.STRING)
     private RbacRoleType grantedRoleType;
 
+    RbacGrantId getRbacGrantId() {
+        return new RbacGrantId(granteeUserUuid, grantedRoleUuid);
+    }
+
     public String toDisplay() {
         return "{ grant " + (assumed ? "assumed " : "") +
             "role " + grantedRoleIdName + " to user " + granteeUserName + " by role " + grantedByRoleIdName + " }";

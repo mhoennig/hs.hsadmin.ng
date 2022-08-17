@@ -60,4 +60,22 @@ public class RbacGrantController implements RbacgrantsApi {
         return ResponseEntity.created(uri).build();
     }
 
+    @Override
+    @Transactional
+    public ResponseEntity<Void> revokeRoleFromUser(
+        final String currentUser,
+        final String assumedRoles,
+        final UUID grantedRoleUuid,
+        final UUID granteeUserUuid) {
+
+        context.setCurrentUser(currentUser);
+        if (assumedRoles != null && !assumedRoles.isBlank()) {
+            context.assumeRoles(assumedRoles);
+        }
+
+        rbacGrantRepository.deleteByRbacGrantId(new RbacGrantId(granteeUserUuid, grantedRoleUuid));
+
+        return ResponseEntity.noContent().build();
+    }
+
 }
