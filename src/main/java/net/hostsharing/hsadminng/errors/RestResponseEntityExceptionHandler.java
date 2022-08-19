@@ -17,11 +17,11 @@ import java.util.Optional;
 
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler
-    extends ResponseEntityExceptionHandler {
+        extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<CustomErrorResponse> handleConflict(
-        final RuntimeException exc, final WebRequest request) {
+            final RuntimeException exc, final WebRequest request) {
 
         final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
         return errorResponse(request, HttpStatus.CONFLICT, message);
@@ -29,16 +29,16 @@ public class RestResponseEntityExceptionHandler
 
     @ExceptionHandler(JpaSystemException.class)
     protected ResponseEntity<CustomErrorResponse> handleJpaExceptions(
-        final RuntimeException exc, final WebRequest request) {
+            final RuntimeException exc, final WebRequest request) {
         final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
-        return errorResponse(request, httpStatus(message).orElse(HttpStatus.FORBIDDEN), message);
+        return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
     }
 
     @ExceptionHandler(Throwable.class)
     protected ResponseEntity<CustomErrorResponse> handleOtherExceptions(
-        final RuntimeException exc, final WebRequest request) {
+            final Throwable exc, final WebRequest request) {
         final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
-        return errorResponse(request, httpStatus(message).orElse(HttpStatus.FORBIDDEN), message);
+        return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
     }
 
     private Optional<HttpStatus> httpStatus(final String message) {
@@ -54,11 +54,11 @@ public class RestResponseEntityExceptionHandler
     }
 
     private static ResponseEntity<CustomErrorResponse> errorResponse(
-        final WebRequest request,
-        final HttpStatus httpStatus,
-        final String message) {
+            final WebRequest request,
+            final HttpStatus httpStatus,
+            final String message) {
         return new ResponseEntity<>(
-            new CustomErrorResponse(request.getContextPath(), httpStatus, message), httpStatus);
+                new CustomErrorResponse(request.getContextPath(), httpStatus, message), httpStatus);
     }
 
     private String firstLine(final String message) {

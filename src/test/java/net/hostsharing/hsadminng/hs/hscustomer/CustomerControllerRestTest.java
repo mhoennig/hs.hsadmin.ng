@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hscustomer;
 
 import net.hostsharing.hsadminng.context.Context;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -28,78 +29,82 @@ class CustomerControllerRestTest {
     @MockBean
     CustomerRepository customerRepositoryMock;
 
-    @Test
-    void listCustomersWillReturnAllCustomersFromRepositoryIfNoCriteriaGiven() throws Exception {
+    @Nested
+    class ListCustomers {
 
-        // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(List.of(
-            TestCustomer.xxx,
-            TestCustomer.yyy));
+        @Test
+        void listCustomersWillReturnAllCustomersFromRepositoryIfNoCriteriaGiven() throws Exception {
 
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/customers")
-                .header("current-user", "mike@hostsharing.net")
-                .accept(MediaType.APPLICATION_JSON))
+            // given
+            when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(List.of(
+                    TestCustomer.xxx,
+                    TestCustomer.yyy));
 
-            // then
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(2)))
-            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix())))
-            .andExpect(jsonPath("$[1].reference", is(TestCustomer.yyy.getReference()))
-            );
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/customers")
+                            .header("current-user", "mike@hostsharing.net")
+                            .accept(MediaType.APPLICATION_JSON))
 
-        // then
-        verify(contextMock).setCurrentUser("mike@hostsharing.net");
-        verify(contextMock, never()).assumeRoles(anyString());
-    }
-
-    @Test
-    void listCustomersWillReturnMatchingCustomersFromRepositoryIfCriteriaGiven() throws Exception {
-
-        // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefixLike("x")).thenReturn(List.of(TestCustomer.xxx));
-
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/customers")
-                .header("current-user", "mike@hostsharing.net")
-                .param("prefix", "x")
-                .accept(MediaType.APPLICATION_JSON))
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(2)))
+                    .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix())))
+                    .andExpect(jsonPath("$[1].reference", is(TestCustomer.yyy.getReference()))
+                    );
 
             // then
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(1)))
-            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix()))
-            );
+            verify(contextMock).setCurrentUser("mike@hostsharing.net");
+            verify(contextMock, never()).assumeRoles(anyString());
+        }
 
-        // then
-        verify(contextMock).setCurrentUser("mike@hostsharing.net");
-        verify(contextMock, never()).assumeRoles(anyString());
-    }
+        @Test
+        void listCustomersWillReturnMatchingCustomersFromRepositoryIfCriteriaGiven() throws Exception {
 
-    @Test
-    void listCustomersWillReturnAllCustomersForGivenAssumedRoles() throws Exception {
+            // given
+            when(customerRepositoryMock.findCustomerByOptionalPrefixLike("x")).thenReturn(List.of(TestCustomer.xxx));
 
-        // given
-        when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(List.of(TestCustomer.yyy));
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/customers")
+                            .header("current-user", "mike@hostsharing.net")
+                            .param("prefix", "x")
+                            .accept(MediaType.APPLICATION_JSON))
 
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/customers")
-                .header("current-user", "mike@hostsharing.net")
-                .header("assumed-roles", "admin@yyy.example.com")
-                .accept(MediaType.APPLICATION_JSON))
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].prefix", is(TestCustomer.xxx.getPrefix()))
+                    );
 
             // then
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(1)))
-            .andExpect(jsonPath("$[0].prefix", is(TestCustomer.yyy.getPrefix()))
-            );
+            verify(contextMock).setCurrentUser("mike@hostsharing.net");
+            verify(contextMock, never()).assumeRoles(anyString());
+        }
 
-        // then
-        verify(contextMock).setCurrentUser("mike@hostsharing.net");
-        verify(contextMock).assumeRoles("admin@yyy.example.com");
+        @Test
+        void listCustomersWillReturnAllCustomersForGivenAssumedRoles() throws Exception {
+
+            // given
+            when(customerRepositoryMock.findCustomerByOptionalPrefixLike(null)).thenReturn(List.of(TestCustomer.yyy));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/customers")
+                            .header("current-user", "mike@hostsharing.net")
+                            .header("assumed-roles", "admin@yyy.example.com")
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(1)))
+                    .andExpect(jsonPath("$[0].prefix", is(TestCustomer.yyy.getPrefix()))
+                    );
+
+            // then
+            verify(contextMock).setCurrentUser("mike@hostsharing.net");
+            verify(contextMock).assumeRoles("admin@yyy.example.com");
+        }
     }
 
 }

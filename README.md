@@ -369,6 +369,29 @@ To apply formatting rules, use:
 gw spotlessApply
 ```
 
+### JaCoCo Test Code Coverage Check
+
+This project uses the JaCoCo test code coverage report with limit checks.
+It can be executed with:
+
+```shell
+gw jacocoTestReport
+```
+
+This task is also automatically run after `gw test`.
+It is configured in [build.gradle](build.gradle).
+
+A report is generated under [build/reports/jacoco/tests/test/index.html](./build/reports/jacoco/test/html/index.html).
+
+Additionally, quality limits are checked via:
+
+```shell
+gw jacocoTestCoverageVerification
+```
+
+This task is also executed as part of `gw check`.
+
+
 ### OWASP Security Vulnerability Check
 
 An OWASP security vulnerability is configured and can be utilized by running:

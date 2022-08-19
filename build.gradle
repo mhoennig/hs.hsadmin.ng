@@ -6,6 +6,7 @@ plugins {
     id 'com.github.jk1.dependency-license-report' version '2.1'
     id "org.owasp.dependencycheck" version "7.1.1"
     id "com.diffplug.spotless" version "6.9.0"
+    id 'jacoco'
 }
 
 group = 'net.hostsharing'
@@ -71,14 +72,19 @@ dependencyManagement {
     }
 }
 
+// Java Compiler Options
 tasks.withType(JavaCompile) {
-    options.compilerArgs += ["-parameters"]
+    options.compilerArgs += [
+            "-parameters" // keep parameter names => no need for @Param for SpringData
+    ]
 }
 
+// Use JUnit Jupiter
 tasks.named('test') {
     useJUnitPlatform()
 }
 
+// OpenAPI Source Code Generation
 openapiProcessor {
     spring {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
@@ -93,6 +99,7 @@ sourceSets.main.java.srcDir 'build/generated/sources/openapi'
 project.tasks.processResources.dependsOn('processSpring')
 project.tasks.compileJava.dependsOn('processSpring')
 
+// Spotless Code Formatting
 spotless {
     java {
         // removeUnusedImports() TODO: reactivate once it can deal with multi-line-strings
@@ -108,6 +115,7 @@ spotless {
 }
 project.tasks.check.dependsOn(spotlessCheck)
 
+// OWASP Dependency Security Test
 dependencyCheck {
     cveValidForHours=4
     format = 'ALL'
@@ -117,8 +125,95 @@ dependencyCheck {
 }
 project.tasks.check.dependsOn(dependencyCheckAnalyze)
 
+// License Check
 licenseReport {
     excludeBoms = true
     allowedLicensesFile = new File("$projectDir/etc/allowed-licenses.json")
 }
 project.tasks.check.dependsOn(checkLicense)
+
+// JaCoCo Test Code Coverage
+jacoco {
+    toolVersion = "0.8.8"
+}
+test {
+    finalizedBy jacocoTestReport // generate report after tests
+    excludes = [
+            'net.hostsharing.hsadminng.generated.**',
+    ]
+}
+jacocoTestReport {
+    dependsOn test
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "net/hostsharing/hsadminng/generated/**/*.class",
+
+                    // TODO: improve test code coverage for these classes:
+                    "net/hostsharing/hsadminng/rbac/rbacuser/UserController.class",
+                    "net/hostsharing/hsadminng/rbac/rbacgrant/GrantController.class",
+                    "net/hostsharing/hsadminng/hs/hscustomer/CustomerController.class"
+            ])
+        }))
+    }
+    doLast {
+        println "HTML Jacoco Test Code Coverage Report: file://${reports.html.outputLocation.get()}/index.html"
+    }
+}
+project.tasks.check.dependsOn(jacocoTestCoverageVerification)
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            excludes = ['net.hostsharing.hsadminng.generated.**']
+            limit {
+                minimum = 0.7 // TODO: increase to 0.9
+            }
+        }
+
+        // element: PACKAGE, BUNDLE, CLASS, SOURCEFILE or METHOD
+        // counter:  INSTRUCTION, BRANCH, LINE, COMPLEXITY, METHOD, or CLASS
+        // value: TOTALCOUNT, COVEREDCOUNT, MISSEDCOUNT, COVEREDRATIO or MISSEDRATIO
+
+        rule {
+            element = 'CLASS'
+            excludes = [
+                    'net.hostsharing.hsadminng.generated.**',
+                    'net.hostsharing.hsadminng.HsadminNgApplication',
+                    'net.hostsharing.hsadminng.TestController',
+
+                    // TODO: improve test code coverage:
+                    'net.hostsharing.hsadminng.rbac.rbacuser.UserController',
+                    'net.hostsharing.hsadminng.hs.hscustomer.CustomerController'
+            ]
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.7
+            }
+        }
+        rule {
+            element = 'METHOD'
+            excludes = [
+                    'net.hostsharing.hsadminng.generated.**',
+                    'net.hostsharing.hsadminng.HsadminNgApplication.*',
+
+                    // TODO: improve test code coverage:
+                    'net.hostsharing.hsadminng.rbac.rbacuser.RbacUserController.listUsers(*)',
+                    'net.hostsharing.hsadminng.rbac.rbacuser.RbacUserController.listUserPermissions(*)',
+                    'net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantController.listUserGrants(*)',
+                    'net.hostsharing.hsadminng.hs.hscustomer.CustomerController.addCustomer(java.lang.String, java.lang.String, net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource)'
+            ]
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.5 // TODO: increase test code coverage
+            }
+        }
+    }
+}
+
+
+
+
