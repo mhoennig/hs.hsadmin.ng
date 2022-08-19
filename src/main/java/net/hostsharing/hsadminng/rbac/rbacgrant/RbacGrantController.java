@@ -27,9 +27,30 @@ public class RbacGrantController implements RbacgrantsApi {
 
     @Override
     @Transactional(readOnly = true)
+    public ResponseEntity<RbacGrantResource> getGrantById(
+            final String currentUser,
+            final String assumedRoles,
+            final UUID grantedRoleUuid,
+            final UUID granteeUserUuid) {
+
+        context.setCurrentUser(currentUser);
+        if (assumedRoles != null && !assumedRoles.isBlank()) {
+            context.assumeRoles(assumedRoles);
+        }
+
+        final var id = new RbacGrantId(granteeUserUuid, grantedRoleUuid);
+        final var result = rbacGrantRepository.findById(id);
+        if (result == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(map(result, RbacGrantResource.class));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ResponseEntity<List<RbacGrantResource>> listUserGrants(
-        final String currentUser,
-        final String assumedRoles) {
+            final String currentUser,
+            final String assumedRoles) {
 
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
@@ -41,9 +62,9 @@ public class RbacGrantController implements RbacgrantsApi {
     @Override
     @Transactional
     public ResponseEntity<Void> grantRoleToUser(
-        final String currentUser,
-        final String assumedRoles,
-        final RbacGrantResource body) {
+            final String currentUser,
+            final String assumedRoles,
+            final RbacGrantResource body) {
 
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
@@ -53,20 +74,20 @@ public class RbacGrantController implements RbacgrantsApi {
         rbacGrantRepository.save(map(body, RbacGrantEntity.class));
 
         final var uri =
-            MvcUriComponentsBuilder.fromController(getClass())
-                .path("/api/rbac-grants/{roleUuid}")
-                .buildAndExpand(body.getGrantedRoleUuid())
-                .toUri();
+                MvcUriComponentsBuilder.fromController(getClass())
+                        .path("/api/rbac-grants/{roleUuid}")
+                        .buildAndExpand(body.getGrantedRoleUuid())
+                        .toUri();
         return ResponseEntity.created(uri).build();
     }
 
     @Override
     @Transactional
     public ResponseEntity<Void> revokeRoleFromUser(
-        final String currentUser,
-        final String assumedRoles,
-        final UUID grantedRoleUuid,
-        final UUID granteeUserUuid) {
+            final String currentUser,
+            final String assumedRoles,
+            final UUID grantedRoleUuid,
+            final UUID granteeUserUuid) {
 
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {

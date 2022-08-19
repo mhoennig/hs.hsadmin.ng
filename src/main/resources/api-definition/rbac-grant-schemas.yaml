@@ -6,11 +6,20 @@ components:
         RbacGrant:
             type: object
             properties:
+                grantedByRoleIdName:
+                    type: string
+                grantedByRoleUuid:
+                    type: string
+                    format: uuid
                 assumed:
                     type: boolean
+                grantedRoleIdName:
+                    type: string
                 grantedRoleUuid:
                     type: string
                     format: uuid
+                granteeUserName:
+                    type: string
                 granteeUserUuid:
                     type: string
                     format: uuid

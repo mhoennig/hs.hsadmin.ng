@@ -32,7 +32,7 @@ public class RbacUserController implements RbacusersApi {
     @Override
     @Transactional
     public ResponseEntity<RbacUserResource> createUser(
-        @RequestBody final RbacUserResource body
+            @RequestBody final RbacUserResource body
     ) {
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
@@ -40,19 +40,27 @@ public class RbacUserController implements RbacusersApi {
         final var saved = map(body, RbacUserEntity.class);
         rbacUserRepository.create(saved);
         final var uri =
-            MvcUriComponentsBuilder.fromController(getClass())
-                .path("/api/rbac-users/{id}")
-                .buildAndExpand(saved.getUuid())
-                .toUri();
+                MvcUriComponentsBuilder.fromController(getClass())
+                        .path("/api/rbac-users/{id}")
+                        .buildAndExpand(saved.getUuid())
+                        .toUri();
         return ResponseEntity.created(uri).body(map(saved, RbacUserResource.class));
     }
 
     @Override
-    @Transactional(readOnly=true)
+    public ResponseEntity<List<RbacUserPermissionResource>> getUserById(
+            final String currentUser,
+            final String assumedRoles,
+            final String userName) {
+        return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ResponseEntity<List<RbacUserResource>> listUsers(
-        @RequestHeader(name = "current-user") final String currentUserName,
-        @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
-        @RequestParam(name = "name", required = false) final String userName
+            @RequestHeader(name = "current-user") final String currentUserName,
+            @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
+            @RequestParam(name = "name", required = false) final String userName
     ) {
         context.setCurrentUser(currentUserName);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
@@ -62,11 +70,11 @@ public class RbacUserController implements RbacusersApi {
     }
 
     @Override
-    @Transactional(readOnly=true)
+    @Transactional(readOnly = true)
     public ResponseEntity<List<RbacUserPermissionResource>> listUserPermissions(
-        @RequestHeader(name = "current-user") final String currentUserName,
-        @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
-        @PathVariable(name = "userName") final String userName
+            @RequestHeader(name = "current-user") final String currentUserName,
+            @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
+            @PathVariable(name = "userName") final String userName
     ) {
         context.setCurrentUser(currentUserName);
         if (assumedRoles != null && !assumedRoles.isBlank()) {

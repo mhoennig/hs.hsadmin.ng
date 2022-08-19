@@ -18,6 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RbacGrantEntity {
+
     @Column(name = "grantedbyroleidname", updatable = false, insertable = false)
     private String grantedByRoleIdName;
 
@@ -59,6 +60,6 @@ public class RbacGrantEntity {
 
     public String toDisplay() {
         return "{ grant " + (assumed ? "assumed " : "") +
-            "role " + grantedRoleIdName + " to user " + granteeUserName + " by role " + grantedByRoleIdName + " }";
+                "role " + grantedRoleIdName + " to user " + granteeUserName + " by role " + grantedByRoleIdName + " }";
     }
 }

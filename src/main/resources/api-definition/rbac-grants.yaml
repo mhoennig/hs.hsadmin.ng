@@ -13,7 +13,7 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './api-definition/rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
+                            $ref: './rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
 
 post:
     tags:

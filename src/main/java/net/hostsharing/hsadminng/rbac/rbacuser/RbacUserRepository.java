@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.rbac.rbacuser;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,14 +10,15 @@ import java.util.UUID;
 public interface RbacUserRepository extends Repository<RbacUserEntity, UUID> {
 
     @Query("""
-         select u from RbacUserEntity u
-             where :userName is null or u.name like concat(:userName, '%')
-             order by u.name
-        """)
+             select u from RbacUserEntity u
+                 where :userName is null or u.name like concat(:userName, '%')
+                 order by u.name
+            """)
     List<RbacUserEntity> findByOptionalNameLike(String userName);
 
-    @Query(value = "select uuid from rbacuser where name=:userName", nativeQuery = true)
-    UUID findUuidByName(String userName);
+    // bypasses the restricted view, to be able to grant rights to arbitrary user
+    @Query(value = "select * from rbacuser where name=:userName", nativeQuery = true)
+    RbacUserEntity findByName(String userName);
 
     RbacUserEntity findByUuid(UUID uuid);
 
@@ -32,7 +32,7 @@ public interface RbacUserRepository extends Repository<RbacUserEntity, UUID> {
      */
     @Modifying
     @Query(value = "insert into RBacUser_RV (uuid, name) values( :#{#newUser.uuid}, :#{#newUser.name})", nativeQuery = true)
-    void insert(@Param("newUser") final RbacUserEntity newUser);
+    void insert(final RbacUserEntity newUser);
 
     default RbacUserEntity create(final RbacUserEntity rbacUserEntity) {
         if (rbacUserEntity.getUuid() == null) {

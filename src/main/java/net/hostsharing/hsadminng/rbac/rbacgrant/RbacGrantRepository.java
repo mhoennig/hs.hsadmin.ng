@@ -8,15 +8,22 @@ import java.util.List;
 
 public interface RbacGrantRepository extends Repository<RbacGrantEntity, RbacGrantId> {
 
+    @Query(value = """
+             select g from RbacGrantEntity as g
+                 where g.grantedRoleUuid=:#{#rbacGrantId.grantedRoleUuid}
+                   and g.granteeUserUuid=:#{#rbacGrantId.granteeUserUuid}
+            """)
+    RbacGrantEntity findById(RbacGrantId rbacGrantId);
+
     List<RbacGrantEntity> findAll();
 
     void save(final RbacGrantEntity grant);
 
     @Modifying
     @Query(value = """
-         delete from RbacGrantEntity as g
-             where g.grantedRoleUuid=:#{#rbacGrantId.grantedRoleUuid}
-               and g.granteeUserUuid=:#{#rbacGrantId.granteeUserUuid}
-        """)
+             delete from RbacGrantEntity as g
+                 where g.grantedRoleUuid=:#{#rbacGrantId.grantedRoleUuid}
+                   and g.granteeUserUuid=:#{#rbacGrantId.granteeUserUuid}
+            """)
     void deleteByRbacGrantId(RbacGrantId rbacGrantId);
 }

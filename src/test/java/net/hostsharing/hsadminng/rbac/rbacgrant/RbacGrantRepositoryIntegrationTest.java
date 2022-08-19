@@ -108,7 +108,7 @@ class RbacGrantRepositoryIntegrationTest {
             // given
             currentUser("admin@aaa.example.com");
             assumedRoles("customer#aaa.admin");
-            final var givenArbitraryUserUuid = rbacUserRepository.findUuidByName("aac00@aac.example.com");
+            final var givenArbitraryUserUuid = rbacUserRepository.findByName("aac00@aac.example.com").getUuid();
             final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName("package#aaa00.admin").getUuid();
 
             // when
@@ -132,9 +132,7 @@ class RbacGrantRepositoryIntegrationTest {
         @Transactional(propagation = Propagation.NEVER)
         public void packageAdmin_canNotGrantPackageOwnerRole() {
             // given
-            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {
-
-            }
+            record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {}
             final var given = jpaAttempt.transacted(() -> {
                 // to find the uuids of we need to have access rights to these
                 currentUser("admin@aaa.example.com");
@@ -247,7 +245,7 @@ class RbacGrantRepositoryIntegrationTest {
         private RbacGrantEntity create(GrantBuilder with) {
             currentUser(with.byUserName);
             assumedRoles(with.assumedRole);
-            final var givenArbitraryUserUuid = rbacUserRepository.findUuidByName(with.granteeUserName);
+            final var givenArbitraryUserUuid = rbacUserRepository.findByName(with.granteeUserName).getUuid();
             final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName(with.grantedRole).getUuid();
 
             final var grant = RbacGrantEntity.builder()

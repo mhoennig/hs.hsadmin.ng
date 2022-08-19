@@ -27,6 +27,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -56,6 +57,67 @@ class RbacGrantControllerAcceptanceTest {
 
     @Autowired
     JpaAttempt jpaAttempt;
+
+    @Nested
+    class GetGrantById {
+
+        @Test
+        @Accepts({ "GRT:R(Read)" })
+        void customerAdmin_withAssumedPacketAdminRole_canReadPacketAdminsGrantById() {
+            // given
+            final var givenCurrentUserAsPackageAdmin = new Subject("admin@aaa.example.com");
+            final var givenGranteeUser = findRbacUserByName("aaa00@aaa.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#aaa00.admin");
+
+            // when
+            final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
+                    .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
+
+            // then
+            grant.assertThat()
+                    .statusCode(200)
+                    .body("grantedByRoleIdName", is("customer#aaa.admin"))
+                    .body("grantedRoleIdName", is("package#aaa00.admin"))
+                    .body("granteeUserName", is("aaa00@aaa.example.com"));
+        }
+
+        @Test
+        @Accepts({ "GRT:R(Read)" })
+        void packageAdmin_withoutAssumedRole_canReadItsOwnGrantById() {
+            // given
+            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com");
+            final var givenGranteeUser = findRbacUserByName("aaa00@aaa.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#aaa00.admin");
+
+            // when
+            final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
+                    .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
+
+            // then
+            grant.assertThat()
+                    .statusCode(200)
+                    .body("grantedByRoleIdName", is("customer#aaa.admin"))
+                    .body("grantedRoleIdName", is("package#aaa00.admin"))
+                    .body("granteeUserName", is("aaa00@aaa.example.com"));
+        }
+
+        @Test
+        @Accepts({ "GRT:R(Read)" })
+        void packageAdmin_withAssumedUnixUserAdmin_canNotReadItsOwnGrantById() {
+            // given
+            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com", "unixuser#aaa00-aaaa.admin");
+            final var givenGranteeUser = findRbacUserByName("aaa00@aaa.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#aaa00.admin");
+
+            // when
+            final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
+                    .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
+
+            // then
+            grant.assertThat()
+                    .statusCode(404);
+        }
+    }
 
     @Nested
     class GrantRoleToUser {
@@ -166,12 +228,20 @@ class RbacGrantControllerAcceptanceTest {
             this.assumedRole = assumedRole;
         }
 
+        public Subject(final String currentUser) {
+            this(currentUser, "");
+        }
+
         GrantFixture grantsRole(final RbacRoleEntity givenOwnPackageAdminRole) {
             return new GrantFixture(givenOwnPackageAdminRole);
         }
 
         RevokeFixture revokesRole(final RbacRoleEntity givenOwnPackageAdminRole) {
             return new RevokeFixture(givenOwnPackageAdminRole);
+        }
+
+        GetGrantByIdFixture getGrantById() {
+            return new GetGrantByIdFixture();
         }
 
         class GrantFixture {
@@ -252,6 +322,34 @@ class RbacGrantControllerAcceptanceTest {
                         .then(); // @formatter:on
             }
         }
+
+        private class GetGrantByIdFixture {
+
+            private Subject currentSubject = Subject.this;
+            private RbacRoleEntity grantedRole;
+            private boolean assumed;
+            private RbacUserEntity granteeUser;
+
+            GetGrantByIdFixture forGrantedRole(final RbacRoleEntity grantedRole) {
+                this.grantedRole = grantedRole;
+                return this;
+            }
+
+            ValidatableResponse toGranteeUser(final RbacUserEntity granteeUser) {
+                this.granteeUser = granteeUser;
+
+                return RestAssured // @formatter:ff
+                        .given()
+                        .header("current-user", currentSubject.currentUser)
+                        .header("assumed-roles", currentSubject.assumedRole)
+                        .port(port)
+                        .when()
+                        .get("http://localhost/api/rbac-grants/%s/%s".formatted(
+                                grantedRole.getUuid(), granteeUser.getUuid()
+                        ))
+                        .then(); // @formatter:on
+            }
+        }
     }
 
     private void assumeGrantExists(final Subject grantingSubject, final String expectedGrant) {
@@ -273,6 +371,13 @@ class RbacGrantControllerAcceptanceTest {
                         UUID.randomUUID(),
                         "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com"))
         ).returnedValue();
+    }
+
+    RbacUserEntity findRbacUserByName(final String userName) {
+        return jpaAttempt.transacted(() -> {
+            context.setCurrentUser("mike@hostsharing.net");
+            return rbacUserRepository.findByName(userName);
+        }).returnedValue();
     }
 
     RbacRoleEntity findRbacRoleByName(final String roleName) {
