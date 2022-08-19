@@ -1,10 +1,12 @@
 package net.hostsharing.hsadminng.context;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
+
+import static org.springframework.transaction.annotation.Propagation.*;
 
 @Service
 public class Context {
@@ -12,7 +14,7 @@ public class Context {
     @PersistenceContext
     private EntityManager em;
 
-    @Transactional(Transactional.TxType.MANDATORY)
+    @Transactional(propagation = MANDATORY)
     public void setCurrentUser(final String userName) {
         em.createNativeQuery(
             String.format(
@@ -27,7 +29,7 @@ public class Context {
         return String.valueOf(em.createNativeQuery("select currentUser()").getSingleResult());
     }
 
-    @Transactional(Transactional.TxType.MANDATORY)
+    @Transactional(propagation = MANDATORY)
     public void assumeRoles(final String roles) {
         em.createNativeQuery(
             String.format(
@@ -37,7 +39,7 @@ public class Context {
         ).executeUpdate();
     }
 
-    @Transactional(Transactional.TxType.MANDATORY)
+    @Transactional(propagation = MANDATORY)
     public void assumeNoSpecialRole() {
         em.createNativeQuery(
             "set local hsadminng.assumedRoles = '';"
