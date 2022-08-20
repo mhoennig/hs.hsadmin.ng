@@ -2,11 +2,13 @@ package net.hostsharing.hsadminng.hs.hspackage;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.hscustomer.CustomerRepository;
+import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +20,7 @@ import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, CustomerRepository.class })
+@ComponentScan(basePackageClasses = { Context.class, CustomerRepository.class, JpaAttempt.class })
 @DirtiesContext
 class PackageRepositoryIntegrationTest {
 
@@ -28,7 +30,11 @@ class PackageRepositoryIntegrationTest {
     @Autowired
     PackageRepository packageRepository;
 
-    @Autowired EntityManager em;
+    @Autowired
+    EntityManager em;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
 
     @Nested
     class FindAllByOptionalNameLike {
@@ -88,13 +94,13 @@ class PackageRepositoryIntegrationTest {
 
             // when
             final var result = attempt(
-                em,
-                () -> packageRepository.findAllByOptionalNameLike(null));
+                    em,
+                    () -> packageRepository.findAllByOptionalNameLike(null));
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
+                    JpaSystemException.class,
+                    "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
         }
 
         @Test
@@ -102,12 +108,12 @@ class PackageRepositoryIntegrationTest {
             currentUser("unknown@example.org");
 
             final var result = attempt(
-                em,
-                () -> packageRepository.findAllByOptionalNameLike(null));
+                    em,
+                    () -> packageRepository.findAllByOptionalNameLike(null));
 
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "hsadminng.currentUser defined as unknown@example.org, but does not exists");
+                    JpaSystemException.class,
+                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
         @Test
@@ -117,14 +123,57 @@ class PackageRepositoryIntegrationTest {
             assumedRoles("customer#aaa.admin");
 
             final var result = attempt(
-                em,
-                () -> packageRepository.findAllByOptionalNameLike(null));
+                    em,
+                    () -> packageRepository.findAllByOptionalNameLike(null));
 
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "hsadminng.currentUser defined as unknown@example.org, but does not exists");
+                    JpaSystemException.class,
+                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
+    }
+
+    @Nested
+    class OptimisticLocking {
+
+        @Test
+        public void supportsOptimisticLocking() throws InterruptedException {
+            // given
+            hostsharingAdminWithAssumedRole("package#aaa00.admin");
+            final var pac = packageRepository.findAllByOptionalNameLike("%").get(0);
+
+            // when
+            final var result1 = jpaAttempt.transacted(() -> {
+                hostsharingAdminWithAssumedRole("package#aaa00.admin");
+                pac.setDescription("description set by thread 1");
+                packageRepository.save(pac);
+            });
+            final var result2 = jpaAttempt.transacted(() -> {
+                hostsharingAdminWithAssumedRole("package#aaa00.admin");
+                pac.setDescription("description set by thread 2");
+                packageRepository.save(pac);
+                sleep(1500);
+            });
+
+            // then
+            em.refresh(pac);
+            assertThat(pac.getDescription()).isEqualTo("description set by thread 1");
+            assertThat(result1.caughtException()).isNull();
+            assertThat(result2.caughtException()).isInstanceOf(ObjectOptimisticLockingFailureException.class);
+        }
+
+        private void sleep(final int millis) {
+            try {
+                Thread.sleep(millis);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void hostsharingAdminWithAssumedRole(final String assumedRoles) {
+        currentUser("mike@hostsharing.net");
+        assumedRoles(assumedRoles);
     }
 
     void currentUser(final String currentUser) {
@@ -139,14 +188,14 @@ class PackageRepositoryIntegrationTest {
 
     void noPackagesAreReturned(final List<PackageEntity> actualResult) {
         assertThat(actualResult)
-            .extracting(PackageEntity::getName)
-            .isEmpty();
+                .extracting(PackageEntity::getName)
+                .isEmpty();
     }
 
     void exactlyThesePackagesAreReturned(final List<PackageEntity> actualResult, final String... packageNames) {
         assertThat(actualResult)
-            .extracting(PackageEntity::getName)
-            .containsExactlyInAnyOrder(packageNames);
+                .extracting(PackageEntity::getName)
+                .containsExactlyInAnyOrder(packageNames);
     }
 
 }

@@ -19,6 +19,9 @@ public class PackageEntity {
 
     private @Id UUID uuid;
 
+    @Version
+    private int version;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "customeruuid")
     private CustomerEntity customer;
