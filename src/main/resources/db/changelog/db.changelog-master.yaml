@@ -6,6 +6,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/003-random-in-range.sql
     - include:
+        file: db/changelog/004-jsonb-changes-delta.sql
+    - include:
         file: db/changelog/005-uuid-ossp-extension.sql
     - include:
         file: db/changelog/030-rbac-base.sql
