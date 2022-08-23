@@ -41,7 +41,6 @@ begin
                 else
                     raise notice 'not an object: %, leaving %', oldJsonElement.key, newJson -> (oldJsonElement.key);
                 end if;
-                continue;
             else
                 raise notice 'nulling old: %', oldJsonElement.key;
                 diffJson = diffJson || jsonb_build_object(oldJsonElement.key, null);
