@@ -107,7 +107,7 @@ END; $$;
 CREATE OR REPLACE PROCEDURE create_historicization(baseTable varchar)
     LANGUAGE plpgsql AS $$
 DECLARE
-createHistTableSql varchar;
+    createHistTableSql varchar;
     createTriggerSQL varchar;
     viewName varchar;
     versionsTable varchar;

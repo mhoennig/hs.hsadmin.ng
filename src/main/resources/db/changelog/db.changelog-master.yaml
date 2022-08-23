@@ -10,17 +10,19 @@ databaseChangeLog:
     - include:
         file: db/changelog/005-uuid-ossp-extension.sql
     - include:
-        file: db/changelog/030-rbac-base.sql
+        file: db/changelog/010-context.sql
     - include:
-        file: db/changelog/031-rbac-current.sql
+        file: db/changelog/050-rbac-base.sql
     - include:
-        file: db/changelog/033-rbac-user-grant.sql
+        file: db/changelog/051-rbac-user-grant.sql
     - include:
-        file: db/changelog/035-rbac-views.sql
+        file: db/changelog/054-rbac-context.sql
     - include:
-        file: db/changelog/037-rbac-role-builder.sql
+        file: db/changelog/055-rbac-views.sql
     - include:
-        file: db/changelog/039-rbac-statistics.sql
+        file: db/changelog/057-rbac-role-builder.sql
+    - include:
+        file: db/changelog/059-rbac-statistics.sql
     - include:
         file: db/changelog/100-hs-base.sql
     - include:

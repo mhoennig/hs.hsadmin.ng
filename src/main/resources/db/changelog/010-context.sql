@@ -1,7 +1,36 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset rbac-current-CURRENT-USER:1 endDelimiter:--//
+--changeset context-CURRENT-TASK:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Returns the current tas as set by `hsadminng.currentTask`.
+    Raises exception if not set.
+ */
+create or replace function currentTask()
+    returns varchar(96)
+    stable leakproof
+    language plpgsql as $$
+declare
+    currentTask varchar(96);
+begin
+    begin
+        currentTask := current_setting('hsadminng.currentTask');
+    exception
+        when others then
+            currentTask := null;
+    end;
+    if (currentTask is null or currentTask = '') then
+        raise exception '[401] hsadminng.currentTask must be defined, please use "SET LOCAL ...;"';
+    end if;
+    raise debug 'currentTask: %', currentTask;
+    return currentTask;
+end; $$;
+--//
+
+
+-- ============================================================================
+--changeset context-CURRENT-USER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Returns the current user as set by `hsadminng.currentUser`.
@@ -26,26 +55,10 @@ begin
     raise debug 'currentUser: %', currentUser;
     return currentUser;
 end; $$;
-
-create or replace function currentUserId()
-    returns uuid
-    stable leakproof
-    language plpgsql as $$
-declare
-    currentUser   varchar(63);
-    currentUserId uuid;
-begin
-    currentUser := currentUser();
-    currentUserId = (select uuid from RbacUser where name = currentUser);
-    if currentUserId is null then
-        raise exception '[401] hsadminng.currentUser defined as %, but does not exists', currentUser;
-    end if;
-    return currentUserId;
-end; $$;
 --//
 
 -- ============================================================================
---changeset rbac-current-ASSUMED-ROLES:1 endDelimiter:--//
+--changeset context-ASSUMED-ROLES:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Returns assumed role names as set in `hsadminng.assumedRoles`
@@ -132,57 +145,6 @@ begin
     else
         return array [currentUser()]::varchar(63)[];
     end if;
-end; $$;
-
-create or replace function currentSubjectIds()
-    returns uuid[]
-    stable leakproof
-    language plpgsql as $$
-declare
-    currentUserId       uuid;
-    roleNames           varchar(63)[];
-    roleName            varchar(63);
-    objectTableToAssume varchar(63);
-    objectNameToAssume  varchar(63);
-    objectUuidToAssume  uuid;
-    roleTypeToAssume    RbacRoleType;
-    roleIdsToAssume     uuid[];
-    roleUuidToAssume    uuid;
-begin
-    currentUserId := currentUserId();
-    if currentUserId is null then
-        raise exception '[401] user % does not exist', currentUser();
-    end if;
-
-    roleNames := assumedRoles();
-    if cardinality(roleNames) = 0 then
-        return array [currentUserId];
-    end if;
-
-    raise notice 'assuming roles: %', roleNames;
-
-    foreach roleName in array roleNames
-        loop
-            roleName = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
-            objectTableToAssume = split_part(roleName, '#', 1);
-            objectNameToAssume = split_part(roleName, '#', 2);
-            roleTypeToAssume = split_part(roleName, '#', 3);
-
-            objectUuidToAssume = findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
-
-            -- TODO: either the result needs to be cached at least per transaction or we need to get rid of SELCT in a loop
-            select uuid as roleuuidToAssume
-                from RbacRole r
-                where r.objectUuid = objectUuidToAssume
-                  and r.roleType = roleTypeToAssume
-                into roleUuidToAssume;
-            if (not isGranted(currentUserId, roleUuidToAssume)) then
-                raise exception '[403] user % (%) has no permission to assume role % (%)', currentUser(), currentUserId, roleName, roleUuidToAssume;
-            end if;
-            roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
-        end loop;
-
-    return roleIdsToAssume;
 end; $$;
 --//
 
