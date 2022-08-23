@@ -17,8 +17,6 @@ declare
     diffJson       jsonb;
     oldJsonElement record;
 begin
-    raise notice '>>> diffing: % % vs. % %', jsonb_typeof(oldJson), oldJson, jsonb_typeof(newJson), newJson;
-
     if oldJson is null or jsonb_typeof(oldJson) = 'null' or
         newJson is null or jsonb_typeof(newJson) = 'null' then
         return newJson;
@@ -27,26 +25,18 @@ begin
     diffJson = newJson;
     for oldJsonElement in select * from jsonb_each(oldJson)
         loop
-            raise notice 'intermediate result: %', diffJson;
-            raise notice 'record: %', oldJsonElement;
             if diffJson @> jsonb_build_object(oldJsonElement.key, oldJsonElement.value) then
-                raise notice 'ignoring equal: %', oldJsonElement.key;
                 diffJson = diffJson - oldJsonElement.key;
             elsif diffJson ? oldJsonElement.key then
                 if jsonb_typeof(newJson -> (oldJsonElement.key)) = 'object' then
-                    raise notice 'diffing new: % -> %', oldJsonElement.key, newJson -> (oldJsonElement.key);
                     diffJson = diffJson ||
                                jsonb_build_object(oldJsonElement.key,
                                                   jsonb_changes_delta(oldJsonElement.value, newJson -> (oldJsonElement.key)));
-                else
-                    raise notice 'not an object: %, leaving %', oldJsonElement.key, newJson -> (oldJsonElement.key);
                 end if;
             else
-                raise notice 'nulling old: %', oldJsonElement.key;
                 diffJson = diffJson || jsonb_build_object(oldJsonElement.key, null);
             end if;
         end loop;
-    raise notice '<<< result: %', diffJson;
     return diffJson;
 end; $$;
 
