@@ -21,6 +21,12 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    testCompile {
+        // Only JUNit 5 (Jupiter) should be used at compile time.
+        // For runtime it's still needed by testcontainers, though.
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
 }
 
 repositories {
