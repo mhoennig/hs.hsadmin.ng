@@ -1,6 +1,5 @@
 package net.hostsharing.test;
 
-import junit.framework.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
@@ -115,7 +114,8 @@ public class JpaAttempt {
             if (expectedExceptionClass.isAssignableFrom(exception.getClass())) {
                 return (E) exception;
             }
-            throw new AssertionFailedError("expected " + expectedExceptionClass + " but got " + exception);
+            fail("");
+            throw new AssertionError("expected " + expectedExceptionClass + " but got " + exception);
         }
 
         public Throwable caughtExceptionsRootCause() {

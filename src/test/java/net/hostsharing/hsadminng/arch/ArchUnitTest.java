@@ -81,6 +81,14 @@ public class ArchUnitTest {
             org.springframework.transaction.annotation.Transactional.class.getName(),
             javax.transaction.Transactional.class.getName()));
 
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule doNotUseOrgJUnitTestAnnotation = noMethods()
+            .should().beAnnotatedWith(org.junit.Test.class)
+            .as("Use @%s instead of @%s." .formatted(
+                    org.junit.jupiter.api.Test.class.getName(),
+                    org.junit.Test.class.getName()));
+
     @Test
     public void everythingShouldBeFreeOfCycles() {
         slices().matching("net.hostsharing.hsadminng.(*)..").should().beFreeOfCycles();
