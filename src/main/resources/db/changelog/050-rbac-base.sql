@@ -26,7 +26,6 @@ begin
     end if;
     return expectedType;
 end; $$;
-
 --//
 
 -- ============================================================================
@@ -40,6 +39,8 @@ create table RbacUser
     uuid uuid primary key references RbacReference (uuid) on delete cascade,
     name varchar(63) not null unique
 );
+
+call create_audit_log('RbacUser');
 
 create or replace function createRbacUser(userName varchar)
     returns uuid
@@ -119,6 +120,8 @@ create table RbacObject
     unique (objectTable, uuid)
 );
 
+call create_audit_log('RbacObject');
+
 create or replace function createRbacObject()
     returns trigger
     language plpgsql
@@ -144,8 +147,6 @@ begin
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 end; $$;
-
-
 --//
 
 -- ============================================================================
@@ -164,6 +165,8 @@ create table RbacRole
     roleType   RbacRoleType                      not null,
     unique (objectUuid, roleType)
 );
+
+call create_audit_log('RbacRole');
 
 create type RbacRoleDescriptor as
 (
@@ -284,6 +287,8 @@ create table RbacPermission
     unique (objectUuid, op)
 );
 
+call create_audit_log('RbacPermission');
+
 create or replace function permissionExists(forObjectUuid uuid, forOp RbacOp)
     returns bool
     language sql as $$
@@ -353,15 +358,17 @@ $$;
  */
 create table RbacGrants
 (
+    uuid                uuid primary key default uuid_generate_v4(),
     grantedByRoleUuid   uuid references RbacRole (uuid) on delete cascade,
     ascendantUuid       uuid references RbacReference (uuid) on delete cascade,
     descendantUuid      uuid references RbacReference (uuid) on delete cascade,
     assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
-    primary key (ascendantUuid, descendantUuid)
+    unique (ascendantUuid, descendantUuid)
 );
 create index on RbacGrants (ascendantUuid);
 create index on RbacGrants (descendantUuid);
 
+call create_audit_log('RbacGrants');
 
 create or replace function findGrantees(grantedId uuid)
     returns setof RbacReference

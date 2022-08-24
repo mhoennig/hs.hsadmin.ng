@@ -12,6 +12,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/010-context.sql
     - include:
+        file: db/changelog/020-audit-log.sql
+    - include:
         file: db/changelog/050-rbac-base.sql
     - include:
         file: db/changelog/051-rbac-user-grant.sql

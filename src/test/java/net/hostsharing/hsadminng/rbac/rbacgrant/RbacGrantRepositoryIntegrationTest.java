@@ -195,9 +195,10 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void packageAdmin_canRevokeOwnPackageAdminRoleGrantedByAnotherAdminOfThatPackage() {
             // given
+            final var newUser = createNewUserTransacted();
             final var grant = create(grant()
                     .byUser("admin@aaa.example.com").withAssumedRole("package#aaa00.admin")
-                    .grantingRole("package#aaa00.admin").toUser(createNewUser().getName()));
+                    .grantingRole("package#aaa00.admin").toUser(newUser.getName()));
 
             // when
             context("aaa00@aaa.example.com", "package#aaa00.admin");
@@ -289,6 +290,14 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
                 return this;
             }
         }
+    }
+
+    private RbacUserEntity createNewUserTransacted() {
+        return jpaAttempt.transacted(() -> {
+            final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+            context(newUserName);
+            return rbacUserRepository.create(new RbacUserEntity(null, newUserName));
+        }).assumeSuccessful().returnedValue();
     }
 
     private RbacUserEntity createNewUser() {

@@ -35,6 +35,7 @@ public class RbacUserController implements RbacusersApi {
             @RequestBody final RbacUserResource body
     ) {
         context.setCurrentTask("creating new user: " + body.getName());
+        context.setCurrentUser(body.getName());
 
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
