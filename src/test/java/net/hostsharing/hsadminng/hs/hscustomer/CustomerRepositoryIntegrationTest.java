@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hscustomer;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.context.ContextBasedTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @ComponentScan(basePackageClasses = { Context.class, CustomerRepository.class })
 @DirtiesContext
-class CustomerRepositoryIntegrationTest {
-
-    @Autowired
-    Context context;
+class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     CustomerRepository customerRepository;
@@ -37,7 +35,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
-            currentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net", null);
             final var count = customerRepository.count();
 
             // when
@@ -58,8 +56,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            currentUser("mike@hostsharing.net");
-            assumedRoles("customer#aaa.admin");
+            context("mike@hostsharing.net", "customer#aaa.admin");
 
             // when
             final var result = attempt(em, () -> {
@@ -77,7 +74,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_cannotCreateNewCustomer() {
             // given
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com", null);
 
             // when
             final var result = attempt(em, () -> {
@@ -105,7 +102,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            currentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net", null);
 
             // when
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
@@ -117,8 +114,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withAssumedHostsharingAdminRole_canViewAllCustomers() {
             given:
-            currentUser("mike@hostsharing.net");
-            assumedRoles("global#hostsharing.admin");
+            context("mike@hostsharing.net", "global#hostsharing.admin");
 
             // when
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
@@ -130,7 +126,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
             // given:
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com", null);
 
             // when:
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
@@ -141,8 +137,7 @@ class CustomerRepositoryIntegrationTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            context("admin@aaa.example.com", "package#aaa00.admin");
 
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
@@ -152,8 +147,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyCustomer() {
             // given:
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aab00.admin");
+            context("admin@aaa.example.com", "package#aab00.admin");
 
             // when
             final var result = attempt(
@@ -168,7 +162,7 @@ class CustomerRepositoryIntegrationTest {
 
         @Test
         void unknownUser_withoutAssumedRole_cannotViewAnyCustomers() {
-            currentUser("unknown@example.org");
+            context("unknown@example.org", null);
 
             final var result = attempt(
                 em,
@@ -182,8 +176,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         @Transactional
         void unknownUser_withAssumedCustomerRole_cannotViewAnyCustomers() {
-            currentUser("unknown@example.org");
-            assumedRoles("customer#aaa.admin");
+            context("unknown@example.org", "customer#aaa.admin");
 
             final var result = attempt(
                 em,
@@ -202,7 +195,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            currentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net", null);
 
             // when
             final var result = customerRepository.findCustomerByOptionalPrefixLike("aab");
@@ -214,7 +207,7 @@ class CustomerRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
             // given:
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com", null);
 
             // when:
             final var result = customerRepository.findCustomerByOptionalPrefixLike("aab");
@@ -222,16 +215,6 @@ class CustomerRepositoryIntegrationTest {
             // then:
             exactlyTheseCustomersAreReturned(result);
         }
-    }
-
-    void currentUser(final String currentUser) {
-        context.setCurrentUser(currentUser);
-        assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
-    }
-
-    void assumedRoles(final String assumedRoles) {
-        context.assumeRoles(assumedRoles);
-        assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
     }
 
     void exactlyTheseCustomersAreReturned(final List<CustomerEntity> actualResult, final String... customerPrefixes) {

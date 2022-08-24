@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
@@ -23,10 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @ComponentScan(basePackageClasses = { RbacUserRepository.class, Context.class, JpaAttempt.class })
 @DirtiesContext
-class RbacUserRepositoryIntegrationTest {
-
-    @Autowired
-    Context context;
+class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     RbacUserRepository rbacUserRepository;
@@ -43,6 +41,7 @@ class RbacUserRepositoryIntegrationTest {
         public void anyoneCanCreateTheirOwnUser() {
             // given
             final var givenNewUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+            context(givenNewUserName, null);
 
             // when
             final var result = rbacUserRepository.create(
@@ -52,7 +51,7 @@ class RbacUserRepositoryIntegrationTest {
             assertThat(result).isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
 
             // and the new user entity can be fetched by the user itself
-            currentUser(givenNewUserName);
+            context(givenNewUserName);
             assertThat(em.find(RbacUserEntity.class, result.getUuid()))
                 .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
         }
@@ -67,7 +66,7 @@ class RbacUserRepositoryIntegrationTest {
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
-                currentUser("admin@aaa.example.com");
+                context("admin@aaa.example.com");
                 return rbacUserRepository.create(new RbacUserEntity(givenUuid, newUserName));
             });
 
@@ -76,7 +75,7 @@ class RbacUserRepositoryIntegrationTest {
             assertThat(result.returnedValue()).isNotNull()
                 .extracting(RbacUserEntity::getUuid).isEqualTo(givenUuid);
             jpaAttempt.transacted(() -> {
-                currentUser(newUserName);
+                context(newUserName);
                 assertThat(em.find(RbacUserEntity.class, givenUuid))
                     .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(newUserName);
             });
@@ -101,7 +100,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canViewAllRbacUsers() {
             // given
-            currentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -113,8 +112,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withAssumedHostsharingAdminRole_canViewAllRbacUsers() {
             given:
-            currentUser("mike@hostsharing.net");
-            assumedRoles("global#hostsharing.admin");
+            context("mike@hostsharing.net", "global#hostsharing.admin");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -126,8 +124,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             given:
-            currentUser("mike@hostsharing.net");
-            assumedRoles("customer#aaa.admin");
+            context("mike@hostsharing.net", "customer#aaa.admin");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -143,7 +140,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             // given:
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com");
 
             // when:
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -158,8 +155,7 @@ class RbacUserRepositoryIntegrationTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            context("admin@aaa.example.com", "package#aaa00.admin");
 
             final var result = rbacUserRepository.findByOptionalNameLike(null);
 
@@ -168,7 +164,7 @@ class RbacUserRepositoryIntegrationTest {
 
         @Test
         public void packageAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            currentUser("aaa00@aaa.example.com");
+            context("aaa00@aaa.example.com");
 
             final var result = rbacUserRepository.findByOptionalNameLike(null);
 
@@ -231,7 +227,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
             // given
-            currentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net");
 
             // when
             final var result = rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net");
@@ -243,8 +239,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withAssumedHostmastersRole_willThrowException() {
             // given
-            currentUser("mike@hostsharing.net");
-            assumedRoles("global#hostsharing.admin");
+            context("mike@hostsharing.net", "global#hostsharing.admin");
 
             // when
             final var result = attempt(em, () ->
@@ -260,7 +255,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
             // given
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com");
 
             // when
             final var result = rbacUserRepository.findPermissionsOfUser("admin@aaa.example.com");
@@ -302,7 +297,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_isNotAllowedToViewGlobalAdminsPermissions() {
             // given
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com");
 
             // when
             final var result = attempt(em, () ->
@@ -318,7 +313,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com");
 
             // when
             final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
@@ -354,7 +349,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canNotViewPermissionsOfUnrelatedUsers() {
             // given
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com");
 
             // when
             final var result = rbacUserRepository.findPermissionsOfUser("aab00@aab.example.com");
@@ -366,7 +361,7 @@ class RbacUserRepositoryIntegrationTest {
         @Test
         public void packetAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
-            currentUser("aaa00@aaa.example.com");
+            context("aaa00@aaa.example.com");
 
             // when
             final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
@@ -399,16 +394,6 @@ class RbacUserRepositoryIntegrationTest {
                 // @formatter:on
             );
         }
-    }
-
-    void currentUser(final String currentUser) {
-        context.setCurrentUser(currentUser);
-        assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
-    }
-
-    void assumedRoles(final String assumedRoles) {
-        context.assumeRoles(assumedRoles);
-        assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
     }
 
     void exactlyTheseRbacUsersAreReturned(final List<RbacUserEntity> actualResult, final String... expectedUserNames) {

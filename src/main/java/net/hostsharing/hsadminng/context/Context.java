@@ -15,6 +15,16 @@ public class Context {
     private EntityManager em;
 
     @Transactional(propagation = MANDATORY)
+    public void setCurrentTask(final String task) {
+        em.createNativeQuery(
+                String.format(
+                        "set local hsadminng.currentTask = '%s';",
+                        task
+                )
+        ).executeUpdate();
+    }
+
+    @Transactional(propagation = MANDATORY)
     public void setCurrentUser(final String userName) {
         em.createNativeQuery(
             String.format(

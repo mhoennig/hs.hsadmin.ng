@@ -66,6 +66,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final String assumedRoles,
             final RbacGrantResource body) {
 
+        context.setCurrentTask("granting role to user");
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
@@ -89,6 +90,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final UUID grantedRoleUuid,
             final UUID granteeUserUuid) {
 
+        context.setCurrentTask("revoking role from user");
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);

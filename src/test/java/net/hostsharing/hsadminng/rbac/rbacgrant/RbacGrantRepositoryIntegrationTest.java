@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserEntity;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserRepository;
@@ -27,7 +28,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 @DataJpaTest
 @ComponentScan(basePackageClasses = { RbacGrantRepository.class, Context.class, JpaAttempt.class })
 @DirtiesContext
-class RbacGrantRepositoryIntegrationTest {
+class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     Context context;
@@ -54,7 +55,7 @@ class RbacGrantRepositoryIntegrationTest {
         @Accepts({ "GRT:L(List)" })
         public void packageAdmin_canViewItsRbacGrants() {
             // given
-            currentUser("aaa00@aaa.example.com");
+            context("aaa00@aaa.example.com", null);
 
             // when
             final var result = rbacGrantRepository.findAll();
@@ -69,7 +70,7 @@ class RbacGrantRepositoryIntegrationTest {
         @Accepts({ "GRT:L(List)" })
         public void customerAdmin_canViewItsRbacGrants() {
             // given
-            currentUser("admin@aaa.example.com");
+            context("admin@aaa.example.com", null);
 
             // when
             final var result = rbacGrantRepository.findAll();
@@ -87,8 +88,7 @@ class RbacGrantRepositoryIntegrationTest {
         @Accepts({ "GRT:L(List)" })
         public void customerAdmin_withAssumedRole_canOnlyViewRbacGrantsVisibleByAssumedRole() {
             // given:
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            context("admin@aaa.example.com", "package#aaa00.admin");
 
             // when
             final var result = rbacGrantRepository.findAll();
@@ -106,8 +106,7 @@ class RbacGrantRepositoryIntegrationTest {
         @Test
         public void customerAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
             // given
-            currentUser("admin@aaa.example.com");
-            assumedRoles("customer#aaa.admin");
+            context("admin@aaa.example.com", "customer#aaa.admin");
             final var givenArbitraryUserUuid = rbacUserRepository.findByName("aac00@aac.example.com").getUuid();
             final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName("package#aaa00.admin").getUuid();
 
@@ -135,18 +134,17 @@ class RbacGrantRepositoryIntegrationTest {
             record Given(RbacUserEntity arbitraryUser, UUID packageOwnerRoleUuid) {}
             final var given = jpaAttempt.transacted(() -> {
                 // to find the uuids of we need to have access rights to these
-                currentUser("admin@aaa.example.com");
+                context("admin@aaa.example.com", null);
                 return new Given(
                         createNewUser(),
                         rbacRoleRepository.findByRoleName("package#aaa00.owner").getUuid()
                 );
-            }).returnedValue();
+            }).assumeSuccessful().returnedValue();
 
             // when
             final var attempt = jpaAttempt.transacted(() -> {
                 // now we try to use these uuids as a less privileged user
-                currentUser("aaa00@aaa.example.com");
-                assumedRoles("package#aaa00.admin");
+                context("aaa00@aaa.example.com", "package#aaa00.admin");
                 final var grant = RbacGrantEntity.builder()
                         .granteeUserUuid(given.arbitraryUser.getUuid())
                         .grantedRoleUuid(given.packageOwnerRoleUuid)
@@ -162,7 +160,7 @@ class RbacGrantRepositoryIntegrationTest {
                             + " forbidden for {package#aaa00.admin}");
             jpaAttempt.transacted(() -> {
                 // finally, we use the new user to make sure, no roles were granted
-                currentUser(given.arbitraryUser.getName());
+                context(given.arbitraryUser.getName(), null);
                 assertThat(rbacGrantRepository.findAll())
                         .extracting(RbacGrantEntity::toDisplay)
                         .hasSize(0);
@@ -181,15 +179,13 @@ class RbacGrantRepositoryIntegrationTest {
                     .grantingRole("package#aaa00.admin").toUser("aac00@aac.example.com"));
 
             // when
-            currentUser("admin@aaa.example.com");
-            assumedRoles("customer#aaa.admin");
+            context("admin@aaa.example.com", "customer#aaa.admin");
             final var revokeAttempt = attempt(em, () -> {
                 rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
             });
 
             // then
-            currentUser("admin@aaa.example.com");
-            assumedRoles("customer#aaa.admin");
+            context("admin@aaa.example.com", "customer#aaa.admin");
             assertThat(revokeAttempt.caughtExceptionsRootCause()).isNull();
             assertThat(rbacGrantRepository.findAll())
                     .extracting(RbacGrantEntity::getGranteeUserName)
@@ -204,16 +200,14 @@ class RbacGrantRepositoryIntegrationTest {
                     .grantingRole("package#aaa00.admin").toUser(createNewUser().getName()));
 
             // when
-            currentUser("aaa00@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            context("aaa00@aaa.example.com", "package#aaa00.admin");
             final var revokeAttempt = attempt(em, () -> {
                 rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
             });
 
             // then
             assertThat(revokeAttempt.caughtExceptionsRootCause()).isNull();
-            currentUser("admin@aaa.example.com");
-            assumedRoles("customer#aaa.admin");
+            context("admin@aaa.example.com", "customer#aaa.admin");
             assertThat(rbacGrantRepository.findAll())
                     .extracting(RbacGrantEntity::getGranteeUserName)
                     .doesNotContain("aac00@aac.example.com");
@@ -228,8 +222,7 @@ class RbacGrantRepositoryIntegrationTest {
             final var grantedByRole = rbacRoleRepository.findByRoleName("package#aaa00.owner");
 
             // when
-            currentUser("aaa00@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            context("aaa00@aaa.example.com", "package#aaa00.admin");
             final var revokeAttempt = attempt(em, () -> {
                 rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
             });
@@ -243,8 +236,7 @@ class RbacGrantRepositoryIntegrationTest {
         }
 
         private RbacGrantEntity create(GrantBuilder with) {
-            currentUser(with.byUserName);
-            assumedRoles(with.assumedRole);
+            context(with.byUserName, with.assumedRole);
             final var givenArbitraryUserUuid = rbacUserRepository.findByName(with.granteeUserName).getUuid();
             final var givenOwnPackageRoleUuid = rbacRoleRepository.findByRoleName(with.grantedRole).getUuid();
 
@@ -302,16 +294,6 @@ class RbacGrantRepositoryIntegrationTest {
     private RbacUserEntity createNewUser() {
         return rbacUserRepository.create(
                 new RbacUserEntity(null, "test-user-" + System.currentTimeMillis() + "@example.com"));
-    }
-
-    void currentUser(final String currentUser) {
-        context.setCurrentUser(currentUser);
-        assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
-    }
-
-    void assumedRoles(final String assumedRoles) {
-        context.assumeRoles(assumedRoles);
-        assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
     }
 
     void exactlyTheseRbacGrantsAreReturned(final List<RbacGrantEntity> actualResult, final String... expectedGrant) {

@@ -21,6 +21,8 @@ grant select on global to restricted;
 /**
   A single row to be referenced as a global object.
  */
+set local hsadminng.currentUser to 'init';
+set local hsadminng.currentTask to 'initializing table "global"';
 insert
     into RbacObject (objecttable) values ('global');
 insert
@@ -91,6 +93,9 @@ create or replace function hostsharingAdmin()
     language sql as $$
 select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType;
 $$;
+
+set local hsadminng.currentUser to 'init';
+set local hsadminng.currentTask to 'creating Hostsharing admin role';
 select createRole(hostsharingAdmin());
 
 -- ============================================================================
@@ -103,6 +108,9 @@ do language plpgsql $$
     declare
         admins uuid ;
     begin
+        set local hsadminng.currentUser to 'init';
+        set local hsadminng.currentTask to 'creating fake Hostsharing admin users';
+
         admins = findRoleId(hostsharingAdmin());
         call grantRoleToUserUnchecked(admins, admins, createRbacUser('mike@hostsharing.net'));
         call grantRoleToUserUnchecked(admins, admins, createRbacUser('sven@hostsharing.net'));

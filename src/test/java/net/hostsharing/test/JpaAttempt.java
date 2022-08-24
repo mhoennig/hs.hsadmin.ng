@@ -132,8 +132,9 @@ public class JpaAttempt {
             }
         }
 
-        public void assertSuccessful() {
+        public JpaResult<T> assumeSuccessful() {
             assertThat(exception).isNull();;
+            return this;
         }
 
         private String firstRootCauseMessageLineOf(final RuntimeException exception) {

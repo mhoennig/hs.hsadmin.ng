@@ -31,9 +31,9 @@ begin
                     currentTask = 'creating RBAC test unixuser #' || t || ' for package ' || pac.name || ' #' || pac.uuid;
                     raise notice 'task: %', currentTask;
                     pacAdmin = 'admin@' || pac.name || '.example.com';
-                    set local hsadminng.currentUser to 'mike@hostsharing.net'; -- TODO: use a package-admin
+                    execute format('set local hsadminng.currentTask to %L', currentTask);
+                    execute format('set local hsadminng.currentUser to %L', pacAdmin);
                     set local hsadminng.assumedRoles = '';
-                    set local hsadminng.currentTask to currentTask;
 
                     insert
                         into unixuser (name, packageUuid)

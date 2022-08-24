@@ -34,6 +34,8 @@ public class RbacUserController implements RbacusersApi {
     public ResponseEntity<RbacUserResource> createUser(
             @RequestBody final RbacUserResource body
     ) {
+        context.setCurrentTask("creating new user: " + body.getName());
+
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
         }
@@ -52,7 +54,7 @@ public class RbacUserController implements RbacusersApi {
             final String currentUser,
             final String assumedRoles,
             final String userName) {
-        return null;
+        return null; // TODO implement getUserById
     }
 
     @Override

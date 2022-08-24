@@ -206,6 +206,9 @@ do language plpgsql $$
         hostsharingObjectUuid  uuid;
         hsAdminRoleUuid        uuid ;
     begin
+        set local hsadminng.currentUser to 'init';
+        set local hsadminng.currentTask to 'granting global add-customer permission to Hostsharing admin role';
+
         hsAdminRoleUuid := findRoleId(hostsharingAdmin());
         hostsharingObjectUuid := (select uuid from global);
         addCustomerPermissions := createPermissions(hostsharingObjectUuid, array ['add-customer']);

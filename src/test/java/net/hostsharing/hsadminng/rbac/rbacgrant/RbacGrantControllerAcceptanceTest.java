@@ -5,7 +5,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserEntity;
@@ -35,16 +35,13 @@ import static org.hamcrest.CoreMatchers.is;
 )
 @Accepts({ "GRT:S(Schema)" })
 @Transactional(readOnly = true, propagation = Propagation.NEVER)
-class RbacGrantControllerAcceptanceTest {
+class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     @LocalServerPort
     Integer port;
 
     @Autowired
     EntityManager em;
-
-    @Autowired
-    Context context;
 
     @Autowired
     RbacUserRepository rbacUserRepository;
@@ -360,29 +357,29 @@ class RbacGrantControllerAcceptanceTest {
 
     List<RbacGrantEntity> findAllGrantsOf(final Subject grantingSubject) {
         return jpaAttempt.transacted(() -> {
-            context.setCurrentUser(grantingSubject.currentUser);
+            context(grantingSubject.currentUser, null);
             return rbacGrantRepository.findAll();
         }).returnedValue();
     }
 
     RbacUserEntity createRBacUser() {
-        return jpaAttempt.transacted(() ->
-                rbacUserRepository.create(new RbacUserEntity(
-                        UUID.randomUUID(),
-                        "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com"))
-        ).returnedValue();
+        return jpaAttempt.transacted(() -> {
+            final String newUserName = "test-user-" + RandomStringUtils.randomAlphabetic(8) + "@example.com";
+            context(newUserName, null);
+            return rbacUserRepository.create(new RbacUserEntity(UUID.randomUUID(), newUserName));
+        }).returnedValue();
     }
 
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context.setCurrentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net", null);
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }
 
     RbacRoleEntity findRbacRoleByName(final String roleName) {
         return jpaAttempt.transacted(() -> {
-            context.setCurrentUser("mike@hostsharing.net");
+            context("mike@hostsharing.net", null);
             return rbacRoleRepository.findByRoleName(roleName);
         }).returnedValue();
     }

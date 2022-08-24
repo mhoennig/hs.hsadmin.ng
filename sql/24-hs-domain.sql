@@ -132,9 +132,9 @@ do language plpgsql $$
 
                             select * from package where uuid = uu.packageUuid into pac;
                             pacAdmin = 'admin@' || pac.name || '.example.com';
-                            set local hsadminng.currentUser to pacAdmin;
+                            execute format('set local hsadminng.currentTask to %L', currentTask);
+                            execute format('set local hsadminng.currentUser to %L', pacAdmin);
                             set local hsadminng.assumedRoles = '';
-                            set local hsadminng.currentTask to currentTask;
 
                             insert
                                 into Domain (name, unixUserUuid)
