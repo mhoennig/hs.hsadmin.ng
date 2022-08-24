@@ -1,12 +1,14 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.2'
+    id 'org.springframework.boot' version '2.7.3'
     id 'io.openapiprocessor.openapi-processor' version '2022.2'
-    id 'io.spring.dependency-management' version '1.0.12.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.13.RELEASE'
     id 'com.github.jk1.dependency-license-report' version '2.1'
-    id "org.owasp.dependencycheck" version "7.1.1"
-    id "com.diffplug.spotless" version "6.9.0"
+    id "org.owasp.dependencycheck" version "7.1.2"
+    id "com.diffplug.spotless" version "6.10.0"
     id 'jacoco'
+    id 'se.patrikerdes.use-latest-versions' version '0.2.18'
+    id 'com.github.ben-manes.versions' version '0.42.0'
 }
 
 group = 'net.hostsharing'
@@ -50,9 +52,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.11'
     implementation 'org.liquibase:liquibase-core'
-    implementation 'com.vladmihalcea:hibernate-types-55:2.17.1'
+    implementation 'com.vladmihalcea:hibernate-types-55:2.18.0'
     implementation 'org.openapitools:jackson-databind-nullable:0.2.3'
     implementation 'org.modelmapper:modelmapper:3.1.0'
 
@@ -220,6 +222,7 @@ jacocoTestCoverageVerification {
     }
 }
 
-
-
-
+// Dependency Versions Upgrade
+useLatestVersions {
+    finalizedBy check
+}

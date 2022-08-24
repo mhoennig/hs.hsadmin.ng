@@ -439,6 +439,20 @@ The generated license can be found here: [index.html](build/reports/dependency-l
 
 More information can be found on the [project's website](https://github.com/jk1/Gradle-License-Report).
 
+### Dependency Version Upgrade
+
+Dependency versions can be automatically upgraded to the latest available version:
+
+```shell
+gw useLatestVersions
+```
+
+Afterwards, `gw check` is automatically started.
+Please only commit+push to master if the check run shows no errors.
+
+More infos, e.g. on blacklists see on the [projet's website](https://github.com/patrikerdes/gradle-use-latest-versions-plugin).
+
+
 ## How To ...
 
 ### How to Run the Application on a Different Port 
