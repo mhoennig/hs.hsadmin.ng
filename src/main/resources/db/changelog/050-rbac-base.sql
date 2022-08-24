@@ -40,7 +40,7 @@ create table RbacUser
     name varchar(63) not null unique
 );
 
-call create_audit_log('RbacUser');
+call create_journal('RbacUser');
 
 create or replace function createRbacUser(userName varchar)
     returns uuid
@@ -120,7 +120,7 @@ create table RbacObject
     unique (objectTable, uuid)
 );
 
-call create_audit_log('RbacObject');
+call create_journal('RbacObject');
 
 create or replace function createRbacObject()
     returns trigger
@@ -166,7 +166,7 @@ create table RbacRole
     unique (objectUuid, roleType)
 );
 
-call create_audit_log('RbacRole');
+call create_journal('RbacRole');
 
 create type RbacRoleDescriptor as
 (
@@ -287,7 +287,7 @@ create table RbacPermission
     unique (objectUuid, op)
 );
 
-call create_audit_log('RbacPermission');
+call create_journal('RbacPermission');
 
 create or replace function permissionExists(forObjectUuid uuid, forOp RbacOp)
     returns bool
@@ -368,7 +368,7 @@ create table RbacGrants
 create index on RbacGrants (ascendantUuid);
 create index on RbacGrants (descendantUuid);
 
-call create_audit_log('RbacGrants');
+call create_journal('RbacGrants');
 
 create or replace function findGrantees(grantedId uuid)
     returns setof RbacReference

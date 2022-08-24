@@ -24,9 +24,6 @@ public class RbacUserController implements RbacusersApi {
     private Context context;
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private RbacUserRepository rbacUserRepository;
 
     @Override
