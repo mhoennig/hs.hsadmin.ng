@@ -49,6 +49,7 @@ public class CustomerController implements CustomersApi {
         final String assumedRoles,
         final CustomerResource customer) {
 
+        context.setCurrentTask("create new customer: #" + customer.getReference() + " / " + customer.getPrefix());
         context.setCurrentUser(currentUser);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
