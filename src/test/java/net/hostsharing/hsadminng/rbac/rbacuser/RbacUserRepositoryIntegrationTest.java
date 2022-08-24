@@ -66,7 +66,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
-                context("admin@aaa.example.com");
+                context("customer-admin@xxx.example.com");
                 return rbacUserRepository.create(new RbacUserEntity(givenUuid, newUserName));
             });
 
@@ -88,12 +88,12 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         private static final String[] ALL_TEST_DATA_USERS = Array.of(
             // @formatter:off
             "mike@hostsharing.net", "sven@hostsharing.net",
-            "admin@aaa.example.com",
-            "aaa00@aaa.example.com", "aaa01@aaa.example.com", "aaa02@aaa.example.com",
-            "admin@aab.example.com",
-            "aab00@aab.example.com", "aab01@aab.example.com", "aab02@aab.example.com",
-            "admin@aac.example.com",
-            "aac00@aac.example.com", "aac01@aac.example.com", "aac02@aac.example.com"
+            "customer-admin@xxx.example.com",
+            "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com",
+            "customer-admin@yyy.example.com",
+            "pac-admin-yyy00@yyy.example.com", "pac-admin-yyy01@yyy.example.com", "pac-admin-yyy02@yyy.example.com",
+            "customer-admin@zzz.example.com",
+            "pac-admin-zzz00@zzz.example.com", "pac-admin-zzz01@zzz.example.com", "pac-admin-zzz02@zzz.example.com"
             // @formatter:on
         );
 
@@ -124,7 +124,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void hostsharingAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             given:
-            context("mike@hostsharing.net", "customer#aaa.admin");
+            context("mike@hostsharing.net", "customer#xxx.admin");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -132,15 +132,15 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             then:
             exactlyTheseRbacUsersAreReturned(
                 result,
-                "admin@aaa.example.com",
-                "aaa00@aaa.example.com", "aaa01@aaa.example.com", "aaa02@aaa.example.com"
+                "customer-admin@xxx.example.com",
+                "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
             );
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             // given:
-            context("admin@aaa.example.com");
+            context("customer-admin@xxx.example.com");
 
             // when:
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -148,27 +148,27 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseRbacUsersAreReturned(
                 result,
-                "admin@aaa.example.com",
-                "aaa00@aaa.example.com", "aaa01@aaa.example.com", "aaa02@aaa.example.com"
+                "customer-admin@xxx.example.com",
+                "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
             );
         }
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("admin@aaa.example.com", "package#aaa00.admin");
+            context("customer-admin@xxx.example.com", "package#xxx00.admin");
 
             final var result = rbacUserRepository.findByOptionalNameLike(null);
 
-            exactlyTheseRbacUsersAreReturned(result, "aaa00@aaa.example.com");
+            exactlyTheseRbacUsersAreReturned(result, "pac-admin-xxx00@xxx.example.com");
         }
 
         @Test
         public void packageAdmin_withoutAssumedRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("aaa00@aaa.example.com");
+            context("pac-admin-xxx00@xxx.example.com");
 
             final var result = rbacUserRepository.findByOptionalNameLike(null);
 
-            exactlyTheseRbacUsersAreReturned(result, "aaa00@aaa.example.com");
+            exactlyTheseRbacUsersAreReturned(result, "pac-admin-xxx00@xxx.example.com");
         }
 
     }
@@ -180,47 +180,47 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             // @formatter:off
             "global#hostsharing.admin -> global#hostsharing: add-customer",
 
-            "customer#aaa.admin -> customer#aaa: add-package",
-            "customer#aaa.admin -> customer#aaa: view",
-            "customer#aaa.owner -> customer#aaa: *",
-            "customer#aaa.tenant -> customer#aaa: view",
-            "package#aaa00.admin -> package#aaa00: add-domain",
-            "package#aaa00.admin -> package#aaa00: add-unixuser",
-            "package#aaa00.tenant -> package#aaa00: view",
-            "package#aaa01.admin -> package#aaa01: add-domain",
-            "package#aaa01.admin -> package#aaa01: add-unixuser",
-            "package#aaa01.tenant -> package#aaa01: view",
-            "package#aaa02.admin -> package#aaa02: add-domain",
-            "package#aaa02.admin -> package#aaa02: add-unixuser",
-            "package#aaa02.tenant -> package#aaa02: view",
+            "customer#xxx.admin -> customer#xxx: add-package",
+            "customer#xxx.admin -> customer#xxx: view",
+            "customer#xxx.owner -> customer#xxx: *",
+            "customer#xxx.tenant -> customer#xxx: view",
+            "package#xxx00.admin -> package#xxx00: add-domain",
+            "package#xxx00.admin -> package#xxx00: add-unixuser",
+            "package#xxx00.tenant -> package#xxx00: view",
+            "package#xxx01.admin -> package#xxx01: add-domain",
+            "package#xxx01.admin -> package#xxx01: add-unixuser",
+            "package#xxx01.tenant -> package#xxx01: view",
+            "package#xxx02.admin -> package#xxx02: add-domain",
+            "package#xxx02.admin -> package#xxx02: add-unixuser",
+            "package#xxx02.tenant -> package#xxx02: view",
 
-            "customer#aab.admin -> customer#aab: add-package",
-            "customer#aab.admin -> customer#aab: view",
-            "customer#aab.owner -> customer#aab: *",
-            "customer#aab.tenant -> customer#aab: view",
-            "package#aab00.admin -> package#aab00: add-domain",
-            "package#aab00.admin -> package#aab00: add-unixuser",
-            "package#aab00.tenant -> package#aab00: view",
-            "package#aab01.admin -> package#aab01: add-domain",
-            "package#aab01.admin -> package#aab01: add-unixuser",
-            "package#aab01.tenant -> package#aab01: view",
-            "package#aab02.admin -> package#aab02: add-domain",
-            "package#aab02.admin -> package#aab02: add-unixuser",
-            "package#aab02.tenant -> package#aab02: view",
+            "customer#yyy.admin -> customer#yyy: add-package",
+            "customer#yyy.admin -> customer#yyy: view",
+            "customer#yyy.owner -> customer#yyy: *",
+            "customer#yyy.tenant -> customer#yyy: view",
+            "package#yyy00.admin -> package#yyy00: add-domain",
+            "package#yyy00.admin -> package#yyy00: add-unixuser",
+            "package#yyy00.tenant -> package#yyy00: view",
+            "package#yyy01.admin -> package#yyy01: add-domain",
+            "package#yyy01.admin -> package#yyy01: add-unixuser",
+            "package#yyy01.tenant -> package#yyy01: view",
+            "package#yyy02.admin -> package#yyy02: add-domain",
+            "package#yyy02.admin -> package#yyy02: add-unixuser",
+            "package#yyy02.tenant -> package#yyy02: view",
 
-            "customer#aac.admin -> customer#aac: add-package",
-            "customer#aac.admin -> customer#aac: view",
-            "customer#aac.owner -> customer#aac: *",
-            "customer#aac.tenant -> customer#aac: view",
-            "package#aac00.admin -> package#aac00: add-domain",
-            "package#aac00.admin -> package#aac00: add-unixuser",
-            "package#aac00.tenant -> package#aac00: view",
-            "package#aac01.admin -> package#aac01: add-domain",
-            "package#aac01.admin -> package#aac01: add-unixuser",
-            "package#aac01.tenant -> package#aac01: view",
-            "package#aac02.admin -> package#aac02: add-domain",
-            "package#aac02.admin -> package#aac02: add-unixuser",
-            "package#aac02.tenant -> package#aac02: view"
+            "customer#zzz.admin -> customer#zzz: add-package",
+            "customer#zzz.admin -> customer#zzz: view",
+            "customer#zzz.owner -> customer#zzz: *",
+            "customer#zzz.tenant -> customer#zzz: view",
+            "package#zzz00.admin -> package#zzz00: add-domain",
+            "package#zzz00.admin -> package#zzz00: add-unixuser",
+            "package#zzz00.tenant -> package#zzz00: view",
+            "package#zzz01.admin -> package#zzz01: add-domain",
+            "package#zzz01.admin -> package#zzz01: add-unixuser",
+            "package#zzz01.tenant -> package#zzz01: view",
+            "package#zzz02.admin -> package#zzz02: add-domain",
+            "package#zzz02.admin -> package#zzz02: add-unixuser",
+            "package#zzz02.tenant -> package#zzz02: view"
             // @formatter:on
         );
 
@@ -255,41 +255,41 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
             // given
-            context("admin@aaa.example.com");
+            context("customer-admin@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("admin@aaa.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUser("customer-admin@xxx.example.com");
 
             // then
             allTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
-                "customer#aaa.admin -> customer#aaa: add-package",
-                "customer#aaa.admin -> customer#aaa: view",
-                "customer#aaa.tenant -> customer#aaa: view",
+                "customer#xxx.admin -> customer#xxx: add-package",
+                "customer#xxx.admin -> customer#xxx: view",
+                "customer#xxx.tenant -> customer#xxx: view",
 
-                "package#aaa00.admin -> package#aaa00: add-domain",
-                "package#aaa00.admin -> package#aaa00: add-unixuser",
-                "package#aaa00.tenant -> package#aaa00: view",
-                "unixuser#aaa00-aaaa.owner -> unixuser#aaa00-aaaa: *",
+                "package#xxx00.admin -> package#xxx00: add-domain",
+                "package#xxx00.admin -> package#xxx00: add-unixuser",
+                "package#xxx00.tenant -> package#xxx00: view",
+                "unixuser#xxx00-aaaa.owner -> unixuser#xxx00-aaaa: *",
 
-                "package#aaa01.admin -> package#aaa01: add-domain",
-                "package#aaa01.admin -> package#aaa01: add-unixuser",
-                "package#aaa01.tenant -> package#aaa01: view",
-                "unixuser#aaa01-aaaa.owner -> unixuser#aaa01-aaaa: *",
+                "package#xxx01.admin -> package#xxx01: add-domain",
+                "package#xxx01.admin -> package#xxx01: add-unixuser",
+                "package#xxx01.tenant -> package#xxx01: view",
+                "unixuser#xxx01-aaaa.owner -> unixuser#xxx01-aaaa: *",
 
-                "package#aaa02.admin -> package#aaa02: add-domain",
-                "package#aaa02.admin -> package#aaa02: add-unixuser",
-                "package#aaa02.tenant -> package#aaa02: view",
-                "unixuser#aaa02-aaaa.owner -> unixuser#aaa02-aaaa: *"
+                "package#xxx02.admin -> package#xxx02: add-domain",
+                "package#xxx02.admin -> package#xxx02: add-unixuser",
+                "package#xxx02.tenant -> package#xxx02: view",
+                "unixuser#xxx02-aaaa.owner -> unixuser#xxx02-aaaa: *"
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
-                "customer#aab.admin -> customer#aab: add-package",
-                "customer#aab.admin -> customer#aab: view",
-                "customer#aab.tenant -> customer#aab: view"
+                "customer#yyy.admin -> customer#yyy: add-package",
+                "customer#yyy.admin -> customer#yyy: view",
+                "customer#yyy.tenant -> customer#yyy: view"
                 // @formatter:on
             );
         }
@@ -297,7 +297,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_isNotAllowedToViewGlobalAdminsPermissions() {
             // given
-            context("admin@aaa.example.com");
+            context("customer-admin@xxx.example.com");
 
             // when
             final var result = attempt(em, () ->
@@ -307,41 +307,41 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
-                "[403] permissions of user \"mike@hostsharing.net\" are not accessible to user \"admin@aaa.example.com\"");
+                "[403] permissions of user \"mike@hostsharing.net\" are not accessible to user \"customer-admin@xxx.example.com\"");
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
-            context("admin@aaa.example.com");
+            context("customer-admin@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUser("pac-admin-xxx00@xxx.example.com");
 
             // then
             allTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
-                "customer#aaa.tenant -> customer#aaa: view",
-                // "customer#aaa.admin -> customer#aaa: view" - Not permissions through the customer admin!
-                "package#aaa00.admin -> package#aaa00: add-unixuser",
-                "package#aaa00.admin -> package#aaa00: add-domain",
-                "package#aaa00.tenant -> package#aaa00: view",
-                "unixuser#aaa00-aaaa.owner -> unixuser#aaa00-aaaa: *",
-                "unixuser#aaa00-aaab.owner -> unixuser#aaa00-aaab: *"
+                "customer#xxx.tenant -> customer#xxx: view",
+                // "customer#xxx.admin -> customer#xxx: view" - Not permissions through the customer admin!
+                "package#xxx00.admin -> package#xxx00: add-unixuser",
+                "package#xxx00.admin -> package#xxx00: add-domain",
+                "package#xxx00.tenant -> package#xxx00: view",
+                "unixuser#xxx00-aaaa.owner -> unixuser#xxx00-aaaa: *",
+                "unixuser#xxx00-aaab.owner -> unixuser#xxx00-aaab: *"
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
-                "customer#aab.admin -> customer#aab: add-package",
-                "customer#aab.admin -> customer#aab: view",
-                "customer#aab.tenant -> customer#aab: view",
-                "package#aab00.admin -> package#aab00: add-unixuser",
-                "package#aab00.admin -> package#aab00: add-domain",
-                "package#aab00.tenant -> package#aab00: view",
-                "unixuser#aab00-aaaa.owner -> unixuser#aab00-aaaa: *",
-                "unixuser#aab00-aaab.owner -> unixuser#aab00-aaab: *"
+                "customer#yyy.admin -> customer#yyy: add-package",
+                "customer#yyy.admin -> customer#yyy: view",
+                "customer#yyy.tenant -> customer#yyy: view",
+                "package#yyy00.admin -> package#yyy00: add-unixuser",
+                "package#yyy00.admin -> package#yyy00: add-domain",
+                "package#yyy00.tenant -> package#yyy00: view",
+                "unixuser#yyy00-aaaa.owner -> unixuser#yyy00-aaaa: *",
+                "unixuser#yyy00-aaab.owner -> unixuser#yyy00-aaab: *"
                 // @formatter:on
             );
         }
@@ -349,10 +349,10 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canNotViewPermissionsOfUnrelatedUsers() {
             // given
-            context("admin@aaa.example.com");
+            context("customer-admin@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("aab00@aab.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUser("pac-admin-yyy00@yyy.example.com");
 
             // then
             noRbacPermissionsAreReturned(result);
@@ -361,36 +361,36 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void packetAdmin_withoutAssumedRole_canViewAllPermissionsWithinThePacketsRealm() {
             // given
-            context("aaa00@aaa.example.com");
+            context("pac-admin-xxx00@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("aaa00@aaa.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUser("pac-admin-xxx00@xxx.example.com");
 
             // then
             allTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
-                "customer#aaa.tenant -> customer#aaa: view",
-                // "customer#aaa.admin -> customer#aaa: view" - Not permissions through the customer admin!
-                "package#aaa00.admin -> package#aaa00: add-unixuser",
-                "package#aaa00.admin -> package#aaa00: add-domain",
-                "package#aaa00.tenant -> package#aaa00: view"
+                "customer#xxx.tenant -> customer#xxx: view",
+                // "customer#xxx.admin -> customer#xxx: view" - Not permissions through the customer admin!
+                "package#xxx00.admin -> package#xxx00: add-unixuser",
+                "package#xxx00.admin -> package#xxx00: add-domain",
+                "package#xxx00.tenant -> package#xxx00: view"
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
                 result,
                 // @formatter:off
                 // no customer admin permissions
-                "customer#aaa.admin -> customer#aaa: add-package",
+                "customer#xxx.admin -> customer#xxx: add-package",
                 // no permissions on other customer's objects
-                "customer#aab.admin -> customer#aab: add-package",
-                "customer#aab.admin -> customer#aab: view",
-                "customer#aab.tenant -> customer#aab: view",
-                "package#aab00.admin -> package#aab00: add-unixuser",
-                "package#aab00.admin -> package#aab00: add-domain",
-                "package#aab00.tenant -> package#aab00: view",
-                "unixuser#aab00-aaaa.owner -> unixuser#aab00-aaaa: *",
-                "unixuser#aab00-aaab.owner -> unixuser#aab00-aaab: *"
+                "customer#yyy.admin -> customer#yyy: add-package",
+                "customer#yyy.admin -> customer#yyy: view",
+                "customer#yyy.tenant -> customer#yyy: view",
+                "package#yyy00.admin -> package#yyy00: add-unixuser",
+                "package#yyy00.admin -> package#yyy00: add-domain",
+                "package#yyy00.tenant -> package#yyy00: view",
+                "unixuser#yyy00-aaaa.owner -> unixuser#yyy00-aaaa: *",
+                "unixuser#yyy00-xxxb.owner -> unixuser#yyy00-xxxb: *"
                 // @formatter:on
             );
         }

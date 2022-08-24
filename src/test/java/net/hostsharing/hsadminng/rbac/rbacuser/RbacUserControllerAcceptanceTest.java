@@ -49,16 +49,16 @@ class RbacUserControllerAcceptanceTest {
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac-users")
-                .then().assertThat()
+                .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("aaa00@aaa.example.com"))
-                    .body("[1].name", is("aaa01@aaa.example.com"))
-                    .body("[2].name", is("aaa02@aaa.example.com"))
-                    .body("[3].name", is("aab00@aab.example.com"))
+                    .body("[0].name", is("customer-admin@xxx.example.com"))
+                    .body("[1].name", is("customer-admin@yyy.example.com"))
+                    .body("[2].name", is("customer-admin@zzz.example.com"))
+                    .body("[3].name", is("mike@hostsharing.net"))
                     // ...
-                    .body("[11].name", is("admin@aac.example.com"))
-                    .body("[12].name", is("mike@hostsharing.net"))
+                    .body("[11].name", is("pac-admin-zzz01@zzz.example.com"))
+                    .body("[12].name", is("pac-admin-zzz02@zzz.example.com"))
                     .body("[13].name", is("sven@hostsharing.net"))
                     .body("size()", greaterThanOrEqualTo(14));
             // @formatter:on
@@ -73,13 +73,13 @@ class RbacUserControllerAcceptanceTest {
                     .header("current-user", "mike@hostsharing.net")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/rbac-users?name=aac")
-                .then().assertThat()
+                    .get("http://localhost/api/rbac-users?name=pac-admin-zzz0")
+                .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("aac00@aac.example.com"))
-                    .body("[1].name", is("aac01@aac.example.com"))
-                    .body("[2].name", is("aac02@aac.example.com"))
+                    .body("[0].name", is("pac-admin-zzz00@zzz.example.com"))
+                    .body("[1].name", is("pac-admin-zzz01@zzz.example.com"))
+                    .body("[2].name", is("pac-admin-zzz02@zzz.example.com"))
                     .body("size()", is(3));
             // @formatter:on
         }
@@ -90,17 +90,17 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "admin@aab.example.com")
+                    .header("current-user", "customer-admin@yyy.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac-users")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("aab00@aab.example.com"))
-                    .body("[1].name", is("aab01@aab.example.com"))
-                    .body("[2].name", is("aab02@aab.example.com"))
-                    .body("[3].name", is("admin@aab.example.com"))
+                    .body("[0].name", is("customer-admin@yyy.example.com"))
+                    .body("[1].name", is("pac-admin-yyy00@yyy.example.com"))
+                    .body("[2].name", is("pac-admin-yyy01@yyy.example.com"))
+                    .body("[3].name", is("pac-admin-yyy02@yyy.example.com"))
                     .body("size()", is(4));
             // @formatter:on
         }
@@ -111,14 +111,14 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "aaa01@aaa.example.com")
+                    .header("current-user", "pac-admin-xxx01@xxx.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac-users")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("aaa01@aaa.example.com"))
+                    .body("[0].name", is("pac-admin-xxx01@xxx.example.com"))
                     .body("size()", is(1));
             // @formatter:on
         }

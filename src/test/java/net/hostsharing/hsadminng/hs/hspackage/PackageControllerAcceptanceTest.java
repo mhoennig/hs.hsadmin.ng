@@ -44,19 +44,19 @@ class PackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "mike@hostsharing.net")
-                    .header("assumed-roles", "customer#aaa.admin")
+                    .header("assumed-roles", "customer#xxx.admin")
                     .port(port)
                 .when()
                     .get("http://localhost/api/packages")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("aaa00"))
-                    .body("[0].customer.reference", is(10000))
-                    .body("[1].name", is("aaa01"))
-                    .body("[1].customer.reference", is(10000))
-                    .body("[2].name", is("aaa02"))
-                    .body("[2].customer.reference", is(10000));
+                    .body("[0].name", is("xxx00"))
+                    .body("[0].customer.reference", is(99901))
+                    .body("[1].name", is("xxx01"))
+                    .body("[1].customer.reference", is(99901))
+                    .body("[2].name", is("xxx02"))
+                    .body("[2].customer.reference", is(99901));
             // @formatter:on
         }
 
@@ -66,15 +66,15 @@ class PackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "mike@hostsharing.net")
-                    .header("assumed-roles", "customer#aaa.admin")
+                    .header("assumed-roles", "customer#xxx.admin")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/packages?name=aaa01")
+                    .get("http://localhost/api/packages?name=xxx01")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].name", is("aaa01"))
-                    .body("[0].customer.reference", is(10000));
+                    .body("[0].name", is("xxx01"))
+                    .body("[0].customer.reference", is(99901));
             // @formatter:on
         }
     }
@@ -85,8 +85,8 @@ class PackageControllerAcceptanceTest {
         @Test
         void withDescriptionUpdatesDescription() {
 
-            assumeThat(getDescriptionOfPackage("aaa00"))
-                .isEqualTo("Here can add your own description of package aaa00.");
+            assumeThat(getDescriptionOfPackage("xxx00"))
+                .isEqualTo("Here can add your own description of package xxx00.");
 
             final var randomDescription = RandomStringUtils.randomAlphanumeric(80);
 
@@ -94,7 +94,7 @@ class PackageControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "mike@hostsharing.net")
-                    .header("assumed-roles", "customer#aaa.admin")
+                    .header("assumed-roles", "customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body(format("""
                             {
@@ -103,12 +103,12 @@ class PackageControllerAcceptanceTest {
                           """, randomDescription))
                     .port(port)
                 .when()
-                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("aaa00"))
+                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("xxx00"))
                 .then()
                     .assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("name", is("aaa00"))
+                    .body("name", is("xxx00"))
                     .body("description", is(randomDescription));
             // @formatter:on
 
@@ -117,14 +117,14 @@ class PackageControllerAcceptanceTest {
         @Test
         void withNullDescriptionUpdatesDescriptionToNull() {
 
-            assumeThat(getDescriptionOfPackage("aaa01"))
-                .isEqualTo("Here can add your own description of package aaa01.");
+            assumeThat(getDescriptionOfPackage("xxx01"))
+                .isEqualTo("Here can add your own description of package xxx01.");
 
             // @formatter:off
             RestAssured
                 .given()
                     .header("current-user", "mike@hostsharing.net")
-                    .header("assumed-roles", "customer#aaa.admin")
+                    .header("assumed-roles", "customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body("""
                             {
@@ -133,12 +133,12 @@ class PackageControllerAcceptanceTest {
                           """)
                     .port(port)
                 .when()
-                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("aaa01"))
+                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("xxx01"))
                 .then()
                     .assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("name", is("aaa01"))
+                    .body("name", is("xxx01"))
                     .body("description", equalTo(null));
             // @formatter:on
         }
@@ -146,24 +146,24 @@ class PackageControllerAcceptanceTest {
         @Test
         void withoutDescriptionDoesNothing() {
 
-            assumeThat(getDescriptionOfPackage("aaa02"))
-                .isEqualTo("Here can add your own description of package aaa02.");
+            assumeThat(getDescriptionOfPackage("xxx02"))
+                .isEqualTo("Here can add your own description of package xxx02.");
 
             // @formatter:off
             RestAssured
                 .given()
                     .header("current-user", "mike@hostsharing.net")
-                    .header("assumed-roles", "customer#aaa.admin")
+                    .header("assumed-roles", "customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body("{}")
                     .port(port)
                 .when()
-                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("aaa02"))
+                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("xxx02"))
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("name", is("aaa02"))
-                    .body("description", is("Here can add your own description of package aaa02.")); // unchanged
+                    .body("name", is("xxx02"))
+                    .body("description", is("Here can add your own description of package xxx02.")); // unchanged
             // @formatter:on
         }
     }
@@ -173,7 +173,7 @@ class PackageControllerAcceptanceTest {
         return UUID.fromString(RestAssured
             .given()
                 .header("current-user", "mike@hostsharing.net")
-                .header("assumed-roles", "customer#aaa.admin")
+                .header("assumed-roles", "customer#xxx.admin")
                 .port(port)
             .when()
                 .get("http://localhost/api/packages?name={packageName}", packageName)
@@ -186,7 +186,7 @@ class PackageControllerAcceptanceTest {
 
     String getDescriptionOfPackage(final String packageName) {
         context.setCurrentUser("mike@hostsharing.net");
-        context.assumeRoles("customer#aaa.admin");
+        context.assumeRoles("customer#xxx.admin");
         return packageRepository.findAllByOptionalNameLike(packageName).get(0).getDescription();
     }
 }

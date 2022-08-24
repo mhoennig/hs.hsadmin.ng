@@ -62,9 +62,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         @Accepts({ "GRT:R(Read)" })
         void customerAdmin_withAssumedPacketAdminRole_canReadPacketAdminsGrantById() {
             // given
-            final var givenCurrentUserAsPackageAdmin = new Subject("admin@aaa.example.com");
-            final var givenGranteeUser = findRbacUserByName("aaa00@aaa.example.com");
-            final var givenGrantedRole = findRbacRoleByName("package#aaa00.admin");
+            final var givenCurrentUserAsPackageAdmin = new Subject("customer-admin@xxx.example.com");
+            final var givenGranteeUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#xxx00.admin");
 
             // when
             final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
@@ -73,18 +73,18 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             grant.assertThat()
                     .statusCode(200)
-                    .body("grantedByRoleIdName", is("customer#aaa.admin"))
-                    .body("grantedRoleIdName", is("package#aaa00.admin"))
-                    .body("granteeUserName", is("aaa00@aaa.example.com"));
+                    .body("grantedByRoleIdName", is("customer#xxx.admin"))
+                    .body("grantedRoleIdName", is("package#xxx00.admin"))
+                    .body("granteeUserName", is("pac-admin-xxx00@xxx.example.com"));
         }
 
         @Test
         @Accepts({ "GRT:R(Read)" })
         void packageAdmin_withoutAssumedRole_canReadItsOwnGrantById() {
             // given
-            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com");
-            final var givenGranteeUser = findRbacUserByName("aaa00@aaa.example.com");
-            final var givenGrantedRole = findRbacRoleByName("package#aaa00.admin");
+            final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com");
+            final var givenGranteeUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#xxx00.admin");
 
             // when
             final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
@@ -93,18 +93,18 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             grant.assertThat()
                     .statusCode(200)
-                    .body("grantedByRoleIdName", is("customer#aaa.admin"))
-                    .body("grantedRoleIdName", is("package#aaa00.admin"))
-                    .body("granteeUserName", is("aaa00@aaa.example.com"));
+                    .body("grantedByRoleIdName", is("customer#xxx.admin"))
+                    .body("grantedRoleIdName", is("package#xxx00.admin"))
+                    .body("granteeUserName", is("pac-admin-xxx00@xxx.example.com"));
         }
 
         @Test
         @Accepts({ "GRT:R(Read)" })
         void packageAdmin_withAssumedUnixUserAdmin_canNotReadItsOwnGrantById() {
             // given
-            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com", "unixuser#aaa00-aaaa.admin");
-            final var givenGranteeUser = findRbacUserByName("aaa00@aaa.example.com");
-            final var givenGrantedRole = findRbacRoleByName("package#aaa00.admin");
+            final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", "unixuser#xxx00-xxxa.admin");
+            final var givenGranteeUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#xxx00.admin");
 
             // when
             final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
@@ -125,8 +125,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // given
             final var givenNewUser = createRBacUser();
-            final var givenRoleToGrant = "package#aaa00.admin";
-            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com", givenRoleToGrant);
+            final var givenRoleToGrant = "package#xxx00.admin";
+            final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
             final var givenOwnPackageAdminRole =
                     findRbacRoleByName(givenCurrentUserAsPackageAdmin.assumedRole);
 
@@ -149,9 +149,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // given
             final var givenNewUser = createRBacUser();
-            final var givenRoleToGrant = "package#aaa00.admin";
-            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com", givenRoleToGrant);
-            final var givenAlienPackageAdminRole = findRbacRoleByName("package#aab00.admin");
+            final var givenRoleToGrant = "package#xxx00.admin";
+            final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
+            final var givenAlienPackageAdminRole = findRbacRoleByName("package#yyy00.admin");
 
             // when
             final var result = givenCurrentUserAsPackageAdmin
@@ -161,7 +161,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             result.assertThat()
                     .body("message", containsString("Access to granted role"))
-                    .body("message", containsString("forbidden for {package#aaa00.admin}"))
+                    .body("message", containsString("forbidden for {package#xxx00.admin}"))
                     .statusCode(403);
             assertThat(findAllGrantsOf(givenCurrentUserAsPackageAdmin))
                     .extracting(RbacGrantEntity::getGranteeUserName)
@@ -179,9 +179,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // given
             final var givenArbitraryUser = createRBacUser();
-            final var givenRoleToGrant = "package#aaa00.admin";
-            final var givenCurrentUserAsPackageAdmin = new Subject("aaa00@aaa.example.com", givenRoleToGrant);
-            final var givenOwnPackageAdminRole = findRbacRoleByName("package#aaa00.admin");
+            final var givenRoleToGrant = "package#xxx00.admin";
+            final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
+            final var givenOwnPackageAdminRole = findRbacRoleByName("package#xxx00.admin");
 
             // and given an existing grant
             assumeCreated(givenCurrentUserAsPackageAdmin

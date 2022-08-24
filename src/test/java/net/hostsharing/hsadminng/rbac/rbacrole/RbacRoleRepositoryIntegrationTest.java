@@ -35,18 +35,18 @@ class RbacRoleRepositoryIntegrationTest {
         private static final String[] ALL_TEST_DATA_ROLES = Array.of(
             // @formatter:off
             "global#hostsharing.admin",
-                "customer#aaa.admin", "customer#aaa.owner", "customer#aaa.tenant",
-                    "package#aaa00.admin", "package#aaa00.owner", "package#aaa00.tenant",
-                    "package#aaa01.admin", "package#aaa01.owner", "package#aaa01.tenant",
-                    "package#aaa02.admin", "package#aaa02.owner", "package#aaa02.tenant",
-                "customer#aab.admin", "customer#aab.owner", "customer#aab.tenant",
-                    "package#aab00.admin", "package#aab00.owner", "package#aab00.tenant",
-                    "package#aab01.admin", "package#aab01.owner", "package#aab01.tenant",
-                    "package#aab02.admin", "package#aab02.owner", "package#aab02.tenant",
-                "customer#aac.admin", "customer#aac.owner", "customer#aac.tenant",
-                    "package#aac00.admin", "package#aac00.owner", "package#aac00.tenant",
-                    "package#aac01.admin", "package#aac01.owner", "package#aac01.tenant",
-                    "package#aac02.admin", "package#aac02.owner", "package#aac02.tenant"
+                "customer#xxx.admin", "customer#xxx.owner", "customer#xxx.tenant",
+                    "package#xxx00.admin", "package#xxx00.owner", "package#xxx00.tenant",
+                    "package#xxx01.admin", "package#xxx01.owner", "package#xxx01.tenant",
+                    "package#xxx02.admin", "package#xxx02.owner", "package#xxx02.tenant",
+                "customer#yyy.admin", "customer#yyy.owner", "customer#yyy.tenant",
+                    "package#yyy00.admin", "package#yyy00.owner", "package#yyy00.tenant",
+                    "package#yyy01.admin", "package#yyy01.owner", "package#yyy01.tenant",
+                    "package#yyy02.admin", "package#yyy02.owner", "package#yyy02.tenant",
+                "customer#zzz.admin", "customer#zzz.owner", "customer#zzz.tenant",
+                    "package#zzz00.admin", "package#zzz00.owner", "package#zzz00.tenant",
+                    "package#zzz01.admin", "package#zzz01.owner", "package#zzz01.tenant",
+                    "package#zzz02.admin", "package#zzz02.owner", "package#zzz02.tenant"
             // @formatter:on
         );
 
@@ -78,7 +78,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnRbacRole() {
             // given:
-            currentUser("admin@aaa.example.com");
+            currentUser("customer-admin@xxx.example.com");
 
             // when:
             final var result = rbacRoleRepository.findAll();
@@ -87,57 +87,57 @@ class RbacRoleRepositoryIntegrationTest {
             allTheseRbacRolesAreReturned(
                 result,
                 // @formatter:off
-                "customer#aaa.admin",
-                "customer#aaa.tenant",
-                "package#aaa00.admin",
-                "package#aaa00.owner",
-                "package#aaa00.tenant",
-                "package#aaa01.admin",
-                "package#aaa01.owner",
-                "package#aaa01.tenant",
+                "customer#xxx.admin",
+                "customer#xxx.tenant",
+                "package#xxx00.admin",
+                "package#xxx00.owner",
+                "package#xxx00.tenant",
+                "package#xxx01.admin",
+                "package#xxx01.owner",
+                "package#xxx01.tenant",
                 // ...
-                "unixuser#aaa00-aaaa.admin",
-                "unixuser#aaa00-aaaa.owner",
+                "unixuser#xxx00-aaaa.admin",
+                "unixuser#xxx00-aaaa.owner",
                 // ..
-                "unixuser#aaa01-aaaa.admin",
-                "unixuser#aaa01-aaaa.owner"
+                "unixuser#xxx01-aaab.admin",
+                "unixuser#xxx01-aaab.owner"
                 // @formatter:on
             );
             noneOfTheseRbacRolesIsReturned(
                 result,
                 // @formatter:off
                 "global#hostsharing.admin",
-                "customer#aaa.owner",
-                "package#aab00.admin",
-                "package#aab00.owner",
-                "package#aab00.tenant"
+                "customer#xxx.owner",
+                "package#yyy00.admin",
+                "package#yyy00.owner",
+                "package#yyy00.tenant"
                 // @formatter:on
             );
         }
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnRbacRole() {
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            currentUser("customer-admin@xxx.example.com");
+            assumedRoles("package#xxx00.admin");
 
             final var result = rbacRoleRepository.findAll();
 
             exactlyTheseRbacRolesAreReturned(
                 result,
-                "customer#aaa.tenant",
-                "package#aaa00.admin",
-                "package#aaa00.tenant",
-                "unixuser#aaa00-aaaa.admin",
-                "unixuser#aaa00-aaaa.owner",
-                "unixuser#aaa00-aaab.admin",
-                "unixuser#aaa00-aaab.owner");
+                "customer#xxx.tenant",
+                "package#xxx00.admin",
+                "package#xxx00.tenant",
+                "unixuser#xxx00-aaaa.admin",
+                "unixuser#xxx00-aaaa.owner",
+                "unixuser#xxx00-aaab.admin",
+                "unixuser#xxx00-aaab.owner");
         }
 
         @Test
         public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyRbacRole() {
             // given:
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aab00.admin");
+            currentUser("customer-admin@xxx.example.com");
+            assumedRoles("package#yyy00.admin");
 
             // when
             final var result = attempt(
@@ -147,7 +147,7 @@ class RbacRoleRepositoryIntegrationTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
-                "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
+                "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
         }
 
         @Test
@@ -166,7 +166,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         void unknownUser_withAssumedRbacRoleRole_cannotViewAnyRbacRoles() {
             currentUser("unknown@example.org");
-            assumedRoles("RbacRole#aaa.admin");
+            assumedRoles("RbacRole#xxx.admin");
 
             final var result = attempt(
                 em,
@@ -183,19 +183,19 @@ class RbacRoleRepositoryIntegrationTest {
 
         @Test
         void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByName() {
-            currentUser("admin@aaa.example.com");
+            currentUser("customer-admin@xxx.example.com");
 
-            final var result = rbacRoleRepository.findByRoleName("customer#aaa.admin");
+            final var result = rbacRoleRepository.findByRoleName("customer#xxx.admin");
 
             assertThat(result).isNotNull();
             assertThat(result.getObjectTable()).isEqualTo("customer");
-            assertThat(result.getObjectIdName()).isEqualTo("aaa");
+            assertThat(result.getObjectIdName()).isEqualTo("xxx");
             assertThat(result.getRoleType()).isEqualTo(RbacRoleType.admin);
         }
 
         @Test
         void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByName() {
-            currentUser("admin@aaa.example.com");
+            currentUser("customer-admin@xxx.example.com");
 
             final var result = rbacRoleRepository.findByRoleName("customer#bbb.admin");
 

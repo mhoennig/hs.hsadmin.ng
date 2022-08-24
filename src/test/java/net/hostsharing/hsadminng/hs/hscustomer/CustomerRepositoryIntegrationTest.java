@@ -42,7 +42,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
             final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
-                    UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
+                    UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
                 return customerRepository.save(newCustomer);
             });
 
@@ -56,37 +56,37 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void hostsharingAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("mike@hostsharing.net", "customer#aaa.admin");
+            context("mike@hostsharing.net", "customer#xxx.admin");
 
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
-                    UUID.randomUUID(), "xxx", 90001, "admin@xxx.example.com");
+                    UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(
                 PersistenceException.class,
-                "add-customer not permitted for customer#aaa.admin");
+                "add-customer not permitted for customer#xxx.admin");
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_cannotCreateNewCustomer() {
             // given
-            context("admin@aaa.example.com", null);
+            context("customer-admin@xxx.example.com", null);
 
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
-                    UUID.randomUUID(), "yyy", 90002, "admin@yyy.example.com");
+                    UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(
                 PersistenceException.class,
-                "add-customer not permitted for admin@aaa.example.com");
+                "add-customer not permitted for customer-admin@xxx.example.com");
 
         }
 
@@ -108,7 +108,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             // then
-            exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
+            exactlyTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
         }
 
         @Test
@@ -120,34 +120,34 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             then:
-            exactlyTheseCustomersAreReturned(result, "aaa", "aab", "aac");
+            exactlyTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
             // given:
-            context("admin@aaa.example.com", null);
+            context("customer-admin@xxx.example.com", null);
 
             // when:
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             // then:
-            exactlyTheseCustomersAreReturned(result, "aaa");
+            exactlyTheseCustomersAreReturned(result, "xxx");
         }
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
-            context("admin@aaa.example.com", "package#aaa00.admin");
+            context("customer-admin@xxx.example.com", "package#xxx00.admin");
 
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
-            exactlyTheseCustomersAreReturned(result, "aaa");
+            exactlyTheseCustomersAreReturned(result, "xxx");
         }
 
         @Test
         public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyCustomer() {
             // given:
-            context("admin@aaa.example.com", "package#aab00.admin");
+            context("customer-admin@xxx.example.com", "package#yyy00.admin");
 
             // when
             final var result = attempt(
@@ -157,7 +157,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                 JpaSystemException.class,
-                "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
+                "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
         }
 
         @Test
@@ -176,7 +176,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         @Transactional
         void unknownUser_withAssumedCustomerRole_cannotViewAnyCustomers() {
-            context("unknown@example.org", "customer#aaa.admin");
+            context("unknown@example.org", "customer#xxx.admin");
 
             final var result = attempt(
                 em,
@@ -198,19 +198,19 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             context("mike@hostsharing.net", null);
 
             // when
-            final var result = customerRepository.findCustomerByOptionalPrefixLike("aab");
+            final var result = customerRepository.findCustomerByOptionalPrefixLike("yyy");
 
             // then
-            exactlyTheseCustomersAreReturned(result, "aab");
+            exactlyTheseCustomersAreReturned(result, "yyy");
         }
 
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnCustomer() {
             // given:
-            context("admin@aaa.example.com", null);
+            context("customer-admin@xxx.example.com", null);
 
             // when:
-            final var result = customerRepository.findCustomerByOptionalPrefixLike("aab");
+            final var result = customerRepository.findCustomerByOptionalPrefixLike("yyy");
 
             // then:
             exactlyTheseCustomersAreReturned(result);

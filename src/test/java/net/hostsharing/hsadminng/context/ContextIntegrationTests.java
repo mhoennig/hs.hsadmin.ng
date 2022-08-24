@@ -33,12 +33,12 @@ class ContextIntegrationTests {
     @Transactional
     void assumeRoles() {
         context.setCurrentUser("mike@hostsharing.net");
-        context.assumeRoles("customer#aaa.owner;customer#aab.owner");
+        context.assumeRoles("customer#xxx.owner;customer#yyy.owner");
 
         final var currentUser = context.getCurrentUser();
         assertThat(currentUser).isEqualTo("mike@hostsharing.net");
 
         final var assumedRoles = context.getAssumedRoles();
-        assertThat(assumedRoles).containsExactlyInAnyOrder("customer#aaa.owner", "customer#aab.owner");
+        assertThat(assumedRoles).containsExactlyInAnyOrder("customer#xxx.owner", "customer#yyy.owner");
     }
 }

@@ -92,7 +92,7 @@ class CustomerControllerRestTest {
             mockMvc.perform(MockMvcRequestBuilders
                             .get("/api/customers")
                             .header("current-user", "mike@hostsharing.net")
-                            .header("assumed-roles", "admin@yyy.example.com")
+                            .header("assumed-roles", "customer-admin@yyy.example.com")
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -103,7 +103,7 @@ class CustomerControllerRestTest {
 
             // then
             verify(contextMock).setCurrentUser("mike@hostsharing.net");
-            verify(contextMock).assumeRoles("admin@yyy.example.com");
+            verify(contextMock).assumeRoles("customer-admin@yyy.example.com");
         }
     }
 

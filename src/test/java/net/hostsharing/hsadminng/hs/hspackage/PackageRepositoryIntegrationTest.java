@@ -67,30 +67,30 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnPackages() {
             // given:
-            currentUser("admin@aaa.example.com");
+            currentUser("customer-admin@xxx.example.com");
 
             // when:
             final var result = packageRepository.findAllByOptionalNameLike(null);
 
             // then:
-            exactlyThesePackagesAreReturned(result, "aaa00", "aaa01", "aaa02");
+            exactlyThesePackagesAreReturned(result, "xxx00", "xxx01", "xxx02");
         }
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aaa00.admin");
+            currentUser("customer-admin@xxx.example.com");
+            assumedRoles("package#xxx00.admin");
 
             final var result = packageRepository.findAllByOptionalNameLike(null);
 
-            exactlyThesePackagesAreReturned(result, "aaa00");
+            exactlyThesePackagesAreReturned(result, "xxx00");
         }
 
         @Test
         public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyPackages() {
             // given:
-            currentUser("admin@aaa.example.com");
-            assumedRoles("package#aab00.admin");
+            currentUser("customer-admin@xxx.example.com");
+            assumedRoles("package#yyy00.admin");
 
             // when
             final var result = attempt(
@@ -100,7 +100,7 @@ class PackageRepositoryIntegrationTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] user admin@aaa.example.com", "has no permission to assume role package#aab00#admin");
+                    "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
         }
 
         @Test
@@ -120,7 +120,7 @@ class PackageRepositoryIntegrationTest {
         @Transactional
         void unknownUser_withAssumedCustomerRole_cannotViewAnyPackages() {
             currentUser("unknown@example.org");
-            assumedRoles("customer#aaa.admin");
+            assumedRoles("customer#xxx.admin");
 
             final var result = attempt(
                     em,
@@ -139,17 +139,17 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void supportsOptimisticLocking() throws InterruptedException {
             // given
-            hostsharingAdminWithAssumedRole("package#aaa00.admin");
+            hostsharingAdminWithAssumedRole("package#xxx00.admin");
             final var pac = packageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                hostsharingAdminWithAssumedRole("package#aaa00.admin");
+                hostsharingAdminWithAssumedRole("package#xxx00.admin");
                 pac.setDescription("description set by thread 1");
                 packageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                hostsharingAdminWithAssumedRole("package#aaa00.admin");
+                hostsharingAdminWithAssumedRole("package#xxx00.admin");
                 pac.setDescription("description set by thread 2");
                 packageRepository.save(pac);
                 sleep(1500);

@@ -15,48 +15,51 @@ begin
     return 10000 + customerCount;
 end; $$;
 
+
 /*
-    Creates test data for the customer main table.
+    Creates a single customer test record with dist.
  */
 create or replace procedure createCustomerTestData(
-    startCount integer,         -- count of auto generated rows before the run
-    endCount integer,           -- count of auto generated rows after the run
-    doCommitAfterEach boolean   -- only for mass data creation outside of Liquibase
+    custReference integer,
+    custPrefix    varchar
 )
     language plpgsql as $$
 declare
     currentTask   varchar;
-    custReference integer;
     custRowId     uuid;
-    custPrefix    varchar;
     custAdminName varchar;
+begin
+    currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
+    set local hsadminng.currentUser to 'mike@hostsharing.net';
+    set local hsadminng.assumedRoles to 'global#hostsharing.admin';
+    execute format('set local hsadminng.currentTask to %L', currentTask);
+
+    custRowId = uuid_generate_v4();
+    custAdminName = 'customer-admin@' || custPrefix || '.example.com';
+
+    raise notice 'creating customer %:%', custReference, custPrefix;
+    insert
+        into customer (reference, prefix, adminUserName)
+        values (custReference, custPrefix, custAdminName);
+end; $$;
+--//
+
+/*
+    Creates a range of test customers for mass data generation.
+ */
+create or replace procedure createCustomerTestData(
+    startCount integer,  -- count of auto generated rows before the run
+    endCount integer     -- count of auto generated rows after the run
+)
+    language plpgsql as $$
 begin
     set hsadminng.currentUser to '';
 
     for t in startCount..endCount
         loop
-            currentTask = 'creating RBAC test customer #' || t;
-            set local hsadminng.currentUser to 'mike@hostsharing.net';
-            set local hsadminng.assumedRoles to 'global#hostsharing.admin';
-            execute format('set local hsadminng.currentTask to %L', currentTask);
-
-            -- When a new customer is created,
-            custReference = testCustomerReference(t);
-            custRowId = uuid_generate_v4();
-            custPrefix = intToVarChar(t, 3);
-            custAdminName = 'admin@' || custPrefix || '.example.com';
-
-            raise notice 'creating customer %:%', custReference, custPrefix;
-            insert
-                into customer (reference, prefix, adminUserName)
-                values (custReference, custPrefix, custAdminName);
-
-            if doCommitAfterEach then
-                commit;
-            end if;
-
+            call createCustomerTestData(testCustomerReference(t), intToVarChar(t, 3));
+            commit;
         end loop;
-
 end; $$;
 --//
 
@@ -67,7 +70,9 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createCustomerTestData(0, 2, false);
+        call createCustomerTestData(99901, 'xxx');
+        call createCustomerTestData(99902, 'yyy');
+        call createCustomerTestData(99903, 'zzz');
     end;
 $$;
 --//
