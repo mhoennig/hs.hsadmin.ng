@@ -2,8 +2,11 @@ package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacusersApi;
+import net.hostsharing.hsadminng.generated.api.v1.model.RbacGrantResource;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserPermissionResource;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserResource;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantId;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +31,7 @@ public class RbacUserController implements RbacusersApi {
     @Override
     @Transactional
     public ResponseEntity<RbacUserResource> createUser(
-            @RequestBody final RbacUserResource body
+            final RbacUserResource body
     ) {
         context.setCurrentTask("creating new user: " + body.getName());
         context.setCurrentUser(body.getName());
@@ -47,22 +50,33 @@ public class RbacUserController implements RbacusersApi {
     }
 
     @Override
-    public ResponseEntity<List<RbacUserPermissionResource>> getUserById(
+    @Transactional(readOnly = true)
+    public ResponseEntity<RbacUserResource> getUserById(
             final String currentUser,
             final String assumedRoles,
-            final String userName) {
-        return null; // TODO implement getUserById
+            final UUID userUuid) {
+
+        context.setCurrentUser(currentUser);
+        if (!StringUtils.isBlank(assumedRoles)) {
+            context.assumeRoles(assumedRoles);
+        }
+
+        final var result = rbacUserRepository.findByUuid(userUuid);
+        if (result == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(map(result, RbacUserResource.class));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<RbacUserResource>> listUsers(
-            @RequestHeader(name = "current-user") final String currentUserName,
-            @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
-            @RequestParam(name = "name", required = false) final String userName
+            final String currentUserName,
+            final String assumedRoles,
+            final String userName
     ) {
         context.setCurrentUser(currentUserName);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
         return ResponseEntity.ok(mapList(rbacUserRepository.findByOptionalNameLike(userName), RbacUserResource.class));
@@ -71,14 +85,14 @@ public class RbacUserController implements RbacusersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<RbacUserPermissionResource>> listUserPermissions(
-            @RequestHeader(name = "current-user") final String currentUserName,
-            @RequestHeader(name = "assumed-roles", required = false) final String assumedRoles,
-            @PathVariable(name = "userName") final String userName
+            final String currentUserName,
+            final String assumedRoles,
+            final UUID userUuid
     ) {
         context.setCurrentUser(currentUserName);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
-        return ResponseEntity.ok(mapList(rbacUserRepository.findPermissionsOfUser(userName), RbacUserPermissionResource.class));
+        return ResponseEntity.ok(mapList(rbacUserRepository.findPermissionsOfUserByUuid(userUuid), RbacUserPermissionResource.class));
     }
 }

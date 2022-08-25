@@ -13,11 +13,11 @@ paths:
     /api/rbac-users:
         $ref: "./api-definition/rbac-users.yaml"
 
-    /api/rbac-users/{userUuid}:
-        $ref: "./api-definition/rbac-users-with-id.yaml"
-
     /api/rbac-users/{userUuid}/permissions:
         $ref: "./api-definition/rbac-users-with-id-permissions.yaml"
+
+    /api/rbac-users/{userUuid}:
+        $ref: "./api-definition/rbac-users-with-id.yaml"
 
     /api/rbac-roles:
         $ref: "./api-definition/rbac-roles.yaml"

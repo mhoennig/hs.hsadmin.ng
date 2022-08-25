@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.rbac.rbacrole;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacrolesApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacRoleResource;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class RbacRoleController implements RbacrolesApi {
         final String assumedRoles) {
 
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
         return ResponseEntity.ok(mapList(rbacRoleRepository.findAll(), RbacRoleResource.class));

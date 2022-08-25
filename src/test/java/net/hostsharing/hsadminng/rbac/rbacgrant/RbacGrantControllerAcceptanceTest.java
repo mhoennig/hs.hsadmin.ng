@@ -28,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -54,6 +55,108 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     @Autowired
     JpaAttempt jpaAttempt;
+
+    @Nested
+    class ListGrants {
+
+        @Test
+        @Accepts("GRT:L(List)")
+        void hostsharingAdmin_withoutAssumedRole_canViewAllGrants() {
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "mike@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac-grants")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(
+                            allOf(
+                                hasEntry("grantedByRoleIdName", "global#hostsharing.admin"),
+                                hasEntry("grantedRoleIdName", "customer#xxx.admin"),
+                                hasEntry("granteeUserName", "customer-admin@xxx.example.com")
+                            )
+                    ))
+                    .body("", hasItem(
+                            allOf(
+                                    hasEntry("grantedByRoleIdName", "global#hostsharing.admin"),
+                                    hasEntry("grantedRoleIdName", "customer#yyy.admin"),
+                                    hasEntry("granteeUserName", "customer-admin@yyy.example.com")
+                            )
+                    ))
+                    .body("", hasItem(
+                            allOf(
+                                    hasEntry("grantedByRoleIdName", "global#hostsharing.admin"),
+                                    hasEntry("grantedRoleIdName", "global#hostsharing.admin"),
+                                    hasEntry("granteeUserName", "sven@hostsharing.net")
+                            )
+                    ))
+                    .body("", hasItem(
+                            allOf(
+                                    hasEntry("grantedByRoleIdName", "customer#xxx.admin"),
+                                    hasEntry("grantedRoleIdName", "package#xxx00.admin"),
+                                    hasEntry("granteeUserName", "pac-admin-xxx00@xxx.example.com")
+                            )
+                    ))
+                    .body("", hasItem(
+                            allOf(
+                                    hasEntry("grantedByRoleIdName", "customer#zzz.admin"),
+                                    hasEntry("grantedRoleIdName", "package#zzz02.admin"),
+                                    hasEntry("granteeUserName", "pac-admin-zzz02@zzz.example.com")
+                            )
+                    ))
+                    .body("size()", greaterThanOrEqualTo(14));
+                // @formatter:on
+        }
+
+        @Test
+        @Accepts({ "GRT:L(List)", "GRT:X(Access Control)" })
+        void hostsharingAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "mike@hostsharing.net")
+                    .header("assumed-roles", "package#yyy00.admin")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac-grants")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(
+                            allOf(
+                                    hasEntry("grantedByRoleIdName", "customer#yyy.admin"),
+                                    hasEntry("grantedRoleIdName", "package#yyy00.admin"),
+                                    hasEntry("granteeUserName", "pac-admin-yyy00@yyy.example.com")
+                            )
+                    ))
+                    .body("size()", is(1));
+                // @formatter:on
+        }
+
+        @Test
+        @Accepts({ "GRT:L(List)", "GRT:X(Access Control)" })
+        void packageAdmin_withoutAssumedRole_canViewPacketRelatedGrants() {
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "pac-admin-yyy00@yyy.example.com")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/rbac-grants")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasItem(
+                            allOf(
+                                    hasEntry("grantedByRoleIdName", "customer#yyy.admin"),
+                                    hasEntry("grantedRoleIdName", "package#yyy00.admin"),
+                                    hasEntry("granteeUserName", "pac-admin-yyy00@yyy.example.com")
+                            )
+                    ))
+                    .body("size()", is(1));
+            // @formatter:on
+        }
+    }
 
     @Nested
     class GetGrantById {

@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.hscustomer;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.CustomersApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,7 @@ public class CustomerController implements CustomersApi {
             String prefix
     ) {
         context.setCurrentUser(userName);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
 
@@ -51,7 +52,7 @@ public class CustomerController implements CustomersApi {
 
         context.setCurrentTask("create new customer: #" + customer.getReference() + " / " + customer.getPrefix());
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
         if (customer.getUuid() == null) {
@@ -62,7 +63,7 @@ public class CustomerController implements CustomersApi {
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/rbac-users/{id}")
+                        .path("/api/customers/{id}")
                         .buildAndExpand(customer.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(map(saved, CustomerResource.class));

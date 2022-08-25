@@ -142,6 +142,36 @@ class CustomerControllerAcceptanceTest {
         }
 
         @Test
+        void hostsharingAdmin_withAssumedCustomerAdminRole_canNotCreateCustomer() throws Exception {
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "mike@hostsharing.net")
+                    .header("assumed-roles", "customer#xxx.admin")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                              {
+                                "reference": 90010,
+                                "prefix": "uuu",
+                                "adminUserName": "customer-admin@uuu.example.com"
+                              }
+                              """)
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/customers")
+                .then().assertThat()
+                    .statusCode(403)
+                    .contentType(ContentType.JSON)
+                    .statusCode(403)
+                    .body("message", containsString("add-customer not permitted for customer#xxx.admin"));
+            // @formatter:on
+
+            // finally, the new customer was not created
+            context.setCurrentUser("sven@hostsharing.net");
+            assertThat(customerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
+        }
+
+        @Test
         void customerAdmin_withoutAssumedRole_canNotCreateCustomer() throws Exception {
 
             RestAssured // @formatter:off

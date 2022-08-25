@@ -205,24 +205,18 @@ grant all privileges on RbacOwnGrantedPermissions_rv to restricted;
 
 
  */
-create or replace function grantedPermissions(userName varchar)
+create or replace function grantedPermissions(targetUserUuid uuid)
     returns table(roleUuid uuid, roleName text, permissionUuid uuid, op RbacOp, objectTable varchar, objectIdName varchar, objectUuid uuid)
     returns null on null input
     language plpgsql as $$
 declare
-    targetUserId uuid;
     currentUserId uuid;
 begin
     -- @formatter:off
-    if cardinality(assumedRoles()) > 0 then
-        raise exception '[400] grantedPermissions(...) does not support assumed roles';
-    end if;
-
-    targetUserId := findRbacUserId(userName);
     currentUserId := currentUserId();
 
-    if hasGlobalRoleGranted(targetUserId) and not hasGlobalRoleGranted(currentUserId) then
-        raise exception '[403] permissions of user "%" are not accessible to user "%"', userName, currentUser();
+    if hasGlobalRoleGranted(targetUserUuid) and not hasGlobalRoleGranted(currentUserId) then
+        raise exception '[403] permissions of user "%" are not accessible to user "%"', targetUserUuid, currentUser();
     end if;
 
     return query select
@@ -235,12 +229,12 @@ begin
                   p.uuid as permissionUuid, p.op, po.objecttable as permissionObjectTable,
                   findIdNameByObjectUuid(po.objectTable, po.uuid) as permissionObjectIdName,
                   po.uuid as permissionObjectUuid
-              from queryPermissionsGrantedToSubjectId( targetUserId) as p
+              from queryPermissionsGrantedToSubjectId( targetUserUuid) as p
               join rbacgrants as g on g.descendantUuid = p.uuid
               join rbacobject as po on po.uuid = p.objectUuid
               join rbacrole_rv as r on r.uuid = g.ascendantUuid
               join rbacobject as ro on ro.uuid = r.objectUuid
-              where isGranted(targetUserId, r.uuid)
+              where isGranted(targetUserUuid, r.uuid)
              ) xp;
     -- @formatter:on
 end; $$;

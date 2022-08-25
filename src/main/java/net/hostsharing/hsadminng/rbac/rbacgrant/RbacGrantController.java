@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.rbac.rbacgrant;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacgrantsApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacGrantResource;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +39,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final UUID granteeUserUuid) {
 
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
 
@@ -57,7 +58,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final String assumedRoles) {
 
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
         return ResponseEntity.ok(mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
@@ -72,7 +73,7 @@ public class RbacGrantController implements RbacgrantsApi {
 
         context.setCurrentTask("granting role to user");
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
 
@@ -98,7 +99,7 @@ public class RbacGrantController implements RbacgrantsApi {
 
         context.setCurrentTask("revoking role from user");
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
 

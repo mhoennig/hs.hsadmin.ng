@@ -22,8 +22,8 @@ public interface RbacUserRepository extends Repository<RbacUserEntity, UUID> {
 
     RbacUserEntity findByUuid(UUID uuid);
 
-    @Query(value = "select * from grantedPermissions(:userName)", nativeQuery = true)
-    List<RbacUserPermission> findPermissionsOfUser(String userName);
+    @Query(value = "select * from grantedPermissions(:userUuid)", nativeQuery = true)
+    List<RbacUserPermission> findPermissionsOfUserByUuid(UUID userUuid);
 
     /*
         Can't use save/saveAndFlush from SpringData because the uuid is not generated on the entity level,

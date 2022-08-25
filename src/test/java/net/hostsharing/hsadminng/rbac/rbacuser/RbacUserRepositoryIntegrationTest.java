@@ -231,26 +231,10 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             context("mike@hostsharing.net");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net");
+            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("mike@hostsharing.net"));
 
             // then
             allTheseRbacPermissionsAreReturned(result, ALL_USER_PERMISSIONS);
-        }
-
-        @Test
-        public void hostsharingAdmin_withAssumedHostmastersRole_willThrowException() {
-            // given
-            context("mike@hostsharing.net", "global#hostsharing.admin");
-
-            // when
-            final var result = attempt(em, () ->
-                    rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net")
-            );
-
-            // then
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "[400] grantedPermissions(...) does not support assumed roles");
         }
 
         @Test
@@ -259,7 +243,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             context("customer-admin@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("customer-admin@xxx.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("customer-admin@xxx.example.com"));
 
             // then
             allTheseRbacPermissionsAreReturned(
@@ -299,16 +283,18 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         public void customerAdmin_withoutAssumedRole_isNotAllowedToViewGlobalAdminsPermissions() {
             // given
             context("customer-admin@xxx.example.com");
+            final UUID userUuid = userUUID("mike@hostsharing.net");
 
             // when
             final var result = attempt(em, () ->
-                    rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net")
+                    rbacUserRepository.findPermissionsOfUserByUuid(userUuid)
             );
 
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] permissions of user \"mike@hostsharing.net\" are not accessible to user \"customer-admin@xxx.example.com\"");
+                    "[403] permissions of user \"" + userUuid
+                            + "\" are not accessible to user \"customer-admin@xxx.example.com\"");
         }
 
         @Test
@@ -317,7 +303,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             context("customer-admin@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("pac-admin-xxx00@xxx.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("pac-admin-xxx00@xxx.example.com"));
 
             // then
             allTheseRbacPermissionsAreReturned(
@@ -353,7 +339,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             context("customer-admin@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("pac-admin-yyy00@yyy.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("pac-admin-yyy00@yyy.example.com"));
 
             // then
             noRbacPermissionsAreReturned(result);
@@ -365,7 +351,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             context("pac-admin-xxx00@xxx.example.com");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUser("pac-admin-xxx00@xxx.example.com");
+            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("pac-admin-xxx00@xxx.example.com"));
 
             // then
             allTheseRbacPermissionsAreReturned(
@@ -395,6 +381,10 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
                 // @formatter:on
             );
         }
+    }
+
+    UUID userUUID(final String userName) {
+        return rbacUserRepository.findByName(userName).getUuid();
     }
 
     void exactlyTheseRbacUsersAreReturned(final List<RbacUserEntity> actualResult, final String... expectedUserNames) {

@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.PackagesApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.PackageResource;
 import net.hostsharing.hsadminng.generated.api.v1.model.PackageUpdateResource;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,7 @@ public class PackageController implements PackagesApi {
         String name
     ) {
         context.setCurrentUser(userName);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles))  {
             context.assumeRoles(assumedRoles);
         }
         final var result = packageRepository.findAllByOptionalNameLike(name);
@@ -49,7 +50,7 @@ public class PackageController implements PackagesApi {
         final PackageUpdateResource body) {
 
         context.setCurrentUser(currentUser);
-        if (assumedRoles != null && !assumedRoles.isBlank()) {
+        if (!StringUtils.isBlank(assumedRoles)) {
             context.assumeRoles(assumedRoles);
         }
         final var current = packageRepository.findByUuid(packageUuid);

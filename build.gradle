@@ -156,11 +156,8 @@ jacocoTestReport {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
                     "net/hostsharing/hsadminng/generated/**/*.class",
-
-                    // TODO: improve test code coverage for these classes:
-                    "net/hostsharing/hsadminng/rbac/rbacuser/UserController.class",
-                    "net/hostsharing/hsadminng/rbac/rbacgrant/GrantController.class",
-                    "net/hostsharing/hsadminng/hs/hscustomer/CustomerController.class"
+                    "net/hostsharing/hsadminng/TestController.class",
+                    "net/hostsharing/hsadminng/hs/hscustomer/HsadminNgApplication.class"
             ])
         }))
     }
@@ -174,7 +171,7 @@ jacocoTestCoverageVerification {
         rule {
             excludes = ['net.hostsharing.hsadminng.generated.**']
             limit {
-                minimum = 0.7 // TODO: increase to 0.9
+                minimum = 0.8 // TODO: increase to 0.9
             }
         }
 
@@ -190,14 +187,13 @@ jacocoTestCoverageVerification {
                     'net.hostsharing.hsadminng.TestController',
 
                     // TODO: improve test code coverage:
-                    'net.hostsharing.hsadminng.rbac.rbacuser.UserController',
-                    'net.hostsharing.hsadminng.hs.hscustomer.CustomerController'
+                    'net.hostsharing.hsadminng.Mapper',
             ]
 
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.7
+                minimum = 0.95
             }
         }
         rule {
@@ -205,13 +201,7 @@ jacocoTestCoverageVerification {
             excludes = [
                     'net.hostsharing.hsadminng.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication.*',
-
-                    // TODO: improve test code coverage:
-                    'net.hostsharing.hsadminng.rbac.rbacuser.RbacUserController.listUsers(*)',
-                    'net.hostsharing.hsadminng.rbac.rbacuser.RbacUserController.listUserPermissions(*)',
-                    'net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantController.listUserGrants(*)',
-                    'net.hostsharing.hsadminng.hs.hscustomer.CustomerController.addCustomer(java.lang.String, java.lang.String, net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource)'
-            ]
+                    'net.hostsharing.hsadminng.TestController.*']
 
             limit {
                 counter = 'BRANCH'
