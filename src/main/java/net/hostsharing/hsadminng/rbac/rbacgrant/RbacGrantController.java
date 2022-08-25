@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +25,9 @@ public class RbacGrantController implements RbacgrantsApi {
 
     @Autowired
     private RbacGrantRepository rbacGrantRepository;
+
+    @Autowired
+    private EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -61,7 +65,7 @@ public class RbacGrantController implements RbacgrantsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<Void> grantRoleToUser(
+    public ResponseEntity<RbacGrantResource> grantRoleToUser(
             final String currentUser,
             final String assumedRoles,
             final RbacGrantResource body) {
@@ -72,14 +76,16 @@ public class RbacGrantController implements RbacgrantsApi {
             context.assumeRoles(assumedRoles);
         }
 
-        rbacGrantRepository.save(map(body, RbacGrantEntity.class));
+        final var granted = rbacGrantRepository.save(map(body, RbacGrantEntity.class));
+        em.flush();
+        em.refresh(granted);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/rbac-grants/{roleUuid}")
                         .buildAndExpand(body.getGrantedRoleUuid())
                         .toUri();
-        return ResponseEntity.created(uri).build();
+        return ResponseEntity.created(uri).body(map(granted, RbacGrantResource.class));
     }
 
     @Override
@@ -100,5 +106,4 @@ public class RbacGrantController implements RbacgrantsApi {
 
         return ResponseEntity.noContent().build();
     }
-
 }

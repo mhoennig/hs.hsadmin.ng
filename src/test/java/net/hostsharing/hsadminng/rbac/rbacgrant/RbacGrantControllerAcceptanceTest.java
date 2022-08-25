@@ -102,7 +102,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         @Accepts({ "GRT:R(Read)" })
         void packageAdmin_withAssumedUnixUserAdmin_canNotReadItsOwnGrantById() {
             // given
-            final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", "unixuser#xxx00-xxxa.admin");
+            final var givenCurrentUserAsPackageAdmin = new Subject(
+                    "pac-admin-xxx00@xxx.example.com",
+                    "unixuser#xxx00-xxxa.admin");
             final var givenGranteeUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
             final var givenGrantedRole = findRbacRoleByName("package#xxx00.admin");
 
@@ -131,11 +133,17 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     findRbacRoleByName(givenCurrentUserAsPackageAdmin.assumedRole);
 
             // when
-            givenCurrentUserAsPackageAdmin
+            final var response = givenCurrentUserAsPackageAdmin
                     .grantsRole(givenOwnPackageAdminRole).assumed()
                     .toUser(givenNewUser);
 
             // then
+            response.assertThat()
+                    .statusCode(201)
+                    .body("grantedByRoleIdName", is("package#xxx00.admin"))
+                    .body("assumed", is(true))
+                    .body("grantedRoleIdName", is("package#xxx00.admin"))
+                    .body("granteeUserName", is(givenNewUser.getName()));
             assertThat(findAllGrantsOf(givenCurrentUserAsPackageAdmin))
                     .extracting(RbacGrantEntity::toDisplay)
                     .contains("{ grant assumed role " + givenOwnPackageAdminRole.getRoleName() +
@@ -160,9 +168,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // then
             result.assertThat()
+                    .statusCode(403)
                     .body("message", containsString("Access to granted role"))
-                    .body("message", containsString("forbidden for {package#xxx00.admin}"))
-                    .statusCode(403);
+                    .body("message", containsString("forbidden for {package#xxx00.admin}"));
             assertThat(findAllGrantsOf(givenCurrentUserAsPackageAdmin))
                     .extracting(RbacGrantEntity::getGranteeUserName)
                     .doesNotContain(givenNewUser.getName());
@@ -200,7 +208,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .fromUser(givenArbitraryUser);
 
             // then
-            assertRevoked(revokeResponse);
+            revokeResponse.assertThat().statusCode(204);
             assertThat(findAllGrantsOf(givenCurrentUserAsPackageAdmin))
                     .extracting(RbacGrantEntity::getGranteeUserName)
                     .doesNotContain(givenArbitraryUser.getName());
@@ -209,10 +217,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     private void assumeCreated(final ValidatableResponse response) {
         assumeThat(response.extract().response().statusCode()).isEqualTo(201);
-    }
-
-    private void assertRevoked(final ValidatableResponse revokeResponse) {
-        revokeResponse.assertThat().statusCode(204);
     }
 
     class Subject {
@@ -278,7 +282,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .port(port)
                         .when()
                         .post("http://localhost/api/rbac-grants")
-                        .then(); // @formatter:on
+                        .then().log().all(); // @formatter:on
             }
         }
 
@@ -316,7 +320,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .delete("http://localhost/api/rbac-grants/%s/%s".formatted(
                                 grantedRole.getUuid(), granteeUser.getUuid()
                         ))
-                        .then(); // @formatter:on
+                        .then().log().all(); // @formatter:on
             }
         }
 
@@ -344,7 +348,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .get("http://localhost/api/rbac-grants/%s/%s".formatted(
                                 grantedRole.getUuid(), granteeUser.getUuid()
                         ))
-                        .then(); // @formatter:on
+                        .then().log().all(); // @formatter:on
             }
         }
     }

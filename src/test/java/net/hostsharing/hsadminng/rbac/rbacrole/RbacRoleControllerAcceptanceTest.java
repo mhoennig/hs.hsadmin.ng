@@ -15,8 +15,8 @@ import javax.persistence.EntityManager;
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    classes = HsadminNgApplication.class
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        classes = HsadminNgApplication.class
 )
 @Accepts({ "ROL:*:S:Schema" })
 class RbacRoleControllerAcceptanceTest {
@@ -38,7 +38,7 @@ class RbacRoleControllerAcceptanceTest {
 
     @Test
     @Accepts({ "ROL:L(List)" })
-    void hostsharingAdmin_withoutAssumedRole_canViewPackageAdminRoles() {
+    void hostsharingAdmin_withoutAssumedRole_canViewAllRoles() {
 
         // @formatter:off
         RestAssured
@@ -50,15 +50,15 @@ class RbacRoleControllerAcceptanceTest {
             .then().assertThat()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("[0].roleName", is("customer#xxx.admin"))
-                .body("[1].roleName", is("customer#xxx.owner"))
-                .body("[2].roleName", is("customer#xxx.tenant"))
+                .body("", hasItem(hasEntry("roleName", "customer#xxx.admin")))
+                .body("", hasItem(hasEntry("roleName", "customer#xxx.owner")))
+                .body("", hasItem(hasEntry("roleName", "customer#xxx.tenant")))
                 // ...
                 .body("", hasItem(hasEntry("roleName", "global#hostsharing.admin")))
                 .body("", hasItem(hasEntry("roleName", "customer#yyy.admin")))
                 .body("", hasItem(hasEntry("roleName", "package#yyy00.admin")))
                 .body("", hasItem(hasEntry("roleName", "unixuser#yyy00-aaaa.owner")))
-                .body( "size()", is(73)); // increases with new test data
+                .body( "size()", greaterThanOrEqualTo(73)); // increases with new test data
         // @formatter:on
     }
 

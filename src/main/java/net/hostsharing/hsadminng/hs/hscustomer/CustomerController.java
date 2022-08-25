@@ -28,26 +28,26 @@ public class CustomerController implements CustomersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<CustomerResource>> listCustomers(
-        String userName,
-        String assumedRoles,
-        String prefix
+            String userName,
+            String assumedRoles,
+            String prefix
     ) {
         context.setCurrentUser(userName);
         if (assumedRoles != null && !assumedRoles.isBlank()) {
             context.assumeRoles(assumedRoles);
         }
-        return ResponseEntity.ok(
-            mapList(
-                customerRepository.findCustomerByOptionalPrefixLike(prefix),
-                CustomerResource.class));
+
+        final var result = customerRepository.findCustomerByOptionalPrefixLike(prefix);
+
+        return ResponseEntity.ok(mapList(result, CustomerResource.class));
     }
 
     @Override
     @Transactional
     public ResponseEntity<CustomerResource> addCustomer(
-        final String currentUser,
-        final String assumedRoles,
-        final CustomerResource customer) {
+            final String currentUser,
+            final String assumedRoles,
+            final CustomerResource customer) {
 
         context.setCurrentTask("create new customer: #" + customer.getReference() + " / " + customer.getPrefix());
         context.setCurrentUser(currentUser);
@@ -61,10 +61,10 @@ public class CustomerController implements CustomersApi {
         final var saved = customerRepository.save(map(customer, CustomerEntity.class));
 
         final var uri =
-            MvcUriComponentsBuilder.fromController(getClass())
-                .path("/api/rbac-users/{id}")
-                .buildAndExpand(customer.getUuid())
-                .toUri();
+                MvcUriComponentsBuilder.fromController(getClass())
+                        .path("/api/rbac-users/{id}")
+                        .buildAndExpand(customer.getUuid())
+                        .toUri();
         return ResponseEntity.created(uri).body(map(saved, CustomerResource.class));
     }
 

@@ -27,7 +27,8 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     CustomerRepository customerRepository;
 
-    @Autowired EntityManager em;
+    @Autowired
+    EntityManager em;
 
     @Nested
     class CreateCustomer {
@@ -42,7 +43,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
             final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
-                    UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
+                        UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
                 return customerRepository.save(newCustomer);
             });
 
@@ -61,14 +62,14 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
-                    UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
+                        UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                PersistenceException.class,
-                "add-customer not permitted for customer#xxx.admin");
+                    PersistenceException.class,
+                    "add-customer not permitted for customer#xxx.admin");
         }
 
         @Test
@@ -79,14 +80,14 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new CustomerEntity(
-                    UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
+                        UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
                 return customerRepository.save(newCustomer);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                PersistenceException.class,
-                "add-customer not permitted for customer-admin@xxx.example.com");
+                    PersistenceException.class,
+                    "add-customer not permitted for customer-admin@xxx.example.com");
 
         }
 
@@ -108,7 +109,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             // then
-            exactlyTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
+            allTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
         }
 
         @Test
@@ -120,7 +121,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
             then:
-            exactlyTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
+            allTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
         }
 
         @Test
@@ -151,13 +152,13 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = attempt(
-                em,
-                () -> customerRepository.findCustomerByOptionalPrefixLike(null));
+                    em,
+                    () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
+                    JpaSystemException.class,
+                    "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
         }
 
         @Test
@@ -165,12 +166,12 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             context("unknown@example.org", null);
 
             final var result = attempt(
-                em,
-                () -> customerRepository.findCustomerByOptionalPrefixLike(null));
+                    em,
+                    () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "hsadminng.currentUser defined as unknown@example.org, but does not exists");
+                    JpaSystemException.class,
+                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
         @Test
@@ -179,12 +180,12 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             context("unknown@example.org", "customer#xxx.admin");
 
             final var result = attempt(
-                em,
-                () -> customerRepository.findCustomerByOptionalPrefixLike(null));
+                    em,
+                    () -> customerRepository.findCustomerByOptionalPrefixLike(null));
 
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "hsadminng.currentUser defined as unknown@example.org, but does not exists");
+                    JpaSystemException.class,
+                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
         }
 
     }
@@ -219,9 +220,14 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
     void exactlyTheseCustomersAreReturned(final List<CustomerEntity> actualResult, final String... customerPrefixes) {
         assertThat(actualResult)
-            .hasSize(customerPrefixes.length)
-            .extracting(CustomerEntity::getPrefix)
-            .containsExactlyInAnyOrder(customerPrefixes);
+                .hasSize(customerPrefixes.length)
+                .extracting(CustomerEntity::getPrefix)
+                .containsExactlyInAnyOrder(customerPrefixes);
     }
 
+    void allTheseCustomersAreReturned(final List<CustomerEntity> actualResult, final String... customerPrefixes) {
+        assertThat(actualResult)
+                .extracting(CustomerEntity::getPrefix)
+                .contains(customerPrefixes);
+    }
 }

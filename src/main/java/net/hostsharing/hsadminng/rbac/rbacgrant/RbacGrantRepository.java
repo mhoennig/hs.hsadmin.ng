@@ -17,7 +17,7 @@ public interface RbacGrantRepository extends Repository<RbacGrantEntity, RbacGra
 
     List<RbacGrantEntity> findAll();
 
-    void save(final RbacGrantEntity grant);
+    RbacGrantEntity save(final RbacGrantEntity grant);
 
     @Modifying
     @Query(value = """

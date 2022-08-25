@@ -32,7 +32,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Autowired EntityManager em;
+    @Autowired
+    EntityManager em;
 
     @Nested
     class CreateUser {
@@ -45,7 +46,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = rbacUserRepository.create(
-                new RbacUserEntity(null, givenNewUserName));
+                    new RbacUserEntity(null, givenNewUserName));
 
             // then the persisted user is returned
             assertThat(result).isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
@@ -53,7 +54,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             // and the new user entity can be fetched by the user itself
             context(givenNewUserName);
             assertThat(em.find(RbacUserEntity.class, result.getUuid()))
-                .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
+                    .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
         }
 
         @Test
@@ -73,11 +74,11 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             assertThat(result.wasSuccessful()).isTrue();
             assertThat(result.returnedValue()).isNotNull()
-                .extracting(RbacUserEntity::getUuid).isEqualTo(givenUuid);
+                    .extracting(RbacUserEntity::getUuid).isEqualTo(givenUuid);
             jpaAttempt.transacted(() -> {
                 context(newUserName);
                 assertThat(em.find(RbacUserEntity.class, givenUuid))
-                    .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(newUserName);
+                        .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(newUserName);
             });
         }
     }
@@ -86,7 +87,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
     class FindByOptionalNameLike {
 
         private static final String[] ALL_TEST_DATA_USERS = Array.of(
-            // @formatter:off
+                // @formatter:off
             "mike@hostsharing.net", "sven@hostsharing.net",
             "customer-admin@xxx.example.com",
             "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com",
@@ -106,7 +107,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             final var result = rbacUserRepository.findByOptionalNameLike(null);
 
             // then
-            exactlyTheseRbacUsersAreReturned(result, ALL_TEST_DATA_USERS);
+            allTheseRbacUsersAreReturned(result, ALL_TEST_DATA_USERS);
         }
 
         @Test
@@ -118,7 +119,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             final var result = rbacUserRepository.findByOptionalNameLike(null);
 
             then:
-            exactlyTheseRbacUsersAreReturned(result, ALL_TEST_DATA_USERS);
+            allTheseRbacUsersAreReturned(result, ALL_TEST_DATA_USERS);
         }
 
         @Test
@@ -131,9 +132,9 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             then:
             exactlyTheseRbacUsersAreReturned(
-                result,
-                "customer-admin@xxx.example.com",
-                "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
+                    result,
+                    "customer-admin@xxx.example.com",
+                    "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
             );
         }
 
@@ -147,9 +148,9 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // then:
             exactlyTheseRbacUsersAreReturned(
-                result,
-                "customer-admin@xxx.example.com",
-                "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
+                    result,
+                    "customer-admin@xxx.example.com",
+                    "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com"
             );
         }
 
@@ -177,7 +178,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
     class ListUserPermissions {
 
         private static final String[] ALL_USER_PERMISSIONS = Array.of(
-            // @formatter:off
+                // @formatter:off
             "global#hostsharing.admin -> global#hostsharing: add-customer",
 
             "customer#xxx.admin -> customer#xxx: add-package",
@@ -243,13 +244,13 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = attempt(em, () ->
-                rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net")
+                    rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net")
             );
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "[400] grantedPermissions(...) does not support assumed roles");
+                    JpaSystemException.class,
+                    "[400] grantedPermissions(...) does not support assumed roles");
         }
 
         @Test
@@ -262,8 +263,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             allTheseRbacPermissionsAreReturned(
-                result,
-                // @formatter:off
+                    result,
+                    // @formatter:off
                 "customer#xxx.admin -> customer#xxx: add-package",
                 "customer#xxx.admin -> customer#xxx: view",
                 "customer#xxx.tenant -> customer#xxx: view",
@@ -285,8 +286,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
-                result,
-                // @formatter:off
+                    result,
+                    // @formatter:off
                 "customer#yyy.admin -> customer#yyy: add-package",
                 "customer#yyy.admin -> customer#yyy: view",
                 "customer#yyy.tenant -> customer#yyy: view"
@@ -301,13 +302,13 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = attempt(em, () ->
-                rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net")
+                    rbacUserRepository.findPermissionsOfUser("mike@hostsharing.net")
             );
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                JpaSystemException.class,
-                "[403] permissions of user \"mike@hostsharing.net\" are not accessible to user \"customer-admin@xxx.example.com\"");
+                    JpaSystemException.class,
+                    "[403] permissions of user \"mike@hostsharing.net\" are not accessible to user \"customer-admin@xxx.example.com\"");
         }
 
         @Test
@@ -320,8 +321,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             allTheseRbacPermissionsAreReturned(
-                result,
-                // @formatter:off
+                    result,
+                    // @formatter:off
                 "customer#xxx.tenant -> customer#xxx: view",
                 // "customer#xxx.admin -> customer#xxx: view" - Not permissions through the customer admin!
                 "package#xxx00.admin -> package#xxx00: add-unixuser",
@@ -332,8 +333,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
-                result,
-                // @formatter:off
+                    result,
+                    // @formatter:off
                 "customer#yyy.admin -> customer#yyy: add-package",
                 "customer#yyy.admin -> customer#yyy: view",
                 "customer#yyy.tenant -> customer#yyy: view",
@@ -368,8 +369,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             allTheseRbacPermissionsAreReturned(
-                result,
-                // @formatter:off
+                    result,
+                    // @formatter:off
                 "customer#xxx.tenant -> customer#xxx: view",
                 // "customer#xxx.admin -> customer#xxx: view" - Not permissions through the customer admin!
                 "package#xxx00.admin -> package#xxx00: add-unixuser",
@@ -378,8 +379,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
-                result,
-                // @formatter:off
+                    result,
+                    // @formatter:off
                 // no customer admin permissions
                 "customer#xxx.admin -> customer#xxx: add-package",
                 // no permissions on other customer's objects
@@ -398,40 +399,47 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
     void exactlyTheseRbacUsersAreReturned(final List<RbacUserEntity> actualResult, final String... expectedUserNames) {
         assertThat(actualResult)
-            .filteredOn(u -> !u.getName().startsWith("test-user-"))
-            .extracting(RbacUserEntity::getName)
-            .containsExactlyInAnyOrder(expectedUserNames);
+                .extracting(RbacUserEntity::getName)
+                .filteredOn(n -> !n.startsWith("test-user"))
+                .containsExactlyInAnyOrder(expectedUserNames);
+    }
+
+    void allTheseRbacUsersAreReturned(final List<RbacUserEntity> actualResult, final String... expectedUserNames) {
+        assertThat(actualResult)
+                .extracting(RbacUserEntity::getName)
+                .filteredOn(n -> !n.startsWith("test-user"))
+                .contains(expectedUserNames);
     }
 
     void noRbacPermissionsAreReturned(
-        final List<RbacUserPermission> actualResult) {
+            final List<RbacUserPermission> actualResult) {
         assertThat(actualResult)
-            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
-            .containsExactlyInAnyOrder();
+                .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+                .containsExactlyInAnyOrder();
     }
 
     void exactlyTheseRbacPermissionsAreReturned(
-        final List<RbacUserPermission> actualResult,
-        final String... expectedRoleNames) {
+            final List<RbacUserPermission> actualResult,
+            final String... expectedRoleNames) {
         assertThat(actualResult)
-            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
-            .containsExactlyInAnyOrder(expectedRoleNames);
+                .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+                .containsExactlyInAnyOrder(expectedRoleNames);
     }
 
     void allTheseRbacPermissionsAreReturned(
-        final List<RbacUserPermission> actualResult,
-        final String... expectedRoleNames) {
+            final List<RbacUserPermission> actualResult,
+            final String... expectedRoleNames) {
         assertThat(actualResult)
-            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
-            .contains(expectedRoleNames);
+                .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+                .contains(expectedRoleNames);
     }
 
     void noneOfTheseRbacPermissionsAreReturned(
-        final List<RbacUserPermission> actualResult,
-        final String... unexpectedRoleNames) {
+            final List<RbacUserPermission> actualResult,
+            final String... unexpectedRoleNames) {
         assertThat(actualResult)
-            .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
-            .doesNotContain(unexpectedRoleNames);
+                .extracting(p -> p.getRoleName() + " -> " + p.getObjectTable() + "#" + p.getObjectIdName() + ": " + p.getOp())
+                .doesNotContain(unexpectedRoleNames);
     }
 
 }

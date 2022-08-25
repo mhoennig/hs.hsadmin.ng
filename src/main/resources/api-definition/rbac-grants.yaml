@@ -32,6 +32,9 @@ post:
         "201":
             description: OK
             content:
+                'application/json':
+                    schema:
+                        $ref: './api-definition/rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
         "401":
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":
