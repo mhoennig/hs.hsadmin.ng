@@ -9,10 +9,27 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [PostgreSQL Server](#postgresql-server)
   - [Markdown](#markdown)
     - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
+  - [IDE Specific Settings](#ide-specific-settings)
+    - [IntelliJ IDEA](#intellij-idea)
   - [Other Tools](#other-tools)
 - [Running the SQL files](#running-the-sql-files)
   - [For RBAC](#for-rbac)
   - [For Historization](#for-historization)
+- [Coding Guidelines](#coding-guidelines)
+  - [Directory and Package Structure](#directory-and-package-structure)
+    - [General Directory Structure](#general-directory-structure)
+    - [Source Code Package Structure](#source-code-package-structure)
+  - [Spotless Code Formatting](#spotless-code-formatting)
+  - [JaCoCo Test Code Coverage Check](#jacoco-test-code-coverage-check)
+  - [PiTest Mutation Testing](#pitest-mutation-testing)
+  - [OWASP Security Vulnerability Check](#owasp-security-vulnerability-check)
+  - [Dependency-License-Compatibility](#dependency-license-compatibility)
+  - [Dependency Version Upgrade](#dependency-version-upgrade)
+- [How To ...](#how-to-...)
+  - [How to Run the Application on a Different Port ](#how-to-run-the-application-on-a-different-port-)
+  - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
+- [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
+- [Further Documentation](#further-documentation)
 <!-- generated TOC end. -->
 
 ## Setting up the Development Environment
@@ -390,6 +407,33 @@ gw jacocoTestCoverageVerification
 ```
 
 This task is also executed as part of `gw check`.
+
+
+### PiTest Mutation Testing
+
+PiTest mutation testing is configured for unit tests.
+It can be executed with:
+
+```shell
+gw pitest
+```
+
+Classes to be scanned, tests to be executed and thresholds are configured in [build.gradle](build.gradle).
+
+A report is generated under [build/reports/pitest/index.html](./build/reports/pitest/index.html).
+A link to the report is also printed after the `pitest` run.
+
+This task is also executed as part of `gw check`.
+
+#### Remark
+
+In this project, there is little business logic in *Java* code;
+most business code is in *plsql* 
+and *Java* ist mostly used for mapping REST calls to database queries.
+This mapping ist mostly done through *Spring* annotations and other implicit code.
+
+Therefore, there are only few unit tests and thus mutation testing has limited value.
+We'll see if this changes when the project progresses and more validations are added.
 
 
 ### OWASP Security Vulnerability Check
