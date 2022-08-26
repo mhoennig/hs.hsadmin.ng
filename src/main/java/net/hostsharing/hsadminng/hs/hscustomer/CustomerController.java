@@ -29,14 +29,11 @@ public class CustomerController implements CustomersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<CustomerResource>> listCustomers(
-            String userName,
+            String currentUser,
             String assumedRoles,
             String prefix
     ) {
-        context.setCurrentUser(userName);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
 
         final var result = customerRepository.findCustomerByOptionalPrefixLike(prefix);
 
@@ -50,11 +47,8 @@ public class CustomerController implements CustomersApi {
             final String assumedRoles,
             final CustomerResource customer) {
 
-        context.setCurrentTask("create new customer: #" + customer.getReference() + " / " + customer.getPrefix());
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
+
         if (customer.getUuid() == null) {
             customer.setUuid(UUID.randomUUID());
         }

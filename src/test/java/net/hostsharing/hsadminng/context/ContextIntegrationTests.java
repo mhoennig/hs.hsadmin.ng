@@ -18,6 +18,15 @@ class ContextIntegrationTests {
     private Context context;
 
     @Test
+    void registerWithoutHttpServletRequestUsesCallStack() {
+
+        context.register("current-user", null);
+
+        final var currentTask = context.getCurrentTask();
+        assertThat(currentTask).isEqualTo("ContextIntegrationTests.registerWithoutHttpServletRequestUsesCallStack");
+    }
+
+    @Test
     @Transactional
     void setCurrentUser() {
         context.setCurrentUser("mike@hostsharing.net");

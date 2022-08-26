@@ -22,33 +22,33 @@ public class RbacGrantEntity {
     @Column(name = "grantedbyroleidname", updatable = false, insertable = false)
     private String grantedByRoleIdName;
 
-    @Column(name = "grantedroleidname", updatable = false, insertable = false)
-    private String grantedRoleIdName;
-
-    @Column(name = "username", updatable = false, insertable = false)
-    private String granteeUserName;
-
-    private boolean assumed;
-
     @Column(name = "grantedbyroleuuid", updatable = false, insertable = false)
     private UUID grantedByRoleUuid;
+
+    @Column(name = "grantedroleidname", updatable = false, insertable = false)
+    private String grantedRoleIdName;
 
     @Id
     @Column(name = "grantedroleuuid")
     private UUID grantedRoleUuid;
 
+    @Column(name = "username", updatable = false, insertable = false)
+    private String granteeUserName;
+
     @Id
     @Column(name = "useruuid")
     private UUID granteeUserUuid;
 
+    private boolean assumed;
+
     @Column(name = "objecttable", updatable = false, insertable = false)
     private String objectTable;
 
-    @Column(name = "objectuuid", updatable = false, insertable = false)
-    private UUID objectUuid;
-
     @Column(name = "objectidname", updatable = false, insertable = false)
     private String objectIdName;
+
+    @Column(name = "objectuuid", updatable = false, insertable = false)
+    private UUID objectUuid;
 
     @Column(name = "grantedroletype", updatable = false, insertable = false)
     @Enumerated(EnumType.STRING)

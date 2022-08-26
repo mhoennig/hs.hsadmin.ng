@@ -33,8 +33,7 @@ public class RbacUserController implements RbacusersApi {
     public ResponseEntity<RbacUserResource> createUser(
             final RbacUserResource body
     ) {
-        context.setCurrentTask("creating new user: " + body.getName());
-        context.setCurrentUser(body.getName());
+        context.register(body.getName(), null);
 
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
@@ -56,10 +55,7 @@ public class RbacUserController implements RbacusersApi {
             final String assumedRoles,
             final UUID userUuid) {
 
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
 
         final var result = rbacUserRepository.findByUuid(userUuid);
         if (result == null) {
@@ -71,28 +67,24 @@ public class RbacUserController implements RbacusersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<RbacUserResource>> listUsers(
-            final String currentUserName,
+            final String currentUser,
             final String assumedRoles,
             final String userName
     ) {
-        context.setCurrentUser(currentUserName);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
+
         return ResponseEntity.ok(mapList(rbacUserRepository.findByOptionalNameLike(userName), RbacUserResource.class));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<RbacUserPermissionResource>> listUserPermissions(
-            final String currentUserName,
+            final String currentUser,
             final String assumedRoles,
             final UUID userUuid
     ) {
-        context.setCurrentUser(currentUserName);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
+
         return ResponseEntity.ok(mapList(rbacUserRepository.findPermissionsOfUserByUuid(userUuid), RbacUserPermissionResource.class));
     }
 }

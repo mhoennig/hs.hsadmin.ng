@@ -7,10 +7,8 @@ import java.util.stream.Collectors;
 
 /**
  * A nicer API for ModelMapper.
- *
- * MOst
  */
-public class Mapper {
+public abstract class Mapper {
     private final static ModelMapper modelMapper = new ModelMapper();
 
 

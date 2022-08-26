@@ -29,14 +29,12 @@ public class PackageController implements PackagesApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<PackageResource>> listPackages(
-        String userName,
+        String currentUser,
         String assumedRoles,
         String name
     ) {
-        context.setCurrentUser(userName);
-        if (!StringUtils.isBlank(assumedRoles))  {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
+
         final var result = packageRepository.findAllByOptionalNameLike(name);
         return ResponseEntity.ok(mapList(result, PackageResource.class));
     }
@@ -49,10 +47,8 @@ public class PackageController implements PackagesApi {
         final UUID packageUuid,
         final PackageUpdateResource body) {
 
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
+
         final var current = packageRepository.findByUuid(packageUuid);
         OptionalFromJson.of(body.getDescription()).ifPresent(current::setDescription);
         final var saved = packageRepository.save(current);

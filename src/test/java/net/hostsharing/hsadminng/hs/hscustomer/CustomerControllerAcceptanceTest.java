@@ -118,9 +118,9 @@ class CustomerControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                               {
-                                "reference": 90010,
-                                "prefix": "vvv",
-                                "adminUserName": "customer-admin@vvv.example.com"
+                                "reference": 90020,
+                                "prefix": "ttt",
+                                "adminUserName": "customer-admin@ttt.example.com"
                               }
                               """)
                         .port(port)
@@ -129,8 +129,43 @@ class CustomerControllerAcceptanceTest {
                     .then().assertThat()
                         .statusCode(201)
                         .contentType(ContentType.JSON)
-                        .body("prefix", is("vvv"))
+                        .body("prefix", is("ttt"))
                         .header("Location", startsWith("http://localhost"))
+                    .extract().header("Location");  // @formatter:on
+
+            // finally, the new customer can be viewed by its own admin
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
+            context.setCurrentUser("customer-admin@ttt.example.com");
+            assertThat(customerRepository.findByUuid(newUserUuid))
+                    .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("ttt"));
+        }
+
+        @Test
+        void hostsharingAdmin_withoutAssumedRole_canCreateCustomerWithGivenUuid() {
+
+            final var givenUuid = UUID.randomUUID();
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "mike@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                              {
+                                "uuid": "%s",
+                                "reference": 90010,
+                                "prefix": "vvv",
+                                "adminUserName": "customer-admin@vvv.example.com"
+                              }
+                              """.formatted(givenUuid))
+                    .port(port)
+                    .when()
+                    .post("http://localhost/api/customers")
+                    .then().assertThat()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("prefix", is("vvv"))
+                    .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new customer can be viewed by its own admin
@@ -138,7 +173,10 @@ class CustomerControllerAcceptanceTest {
                     location.substring(location.lastIndexOf('/') + 1));
             context.setCurrentUser("customer-admin@vvv.example.com");
             assertThat(customerRepository.findByUuid(newUserUuid))
-                    .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("vvv"));
+                    .hasValueSatisfying(c -> {
+                        assertThat(c.getPrefix()).isEqualTo("vvv");
+                        assertThat(c.getUuid()).isEqualTo(givenUuid);
+                    });
         }
 
         @Test

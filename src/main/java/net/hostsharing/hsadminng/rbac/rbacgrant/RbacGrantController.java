@@ -38,10 +38,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final UUID grantedRoleUuid,
             final UUID granteeUserUuid) {
 
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
 
         final var id = new RbacGrantId(granteeUserUuid, grantedRoleUuid);
         final var result = rbacGrantRepository.findById(id);
@@ -57,10 +54,8 @@ public class RbacGrantController implements RbacgrantsApi {
             final String currentUser,
             final String assumedRoles) {
 
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
+
         return ResponseEntity.ok(mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
     }
 
@@ -71,11 +66,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final String assumedRoles,
             final RbacGrantResource body) {
 
-        context.setCurrentTask("granting role to user");
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
 
         final var granted = rbacGrantRepository.save(map(body, RbacGrantEntity.class));
         em.flush();
@@ -97,11 +88,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final UUID grantedRoleUuid,
             final UUID granteeUserUuid) {
 
-        context.setCurrentTask("revoking role from user");
-        context.setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            context.assumeRoles(assumedRoles);
-        }
+        context.register(currentUser, assumedRoles);
 
         rbacGrantRepository.deleteByRbacGrantId(new RbacGrantId(granteeUserUuid, grantedRoleUuid));
 

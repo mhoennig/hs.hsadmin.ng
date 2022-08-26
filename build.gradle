@@ -169,9 +169,12 @@ project.tasks.check.dependsOn(jacocoTestCoverageVerification)
 jacocoTestCoverageVerification {
     violationRules {
         rule {
-            excludes = ['net.hostsharing.hsadminng.generated.**']
+            excludes = [
+                    'net.hostsharing.hsadminng.generated.**',
+                    'net.hostsharing.hsadminng.HsadminNgApplication' // main method
+            ]
             limit {
-                minimum = 0.8 // TODO: increase to 0.9
+                minimum = 0.94
             }
         }
 
@@ -185,8 +188,6 @@ jacocoTestCoverageVerification {
                     'net.hostsharing.hsadminng.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication',
                     'net.hostsharing.hsadminng.TestController',
-
-                    // TODO: improve test code coverage:
                     'net.hostsharing.hsadminng.Mapper',
             ]
 
@@ -200,13 +201,13 @@ jacocoTestCoverageVerification {
             element = 'METHOD'
             excludes = [
                     'net.hostsharing.hsadminng.generated.**',
-                    'net.hostsharing.hsadminng.HsadminNgApplication.*',
+                    'net.hostsharing.hsadminng.HsadminNgApplication.main',
                     'net.hostsharing.hsadminng.TestController.*']
 
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.5 // TODO: increase test code coverage
+                minimum = 0.95
             }
         }
     }
