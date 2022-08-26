@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.arch;
 
 import com.tngtech.archunit.junit.AnalyzeClasses;
-import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import net.hostsharing.hsadminng.Accepts;
 import org.junit.jupiter.api.Test;
@@ -11,61 +10,61 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
-@AnalyzeClasses(packages = ArchUnitTest.NET_HOSTSHARING_HSADMINNG)
-public class ArchUnitTest {
+@AnalyzeClasses(packages = ArchTest.NET_HOSTSHARING_HSADMINNG)
+public class ArchTest {
 
     public static final String NET_HOSTSHARING_HSADMINNG = "net.hostsharing.hsadminng";
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule contextPackageRule = classes()
         .that().resideInAPackage("..context..")
         .should().onlyDependOnClassesThat()
         .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule configPackageRule = classes()
         .that().resideInAPackage("..config..")
         .should().onlyDependOnClassesThat()
         .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule errorsPackageRule = classes()
         .that().resideInAPackage("..errors..")
         .should().onlyDependOnClassesThat()
         .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsPackagesRule = classes()
         .that().resideInAPackage("..hs.(*)..")
         .should().onlyBeAccessed().byClassesThat()
         .resideInAnyPackage("..hs.(*)..");
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsPackagePackageRule = classes()
         .that().resideInAPackage("..hs.hspackage..")
         .should().onlyBeAccessed().byClassesThat()
         .resideInAnyPackage("..hs.hspackage..");
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule acceptsAnnotationOnMethodsRule = methods()
         .that().areAnnotatedWith(Accepts.class)
         .should().beDeclaredInClassesThat().haveSimpleNameEndingWith("AcceptanceTest")
         .orShould().beDeclaredInClassesThat().haveSimpleNameNotContaining("AcceptanceTest$");
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule acceptsAnnotationOnClasesRule = classes()
         .that().areAnnotatedWith(Accepts.class)
         .should().haveSimpleNameEndingWith("AcceptanceTest")
         .orShould().haveSimpleNameNotContaining("AcceptanceTest$");
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule doNotUseJavaxTransactionAnnotationAtClassLevel = noClasses()
         .should().beAnnotatedWith(javax.transaction.Transactional.class.getName())
@@ -73,7 +72,7 @@ public class ArchUnitTest {
             org.springframework.transaction.annotation.Transactional.class.getName(),
             javax.transaction.Transactional.class));
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule doNotUseJavaxTransactionAnnotationAtMethodLevel = noMethods()
         .should().beAnnotatedWith(javax.transaction.Transactional.class)
@@ -81,7 +80,7 @@ public class ArchUnitTest {
             org.springframework.transaction.annotation.Transactional.class.getName(),
             javax.transaction.Transactional.class.getName()));
 
-    @ArchTest
+    @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule doNotUseOrgJUnitTestAnnotation = noMethods()
             .should().beAnnotatedWith(org.junit.Test.class)
