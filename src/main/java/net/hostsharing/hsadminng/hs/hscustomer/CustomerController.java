@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.hscustomer;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.CustomersApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +32,7 @@ public class CustomerController implements CustomersApi {
             String assumedRoles,
             String prefix
     ) {
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         final var result = customerRepository.findCustomerByOptionalPrefixLike(prefix);
 
@@ -47,7 +46,7 @@ public class CustomerController implements CustomersApi {
             final String assumedRoles,
             final CustomerResource customer) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         if (customer.getUuid() == null) {
             customer.setUuid(UUID.randomUUID());

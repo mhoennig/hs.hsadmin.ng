@@ -1,10 +1,38 @@
 --liquibase formatted sql
 
+
+-- ============================================================================
+--changeset context-DEFINE:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Defines the transaction context.
+ */
+
+create or replace procedure defineContext(
+    currentTask varchar,
+    currentRequest varchar,
+    currentUser varchar,
+    assumedRoles varchar
+)
+    language plpgsql as $$
+begin
+    raise notice 'currentRequest: %', defineContext.currentRequest;
+    execute format('set local hsadminng.currentTask to %L', currentTask);
+    execute format('set local hsadminng.currentUser to %L', currentUser);
+    if length(assumedRoles) > 0 then
+        execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
+    else
+        execute format('set local hsadminng.assumedRoles to %L', '');
+    end if;
+end; $$;
+--//
+
+
 -- ============================================================================
 --changeset context-CURRENT-TASK:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns the current tas as set by `hsadminng.currentTask`.
+    Returns the current task as set by `hsadminng.currentTask`.
     Raises exception if not set.
  */
 create or replace function currentTask()
@@ -117,7 +145,7 @@ create or replace function findIdNameByObjectUuid(objectTable varchar, objectUui
     returns null on null input
     language plpgsql as $$
 declare
-    sql     varchar;
+    sql    varchar;
     idName varchar;
 begin
     objectTable := pureIdentifier(objectTable);

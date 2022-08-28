@@ -71,7 +71,7 @@ class RbacUserControllerAcceptanceTest {
             // finally, the user can view its own record
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.setCurrentUser("new-user@example.com");
+            context.define("new-user@example.com");
             assertThat(rbacUserRepository.findByUuid(newUserUuid))
                     .extracting(RbacUserEntity::getName).isEqualTo("new-user@example.com");
         }
@@ -399,7 +399,7 @@ class RbacUserControllerAcceptanceTest {
 
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context.setCurrentUser("mike@hostsharing.net");
+            context.define("mike@hostsharing.net");
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }

@@ -21,8 +21,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 @SpringBootTest(
-    webEnvironment = WebEnvironment.RANDOM_PORT,
-    classes = HsadminNgApplication.class
+        webEnvironment = WebEnvironment.RANDOM_PORT,
+        classes = HsadminNgApplication.class
 )
 @Transactional
 class PackageControllerAcceptanceTest {
@@ -86,7 +86,7 @@ class PackageControllerAcceptanceTest {
         void withDescriptionUpdatesDescription() {
 
             assumeThat(getDescriptionOfPackage("xxx00"))
-                .isEqualTo("Here can add your own description of package xxx00.");
+                    .isEqualTo("Here can add your own description of package xxx00.");
 
             final var randomDescription = RandomStringUtils.randomAlphanumeric(80);
 
@@ -118,7 +118,7 @@ class PackageControllerAcceptanceTest {
         void withNullDescriptionUpdatesDescriptionToNull() {
 
             assumeThat(getDescriptionOfPackage("xxx01"))
-                .isEqualTo("Here can add your own description of package xxx01.");
+                    .isEqualTo("Here can add your own description of package xxx01.");
 
             // @formatter:off
             RestAssured
@@ -147,7 +147,7 @@ class PackageControllerAcceptanceTest {
         void withoutDescriptionDoesNothing() {
 
             assumeThat(getDescriptionOfPackage("xxx02"))
-                .isEqualTo("Here can add your own description of package xxx02.");
+                    .isEqualTo("Here can add your own description of package xxx02.");
 
             // @formatter:off
             RestAssured
@@ -185,8 +185,7 @@ class PackageControllerAcceptanceTest {
     }
 
     String getDescriptionOfPackage(final String packageName) {
-        context.setCurrentUser("mike@hostsharing.net");
-        context.assumeRoles("customer#xxx.admin");
+        context.define("mike@hostsharing.net","customer#xxx.admin");
         return packageRepository.findAllByOptionalNameLike(packageName).get(0).getDescription();
     }
 }

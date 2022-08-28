@@ -4,8 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class ContextBasedTest {
 
     @Autowired
@@ -18,18 +16,9 @@ public class ContextBasedTest {
         this.test = testInfo;
     }
 
+    // TODO: remove the class and check which task is recorded
     protected void context(final String currentUser, final String assumedRoles) {
-        context.setCurrentTask(test.getDisplayName());
-
-        context.setCurrentUser(currentUser);
-        assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
-
-        if (assumedRoles != null) {
-            context.assumeRoles(assumedRoles);
-            assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
-//        } else {
-//            context.assumeNoSpecialRole();
-        }
+        context.define(test.getDisplayName(), null, currentUser, assumedRoles);
     }
 
     protected void context(final String currentUser) {

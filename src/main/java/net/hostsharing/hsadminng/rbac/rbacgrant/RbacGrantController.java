@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.rbac.rbacgrant;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacgrantsApi;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacGrantResource;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +37,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final UUID grantedRoleUuid,
             final UUID granteeUserUuid) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         final var id = new RbacGrantId(granteeUserUuid, grantedRoleUuid);
         final var result = rbacGrantRepository.findById(id);
@@ -54,7 +53,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final String currentUser,
             final String assumedRoles) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         return ResponseEntity.ok(mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
     }
@@ -66,7 +65,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final String assumedRoles,
             final RbacGrantResource body) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         final var granted = rbacGrantRepository.save(map(body, RbacGrantEntity.class));
         em.flush();
@@ -88,7 +87,7 @@ public class RbacGrantController implements RbacgrantsApi {
             final UUID grantedRoleUuid,
             final UUID granteeUserUuid) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         rbacGrantRepository.deleteByRbacGrantId(new RbacGrantId(granteeUserUuid, grantedRoleUuid));
 

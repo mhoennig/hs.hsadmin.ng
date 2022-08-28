@@ -20,7 +20,7 @@ class ContextIntegrationTests {
     @Test
     void registerWithoutHttpServletRequestUsesCallStack() {
 
-        context.register("current-user", null);
+        context.define("current-user", null);
 
         final var currentTask = context.getCurrentTask();
         assertThat(currentTask).isEqualTo("ContextIntegrationTests.registerWithoutHttpServletRequestUsesCallStack");
@@ -29,7 +29,7 @@ class ContextIntegrationTests {
     @Test
     @Transactional
     void setCurrentUser() {
-        context.setCurrentUser("mike@hostsharing.net");
+        context.define("mike@hostsharing.net");
 
         final var currentUser = context.getCurrentUser();
         assertThat(currentUser).isEqualTo("mike@hostsharing.net");
@@ -41,8 +41,7 @@ class ContextIntegrationTests {
     @Test
     @Transactional
     void assumeRoles() {
-        context.setCurrentUser("mike@hostsharing.net");
-        context.assumeRoles("customer#xxx.owner;customer#yyy.owner");
+        context.define("mike@hostsharing.net", "customer#xxx.owner;customer#yyy.owner");
 
         final var currentUser = context.getCurrentUser();
         assertThat(currentUser).isEqualTo("mike@hostsharing.net");

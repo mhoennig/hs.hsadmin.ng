@@ -28,7 +28,7 @@ public class RbacRoleController implements RbacrolesApi {
             final String currentUser,
             final String assumedRoles) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         return ResponseEntity.ok(mapList(rbacRoleRepository.findAll(), RbacRoleResource.class));
     }

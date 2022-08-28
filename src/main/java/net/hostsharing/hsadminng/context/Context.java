@@ -1,20 +1,33 @@
 package net.hostsharing.hsadminng.context;
 
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import static java.util.function.Predicate.not;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 
 @Service
 public class Context {
 
+    private static final Set<String> HEADERS_TO_IGNORE = Set.of(
+            "accept-encoding",
+            "connection",
+            "content-length",
+            "host",
+            "user-agent");
     @PersistenceContext
     private EntityManager em;
 
@@ -22,81 +35,111 @@ public class Context {
     private HttpServletRequest request;
 
     @Transactional(propagation = MANDATORY)
-    public void register(final String currentUser, final String assumedRoles) {
-        if (request != null) {
-            setCurrentTask(request.getMethod() + " " + request.getRequestURI());
-        } else {
-
-            final Optional<StackWalker.StackFrame> caller =
-                    StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
-                            .walk(frames ->
-                                    frames.skip(1)
-                                            .filter(c -> c.getDeclaringClass()
-                                                    .getPackageName()
-                                                    .startsWith("net.hostsharing.hsadminng"))
-                                            .filter(c -> !c.getDeclaringClass().getName().contains("BySpringCGLIB$$"))
-                                            .findFirst());
-            final var callerName = caller.map(
-                            c -> c.getDeclaringClass().getSimpleName() + "." + c.getMethodName())
-                    .orElse("unknown");
-            setCurrentTask(callerName);
-        }
-        setCurrentUser(currentUser);
-        if (!StringUtils.isBlank(assumedRoles)) {
-            assumeRoles(assumedRoles);
-        }
+    public void define(final String currentUser) {
+        define(currentUser, null);
     }
 
     @Transactional(propagation = MANDATORY)
-    public void setCurrentTask(final String task) {
-        final var sql = String.format(
-                "set local hsadminng.currentTask = '%s';",
-                shortenToMaxLength(task, 95)
-        );
-        em.createNativeQuery(sql).executeUpdate();
+    public void define(final String currentUser, final String assumedRoles) {
+        define(toTask(request), toCurl(request), currentUser, assumedRoles);
+    }
+
+    @Transactional(propagation = MANDATORY)
+    public void define(
+            final String currentTask,
+            final String currentRequest,
+            final String currentUser,
+            final String assumedRoles) {
+        final var query = em.createNativeQuery(
+                "call defineContext(:currentTask, :currentRequest, :currentUser, :assumedRoles);");
+        query.setParameter("currentTask", shortenToMaxLength(currentTask, 96));
+        query.setParameter("currentRequest", shortenToMaxLength(currentRequest, 512)); // TODO.SPEC: length?
+        query.setParameter("currentUser", currentUser);
+        query.setParameter("assumedRoles", assumedRoles != null ? assumedRoles : "");
+        query.executeUpdate();
     }
 
     public String getCurrentTask() {
         return (String) em.createNativeQuery("select current_setting('hsadminng.currentTask');").getSingleResult();
     }
 
-    @Transactional(propagation = MANDATORY)
-    public void setCurrentUser(final String userName) {
-        em.createNativeQuery(
-                String.format(
-                        "set local hsadminng.currentUser = '%s';",
-                        userName
-                )
-        ).executeUpdate();
-        assumeNoSpecialRole();
-    }
-
     public String getCurrentUser() {
         return String.valueOf(em.createNativeQuery("select currentUser()").getSingleResult());
-    }
-
-    @Transactional(propagation = MANDATORY)
-    public void assumeRoles(final String roles) {
-        em.createNativeQuery(
-                String.format(
-                        "set local hsadminng.assumedRoles = '%s';",
-                        roles
-                )
-        ).executeUpdate();
-    }
-
-    @Transactional(propagation = MANDATORY)
-    public void assumeNoSpecialRole() {
-        em.createNativeQuery(
-                "set local hsadminng.assumedRoles = '';"
-        ).executeUpdate();
     }
 
     public String[] getAssumedRoles() {
         return (String[]) em.createNativeQuery("select assumedRoles()").getSingleResult();
     }
 
-    private static String shortenToMaxLength(final String task, final int maxLength) {
-        return task.substring(0, Math.min(task.length(), maxLength));
+    private static String getCallerMethodNameFromStack() {
+        final Optional<StackWalker.StackFrame> caller =
+                StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+                        .walk(frames -> frames
+                                .skip(2)
+                                .filter(c -> c.getDeclaringClass() != Context.class)
+                                .filter(c -> c.getDeclaringClass()
+                                        .getPackageName()
+                                        .startsWith("net.hostsharing.hsadminng"))
+                                .filter(c -> !c.getDeclaringClass().getName().contains("BySpringCGLIB$$"))
+                                .findFirst());
+        return caller.map(
+                        c -> c.getDeclaringClass().getSimpleName() + "." + c.getMethodName())
+                .orElse("unknown");
+    }
+
+    private String toTask(final HttpServletRequest request) {
+        if (isRequestScopeAvailable()) {
+            return request.getMethod() + " " + request.getRequestURI();
+        } else {
+            return getCallerMethodNameFromStack();
+        }
+    }
+
+    @SneakyThrows
+    private String toCurl(final HttpServletRequest request) {
+        if (!isRequestScopeAvailable()) {
+            return null;
+        }
+
+        var curlCommand = "curl -0 -v";
+
+        // append method
+        curlCommand += " -X " + request.getMethod();
+
+        // append request url
+        curlCommand += " " + request.getRequestURI();
+
+        // append headers
+        final var headers = Collections.list(request.getHeaderNames()).stream()
+                .filter(not(HEADERS_TO_IGNORE::contains))
+                .collect(Collectors.toSet());
+        for (String headerName : headers) {
+            final var headerValue = request.getHeader(headerName);
+            curlCommand += " \\" + System.lineSeparator() + String.format("-H '%s:%s'", headerName, headerValue);
+        }
+
+        // body
+        final String body = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+        if (!StringUtils.isEmpty(body)) {
+            curlCommand += " \\" + System.lineSeparator() + "--data-binary @- ";
+            curlCommand +=
+                    "<< EOF" + System.lineSeparator() + System.lineSeparator() + body + System.lineSeparator() + "EOF";
+        }
+
+        return curlCommand;
+    }
+
+    private boolean isRequestScopeAvailable() {
+        return RequestContextHolder.getRequestAttributes() != null;
+    }
+
+    private static String shortenToMaxLength(final String raw, final int maxLength) {
+        if (raw == null) {
+            return "";
+        }
+        if (raw.length() <= maxLength) {
+            return raw;
+        }
+        return raw.substring(0, maxLength - 3) + "...";
     }
 }

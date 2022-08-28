@@ -42,7 +42,7 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             // given
-            currentUser("mike@hostsharing.net");
+            context.define("mike@hostsharing.net");
 
             // when
             final var result = packageRepository.findAllByOptionalNameLike(null);
@@ -54,8 +54,7 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void hostsharingAdmin_withAssumedHostsharingAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             given:
-            currentUser("mike@hostsharing.net");
-            assumedRoles("global#hostsharing.admin");
+            context.define("mike@hostsharing.net", "global#hostsharing.admin");
 
             // when
             final var result = packageRepository.findAllByOptionalNameLike(null);
@@ -67,7 +66,7 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withoutAssumedRole_canViewOnlyItsOwnPackages() {
             // given:
-            currentUser("customer-admin@xxx.example.com");
+            context.define("customer-admin@xxx.example.com");
 
             // when:
             final var result = packageRepository.findAllByOptionalNameLike(null);
@@ -78,8 +77,7 @@ class PackageRepositoryIntegrationTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            currentUser("customer-admin@xxx.example.com");
-            assumedRoles("package#xxx00.admin");
+            context.define("customer-admin@xxx.example.com", "package#xxx00.admin");
 
             final var result = packageRepository.findAllByOptionalNameLike(null);
 
@@ -89,8 +87,7 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyPackages() {
             // given:
-            currentUser("customer-admin@xxx.example.com");
-            assumedRoles("package#yyy00.admin");
+            context.define("customer-admin@xxx.example.com", "package#yyy00.admin");
 
             // when
             final var result = attempt(
@@ -105,7 +102,7 @@ class PackageRepositoryIntegrationTest {
 
         @Test
         void unknownUser_withoutAssumedRole_cannotViewAnyPackages() {
-            currentUser("unknown@example.org");
+            context.define("unknown@example.org");
 
             final var result = attempt(
                     em,
@@ -119,8 +116,7 @@ class PackageRepositoryIntegrationTest {
         @Test
         @Transactional
         void unknownUser_withAssumedCustomerRole_cannotViewAnyPackages() {
-            currentUser("unknown@example.org");
-            assumedRoles("customer#xxx.admin");
+            context.define("unknown@example.org", "customer#xxx.admin");
 
             final var result = attempt(
                     em,
@@ -172,18 +168,7 @@ class PackageRepositoryIntegrationTest {
     }
 
     private void hostsharingAdminWithAssumedRole(final String assumedRoles) {
-        currentUser("mike@hostsharing.net");
-        assumedRoles(assumedRoles);
-    }
-
-    void currentUser(final String currentUser) {
-        context.setCurrentUser(currentUser);
-        assertThat(context.getCurrentUser()).as("precondition").isEqualTo(currentUser);
-    }
-
-    void assumedRoles(final String assumedRoles) {
-        context.assumeRoles(assumedRoles);
-        assertThat(context.getAssumedRoles()).as("precondition").containsExactly(assumedRoles.split(";"));
+        context.define("mike@hostsharing.net", assumedRoles);
     }
 
     void noPackagesAreReturned(final List<PackageEntity> actualResult) {

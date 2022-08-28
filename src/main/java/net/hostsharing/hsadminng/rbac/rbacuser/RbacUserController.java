@@ -2,15 +2,12 @@ package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.RbacusersApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.RbacGrantResource;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserPermissionResource;
 import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserResource;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantId;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.List;
@@ -33,7 +30,7 @@ public class RbacUserController implements RbacusersApi {
     public ResponseEntity<RbacUserResource> createUser(
             final RbacUserResource body
     ) {
-        context.register(body.getName(), null);
+        context.define(body.getName());
 
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
@@ -55,7 +52,7 @@ public class RbacUserController implements RbacusersApi {
             final String assumedRoles,
             final UUID userUuid) {
 
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         final var result = rbacUserRepository.findByUuid(userUuid);
         if (result == null) {
@@ -71,7 +68,7 @@ public class RbacUserController implements RbacusersApi {
             final String assumedRoles,
             final String userName
     ) {
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         return ResponseEntity.ok(mapList(rbacUserRepository.findByOptionalNameLike(userName), RbacUserResource.class));
     }
@@ -83,8 +80,10 @@ public class RbacUserController implements RbacusersApi {
             final String assumedRoles,
             final UUID userUuid
     ) {
-        context.register(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
-        return ResponseEntity.ok(mapList(rbacUserRepository.findPermissionsOfUserByUuid(userUuid), RbacUserPermissionResource.class));
+        return ResponseEntity.ok(mapList(
+                rbacUserRepository.findPermissionsOfUserByUuid(userUuid),
+                RbacUserPermissionResource.class));
     }
 }

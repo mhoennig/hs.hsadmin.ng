@@ -57,7 +57,7 @@ class CustomerControllerAcceptanceTest {
         }
 
         @Test
-        void hostsharingAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() throws Exception {
+        void hostsharingAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "mike@hostsharing.net")
@@ -73,7 +73,7 @@ class CustomerControllerAcceptanceTest {
         }
 
         @Test
-        void hostsharingAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() throws Exception {
+        void hostsharingAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "mike@hostsharing.net")
@@ -90,14 +90,14 @@ class CustomerControllerAcceptanceTest {
         }
 
         @Test
-        void customerAdmin_withoutAssumedRole_canOnlyViewOwnCustomer() throws Exception {
+        void customerAdmin_withoutAssumedRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
-                    .given()
+                .given()
                     .header("current-user", "customer-admin@yyy.example.com")
                     .port(port)
-                    .when()
+                .when()
                     .get("http://localhost/api/customers")
-                    .then().assertThat()
+                .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("[0].prefix", is("yyy"))
@@ -107,10 +107,10 @@ class CustomerControllerAcceptanceTest {
     }
 
     @Nested
-    class CreateCustomer {
+    class AddCustomer {
 
         @Test
-        void hostsharingAdmin_withoutAssumedRole_canCreateCustomer() throws Exception {
+        void hostsharingAdmin_withoutAssumedRole_canAddCustomer() {
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -136,13 +136,13 @@ class CustomerControllerAcceptanceTest {
             // finally, the new customer can be viewed by its own admin
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.setCurrentUser("customer-admin@ttt.example.com");
+            context.define("customer-admin@ttt.example.com");
             assertThat(customerRepository.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("ttt"));
         }
 
         @Test
-        void hostsharingAdmin_withoutAssumedRole_canCreateCustomerWithGivenUuid() {
+        void hostsharingAdmin_withoutAssumedRole_canAddCustomerWithGivenUuid() {
 
             final var givenUuid = UUID.randomUUID();
 
@@ -171,7 +171,7 @@ class CustomerControllerAcceptanceTest {
             // finally, the new customer can be viewed by its own admin
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.setCurrentUser("customer-admin@vvv.example.com");
+            context.define("customer-admin@vvv.example.com");
             assertThat(customerRepository.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> {
                         assertThat(c.getPrefix()).isEqualTo("vvv");
@@ -180,7 +180,7 @@ class CustomerControllerAcceptanceTest {
         }
 
         @Test
-        void hostsharingAdmin_withAssumedCustomerAdminRole_canNotCreateCustomer() throws Exception {
+        void hostsharingAdmin_withAssumedCustomerAdminRole_canNotAddCustomer() {
 
             RestAssured // @formatter:off
                 .given()
@@ -205,12 +205,12 @@ class CustomerControllerAcceptanceTest {
             // @formatter:on
 
             // finally, the new customer was not created
-            context.setCurrentUser("sven@hostsharing.net");
+            context.define("sven@hostsharing.net");
             assertThat(customerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
 
         @Test
-        void customerAdmin_withoutAssumedRole_canNotCreateCustomer() throws Exception {
+        void customerAdmin_withoutAssumedRole_canNotAddCustomer() {
 
             RestAssured // @formatter:off
                 .given()
@@ -234,7 +234,7 @@ class CustomerControllerAcceptanceTest {
                 // @formatter:on
 
             // finally, the new customer was not created
-            context.setCurrentUser("sven@hostsharing.net");
+            context.define("sven@hostsharing.net");
             assertThat(customerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
     }

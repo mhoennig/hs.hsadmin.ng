@@ -191,7 +191,7 @@ jacocoTestCoverageVerification {
                     'net.hostsharing.hsadminng.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication',
                     'net.hostsharing.hsadminng.TestController',
-                    'net.hostsharing.hsadminng.Mapper',
+                    'net.hostsharing.hsadminng.Mapper'
             ]
 
             limit {
@@ -205,7 +205,8 @@ jacocoTestCoverageVerification {
             excludes = [
                     'net.hostsharing.hsadminng.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication.main',
-                    'net.hostsharing.hsadminng.TestController.*']
+                    'net.hostsharing.hsadminng.TestController.*'
+            ]
 
             limit {
                 counter = 'BRANCH'
