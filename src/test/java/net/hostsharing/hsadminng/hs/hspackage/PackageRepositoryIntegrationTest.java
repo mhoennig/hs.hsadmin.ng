@@ -7,16 +7,15 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -35,6 +34,9 @@ class PackageRepositoryIntegrationTest {
 
     @Autowired
     JpaAttempt jpaAttempt;
+
+    @MockBean
+    HttpServletRequest request;
 
     @Nested
     class FindAllByOptionalNameLike {
@@ -83,50 +85,6 @@ class PackageRepositoryIntegrationTest {
 
             exactlyThesePackagesAreReturned(result, "xxx00");
         }
-
-        @Test
-        public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyPackages() {
-            // given:
-            context.define("customer-admin@xxx.example.com", "package#yyy00.admin");
-
-            // when
-            final var result = attempt(
-                    em,
-                    () -> packageRepository.findAllByOptionalNameLike(null));
-
-            // then
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
-        }
-
-        @Test
-        void unknownUser_withoutAssumedRole_cannotViewAnyPackages() {
-            context.define("unknown@example.org");
-
-            final var result = attempt(
-                    em,
-                    () -> packageRepository.findAllByOptionalNameLike(null));
-
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
-        }
-
-        @Test
-        @Transactional
-        void unknownUser_withAssumedCustomerRole_cannotViewAnyPackages() {
-            context.define("unknown@example.org", "customer#xxx.admin");
-
-            final var result = attempt(
-                    em,
-                    () -> packageRepository.findAllByOptionalNameLike(null));
-
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
-        }
-
     }
 
     @Nested

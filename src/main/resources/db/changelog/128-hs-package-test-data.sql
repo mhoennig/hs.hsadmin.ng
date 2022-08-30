@@ -26,9 +26,7 @@ begin
 
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
             custAdminRole = 'customer#' || cust.prefix || '.admin';
-            execute format('set local hsadminng.currentUser to %L', custAdminUser);
-            execute format('set local hsadminng.assumedRoles to %L', custAdminRole);
-            execute format('set local hsadminng.currentTask to %L', currentTask);
+            call defineContext(currentTask, null, custAdminUser, custAdminRole);
             raise notice 'task: % by % as %', currentTask, custAdminUser, custAdminRole;
 
             insert
@@ -53,8 +51,6 @@ create or replace procedure createPackageTestData()
 declare
     cust customer;
 begin
-    set hsadminng.currentUser to '';
-
     for cust in (select * from customer)
         loop
             continue when cust.reference >= 90000; -- reserved for functional testing

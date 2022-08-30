@@ -1,45 +1,32 @@
 --liquibase formatted sql
 
--- ============================================================================
---changeset rbac-context-CURRENT-USER-ID:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Returns the id of the current user as set by `hsadminng.currentUser`.
-    Raises exception if not set.
- */
 
-create or replace function currentUserUuid()
+-- ============================================================================
+--changeset rbac-context-DETERMINE:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace function determineCurrentUserUuid(currentUser varchar)
     returns uuid
     stable leakproof
     language plpgsql as $$
 declare
-    currentUser   varchar(63);
     currentUserUuid uuid;
 begin
-    currentUser := currentUser();
-    currentUserUuid = (select uuid from RbacUser where name = currentUser);
-    if currentUserUuid is null then
-        raise exception '[401] hsadminng.currentUser defined as %, but does not exists', currentUser;
+    if currentUser = '' then
+        return null;
     end if;
+
+    select uuid from RbacUser where name = currentUser into currentUserUuid;
+    -- TODO: maybe this should be changed, and in this case no user name defined in context?
+    -- no exception if user does not exist because users can register themselves
     return currentUserUuid;
 end; $$;
---//
 
--- ============================================================================
---changeset rbac-context-CURRENT-SUBJECT-IDS:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Returns id of current user as set in `hsadminng.currentUser`
-    or, if any, ids of assumed role names as set in `hsadminng.assumedRoles`
-    or empty array, if not set.
- */
-create or replace function currentSubjectsUuids()
+create or replace function determineCurrentSubjectsUuids(currentUserUuid uuid, assumedRoles varchar)
     returns uuid[]
     stable leakproof
     language plpgsql as $$
 declare
-    currentUserUuid       uuid;
-    roleNames           varchar(63)[];
     roleName            varchar(63);
     objectTableToAssume varchar(63);
     objectNameToAssume  varchar(63);
@@ -48,19 +35,18 @@ declare
     roleIdsToAssume     uuid[];
     roleUuidToAssume    uuid;
 begin
-    currentUserUuid := currentUserUuid();
     if currentUserUuid is null then
-        raise exception '[401] user % does not exist', currentUser();
+        if  length(coalesce(assumedRoles, '')) > 0 then
+            raise exception '[403] undefined has no permission to assume role %', assumedRoles;
+        else
+            return array[]::uuid[];
+        end if;
     end if;
-
-    roleNames := assumedRoles();
-    if cardinality(roleNames) = 0 then
+    if  length(coalesce(assumedRoles, '')) = 0 then
         return array [currentUserUuid];
     end if;
 
-    raise notice 'assuming roles: %', roleNames;
-
-    foreach roleName in array roleNames
+    foreach roleName in array string_to_array(assumedRoles, ';')
         loop
             roleName = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
             objectTableToAssume = split_part(roleName, '#', 1);
@@ -69,19 +55,117 @@ begin
 
             objectUuidToAssume = findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
 
-            -- TODO: either the result needs to be cached at least per transaction or we need to get rid of SELCT in a loop
             select uuid as roleuuidToAssume
                 from RbacRole r
                 where r.objectUuid = objectUuidToAssume
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
             if (not isGranted(currentUserUuid, roleUuidToAssume)) then
-                raise exception '[403] user % (%) has no permission to assume role % (%)', currentUser(), currentUserUuid, roleName, roleUuidToAssume;
+                raise exception '[403] user % has no permission to assume role %', currentUser(), roleName;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
         end loop;
 
     return roleIdsToAssume;
+end; $$;
+
+-- ============================================================================
+--changeset rbac-context-CONTEXT-DEFINED:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Callback which is called after the context has been (re-) defined.
+    This function will be overwritten by later changesets.
+ */
+create or replace procedure contextDefined(
+    currentTask varchar,
+    currentRequest varchar,
+    currentUser varchar,
+    assumedRoles varchar
+)
+    language plpgsql as $$
+declare
+    currentUserUuid uuid;
+begin
+    execute format('set local hsadminng.currentTask to %L', currentTask);
+
+    execute format('set local hsadminng.currentRequest to %L', currentRequest);
+
+    execute format('set local hsadminng.currentUser to %L', currentUser);
+    select determineCurrentUserUuid(currentUser) into currentUserUuid;
+    execute format('set local hsadminng.currentUserUuid to %L', coalesce(currentUserUuid::text, ''));
+
+    execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
+    execute format('set local hsadminng.currentSubjectsUuids to %L',
+       (select array_to_string(determinecurrentSubjectsUuids(currentUserUuid, assumedRoles), ';')));
+
+    raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentUser, assumedRoles;
+end; $$;
+
+
+-- ============================================================================
+--changeset rbac-context-CURRENT-USER-ID:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Returns the uuid of the current user as set via `defineContext(...)`.
+ */
+
+create or replace function currentUserUuid()
+    returns uuid
+    stable leakproof
+    language plpgsql as $$
+declare
+    currentUserUuid text;
+    currentUserName text;
+begin
+    begin
+        currentUserUuid := current_setting('hsadminng.currentUserUuid');
+    exception
+        when others then
+            currentUserUuid := null;
+    end;
+    if (currentUserUuid is null or currentUserUuid = '') then
+        currentUserName := currentUser();
+        if (length(currentUserName) > 0) then
+            raise exception '[401] currentUserUuid cannot be determined, unknown user name "%"', currentUserName;
+        else
+            raise exception '[401] currentUserUuid cannot be determined, please call `defineContext(...)` first;"';
+        end if;
+    end if;
+    return currentUserUuid::uuid;
+end; $$;
+--//
+
+-- ============================================================================
+--changeset rbac-context-CURRENT-SUBJECT-UUIDS:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Returns the uuid of the current user as set via `defineContext(...)`,
+    or, if any, the uuids of all assumed roles as set via `defineContext(...)`
+    or empty array, if context is not defined.
+ */
+create or replace function currentSubjectsUuids()
+    returns uuid[]
+    stable leakproof
+    language plpgsql as $$
+declare
+    currentSubjectsUuids text;
+    currentUserName text;
+begin
+    begin
+        currentSubjectsUuids := current_setting('hsadminng.currentSubjectsUuids');
+    exception
+        when others then
+            currentSubjectsUuids := null;
+    end;
+    if (currentSubjectsUuids is null or length(currentSubjectsUuids) = 0 ) then
+        currentUserName := currentUser();
+        if (length(currentUserName) > 0) then
+            raise exception '[401] currentUserUuid cannot be determined, unknown user name "%"', currentUserName;
+        else
+            raise exception '[401] currentSubjectsUuids cannot be determined, please call `defineContext(...)` first;"';
+        end if;
+    end if;
+    return string_to_array(currentSubjectsUuids, ';');
 end; $$;
 --//
 

@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.context;
 
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,16 +11,17 @@ import org.springframework.web.context.request.RequestContextHolder;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 
 @Service
+@AllArgsConstructor
 public class Context {
 
     private static final Set<String> HEADERS_TO_IGNORE = Set.of(
@@ -51,7 +53,13 @@ public class Context {
             final String currentUser,
             final String assumedRoles) {
         final var query = em.createNativeQuery(
-                "call defineContext(:currentTask, :currentRequest, :currentUser, :assumedRoles);");
+                """
+                call defineContext(
+                    cast(:currentTask as varchar), 
+                    cast(:currentRequest as varchar), 
+                    cast(:currentUser as varchar), 
+                    cast(:assumedRoles as varchar));
+                """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 96));
         query.setParameter("currentRequest", shortenToMaxLength(currentRequest, 512)); // TODO.SPEC: length?
         query.setParameter("currentUser", currentUser);
@@ -67,8 +75,16 @@ public class Context {
         return String.valueOf(em.createNativeQuery("select currentUser()").getSingleResult());
     }
 
+    public UUID getCurrentUserUUid() {
+        return (UUID) em.createNativeQuery("select currentUserUUid()").getSingleResult();
+    }
+
     public String[] getAssumedRoles() {
         return (String[]) em.createNativeQuery("select assumedRoles()").getSingleResult();
+    }
+
+    public UUID[] currentSubjectsUuids() {
+        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids()").getSingleResult();
     }
 
     private static String getCallerMethodNameFromStack() {

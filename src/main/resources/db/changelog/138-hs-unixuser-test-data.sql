@@ -13,8 +13,6 @@ declare
     pacAdmin    varchar;
     currentTask varchar;
 begin
-    set hsadminng.currentUser to '';
-
     select p.uuid, p.name, c.prefix as custPrefix
         from package p
         join customer c on p.customeruuid = c.uuid
@@ -26,9 +24,7 @@ begin
             currentTask = 'creating RBAC test unixuser #' || t || ' for package ' || pac.name || ' #' || pac.uuid;
             raise notice 'task: %', currentTask;
             pacAdmin = 'pac-admin-' || pac.name || '@' || pac.custPrefix || '.example.com';
-            execute format('set local hsadminng.currentTask to %L', currentTask);
-            execute format('set local hsadminng.currentUser to %L', pacAdmin);
-            set local hsadminng.assumedRoles = '';
+            call defineContext(currentTask, null, pacAdmin, null);
 
             insert
                 into unixuser (name, packageUuid)
@@ -46,8 +42,6 @@ declare
     pacAdmin    varchar;
     currentTask varchar;
 begin
-    set hsadminng.currentUser to '';
-
     for pac in
         (select p.uuid, p.name
              from package p

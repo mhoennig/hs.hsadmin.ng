@@ -30,8 +30,7 @@ declare
     custAdminName varchar;
 begin
     currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
-    set local hsadminng.currentUser to 'mike@hostsharing.net';
-    set local hsadminng.assumedRoles to 'global#hostsharing.admin';
+    call defineContext(currentTask, null, 'mike@hostsharing.net', 'global#hostsharing.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     custRowId = uuid_generate_v4();
@@ -53,8 +52,6 @@ create or replace procedure createCustomerTestData(
 )
     language plpgsql as $$
 begin
-    set hsadminng.currentUser to '';
-
     for t in startCount..endCount
         loop
             call createCustomerTestData(testCustomerReference(t), intToVarChar(t, 3));

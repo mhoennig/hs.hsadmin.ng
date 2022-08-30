@@ -206,8 +206,7 @@ do language plpgsql $$
         hostsharingObjectUuid  uuid;
         hsAdminRoleUuid        uuid ;
     begin
-        set local hsadminng.currentUser to 'init';
-        set local hsadminng.currentTask to 'granting global add-customer permission to Hostsharing admin role';
+        call defineContext('granting global add-customer permission to Hostsharing admin role', null, null, null);
 
         hsAdminRoleUuid := findRoleId(hostsharingAdmin());
         hostsharingObjectUuid := (select uuid from global);
@@ -224,7 +223,8 @@ create or replace function addCustomerNotAllowedForCurrentSubjects()
     language PLPGSQL
 as $$
 begin
-    raise exception '[403] add-customer not permitted for %', array_to_string(currentSubjects(), ';', 'null');
+    raise exception '[403] add-customer not permitted for %',
+        array_to_string(currentSubjects(), ';', 'null');
 end; $$;
 
 /**

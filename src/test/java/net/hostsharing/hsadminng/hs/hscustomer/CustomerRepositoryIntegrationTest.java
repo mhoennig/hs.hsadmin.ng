@@ -6,13 +6,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +29,9 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     EntityManager em;
+
+    @MockBean
+    HttpServletRequest request;
 
     @Nested
     class CreateCustomer {
@@ -144,50 +147,6 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
             exactlyTheseCustomersAreReturned(result, "xxx");
         }
-
-        @Test
-        public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyCustomer() {
-            // given:
-            context("customer-admin@xxx.example.com", "package#yyy00.admin");
-
-            // when
-            final var result = attempt(
-                    em,
-                    () -> customerRepository.findCustomerByOptionalPrefixLike(null));
-
-            // then
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
-        }
-
-        @Test
-        void unknownUser_withoutAssumedRole_cannotViewAnyCustomers() {
-            context("unknown@example.org", null);
-
-            final var result = attempt(
-                    em,
-                    () -> customerRepository.findCustomerByOptionalPrefixLike(null));
-
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
-        }
-
-        @Test
-        @Transactional
-        void unknownUser_withAssumedCustomerRole_cannotViewAnyCustomers() {
-            context("unknown@example.org", "customer#xxx.admin");
-
-            final var result = attempt(
-                    em,
-                    () -> customerRepository.findCustomerByOptionalPrefixLike(null));
-
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
-        }
-
     }
 
     @Nested

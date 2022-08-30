@@ -202,8 +202,30 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:R(Read)" })
-        void packageAdmin_withAssumedUnixUserAdmin_canNotReadItsOwnGrantById() {
+        @Accepts({ "GRT:R(Read)", "GRT:X(Access Control)" })
+        void packageAdmin_withAssumedPackageAdmin_canNotReadItsOwnGrantByIdAnymore() {
+            // given
+            final var givenCurrentUserAsPackageAdmin = new Subject(
+                    "pac-admin-xxx00@xxx.example.com",
+                    "package#xxx00.admin");
+            final var givenGranteeUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
+            final var givenGrantedRole = findRbacRoleByName("package#xxx00.admin");
+
+            // when
+            final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
+                    .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
+
+            // then
+            grant.assertThat()
+                    .statusCode(200)
+                    .body("grantedByRoleIdName", is("customer#xxx.admin"))
+                    .body("grantedRoleIdName", is("package#xxx00.admin"))
+                    .body("granteeUserName", is("pac-admin-xxx00@xxx.example.com"));
+        }
+
+        @Test
+        @Accepts({ "GRT:R(Read)", "GRT:X(Access Control)" })
+        void packageAdmin_withAssumedUnixUserAdmin_canNotReadItsOwnGrantByIdAnymore() {
             // given
             final var givenCurrentUserAsPackageAdmin = new Subject(
                     "pac-admin-xxx00@xxx.example.com",
@@ -217,7 +239,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // then
             grant.assertThat()
-                    .statusCode(404);
+                    .statusCode(401);
         }
     }
 

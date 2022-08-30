@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Wraps the 'when' part of a DataJpaTest to improve readability of tests.
@@ -55,7 +54,7 @@ public class JpaAttempt {
     public <T> JpaResult<T> transacted(final Supplier<T> code) {
         try {
             return JpaResult.forValue(
-                transactionTemplate.execute(transactionStatus -> code.get()));
+                    transactionTemplate.execute(transactionStatus -> code.get()));
         } catch (final RuntimeException exc) {
             return JpaResult.forException(exc);
         }
@@ -114,7 +113,6 @@ public class JpaAttempt {
             if (expectedExceptionClass.isAssignableFrom(exception.getClass())) {
                 return (E) exception;
             }
-            fail("");
             throw new AssertionError("expected " + expectedExceptionClass + " but got " + exception);
         }
 
@@ -123,8 +121,8 @@ public class JpaAttempt {
         }
 
         public void assertExceptionWithRootCauseMessage(
-            final Class<? extends RuntimeException> expectedExceptionClass,
-            final String... expectedRootCauseMessages) {
+                final Class<? extends RuntimeException> expectedExceptionClass,
+                final String... expectedRootCauseMessages) {
             assertThat(wasSuccessful()).isFalse();
             final String firstRootCauseMessageLine = firstRootCauseMessageLineOf(caughtException(expectedExceptionClass));
             for (String expectedRootCauseMessage : expectedRootCauseMessages) {
@@ -133,16 +131,17 @@ public class JpaAttempt {
         }
 
         public JpaResult<T> assumeSuccessful() {
-            assertThat(exception).isNull();;
+            assertThat(exception).isNull();
+            ;
             return this;
         }
 
         private String firstRootCauseMessageLineOf(final RuntimeException exception) {
             final var rootCause = NestedExceptionUtils.getRootCause(exception);
             return Optional.ofNullable(rootCause)
-                .map(Throwable::getMessage)
-                .map(message -> message.split("\\r|\\n|\\r\\n", 0)[0])
-                .orElse(null);
+                    .map(Throwable::getMessage)
+                    .map(message -> message.split("\\r|\\n|\\r\\n", 0)[0])
+                    .orElse(null);
         }
     }
 

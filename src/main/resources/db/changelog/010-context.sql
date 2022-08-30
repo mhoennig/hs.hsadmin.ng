@@ -4,10 +4,24 @@
 -- ============================================================================
 --changeset context-DEFINE:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
+
+/*
+    Callback which is called after the context has been (re-) defined.
+    This function will be overwritten by later changesets.
+ */
+create procedure contextDefined(
+    currentTask varchar,
+    currentRequest varchar,
+    currentUser varchar,
+    assumedRoles varchar
+)
+    language plpgsql as $$
+begin
+end; $$;
+
 /*
     Defines the transaction context.
  */
-
 create or replace procedure defineContext(
     currentTask varchar,
     currentRequest varchar,
@@ -16,14 +30,18 @@ create or replace procedure defineContext(
 )
     language plpgsql as $$
 begin
-    raise notice 'currentRequest: %', defineContext.currentRequest;
     execute format('set local hsadminng.currentTask to %L', currentTask);
+
+    currentRequest := coalesce(currentRequest, '');
+    execute format('set local hsadminng.currentRequest to %L', currentRequest);
+
+    currentUser := coalesce(currentUser, '');
     execute format('set local hsadminng.currentUser to %L', currentUser);
-    if length(assumedRoles) > 0 then
-        execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
-    else
-        execute format('set local hsadminng.assumedRoles to %L', '');
-    end if;
+
+    assumedRoles := coalesce(assumedRoles, '');
+    execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
+
+    call contextDefined(currentTask, currentRequest, currentUser, assumedRoles);
 end; $$;
 --//
 
@@ -49,7 +67,7 @@ begin
             currentTask := null;
     end;
     if (currentTask is null or currentTask = '') then
-        raise exception '[401] hsadminng.currentTask must be defined, please use "SET LOCAL ...;"';
+        raise exception '[401] currentTask must be defined, please call `defineContext(...)`';
     end if;
     raise debug 'currentTask: %', currentTask;
     return currentTask;
@@ -61,8 +79,7 @@ end; $$;
 --changeset context-CURRENT-USER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns the current user as set by `hsadminng.currentUser`.
-    Raises exception if not set.
+    Returns the current user as defined by `defineContext(...)`.
  */
 create or replace function currentUser()
     returns varchar(63)
@@ -77,10 +94,6 @@ begin
         when others then
             currentUser := null;
     end;
-    if (currentUser is null or currentUser = '') then
-        raise exception '[401] hsadminng.currentUser must be defined, please use "SET LOCAL ...;"';
-    end if;
-    raise debug 'currentUser: %', currentUser;
     return currentUser;
 end; $$;
 --//

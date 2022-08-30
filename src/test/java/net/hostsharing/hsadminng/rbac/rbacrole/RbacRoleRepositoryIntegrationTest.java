@@ -6,11 +6,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static net.hostsharing.test.JpaAttempt.attempt;
@@ -29,6 +31,9 @@ class RbacRoleRepositoryIntegrationTest {
 
     @Autowired
     EntityManager em;
+
+    @MockBean
+    HttpServletRequest request;
 
     @Nested
     class FindAllRbacRoles {
@@ -133,22 +138,6 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        public void customerAdmin_withAssumedAlienPackageAdminRole_cannotViewAnyRbacRole() {
-            // given:
-            context.define("customer-admin@xxx.example.com", "package#yyy00.admin");
-
-            // when
-            final var result = attempt(
-                    em,
-                    () -> rbacRoleRepository.findAll());
-
-            // then
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "[403] user customer-admin@xxx.example.com", "has no permission to assume role package#yyy00#admin");
-        }
-
-        @Test
         void unknownUser_withoutAssumedRole_cannotViewAnyRbacRoles() {
             context.define("unknown@example.org");
 
@@ -158,20 +147,7 @@ class RbacRoleRepositoryIntegrationTest {
 
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
-        }
-
-        @Test
-        void unknownUser_withAssumedRbacRoleRole_cannotViewAnyRbacRoles() {
-            context.define("unknown@example.org", "RbacRole#xxx.admin");
-
-            final var result = attempt(
-                    em,
-                    () -> rbacRoleRepository.findAll());
-
-            result.assertExceptionWithRootCauseMessage(
-                    JpaSystemException.class,
-                    "hsadminng.currentUser defined as unknown@example.org, but does not exists");
+                    "[401] currentUserUuid cannot be determined, unknown user name \"unknown@example.org\"");
         }
     }
 

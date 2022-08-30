@@ -21,12 +21,13 @@ grant select on global to restricted;
 /**
   A single row to be referenced as a global object.
  */
-set local hsadminng.currentUser to 'init';
-set local hsadminng.currentTask to 'initializing table "global"';
-insert
-    into RbacObject (objecttable) values ('global');
-insert
-    into Global (uuid, name) values ((select uuid from RbacObject where objectTable = 'global'), 'hostsharing');
+begin transaction;
+    call defineContext('initializing table "global"', null, null, null);
+    insert
+        into RbacObject (objecttable) values ('global');
+    insert
+        into Global (uuid, name) values ((select uuid from RbacObject where objectTable = 'global'), 'hostsharing');
+commit;
 --//
 
 
@@ -40,8 +41,7 @@ create or replace function hasGlobalPermission(op RbacOp)
 $$
     -- TODO: this could to be optimized
 select (select uuid from global) in
-       (select queryAccessibleObjectUuidsOfSubjectIds(
-                   op, 'global', currentSubjectsUuids()));
+       (select queryAccessibleObjectUuidsOfSubjectIds(op, 'global', currentSubjectsUuids()));
 $$;
 --//
 
@@ -94,9 +94,10 @@ create or replace function hostsharingAdmin()
 select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType;
 $$;
 
-set local hsadminng.currentUser to 'init';
-set local hsadminng.currentTask to 'creating Hostsharing admin role';
-select createRole(hostsharingAdmin());
+begin transaction;
+    call defineContext('creating Hostsharing admin role', null, null, null);
+    select createRole(hostsharingAdmin());
+commit;
 
 -- ============================================================================
 --changeset hs-base-ADMIN-USERS:1 context:dev,tc endDelimiter:--//
@@ -108,8 +109,7 @@ do language plpgsql $$
     declare
         admins uuid ;
     begin
-        set local hsadminng.currentUser to 'init';
-        set local hsadminng.currentTask to 'creating fake Hostsharing admin users';
+        call defineContext('creating fake Hostsharing admin users', null, null, null);
 
         admins = findRoleId(hostsharingAdmin());
         call grantRoleToUserUnchecked(admins, admins, createRbacUser('mike@hostsharing.net'));
@@ -131,13 +131,13 @@ do language plpgsql $$
     declare
         userName varchar;
     begin
-        set local hsadminng.currentUser = 'sven@hostsharing.net';
+        call defineContext('testing currentUserUuid', null, 'sven@hostsharing.net', null);
         select userName from RbacUser where uuid = currentUserUuid() into userName;
         if userName <> 'sven@hostsharing.net' then
             raise exception 'setting or fetching initial currentUser failed, got: %', userName;
         end if;
 
-        set local hsadminng.currentUser = 'mike@hostsharing.net';
+        call defineContext('testing currentUserUuid', null, 'mike@hostsharing.net', null);
         select userName from RbacUser where uuid = currentUserUuid() into userName;
         if userName = 'mike@hostsharing.net' then
             raise exception 'currentUser should not change in one transaction, but did change, got: %', userName;

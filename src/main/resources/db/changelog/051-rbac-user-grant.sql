@@ -9,15 +9,15 @@ create or replace function assumedRoleUuid()
     stable leakproof
     language plpgsql as $$
 declare
-    currentSubjectUuids uuid[];
+    currentSubjectsUuids uuid[];
 begin
     -- exactly one role must be assumed, not none not more than one
     if cardinality(assumedRoles()) <> 1 then
         raise exception '[400] Granting roles to user is only possible if exactly one role is assumed, given: %', assumedRoles();
     end if;
 
-    currentSubjectUuids := currentSubjectsUuids();
-    return currentSubjectUuids[1];
+    currentSubjectsUuids := currentSubjectsUuids();
+    return currentSubjectsUuids[1];
 end; $$;
 
 create or replace procedure grantRoleToUserUnchecked(grantedByRoleUuid uuid, roleUuid uuid, userUuid uuid, doAssume boolean = true)
