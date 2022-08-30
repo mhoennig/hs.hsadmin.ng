@@ -1,6 +1,27 @@
 --liquibase formatted sql
 
 -- ============================================================================
+--changeset rbac-views-ROLE-ENHANCED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a view to the role table with additional columns
+    for easier human readability.
+ */
+drop view if exists rbacrole_ev;
+create or replace view rbacrole_ev as
+select (objectTable || '#' || objectIdName || '.' || roleType) as roleIdName, *
+       -- @formatter:off
+    from (
+             select r.*,
+                    o.objectTable, findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                 from rbacrole as r
+                          join rbacobject as o on o.uuid = r.objectuuid
+         ) as unordered
+         -- @formatter:on
+    order by roleIdName;
+--//
+
+-- ============================================================================
 --changeset rbac-views-ROLE-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
@@ -16,7 +37,7 @@ select *
                    findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
                 from rbacrole as r
                 join rbacobject as o on o.uuid = r.objectuuid
-                where isGranted(currentSubjectIds(), r.uuid)
+                where isGranted(currentSubjectsUuids(), r.uuid)
         ) as unordered
         -- @formatter:on
         order by objectTable || '#' || objectIdName || '.' || roleType;
@@ -25,14 +46,14 @@ grant all privileges on rbacrole_rv to restricted;
 
 
 -- ============================================================================
---changeset rbac-views-GRANT-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset rbac-views-GRANT-ENHANCED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Creates a view to the grants table with row-level limitation
-    based on the direct grants of the current user.
+    Creates a view to the grants table with additional columns
+    for easier human readability.
  */
-drop view if exists rbacgrants_rv;
-create or replace view rbacgrants_rv as
+drop view if exists rbacgrants_ev;
+create or replace view rbacgrants_ev as
     -- @formatter:off
     select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || '.' || r.roletype as grantedByRoleIdName,
            g.objectTable || '#' || g.objectIdName || '.' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
@@ -46,12 +67,42 @@ create or replace view rbacgrants_rv as
                  join rbacrole as r on r.uuid = g.descendantUuid
                  join rbacobject o on o.uuid = r.objectuuid
                  join rbacuser u on u.uuid = g.ascendantuuid
-                 where isGranted(currentSubjectIds(), r.uuid)
          ) as g
         join RbacRole as r on r.uuid = grantedByRoleUuid
         join RbacObject as o on o.uuid = r.objectUuid
     order by grantedRoleIdName;
     -- @formatter:on
+--//
+
+
+-- ============================================================================
+--changeset rbac-views-GRANT-RESTRICTED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a view to the grants table with row-level limitation
+    based on the direct grants of the current user.
+ */
+drop view if exists rbacgrants_rv;
+create or replace view rbacgrants_rv as
+    -- @formatter:off
+select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || '.' || r.roletype as grantedByRoleIdName,
+       g.objectTable || '#' || g.objectIdName || '.' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
+       g.grantedByRoleUuid, g.descendantUuid as grantedRoleUuid, g.ascendantUuid as userUuid,
+       g.objectTable, g.objectUuid, g.objectIdName, g.roleType as grantedRoleType
+    from (
+             select g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
+                    u.name as userName, o.objecttable, r.objectuuid, r.roletype,
+                    findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                 from rbacgrants as g
+                          join rbacrole as r on r.uuid = g.descendantUuid
+                          join rbacobject o on o.uuid = r.objectuuid
+                          join rbacuser u on u.uuid = g.ascendantuuid
+                 where isGranted(currentSubjectsUuids(), r.uuid)
+         ) as g
+             join RbacRole as r on r.uuid = grantedByRoleUuid
+             join RbacObject as o on o.uuid = r.objectUuid
+    order by grantedRoleIdName;
+-- @formatter:on
 grant all privileges on rbacrole_rv to restricted;
 --//
 
@@ -115,6 +166,31 @@ execute function deleteRbacGrant();
 
 
 -- ============================================================================
+--changeset rbac-views-USER-ENHANCED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Creates a view to the users table with additional columns
+    for easier human readability.
+ */
+drop view if exists RbacUser_ev;
+create or replace view RbacUser_ev as
+select distinct *
+                -- @formatter:off
+    from (
+             select usersInRolesOfCurrentUser.*
+                 from RbacUser as usersInRolesOfCurrentUser
+                          join RbacGrants as g on g.ascendantuuid = usersInRolesOfCurrentUser.uuid
+                          join rbacrole_ev as r on r.uuid = g.descendantuuid
+             union
+             select users.*
+                 from RbacUser as users
+         ) as unordered
+         -- @formatter:on
+    order by unordered.name;
+--//
+
+
+-- ============================================================================
 --changeset rbac-views-USER-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
@@ -133,7 +209,7 @@ create or replace view RbacUser_rv as
             union
             select users.*
                 from RbacUser as users
-                where cardinality(assumedRoles()) = 0 and  currentUserId() = users.uuid
+                where cardinality(assumedRoles()) = 0 and  currentUserUuid() = users.uuid
         ) as unordered
         -- @formatter:on
         order by unordered.name;
@@ -210,12 +286,12 @@ create or replace function grantedPermissions(targetUserUuid uuid)
     returns null on null input
     language plpgsql as $$
 declare
-    currentUserId uuid;
+    currentUserUuid uuid;
 begin
     -- @formatter:off
-    currentUserId := currentUserId();
+    currentUserUuid := currentUserUuid();
 
-    if hasGlobalRoleGranted(targetUserUuid) and not hasGlobalRoleGranted(currentUserId) then
+    if hasGlobalRoleGranted(targetUserUuid) and not hasGlobalRoleGranted(currentUserUuid) then
         raise exception '[403] permissions of user "%" are not accessible to user "%"', targetUserUuid, currentUser();
     end if;
 
