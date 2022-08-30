@@ -28,6 +28,7 @@ create or replace function determineCurrentSubjectsUuids(currentUserUuid uuid, a
     language plpgsql as $$
 declare
     roleName            varchar(63);
+    roleNameParts       varchar(63);
     objectTableToAssume varchar(63);
     objectNameToAssume  varchar(63);
     objectUuidToAssume  uuid;
@@ -48,10 +49,10 @@ begin
 
     foreach roleName in array string_to_array(assumedRoles, ';')
         loop
-            roleName = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
-            objectTableToAssume = split_part(roleName, '#', 1);
-            objectNameToAssume = split_part(roleName, '#', 2);
-            roleTypeToAssume = split_part(roleName, '#', 3);
+            roleNameParts = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
+            objectTableToAssume = split_part(roleNameParts, '#', 1);
+            objectNameToAssume = split_part(roleNameParts, '#', 2);
+            roleTypeToAssume = split_part(roleNameParts, '#', 3);
 
             objectUuidToAssume = findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
 
@@ -60,7 +61,10 @@ begin
                 where r.objectUuid = objectUuidToAssume
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
-            if (not isGranted(currentUserUuid, roleUuidToAssume)) then
+            if roleUuidToAssume is null then
+                raise exception '[403] role % not accessible for user %', roleName, currentUser();
+            end if;
+            if not isGranted(currentUserUuid, roleUuidToAssume) then
                 raise exception '[403] user % has no permission to assume role %', currentUser(), roleName;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
@@ -160,7 +164,7 @@ begin
     if (currentSubjectsUuids is null or length(currentSubjectsUuids) = 0 ) then
         currentUserName := currentUser();
         if (length(currentUserName) > 0) then
-            raise exception '[401] currentUserUuid cannot be determined, unknown user name "%"', currentUserName;
+            raise exception '[401] currentSubjectsUuids (%) cannot be determined, unknown user name "%"', currentSubjectsUuids, currentUserName;
         else
             raise exception '[401] currentSubjectsUuids cannot be determined, please call `defineContext(...)` first;"';
         end if;

@@ -147,7 +147,7 @@ class RbacRoleRepositoryIntegrationTest {
 
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[401] currentUserUuid cannot be determined, unknown user name \"unknown@example.org\"");
+                    "[401] currentSubjectsUuids () cannot be determined, unknown user name \"unknown@example.org\"");
         }
     }
 

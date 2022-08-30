@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.context;
 
+import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,23 +33,26 @@ class ContextIntegrationTests {
 
         context.define("mike@hostsharing.net", null);
 
-        final var currentTask = context.getCurrentTask();
-        assertThat(currentTask).isEqualTo("ContextIntegrationTests.defineWithoutHttpServletRequestUsesCallStack");
+        assertThat(context.getCurrentTask())
+                .isEqualTo("ContextIntegrationTests.defineWithoutHttpServletRequestUsesCallStack");
     }
 
     @Test
     @Transactional
     void defineWithCurrentUserButWithoutAssumedRoles() {
+        // when
         context.define("mike@hostsharing.net");
 
-        final var currentUser = context.getCurrentUser();
-        assertThat(currentUser).isEqualTo("mike@hostsharing.net");
+        // then
+        assertThat(context.getCurrentUser()).
+                isEqualTo("mike@hostsharing.net");
 
-        final var currentUserUuid = context.getCurrentUserUUid();
-        assertThat(currentUserUuid).isNotNull();
+        assertThat(context.getCurrentUserUUid()).isNotNull();
 
-        final var assumedRoleUuids = context.currentSubjectsUuids();
-        assertThat(assumedRoleUuids).containsExactly(currentUserUuid);
+        assertThat(context.getAssumedRoles()).isEmpty();
+
+        assertThat(context.currentSubjectsUuids())
+                .containsExactly(context.getCurrentUserUUid());
     }
 
     @Test
@@ -80,13 +84,17 @@ class ContextIntegrationTests {
     @Test
     @Transactional
     void defineWithCurrentUserAndAssumedRoles() {
+        // given
         context.define("mike@hostsharing.net", "customer#xxx.owner;customer#yyy.owner");
 
+        // when
         final var currentUser = context.getCurrentUser();
         assertThat(currentUser).isEqualTo("mike@hostsharing.net");
 
-        final var assumedRoles = context.currentSubjectsUuids();
-        assertThat(assumedRoles).hasSize(2);
+        // then
+        assertThat(context.getAssumedRoles())
+                .isEqualTo(Array.of("customer#xxx.owner", "customer#yyy.owner"));
+        assertThat(context.currentSubjectsUuids()).hasSize(2);
     }
 
     @Test
@@ -99,6 +107,6 @@ class ContextIntegrationTests {
         // then
         result.assertExceptionWithRootCauseMessage(
                 javax.persistence.PersistenceException.class,
-                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role package#yyy00#admin");
+                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role package#yyy00.admin");
     }
 }

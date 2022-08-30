@@ -16,7 +16,7 @@ spring:
     jpa:
         properties:
             hibernate:
-                dialect: net.hostsharing.hsadminng.config.PostgreSQL95CustomDialect
+                dialect: net.hostsharing.hsadminng.config.PostgresCustomDialect
 
 liquibase:
     contexts: dev

@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.context;
 
+import com.vladmihalcea.hibernate.type.array.StringArrayType;
+import com.vladmihalcea.hibernate.type.array.UUIDArrayType;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -54,12 +56,12 @@ public class Context {
             final String assumedRoles) {
         final var query = em.createNativeQuery(
                 """
-                call defineContext(
-                    cast(:currentTask as varchar), 
-                    cast(:currentRequest as varchar), 
-                    cast(:currentUser as varchar), 
-                    cast(:assumedRoles as varchar));
-                """);
+                        call defineContext(
+                            cast(:currentTask as varchar), 
+                            cast(:currentRequest as varchar), 
+                            cast(:currentUser as varchar), 
+                            cast(:assumedRoles as varchar));
+                        """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 96));
         query.setParameter("currentRequest", shortenToMaxLength(currentRequest, 512)); // TODO.SPEC: length?
         query.setParameter("currentUser", currentUser);
@@ -80,11 +82,17 @@ public class Context {
     }
 
     public String[] getAssumedRoles() {
-        return (String[]) em.createNativeQuery("select assumedRoles()").getSingleResult();
+        return (String[]) em.createNativeQuery("select assumedRoles() as roles")
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("roles", StringArrayType.INSTANCE)
+                .getSingleResult();
     }
 
     public UUID[] currentSubjectsUuids() {
-        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids()").getSingleResult();
+        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids() as uuids")
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("uuids", UUIDArrayType.INSTANCE) // TODO.BLOG
+                .getSingleResult();
     }
 
     private static String getCallerMethodNameFromStack() {

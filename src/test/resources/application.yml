@@ -13,7 +13,7 @@ spring:
         properties:
             hibernate:
                 default_schema: public
-                dialect: net.hostsharing.hsadminng.config.PostgreSQL95CustomDialect
+                dialect: net.hostsharing.hsadminng.config.PostgresCustomDialect
                 format_sql: false
         hibernate:
             ddl-auto: none

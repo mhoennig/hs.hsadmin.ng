@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
@@ -203,7 +204,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
         @Test
         @Accepts({ "GRT:R(Read)", "GRT:X(Access Control)" })
-        void packageAdmin_withAssumedPackageAdmin_canNotReadItsOwnGrantByIdAnymore() {
+        void packageAdmin_withAssumedPackageAdmin_canStillReadItsOwnGrantById() {
             // given
             final var givenCurrentUserAsPackageAdmin = new Subject(
                     "pac-admin-xxx00@xxx.example.com",
@@ -225,21 +226,20 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
         @Test
         @Accepts({ "GRT:R(Read)", "GRT:X(Access Control)" })
-        void packageAdmin_withAssumedUnixUserAdmin_canNotReadItsOwnGrantByIdAnymore() {
+        void packageAdmin_withAssumedPackageTenantRole_canNotReadItsOwnGrantByIdAnymore() {
+
             // given
             final var givenCurrentUserAsPackageAdmin = new Subject(
                     "pac-admin-xxx00@xxx.example.com",
-                    "unixuser#xxx00-xxxa.admin");
+                    "package#xxx00.tenant");
             final var givenGranteeUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
             final var givenGrantedRole = findRbacRoleByName("package#xxx00.admin");
-
-            // when
             final var grant = givenCurrentUserAsPackageAdmin.getGrantById()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
             // then
             grant.assertThat()
-                    .statusCode(401);
+                    .statusCode(404);
         }
     }
 
@@ -453,8 +453,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             private Subject currentSubject = Subject.this;
             private RbacRoleEntity grantedRole;
-            private boolean assumed;
-            private RbacUserEntity granteeUser;
 
             GetGrantByIdFixture forGrantedRole(final RbacRoleEntity grantedRole) {
                 this.grantedRole = grantedRole;
@@ -462,7 +460,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             }
 
             ValidatableResponse toGranteeUser(final RbacUserEntity granteeUser) {
-                this.granteeUser = granteeUser;
 
                 return RestAssured // @formatter:ff
                         .given()
@@ -473,7 +470,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .get("http://localhost/api/rbac-grants/%s/%s".formatted(
                                 grantedRole.getUuid(), granteeUser.getUuid()
                         ))
-                        .then().log().all(); // @formatter:on
+                        .then().log().all();
+                // @formatter:on
             }
         }
     }
