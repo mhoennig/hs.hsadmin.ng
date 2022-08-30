@@ -23,11 +23,12 @@ do $$
  */
 create table tx_context
 (
-    txId         bigint primary key not null,
-    txTimestamp  timestamp          not null,
-    currentUser  varchar(63)        not null, -- not the uuid, because users can be deleted
-    assumedRoles varchar            not null, -- not the uuids, because roles can be deleted
-    currentTask  varchar            not null
+    txId            bigint primary key not null,
+    txTimestamp     timestamp          not null,
+    currentUser     varchar(63)        not null, -- not the uuid, because users can be deleted
+    assumedRoles    varchar            not null, -- not the uuids, because roles can be deleted
+    currentTask     varchar(96)        not null,
+    currentRequest  varchar(512)       not null
 );
 
 create index on tx_context using brin (txTimestamp);
@@ -65,7 +66,7 @@ begin
     insert
         into tx_context
         values (txid_current(), now(),
-                currentUser(), assumedRoles(), currentTask())
+                currentUser(), assumedRoles(), currentTask(), currentRequest())
         on conflict do nothing;
 
     case tg_op

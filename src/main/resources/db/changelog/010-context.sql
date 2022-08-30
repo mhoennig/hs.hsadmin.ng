@@ -69,8 +69,32 @@ begin
     if (currentTask is null or currentTask = '') then
         raise exception '[401] currentTask must be defined, please call `defineContext(...)`';
     end if;
-    raise debug 'currentTask: %', currentTask;
     return currentTask;
+end; $$;
+--//
+
+
+-- ============================================================================
+--changeset context-CURRENT-REQUEST:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Returns the current http request as set via `defineContext(...)`.
+    Raises exception if not set.
+ */
+create or replace function currentRequest()
+    returns varchar(512)
+    stable leakproof
+    language plpgsql as $$
+declare
+    currentRequest varchar(512);
+begin
+    begin
+        currentRequest := current_setting('hsadminng.currentRequest');
+    exception
+        when others then
+            currentRequest := null;
+    end;
+    return currentRequest;
 end; $$;
 --//
 
