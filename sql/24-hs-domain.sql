@@ -102,7 +102,7 @@ drop view if exists domain_rv;
 create or replace view domain_rv as
 select target.*
     from Domain as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'domain', currentSubjectIds()));
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'domain', currentSubjectsUuids()));
 grant all privileges on domain_rv to restricted;
 
 

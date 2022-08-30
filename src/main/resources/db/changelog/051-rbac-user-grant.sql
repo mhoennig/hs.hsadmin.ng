@@ -16,7 +16,7 @@ begin
         raise exception '[400] Granting roles to user is only possible if exactly one role is assumed, given: %', assumedRoles();
     end if;
 
-    currentSubjectUuids := currentSubjectIds();
+    currentSubjectUuids := currentSubjectsUuids();
     return currentSubjectUuids[1];
 end; $$;
 
@@ -42,7 +42,7 @@ begin
     perform assertReferenceType('grantedRoleUuid (descendant)', grantedRoleUuid, 'RbacRole');
     perform assertReferenceType('userUuid (ascendant)', userUuid, 'RbacUser');
 
-    if NOT isGranted(currentSubjectIds(), grantedByRoleUuid) then
+    if NOT isGranted(currentSubjectsUuids(), grantedByRoleUuid) then
         raise exception '[403] Access to granted-by-role % forbidden for %', grantedByRoleUuid, currentSubjects();
     end if;
 
@@ -71,7 +71,7 @@ begin
     perform assertReferenceType('grantedRoleUuid (descendant)', grantedRoleUuid, 'RbacRole');
     perform assertReferenceType('userUuid (ascendant)', userUuid, 'RbacUser');
 
-    if NOT isGranted(currentSubjectIds(), grantedByRoleUuid) then
+    if NOT isGranted(currentSubjectsUuids(), grantedByRoleUuid) then
         raise exception '[403] Revoking role created by % is forbidden for %.', grantedByRoleUuid, currentSubjects();
     end if;
 
@@ -79,8 +79,8 @@ begin
         raise exception '[403] Revoking role % is forbidden for %.', grantedRoleUuid, currentSubjects();
     end if;
 
-    --raise exception 'isGranted(%, %)', currentSubjectIds(), grantedByRoleUuid;
-    if NOT isGranted(currentSubjectIds(), grantedByRoleUuid) then
+    --raise exception 'isGranted(%, %)', currentSubjectsUuids(), grantedByRoleUuid;
+    if NOT isGranted(currentSubjectsUuids(), grantedByRoleUuid) then
         raise exception '[403] Revoking role granted by % is forbidden for %.', grantedByRoleUuid, currentSubjects();
     end if;
 

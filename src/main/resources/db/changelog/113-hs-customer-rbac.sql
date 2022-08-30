@@ -189,7 +189,7 @@ drop view if exists customer_rv;
 create or replace view customer_rv as
 select target.*
     from customer as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', currentSubjectIds()));
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', currentSubjectsUuids()));
 grant all privileges on customer_rv to restricted;
 --//
 

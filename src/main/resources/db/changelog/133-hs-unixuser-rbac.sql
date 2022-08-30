@@ -206,6 +206,6 @@ drop view if exists unixuser_rv;
 create or replace view unixuser_rv as
 select target.*
     from unixuser as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'unixuser', currentSubjectIds()));
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'unixuser', currentSubjectsUuids()));
 grant all privileges on unixuser_rv to restricted;
 --//

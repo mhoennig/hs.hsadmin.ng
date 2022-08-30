@@ -591,7 +591,7 @@ Let's have a look at the two view queries:
          WHERE target.uuid IN (
             SELECT uuid
               FROM queryAccessibleObjectUuidsOfSubjectIds( 
-                'view', 'customer', currentSubjectIds()));
+                'view', 'customer', currentSubjectsUuids()));
 
 This view should be automatically updatable.
 Where, for updates, we actually have to check for 'edit' instead of 'view' operation, which makes it a bit more complicated.
@@ -609,7 +609,7 @@ Looks like the query optimizer needed some statistics to find the best path.
         SELECT DISTINCT target.*
           FROM customer AS target
           JOIN queryAccessibleObjectUuidsOfSubjectIds( 
-                'view', 'customer', currentSubjectIds()) AS allowedObjId
+                'view', 'customer', currentSubjectsUuids()) AS allowedObjId
             ON target.uuid = allowedObjId;
 
 This view cannot is not updatable automatically,

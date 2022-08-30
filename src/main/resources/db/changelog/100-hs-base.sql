@@ -41,7 +41,7 @@ $$
     -- TODO: this could to be optimized
 select (select uuid from global) in
        (select queryAccessibleObjectUuidsOfSubjectIds(
-                   op, 'global', currentSubjectIds()));
+                   op, 'global', currentSubjectsUuids()));
 $$;
 --//
 
@@ -124,7 +124,7 @@ $$;
 -- ----------------------------------------------------------------------------
 
 /*
-    Tests if currentUserId() can fetch the user from the session variable.
+    Tests if currentUserUuid() can fetch the user from the session variable.
  */
 
 do language plpgsql $$
@@ -132,13 +132,13 @@ do language plpgsql $$
         userName varchar;
     begin
         set local hsadminng.currentUser = 'sven@hostsharing.net';
-        select userName from RbacUser where uuid = currentUserId() into userName;
+        select userName from RbacUser where uuid = currentUserUuid() into userName;
         if userName <> 'sven@hostsharing.net' then
             raise exception 'setting or fetching initial currentUser failed, got: %', userName;
         end if;
 
         set local hsadminng.currentUser = 'mike@hostsharing.net';
-        select userName from RbacUser where uuid = currentUserId() into userName;
+        select userName from RbacUser where uuid = currentUserUuid() into userName;
         if userName = 'mike@hostsharing.net' then
             raise exception 'currentUser should not change in one transaction, but did change, got: %', userName;
         end if;

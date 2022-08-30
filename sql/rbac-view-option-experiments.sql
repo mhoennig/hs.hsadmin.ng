@@ -20,7 +20,7 @@ CREATE POLICY customer_policy ON customer
     TO restricted
     USING (
         -- id=1000
-        isPermissionGrantedToSubject(findPermissionId('customer', id, 'view'), currentUserId())
+        isPermissionGrantedToSubject(findPermissionId('customer', id, 'view'), currentUserUuid())
     );
 
 SET SESSION AUTHORIZATION restricted;
@@ -35,7 +35,7 @@ SELECT * FROM customer;
 CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
-    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findPermissionId('customer', id, 'view'), currentUserId());
+    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findPermissionId('customer', id, 'view'), currentUserUuid());
 SELECT * from cust_view LIMIT 10;
 
 select queryAllPermissionsOfSubjectId(findRbacUser('mike@hostsharing.net'));
@@ -51,7 +51,7 @@ CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
     SELECT c.uuid, c.reference, c.prefix FROM customer AS c
-      JOIN queryAllPermissionsOfSubjectId(currentUserId()) AS p
+      JOIN queryAllPermissionsOfSubjectId(currentUserUuid()) AS p
            ON p.objectTable='customer' AND p.objectUuid=c.uuid AND p.op in ('*', 'view');
 GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
@@ -67,7 +67,7 @@ DROP VIEW IF EXISTS cust_view;
 CREATE OR REPLACE VIEW cust_view AS
     SELECT c.uuid, c.reference, c.prefix
       FROM customer AS c
-      JOIN queryAllPermissionsOfSubjectId(currentUserId()) AS p
+      JOIN queryAllPermissionsOfSubjectId(currentUserUuid()) AS p
            ON p.objectUuid=c.uuid AND p.op in ('*', 'view');
 GRANT ALL PRIVILEGES ON cust_view TO restricted;
 

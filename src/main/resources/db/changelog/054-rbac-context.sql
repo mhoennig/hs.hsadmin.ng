@@ -8,20 +8,20 @@
     Raises exception if not set.
  */
 
-create or replace function currentUserId()
+create or replace function currentUserUuid()
     returns uuid
     stable leakproof
     language plpgsql as $$
 declare
     currentUser   varchar(63);
-    currentUserId uuid;
+    currentUserUuid uuid;
 begin
     currentUser := currentUser();
-    currentUserId = (select uuid from RbacUser where name = currentUser);
-    if currentUserId is null then
+    currentUserUuid = (select uuid from RbacUser where name = currentUser);
+    if currentUserUuid is null then
         raise exception '[401] hsadminng.currentUser defined as %, but does not exists', currentUser;
     end if;
-    return currentUserId;
+    return currentUserUuid;
 end; $$;
 --//
 
@@ -33,12 +33,12 @@ end; $$;
     or, if any, ids of assumed role names as set in `hsadminng.assumedRoles`
     or empty array, if not set.
  */
-create or replace function currentSubjectIds()
+create or replace function currentSubjectsUuids()
     returns uuid[]
     stable leakproof
     language plpgsql as $$
 declare
-    currentUserId       uuid;
+    currentUserUuid       uuid;
     roleNames           varchar(63)[];
     roleName            varchar(63);
     objectTableToAssume varchar(63);
@@ -48,14 +48,14 @@ declare
     roleIdsToAssume     uuid[];
     roleUuidToAssume    uuid;
 begin
-    currentUserId := currentUserId();
-    if currentUserId is null then
+    currentUserUuid := currentUserUuid();
+    if currentUserUuid is null then
         raise exception '[401] user % does not exist', currentUser();
     end if;
 
     roleNames := assumedRoles();
     if cardinality(roleNames) = 0 then
-        return array [currentUserId];
+        return array [currentUserUuid];
     end if;
 
     raise notice 'assuming roles: %', roleNames;
@@ -75,8 +75,8 @@ begin
                 where r.objectUuid = objectUuidToAssume
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
-            if (not isGranted(currentUserId, roleUuidToAssume)) then
-                raise exception '[403] user % (%) has no permission to assume role % (%)', currentUser(), currentUserId, roleName, roleUuidToAssume;
+            if (not isGranted(currentUserUuid, roleUuidToAssume)) then
+                raise exception '[403] user % (%) has no permission to assume role % (%)', currentUser(), currentUserUuid, roleName, roleUuidToAssume;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
         end loop;

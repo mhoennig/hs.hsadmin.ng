@@ -87,7 +87,7 @@ drop view if exists EMailAddress_rv;
 create or replace view EMailAddress_rv as
 select target.*
     from EMailAddress as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'emailaddress', currentSubjectIds()));
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'emailaddress', currentSubjectsUuids()));
 grant all privileges on EMailAddress_rv to restricted;
 
 -- generate EMailAddress test data
