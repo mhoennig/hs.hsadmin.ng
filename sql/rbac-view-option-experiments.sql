@@ -20,7 +20,7 @@ CREATE POLICY customer_policy ON customer
     TO restricted
     USING (
         -- id=1000
-        isPermissionGrantedToSubject(findPermissionId('customer', id, 'view'), currentUserUuid())
+        isPermissionGrantedToSubject(findPermissionId('test_customer', id, 'view'), currentUserUuid())
     );
 
 SET SESSION AUTHORIZATION restricted;
@@ -35,10 +35,10 @@ SELECT * FROM customer;
 CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
-    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findPermissionId('customer', id, 'view'), currentUserUuid());
+    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findPermissionId('test_customer', id, 'view'), currentUserUuid());
 SELECT * from cust_view LIMIT 10;
 
-select queryAllPermissionsOfSubjectId(findRbacUser('mike@hostsharing.net'));
+select queryAllPermissionsOfSubjectId(findRbacUser('mike@example.org'));
 
 -- access control via view-rule with join to recursive permissions - really fast (38ms for 1 million rows)
 SET SESSION SESSION AUTHORIZATION DEFAULT;
@@ -52,7 +52,7 @@ CREATE OR REPLACE RULE "_RETURN" AS
     DO INSTEAD
     SELECT c.uuid, c.reference, c.prefix FROM customer AS c
       JOIN queryAllPermissionsOfSubjectId(currentUserUuid()) AS p
-           ON p.objectTable='customer' AND p.objectUuid=c.uuid AND p.op in ('*', 'view');
+           ON p.objectTable='test_customer' AND p.objectUuid=c.uuid AND p.op in ('*', 'view');
 GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
 SET SESSION SESSION AUTHORIZATION restricted;
@@ -73,7 +73,7 @@ GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
 SET SESSION SESSION AUTHORIZATION restricted;
 -- SET hsadminng.currentUser TO 'alex@example.com';
-SET hsadminng.currentUser TO 'mike@hostsharing.net';
+SET hsadminng.currentUser TO 'mike@example.org';
 -- SET hsadminng.currentUser TO 'aaaaouq@example.com';
 SELECT * from cust_view where reference=1144150;
 
@@ -81,9 +81,9 @@ select rr.uuid, rr.type from RbacGrants g
     join RbacReference RR on g.ascendantUuid = RR.uuid
     where g.descendantUuid in (
         select uuid from queryAllPermissionsOfSubjectId(findRbacUser('alex@example.com'))
-            where objectTable='customer' and op in ('*', 'view'));
+            where objectTable='test_customer' and op in ('*', 'view'));
 
-call grantRoleToUser(findRoleId('customer#aaa.admin'), findRbacUser('aaaaouq@example.com'));
+call grantRoleToUser(findRoleId('test_customer#aaa.admin'), findRbacUser('aaaaouq@example.com'));
 
 select queryAllPermissionsOfSubjectId(findRbacUser('aaaaouq@example.com'));
 

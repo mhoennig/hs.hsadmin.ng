@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-package-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset test-package-TEST-DATA-GENERATOR:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates the given number of test packages for the given customer.
@@ -9,14 +9,14 @@
 create or replace procedure createPackageTestData(customerPrefix varchar, pacCount int)
     language plpgsql as $$
 declare
-    cust          customer;
+    cust          test_customer;
     custAdminUser varchar;
     custAdminRole varchar;
     pacName       varchar;
     currentTask   varchar;
-    pac           package;
+    pac           test_package;
 begin
-    select * from customer where customer.prefix = customerPrefix into cust;
+    select * from test_customer where test_customer.prefix = customerPrefix into cust;
 
     for t in 0..(pacCount-1)
         loop
@@ -25,18 +25,18 @@ begin
                           cust.uuid;
 
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
-            custAdminRole = 'customer#' || cust.prefix || '.admin';
+            custAdminRole = 'test_customer#' || cust.prefix || '.admin';
             call defineContext(currentTask, null, custAdminUser, custAdminRole);
             raise notice 'task: % by % as %', currentTask, custAdminUser, custAdminRole;
 
             insert
-                into package (customerUuid, name, description)
+                into test_package (customerUuid, name, description)
                 values (cust.uuid, pacName, 'Here can add your own description of package ' || pacName || '.')
                 returning * into pac;
 
             call grantRoleToUser(
-                    getRoleId(customerAdmin(cust), 'fail'),
-                    findRoleId(packageAdmin(pac)),
+                    getRoleId(testCustomerAdmin(cust), 'fail'),
+                    findRoleId(testPackageAdmin(pac)),
                     createRbacUser('pac-admin-' || pacName || '@' || cust.prefix || '.example.com'),
                     true);
 
@@ -49,9 +49,9 @@ end; $$;
 create or replace procedure createPackageTestData()
     language plpgsql as $$
 declare
-    cust customer;
+    cust test_customer;
 begin
-    for cust in (select * from customer)
+    for cust in (select * from test_customer)
         loop
             continue when cust.reference >= 90000; -- reserved for functional testing
             call createPackageTestData(cust.prefix, 3);
@@ -64,7 +64,7 @@ $$;
 
 
 -- ============================================================================
---changeset hs-package-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset test-package-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

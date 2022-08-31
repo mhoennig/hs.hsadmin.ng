@@ -1,64 +1,64 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-customer-rbac-CREATE-OBJECT:1 endDelimiter:--//
+--changeset test-customer-rbac-CREATE-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the related RbacObject through a BEFORE INSERT TRIGGER.
  */
-drop trigger if exists createRbacObjectForCustomer_Trigger on customer;
+drop trigger if exists createRbacObjectForCustomer_Trigger on test_customer;
 create trigger createRbacObjectForCustomer_Trigger
     before insert
-    on customer
+    on test_customer
     for each row
 execute procedure createRbacObject();
 --//
 
 -- ============================================================================
---changeset hs-customer-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset test-customer-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function customerOwner(customer customer)
+create or replace function testCustomerOwner(customer test_customer)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$
 begin
-    return roleDescriptor('customer', customer.uuid, 'owner');
+    return roleDescriptor('test_customer', customer.uuid, 'owner');
 end; $$;
 
-create or replace function customerAdmin(customer customer)
+create or replace function testCustomerAdmin(customer test_customer)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$
 begin
-    return roleDescriptor('customer', customer.uuid, 'admin');
+    return roleDescriptor('test_customer', customer.uuid, 'admin');
 end; $$;
 
-create or replace function customerTenant(customer customer)
+create or replace function testCustomerTenant(customer test_customer)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$
 begin
-    return roleDescriptor('customer', customer.uuid, 'tenant');
+    return roleDescriptor('test_customer', customer.uuid, 'tenant');
 end; $$;
 --//
 
 
 -- ============================================================================
---changeset hs-customer-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset test-customer-rbac-ROLES-CREATION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the roles and their assignments for a new customer for the AFTER INSERT TRIGGER.
  */
 
-create or replace function createRbacRolesForCustomer()
+create or replace function createRbacRolesForTestCustomer()
     returns trigger
     language plpgsql
     strict as $$
 declare
-    customerOwnerUuid uuid;
+    testCustomerOwnerUuid uuid;
     customerAdminUuid uuid;
 begin
     if TG_OP <> 'INSERT' then
@@ -66,27 +66,27 @@ begin
     end if;
 
     -- the owner role with full access for Hostsharing administrators
-    customerOwnerUuid = createRole(
-        customerOwner(NEW),
+    testCustomerOwnerUuid = createRole(
+        testCustomerOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(hostsharingAdmin())
+        beneathRole(testGlobalAdmin())
         );
 
     -- the admin role for the customer's admins, who can view and add products
     customerAdminUuid = createRole(
-        customerAdmin(NEW),
+        testCustomerAdmin(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view', 'add-package']),
         -- NO auto assume for customer owner to avoid exploding permissions for administrators
         withUser(NEW.adminUserName, 'create'), -- implicitly ignored if null
-        grantedByRole(hostsharingAdmin())
+        grantedByRole(testGlobalAdmin())
         );
 
     -- allow the customer owner role (thus administrators) to assume the customer admin role
-    call grantRoleToRole(customerAdminUuid, customerOwnerUuid, false);
+    call grantRoleToRole(customerAdminUuid, testCustomerOwnerUuid, false);
 
     -- the tenant role which later can be used by owners+admins of sub-objects
     perform createRole(
-        customerTenant(NEW),
+        testCustomerTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view'])
         );
 
@@ -97,32 +97,32 @@ end; $$;
     An AFTER INSERT TRIGGER which creates the role structure for a new customer.
  */
 
-drop trigger if exists createRbacRolesForCustomer_Trigger on customer;
-create trigger createRbacRolesForCustomer_Trigger
+drop trigger if exists createRbacRolesForTestCustomer_Trigger on test_customer;
+create trigger createRbacRolesForTestCustomer_Trigger
     after insert
-    on customer
+    on test_customer
     for each row
-execute procedure createRbacRolesForCustomer();
+execute procedure createRbacRolesForTestCustomer();
 --//
 
 
 -- ============================================================================
---changeset hs-customer-rbac-ROLES-REMOVAL:1 endDelimiter:--//
+--changeset test-customer-rbac-ROLES-REMOVAL:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Deletes the roles and their assignments of a deleted customer for the BEFORE DELETE TRIGGER.
  */
 
-create or replace function deleteRbacRulesForCustomer()
+create or replace function deleteRbacRulesForTestCustomer()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if TG_OP = 'DELETE' then
-        call deleteRole(findRoleId(customerOwner(OLD)));
-        call deleteRole(findRoleId(customerAdmin(OLD)));
-        call deleteRole(findRoleId(customerTenant(OLD)));
+        call deleteRole(findRoleId(testCustomerOwner(OLD)));
+        call deleteRole(findRoleId(testCustomerAdmin(OLD)));
+        call deleteRole(findRoleId(testCustomerTenant(OLD)));
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
@@ -132,93 +132,93 @@ end; $$;
     An BEFORE DELETE TRIGGER which deletes the role structure of a customer.
  */
 
-drop trigger if exists deleteRbacRulesForCustomer_Trigger on customer;
-create trigger deleteRbacRulesForCustomer_Trigger
+drop trigger if exists deleteRbacRulesForTestCustomer_Trigger on test_customer;
+create trigger deleteRbacRulesForTestCustomer_Trigger
     before delete
-    on customer
+    on test_customer
     for each row
-execute procedure deleteRbacRulesForCustomer();
+execute procedure deleteRbacRulesForTestCustomer();
 --//
 
 -- ============================================================================
---changeset hs-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset test-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates a view to the customer main table which maps the identifying name
     (in this case, the prefix) to the objectUuid.
  */
-drop view if exists customer_iv;
-create or replace view customer_iv as
+drop view if exists test_customer_iv;
+create or replace view test_customer_iv as
 select target.uuid, target.prefix as idName
-    from customer as target;
+    from test_customer as target;
 -- TODO: Is it ok that everybody has access to this information?
-grant all privileges on customer_iv to restricted;
+grant all privileges on test_customer_iv to restricted;
 
 /*
     Returns the objectUuid for a given identifying name (in this case the prefix).
  */
-create or replace function customerUuidByIdName(idName varchar)
+create or replace function test_customerUuidByIdName(idName varchar)
     returns uuid
     language sql
     strict as $$
-select uuid from customer_iv iv where iv.idName = customerUuidByIdName.idName;
+select uuid from test_customer_iv iv where iv.idName = test_customerUuidByIdName.idName;
 $$;
 
 /*
     Returns the identifying name for a given objectUuid (in this case the prefix).
  */
-create or replace function customerIdNameByUuid(uuid uuid)
+create or replace function test_customerIdNameByUuid(uuid uuid)
     returns varchar
     language sql
     strict as $$
-select idName from customer_iv iv where iv.uuid = customerIdNameByUuid.uuid;
+select idName from test_customer_iv iv where iv.uuid = test_customerIdNameByUuid.uuid;
 $$;
 --//
 
 
 -- ============================================================================
---changeset hs-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset test-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates a view to the customer main table with row-level limitation
     based on the 'view' permission of the current user or assumed roles.
  */
 set session session authorization default;
-drop view if exists customer_rv;
-create or replace view customer_rv as
+drop view if exists test_customer_rv;
+create or replace view test_customer_rv as
 select target.*
-    from customer as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'customer', currentSubjectsUuids()));
-grant all privileges on customer_rv to restricted;
+    from test_customer as target
+    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'test_customer', currentSubjectsUuids()));
+grant all privileges on test_customer_rv to restricted;
 --//
 
 
 -- ============================================================================
---changeset hs-customer-rbac-ADD-CUSTOMER:1 endDelimiter:--//
+--changeset test-customer-rbac-ADD-CUSTOMER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates a global permission for add-customer and assigns it to the hostsharing admins role.
  */
 do language plpgsql $$
     declare
-        addCustomerPermissions uuid[];
-        hostsharingObjectUuid  uuid;
-        hsAdminRoleUuid        uuid ;
+        addCustomerPermissions  uuid[];
+        globalObjectUuid        uuid;
+        globalAdminRoleUuid         uuid ;
     begin
-        call defineContext('granting global add-customer permission to Hostsharing admin role', null, null, null);
+        call defineContext('granting global add-customer permission to global admin role', null, null, null);
 
-        hsAdminRoleUuid := findRoleId(hostsharingAdmin());
-        hostsharingObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(hostsharingObjectUuid, array ['add-customer']);
-        call grantPermissionsToRole(hsAdminRoleUuid, addCustomerPermissions);
+        globalAdminRoleUuid := findRoleId(testGlobalAdmin());
+        globalObjectUuid := (select uuid from global);
+        addCustomerPermissions := createPermissions(globalObjectUuid, array ['add-customer']);
+        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
     end;
 $$;
 
 /**
     Used by the trigger to prevent the add-customer to current user respectively assumed roles.
  */
-create or replace function addCustomerNotAllowedForCurrentSubjects()
+create or replace function addTestCustomerNotAllowedForCurrentSubjects()
     returns trigger
     language PLPGSQL
 as $$
@@ -230,11 +230,11 @@ end; $$;
 /**
     Checks if the user or assumed roles are allowed to add a new customer.
  */
-create trigger customer_insert_trigger
+create trigger test_customer_insert_trigger
     before insert
-    on customer
+    on test_customer
     for each row
-    when ( currentUser() <> 'mike@hostsharing.net' or not hasGlobalPermission('add-customer') )
-execute procedure addCustomerNotAllowedForCurrentSubjects();
+    when ( currentUser() <> 'mike@example.org' or not hasGlobalPermission('add-customer') )
+execute procedure addTestCustomerNotAllowedForCurrentSubjects();
 --//
 

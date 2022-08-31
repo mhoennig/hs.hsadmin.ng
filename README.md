@@ -65,22 +65,22 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
 
     # the following command should return a JSON array with just all customers:
     curl \
-        -H 'current-user: mike@hostsharing.net' \
+        -H 'current-user: mike@example.org' \
         http://localhost:8080/api/customers
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     curl \
-        -H 'current-user: mike@hostsharing.net' -H 'assumed-roles: customer#yyy.admin' \
+        -H 'current-user: mike@example.org' -H 'assumed-roles: test_customer#yyy.admin' \
         http://localhost:8080/api/packages
 
     # add a new customer
     curl \
-        -H 'current-user: mike@hostsharing.net' -H "Content-Type: application/json" \
+        -H 'current-user: mike@example.org' -H "Content-Type: application/json" \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
         -X POST http://localhost:8080/api/customers
 
-If you wonder who 'mike@hostsharing.net' and 'sven@hostsharing.net' are and where the data comes from:
-Mike and Sven are just example Hostsharing hostmaster accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
+If you wonder who 'mike@example.org' and 'sven@example.org' are and where the data comes from:
+Mike and Sven are just example global admin accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.
 Also try for example 'admin@xxx.example.com' or 'unknown@example.org'.
 
 If you want a formatted JSON output, you can pipe the result to `jq` or similar.

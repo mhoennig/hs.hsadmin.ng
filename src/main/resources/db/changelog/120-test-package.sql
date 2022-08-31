@@ -1,14 +1,14 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-package-MAIN-TABLE:1 endDelimiter:--//
+--changeset test-package-MAIN-TABLE:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table if not exists package
+create table if not exists test_package
 (
     uuid         uuid unique references RbacObject (uuid),
     version      int not null default 0,
-    customerUuid uuid references customer (uuid),
+    customerUuid uuid references test_customer (uuid),
     name         varchar(5),
     description  varchar(96)
 );

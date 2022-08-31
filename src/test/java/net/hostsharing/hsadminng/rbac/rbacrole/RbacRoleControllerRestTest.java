@@ -37,15 +37,15 @@ class RbacRoleControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                 .get("/api/rbac-roles")
-                .header("current-user", "mike@hostsharing.net")
+                .header("current-user", "mike@example.org")
                 .accept(MediaType.APPLICATION_JSON))
 
             // then
             .andExpect(status().isOk())
             .andExpect(jsonPath("$", hasSize(3)))
-            .andExpect(jsonPath("$[0].roleName", is("global#hostsharing.admin")))
-            .andExpect(jsonPath("$[1].roleName", is("customer#xxx.owner")))
-            .andExpect(jsonPath("$[2].roleName", is("customer#xxx.admin")))
+            .andExpect(jsonPath("$[0].roleName", is("global#test-global.admin")))
+            .andExpect(jsonPath("$[1].roleName", is("test_customer#xxx.owner")))
+            .andExpect(jsonPath("$[2].roleName", is("test_customer#xxx.admin")))
             .andExpect(jsonPath("$[2].uuid", is(customerXxxAdmin.getUuid().toString())))
             .andExpect(jsonPath("$[2].objectUuid", is(customerXxxAdmin.getObjectUuid().toString())))
             .andExpect(jsonPath("$[2].objectTable", is(customerXxxAdmin.getObjectTable().toString())))

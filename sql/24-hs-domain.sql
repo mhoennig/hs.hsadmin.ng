@@ -64,7 +64,7 @@ begin
     domainOwnerRoleUuid = createRole(
         domainOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(packageAdmin(parentPackage))
+        beneathRole(testPackageAdmin(parentPackage))
         );
 
     -- a domain admin role is created and assigned to the domain's owner role

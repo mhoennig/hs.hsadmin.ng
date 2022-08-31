@@ -42,9 +42,9 @@ class PackageRepositoryIntegrationTest {
     class FindAllByOptionalNameLike {
 
         @Test
-        public void hostsharingAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
+        public void testGlobalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             // given
-            context.define("mike@hostsharing.net");
+            context.define("mike@example.org");
 
             // when
             final var result = packageRepository.findAllByOptionalNameLike(null);
@@ -54,9 +54,9 @@ class PackageRepositoryIntegrationTest {
         }
 
         @Test
-        public void hostsharingAdmin_withAssumedHostsharingAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
+        public void testGlobalAdmin_withAssumedtestGlobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             given:
-            context.define("mike@hostsharing.net", "global#hostsharing.admin");
+            context.define("mike@example.org", "global#test-global.admin");
 
             // when
             final var result = packageRepository.findAllByOptionalNameLike(null);
@@ -79,7 +79,7 @@ class PackageRepositoryIntegrationTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            context.define("customer-admin@xxx.example.com", "package#xxx00.admin");
+            context.define("customer-admin@xxx.example.com", "test_package#xxx00.admin");
 
             final var result = packageRepository.findAllByOptionalNameLike(null);
 
@@ -93,17 +93,17 @@ class PackageRepositoryIntegrationTest {
         @Test
         public void supportsOptimisticLocking() throws InterruptedException {
             // given
-            hostsharingAdminWithAssumedRole("package#xxx00.admin");
+            testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
             final var pac = packageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                hostsharingAdminWithAssumedRole("package#xxx00.admin");
+                testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
                 pac.setDescription("description set by thread 1");
                 packageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                hostsharingAdminWithAssumedRole("package#xxx00.admin");
+                testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
                 pac.setDescription("description set by thread 2");
                 packageRepository.save(pac);
                 sleep(1500);
@@ -125,8 +125,8 @@ class PackageRepositoryIntegrationTest {
         }
     }
 
-    private void hostsharingAdminWithAssumedRole(final String assumedRoles) {
-        context.define("mike@hostsharing.net", assumedRoles);
+    private void testGlobalAdminWithAssumedRole(final String assumedRoles) {
+        context.define("mike@example.org", assumedRoles);
     }
 
     void noPackagesAreReturned(final List<PackageEntity> actualResult) {

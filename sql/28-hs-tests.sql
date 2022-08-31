@@ -17,21 +17,21 @@ BEGIN
 
     -- hostmaster accessing a single customer
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
+    SET LOCAL hsadminng.currentUser = 'mike@example.org';
     SET LOCAL hsadminng.assumedRoles = '';
     -- SELECT *
     SELECT count(*) INTO resultCount
-      from customer_rv c
+      from test_customer_rv c
      where c.prefix='aab';
     call expectBetween(resultCount, 1, 1);
 
     -- hostmaster listing all customers
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
+    SET LOCAL hsadminng.currentUser = 'mike@example.org';
     SET LOCAL hsadminng.assumedRoles = '';
     -- SELECT *
     SELECT count(*) INTO resultCount
-       FROM customer_rv;
+       FROM test_customer_rv;
     call expectBetween(resultCount, 10, 20000);
 
     -- customer admin listing all their packages
@@ -40,7 +40,7 @@ BEGIN
     SET LOCAL hsadminng.assumedRoles = '';
     -- SELECT *
     SELECT count(*) INTO resultCount
-      FROM package_rv;
+      FROM test_package_rv;
     call expectBetween(resultCount, 2, 10);
 
     -- cutomer admin listing all their unix users
@@ -54,49 +54,49 @@ BEGIN
 
     -- hostsharing admin assuming customer role and listing all accessible packages
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-    SET LOCAL hsadminng.assumedRoles = 'customer#aaa.admin;customer#aab.admin';
+    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.assumedRoles = 'test_customer#aaa.admin;test_customer#aab.admin';
     -- SELECT *
     SELECT count(*) INTO resultCount
-      FROM package_rv p;
+      FROM test_package_rv p;
     call expectBetween(resultCount, 2, 10);
 
     -- hostsharing admin assuming two customer admin roles and listing all accessible unixusers
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-    SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.assumedRoles = 'test_customer#aab.admin;test_customer#aac.admin';
     -- SELECT c.prefix, c.reference, uu.*
     SELECT count(*) INTO resultCount
       FROM unixuser_rv uu
-      JOIN package_rv p ON p.uuid = uu.packageuuid
-      JOIN customer_rv c ON c.uuid = p.customeruuid;
+      JOIN test_package_rv p ON p.uuid = uu.packageuuid
+      JOIN test_customer_rv c ON c.uuid = p.customeruuid;
     call expectBetween(resultCount, 40, 60);
 
     -- hostsharing admin assuming two customer admin roles and listing all accessible domains
     -- ABORT; START TRANSACTION;
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-    SET LOCAL hsadminng.assumedRoles = 'customer#aac.admin;customer#aad.admin';
+    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.assumedRoles = 'test_customer#aac.admin;test_customer#aad.admin';
     -- SELECT p.name, uu.name, dom.name
     SELECT count(*) INTO resultCount
        FROM domain_rv dom
        JOIN unixuser_rv uu ON uu.uuid = dom.unixuseruuid
-       JOIN package_rv p ON p.uuid = uu.packageuuid
-       JOIN customer_rv c ON c.uuid = p.customeruuid;
+       JOIN test_package_rv p ON p.uuid = uu.packageuuid
+       JOIN test_customer_rv c ON c.uuid = p.customeruuid;
     call expectBetween(resultCount, 20, 40);
 
     -- hostsharing admin assuming two customer admin roles and listing all accessible email addresses
     -- ABORT; START TRANSACTION;
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-    SET LOCAL hsadminng.assumedRoles = 'customer#aae.admin;customer#aaf.admin';
+    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.assumedRoles = 'test_customer#aae.admin;test_customer#aaf.admin';
     -- SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
     SELECT count(*) INTO resultCount
       FROM emailaddress_rv ema
       JOIN domain_rv dom ON dom.uuid = ema.domainuuid
       JOIN unixuser_rv uu ON uu.uuid = dom.unixuseruuid
-      JOIN package_rv p ON p.uuid = uu.packageuuid
-      JOIN customer_rv c ON c.uuid = p.customeruuid;
+      JOIN test_package_rv p ON p.uuid = uu.packageuuid
+      JOIN test_customer_rv c ON c.uuid = p.customeruuid;
     call expectBetween(resultCount, 100, 300);
 
     -- ~170ms

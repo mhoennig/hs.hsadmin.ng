@@ -3,16 +3,16 @@
 -- --------------------------------------------------------
 
 
-select isGranted(findRoleId('administrators'), findRoleId('package#aaa00.owner'));
-select isGranted(findRoleId('package#aaa00.owner'), findRoleId('administrators'));
--- call grantRoleToRole(findRoleId('package#aaa00.owner'), findRoleId('administrators'));
--- call grantRoleToRole(findRoleId('administrators'), findRoleId('package#aaa00.owner'));
+select isGranted(findRoleId('administrators'), findRoleId('test_package#aaa00.owner'));
+select isGranted(findRoleId('test_package#aaa00.owner'), findRoleId('administrators'));
+-- call grantRoleToRole(findRoleId('test_package#aaa00.owner'), findRoleId('administrators'));
+-- call grantRoleToRole(findRoleId('administrators'), findRoleId('test_package#aaa00.owner'));
 
 select count(*)
-FROM queryAllPermissionsOfSubjectIdForObjectUuids(findRbacUser('sven@hostsharing.net'),
+FROM queryAllPermissionsOfSubjectIdForObjectUuids(findRbacUser('sven@example.org'),
                                                   ARRAY(select uuid from customer where reference < 1100000));
 select count(*)
-FROM queryAllPermissionsOfSubjectId(findRbacUser('sven@hostsharing.net'));
+FROM queryAllPermissionsOfSubjectId(findRbacUser('sven@example.org'));
 select *
 FROM queryAllPermissionsOfSubjectId(findRbacUser('alex@example.com'));
 select *
@@ -33,7 +33,7 @@ $$
         userId uuid;
         result bool;
     BEGIN
-        userId = findRbacUser('mike@hostsharing.net');
+        userId = findRbacUser('mike@example.org');
         result = (SELECT * FROM isPermissionGrantedToSubject(findPermissionId('package', 94928, 'add-package'), userId));
         IF (result) THEN
             RAISE EXCEPTION 'expected permission NOT to be granted, but it is';

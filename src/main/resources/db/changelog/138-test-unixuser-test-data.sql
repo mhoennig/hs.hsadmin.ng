@@ -14,8 +14,8 @@ declare
     currentTask varchar;
 begin
     select p.uuid, p.name, c.prefix as custPrefix
-        from package p
-        join customer c on p.customeruuid = c.uuid
+        from test_package p
+        join test_customer c on p.customeruuid = c.uuid
         where p.name = packageName
         into pac;
 
@@ -27,7 +27,7 @@ begin
             call defineContext(currentTask, null, pacAdmin, null);
 
             insert
-                into unixuser (name, packageUuid)
+                into test_unixuser (name, packageUuid)
                 values (pac.name || '-' || intToVarChar(t, 4), pac.uuid);
         end loop;
 end; $$;
@@ -44,8 +44,8 @@ declare
 begin
     for pac in
         (select p.uuid, p.name
-             from package p
-                      join customer c on p.customeruuid = c.uuid
+             from test_package p
+                      join test_customer c on p.customeruuid = c.uuid
              where c.reference < 90000) -- reserved for functional testing
         loop
             call createUnixUserTestData(pac.name, 2);

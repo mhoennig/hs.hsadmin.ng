@@ -10,7 +10,7 @@ import javax.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "package_rv")
+@Table(name = "test_package_rv")
 @Getter
 @Setter
 @NoArgsConstructor

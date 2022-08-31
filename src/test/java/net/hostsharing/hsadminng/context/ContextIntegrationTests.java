@@ -31,7 +31,7 @@ class ContextIntegrationTests {
     @Test
     void defineWithoutHttpServletRequestUsesCallStack() {
 
-        context.define("mike@hostsharing.net", null);
+        context.define("mike@example.org", null);
 
         assertThat(context.getCurrentTask())
                 .isEqualTo("ContextIntegrationTests.defineWithoutHttpServletRequestUsesCallStack");
@@ -41,11 +41,11 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentUserButWithoutAssumedRoles() {
         // when
-        context.define("mike@hostsharing.net");
+        context.define("mike@example.org");
 
         // then
         assertThat(context.getCurrentUser()).
-                isEqualTo("mike@hostsharing.net");
+                isEqualTo("mike@example.org");
 
         assertThat(context.getCurrentUserUUid()).isNotNull();
 
@@ -59,41 +59,41 @@ class ContextIntegrationTests {
     void defineWithoutCurrentUserButWithAssumedRoles() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define(null, "package#yyy00.admin")
+                context.define(null, "test_package#yyy00.admin")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 javax.persistence.PersistenceException.class,
-                "ERROR: [403] undefined has no permission to assume role package#yyy00.admin");
+                "ERROR: [403] undefined has no permission to assume role test_package#yyy00.admin");
     }
 
     @Test
     void defineWithUnknownCurrentUserButWithAssumedRoles() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define("unknown@example.org", "package#yyy00.admin")
+                context.define("unknown@example.org", "test_package#yyy00.admin")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 javax.persistence.PersistenceException.class,
-                "ERROR: [403] undefined has no permission to assume role package#yyy00.admin");
+                "ERROR: [403] undefined has no permission to assume role test_package#yyy00.admin");
     }
 
     @Test
     @Transactional
     void defineWithCurrentUserAndAssumedRoles() {
         // given
-        context.define("mike@hostsharing.net", "customer#xxx.owner;customer#yyy.owner");
+        context.define("mike@example.org", "test_customer#xxx.owner;test_customer#yyy.owner");
 
         // when
         final var currentUser = context.getCurrentUser();
-        assertThat(currentUser).isEqualTo("mike@hostsharing.net");
+        assertThat(currentUser).isEqualTo("mike@example.org");
 
         // then
         assertThat(context.getAssumedRoles())
-                .isEqualTo(Array.of("customer#xxx.owner", "customer#yyy.owner"));
+                .isEqualTo(Array.of("test_customer#xxx.owner", "test_customer#yyy.owner"));
         assertThat(context.currentSubjectsUuids()).hasSize(2);
     }
 
@@ -101,12 +101,12 @@ class ContextIntegrationTests {
     public void defineContextWithCurrentUserAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define("customer-admin@xxx.example.com", "package#yyy00.admin")
+                context.define("customer-admin@xxx.example.com", "test_package#yyy00.admin")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 javax.persistence.PersistenceException.class,
-                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role package#yyy00.admin");
+                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role test_package#yyy00.admin");
     }
 }

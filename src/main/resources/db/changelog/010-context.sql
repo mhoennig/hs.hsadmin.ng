@@ -152,8 +152,14 @@ create or replace function pureIdentifier(rawIdentifier varchar)
     returns varchar
     returns null on null input
     language plpgsql as $$
+declare
+    cleanIdentifier varchar;
 begin
-    return regexp_replace(rawIdentifier, '\W+', '');
+    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._]+', '', 'g');
+    if cleanIdentifier != rawIdentifier then
+        raise exception 'identifier "%" contains invalid characters, maybe use "%"', rawIdentifier, cleanIdentifier;
+    end if;
+    return cleanIdentifier;
 end; $$;
 
 create or replace function findObjectUuidByIdName(objectTable varchar, objectIdName varchar)

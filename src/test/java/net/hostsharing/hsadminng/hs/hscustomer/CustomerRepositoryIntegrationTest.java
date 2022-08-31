@@ -37,9 +37,9 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
     class CreateCustomer {
 
         @Test
-        public void hostsharingAdmin_withoutAssumedRole_canCreateNewCustomer() {
+        public void testGlobalAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
-            context("mike@hostsharing.net", null);
+            context("mike@example.org", null);
             final var count = customerRepository.count();
 
             // when
@@ -58,9 +58,9 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void hostsharingAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
+        public void testGlobalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("mike@hostsharing.net", "customer#xxx.admin");
+            context("mike@example.org", "test_customer#xxx.admin");
 
             // when
             final var result = attempt(em, () -> {
@@ -72,7 +72,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "add-customer not permitted for customer#xxx.admin");
+                    "add-customer not permitted for test_customer#xxx.admin");
         }
 
         @Test
@@ -104,9 +104,9 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
     class FindAllCustomers {
 
         @Test
-        public void hostsharingAdmin_withoutAssumedRole_canViewAllCustomers() {
+        public void testGlobalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("mike@hostsharing.net", null);
+            context("mike@example.org", null);
 
             // when
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
@@ -116,9 +116,9 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void hostsharingAdmin_withAssumedHostsharingAdminRole_canViewAllCustomers() {
+        public void testGlobalAdmin_withAssumedtestGlobalAdminRole_canViewAllCustomers() {
             given:
-            context("mike@hostsharing.net", "global#hostsharing.admin");
+            context("mike@example.org", "global#test-global.admin");
 
             // when
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
@@ -141,7 +141,7 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
-            context("customer-admin@xxx.example.com", "package#xxx00.admin");
+            context("customer-admin@xxx.example.com", "test_package#xxx00.admin");
 
             final var result = customerRepository.findCustomerByOptionalPrefixLike(null);
 
@@ -153,9 +153,9 @@ class CustomerRepositoryIntegrationTest extends ContextBasedTest {
     class FindByPrefixLike {
 
         @Test
-        public void hostsharingAdmin_withoutAssumedRole_canViewAllCustomers() {
+        public void testGlobalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("mike@hostsharing.net", null);
+            context("mike@example.org", null);
 
             // when
             final var result = customerRepository.findCustomerByOptionalPrefixLike("yyy");

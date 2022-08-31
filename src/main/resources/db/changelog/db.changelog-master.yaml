@@ -28,24 +28,24 @@ databaseChangeLog:
     - include:
         file: db/changelog/080-rbac-global.sql
     - include:
-        file: db/changelog/100-hs-base.sql
+        file: db/changelog/100-test-base.sql
     - include:
-        file: db/changelog/110-hs-customer.sql
+        file: db/changelog/110-test-customer.sql
     - include:
-        file: db/changelog/113-hs-customer-rbac.sql
+        file: db/changelog/113-test-customer-rbac.sql
     - include:
-        file: db/changelog/118-hs-customer-test-data.sql
+        file: db/changelog/118-test-customer-test-data.sql
     - include:
-        file: db/changelog/120-hs-package.sql
+        file: db/changelog/120-test-package.sql
     - include:
-        file: db/changelog/123-hs-package-rbac.sql
+        file: db/changelog/123-test-package-rbac.sql
     - include:
-        file: db/changelog/128-hs-package-test-data.sql
+        file: db/changelog/128-test-package-test-data.sql
     - include:
-        file: db/changelog/130-hs-unixuser.sql
+        file: db/changelog/130-test-unixuser.sql
     - include:
-        file: db/changelog/133-hs-unixuser-rbac.sql
+        file: db/changelog/133-test-unixuser-rbac.sql
     - include:
-        file: db/changelog/138-hs-unixuser-test-data.sql
+        file: db/changelog/138-test-unixuser-test-data.sql
 
 

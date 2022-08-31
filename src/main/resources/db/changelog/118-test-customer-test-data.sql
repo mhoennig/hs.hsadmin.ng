@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-customer-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset test-customer-TEST-DATA-GENERATOR:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Generates a customer reference number for a given test data counter.
@@ -19,7 +19,7 @@ end; $$;
 /*
     Creates a single customer test record with dist.
  */
-create or replace procedure createCustomerTestData(
+create or replace procedure createTestCustomerTestData(
     custReference integer,
     custPrefix    varchar
 )
@@ -30,7 +30,7 @@ declare
     custAdminName varchar;
 begin
     currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
-    call defineContext(currentTask, null, 'mike@hostsharing.net', 'global#hostsharing.admin');
+    call defineContext(currentTask, null, 'mike@example.org', 'global#test-global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     custRowId = uuid_generate_v4();
@@ -38,7 +38,7 @@ begin
 
     raise notice 'creating customer %:%', custReference, custPrefix;
     insert
-        into customer (reference, prefix, adminUserName)
+        into test_customer (reference, prefix, adminUserName)
         values (custReference, custPrefix, custAdminName);
 end; $$;
 --//
@@ -46,7 +46,7 @@ end; $$;
 /*
     Creates a range of test customers for mass data generation.
  */
-create or replace procedure createCustomerTestData(
+create or replace procedure createTestCustomerTestData(
     startCount integer,  -- count of auto generated rows before the run
     endCount integer     -- count of auto generated rows after the run
 )
@@ -54,7 +54,7 @@ create or replace procedure createCustomerTestData(
 begin
     for t in startCount..endCount
         loop
-            call createCustomerTestData(testCustomerReference(t), intToVarChar(t, 3));
+            call createTestCustomerTestData(testCustomerReference(t), intToVarChar(t, 3));
             commit;
         end loop;
 end; $$;
@@ -62,14 +62,14 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-customer-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset test-customer-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call createCustomerTestData(99901, 'xxx');
-        call createCustomerTestData(99902, 'yyy');
-        call createCustomerTestData(99903, 'zzz');
+        call createTestCustomerTestData(99901, 'xxx');
+        call createTestCustomerTestData(99902, 'yyy');
+        call createTestCustomerTestData(99903, 'zzz');
     end;
 $$;
 --//

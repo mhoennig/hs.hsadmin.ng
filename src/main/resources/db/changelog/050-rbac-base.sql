@@ -228,6 +228,9 @@ begin
     roleTypeFromRoleIdName = split_part(roleParts, '#', 3);
     objectUuidOfRole = findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
 
+    raise notice $sql$findObjectUuidByIdName('%', '%') = %;$sql$, objectTableFromRoleIdName, objectNameFromRoleIdName, objectUuidOfRole;
+    raise notice 'finding %, % (%), %', objectTableFromRoleIdName, objectNameFromRoleIdName, objectUuidOfRole, roleTypeFromRoleIdName;
+
     select uuid
         from RbacRole
         where objectUuid = objectUuidOfRole
