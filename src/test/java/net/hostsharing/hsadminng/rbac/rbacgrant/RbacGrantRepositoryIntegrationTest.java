@@ -300,7 +300,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
     private RbacUserEntity createNewUserTransacted() {
         return jpaAttempt.transacted(() -> {
             final var newUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
-            context(newUserName);
+            context(null);
             return rbacUserRepository.create(new RbacUserEntity(null, newUserName));
         }).assumeSuccessful().returnedValue();
     }

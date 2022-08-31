@@ -47,7 +47,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         public void anyoneCanCreateTheirOwnUser() {
             // given
             final var givenNewUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
-            context(givenNewUserName, null);
+            context(null);
 
             // when
             final var result = rbacUserRepository.create(

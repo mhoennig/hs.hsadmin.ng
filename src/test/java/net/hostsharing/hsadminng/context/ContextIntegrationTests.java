@@ -69,16 +69,16 @@ class ContextIntegrationTests {
     }
 
     @Test
-    void defineWithUnknownCurrentUserButWithAssumedRoles() {
+    void defineWithUnknownCurrentUser() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define("unknown@example.org", "test_package#yyy00.admin")
+                context.define("unknown@example.org")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 javax.persistence.PersistenceException.class,
-                "ERROR: [403] undefined has no permission to assume role test_package#yyy00.admin");
+                "[401] user unknown@example.org given in `defineContext(...)` does not exist");
     }
 
     @Test

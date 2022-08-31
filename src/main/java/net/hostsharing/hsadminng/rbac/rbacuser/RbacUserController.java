@@ -30,7 +30,7 @@ public class RbacUserController implements RbacusersApi {
     public ResponseEntity<RbacUserResource> createUser(
             final RbacUserResource body
     ) {
-        context.define(body.getName());
+        context.define(null);
 
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());

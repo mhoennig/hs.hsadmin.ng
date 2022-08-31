@@ -51,21 +51,21 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             final var location = RestAssured
                     .given()
-                    .contentType(ContentType.JSON)
-                    .body("""
-                          {
-                            "name": "new-user@example.com"
-                          }
-                          """)
-                    .port(port)
+                        .contentType(ContentType.JSON)
+                        .body("""
+                              {
+                                "name": "new-user@example.com"
+                              }
+                              """)
+                        .port(port)
                     .when()
-                    .post("http://localhost/api/rbac-users")
+                        .post("http://localhost/api/rbac-users")
                     .then().assertThat()
-                    .statusCode(201)
-                    .contentType(ContentType.JSON)
-                    .body("name", is("new-user@example.com"))
-                    .header("Location", startsWith("http://localhost"))
-                    .extract().header("Location");
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("name", is("new-user@example.com"))
+                        .header("Location", startsWith("http://localhost"))
+                        .extract().header("Location");
             // @formatter:on
 
             // finally, the user can view its own record

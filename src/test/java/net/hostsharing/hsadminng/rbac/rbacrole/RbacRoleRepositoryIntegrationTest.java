@@ -138,8 +138,8 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        void unknownUser_withoutAssumedRole_cannotViewAnyRbacRoles() {
-            context.define("unknown@example.org");
+        void anonymousUser_withoutAssumedRole_cannotViewAnyRbacRoles() {
+            context.define(null);
 
             final var result = attempt(
                     em,
@@ -147,7 +147,7 @@ class RbacRoleRepositoryIntegrationTest {
 
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[401] currentSubjectsUuids () cannot be determined, unknown user name \"unknown@example.org\"");
+                    "[401] currentSubjectsUuids cannot be determined, please call `defineContext(...)` with a valid user");
         }
     }
 

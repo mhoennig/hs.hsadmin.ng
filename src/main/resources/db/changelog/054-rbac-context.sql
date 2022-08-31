@@ -17,8 +17,9 @@ begin
     end if;
 
     select uuid from RbacUser where name = currentUser into currentUserUuid;
-    -- TODO: maybe this should be changed, and in this case no user name defined in context?
-    -- no exception if user does not exist because users can register themselves
+    if currentUserUuid is null then
+        raise exception '[401] user % given in `defineContext(...)` does not exist', currentUser;
+    end if;
     return currentUserUuid;
 end; $$;
 
@@ -37,7 +38,7 @@ declare
     roleUuidToAssume    uuid;
 begin
     if currentUserUuid is null then
-        if  length(coalesce(assumedRoles, '')) > 0 then
+        if length(coalesce(assumedRoles, '')) > 0 then
             raise exception '[403] undefined has no permission to assume role %', assumedRoles;
         else
             return array[]::uuid[];
@@ -166,7 +167,7 @@ begin
         if (length(currentUserName) > 0) then
             raise exception '[401] currentSubjectsUuids (%) cannot be determined, unknown user name "%"', currentSubjectsUuids, currentUserName;
         else
-            raise exception '[401] currentSubjectsUuids cannot be determined, please call `defineContext(...)` first;"';
+            raise exception '[401] currentSubjectsUuids cannot be determined, please call `defineContext(...)` with a valid user;"';
         end if;
     end if;
     return string_to_array(currentSubjectsUuids, ';');
