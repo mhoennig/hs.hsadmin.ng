@@ -76,7 +76,7 @@ begin
     -- an owner role is created and assigned to the package owner role
     packageAdminRoleUuid = createRole(
         testPackageAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['add-unixuser', 'add-domain']),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['add-domain']),
         beneathRole(packageOwnerRoleUuid)
         );
 

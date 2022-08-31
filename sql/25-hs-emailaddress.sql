@@ -48,7 +48,7 @@ begin
 
     select d.*
         from domain d
-                 left join unixuser u on u.uuid = d.unixuseruuid
+                 left join domain u on u.uuid = d.domainuuid
         where d.uuid = NEW.domainUuid
         into parentDomain;
 
@@ -59,7 +59,7 @@ begin
         beneathRole(domainAdmin(parentDomain))
         );
 
-    -- and an admin role is created and assigned to the unixuser owner as well
+    -- and an admin role is created and assigned to the domain owner as well
     perform createRole(
         emailAddressAdmin(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
@@ -102,7 +102,7 @@ do language plpgsql $$
 
         for dom in (select d.uuid, d.name, p.name as packageName
                         from domain d
-                                 join unixuser u on u.uuid = d.unixuseruuid
+                                 join domain u on u.uuid = d.domainuuid
                                  join package p on u.packageuuid = p.uuid
                                  join customer c on p.customeruuid = c.uuid
             -- WHERE c.reference >= 18000

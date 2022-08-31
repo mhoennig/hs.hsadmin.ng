@@ -42,10 +42,10 @@ databaseChangeLog:
     - include:
         file: db/changelog/128-test-package-test-data.sql
     - include:
-        file: db/changelog/130-test-unixuser.sql
+        file: db/changelog/130-test-domain.sql
     - include:
-        file: db/changelog/133-test-unixuser-rbac.sql
+        file: db/changelog/133-test-domain-rbac.sql
     - include:
-        file: db/changelog/138-test-unixuser-test-data.sql
+        file: db/changelog/138-test-domain-test-data.sql
 
 

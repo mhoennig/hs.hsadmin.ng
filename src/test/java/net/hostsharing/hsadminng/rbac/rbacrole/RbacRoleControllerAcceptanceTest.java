@@ -57,7 +57,7 @@ class RbacRoleControllerAcceptanceTest {
                 .body("", hasItem(hasEntry("roleName", "global#test-global.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_customer#yyy.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_package#yyy00.admin")))
-                .body("", hasItem(hasEntry("roleName", "test_unixuser#yyy00-aaaa.owner")))
+                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa.owner")))
                 .body( "size()", greaterThanOrEqualTo(73)); // increases with new test data
         // @formatter:on
     }
@@ -79,10 +79,10 @@ class RbacRoleControllerAcceptanceTest {
             .assertThat()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("[0].roleName", is("test_customer#yyy.tenant"))
-                .body("[1].roleName", is("test_package#yyy00.admin"))
-                .body("[2].roleName", is("test_package#yyy00.tenant"))
-                .body("[3].roleName", is("test_unixuser#yyy00-aaaa.admin"))
+                .body("", hasItem(hasEntry("roleName", "test_customer#yyy.tenant")))
+                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa.admin")))
+                .body("", hasItem(hasEntry("roleName", "test_package#yyy00.admin")))
+                .body("", hasItem(hasEntry("roleName", "test_package#yyy00.tenant")))
                 .body("size()", is(7)); // increases with new test data
         // @formatter:on
     }
@@ -101,10 +101,10 @@ class RbacRoleControllerAcceptanceTest {
             .then().assertThat()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("[0].roleName", is("test_customer#zzz.tenant"))
-                .body("[1].roleName", is("test_package#zzz00.admin"))
-                .body("[2].roleName", is("test_package#zzz00.tenant"))
-                .body("[3].roleName", is("test_unixuser#zzz00-aaaa.admin"))
+                .body("", hasItem(hasEntry("roleName", "test_customer#zzz.tenant")))
+                .body("", hasItem(hasEntry("roleName", "test_domain#zzz00-aaaa.admin")))
+                .body("", hasItem(hasEntry("roleName", "test_package#zzz00.admin")))
+                .body("", hasItem(hasEntry("roleName", "test_package#zzz00.tenant")))
                 .body("size()", is(7)); // increases with new test data
         // @formatter:on
     }

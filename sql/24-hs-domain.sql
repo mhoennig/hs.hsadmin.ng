@@ -8,7 +8,7 @@ create table if not exists Domain
 (
     uuid         uuid unique references RbacObject (uuid),
     name         character varying(32),
-    unixUserUuid uuid references unixuser (uuid)
+    domainUuid uuid references domain (uuid)
 );
 
 drop trigger if exists createRbacObjectForDomain_Trigger on Domain;
@@ -48,7 +48,7 @@ create or replace function createRbacRulesForDomain()
     language plpgsql
     strict as $$
 declare
-    parentUser          UnixUser;
+    parentUser          domain;
     parentPackage       package;
     domainOwnerRoleUuid uuid;
     domainAdminRoleUuid uuid;
@@ -57,10 +57,10 @@ begin
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
-    select * from UnixUser where uuid = NEW.unixUserUuid into parentUser;
+    select * from domain where uuid = NEW.domainUuid into parentUser;
     select * from Package where uuid = parentUser.packageuuid into parentPackage;
 
-    -- a domain owner role is created and assigned to the unixuser's admin role
+    -- a domain owner role is created and assigned to the domain's admin role
     domainOwnerRoleUuid = createRole(
         domainOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
@@ -79,7 +79,7 @@ begin
         domainTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(domainAdminRoleUuid),
-        beingItselfA(createUnixUserTenantRoleIfNotExists(parentUser))
+        beingItselfA(createdomainTenantRoleIfNotExists(parentUser))
         );
 
     return NEW;
@@ -118,7 +118,7 @@ do language plpgsql $$
         set hsadminng.currentUser to '';
 
         for uu in (select u.uuid, u.name, u.packageuuid, c.reference
-                       from unixuser u
+                       from domain u
                                 join package p on u.packageuuid = p.uuid
                                 join customer c on p.customeruuid = c.uuid
             -- WHERE c.reference >= 18000
@@ -127,7 +127,7 @@ do language plpgsql $$
                 if (random() < 0.3) then
                     for t in 0..1
                         loop
-                            currentTask = 'creating RBAC test Domain #' || t || ' for UnixUser ' || uu.name || ' #' || uu.uuid;
+                            currentTask = 'creating RBAC test Domain #' || t || ' for domain ' || uu.name || ' #' || uu.uuid;
                             raise notice 'task: %', currentTask;
 
                             select * from package where uuid = uu.packageUuid into pac;
@@ -137,7 +137,7 @@ do language plpgsql $$
                             set local hsadminng.assumedRoles = '';
 
                             insert
-                                into Domain (name, unixUserUuid)
+                                into Domain (name, domainUuid)
                                 values ('dom-' || t || '.' || uu.name || '.example.org', uu.uuid);
 
                             commit;

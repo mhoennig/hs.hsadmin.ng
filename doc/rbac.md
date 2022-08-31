@@ -103,7 +103,7 @@ package RBAC {
     enum RbacOperation {
         add-package
         add-domain
-        add-unixuser
+        add-domain
         ...
         view
         edit
@@ -359,7 +359,7 @@ A full example is shown here:
         SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
           FROM emailaddress_rv ema
           JOIN domain_rv dom ON dom.uuid = ema.domainuuid
-          JOIN unixuser_rv uu ON uu.uuid = dom.unixuseruuid
+          JOIN domain_rv uu ON uu.uuid = dom.domainuuid
           JOIN package_rv p ON p.uuid = uu.packageuuid
           JOIN customer_rv c ON c.uuid = p.customeruuid;
     END TRANSACTION;
@@ -387,11 +387,11 @@ entity EMailAddress
 entity Domain
 Domain o-- "*" EMailAddress
 
-entity UnixUser
-UnixUser o-- "*" Domain
+entity domain
+domain o-- "*" Domain
 
 entity Package
-Package o.. "*" UnixUser
+Package o.. "*" domain
 
 entity Customer
 Customer o-- "*" Package
@@ -497,7 +497,7 @@ together {
     entity "Perm package#xyz00 *" as permPackageXyzAll
     permPackageXyzAll --> boPacXyz00
     
-    entity "Perm package#xyz00 add-unixuser" as permPacXyz00AddUser
+    entity "Perm package#xyz00 add-domain" as permPacXyz00AddUser
     permPacXyz00AddUser --> boPacXyz00
 
     entity "Perm package#xyz00 edit" as permPacXyz00Edit

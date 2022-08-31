@@ -15,8 +15,8 @@ select no,
           select 2 as no, count(*) as "count", 15000 as "required", 'packages' as "table"
               from package
           union
-          select 3 as no, count(*) as "count", 150000 as "required", 'unixuser' as "table"
-              from unixuser
+          select 3 as no, count(*) as "count", 150000 as "required", 'domain' as "table"
+              from domain
           union
           select 4 as no, count(*) as "count", 100000 as "required", 'domain' as "table"
               from domain

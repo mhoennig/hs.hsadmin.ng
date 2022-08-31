@@ -101,11 +101,11 @@ class RbacRoleRepositoryIntegrationTest {
                 "test_package#xxx01.owner",
                 "test_package#xxx01.tenant",
                 // ...
-                "test_unixuser#xxx00-aaaa.admin",
-                "test_unixuser#xxx00-aaaa.owner",
+                "test_domain#xxx00-aaaa.admin",
+                "test_domain#xxx00-aaaa.owner",
                 // ..
-                "test_unixuser#xxx01-aaab.admin",
-                "test_unixuser#xxx01-aaab.owner"
+                "test_domain#xxx01-aaab.admin",
+                "test_domain#xxx01-aaab.owner"
                 // @formatter:on
             );
             noneOfTheseRbacRolesIsReturned(
@@ -131,10 +131,10 @@ class RbacRoleRepositoryIntegrationTest {
                     "test_customer#xxx.tenant",
                     "test_package#xxx00.admin",
                     "test_package#xxx00.tenant",
-                    "test_unixuser#xxx00-aaaa.admin",
-                    "test_unixuser#xxx00-aaaa.owner",
-                    "test_unixuser#xxx00-aaab.admin",
-                    "test_unixuser#xxx00-aaab.owner");
+                    "test_domain#xxx00-aaaa.admin",
+                    "test_domain#xxx00-aaaa.owner",
+                    "test_domain#xxx00-aaab.admin",
+                    "test_domain#xxx00-aaab.owner");
         }
 
         @Test

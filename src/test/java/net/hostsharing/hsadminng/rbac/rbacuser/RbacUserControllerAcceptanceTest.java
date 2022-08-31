@@ -297,14 +297,14 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_package#yyy00.admin"),
-                                    hasEntry("op", "add-unixuser"))
+                                    hasEntry("op", "add-domain"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_unixuser#yyy00-aaaa.owner"),
+                                    hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
                                     hasEntry("op", "*"))
                     ))
-                    .body("size()", is(8));
+                    .body("size()", is(7));
             // @formatter:on
         }
 
@@ -332,14 +332,14 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_package#yyy00.admin"),
-                                    hasEntry("op", "add-unixuser"))
+                                    hasEntry("op", "add-domain"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_unixuser#yyy00-aaaa.owner"),
+                                    hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
                                     hasEntry("op", "*"))
                     ))
-                    .body("size()", is(8));
+                    .body("size()", is(7));
             // @formatter:on
         }
 
@@ -366,14 +366,14 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_package#yyy00.admin"),
-                                    hasEntry("op", "add-unixuser"))
+                                    hasEntry("op", "add-domain"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_unixuser#yyy00-aaaa.owner"),
+                                    hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
                                     hasEntry("op", "*"))
                     ))
-                    .body("size()", is(8));
+                    .body("size()", is(7));
             // @formatter:on
         }
 
