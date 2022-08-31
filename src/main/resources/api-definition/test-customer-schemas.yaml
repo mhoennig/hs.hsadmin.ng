@@ -3,7 +3,7 @@ components:
 
     schemas:
 
-        Customer:
+        TestCustomer:
             type: object
             properties:
                 uuid:

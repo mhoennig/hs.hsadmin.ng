@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.is;
         classes = HsadminNgApplication.class
 )
 @Transactional
-class PackageControllerAcceptanceTest {
+class TestPackageControllerAcceptanceTest {
 
     @LocalServerPort
     Integer port;
@@ -33,7 +33,7 @@ class PackageControllerAcceptanceTest {
     Context context;
 
     @Autowired
-    PackageRepository packageRepository;
+    TestPackageRepository testPackageRepository;
 
     @Nested
     class ListPackages {
@@ -47,7 +47,7 @@ class PackageControllerAcceptanceTest {
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/packages")
+                    .get("http://localhost/api/test-packages")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -69,7 +69,7 @@ class PackageControllerAcceptanceTest {
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/packages?name=xxx01")
+                    .get("http://localhost/api/test-packages?name=xxx01")
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -103,7 +103,7 @@ class PackageControllerAcceptanceTest {
                           """, randomDescription))
                     .port(port)
                 .when()
-                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("xxx00"))
+                    .patch("http://localhost/api/test-packages/{uuidOfPackage}", getUuidOfPackage("xxx00"))
                 .then()
                     .assertThat()
                     .statusCode(200)
@@ -133,7 +133,7 @@ class PackageControllerAcceptanceTest {
                           """)
                     .port(port)
                 .when()
-                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("xxx01"))
+                    .patch("http://localhost/api/test-packages/{uuidOfPackage}", getUuidOfPackage("xxx01"))
                 .then()
                     .assertThat()
                     .statusCode(200)
@@ -158,7 +158,7 @@ class PackageControllerAcceptanceTest {
                     .body("{}")
                     .port(port)
                 .when()
-                    .patch("http://localhost/api/packages/{uuidOfPackage}", getUuidOfPackage("xxx02"))
+                    .patch("http://localhost/api/test-packages/{uuidOfPackage}", getUuidOfPackage("xxx02"))
                 .then().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -176,7 +176,7 @@ class PackageControllerAcceptanceTest {
                 .header("assumed-roles", "test_customer#xxx.admin")
                 .port(port)
             .when()
-                .get("http://localhost/api/packages?name={packageName}", packageName)
+                .get("http://localhost/api/test-packages?name={packageName}", packageName)
             .then()
                 .statusCode(200)
                 .contentType("application/json")
@@ -186,6 +186,6 @@ class PackageControllerAcceptanceTest {
 
     String getDescriptionOfPackage(final String packageName) {
         context.define("mike@example.org","test_customer#xxx.admin");
-        return packageRepository.findAllByOptionalNameLike(packageName).get(0).getDescription();
+        return testPackageRepository.findAllByOptionalNameLike(packageName).get(0).getDescription();
     }
 }

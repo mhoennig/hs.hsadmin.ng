@@ -2,7 +2,7 @@ get:
     summary: Returns a list of (optionally filtered) customers.
     description: Returns the list of (optionally filtered) customers which are visible to the current user or any of it's assumed roles.
     tags:
-        - customers
+        - testCustomers
     operationId: listCustomers
     parameters:
         - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
@@ -21,7 +21,7 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
+                            $ref: './api-definition/test-customer-schemas.yaml#/components/schemas/TestCustomer'
         "401":
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":
@@ -30,7 +30,7 @@ get:
 post:
     summary: Adds a new customer.
     tags:
-        - customers
+        - testCustomers
     operationId: addCustomer
     parameters:
         - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
@@ -39,7 +39,7 @@ post:
         content:
             'application/json':
                 schema:
-                    $ref: './api-definition/api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
+                    $ref: './api-definition/api-definition/test-customer-schemas.yaml#/components/schemas/TestCustomer'
         required: true
     responses:
         "201":
@@ -47,7 +47,7 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
+                        $ref: './api-definition/test-customer-schemas.yaml#/components/schemas/TestCustomer'
         "401":
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":

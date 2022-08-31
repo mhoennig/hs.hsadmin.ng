@@ -7,11 +7,10 @@ options:
 map:
     result: org.springframework.http.ResponseEntity
 
-
     types:
         - type: array => java.util.List
         - type: string:uuid => java.util.UUID
 
     paths:
-        /api/packages/{packageUUID}:
+        /api/test-packages/{packageUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable

@@ -2,9 +2,9 @@ package net.hostsharing.hsadminng.test.pac;
 
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.PackagesApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.PackageResource;
-import net.hostsharing.hsadminng.generated.api.v1.model.PackageUpdateResource;
+import net.hostsharing.hsadminng.generated.api.v1.api.TestPackagesApi;
+import net.hostsharing.hsadminng.generated.api.v1.model.TestPackageResource;
+import net.hostsharing.hsadminng.generated.api.v1.model.TestPackageUpdateResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,41 +17,41 @@ import static net.hostsharing.hsadminng.Mapper.map;
 import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
-public class PackageController implements PackagesApi {
+public class TestPackageController implements TestPackagesApi {
 
     @Autowired
     private Context context;
 
     @Autowired
-    private PackageRepository packageRepository;
+    private TestPackageRepository testPackageRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<PackageResource>> listPackages(
+    public ResponseEntity<List<TestPackageResource>> listPackages(
             String currentUser,
             String assumedRoles,
             String name
     ) {
         context.define(currentUser, assumedRoles);
 
-        final var result = packageRepository.findAllByOptionalNameLike(name);
-        return ResponseEntity.ok(mapList(result, PackageResource.class));
+        final var result = testPackageRepository.findAllByOptionalNameLike(name);
+        return ResponseEntity.ok(mapList(result, TestPackageResource.class));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<PackageResource> updatePackage(
+    public ResponseEntity<TestPackageResource> updatePackage(
             final String currentUser,
             final String assumedRoles,
             final UUID packageUuid,
-            final PackageUpdateResource body) {
+            final TestPackageUpdateResource body) {
 
         context.define(currentUser, assumedRoles);
 
-        final var current = packageRepository.findByUuid(packageUuid);
+        final var current = testPackageRepository.findByUuid(packageUuid);
         OptionalFromJson.of(body.getDescription()).ifPresent(current::setDescription);
-        final var saved = packageRepository.save(current);
-        final var mapped = map(saved, PackageResource.class);
+        final var saved = testPackageRepository.save(current);
+        final var mapped = map(saved, TestPackageResource.class);
         return ResponseEntity.ok(mapped);
     }
 }

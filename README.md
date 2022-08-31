@@ -66,18 +66,18 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
     # the following command should return a JSON array with just all customers:
     curl \
         -H 'current-user: mike@example.org' \
-        http://localhost:8080/api/customers
+        http://localhost:8080/api/test-customers
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     curl \
         -H 'current-user: mike@example.org' -H 'assumed-roles: test_customer#yyy.admin' \
-        http://localhost:8080/api/packages
+        http://localhost:8080/api/test-packages
 
     # add a new customer
     curl \
         -H 'current-user: mike@example.org' -H "Content-Type: application/json" \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
-        -X POST http://localhost:8080/api/customers
+        -X POST http://localhost:8080/api/test-customers
 
 If you wonder who 'mike@example.org' and 'sven@example.org' are and where the data comes from:
 Mike and Sven are just example global admin accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.

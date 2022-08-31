@@ -1,6 +1,6 @@
 get:
     tags:
-        - packages
+        - testPackages
     operationId: listPackages
     parameters:
         - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
@@ -18,7 +18,7 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './api-definition/hs-package-schemas.yaml#/components/schemas/Package'
+                            $ref: './api-definition/test-package-schemas.yaml#/components/schemas/TestPackage'
         "401":
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":

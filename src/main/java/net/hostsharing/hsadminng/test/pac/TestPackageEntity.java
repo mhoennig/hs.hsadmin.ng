@@ -15,7 +15,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PackageEntity {
+public class TestPackageEntity {
 
     private @Id UUID uuid;
 

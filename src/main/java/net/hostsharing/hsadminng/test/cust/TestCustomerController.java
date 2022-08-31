@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.test.cust;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.CustomersApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.CustomerResource;
+import net.hostsharing.hsadminng.generated.api.v1.api.TestCustomersApi;
+import net.hostsharing.hsadminng.generated.api.v1.model.TestCustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,7 @@ import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
 
-public class TestCustomerController implements CustomersApi {
+public class TestCustomerController implements TestCustomersApi {
 
     @Autowired
     private Context context;
@@ -27,7 +27,7 @@ public class TestCustomerController implements CustomersApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<CustomerResource>> listCustomers(
+    public ResponseEntity<List<TestCustomerResource>> listCustomers(
             String currentUser,
             String assumedRoles,
             String prefix
@@ -36,15 +36,15 @@ public class TestCustomerController implements CustomersApi {
 
         final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(prefix);
 
-        return ResponseEntity.ok(mapList(result, CustomerResource.class));
+        return ResponseEntity.ok(mapList(result, TestCustomerResource.class));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<CustomerResource> addCustomer(
+    public ResponseEntity<TestCustomerResource> addCustomer(
             final String currentUser,
             final String assumedRoles,
-            final CustomerResource customer) {
+            final TestCustomerResource customer) {
 
         context.define(currentUser, assumedRoles);
 
@@ -56,10 +56,10 @@ public class TestCustomerController implements CustomersApi {
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/customers/{id}")
+                        .path("/api/test-customers/{id}")
                         .buildAndExpand(customer.getUuid())
                         .toUri();
-        return ResponseEntity.created(uri).body(map(saved, CustomerResource.class));
+        return ResponseEntity.created(uri).body(map(saved, TestCustomerResource.class));
     }
 
 }

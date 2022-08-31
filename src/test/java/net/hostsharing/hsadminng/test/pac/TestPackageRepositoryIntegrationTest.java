@@ -21,13 +21,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @ComponentScan(basePackageClasses = { Context.class, TestCustomerRepository.class, JpaAttempt.class })
 @DirtiesContext
-class PackageRepositoryIntegrationTest {
+class TestPackageRepositoryIntegrationTest {
 
     @Autowired
     Context context;
 
     @Autowired
-    PackageRepository packageRepository;
+    TestPackageRepository testPackageRepository;
 
     @Autowired
     EntityManager em;
@@ -47,7 +47,7 @@ class PackageRepositoryIntegrationTest {
             context.define("mike@example.org");
 
             // when
-            final var result = packageRepository.findAllByOptionalNameLike(null);
+            final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
             // then
             noPackagesAreReturned(result);
@@ -59,7 +59,7 @@ class PackageRepositoryIntegrationTest {
             context.define("mike@example.org", "global#test-global.admin");
 
             // when
-            final var result = packageRepository.findAllByOptionalNameLike(null);
+            final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
             then:
             noPackagesAreReturned(result);
@@ -71,7 +71,7 @@ class PackageRepositoryIntegrationTest {
             context.define("customer-admin@xxx.example.com");
 
             // when:
-            final var result = packageRepository.findAllByOptionalNameLike(null);
+            final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
             // then:
             exactlyThesePackagesAreReturned(result, "xxx00", "xxx01", "xxx02");
@@ -81,7 +81,7 @@ class PackageRepositoryIntegrationTest {
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
             context.define("customer-admin@xxx.example.com", "test_package#xxx00.admin");
 
-            final var result = packageRepository.findAllByOptionalNameLike(null);
+            final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
             exactlyThesePackagesAreReturned(result, "xxx00");
         }
@@ -94,18 +94,18 @@ class PackageRepositoryIntegrationTest {
         public void supportsOptimisticLocking() throws InterruptedException {
             // given
             testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
-            final var pac = packageRepository.findAllByOptionalNameLike("%").get(0);
+            final var pac = testPackageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
                 testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
                 pac.setDescription("description set by thread 1");
-                packageRepository.save(pac);
+                testPackageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
                 testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
                 pac.setDescription("description set by thread 2");
-                packageRepository.save(pac);
+                testPackageRepository.save(pac);
                 sleep(1500);
             });
 
@@ -129,15 +129,15 @@ class PackageRepositoryIntegrationTest {
         context.define("mike@example.org", assumedRoles);
     }
 
-    void noPackagesAreReturned(final List<PackageEntity> actualResult) {
+    void noPackagesAreReturned(final List<TestPackageEntity> actualResult) {
         assertThat(actualResult)
-                .extracting(PackageEntity::getName)
+                .extracting(TestPackageEntity::getName)
                 .isEmpty();
     }
 
-    void exactlyThesePackagesAreReturned(final List<PackageEntity> actualResult, final String... packageNames) {
+    void exactlyThesePackagesAreReturned(final List<TestPackageEntity> actualResult, final String... packageNames) {
         assertThat(actualResult)
-                .extracting(PackageEntity::getName)
+                .extracting(TestPackageEntity::getName)
                 .containsExactlyInAnyOrder(packageNames);
     }
 

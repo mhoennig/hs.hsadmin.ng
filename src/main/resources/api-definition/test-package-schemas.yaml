@@ -3,20 +3,20 @@ components:
 
     schemas:
 
-        Package:
+        TestPackage:
             type: object
             properties:
                 uuid:
                     type: string
                     format: uuid
                 customer:
-                    $ref: './api-definition/hs-customer-schemas.yaml#/components/schemas/Customer'
+                    $ref: './api-definition/test-customer-schemas.yaml#/components/schemas/TestCustomer'
                 name:
                     type: string
                 description:
                     type: string
                     maxLength: 80
-        PackageUpdate:
+        TestPackageUpdate:
             type: object
             properties:
                 description:
