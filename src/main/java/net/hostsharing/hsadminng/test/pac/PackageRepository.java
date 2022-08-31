@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hspackage;
+package net.hostsharing.hsadminng.test.pac;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;

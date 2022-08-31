@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hscustomer;
+package net.hostsharing.hsadminng.test.cust;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.*;
         classes = HsadminNgApplication.class
 )
 @Transactional
-class CustomerControllerAcceptanceTest {
+class TestCustomerControllerAcceptanceTest {
 
     @LocalServerPort
     private Integer port;
@@ -33,7 +33,7 @@ class CustomerControllerAcceptanceTest {
     @Autowired
     Context contextMock;
     @Autowired
-    CustomerRepository customerRepository;
+    TestCustomerRepository testCustomerRepository;
 
     @Nested
     class ListCustomers {
@@ -137,7 +137,7 @@ class CustomerControllerAcceptanceTest {
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             context.define("customer-admin@ttt.example.com");
-            assertThat(customerRepository.findByUuid(newUserUuid))
+            assertThat(testCustomerRepository.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("ttt"));
         }
 
@@ -172,7 +172,7 @@ class CustomerControllerAcceptanceTest {
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             context.define("customer-admin@vvv.example.com");
-            assertThat(customerRepository.findByUuid(newUserUuid))
+            assertThat(testCustomerRepository.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> {
                         assertThat(c.getPrefix()).isEqualTo("vvv");
                         assertThat(c.getUuid()).isEqualTo(givenUuid);
@@ -206,7 +206,7 @@ class CustomerControllerAcceptanceTest {
 
             // finally, the new customer was not created
             context.define("sven@example.org");
-            assertThat(customerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
+            assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
 
         @Test
@@ -235,7 +235,7 @@ class CustomerControllerAcceptanceTest {
 
             // finally, the new customer was not created
             context.define("sven@example.org");
-            assertThat(customerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
+            assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
     }
 }

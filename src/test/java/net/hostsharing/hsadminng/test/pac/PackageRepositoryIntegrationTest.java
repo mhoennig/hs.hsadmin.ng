@@ -1,7 +1,7 @@
-package net.hostsharing.hsadminng.hs.hspackage;
+package net.hostsharing.hsadminng.test.pac;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.hscustomer.CustomerRepository;
+import net.hostsharing.hsadminng.test.cust.TestCustomerRepository;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, CustomerRepository.class, JpaAttempt.class })
+@ComponentScan(basePackageClasses = { Context.class, TestCustomerRepository.class, JpaAttempt.class })
 @DirtiesContext
 class PackageRepositoryIntegrationTest {
 

@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hscustomer;
+package net.hostsharing.hsadminng.test.cust;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.generated.api.v1.api.CustomersApi;
@@ -17,13 +17,13 @@ import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
 
-public class CustomerController implements CustomersApi {
+public class TestCustomerController implements CustomersApi {
 
     @Autowired
     private Context context;
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private TestCustomerRepository testCustomerRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -34,7 +34,7 @@ public class CustomerController implements CustomersApi {
     ) {
         context.define(currentUser, assumedRoles);
 
-        final var result = customerRepository.findCustomerByOptionalPrefixLike(prefix);
+        final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(prefix);
 
         return ResponseEntity.ok(mapList(result, CustomerResource.class));
     }
@@ -52,7 +52,7 @@ public class CustomerController implements CustomersApi {
             customer.setUuid(UUID.randomUUID());
         }
 
-        final var saved = customerRepository.save(map(customer, CustomerEntity.class));
+        final var saved = testCustomerRepository.save(map(customer, TestCustomerEntity.class));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())

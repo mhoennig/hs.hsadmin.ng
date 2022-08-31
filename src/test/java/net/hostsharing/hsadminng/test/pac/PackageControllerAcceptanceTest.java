@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hspackage;
+package net.hostsharing.hsadminng.test.pac;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;

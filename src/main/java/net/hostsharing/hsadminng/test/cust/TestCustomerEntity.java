@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hscustomer;
+package net.hostsharing.hsadminng.test.cust;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerEntity {
+public class TestCustomerEntity {
     private @Id UUID uuid;
     private String prefix;
     private int reference;

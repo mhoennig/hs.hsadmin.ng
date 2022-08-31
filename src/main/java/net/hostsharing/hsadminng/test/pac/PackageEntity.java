@@ -1,10 +1,10 @@
-package net.hostsharing.hsadminng.hs.hspackage;
+package net.hostsharing.hsadminng.test.pac;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.hs.hscustomer.CustomerEntity;
+import net.hostsharing.hsadminng.test.cust.TestCustomerEntity;
 
 import javax.persistence.*;
 import java.util.UUID;
@@ -24,7 +24,7 @@ public class PackageEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "customeruuid")
-    private CustomerEntity customer;
+    private TestCustomerEntity customer;
 
     private String name;
 

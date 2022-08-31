@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.hspackage;
+package net.hostsharing.hsadminng.test.pac;
 
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
@@ -28,9 +28,9 @@ public class PackageController implements PackagesApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<PackageResource>> listPackages(
-        String currentUser,
-        String assumedRoles,
-        String name
+            String currentUser,
+            String assumedRoles,
+            String name
     ) {
         context.define(currentUser, assumedRoles);
 
@@ -41,10 +41,10 @@ public class PackageController implements PackagesApi {
     @Override
     @Transactional
     public ResponseEntity<PackageResource> updatePackage(
-        final String currentUser,
-        final String assumedRoles,
-        final UUID packageUuid,
-        final PackageUpdateResource body) {
+            final String currentUser,
+            final String assumedRoles,
+            final UUID packageUuid,
+            final PackageUpdateResource body) {
 
         context.define(currentUser, assumedRoles);
 
