@@ -24,3 +24,28 @@ get:
             $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+
+
+delete:
+    tags:
+        - rbacusers
+    operationId: deleteUserByUuid
+    parameters:
+        - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
+        - $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
+        - name: userUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the user to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: './api-definition/error-responses.yaml#/components/responses/NotFound'

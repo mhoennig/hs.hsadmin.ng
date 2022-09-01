@@ -41,4 +41,6 @@ public interface RbacUserRepository extends Repository<RbacUserEntity, UUID> {
         insert(rbacUserEntity);
         return rbacUserEntity;
     }
+
+    void deleteByUuid(UUID userUuid);
 }

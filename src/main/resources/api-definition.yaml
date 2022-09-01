@@ -17,7 +17,7 @@ paths:
         $ref: "./api-definition/rbac-users-with-id-permissions.yaml"
 
     /api/rbac-users/{userUuid}:
-        $ref: "./api-definition/rbac-users-with-id.yaml"
+        $ref: "./api-definition/rbac-users-with-uuid.yaml"
 
     /api/rbac-roles:
         $ref: "./api-definition/rbac-roles.yaml"

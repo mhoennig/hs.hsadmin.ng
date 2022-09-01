@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Wraps the 'when' part of a DataJpaTest to improve readability of tests.
@@ -53,6 +54,7 @@ public class JpaAttempt {
 
     public <T> JpaResult<T> transacted(final Supplier<T> code) {
         try {
+            transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
             return JpaResult.forValue(
                     transactionTemplate.execute(transactionStatus -> code.get()));
         } catch (final RuntimeException exc) {
@@ -131,9 +133,17 @@ public class JpaAttempt {
         }
 
         public JpaResult<T> assumeSuccessful() {
-            assertThat(exception).isNull();
-            ;
+            assumeThat(exception).as(getSensibleMessage(exception)).isNull();
             return this;
+        }
+
+        public JpaResult<T> assertSuccessful() {
+            assertThat(exception).as(getSensibleMessage(exception)).isNull();
+            return this;
+        }
+
+        private String getSensibleMessage(final RuntimeException exception) {
+            return exception != null ? NestedExceptionUtils.getRootCause(exception).getMessage() : null;
         }
 
         private String firstRootCauseMessageLineOf(final RuntimeException exception) {

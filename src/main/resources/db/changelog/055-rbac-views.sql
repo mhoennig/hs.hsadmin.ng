@@ -209,7 +209,9 @@ create or replace view RbacUser_rv as
             union
             select users.*
                 from RbacUser as users
-                where cardinality(assumedRoles()) = 0 and  currentUserUuid() = users.uuid
+                where cardinality(assumedRoles()) = 0 and
+                        (currentUserUuid() = users.uuid or hasGlobalRoleGranted(currentUserUuid()))
+
         ) as unordered
         -- @formatter:on
         order by unordered.name;
@@ -250,7 +252,35 @@ create trigger insertRbacUser_Trigger
     on RbacUser_rv
     for each row
 execute function insertRbacUser();
+--//
 
+-- ============================================================================
+--changeset rbac-views-USER-RV-DELETE-TRIGGER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/**
+    Instead of delete trigger function for RbacUser_RV.
+ */
+create or replace function deleteRbacUser()
+    returns trigger
+    language plpgsql as $$
+begin
+    if currentUserUuid() = old.uuid or hasGlobalRoleGranted(currentUserUuid()) then
+        delete from RbacUser where uuid = old.uuid;
+        return old;
+    end if;
+    raise exception '[403] User % not allowed to delete user uuid %', currentUser(), old.uuid;
+end; $$;
+
+/*
+    Creates an instead of delete trigger for the RbacUser_rv view.
+ */
+create trigger deleteRbacUser_Trigger
+    instead of delete
+    on RbacUser_rv
+    for each row
+execute function deleteRbacUser();
+--/
 
 -- ============================================================================
 --changeset rbac-views-OWN-GRANTED-PERMISSIONS-VIEW:1 endDelimiter:--//

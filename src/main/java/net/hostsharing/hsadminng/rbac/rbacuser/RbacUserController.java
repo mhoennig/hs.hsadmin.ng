@@ -46,6 +46,20 @@ public class RbacUserController implements RbacusersApi {
     }
 
     @Override
+    @Transactional
+    public ResponseEntity<Void> deleteUserByUuid(
+            final String currentUser,
+            final String assumedRoles,
+            final UUID userUuid
+    ) {
+        context.define(currentUser, assumedRoles);
+
+        rbacUserRepository.deleteByUuid(userUuid);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public ResponseEntity<RbacUserResource> getUserById(
             final String currentUser,

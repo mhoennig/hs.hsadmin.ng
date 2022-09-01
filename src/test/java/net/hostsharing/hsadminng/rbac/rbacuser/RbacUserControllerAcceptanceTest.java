@@ -397,10 +397,92 @@ class RbacUserControllerAcceptanceTest {
         }
     }
 
+    @Nested
+    class DeleteRbacUser {
+
+        @Test
+        @Accepts({ "USR:D(Create)" })
+        void anybody_canDeleteTheirOwnUser() {
+
+            // given
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            final var location = RestAssured
+                    .given()
+                        .header("current-user", givenUser.getName())
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac-users/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // finally, the user is actually deleted
+            assertThat(rbacUserRepository.findByName(givenUser.getName())).isNull();
+        }
+
+        @Test
+        @Accepts({ "USR:D(Create)", "USR:X(Access Control)" })
+        void customerAdmin_canNotDeleteOtherUser() {
+
+            // given
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            final var location = RestAssured
+                    .given()
+                        .header("current-user", "customer-admin@xxx.example.com")
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac-users/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        // that user cannot even see other users, thus the system won't even try to delete
+                        .statusCode(204);
+            // @formatter:on
+
+            // finally, the user is still there
+            assertThat(rbacUserRepository.findByName(givenUser.getName())).isNotNull();
+        }
+
+        @Test
+        @Accepts({ "USR:D(Create)", "USR:X(Access Control)" })
+        void globalAdmin_canDeleteArbitraryUser() {
+
+            // given
+            final var givenUser = givenANewUser();
+
+            // @formatter:off
+            final var location = RestAssured
+                    .given()
+                        .header("current-user", "mike@example.org")
+                        .port(port)
+                    .when()
+                        .delete("http://localhost/api/rbac-users/" + givenUser.getUuid())
+                    .then().log().all().assertThat()
+                        .statusCode(204);
+            // @formatter:on
+
+            // finally, the user is actually deleted
+            assertThat(rbacUserRepository.findByName(givenUser.getName())).isNull();
+        }
+    }
+
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
             context.define("mike@example.org");
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }
+
+    RbacUserEntity givenANewUser() {
+        final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+        final var givenUser = jpaAttempt.transacted(() -> {
+            context.define(null);
+            return rbacUserRepository.create(new RbacUserEntity(UUID.randomUUID(), givenUserName));
+        }).assumeSuccessful().returnedValue();
+        assertThat(rbacUserRepository.findByName(givenUser.getName())).isNotNull();
+        return givenUser;
+    }
+
 }

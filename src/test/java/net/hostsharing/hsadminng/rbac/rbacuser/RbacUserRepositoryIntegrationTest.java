@@ -44,27 +44,8 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
     class CreateUser {
 
         @Test
-        public void anyoneCanCreateTheirOwnUser() {
-            // given
-            final var givenNewUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
-            context(null);
-
-            // when
-            final var result = rbacUserRepository.create(
-                    new RbacUserEntity(null, givenNewUserName));
-
-            // then the persisted user is returned
-            assertThat(result).isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
-
-            // and the new user entity can be fetched by the user itself
-            context(givenNewUserName);
-            assertThat(em.find(RbacUserEntity.class, result.getUuid()))
-                    .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenNewUserName);
-        }
-
-        @Test
         @Transactional(propagation = Propagation.NEVER)
-        void anyoneCanCreateTheirOwnUser_committed() {
+        void anyoneCanCreateTheirOwnUser() {
 
             // given:
             final var givenUuid = UUID.randomUUID();
@@ -72,7 +53,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
             // when:
             final var result = jpaAttempt.transacted(() -> {
-                context("customer-admin@xxx.example.com");
+                context(null);
                 return rbacUserRepository.create(new RbacUserEntity(givenUuid, newUserName));
             });
 
@@ -80,11 +61,36 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(result.wasSuccessful()).isTrue();
             assertThat(result.returnedValue()).isNotNull()
                     .extracting(RbacUserEntity::getUuid).isEqualTo(givenUuid);
-            jpaAttempt.transacted(() -> {
-                context(newUserName);
-                assertThat(em.find(RbacUserEntity.class, givenUuid))
-                        .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(newUserName);
+            assertThat(rbacUserRepository.findByName(result.returnedValue().getName())).isNotNull();
+            //        jpaAttempt.transacted(() -> {
+            //            context(givenUser.getName());
+            //            assertThat(em.find(RbacUserEntity.class, givenUser.getUuid()))
+            //                    .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenUser.getName());
+            //        }).assertSuccessful();
+        }
+    }
+
+    @Nested
+    class DeleteUser {
+
+        @Test
+        @Transactional(propagation = Propagation.NEVER)
+        public void anyoneCanDeleteTheirOwnUser() {
+            // given
+            final RbacUserEntity givenUser = givenANewUser();
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context(givenUser.getName());
+                rbacUserRepository.deleteByUuid(givenUser.getUuid());
             });
+
+            // then the user is deleted
+            result.assertSuccessful();
+            assertThat(rbacUserRepository.findByName(givenUser.getName())).isNull();
+            //        jpaAttempt.transacted(() -> {
+            //            assertThat(rbacUserRepository.findByName(givenUser.getName())).isNull();
+            //        }).assertSuccessful();
         }
     }
 
@@ -390,6 +396,16 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
     UUID userUUID(final String userName) {
         return rbacUserRepository.findByName(userName).getUuid();
+    }
+
+    RbacUserEntity givenANewUser() {
+        final var givenUserName = "test-user-" + System.currentTimeMillis() + "@example.com";
+        final var givenUser = jpaAttempt.transacted(() -> {
+            context(null);
+            return rbacUserRepository.create(new RbacUserEntity(UUID.randomUUID(), givenUserName));
+        }).assumeSuccessful().returnedValue();
+        assertThat(rbacUserRepository.findByName(givenUser.getName())).isNotNull();
+        return givenUser;
     }
 
     void exactlyTheseRbacUsersAreReturned(final List<RbacUserEntity> actualResult, final String... expectedUserNames) {
