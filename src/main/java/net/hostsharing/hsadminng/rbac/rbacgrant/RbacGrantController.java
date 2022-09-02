@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.RbacgrantsApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.RbacGrantResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacGrantsApi;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGrantResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,7 @@ import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
 
-public class RbacGrantController implements RbacgrantsApi {
+public class RbacGrantController implements RbacGrantsApi {
 
     @Autowired
     private Context context;
@@ -73,7 +73,7 @@ public class RbacGrantController implements RbacgrantsApi {
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/rbac/grants/{roleUuid}")
+                        .path("/api/rbac.yaml/grants/{roleUuid}")
                         .buildAndExpand(body.getGrantedRoleUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(map(granted, RbacGrantResource.class));

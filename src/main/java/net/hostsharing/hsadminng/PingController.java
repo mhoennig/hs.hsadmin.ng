@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-public class TestController {
+public class PingController {
 
     @ResponseBody
     @RequestMapping(value = "/api/ping", method = RequestMethod.GET)

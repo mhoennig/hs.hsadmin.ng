@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.test.cust;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.TestCustomersApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.TestCustomerResource;
+import net.hostsharing.hsadminng.test.generated.api.v1.api.TestCustomersApi;
+import net.hostsharing.hsadminng.test.generated.api.v1.model.TestCustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

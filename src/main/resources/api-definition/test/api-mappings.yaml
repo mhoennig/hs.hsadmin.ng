@@ -1,0 +1,16 @@
+openapi-processor-mapping: v2
+
+options:
+    package-name: net.hostsharing.hsadminng.test.generated.api.v1
+    model-name-suffix: Resource
+
+map:
+    result: org.springframework.http.ResponseEntity
+
+    types:
+        - type: array => java.util.List
+        - type: string:uuid => java.util.UUID
+
+    paths:
+        /api/test/packages/{packageUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable

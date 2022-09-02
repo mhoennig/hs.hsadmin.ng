@@ -1,0 +1,43 @@
+get:
+    tags:
+        - rbac-grants
+    operationId: listUserGrants
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
+
+post:
+    tags:
+        - rbac-grants
+    operationId: grantRoleToUser
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: './rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
+    responses:
+        "201":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "409":
+            $ref: './error-responses.yaml#/components/responses/Conflict'

@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.RbacrolesApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.RbacRoleResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacRolesApi;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +14,7 @@ import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
 
-public class RbacRoleController implements RbacrolesApi {
+public class RbacRoleController implements RbacRolesApi {
 
     @Autowired
     private Context context;

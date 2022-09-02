@@ -97,18 +97,39 @@ tasks.named('test') {
 
 // OpenAPI Source Code Generation
 openapiProcessor {
-    spring {
+    springRoot {
+        processorName 'spring'
         processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
         apiPath "$projectDir/src/main/resources/api-definition.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi"
         mapping "$projectDir/src/main/resources/api-mappings.yaml"
+        targetDir "$projectDir/build/generated/sources/openapi"
+        showWarnings true
+        openApiNullable true
+    }
+    springRbac {
+        processorName 'spring'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
+        apiPath "$projectDir/src/main/resources/api-definition/rbac/rbac.yaml"
+        mapping "$projectDir/src/main/resources/api-definition/rbac/api-mappings.yaml"
+        targetDir "$projectDir/build/generated/sources/openapi"
+        showWarnings true
+        openApiNullable true
+    }
+    springTest {
+        processorName 'spring'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
+        apiPath "$projectDir/src/main/resources/api-definition/test/test.yaml"
+        mapping "$projectDir/src/main/resources/api-definition/test/api-mappings.yaml"
+        targetDir "$projectDir/build/generated/sources/openapi"
         showWarnings true
         openApiNullable true
     }
 }
 sourceSets.main.java.srcDir 'build/generated/sources/openapi'
-project.tasks.processResources.dependsOn('processSpring')
-project.tasks.compileJava.dependsOn('processSpring')
+['processSpringRoot', 'processSpringRbac', 'processSpringTest'].each {
+    project.tasks.processResources.dependsOn it
+    project.tasks.compileJava.dependsOn it
+}
 
 // Spotless Code Formatting
 spotless {
@@ -154,7 +175,7 @@ jacoco {
 test {
     finalizedBy jacocoTestReport // generate report after tests
     excludes = [
-            'net.hostsharing.hsadminng.generated.**',
+            'net.hostsharing.hsadminng.**.generated.**',
     ]
 }
 jacocoTestReport {
@@ -162,8 +183,8 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                    "net/hostsharing/hsadminng/generated/**/*.class",
-                    "net/hostsharing/hsadminng/TestController.class",
+                    "net/hostsharing/hsadminng/**/generated/**/*.class",
+                    "net/hostsharing/hsadminng/PingController.class",
                     "net/hostsharing/hsadminng/hs/hscustomer/HsadminNgApplication.class"
             ])
         }))
@@ -176,12 +197,8 @@ project.tasks.check.dependsOn(jacocoTestCoverageVerification)
 jacocoTestCoverageVerification {
     violationRules {
         rule {
-            excludes = [
-                    'net.hostsharing.hsadminng.generated.**',
-                    'net.hostsharing.hsadminng.HsadminNgApplication' // main method
-            ]
             limit {
-                minimum = 0.94
+                minimum = 0.90
             }
         }
 
@@ -192,9 +209,9 @@ jacocoTestCoverageVerification {
         rule {
             element = 'CLASS'
             excludes = [
-                    'net.hostsharing.hsadminng.generated.**',
+                    'net.hostsharing.hsadminng.**.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication',
-                    'net.hostsharing.hsadminng.TestController',
+                    'net.hostsharing.hsadminng.PingController',
                     'net.hostsharing.hsadminng.Mapper'
             ]
 
@@ -207,9 +224,9 @@ jacocoTestCoverageVerification {
         rule {
             element = 'METHOD'
             excludes = [
-                    'net.hostsharing.hsadminng.generated.**',
+                    'net.hostsharing.hsadminng.**.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication.main',
-                    'net.hostsharing.hsadminng.TestController.*'
+                    'net.hostsharing.hsadminng.PingController.*'
             ]
 
             limit {
@@ -226,7 +243,7 @@ pitest {
     targetClasses = ['net.hostsharing.hsadminng.**']
     excludedClasses = [
             'net.hostsharing.hsadminng.config.**',
-            'net.hostsharing.hsadminng.generated.**'
+            'net.hostsharing.hsadminng.**.generated.**'
     ]
 
     targetTests = ['net.hostsharing.hsadminng.**.*UnitTest', 'net.hostsharing.hsadminng.**.*RestTest']

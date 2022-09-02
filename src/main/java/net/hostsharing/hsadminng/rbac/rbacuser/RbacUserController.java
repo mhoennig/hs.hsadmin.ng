@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.RbacusersApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserPermissionResource;
-import net.hostsharing.hsadminng.generated.api.v1.model.RbacUserResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacUsersApi;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserPermissionResource;
+import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,7 @@ import static net.hostsharing.hsadminng.Mapper.map;
 import static net.hostsharing.hsadminng.Mapper.mapList;
 
 @RestController
-public class RbacUserController implements RbacusersApi {
+public class RbacUserController implements RbacUsersApi {
 
     @Autowired
     private Context context;
@@ -39,7 +39,7 @@ public class RbacUserController implements RbacusersApi {
         rbacUserRepository.create(saved);
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/rbac/users/{id}")
+                        .path("/api/rbac.yaml/users/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(map(saved, RbacUserResource.class));

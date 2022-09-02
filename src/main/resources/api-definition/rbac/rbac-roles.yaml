@@ -1,0 +1,16 @@
+get:
+    tags:
+        - rbac-roles
+    operationId: listRoles
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './rbac-role-schemas.yaml#/components/schemas/RbacRole'

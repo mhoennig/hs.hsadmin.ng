@@ -2,9 +2,9 @@ package net.hostsharing.hsadminng.test.pac;
 
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.generated.api.v1.api.TestPackagesApi;
-import net.hostsharing.hsadminng.generated.api.v1.model.TestPackageResource;
-import net.hostsharing.hsadminng.generated.api.v1.model.TestPackageUpdateResource;
+import net.hostsharing.hsadminng.test.generated.api.v1.api.TestPackagesApi;
+import net.hostsharing.hsadminng.test.generated.api.v1.model.TestPackageResource;
+import net.hostsharing.hsadminng.test.generated.api.v1.model.TestPackageUpdateResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

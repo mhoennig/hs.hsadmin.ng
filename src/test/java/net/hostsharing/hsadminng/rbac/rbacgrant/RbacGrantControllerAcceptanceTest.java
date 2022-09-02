@@ -5,7 +5,6 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;

@@ -8,41 +8,6 @@ servers:
 
 paths:
 
-    # RBAC
-
-    /api/rbac/users:
-        $ref: "./api-definition/rbac-users.yaml"
-
-    /api/rbac/users/{userUuid}/permissions:
-        $ref: "./api-definition/rbac-users-with-id-permissions.yaml"
-
-    /api/rbac/users/{userUuid}:
-        $ref: "./api-definition/rbac-users-with-uuid.yaml"
-
-    /api/rbac/roles:
-        $ref: "./api-definition/rbac-roles.yaml"
-
-    /api/rbac/grants:
-        $ref: "./api-definition/rbac-grants.yaml"
-
-    /api/rbac/grants/{grantedRoleUuid}/{granteeUserUuid}:
-        $ref: "./api-definition/rbac-grants-with-id.yaml"
-
-
-    # Test-Entities for RBAC
-
-    /api/test/customers:
-        $ref: "./api-definition/test-customers.yaml"
-
-    /api/test/packages:
-        $ref: "./api-definition/test-packages.yaml"
-
-    /api/test/packages/{packageUUID}:
-        $ref: "./api-definition/test-packages-uuid.yaml"
-
-
-    # Other
-
     /api/ping:
         get:
             tags:

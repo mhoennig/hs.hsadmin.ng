@@ -1,10 +1,10 @@
 get:
   tags:
-    - rbacgrants
+    - rbac-grants
   operationId: getGrantById
   parameters:
-    - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
-    - $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
+    - $ref: './auth.yaml#/components/parameters/currentUser'
+    - $ref: './auth.yaml#/components/parameters/assumedRoles'
     - name: grantedRoleUuid
       in: path
       required: true
@@ -25,21 +25,21 @@ get:
       content:
         'application/json':
             schema:
-              $ref: './api-definition/rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
+              $ref: './rbac-grant-schemas.yaml#/components/schemas/RbacGrant'
     "401":
-      $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
+      $ref: './error-responses.yaml#/components/responses/Unauthorized'
     "403":
-      $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+      $ref: './error-responses.yaml#/components/responses/Forbidden'
     "404":
-      $ref: './api-definition/error-responses.yaml#/components/responses/NotFound'
+      $ref: './error-responses.yaml#/components/responses/NotFound'
 
 delete:
     tags:
-        - rbacgrants
+        - rbac-grants
     operationId: revokeRoleFromUser
     parameters:
-        - $ref: './api-definition/auth.yaml#/components/parameters/currentUser'
-        - $ref: './api-definition/auth.yaml#/components/parameters/assumedRoles'
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
         - name: grantedRoleUuid
           in: path
           required: true
@@ -58,8 +58,8 @@ delete:
         "204":
             description: No Content
         "401":
-            $ref: './api-definition/error-responses.yaml#/components/responses/Unauthorized'
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './api-definition/error-responses.yaml#/components/responses/Forbidden'
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
         "404":
-            $ref: './api-definition/error-responses.yaml#/components/responses/NotFound'
+            $ref: './error-responses.yaml#/components/responses/NotFound'

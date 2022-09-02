@@ -1,0 +1,48 @@
+get:
+    tags:
+        - rbac-users
+    description: List accessible RBAC users with optional filter by name.
+    operationId: listUsers
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: name
+          in: query
+          required: false
+          schema:
+              type: string
+    responses:
+        '200':
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+        '401':
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        '403':
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+post:
+    tags:
+        - rbac-users
+    description: Create a new RBAC user.
+    operationId: createUser
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+    responses:
+        '201':
+            description: Created
+            content:
+                'application/json':
+                    schema:
+                        $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+        '409':
+            $ref: './error-responses.yaml#/components/responses/Conflict'
+
