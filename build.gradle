@@ -135,6 +135,10 @@ dependencyCheck {
     failBuildOnCVSS = 7
 }
 project.tasks.check.dependsOn(dependencyCheckAnalyze)
+project.tasks.dependencyCheckAnalyze.doFirst { // doLast is not executed on exception, thus when we need it
+    println "OWASP Dependency Security Report: file:///${project.rootDir}/build/reports/dependency-check-report.html"
+}
+
 
 // License Check
 licenseReport {
