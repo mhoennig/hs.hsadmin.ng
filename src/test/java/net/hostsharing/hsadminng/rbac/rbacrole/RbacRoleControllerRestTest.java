@@ -36,7 +36,7 @@ class RbacRoleControllerRestTest {
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/api/rbac-roles")
+                .get("/api/rbac/roles")
                 .header("current-user", "mike@example.org")
                 .accept(MediaType.APPLICATION_JSON))
 

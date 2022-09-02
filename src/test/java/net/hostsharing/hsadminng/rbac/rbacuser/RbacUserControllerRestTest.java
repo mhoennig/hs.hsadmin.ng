@@ -35,7 +35,7 @@ class RbacUserControllerRestTest {
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/rbac-users")
+                        .post("/api/rbac/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -56,7 +56,7 @@ class RbacUserControllerRestTest {
     void createUserGeneratesRandomUuidIfNotGiven() throws Exception {
         // when
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/rbac-users")
+                        .post("/api/rbac/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
                         .accept(MediaType.APPLICATION_JSON))

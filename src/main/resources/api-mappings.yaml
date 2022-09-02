@@ -12,5 +12,5 @@ map:
         - type: string:uuid => java.util.UUID
 
     paths:
-        /api/test-packages/{packageUUID}:
+        /api/test/packages/{packageUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable

@@ -73,7 +73,7 @@ public class RbacGrantController implements RbacgrantsApi {
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/rbac-grants/{roleUuid}")
+                        .path("/api/rbac/grants/{roleUuid}")
                         .buildAndExpand(body.getGrantedRoleUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(map(granted, RbacGrantResource.class));

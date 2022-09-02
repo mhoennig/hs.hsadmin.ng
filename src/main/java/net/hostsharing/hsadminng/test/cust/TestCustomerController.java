@@ -56,7 +56,7 @@ public class TestCustomerController implements TestCustomersApi {
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/test-customers/{id}")
+                        .path("/api/test/customers/{id}")
                         .buildAndExpand(customer.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(map(saved, TestCustomerResource.class));

@@ -10,34 +10,36 @@ paths:
 
     # RBAC
 
-    /api/rbac-users:
+    /api/rbac/users:
         $ref: "./api-definition/rbac-users.yaml"
 
-    /api/rbac-users/{userUuid}/permissions:
+    /api/rbac/users/{userUuid}/permissions:
         $ref: "./api-definition/rbac-users-with-id-permissions.yaml"
 
-    /api/rbac-users/{userUuid}:
+    /api/rbac/users/{userUuid}:
         $ref: "./api-definition/rbac-users-with-uuid.yaml"
 
-    /api/rbac-roles:
+    /api/rbac/roles:
         $ref: "./api-definition/rbac-roles.yaml"
 
-    /api/rbac-grants:
+    /api/rbac/grants:
         $ref: "./api-definition/rbac-grants.yaml"
 
-    /api/rbac-grants/{grantedRoleUuid}/{granteeUserUuid}:
+    /api/rbac/grants/{grantedRoleUuid}/{granteeUserUuid}:
         $ref: "./api-definition/rbac-grants-with-id.yaml"
 
-    # HS
 
-    /api/test-customers:
+    # Test-Entities for RBAC
+
+    /api/test/customers:
         $ref: "./api-definition/test-customers.yaml"
 
-    /api/test-packages:
+    /api/test/packages:
         $ref: "./api-definition/test-packages.yaml"
 
-    /api/test-packages/{packageUUID}:
+    /api/test/packages/{packageUUID}:
         $ref: "./api-definition/test-packages-uuid.yaml"
+
 
     # Other
 

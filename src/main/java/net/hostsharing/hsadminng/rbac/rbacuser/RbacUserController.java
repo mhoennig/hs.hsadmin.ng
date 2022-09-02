@@ -39,7 +39,7 @@ public class RbacUserController implements RbacusersApi {
         rbacUserRepository.create(saved);
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/rbac-users/{id}")
+                        .path("/api/rbac/users/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(map(saved, RbacUserResource.class));

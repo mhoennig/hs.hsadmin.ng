@@ -68,7 +68,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .header("current-user", "mike@example.org")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/rbac-grants")
+                    .get("http://localhost/api/rbac/grants")
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -120,7 +120,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .header("assumed-roles", "test_package#yyy00.admin")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/rbac-grants")
+                    .get("http://localhost/api/rbac/grants")
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -143,7 +143,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .header("current-user", "pac-admin-yyy00@yyy.example.com")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/rbac-grants")
+                    .get("http://localhost/api/rbac/grants")
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -406,7 +406,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         )
                         .port(port)
                         .when()
-                        .post("http://localhost/api/rbac-grants")
+                        .post("http://localhost/api/rbac/grants")
                         .then().log().all(); // @formatter:on
             }
         }
@@ -442,7 +442,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         )
                         .port(port)
                         .when()
-                        .delete("http://localhost/api/rbac-grants/%s/%s".formatted(
+                        .delete("http://localhost/api/rbac/grants/%s/%s".formatted(
                                 grantedRole.getUuid(), granteeUser.getUuid()
                         ))
                         .then().log().all(); // @formatter:on
@@ -467,7 +467,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .header("assumed-roles", currentSubject.assumedRole)
                         .port(port)
                         .when()
-                        .get("http://localhost/api/rbac-grants/%s/%s".formatted(
+                        .get("http://localhost/api/rbac/grants/%s/%s".formatted(
                                 grantedRole.getUuid(), granteeUser.getUuid()
                         ))
                         .then().log().all();
