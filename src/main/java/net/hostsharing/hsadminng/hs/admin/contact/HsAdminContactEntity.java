@@ -1,15 +1,15 @@
 package net.hostsharing.hsadminng.hs.admin.contact;
 
-import com.vladmihalcea.hibernate.type.array.ListArrayType;
 import lombok.*;
-import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.UUID;
 
 @Entity
+@Table(name = "hs_admin_contact_rv")
 @Getter
 @Setter
 @Builder

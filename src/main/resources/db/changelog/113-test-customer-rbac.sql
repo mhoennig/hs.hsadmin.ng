@@ -234,7 +234,7 @@ create trigger test_customer_insert_trigger
     before insert
     on test_customer
     for each row
-    when ( currentUser() <> 'alex@hostsharing.net' or not hasGlobalPermission('add-customer') )
+    when ( not hasGlobalPermission('add-customer') )
 execute procedure addTestCustomerNotAllowedForCurrentSubjects();
 --//
 

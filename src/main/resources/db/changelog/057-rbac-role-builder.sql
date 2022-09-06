@@ -114,6 +114,14 @@ begin
     return beingItselfA(getRoleId(roleDescriptor, 'fail'));
 end; $$;
 
+create or replace function withoutSubRoles()
+    returns RbacSubRoles
+    language plpgsql
+    strict as $$
+begin
+    return row (array []::uuid[]);
+end; $$;
+
 --//
 
 -- =================================================================

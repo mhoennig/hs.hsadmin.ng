@@ -45,5 +45,12 @@ databaseChangeLog:
         file: db/changelog/133-test-domain-rbac.sql
     - include:
         file: db/changelog/138-test-domain-test-data.sql
+    - include:
+        file: db/changelog/200-hs-admin-contact.sql
+    - include:
+        file: db/changelog/203-hs-admin-contact-rbac.sql
+    - include:
+        file: db/changelog/208-hs-admin-contact-test-data.sql
+
 
 

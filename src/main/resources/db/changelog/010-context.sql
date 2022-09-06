@@ -148,7 +148,7 @@ begin
     return string_to_array(currentSubject, ';');
 end; $$;
 
-create or replace function pureIdentifier(rawIdentifier varchar)
+create or replace function cleanIdentifier(rawIdentifier varchar)
     returns varchar
     returns null on null input
     language plpgsql as $$
@@ -156,6 +156,17 @@ declare
     cleanIdentifier varchar;
 begin
     cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._]+', '', 'g');
+    return cleanIdentifier;
+end; $$;
+
+create or replace function pureIdentifier(rawIdentifier varchar)
+    returns varchar
+    returns null on null input
+    language plpgsql as $$
+declare
+    cleanIdentifier varchar;
+begin
+    cleanIdentifier := cleanIdentifier(rawIdentifier);
     if cleanIdentifier != rawIdentifier then
         raise exception 'identifier "%" contains invalid characters, maybe use "%"', rawIdentifier, cleanIdentifier;
     end if;
@@ -211,11 +222,19 @@ declare
     assumedRoles varchar(63)[];
 begin
     assumedRoles := assumedRoles();
-    if array_length(assumedRoles(), 1) > 0 then
+    if array_length(assumedRoles, 1) > 0 then
         return assumedRoles();
     else
         return array [currentUser()]::varchar(63)[];
     end if;
+end; $$;
+
+create or replace function hasAssumedRole()
+    returns boolean
+    stable leakproof
+    language plpgsql as $$
+begin
+    return array_length(assumedRoles(), 1) > 0;
 end; $$;
 --//
 

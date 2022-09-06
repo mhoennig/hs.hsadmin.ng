@@ -280,6 +280,7 @@ create domain RbacOp as varchar(67)
             or VALUE = 'view'
             or VALUE = 'assume'
             or VALUE ~ '^add-[a-z]+$'
+            or VALUE ~ '^set-[a-z]+$'
         );
 
 create table RbacPermission
