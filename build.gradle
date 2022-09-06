@@ -168,7 +168,7 @@ dependencyCheck {
     failBuildOnCVSS = 7
 }
 project.tasks.check.dependsOn(dependencyCheckAnalyze)
-project.tasks.dependencyCheckAnalyze.doFirst { // doLast is not executed on exception, thus when we need it
+project.tasks.dependencyCheckAnalyze.doFirst { // Why not doLast? See README.md!
     println "OWASP Dependency Security Report: file:///${project.rootDir}/build/reports/dependency-check-report.html"
 }
 
@@ -196,12 +196,11 @@ jacocoTestReport {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
                     "net/hostsharing/hsadminng/**/generated/**/*.class",
-                    "net/hostsharing/hsadminng/PingController.class",
                     "net/hostsharing/hsadminng/hs/hscustomer/HsadminNgApplication.class"
             ])
         }))
     }
-    doLast {
+    doFirst { // Why not doLast? See README.md!
         println "HTML Jacoco Test Code Coverage Report: file://${reports.html.outputLocation.get()}/index.html"
     }
 }
@@ -276,7 +275,7 @@ pitest {
     timestampedReports = false
 }
 project.tasks.check.dependsOn(project.tasks.pitest)
-project.tasks.pitest.doLast {
+project.tasks.pitest.doFirst { // Why not doLast? See README.md!
     println "PiTest Mutation Report: file:///${project.rootDir}/build/reports/pitest/index.html"
 }
 
