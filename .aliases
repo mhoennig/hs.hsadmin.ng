@@ -5,10 +5,10 @@ gradleWrapper () {
     fi
 
     TEMPFILE=$(mktemp /tmp/gw.XXXXXX)
-    ./gradlew "$@" | tee $TEMPFILE
+    unbuffer ./gradlew "$@" | tee $TEMPFILE
 
     echo
-    grep "Report:" $TEMPFILE
+    grep --color=never "Report:" $TEMPFILE
     rm $TEMPFILE
 }
 
