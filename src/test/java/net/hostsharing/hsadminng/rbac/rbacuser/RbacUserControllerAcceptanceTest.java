@@ -82,13 +82,13 @@ class RbacUserControllerAcceptanceTest {
 
         @Test
         @Accepts({ "USR:R(Read)" })
-        void testGlobalAdmin_withoutAssumedRole_canGetArbitraryUser() {
+        void globalAdmin_withoutAssumedRole_canGetArbitraryUser() {
             final var givenUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid())
@@ -101,13 +101,13 @@ class RbacUserControllerAcceptanceTest {
 
         @Test
         @Accepts({ "USR:R(Read)", "USR:X(Access Control)" })
-        void testGlobalAdmin_withAssumedCustomerAdminRole_canGetUserWithinInItsRealm() {
+        void globalAdmin_withAssumedCustomerAdminRole_canGetUserWithinInItsRealm() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
@@ -161,12 +161,12 @@ class RbacUserControllerAcceptanceTest {
 
         @Test
         @Accepts({ "USR:L(List)" })
-        void testGlobalAdmin_withoutAssumedRole_canViewAllUsers() {
+        void globalAdmin_withoutAssumedRole_canViewAllUsers() {
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users")
@@ -176,23 +176,23 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(hasEntry("name", "customer-admin@xxx.example.com")))
                     .body("", hasItem(hasEntry("name", "customer-admin@yyy.example.com")))
                     .body("", hasItem(hasEntry("name", "customer-admin@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "mike@example.org")))
+                    .body("", hasItem(hasEntry("name", "alex@hostsharing.net")))
                     // ...
                     .body("", hasItem(hasEntry("name", "pac-admin-zzz01@zzz.example.com")))
                     .body("", hasItem(hasEntry("name", "pac-admin-zzz02@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "sven@example.org")))
+                    .body("", hasItem(hasEntry("name", "fran@hostsharing.net")))
                     .body("size()", greaterThanOrEqualTo(14));
             // @formatter:on
         }
 
         @Test
         @Accepts({ "USR:F(Filter)" })
-        void testGlobalAdmin_withoutAssumedRole_canViewAllUsersByName() {
+        void globalAdmin_withoutAssumedRole_canViewAllUsersByName() {
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users?name=pac-admin-zzz0")
@@ -208,12 +208,12 @@ class RbacUserControllerAcceptanceTest {
 
         @Test
         @Accepts({ "USR:L(List)", "USR:X(Access Control)" })
-        void testGlobalAdmin_withAssumedCustomerAdminRole_canViewUsersInItsRealm() {
+        void globalAdmin_withAssumedCustomerAdminRole_canViewUsersInItsRealm() {
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
@@ -276,13 +276,13 @@ class RbacUserControllerAcceptanceTest {
 
         @Test
         @Accepts({ "PRM:L(List)" })
-        void testGlobalAdmin_withoutAssumedRole_canViewArbitraryUsersPermissions() {
+        void globalAdmin_withoutAssumedRole_canViewArbitraryUsersPermissions() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid() + "/permissions")
@@ -310,13 +310,13 @@ class RbacUserControllerAcceptanceTest {
 
         @Test
         @Accepts({ "PRM:L(List)" })
-        void testGlobalAdmin_withAssumedCustomerAdminRole_canViewArbitraryUsersPermissions() {
+        void globalAdmin_withAssumedCustomerAdminRole_canViewArbitraryUsersPermissions() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .header("assumed-roles", "test_package#yyy00.admin")
                     .port(port)
                 .when()
@@ -455,7 +455,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             final var location = RestAssured
                     .given()
-                        .header("current-user", "mike@example.org")
+                        .header("current-user", "alex@hostsharing.net")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/users/" + givenUser.getUuid())
@@ -470,7 +470,7 @@ class RbacUserControllerAcceptanceTest {
 
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context.define("mike@example.org");
+            context.define("alex@hostsharing.net");
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }

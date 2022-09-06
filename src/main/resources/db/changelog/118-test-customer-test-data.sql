@@ -30,7 +30,7 @@ declare
     custAdminName varchar;
 begin
     currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
-    call defineContext(currentTask, null, 'mike@example.org', 'global#test-global.admin');
+    call defineContext(currentTask, null, 'alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     custRowId = uuid_generate_v4();

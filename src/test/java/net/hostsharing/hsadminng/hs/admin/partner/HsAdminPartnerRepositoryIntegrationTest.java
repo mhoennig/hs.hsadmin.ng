@@ -41,7 +41,7 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
             final var count = partnerRepository.count();
 
             // when
@@ -67,9 +67,9 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
     class FindAllCustomers {
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewAllCustomers() {
+        public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
 
             // when
             final var result = partnerRepository.findPartnerByOptionalNameLike(null);
@@ -84,9 +84,9 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
     class FindByPrefixLike {
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewAllCustomers() {
+        public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
 
             // when
             final var result = partnerRepository.findPartnerByOptionalNameLike("Yps");

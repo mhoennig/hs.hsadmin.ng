@@ -37,9 +37,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
     class CreateCustomer {
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canCreateNewCustomer() {
+        public void globalAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
             final var count = testCustomerRepository.count();
 
             // when
@@ -58,9 +58,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void testGlobalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
+        public void globalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("mike@example.org", "test_customer#xxx.admin");
+            context("alex@hostsharing.net", "test_customer#xxx.admin");
 
             // when
             final var result = attempt(em, () -> {
@@ -104,9 +104,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
     class FindAllCustomers {
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewAllCustomers() {
+        public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -116,9 +116,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void testGlobalAdmin_withAssumedtestGlobalAdminRole_canViewAllCustomers() {
+        public void globalAdmin_withAssumedglobalAdminRole_canViewAllCustomers() {
             given:
-            context("mike@example.org", "global#test-global.admin");
+            context("alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -153,9 +153,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
     class FindByPrefixLike {
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewAllCustomers() {
+        public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike("yyy");

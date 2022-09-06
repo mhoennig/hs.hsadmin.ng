@@ -40,7 +40,7 @@ class RbacRoleRepositoryIntegrationTest {
 
         private static final String[] ALL_TEST_DATA_ROLES = Array.of(
                 // @formatter:off
-            "global#test-global.admin",
+            "global#global.admin",
                 "test_customer#xxx.admin", "test_customer#xxx.owner", "test_customer#xxx.tenant",
                     "test_package#xxx00.admin", "test_package#xxx00.owner", "test_package#xxx00.tenant",
                     "test_package#xxx01.admin", "test_package#xxx01.owner", "test_package#xxx01.tenant",
@@ -57,9 +57,9 @@ class RbacRoleRepositoryIntegrationTest {
         );
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewAllRbacRoles() {
+        public void globalAdmin_withoutAssumedRole_canViewAllRbacRoles() {
             // given
-            context.define("mike@example.org");
+            context.define("alex@hostsharing.net");
 
             // when
             final var result = rbacRoleRepository.findAll();
@@ -69,9 +69,9 @@ class RbacRoleRepositoryIntegrationTest {
         }
 
         @Test
-        public void testGlobalAdmin_withAssumedtestGlobalAdminRole_canViewAllRbacRoles() {
+        public void globalAdmin_withAssumedglobalAdminRole_canViewAllRbacRoles() {
             given:
-            context.define("mike@example.org", "global#test-global.admin");
+            context.define("alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = rbacRoleRepository.findAll();
@@ -111,7 +111,7 @@ class RbacRoleRepositoryIntegrationTest {
             noneOfTheseRbacRolesIsReturned(
                     result,
                     // @formatter:off
-                "global#test-global.admin",
+                "global#global.admin",
                 "test_customer#xxx.owner",
                 "test_package#yyy00.admin",
                 "test_package#yyy00.owner",

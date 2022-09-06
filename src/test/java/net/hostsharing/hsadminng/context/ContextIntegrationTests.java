@@ -31,7 +31,7 @@ class ContextIntegrationTests {
     @Test
     void defineWithoutHttpServletRequestUsesCallStack() {
 
-        context.define("mike@example.org", null);
+        context.define("alex@hostsharing.net", null);
 
         assertThat(context.getCurrentTask())
                 .isEqualTo("ContextIntegrationTests.defineWithoutHttpServletRequestUsesCallStack");
@@ -41,11 +41,11 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentUserButWithoutAssumedRoles() {
         // when
-        context.define("mike@example.org");
+        context.define("alex@hostsharing.net");
 
         // then
         assertThat(context.getCurrentUser()).
-                isEqualTo("mike@example.org");
+                isEqualTo("alex@hostsharing.net");
 
         assertThat(context.getCurrentUserUUid()).isNotNull();
 
@@ -85,11 +85,11 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentUserAndAssumedRoles() {
         // given
-        context.define("mike@example.org", "test_customer#xxx.owner;test_customer#yyy.owner");
+        context.define("alex@hostsharing.net", "test_customer#xxx.owner;test_customer#yyy.owner");
 
         // when
         final var currentUser = context.getCurrentUser();
-        assertThat(currentUser).isEqualTo("mike@example.org");
+        assertThat(currentUser).isEqualTo("alex@hostsharing.net");
 
         // then
         assertThat(context.getAssumedRoles())

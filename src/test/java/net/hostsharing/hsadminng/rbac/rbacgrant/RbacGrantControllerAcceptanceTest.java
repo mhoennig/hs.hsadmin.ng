@@ -61,10 +61,10 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
         @Test
         @Accepts("GRT:L(List)")
-        void testGlobalAdmin_withoutAssumedRole_canViewAllGrants() {
+        void globalAdmin_withoutAssumedRole_canViewAllGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -73,23 +73,23 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                hasEntry("grantedByRoleIdName", "global#test-global.admin"),
+                                hasEntry("grantedByRoleIdName", "global#global.admin"),
                                 hasEntry("grantedRoleIdName", "test_customer#xxx.admin"),
                                 hasEntry("granteeUserName", "customer-admin@xxx.example.com")
                             )
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "global#test-global.admin"),
+                                    hasEntry("grantedByRoleIdName", "global#global.admin"),
                                     hasEntry("grantedRoleIdName", "test_customer#yyy.admin"),
                                     hasEntry("granteeUserName", "customer-admin@yyy.example.com")
                             )
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "global#test-global.admin"),
-                                    hasEntry("grantedRoleIdName", "global#test-global.admin"),
-                                    hasEntry("granteeUserName", "sven@example.org")
+                                    hasEntry("grantedByRoleIdName", "global#global.admin"),
+                                    hasEntry("grantedRoleIdName", "global#global.admin"),
+                                    hasEntry("granteeUserName", "fran@hostsharing.net")
                             )
                     ))
                     .body("", hasItem(
@@ -112,10 +112,10 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
         @Test
         @Accepts({ "GRT:L(List)", "GRT:X(Access Control)" })
-        void testGlobalAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
+        void globalAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .header("assumed-roles", "test_package#yyy00.admin")
                     .port(port)
                 .when()
@@ -498,14 +498,14 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }
 
     RbacRoleEntity findRbacRoleByName(final String roleName) {
         return jpaAttempt.transacted(() -> {
-            context("mike@example.org", null);
+            context("alex@hostsharing.net", null);
             return rbacRoleRepository.findByRoleName(roleName);
         }).returnedValue();
     }

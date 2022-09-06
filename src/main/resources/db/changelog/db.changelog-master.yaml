@@ -28,8 +28,6 @@ databaseChangeLog:
     - include:
         file: db/changelog/080-rbac-global.sql
     - include:
-        file: db/changelog/100-test-base.sql
-    - include:
         file: db/changelog/110-test-customer.sql
     - include:
         file: db/changelog/113-test-customer-rbac.sql

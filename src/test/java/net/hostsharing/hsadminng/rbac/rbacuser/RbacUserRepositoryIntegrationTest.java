@@ -99,7 +99,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
         private static final String[] ALL_TEST_DATA_USERS = Array.of(
                 // @formatter:off
-            "mike@example.org", "sven@example.org",
+            "alex@hostsharing.net", "fran@hostsharing.net",
             "customer-admin@xxx.example.com",
             "pac-admin-xxx00@xxx.example.com", "pac-admin-xxx01@xxx.example.com", "pac-admin-xxx02@xxx.example.com",
             "customer-admin@yyy.example.com",
@@ -110,9 +110,9 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         );
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewAllRbacUsers() {
+        public void globalAdmin_withoutAssumedRole_canViewAllRbacUsers() {
             // given
-            context("mike@example.org");
+            context("alex@hostsharing.net");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -122,9 +122,9 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void testGlobalAdmin_withAssumedtestGlobalAdminRole_canViewAllRbacUsers() {
+        public void globalAdmin_withAssumedglobalAdminRole_canViewAllRbacUsers() {
             given:
-            context("mike@example.org", "global#test-global.admin");
+            context("alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -134,9 +134,9 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void testGlobalAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
+        public void globalAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             given:
-            context("mike@example.org", "test_customer#xxx.admin");
+            context("alex@hostsharing.net", "test_customer#xxx.admin");
 
             // when
             final var result = rbacUserRepository.findByOptionalNameLike(null);
@@ -190,7 +190,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
 
         private static final String[] ALL_USER_PERMISSIONS = Array.of(
                 // @formatter:off
-            "global#test-global.admin -> global#test-global: add-customer",
+            "global#global.admin -> global#global: add-customer",
 
             "test_customer#xxx.admin -> test_customer#xxx: add-package",
             "test_customer#xxx.admin -> test_customer#xxx: view",
@@ -237,12 +237,12 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         );
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
+        public void globalAdmin_withoutAssumedRole_canViewTheirOwnPermissions() {
             // given
-            context("mike@example.org");
+            context("alex@hostsharing.net");
 
             // when
-            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("mike@example.org"));
+            final var result = rbacUserRepository.findPermissionsOfUserByUuid(userUUID("alex@hostsharing.net"));
 
             // then
             allTheseRbacPermissionsAreReturned(result, ALL_USER_PERMISSIONS);
@@ -294,7 +294,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
         public void customerAdmin_withoutAssumedRole_isNotAllowedToViewGlobalAdminsPermissions() {
             // given
             context("customer-admin@xxx.example.com");
-            final UUID userUuid = userUUID("mike@example.org");
+            final UUID userUuid = userUUID("alex@hostsharing.net");
 
             // when
             final var result = attempt(em, () ->

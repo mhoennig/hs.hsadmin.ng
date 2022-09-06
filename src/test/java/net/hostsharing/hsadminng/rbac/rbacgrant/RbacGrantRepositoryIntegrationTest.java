@@ -83,7 +83,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant assumed role test_customer#xxx.admin to user customer-admin@xxx.example.com by role global#test-global.admin }",
+                    "{ grant assumed role test_customer#xxx.admin to user customer-admin@xxx.example.com by role global#global.admin }",
                     "{ grant assumed role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin }",
                     "{ grant assumed role test_package#xxx01.admin to user pac-admin-xxx01@xxx.example.com by role test_customer#xxx.admin }",
                     "{ grant assumed role test_package#xxx02.admin to user pac-admin-xxx02@xxx.example.com by role test_customer#xxx.admin }");

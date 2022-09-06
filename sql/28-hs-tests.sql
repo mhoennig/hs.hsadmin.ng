@@ -17,7 +17,7 @@ BEGIN
 
     -- hostmaster accessing a single customer
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.currentUser = 'alex@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = '';
     -- SELECT *
     SELECT count(*) INTO resultCount
@@ -27,7 +27,7 @@ BEGIN
 
     -- hostmaster listing all customers
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.currentUser = 'alex@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = '';
     -- SELECT *
     SELECT count(*) INTO resultCount
@@ -54,7 +54,7 @@ BEGIN
 
     -- hostsharing admin assuming customer role and listing all accessible packages
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.currentUser = 'alex@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = 'test_customer#aaa.admin;test_customer#aab.admin';
     -- SELECT *
     SELECT count(*) INTO resultCount
@@ -63,7 +63,7 @@ BEGIN
 
     -- hostsharing admin assuming two customer admin roles and listing all accessible domains
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.currentUser = 'alex@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = 'test_customer#aab.admin;test_customer#aac.admin';
     -- SELECT c.prefix, c.reference, uu.*
     SELECT count(*) INTO resultCount
@@ -75,7 +75,7 @@ BEGIN
     -- hostsharing admin assuming two customer admin roles and listing all accessible domains
     -- ABORT; START TRANSACTION;
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.currentUser = 'alex@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = 'test_customer#aac.admin;test_customer#aad.admin';
     -- SELECT p.name, uu.name, dom.name
     SELECT count(*) INTO resultCount
@@ -88,7 +88,7 @@ BEGIN
     -- hostsharing admin assuming two customer admin roles and listing all accessible email addresses
     -- ABORT; START TRANSACTION;
     SET SESSION SESSION AUTHORIZATION restricted;
-    SET LOCAL hsadminng.currentUser = 'mike@example.org';
+    SET LOCAL hsadminng.currentUser = 'alex@hostsharing.net';
     SET LOCAL hsadminng.assumedRoles = 'test_customer#aae.admin;test_customer#aaf.admin';
     -- SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
     SELECT count(*) INTO resultCount

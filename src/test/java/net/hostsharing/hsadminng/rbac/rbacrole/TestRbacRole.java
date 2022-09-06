@@ -4,7 +4,7 @@ import static java.util.UUID.randomUUID;
 
 public class TestRbacRole {
 
-    public static final RbacRoleEntity hostmasterRole = rbacRole("global", "test-global", RbacRoleType.admin);
+    public static final RbacRoleEntity hostmasterRole = rbacRole("global", "global", RbacRoleType.admin);
     static final RbacRoleEntity customerXxxOwner = rbacRole("test_customer", "xxx", RbacRoleType.owner);
     static final RbacRoleEntity customerXxxAdmin = rbacRole("test_customer", "xxx", RbacRoleType.admin);
 

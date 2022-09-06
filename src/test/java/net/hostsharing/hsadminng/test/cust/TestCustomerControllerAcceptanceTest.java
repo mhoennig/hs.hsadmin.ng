@@ -39,10 +39,10 @@ class TestCustomerControllerAcceptanceTest {
     class ListCustomers {
 
         @Test
-        void testGlobalAdmin_withoutAssumedRoles_canViewAllCustomers_ifNoCriteriaGiven() {
+        void globalAdmin_withoutAssumedRoles_canViewAllCustomers_ifNoCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -57,10 +57,10 @@ class TestCustomerControllerAcceptanceTest {
         }
 
         @Test
-        void testGlobalAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
+        void globalAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers?prefix=y")
@@ -73,10 +73,10 @@ class TestCustomerControllerAcceptanceTest {
         }
 
         @Test
-        void testGlobalAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
+        void globalAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
@@ -110,11 +110,11 @@ class TestCustomerControllerAcceptanceTest {
     class AddCustomer {
 
         @Test
-        void testGlobalAdmin_withoutAssumedRole_canAddCustomer() {
+        void globalAdmin_withoutAssumedRole_canAddCustomer() {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "mike@example.org")
+                        .header("current-user", "alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -142,13 +142,13 @@ class TestCustomerControllerAcceptanceTest {
         }
 
         @Test
-        void testGlobalAdmin_withoutAssumedRole_canAddCustomerWithGivenUuid() {
+        void globalAdmin_withoutAssumedRole_canAddCustomerWithGivenUuid() {
 
             final var givenUuid = UUID.randomUUID();
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                               {
@@ -180,11 +180,11 @@ class TestCustomerControllerAcceptanceTest {
         }
 
         @Test
-        void testGlobalAdmin_withAssumedCustomerAdminRole_canNotAddCustomer() {
+        void globalAdmin_withAssumedCustomerAdminRole_canNotAddCustomer() {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@example.org")
+                    .header("current-user", "alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -205,7 +205,7 @@ class TestCustomerControllerAcceptanceTest {
             // @formatter:on
 
             // finally, the new customer was not created
-            context.define("sven@example.org");
+            context.define("fran@hostsharing.net");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
 
@@ -234,7 +234,7 @@ class TestCustomerControllerAcceptanceTest {
                 // @formatter:on
 
             // finally, the new customer was not created
-            context.define("sven@example.org");
+            context.define("fran@hostsharing.net");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
     }

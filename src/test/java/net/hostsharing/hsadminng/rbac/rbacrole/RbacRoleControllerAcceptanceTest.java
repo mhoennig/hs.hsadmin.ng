@@ -38,12 +38,12 @@ class RbacRoleControllerAcceptanceTest {
 
     @Test
     @Accepts({ "ROL:L(List)" })
-    void testGlobalAdmin_withoutAssumedRole_canViewAllRoles() {
+    void globalAdmin_withoutAssumedRole_canViewAllRoles() {
 
         // @formatter:off
         RestAssured
             .given()
-                .header("current-user", "mike@example.org")
+                .header("current-user", "alex@hostsharing.net")
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")
@@ -54,7 +54,7 @@ class RbacRoleControllerAcceptanceTest {
                 .body("", hasItem(hasEntry("roleName", "test_customer#xxx.owner")))
                 .body("", hasItem(hasEntry("roleName", "test_customer#xxx.tenant")))
                 // ...
-                .body("", hasItem(hasEntry("roleName", "global#test-global.admin")))
+                .body("", hasItem(hasEntry("roleName", "global#global.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_customer#yyy.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_package#yyy00.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa.owner")))
@@ -64,12 +64,12 @@ class RbacRoleControllerAcceptanceTest {
 
     @Test
     @Accepts({ "ROL:L(List)", "ROL:X(Access Control)" })
-    void testGlobalAdmin_withAssumedPackageAdminRole_canViewPackageAdminRoles() {
+    void globalAdmin_withAssumedPackageAdminRole_canViewPackageAdminRoles() {
 
         // @formatter:off
         RestAssured
             .given()
-                .header("current-user", "mike@example.org")
+                .header("current-user", "alex@hostsharing.net")
                 .header("assumed-roles", "test_package#yyy00.admin")
                 .port(port)
             .when()

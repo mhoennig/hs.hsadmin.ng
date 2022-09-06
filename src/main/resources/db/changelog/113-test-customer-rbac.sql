@@ -69,7 +69,7 @@ begin
     testCustomerOwnerUuid = createRole(
         testCustomerOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(testGlobalAdmin())
+        beneathRole(globalAdmin())
         );
 
     -- the admin role for the customer's admins, who can view and add products
@@ -78,7 +78,7 @@ begin
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view', 'add-package']),
         -- NO auto assume for customer owner to avoid exploding permissions for administrators
         withUser(NEW.adminUserName, 'create'), -- implicitly ignored if null
-        grantedByRole(testGlobalAdmin())
+        grantedByRole(globalAdmin())
         );
 
     -- allow the customer owner role (thus administrators) to assume the customer admin role
@@ -208,7 +208,7 @@ do language plpgsql $$
     begin
         call defineContext('granting global add-customer permission to global admin role', null, null, null);
 
-        globalAdminRoleUuid := findRoleId(testGlobalAdmin());
+        globalAdminRoleUuid := findRoleId(globalAdmin());
         globalObjectUuid := (select uuid from global);
         addCustomerPermissions := createPermissions(globalObjectUuid, array ['add-customer']);
         call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
@@ -234,7 +234,7 @@ create trigger test_customer_insert_trigger
     before insert
     on test_customer
     for each row
-    when ( currentUser() <> 'mike@example.org' or not hasGlobalPermission('add-customer') )
+    when ( currentUser() <> 'alex@hostsharing.net' or not hasGlobalPermission('add-customer') )
 execute procedure addTestCustomerNotAllowedForCurrentSubjects();
 --//
 

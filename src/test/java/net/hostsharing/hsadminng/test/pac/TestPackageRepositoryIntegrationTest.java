@@ -42,9 +42,9 @@ class TestPackageRepositoryIntegrationTest {
     class FindAllByOptionalNameLike {
 
         @Test
-        public void testGlobalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
+        public void globalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             // given
-            context.define("mike@example.org");
+            context.define("alex@hostsharing.net");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -54,9 +54,9 @@ class TestPackageRepositoryIntegrationTest {
         }
 
         @Test
-        public void testGlobalAdmin_withAssumedtestGlobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
+        public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             given:
-            context.define("mike@example.org", "global#test-global.admin");
+            context.define("alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -93,17 +93,17 @@ class TestPackageRepositoryIntegrationTest {
         @Test
         public void supportsOptimisticLocking() throws InterruptedException {
             // given
-            testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
+            globalAdminWithAssumedRole("test_package#xxx00.admin");
             final var pac = testPackageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
+                globalAdminWithAssumedRole("test_package#xxx00.admin");
                 pac.setDescription("description set by thread 1");
                 testPackageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                testGlobalAdminWithAssumedRole("test_package#xxx00.admin");
+                globalAdminWithAssumedRole("test_package#xxx00.admin");
                 pac.setDescription("description set by thread 2");
                 testPackageRepository.save(pac);
                 sleep(1500);
@@ -125,8 +125,8 @@ class TestPackageRepositoryIntegrationTest {
         }
     }
 
-    private void testGlobalAdminWithAssumedRole(final String assumedRoles) {
-        context.define("mike@example.org", assumedRoles);
+    private void globalAdminWithAssumedRole(final String assumedRoles) {
+        context.define("alex@hostsharing.net", assumedRoles);
     }
 
     void noPackagesAreReturned(final List<TestPackageEntity> actualResult) {
