@@ -5,14 +5,15 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
 import java.util.UUID;
+import java.util.function.Predicate;
 
 public class IsValidUuidMatcher extends BaseMatcher<CharSequence> {
 
-    public static Matcher<CharSequence> isValidUuid() {
+    public static Matcher<CharSequence> isUuidValid() {
         return new IsValidUuidMatcher();
     }
 
-    public static boolean isValidUuid(final String actual) {
+    public static boolean isUuidValid(final String actual) {
         try {
             UUID.fromString(actual);
         } catch (final IllegalArgumentException exc) {
@@ -21,12 +22,16 @@ public class IsValidUuidMatcher extends BaseMatcher<CharSequence> {
         return true;
     }
 
+    public static Predicate<String> isValidUuid() {
+        return IsValidUuidMatcher::isUuidValid;
+    }
+
     @Override
     public boolean matches(final Object actual) {
         if (actual == null || actual.getClass().isAssignableFrom(CharSequence.class)) {
             return false;
         }
-        return isValidUuid(actual.toString());
+        return isUuidValid(actual.toString());
     }
 
     @Override

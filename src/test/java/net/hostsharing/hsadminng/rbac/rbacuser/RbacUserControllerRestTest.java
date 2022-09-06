@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.UUID;
 
-import static net.hostsharing.test.IsValidUuidMatcher.isValidUuid;
+import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
@@ -63,7 +63,7 @@ class RbacUserControllerRestTest {
 
                 // then
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("uuid", isValidUuid()));
+                .andExpect(jsonPath("uuid", isUuidValid()));
 
         // then
         verify(rbacUserRepository).create(argThat(entity -> entity.getUuid() != null));

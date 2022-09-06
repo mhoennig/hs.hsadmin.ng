@@ -124,12 +124,24 @@ openapiProcessor {
         showWarnings true
         openApiNullable true
     }
+    springHs {
+        processorName 'spring'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
+        apiPath "$projectDir/src/main/resources/api-definition/hs-admin/hs-admin.yaml"
+        mapping "$projectDir/src/main/resources/api-definition/hs-admin/api-mappings.yaml"
+        targetDir "$projectDir/build/generated/sources/openapi"
+        showWarnings true
+        openApiNullable true
+    }
 }
 sourceSets.main.java.srcDir 'build/generated/sources/openapi'
-['processSpringRoot', 'processSpringRbac', 'processSpringTest'].each {
-    project.tasks.processResources.dependsOn it
-    project.tasks.compileJava.dependsOn it
+abstract class ProcessSpring extends DefaultTask {}
+tasks.register('processSpring', ProcessSpring)
+['processSpringRoot', 'processSpringRbac', 'processSpringTest', 'processSpringHs'].each {
+    project.tasks.processSpring.dependsOn it
 }
+project.tasks.processResources.dependsOn processSpring
+project.tasks.compileJava.dependsOn processSpring
 
 // Spotless Code Formatting
 spotless {
@@ -243,6 +255,7 @@ pitest {
     targetClasses = ['net.hostsharing.hsadminng.**']
     excludedClasses = [
             'net.hostsharing.hsadminng.config.**',
+            'net.hostsharing.hsadminng.**.*Controller',
             'net.hostsharing.hsadminng.**.generated.**'
     ]
 
@@ -255,9 +268,9 @@ pitest {
     threads = 4
 
     // As Java unit tests are pretty pointless in our case, this maybe makes not much sense.
-    mutationThreshold = 31
-    coverageThreshold = 44
-    testStrengthThreshold = 76
+    mutationThreshold = 71
+    coverageThreshold = 57
+    testStrengthThreshold = 99
 
     outputFormats = ['XML', 'HTML']
     timestampedReports = false

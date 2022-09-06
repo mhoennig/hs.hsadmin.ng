@@ -38,17 +38,31 @@ public class ArchTest {
 
     @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule hsPackagesRule = classes()
+    public static final ArchRule testPackagesRule = classes()
             .that().resideInAPackage("..test.(*)..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..test.(*)..");
 
     @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule hsPackagePackageRule = classes()
+    public static final ArchRule testPackagePackageRule = classes()
             .that().resideInAPackage("..test.pac..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..test.pac..");
+
+    @com.tngtech.archunit.junit.ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsAdminPackagesRule = classes()
+            .that().resideInAPackage("..hs.admin.(*)..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.admin.(*)..");
+
+    @com.tngtech.archunit.junit.ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsAdminPartnerPackageRule = classes()
+            .that().resideInAPackage("..hs.admin.partner..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.admin.partner..");
 
     @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")

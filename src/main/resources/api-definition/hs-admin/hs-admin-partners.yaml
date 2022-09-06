@@ -1,0 +1,56 @@
+get:
+    summary: Returns a list of (optionally filtered) business partners.
+    description: Returns the list of (optionally filtered) business partners which are visible to the current user or any of it's assumed roles.
+    tags:
+        - hs-admin-partners
+    operationId: listPartners
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: name
+          in: query
+          required: false
+          schema:
+              type: string
+          description: Customer-prefix to filter the results. TODO
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './hs-admin-partner-schemas.yaml#/components/schemas/HsAdminPartner'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+post:
+    summary: Adds a new business partner.
+    tags:
+        - hs-admin-partners
+    operationId: addPartner
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: './hs-admin-partner-schemas.yaml#/components/schemas/HsAdminPartner'
+        required: true
+    responses:
+        "201":
+            description: Created
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-admin-partner-schemas.yaml#/components/schemas/HsAdminPartner'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "409":
+            $ref: './error-responses.yaml#/components/responses/Conflict'
