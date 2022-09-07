@@ -133,17 +133,13 @@ public class JpaAttempt {
         }
 
         public JpaResult<T> assumeSuccessful() {
-            assumeThat(exception).as(getSensibleMessage(exception)).isNull();
+            assumeThat(exception).as(firstRootCauseMessageLineOf(exception)).isNull();
             return this;
         }
 
         public JpaResult<T> assertSuccessful() {
-            assertThat(exception).as(getSensibleMessage(exception)).isNull();
+            assertThat(exception).as(firstRootCauseMessageLineOf(exception)).isNull();
             return this;
-        }
-
-        private String getSensibleMessage(final RuntimeException exception) {
-            return exception != null ? NestedExceptionUtils.getRootCause(exception).getMessage() : null;
         }
 
         private String firstRootCauseMessageLineOf(final RuntimeException exception) {
