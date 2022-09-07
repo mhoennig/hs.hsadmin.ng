@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface HsAdminPersonRepository extends Repository<HsAdminPersonEntity, UUID> {
 
-    Optional<HsAdminPersonEntity> findByUuid(UUID id);
+    Optional<HsAdminPersonEntity> findByUuid(UUID personUuid);
 
     @Query("""
             SELECT p FROM HsAdminPersonEntity p
@@ -21,6 +21,8 @@ public interface HsAdminPersonRepository extends Repository<HsAdminPersonEntity,
     List<HsAdminPersonEntity> findPersonByOptionalNameLike(String name);
 
     HsAdminPersonEntity save(final HsAdminPersonEntity entity);
+
+    void deleteByUuid(final UUID personUuid);
 
     long count();
 }

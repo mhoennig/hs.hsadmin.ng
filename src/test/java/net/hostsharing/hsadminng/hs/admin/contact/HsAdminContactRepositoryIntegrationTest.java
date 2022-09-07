@@ -3,8 +3,10 @@ package net.hostsharing.hsadminng.hs.admin.contact;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.test.JpaAttempt;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.internal.bytebuddy.utility.RandomString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -52,7 +54,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
                     hsAdminContact("a new contact", "contact-admin@www.example.com")));
 
             // then
-            assertThat(result.wasSuccessful()).isTrue();
+            result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsAdminContactEntity::getUuid).isNotNull();
             assertThatContactIsPersisted(result.returnedValue());
             assertThat(contactRepo.count()).isEqualTo(count + 1);
@@ -61,7 +63,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_canCreateNewContact() {
             // given
-            context("pac-admin-xxx00@xxx.example.com");
+            context("drew@hostsharing.org");
             final var count = contactRepo.count();
 
             // when
@@ -69,7 +71,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
                     hsAdminContact("another new contact", "another-new-contact@example.com")));
 
             // then
-            assertThat(result.wasSuccessful()).isTrue();
+            result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsAdminContactEntity::getUuid).isNotNull();
             assertThatContactIsPersisted(result.returnedValue());
             assertThat(contactRepo.count()).isEqualTo(count + 1);
@@ -99,10 +101,10 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_canViewOnlyItsOwnContact() {
             // given:
-            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
+            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
 
             // when:
-            context("pac-admin-xxx00@xxx.example.com");
+            context("drew@hostsharing.org");
             final var result = contactRepo.findContactByOptionalLabelLike(null);
 
             // then:
@@ -128,10 +130,10 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnContact() {
             // given:
-            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
+            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
 
             // when:
-            context("pac-admin-xxx00@xxx.example.com");
+            context("drew@hostsharing.org");
             final var result = contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
 
             // then:
@@ -145,7 +147,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyContact() {
             // given
-            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
+            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -164,11 +166,11 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canDeleteAContactCreatedByItself() {
             // given
-            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
+            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("pac-admin-xxx00@xxx.example.com", null);
+                context("drew@hostsharing.org", null);
                 contactRepo.deleteByUuid(givenContact.getUuid());
             });
 
@@ -190,16 +192,26 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         }).assumeSuccessful().returnedValue();
     }
 
+    @AfterEach
+    void cleanup() {
+        context("alex@hostsharing.net", null);
+        final var result = contactRepo.findContactByOptionalLabelLike("some temporary contact");
+        result.forEach(tempPerson -> {
+            System.out.println("DELETING contact: " + tempPerson.getLabel());
+            contactRepo.deleteByUuid(tempPerson.getUuid());
+        });
+    }
+
     private HsAdminContactEntity givenSomeTemporaryContact(final String createdByUser) {
+        final var random = RandomString.make(12);
         return givenSomeTemporaryContact(createdByUser, () ->
                 hsAdminContact(
-                        "some temporary contact #" + Math.random(),
-                        "some-temporary-contact" + Math.random() + "@example.com"));
+                        "some temporary contact #" + random,
+                        "some-temporary-contact" + random + "@example.com"));
     }
 
     void exactlyTheseContactsAreReturned(final List<HsAdminContactEntity> actualResult, final String... contactLabels) {
         assertThat(actualResult)
-                .hasSize(contactLabels.length)
                 .extracting(HsAdminContactEntity::getLabel)
                 .containsExactlyInAnyOrder(contactLabels);
     }

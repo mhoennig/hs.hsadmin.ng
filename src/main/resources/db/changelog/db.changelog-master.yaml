@@ -51,6 +51,9 @@ databaseChangeLog:
         file: db/changelog/203-hs-admin-contact-rbac.sql
     - include:
         file: db/changelog/208-hs-admin-contact-test-data.sql
-
-
-
+    - include:
+        file: db/changelog/210-hs-admin-person.sql
+    - include:
+        file: db/changelog/213-hs-admin-person-rbac.sql
+    - include:
+        file: db/changelog/218-hs-admin-person-test-data.sql

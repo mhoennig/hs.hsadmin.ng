@@ -66,7 +66,7 @@ create or replace view rbacgrants_ev as
                  from rbacgrants as g
                  join rbacrole as r on r.uuid = g.descendantUuid
                  join rbacobject o on o.uuid = r.objectuuid
-                 join rbacuser u on u.uuid = g.ascendantuuid
+                 right outer join rbacuser u on u.uuid = g.ascendantuuid
          ) as g
         join RbacRole as r on r.uuid = grantedByRoleUuid
         join RbacObject as o on o.uuid = r.objectUuid

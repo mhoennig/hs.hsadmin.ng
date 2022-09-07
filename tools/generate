@@ -1,5 +1,16 @@
 #!/bin/bash
 
+mkdir -p src/test/java/net/hostsharing/hsadminng/hs/admin/person
+
+sed -e 's/hs-admin-contact/hs-admin-person/g' \
+	-e 's/hs_admin_contact/hs_admin_person/g' \
+	-e 's/HsAdminContact/HsAdminPerson/g' \
+	-e 's/hsAdminContact/hsAdminPerson/g' \
+	-e 's/contact/person/g' \
+<src/test/java/net/hostsharing/hsadminng/hs/admin/contact/HsAdminContactRepositoryIntegrationTest.java \
+>src/test/java/net/hostsharing/hsadminng/hs/admin/person/HsAdminPersonRepositoryIntegrationTest.java
+
+
 sed -e 's/hs-admin-contact/hs-admin-person/g' \
 	-e 's/hs_admin_contact/hs_admin_person/g' \
 	<src/main/resources/db/changelog/200-hs-admin-contact.sql >src/main/resources/db/changelog/210-hs-admin-person.sql

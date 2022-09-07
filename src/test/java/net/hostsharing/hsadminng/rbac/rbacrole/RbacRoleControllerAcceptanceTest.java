@@ -79,11 +79,20 @@ class RbacRoleControllerAcceptanceTest {
             .assertThat()
                 .statusCode(200)
                 .contentType("application/json")
+
                 .body("", hasItem(hasEntry("roleName", "test_customer#yyy.tenant")))
+                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa.owner")))
                 .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa.admin")))
+                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaab.owner")))
+                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaab.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_package#yyy00.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_package#yyy00.tenant")))
-                .body("size()", is(7)); // increases with new test data
+
+                .body("", not(hasItem(hasEntry("roleName", "test_customer#xxx.tenant"))))
+                .body("", not(hasItem(hasEntry("roleName", "test_domain#xxx00-aaaa.admin"))))
+                .body("", not(hasItem(hasEntry("roleName", "test_package#xxx00.admin"))))
+                .body("", not(hasItem(hasEntry("roleName", "test_package#xxx00.tenant"))))
+        ;
         // @formatter:on
     }
 
@@ -101,11 +110,16 @@ class RbacRoleControllerAcceptanceTest {
             .then().assertThat()
                 .statusCode(200)
                 .contentType("application/json")
+
                 .body("", hasItem(hasEntry("roleName", "test_customer#zzz.tenant")))
                 .body("", hasItem(hasEntry("roleName", "test_domain#zzz00-aaaa.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_package#zzz00.admin")))
                 .body("", hasItem(hasEntry("roleName", "test_package#zzz00.tenant")))
-                .body("size()", is(7)); // increases with new test data
+
+                .body("", not(hasItem(hasEntry("roleName", "test_customer#yyy.tenant"))))
+                .body("", not(hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa.admin"))))
+                .body("", not(hasItem(hasEntry("roleName", "test_package#yyy00.admin"))))
+                .body("", not(hasItem(hasEntry("roleName", "test_package#yyy00.tenant"))));
         // @formatter:on
     }
 }

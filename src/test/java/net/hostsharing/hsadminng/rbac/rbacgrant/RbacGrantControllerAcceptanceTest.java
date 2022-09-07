@@ -153,7 +153,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                                     hasEntry("granteeUserName", "pac-admin-yyy00@yyy.example.com")
                             )
                     ))
-                    .body("size()", is(1));
+                    .body("[0].grantedByRoleIdName", is("test_customer#yyy.admin"))
+                    .body("[0].grantedRoleIdName", is("test_package#yyy00.admin"))
+                    .body("[0].granteeUserName", is("pac-admin-yyy00@yyy.example.com"));
             // @formatter:on
         }
     }

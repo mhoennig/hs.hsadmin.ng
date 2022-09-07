@@ -24,9 +24,9 @@ end; $$;
  */
 create or replace procedure defineContext(
     currentTask varchar,
-    currentRequest varchar,
-    currentUser varchar,
-    assumedRoles varchar
+    currentRequest varchar = null,
+    currentUser varchar = null,
+    assumedRoles varchar = null
 )
     language plpgsql as $$
 begin
