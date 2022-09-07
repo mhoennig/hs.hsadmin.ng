@@ -77,8 +77,6 @@ create trigger createRbacRulesForEMailAddress_Trigger
     for each row
 execute procedure createRbacRulesForEMailAddress();
 
--- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForEMailAddress()
-
 
 -- create RBAC-restricted view
 set session session authorization default;

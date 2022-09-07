@@ -92,9 +92,6 @@ create trigger createRbacRulesForDomain_Trigger
     for each row
 execute procedure createRbacRulesForDomain();
 
--- TODO: CREATE OR REPLACE FUNCTION deleteRbacRulesForDomain()
-
-
 -- create RBAC-restricted view
 set session session authorization default;
 -- ALTER TABLE Domain ENABLE ROW LEVEL SECURITY;

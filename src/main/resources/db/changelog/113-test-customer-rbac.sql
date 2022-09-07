@@ -152,7 +152,7 @@ drop view if exists test_customer_iv;
 create or replace view test_customer_iv as
 select target.uuid, target.prefix as idName
     from test_customer as target;
--- TODO: Is it ok that everybody has access to this information?
+-- TODO.spec: Is it ok that everybody has access to this information?
 grant all privileges on test_customer_iv to restricted;
 
 /*

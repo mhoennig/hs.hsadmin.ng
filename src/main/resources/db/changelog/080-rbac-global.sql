@@ -30,7 +30,7 @@ create or replace function hasGlobalPermission(op RbacOp)
     returns boolean
     language sql as
 $$
-    -- TODO: this could to be optimized
+    -- TODO.perf: this could to be optimized
 select (select uuid from global) in
        (select queryAccessibleObjectUuidsOfSubjectIds(op, 'global', currentSubjectsUuids()));
 $$;

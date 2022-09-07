@@ -16,7 +16,7 @@ public interface HsAdminContactRepository extends Repository<HsAdminContactEntit
                 WHERE :label is null
                     OR c.label like concat(:label, '%')
                """)
-        // TODO: join tables missing
+        // TODO.feat: join tables missing
     List<HsAdminContactEntity> findContactByOptionalLabelLike(String label);
 
     HsAdminContactEntity save(final HsAdminContactEntity entity);

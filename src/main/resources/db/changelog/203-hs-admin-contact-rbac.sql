@@ -139,7 +139,7 @@ execute procedure deleteRbacRulesForHsAdminContact();
 create or replace view hs_admin_contact_iv as
 select target.uuid, cleanIdentifier(target.label) as idName
     from hs_admin_contact as target;
--- TODO: Is it ok that everybody has access to this information?
+-- TODO.spec: Is it ok that everybody has access to this information?
 grant all privileges on hs_admin_contact_iv to restricted;
 
 /*

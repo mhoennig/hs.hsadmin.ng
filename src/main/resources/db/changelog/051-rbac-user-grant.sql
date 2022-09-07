@@ -30,7 +30,7 @@ begin
     insert
         into RbacGrants (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
         values (grantedByRoleUuid, userUuid, roleUuid, doAssume);
-    -- TODO: What should happen on mupltiple grants? What if options are not the same?
+    -- TODO.spec: What should happen on mupltiple grants? What if options (doAssume) are not the same?
     --      Most powerful or latest grant wins? What about managed?
     -- on conflict do nothing; -- allow granting multiple times
 end; $$;
@@ -53,7 +53,7 @@ begin
     insert
         into RbacGrants (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
         values (grantedByRoleUuid, userUuid, grantedRoleUuid, doAssume);
-    -- TODO: What should happen on mupltiple grants? What if options are not the same?
+    -- TODO.spec: What should happen on mupltiple grants? What if options (doAssume) are not the same?
     --      Most powerful or latest grant wins? What about managed?
     -- on conflict do nothing; -- allow granting multiple times
 end; $$;

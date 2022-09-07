@@ -170,7 +170,7 @@ call create_journal('RbacRole');
 
 create type RbacRoleDescriptor as
 (
-    objectTable varchar(63), -- TODO: needed? remove?
+    objectTable varchar(63), -- for human readability and easier debugging
     objectUuid  uuid,
     roleType    RbacRoleType
 );
@@ -221,7 +221,7 @@ declare
     objectUuidOfRole          uuid;
     roleUuid                  uuid;
 begin
-    -- TODO: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
+    -- TODO.refact: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
     roleParts = overlay(roleIdName placing '#' from length(roleIdName) + 1 - strpos(reverse(roleIdName), '.'));
     objectTableFromRoleIdName = split_part(roleParts, '#', 1);
     objectNameFromRoleIdName = split_part(roleParts, '#', 2);
@@ -415,7 +415,7 @@ create or replace function isGranted(granteeIds uuid[], grantedId uuid)
 declare
     granteeId uuid;
 begin
-    -- TODO: needs optimization
+    -- TODO.perf: needs optimization
     foreach granteeId in array granteeIds
         loop
             if isGranted(granteeId, grantedId) then

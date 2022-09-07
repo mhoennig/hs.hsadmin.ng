@@ -168,7 +168,7 @@ drop view if exists test_domain_iv;
 create or replace view test_domain_iv as
 select distinct target.uuid, target.name as idName
     from test_domain as target;
--- TODO: Is it ok that everybody has access to this information?
+-- TODO.spec: Is it ok that everybody has access to this information?
 grant all privileges on test_domain_iv to restricted;
 
 /*

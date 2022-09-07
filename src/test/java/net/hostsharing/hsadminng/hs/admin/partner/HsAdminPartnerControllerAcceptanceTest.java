@@ -117,7 +117,7 @@ class HsAdminPartnerControllerAcceptanceTest {
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isEqualTo(givenUUID);
-            // TODO: context.define("partner-admin@ttt.example.com");
+            // TODO.feat: context.define("partner-admin@ttt.example.com");
             // assertThat(partnerRepository.findByUuid(newUserUuid))
             //        .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
         }
@@ -146,7 +146,7 @@ class HsAdminPartnerControllerAcceptanceTest {
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
-            // TODO: context.define("partner-admin@ttt.example.com");
+            // TODO.feat: context.define("partner-admin@ttt.example.com");
             // assertThat(partnerRepository.findByUuid(newUserUuid))
             //        .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
         }
@@ -158,7 +158,7 @@ class HsAdminPartnerControllerAcceptanceTest {
 
         @Test
         void hostsharingAdmin_withoutAssumedRole_canGetArbitraryPartner() {
-            // TODO: final var givenPartnerUuid = partnerRepository.findPartnerByOptionalNameLike("Ixx").get(0).getUuid();
+            // TODO.feat: final var givenPartnerUuid = partnerRepository.findPartnerByOptionalNameLike("Ixx").get(0).getUuid();
             final var givenPartnerUuid = UUID.randomUUID();
 
             RestAssured // @formatter:off
@@ -178,7 +178,7 @@ class HsAdminPartnerControllerAcceptanceTest {
         @Test
         @Accepts({ "Partner:X(Access Control)" })
         void normalUser_canNotGetUnrelatedPartner() {
-            // TODO: final var givenPartnerUuid = partnerRepository.findPartnerByOptionalNameLike("Ixx").get(0).getUuid();
+            // TODO.feat: final var givenPartnerUuid = partnerRepository.findPartnerByOptionalNameLike("Ixx").get(0).getUuid();
             final UUID givenPartnerUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
 
             RestAssured // @formatter:off

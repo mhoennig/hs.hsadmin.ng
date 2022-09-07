@@ -37,9 +37,9 @@ public class HsAdminPartnerController implements HsAdminPartnersApi {
             final String currentUser,
             final String assumedRoles,
             final String name) {
-        // TODO: context.define(currentUser, assumedRoles);
+        // TODO.feat: context.define(currentUser, assumedRoles);
 
-        // TODO: final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
+        // TODO.feat: final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
 
         final var entities = List.of(
                 HsAdminPartnerEntity.builder()
@@ -83,13 +83,13 @@ public class HsAdminPartnerController implements HsAdminPartnersApi {
             final String assumedRoles,
             final HsAdminPartnerResource body) {
 
-        // TODO: context.define(currentUser, assumedRoles);
+        // TODO.feat: context.define(currentUser, assumedRoles);
 
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
         }
 
-        // TODO: final var saved = partnerRepo.save(map(body, HsAdminPartnerEntity.class));
+        // TODO.feat: final var saved = partnerRepo.save(map(body, HsAdminPartnerEntity.class));
         final var saved = map(body, HsAdminPartnerEntity.class, PARTNER_RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var uri =
@@ -108,9 +108,9 @@ public class HsAdminPartnerController implements HsAdminPartnersApi {
             final String assumedRoles,
             final UUID partnerUuid) {
 
-        // TODO: context.define(currentUser, assumedRoles);
+        // TODO.feat: context.define(currentUser, assumedRoles);
 
-        // TODO: final var result = partnerRepo.findByUuid(partnerUuid);
+        // TODO.feat: final var result = partnerRepo.findByUuid(partnerUuid);
         final var result =
                 partnerUuid.equals(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")) ? null :
                         HsAdminPartnerEntity.builder()

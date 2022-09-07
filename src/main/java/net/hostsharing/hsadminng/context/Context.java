@@ -63,7 +63,7 @@ public class Context {
                             cast(:assumedRoles as varchar));
                         """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 96));
-        query.setParameter("currentRequest", shortenToMaxLength(currentRequest, 512)); // TODO.SPEC: length?
+        query.setParameter("currentRequest", shortenToMaxLength(currentRequest, 512)); // TODO.spec: length?
         query.setParameter("currentUser", currentUser);
         query.setParameter("assumedRoles", assumedRoles != null ? assumedRoles : "");
         query.executeUpdate();
@@ -91,7 +91,7 @@ public class Context {
     public UUID[] currentSubjectsUuids() {
         return (UUID[]) em.createNativeQuery("select currentSubjectsUuids() as uuids")
                 .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("uuids", UUIDArrayType.INSTANCE) // TODO.BLOG
+                .addScalar("uuids", UUIDArrayType.INSTANCE) // TODO.blog
                 .getSingleResult();
     }
 
