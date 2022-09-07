@@ -12,31 +12,29 @@ create or replace procedure createHsAdminContactTestData(contLabel varchar)
     language plpgsql as $$
 declare
     currentTask   varchar;
-    contRowId     uuid;
-    contEmailAddr varchar;
+    emailAddr varchar;
 begin
     currentTask = 'creating RBAC test contact ' || contLabel;
     call defineContext(currentTask, null, 'alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    -- contRowId = uuid_generate_v4();
-    contEmailAddr = 'customer-admin@' || cleanIdentifier(contLabel) || '.example.com';
+    emailAddr = 'customer-admin@' || cleanIdentifier(contLabel) || '.example.com';
 
     raise notice 'creating test contact: %', contLabel;
     insert
         into hs_admin_contact (label, postaladdress, emailaddresses, phonenumbers)
-        values (contLabel, $addr$
+        values (contLabel, $address$
 Vorname Nachname
 Straße Hnr
 PLZ Stadt
-$addr$, contEmailAddr, '+49 123 1234567');
+$address$, emailAddr, '+49 123 1234567');
 end; $$;
 --//
 
 /*
-    Creates a range of test customers for mass data generation.
+    Creates a range of test contact for mass data generation.
  */
-create or replace procedure createTestCustomerTestData(
+create or replace procedure createTestContactTestData(
     startCount integer,  -- count of auto generated rows before the run
     endCount integer     -- count of auto generated rows after the run
 )
@@ -44,7 +42,7 @@ create or replace procedure createTestCustomerTestData(
 begin
     for t in startCount..endCount
         loop
-            call createHsAdminContactTestData(intToVarChar(t, 4)|| ' ' || testCustomerReference(t));
+            call createHsAdminContactTestData(intToVarChar(t, 4) || '#' || t);
             commit;
         end loop;
 end; $$;

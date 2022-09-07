@@ -1,0 +1,35 @@
+#!/bin/bash
+
+sed -e 's/hs-admin-contact/hs-admin-person/g' \
+	-e 's/hs_admin_contact/hs_admin_person/g' \
+	<src/main/resources/db/changelog/200-hs-admin-contact.sql >src/main/resources/db/changelog/210-hs-admin-person.sql
+
+sed -e 's/hs-admin-contact/hs-admin-person/g' \
+	-e 's/hs_admin_contact/hs_admin_person/g' \
+	-e 's/HsAdminCustomer/HsAdminPerson/g' \
+	-e 's/hsAdminContact/hsAdminPerson/g' \
+	-e 's/contact/person/g' \
+	<src/main/resources/db/changelog/203-hs-admin-contact-rbac.sql >src/main/resources/db/changelog/213-hs-admin-person-rbac.sql
+
+sed -e 's/hs-admin-contact/hs-admin-person/g' \
+	-e 's/hs_admin_contact/hs_admin_person/g' \
+	-e 's/HsAdminCustomer/HsAdminPerson/g' \
+	-e 's/hsAdminContact/hsAdminPerson/g' \
+	-e 's/contact/person/g' \
+	<src/main/resources/db/changelog/208-hs-admin-contact-test-data.sql >src/main/resources/db/changelog/218-hs-admin-person-test-data.sql
+
+
+# mkdir -p src/main/java/net/hostsharing/hsadminng/hs/admin/person
+# 
+# sed -e 's/HsAdminContactEntity/HsAdminPersonEntity/g' \
+# sed -e 's/admin.contact/admin.person/g' \
+# 	<src/main/java/net/hostsharing/hsadminng/hs/admin/contact/HsAdminContactEntity.java >src/main/java/net/hostsharing/hsadminng/hs/admin/person/HsAdminPersonEntity.java
+
+cat >>src/main/resources/db/changelog/db.changelog-master.yaml <<EOF
+    - include:
+        file: db/changelog/210-hs-admin-person.sql
+    - include:
+        file: db/changelog/213-hs-admin-person-rbac.sql
+    - include:
+        file: db/changelog/218-hs-admin-person-test-data.sql
+EOF

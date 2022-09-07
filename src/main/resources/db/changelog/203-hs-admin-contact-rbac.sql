@@ -7,7 +7,7 @@
 /*
     Creates the related RbacObject through a BEFORE INSERT TRIGGER.
  */
-create trigger createRbacObjectForCustomer_Trigger
+create trigger createRbacObjectForHsAdminCustomer_Trigger
     before insert
     on hs_admin_contact
     for each row
@@ -57,14 +57,14 @@ create or replace function createRbacRolesForHsAdminContact()
     language plpgsql
     strict as $$
 declare
-    contOwnerRole uuid;
+    ownerRole uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
-    -- the owner role with full access for the creator assigned to the contact's email addr
-    contOwnerRole = createRole(
+    -- the owner role with full access for the creator assigned to the current user
+    ownerRole = createRole(
         hsAdminContactOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(globalAdmin()),
@@ -77,7 +77,7 @@ begin
     perform createRole(
         hsAdminContactTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-        beneathRole(contOwnerRole)
+        beneathRole(ownerRole)
         );
 
     return NEW;
@@ -102,7 +102,6 @@ execute procedure createRbacRolesForHsAdminContact();
 /*
     Deletes the roles and their assignments of a deleted contact for the BEFORE DELETE TRIGGER.
  */
-
 create or replace function deleteRbacRulesForHsAdminContact()
     returns trigger
     language plpgsql
@@ -120,7 +119,6 @@ end; $$;
 /*
     An BEFORE DELETE TRIGGER which deletes the role structure of a contact.
  */
-
 create trigger deleteRbacRulesForTestContact_Trigger
     before delete
     on hs_admin_contact
@@ -194,9 +192,6 @@ create or replace function insertHsAdminContact()
 declare
     newUser hs_admin_contact;
 begin
---     insert
---         into RbacObject as r (uuid, objecttable)
---         values( new.uuid, 'hs_admin_contact_rv');
     insert
         into hs_admin_contact
         values (new.*)
@@ -245,10 +240,10 @@ execute function deleteHsAdminContact();
 --/
 
 -- ============================================================================
---changeset hs-admin-contact-rbac-SET-CONTACT:1 endDelimiter:--//
+--changeset hs-admin-contact-rbac-NEW-CONTACT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Creates a global permission for set-contact and assigns it to the hostsharing admins role.
+    Creates a global permission for new-contact and assigns it to the hostsharing admins role.
  */
 do language plpgsql $$
     declare
@@ -256,11 +251,11 @@ do language plpgsql $$
         globalObjectUuid        uuid;
         globalAdminRoleUuid         uuid ;
     begin
-        call defineContext('granting global set-contact permission to global admin role', null, null, null);
+        call defineContext('granting global new-contact permission to global admin role', null, null, null);
 
         globalAdminRoleUuid := findRoleId(globalAdmin());
         globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['set-contact']);
+        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-contact']);
         call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
     end;
 $$;
@@ -273,7 +268,7 @@ create or replace function addHsAdminContactNotAllowedForCurrentSubjects()
     language PLPGSQL
 as $$
 begin
-    raise exception '[403] set-contact not permitted for %',
+    raise exception '[403] new-contact not permitted for %',
         array_to_string(currentSubjects(), ';', 'null');
 end; $$;
 
