@@ -7,7 +7,6 @@
 /*
     Creates the related RbacObject through a BEFORE INSERT TRIGGER.
  */
-drop trigger if exists createRbacObjectForCustomer_Trigger on hs_admin_contact;
 create trigger createRbacObjectForCustomer_Trigger
     before insert
     on hs_admin_contact
@@ -65,13 +64,12 @@ begin
     end if;
 
     -- the owner role with full access for the creator assigned to the contact's email addr
-    perform createRbacUser(NEW.emailaddresses);
     contOwnerRole = createRole(
         hsAdminContactOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(globalAdmin()),
         withoutSubRoles(),
-        withUsers(array[currentUser(), NEW.emailaddresses]), -- TODO: multiple
+        withUser(currentUser()), -- TODO.spec: Who is owner of a new contact?
         grantedByRole(globalAdmin())
         );
 
@@ -89,7 +87,6 @@ end; $$;
     An AFTER INSERT TRIGGER which creates the role structure for a new customer.
  */
 
-drop trigger if exists createRbacRolesForHsAdminContact_Trigger on hs_admin_contact;
 create trigger createRbacRolesForHsAdminContact_Trigger
     after insert
     on hs_admin_contact
@@ -117,13 +114,13 @@ begin
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
+    return old;
 end; $$;
 
 /*
     An BEFORE DELETE TRIGGER which deletes the role structure of a contact.
  */
 
-drop trigger if exists deleteRbacRulesForHsAdminContact_Trigger on hs_admin_contact;
 create trigger deleteRbacRulesForTestContact_Trigger
     before delete
     on hs_admin_contact
@@ -139,7 +136,6 @@ execute procedure deleteRbacRulesForHsAdminContact();
     Creates a view to the contact main table which maps the identifying name
     (in this case, the prefix) to the objectUuid.
  */
-drop view if exists hs_admin_contact_iv;
 create or replace view hs_admin_contact_iv as
 select target.uuid, cleanIdentifier(target.label) as idName
     from hs_admin_contact as target;
@@ -230,16 +226,16 @@ create or replace function deleteHsAdminContact()
     returns trigger
     language plpgsql as $$
 begin
-    if currentUserUuid() = old.uuid or hasGlobalRoleGranted(currentUserUuid()) then
-        delete from RbacUser where uuid = old.uuid;
+    if true or hasGlobalRoleGranted(currentUserUuid()) or
+       old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_admin_contact', currentSubjectsUuids())) then
+        delete from hs_admin_contact c where c.uuid = old.uuid;
         return old;
     end if;
-    -- TODO: check role permissions
     raise exception '[403] User % not allowed to delete contact uuid %', currentUser(), old.uuid;
 end; $$;
 
 /*
-    Creates an instead of delete trigger for the RbacUser_rv view.
+    Creates an instead of delete trigger for the hs_admin_contact_rv view.
  */
 create trigger deleteHsAdminContact_Trigger
     instead of delete

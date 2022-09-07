@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.admin.contact;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +14,14 @@ import org.springframework.test.annotation.DirtiesContext;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.admin.contact.TestHsAdminContact.hsAdminContact;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, HsAdminContactRepository.class })
+@ComponentScan(basePackageClasses = { HsAdminContactRepository.class, Context.class, JpaAttempt.class })
 @DirtiesContext
 class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
 
@@ -28,6 +30,9 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     EntityManager em;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
 
     @MockBean
     HttpServletRequest request;
@@ -93,16 +98,20 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void arbitraryUser_canViewOnlyItsOwnContact() {
-            context("customer-admin@secondcontact.example.com");
+            // given:
+            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
 
+            // when:
+            context("pac-admin-xxx00@xxx.example.com");
             final var result = contactRepo.findContactByOptionalLabelLike(null);
 
-            exactlyTheseContactsAreReturned(result, "second contact");
+            // then:
+            exactlyTheseContactsAreReturned(result, givenContact.getLabel());
         }
     }
 
     @Nested
-    class FindByPrefixLike {
+    class FindByLabelLike {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
@@ -119,14 +128,73 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnContact() {
             // given:
-            context("customer-admin@secondcontact.example.com", null);
+            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
 
             // when:
-            final var result = contactRepo.findContactByOptionalLabelLike("second contact");
+            context("pac-admin-xxx00@xxx.example.com");
+            final var result = contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
 
             // then:
-            exactlyTheseContactsAreReturned(result, "second contact");
+            exactlyTheseContactsAreReturned(result, givenContact.getLabel());
         }
+    }
+
+    @Nested
+    class DeleteByUuid {
+
+        @Test
+        public void globalAdmin_withoutAssumedRole_canDeleteAnyContact() {
+            // given
+            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("alex@hostsharing.net", null);
+                contactRepo.deleteByUuid(givenContact.getUuid());
+            });
+
+            // then
+            result.assertSuccessful();
+            assertThat(jpaAttempt.transacted(() -> {
+                context("alex@hostsharing.net", null);
+                return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
+            }).assertSuccessful().returnedValue()).hasSize(0);
+        }
+
+        @Test
+        public void arbitraryUser_withoutAssumedRole_canDeleteAContactCreatedByItself() {
+            // given
+            final var givenContact = givenSomeTemporaryContact("pac-admin-xxx00@xxx.example.com");
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("pac-admin-xxx00@xxx.example.com", null);
+                contactRepo.deleteByUuid(givenContact.getUuid());
+            });
+
+            // then
+            result.assertSuccessful();
+            assertThat(jpaAttempt.transacted(() -> {
+                context("alex@hostsharing.net", null);
+                return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
+            }).assertSuccessful().returnedValue()).hasSize(0);
+        }
+    }
+
+    private HsAdminContactEntity givenSomeTemporaryContact(
+            final String createdByUser,
+            Supplier<HsAdminContactEntity> entitySupplier) {
+        return jpaAttempt.transacted(() -> {
+            context(createdByUser);
+            return contactRepo.save(entitySupplier.get());
+        }).assumeSuccessful().returnedValue();
+    }
+
+    private HsAdminContactEntity givenSomeTemporaryContact(final String createdByUser) {
+        return givenSomeTemporaryContact(createdByUser, () ->
+                hsAdminContact(
+                        "some temporary contact #" + Math.random(),
+                        "some-temporary-contact" + Math.random() + "@example.com"));
     }
 
     void exactlyTheseContactsAreReturned(final List<HsAdminContactEntity> actualResult, final String... contactLabels) {

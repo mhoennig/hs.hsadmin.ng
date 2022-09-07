@@ -21,5 +21,7 @@ public interface HsAdminContactRepository extends Repository<HsAdminContactEntit
 
     HsAdminContactEntity save(final HsAdminContactEntity entity);
 
+    void deleteByUuid(final UUID uuid);
+
     long count();
 }
