@@ -2,6 +2,8 @@ package net.hostsharing.hsadminng.hs.admin.person;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -16,13 +18,14 @@ import org.springframework.test.annotation.DirtiesContext;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Random;
 import java.util.function.Supplier;
-import java.util.random.RandomGenerator;
 
 import static net.hostsharing.hsadminng.hs.admin.person.TestHsAdminPerson.hsAdminPerson;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantDisplayExtractor.grantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleNameExtractor.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
 @ComponentScan(basePackageClasses = { HsAdminPersonRepository.class, Context.class, JpaAttempt.class })
@@ -31,6 +34,12 @@ class HsAdminPersonRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     HsAdminPersonRepository personRepo;
+
+    @Autowired
+    RbacRoleRepository roleRepo;
+
+    @Autowired
+    RbacGrantRepository grantRepo;
 
     @Autowired
     EntityManager em;
@@ -79,6 +88,33 @@ class HsAdminPersonRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(personRepo.count()).isEqualTo(count + 1);
         }
 
+        @Test
+        public void createsAndGrantsRoles() {
+            // given
+            context("drew@hostsharing.org");
+            final var count = personRepo.count();
+            final var initialRoleCount = roleRepo.findAll().size();
+            final var initialGrantCount = grantRepo.findAll().size();
+
+            // when
+            attempt(em, () -> personRepo.save(
+                    hsAdminPerson("another new person"))
+            ).assumeSuccessful();
+
+            // then
+            final var roles = roleRepo.findAll();
+            assertThat(roleNamesOf(roles)).containsAll(List.of(
+                    "hs_admin_person#anothernewperson.admin",
+                    "hs_admin_person#anothernewperson.tenant"));
+            assertThat(roles.size()).as("invalid number of roles created")
+                    .isEqualTo(initialRoleCount + 2);
+            final var grants = grantRepo.findAll();
+            assertThat(grantDisplaysOf(grants)).containsAll(List.of(
+                    "{ grant assumed role hs_admin_person#anothernewperson.admin to user drew@hostsharing.org by role global#global.admin }"));
+            assertThat(grants.size()).as("invalid number of grants created")
+                    .isEqualTo(initialGrantCount + 1);
+        }
+
         private void assertThatPersonIsPersisted(final HsAdminPersonEntity saved) {
             final var found = personRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
@@ -97,7 +133,8 @@ class HsAdminPersonRepositoryIntegrationTest extends ContextBasedTest {
             final var result = personRepo.findPersonByOptionalNameLike(null);
 
             // then
-            allThesePersonsAreReturned(result,
+            allThesePersonsAreReturned(
+                    result,
                     "Peter, Smith",
                     "Rockshop e.K.",
                     "Ostfriesische Stahlhandel OHG",
@@ -186,6 +223,31 @@ class HsAdminPersonRepositoryIntegrationTest extends ContextBasedTest {
                 context("alex@hostsharing.net", null);
                 return personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
+        }
+
+        @Test
+        public void deletingAPersonAlsoDeletesRelatedRolesAndGrants() {
+            // given
+            context("drew@hostsharing.org", null);
+            final var initialRoleCount = roleRepo.findAll().size();
+            final var initialGrantCount = grantRepo.findAll().size();
+            final var givenPerson = givenSomeTemporaryPerson("drew@hostsharing.org");
+            assumeThat(roleRepo.findAll().size()).as("unexpected number of roles created")
+                    .isEqualTo(initialRoleCount + 2);
+            assumeThat(grantRepo.findAll().size()).as("unexpected number of grants created")
+                    .isEqualTo(initialGrantCount + 1);
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("drew@hostsharing.org", null);
+                personRepo.deleteByUuid(givenPerson.getUuid());
+            }).assumeSuccessful();
+
+            // then
+            assertThat(roleRepo.findAll().size()).as("invalid number of roles deleted")
+                    .isEqualTo(initialRoleCount);
+            assertThat(grantRepo.findAll().size()).as("invalid number of grants revoked")
+                    .isEqualTo(initialGrantCount);
         }
     }
 

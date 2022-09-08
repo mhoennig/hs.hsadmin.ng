@@ -2,6 +2,8 @@ package net.hostsharing.hsadminng.hs.admin.contact;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -19,8 +21,11 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.admin.contact.TestHsAdminContact.hsAdminContact;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantDisplayExtractor.grantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleNameExtractor.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
 @ComponentScan(basePackageClasses = { HsAdminContactRepository.class, Context.class, JpaAttempt.class })
@@ -29,6 +34,12 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     HsAdminContactRepository contactRepo;
+
+    @Autowired
+    RbacRoleRepository roleRepo;
+
+    @Autowired
+    RbacGrantRepository grantRepo;
 
     @Autowired
     EntityManager em;
@@ -75,6 +86,33 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(result.returnedValue()).isNotNull().extracting(HsAdminContactEntity::getUuid).isNotNull();
             assertThatContactIsPersisted(result.returnedValue());
             assertThat(contactRepo.count()).isEqualTo(count + 1);
+        }
+
+        @Test
+        public void createsAndGrantsRoles() {
+            // given
+            context("drew@hostsharing.org");
+            final var count = contactRepo.count();
+            final var initialRoleCount = roleRepo.findAll().size();
+            final var initialGrantCount = grantRepo.findAll().size();
+
+            // when
+            attempt(em, () -> contactRepo.save(
+                    hsAdminContact("another new contact", "another-new-contact@example.com"))
+            ).assumeSuccessful();
+
+            // then
+            final var roles = roleRepo.findAll();
+            assertThat(roleNamesOf(roles)).containsAll(List.of(
+                    "hs_admin_contact#anothernewcontact.admin",
+                    "hs_admin_contact#anothernewcontact.tenant"));
+            assertThat(roles.size()).as("invalid number of roles created")
+                    .isEqualTo(initialRoleCount + 2);
+            final var grants = grantRepo.findAll();
+            assertThat(grantDisplaysOf(grants)).containsAll(List.of(
+                    "{ grant assumed role hs_admin_contact#anothernewcontact.admin to user drew@hostsharing.org by role global#global.admin }"));
+            assertThat(grants.size()).as("invalid number of grants created")
+                    .isEqualTo(initialGrantCount + 1);
         }
 
         private void assertThatContactIsPersisted(final HsAdminContactEntity saved) {
@@ -147,6 +185,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyContact() {
             // given
+            context("alex@hostsharing.net", null);
             final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
 
             // when
@@ -180,6 +219,31 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
                 context("alex@hostsharing.net", null);
                 return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
             }).assertSuccessful().returnedValue()).hasSize(0);
+        }
+
+        @Test
+        public void deletingAContactAlsoDeletesRelatedRolesAndGrants() {
+            // given
+            context("drew@hostsharing.org", null);
+            final var initialRoleCount = roleRepo.findAll().size();
+            final var initialGrantCount = grantRepo.findAll().size();
+            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
+            assumeThat(roleRepo.findAll().size()).as("unexpected number of roles created")
+                    .isEqualTo(initialRoleCount + 2);
+            assumeThat(grantRepo.findAll().size()).as("unexpected number of grants created")
+                    .isEqualTo(initialGrantCount + 1);
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("drew@hostsharing.org", null);
+                contactRepo.deleteByUuid(givenContact.getUuid());
+            }).assumeSuccessful();
+
+            // then
+            assertThat(roleRepo.findAll().size()).as("invalid number of roles deleted")
+                    .isEqualTo(initialRoleCount);
+            assertThat(grantRepo.findAll().size()).as("invalid number of grants revoked")
+                    .isEqualTo(initialGrantCount);
         }
     }
 
