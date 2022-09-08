@@ -22,11 +22,18 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [Spotless Code Formatting](#spotless-code-formatting)
   - [JaCoCo Test Code Coverage Check](#jacoco-test-code-coverage-check)
   - [PiTest Mutation Testing](#pitest-mutation-testing)
+    - [Remark](#remark)
   - [OWASP Security Vulnerability Check](#owasp-security-vulnerability-check)
   - [Dependency-License-Compatibility](#dependency-license-compatibility)
   - [Dependency Version Upgrade](#dependency-version-upgrade)
 - [How To ...](#how-to-...)
-  - [How to Run the Application on a Different Port ](#how-to-run-the-application-on-a-different-port-)
+  - [How to Run the Tests Against a Local User-Space Podman Deamon?](#how-to-run-the-tests-against-a-local-user-space-podman-deamon?)
+    - [Install and Run Podman](#install-and-run-podman)
+    - [Use the Command Line to Run the Tests Against the Podman Daemon ](#use-the-command-line-to-run-the-tests-against-the-podman-daemon-)
+    - [Use IntelliJ IDEA Run the Tests Against the Podman Daemon](#use-intellij-idea-run-the-tests-against-the-podman-daemon)
+    - [~/.testcontainers.properties](#~/.testcontainers.properties)
+  - [How to Run the Tests Against a Remote Podman or Docker Deamon?](#how-to-run-the-tests-against-a-remote-podman-or-docker-deamon?)
+  - [How to Run the Application on a Different Port?](#how-to-run-the-application-on-a-different-port?)
   - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
 - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
 - [Further Documentation](#further-documentation)
@@ -499,7 +506,95 @@ More infos, e.g. on blacklists see on the [projet's website](https://github.com/
 
 ## How To ...
 
-### How to Run the Application on a Different Port 
+
+### How to Run the Tests Against a Local User-Space Podman Deamon?
+
+Using a normal Docker deamon running as root has some security issues.
+As an alternative, this chapter shows how you can run a Podman daemon in user-space.
+
+#### Install and Run Podman
+
+You can find directions in [this project on Github](https://stackoverflow.com/questions/71549856/testcontainers-with-podman-in-java-tests) 
+
+Summary for Debian-based Linux systems:
+
+1. Install Podman, e.g. like this:
+
+ ```shell
+
+```
+
+systemctl --user enable --now podman.socket
+systemctl --user status podman.socket
+ls -la /run/user/$UID/podman/podman.sock
+
+
+#### Use the Command Line to Run the Tests Against the Podman Daemon 
+
+1. In a local shell. in which you want to run the tests, set some environment variables:
+
+```shell
+export DOCKER_HOST="unix:///run/user/$UID/podman/podman.sock"
+export TESTCONTAINERS_RYUK_DISABLED=true
+```
+
+Disabling RYUK is necessary, because it's not supported by Podman.
+Supposedly this means that containers are not properly cleaned up after test runs,
+but I could not see any remaining containers after test runs.
+If we are running into problems with stale containers,
+we need to register a shutdown-hook in the test source code.
+
+2. Now You Can Run the Tests
+
+```shell
+gw clean test # gw is from the .aliases file
+```
+
+#### Use IntelliJ IDEA Run the Tests Against the Podman Daemon
+
+To run the tests against a Podman Deamon in IntelliJ IDEA too, you also need to set some environment variables.
+This can either be done in the environment from which IDEA is started.
+Or you can use the run config template for JUnit tests to set these variables.
+Find more information [here](https://www.jetbrains.com/help/idea/run-debug-configuration.html).
+
+#### ~/.testcontainers.properties
+
+It should be possible to set these environment variables in `~/.testcontainers.properties`,
+but it did not work so far.
+Maybe a problem with quoting.
+
+If you manage to make it work, please amend this documentation, thanks.
+
+
+### How to Run the Tests Against a Remote Podman or Docker Deamon?
+
+1. On the remote host, you need to have a Podman or Docker deamon running on a port accessible from the Internet. 
+Probably, you want to protect it with a VPN, but that's not part of this documentation.
+
+e.g. to make Podman listen to a port, run this:
+
+```shell
+podman system service -t 0 tcp:HOST:PORT # please replace HOST+PORT
+```
+
+2. In a local shell. in which you want to run the tests, set some environment variables:
+
+```shell
+export DOCKER_HOST=tcp://HOST:PORT # please replace HOST+PORT again
+export TESTCONTAINERS_RYUK_DISABLED=true  # only for Podman
+```
+
+Regarding RYUK, see also in the directions for a locally running Podman, above.
+
+3. Now you can run the tests:
+
+```shell
+gw clean test # gw is from the .aliases file
+```
+
+For information about how to run the tests in IntelliJ IDEA against a remote Podman deamon, see also in the chapter above just with the HOST:PORT-based DOCKER_HOST.
+
+### How to Run the Application on a Different Port?
 
 By default, `gw bootRun` starts the application on port 8080.
 
