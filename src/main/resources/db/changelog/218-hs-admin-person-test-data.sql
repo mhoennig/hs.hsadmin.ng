@@ -62,7 +62,7 @@ do language plpgsql $$
         call createHsAdminPersonTestData('LEGAL', 'first person');
         call createHsAdminPersonTestData('NATURAL', null, 'Peter', 'Smith');
         call createHsAdminPersonTestData('LEGAL', 'Rockshop e.K.', 'Sandra', 'Miller');
-        call createHsAdminPersonTestData('SOLE_REPRESENTATION', 'Ostfriesische Stahlhandel OHG');
+        call createHsAdminPersonTestData('SOLE_REPRESENTATION', 'Ostfriesische Kuhhandel OHG');
         call createHsAdminPersonTestData('JOINT_REPRESENTATION', 'Erbengemeinschaft Bessler', 'Mel', 'Bessler');
     end;
 $$;

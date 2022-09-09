@@ -57,3 +57,9 @@ databaseChangeLog:
         file: db/changelog/213-hs-admin-person-rbac.sql
     - include:
         file: db/changelog/218-hs-admin-person-test-data.sql
+    - include:
+        file: db/changelog/220-hs-admin-partner.sql
+    - include:
+        file: db/changelog/223-hs-admin-partner-rbac.sql
+    - include:
+        file: db/changelog/228-hs-admin-partner-test-data.sql
