@@ -13,23 +13,23 @@ create or replace procedure createHsAdminPartnerTestData( personTradeName varcha
 declare
     currentTask     varchar;
     idName          varchar;
-    person          hs_admin_person;
-    contact         hs_admin_contact;
+    relatedPerson   hs_admin_person;
+    relatedContact  hs_admin_contact;
 begin
     idName := cleanIdentifier( personTradeName|| '-' || contactLabel);
     currentTask := 'creating RBAC test partner ' || idName;
     call defineContext(currentTask, null, 'alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    select p.* from hs_admin_person p where p.tradeName = personTradeName into person;
-    select c.* from hs_admin_contact c where c.label = contactLabel into contact;
+    select p.* from hs_admin_person p where p.tradeName = personTradeName into relatedPerson;
+    select c.* from hs_admin_contact c where c.label = contactLabel into relatedContact;
 
     raise notice 'creating test partner: %', idName;
-    raise notice '- using person (%): %', person.uuid, person;
-    raise notice '- using contact (%): %', contact.uuid, contact;
+    raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
+    raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
     insert
         into hs_admin_partner (uuid, personuuid, contactuuid)
-        values (uuid_generate_v4(), person.uuid, contact.uuid);
+        values (uuid_generate_v4(), relatedPerson.uuid, relatedContact.uuid);
 end; $$;
 --//
 
@@ -63,7 +63,7 @@ end; $$;
 
 do language plpgsql $$
     begin
-        -- call createHsAdminPartnerTestData('first person', 'first contact');
+        call createHsAdminPartnerTestData('First Impressions GmbH', 'first contact');
 
         call createHsAdminPartnerTestData('Rockshop e.K.', 'second contact');
 

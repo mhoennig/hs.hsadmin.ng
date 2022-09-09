@@ -225,6 +225,8 @@ class HsAdminPersonRepositoryIntegrationTest extends ContextBasedTest {
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
+        // TODO.test: can NOT delete test is missing
+
         @Test
         public void deletingAPersonAlsoDeletesRelatedRolesAndGrants() {
             // given

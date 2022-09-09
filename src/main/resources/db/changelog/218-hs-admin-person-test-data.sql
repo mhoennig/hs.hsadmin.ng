@@ -9,10 +9,10 @@
     Creates a single person test record.
  */
 create or replace procedure createHsAdminPersonTestData(
-        personType HsAdminPersonType,
-        tradeName varchar,
-        familyName varchar = null,
-        givenName varchar = null
+        newPersonType HsAdminPersonType,
+        newTradeName varchar,
+        newFamilyName varchar = null,
+        newGivenName varchar = null
 )
     language plpgsql as $$
 declare
@@ -20,7 +20,7 @@ declare
     currentTask varchar;
     emailAddr   varchar;
 begin
-    fullName := concat_ws(', ', personType, tradename, familyName, givenName);
+    fullName := concat_ws(', ', newTradeName, newFamilyName, newGivenName);
     currentTask = 'creating RBAC test person ' || fullName;
     emailAddr = 'person-' || left(cleanIdentifier(fullName), 32) || '@example.com';
     call defineContext(currentTask);
@@ -31,7 +31,7 @@ begin
     raise notice 'creating test person: %', fullName;
     insert
         into hs_admin_person (persontype, tradename, givenname, familyname)
-        values (personType, tradeName, givenName, familyName);
+        values (newPersonType, newTradeName, newGivenName, newFamilyName);
 end; $$;
 --//
 
@@ -59,7 +59,7 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsAdminPersonTestData('LEGAL', 'first person');
+        call createHsAdminPersonTestData('LEGAL', 'First Impressions GmbH');
         call createHsAdminPersonTestData('NATURAL', null, 'Peter', 'Smith');
         call createHsAdminPersonTestData('LEGAL', 'Rockshop e.K.', 'Sandra', 'Miller');
         call createHsAdminPersonTestData('SOLE_REPRESENTATION', 'Ostfriesische Kuhhandel OHG');

@@ -58,13 +58,14 @@ create or replace function createRbacRolesForHsAdminContact()
     strict as $$
 declare
     ownerRole uuid;
+    adminRole uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
     -- the owner role with full access for the creator assigned to the current user
-    ownerRole = createRole(
+    ownerRole := createRole(
         hsAdminContactOwner(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(globalAdmin()),
@@ -74,10 +75,17 @@ begin
         );
 
     -- the tenant role for those related users who can view the data
+    adminRole := createRole(
+            hsAdminContactAdmin(NEW),
+            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
+            beneathRole(ownerRole)
+        );
+
+    -- the tenant role for those related users who can view the data
     perform createRole(
         hsAdminContactTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-        beneathRole(ownerRole)
+        beneathRole(adminRole)
         );
 
     return NEW;
@@ -221,7 +229,7 @@ create or replace function deleteHsAdminContact()
     returns trigger
     language plpgsql as $$
 begin
-    if true or hasGlobalRoleGranted(currentUserUuid()) or
+    if hasGlobalRoleGranted(currentUserUuid()) or
        old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_admin_contact', currentSubjectsUuids())) then
         delete from hs_admin_contact c where c.uuid = old.uuid;
         return old;

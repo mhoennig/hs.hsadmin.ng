@@ -15,10 +15,12 @@ declare
     emailAddr varchar;
 begin
     currentTask = 'creating RBAC test contact ' || contLabel;
-    call defineContext(currentTask, null, 'alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     emailAddr = 'customer-admin@' || cleanIdentifier(contLabel) || '.example.com';
+    call defineContext(currentTask);
+    perform createRbacUser(emailAddr);
+    call defineContext(currentTask, null, emailAddr);
 
     raise notice 'creating test contact: %', contLabel;
     insert
@@ -58,6 +60,7 @@ do language plpgsql $$
         call createHsAdminContactTestData('first contact');
         call createHsAdminContactTestData('second contact');
         call createHsAdminContactTestData('third contact');
+        call createHsAdminContactTestData('forth contact');
     end;
 $$;
 --//

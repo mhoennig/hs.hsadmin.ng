@@ -114,6 +114,22 @@ begin
     return beingItselfA(getRoleId(roleDescriptor, 'fail'));
 end; $$;
 
+create or replace function withSubRoles(roleDescriptors RbacRoleDescriptor[])
+    returns RbacSubRoles
+    language plpgsql
+    strict as $$
+declare
+    subRoleDescriptor RbacRoleDescriptor;
+    subRoleUuids      uuid[] := array []::uuid[];
+begin
+    foreach subRoleDescriptor in array roleDescriptors
+        loop
+            subRoleUuids := subRoleUuids || getRoleId(subRoleDescriptor, 'fail');
+        end loop;
+
+    return row (subRoleUuids)::RbacSubRoles;
+end; $$;
+
 create or replace function withoutSubRoles()
     returns RbacSubRoles
     language plpgsql

@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.admin.partner;
 import lombok.*;
 import net.hostsharing.hsadminng.hs.admin.contact.HsAdminContactEntity;
 import net.hostsharing.hsadminng.hs.admin.person.HsAdminPersonEntity;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.time.LocalDate;

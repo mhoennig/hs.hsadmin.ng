@@ -52,17 +52,22 @@ end; $$;
     Creates the roles and their assignments for a new partner for the AFTER INSERT TRIGGER.
  */
 
-create or replace function createRbacRolesForHsAdminContact()
+create or replace function createRbacRolesForHsAdminPartner()
     returns trigger
     language plpgsql
     strict as $$
 declare
     ownerRole uuid;
     adminRole uuid;
+    person hs_admin_person;
+    contact hs_admin_contact;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
+
+    select * from hs_admin_person as p where p.uuid = NEW.personUuid into person;
+    select * from hs_admin_contact as c where c.uuid = NEW.contactUuid into contact;
 
     -- the owner role with full access for the global admins
     ownerRole = createRole(
@@ -75,14 +80,15 @@ begin
     adminRole = createRole(
             hsAdminPartnerAdmin(NEW),
             grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-            beneathRole(globalAdmin())
+            beneathRole(ownerRole)
         );
 
     -- the tenant role for those related users who can view the data
     perform createRole(
             hsAdminPartnerTenant(NEW),
             grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-            beneathRole(ownerRole)
+            beneathRoles(array[hsAdminPartnerAdmin(NEW), hsAdminPersonAdmin(person), hsAdminContactAdmin(contact)]),
+            withSubRoles(array[hsAdminPersonTenant(person), hsAdminContactTenant(contact)])
         );
 
     return NEW;
@@ -92,11 +98,11 @@ end; $$;
     An AFTER INSERT TRIGGER which creates the role structure for a new customer.
  */
 
-create trigger createRbacRolesForHsAdminContact_Trigger
+create trigger createRbacRolesForHsAdminPartner_Trigger
     after insert
     on hs_admin_partner
     for each row
-execute procedure createRbacRolesForHsAdminContact();
+execute procedure createRbacRolesForHsAdminPartner();
 --//
 
 
@@ -107,13 +113,14 @@ execute procedure createRbacRolesForHsAdminContact();
 /*
     Deletes the roles and their assignments of a deleted partner for the BEFORE DELETE TRIGGER.
  */
-create or replace function deleteRbacRulesForHsAdminContact()
+create or replace function deleteRbacRulesForHsAdminPartner()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if TG_OP = 'DELETE' then
         call deleteRole(findRoleId(hsAdminPartnerOwner(OLD)));
+        call deleteRole(findRoleId(hsAdminPartnerAdmin(OLD)));
         call deleteRole(findRoleId(hsAdminPartnerTenant(OLD)));
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
@@ -124,11 +131,11 @@ end; $$;
 /*
     An BEFORE DELETE TRIGGER which deletes the role structure of a partner.
  */
-create trigger deleteRbacRulesForTestContact_Trigger
+create trigger deleteRbacRulesForTestPartner_Trigger
     before delete
     on hs_admin_partner
     for each row
-execute procedure deleteRbacRulesForHsAdminContact();
+execute procedure deleteRbacRulesForHsAdminPartner();
 --//
 
 -- ============================================================================
@@ -142,9 +149,9 @@ execute procedure deleteRbacRulesForHsAdminContact();
 create or replace view hs_admin_partner_iv as
 select target.uuid,
        cleanIdentifier(
-                       (select idName from hs_admin_person_iv person where person.uuid = target.personuuid)
+                       (select idName from hs_admin_person_iv p where p.uuid = target.personuuid)
                        || '-' ||
-                       (select idName from hs_admin_contact_iv contact where contact.uuid = target.contactuuid)
+                       (select idName from hs_admin_contact_iv c where c.uuid = target.contactuuid)
            )
            as idName
     from hs_admin_partner as target;
@@ -197,7 +204,7 @@ grant all privileges on hs_admin_partner_rv to restricted;
 /**
     Instead of insert trigger function for hs_admin_partner_rv.
  */
-create or replace function insertHsAdminContact()
+create or replace function insertHsAdminPartner()
     returns trigger
     language plpgsql as $$
 declare
@@ -214,11 +221,11 @@ $$;
 /*
     Creates an instead of insert trigger for the hs_admin_partner_rv view.
  */
-create trigger insertHsAdminContact_Trigger
+create trigger insertHsAdminPartner_Trigger
     instead of insert
     on hs_admin_partner_rv
     for each row
-execute function insertHsAdminContact();
+execute function insertHsAdminPartner();
 --//
 
 -- ============================================================================
@@ -228,11 +235,11 @@ execute function insertHsAdminContact();
 /**
     Instead of delete trigger function for hs_admin_partner_rv.
  */
-create or replace function deleteHsAdminContact()
+create or replace function deleteHsAdminPartner()
     returns trigger
     language plpgsql as $$
 begin
-    if true or hasGlobalRoleGranted(currentUserUuid()) or
+    if hasGlobalRoleGranted(currentUserUuid()) or
        old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_admin_partner', currentSubjectsUuids())) then
         delete from hs_admin_partner c where c.uuid = old.uuid;
         return old;
@@ -243,11 +250,11 @@ end; $$;
 /*
     Creates an instead of delete trigger for the hs_admin_partner_rv view.
  */
-create trigger deleteHsAdminContact_Trigger
+create trigger deleteHsAdminPartner_Trigger
     instead of delete
     on hs_admin_partner_rv
     for each row
-execute function deleteHsAdminContact();
+execute function deleteHsAdminPartner();
 --/
 
 -- ============================================================================
@@ -274,7 +281,7 @@ $$;
 /**
     Used by the trigger to prevent the add-customer to current user respectively assumed roles.
  */
-create or replace function addHsAdminContactNotAllowedForCurrentSubjects()
+create or replace function addHsAdminPartnerNotAllowedForCurrentSubjects()
     returns trigger
     language PLPGSQL
 as $$
@@ -292,6 +299,6 @@ create trigger hs_admin_partner_insert_trigger
     for each row
     -- TODO.spec: who is allowed to create new partners
     when ( not hasAssumedRole() )
-execute procedure addHsAdminContactNotAllowedForCurrentSubjects();
+execute procedure addHsAdminPartnerNotAllowedForCurrentSubjects();
 --//
 

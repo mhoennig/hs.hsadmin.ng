@@ -2,14 +2,15 @@
 
 mkdir -p src/test/java/net/hostsharing/hsadminng/hs/admin/partner
 
-#sed -e 's/hs-admin-contact/hs-admin-partner/g' \
-#	-e 's/hs_admin_contact/hs_admin_partner/g' \
-#	-e 's/HsAdminContact/HsAdminPartner/g' \
-#	-e 's/hsAdminContact/hsAdminPartner/g' \
-#	-e 's/contact/partner/g' \
-#<src/test/java/net/hostsharing/hsadminng/hs/admin/contact/HsAdminContactRepositoryIntegrationTest.java \
-#>src/test/java/net/hostsharing/hsadminng/hs/admin/partner/HsAdminPartnerRepositoryIntegrationTest.java
+sed -e 's/hs-admin-contact/hs-admin-partner/g' \
+	-e 's/hs_admin_contact/hs_admin_partner/g' \
+	-e 's/HsAdminContact/HsAdminPartner/g' \
+	-e 's/hsAdminContact/hsAdminPartner/g' \
+	-e 's/contact/partner/g' \
+<src/test/java/net/hostsharing/hsadminng/hs/admin/contact/HsAdminContactRepositoryIntegrationTest.java \
+>src/test/java/net/hostsharing/hsadminng/hs/admin/partner/HsAdminPartnerRepositoryIntegrationTest.java
 
+exit
 
 sed -e 's/hs-admin-contact/hs-admin-partner/g' \
 	-e 's/hs_admin_contact/hs_admin_partner/g' \

@@ -27,4 +27,5 @@ public interface HsAdminPartnerRepository extends Repository<HsAdminPartnerEntit
     HsAdminPartnerEntity save(final HsAdminPartnerEntity entity);
 
     long count();
+    void deleteByUuid(UUID uuid);
 }
