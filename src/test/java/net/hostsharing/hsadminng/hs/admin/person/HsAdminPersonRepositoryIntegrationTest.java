@@ -104,13 +104,13 @@ class HsAdminPersonRepositoryIntegrationTest extends ContextBasedTest {
             // then
             final var roles = roleRepo.findAll();
             assertThat(roleNamesOf(roles)).containsAll(List.of(
-                    "hs_admin_person#anothernewperson.admin",
+                    "hs_admin_person#anothernewperson.owner",
                     "hs_admin_person#anothernewperson.tenant"));
             assertThat(roles.size()).as("invalid number of roles created")
                     .isEqualTo(initialRoleCount + 2);
             final var grants = grantRepo.findAll();
             assertThat(grantDisplaysOf(grants)).containsAll(List.of(
-                    "{ grant assumed role hs_admin_person#anothernewperson.admin to user drew@hostsharing.org by role global#global.admin }"));
+                    "{ grant assumed role hs_admin_person#anothernewperson.owner to user drew@hostsharing.org by role global#global.admin }"));
             assertThat(grants.size()).as("invalid number of grants created")
                     .isEqualTo(initialGrantCount + 1);
         }

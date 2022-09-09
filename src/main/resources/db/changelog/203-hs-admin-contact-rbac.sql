@@ -26,7 +26,7 @@ begin
     return roleDescriptor('hs_admin_contact', contact.uuid, 'owner');
 end; $$;
 
-create or replace function hsAdminContactOwner(contact hs_admin_contact)
+create or replace function hsAdminContactAdmin(contact hs_admin_contact)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$

@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
+import org.testcontainers.junit.jupiter.Container;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +50,9 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
 
     @MockBean
     HttpServletRequest request;
+
+    @Container
+    Container postgres;
 
     @Nested
     class CreateContact {
@@ -104,13 +108,13 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
             // then
             final var roles = roleRepo.findAll();
             assertThat(roleNamesOf(roles)).containsAll(List.of(
-                    "hs_admin_contact#anothernewcontact.admin",
+                    "hs_admin_contact#anothernewcontact.owner",
                     "hs_admin_contact#anothernewcontact.tenant"));
             assertThat(roles.size()).as("invalid number of roles created")
                     .isEqualTo(initialRoleCount + 2);
             final var grants = grantRepo.findAll();
             assertThat(grantDisplaysOf(grants)).containsAll(List.of(
-                    "{ grant assumed role hs_admin_contact#anothernewcontact.admin to user drew@hostsharing.org by role global#global.admin }"));
+                    "{ grant assumed role hs_admin_contact#anothernewcontact.owner to user drew@hostsharing.org by role global#global.admin }"));
             assertThat(grants.size()).as("invalid number of grants created")
                     .isEqualTo(initialGrantCount + 1);
         }
