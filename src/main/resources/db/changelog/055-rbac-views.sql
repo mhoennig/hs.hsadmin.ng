@@ -55,22 +55,45 @@ grant all privileges on rbacrole_rv to restricted;
 drop view if exists rbacgrants_ev;
 create or replace view rbacgrants_ev as
     -- @formatter:off
-    select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || '.' || r.roletype as grantedByRoleIdName,
-           g.objectTable || '#' || g.objectIdName || '.' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
-           g.grantedByRoleUuid, g.descendantUuid as grantedRoleUuid, g.ascendantUuid as userUuid,
-           g.objectTable, g.objectUuid, g.objectIdName, g.roleType as grantedRoleType
+    select x.grantUuid as uuid,
+           go.objectTable || '#' || findIdNameByObjectUuid(go.objectTable, go.uuid) || '.' || r.roletype as grantedByRoleIdName,
+           x.ascendingIdName as ascendantIdName,
+           x.descendingIdName as descendantIdName,
+           x.grantedByRoleUuid,
+           x.ascendantUuid as ascendantUuid,
+           x.descendantUuid as descenantUuid,
+           x.assumed
         from (
-             select g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
-                    u.name as userName, o.objecttable, r.objectuuid, r.roletype,
-                    findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
-                 from rbacgrants as g
-                 join rbacrole as r on r.uuid = g.descendantUuid
-                 join rbacobject o on o.uuid = r.objectuuid
-                 right outer join rbacuser u on u.uuid = g.ascendantuuid
-         ) as g
-        join RbacRole as r on r.uuid = grantedByRoleUuid
-        join RbacObject as o on o.uuid = r.objectUuid
-    order by grantedRoleIdName;
+             select g.uuid as grantUuid,
+                    g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
+
+                    coalesce(
+                        'user ' || au.name,
+                        'role ' || aro.objectTable || '#' || findIdNameByObjectUuid(aro.objectTable, aro.uuid) || '.' || ar.roletype
+                        ) as ascendingIdName,
+                    aro.objectTable, aro.uuid,
+
+                    coalesce(
+                        'role ' || dro.objectTable || '#' || findIdNameByObjectUuid(dro.objectTable, dro.uuid) || '.' || dr.roletype,
+                        'perm ' || dp.op || ' on ' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid)
+                    ) as descendingIdName,
+                    dro.objectTable, dro.uuid
+                from rbacgrants as g
+
+                left outer join rbacrole as ar on ar.uuid = g.ascendantUuid
+                    left outer join rbacobject as aro on aro.uuid = ar.objectuuid
+                left outer join rbacuser as au on au.uuid = g.ascendantUuid
+
+                left outer join rbacrole as dr on dr.uuid = g.descendantUuid
+                    left outer join rbacobject as dro on dro.uuid = dr.objectuuid
+                left outer join rbacpermission dp on dp.uuid = g.descendantUuid
+                    left outer join rbacobject as dpo on dpo.uuid = dp.objectUuid
+         ) as x
+         left outer join rbacrole as r on r.uuid = grantedByRoleUuid
+         left outer join rbacuser u on u.uuid = x.ascendantuuid
+         left outer join rbacobject go on go.uuid = r.objectuuid
+
+        order by x.ascendingIdName, x.descendingIdName;
     -- @formatter:on
 --//
 
@@ -96,7 +119,7 @@ select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || 
                  from rbacgrants as g
                           join rbacrole as r on r.uuid = g.descendantUuid
                           join rbacobject o on o.uuid = r.objectuuid
-                          join rbacuser u on u.uuid = g.ascendantuuid
+                          left outer join rbacuser u on u.uuid = g.ascendantuuid
                  where isGranted(currentSubjectsUuids(), r.uuid)
          ) as g
              join RbacRole as r on r.uuid = grantedByRoleUuid

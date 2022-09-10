@@ -25,6 +25,8 @@ configurations {
         extendsFrom annotationProcessor
     }
     testCompile {
+        extendsFrom testAnnotationProcessor
+
         // Only JUNit 5 (Jupiter) should be used at compile time.
         // For runtime it's still needed by testcontainers, though.
         exclude group: 'junit', module: 'junit'
@@ -60,12 +62,14 @@ dependencies {
     implementation 'org.modelmapper:modelmapper:3.1.0'
 
     compileOnly 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     runtimeOnly 'org.postgresql:postgresql'
 
     annotationProcessor 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:testcontainers'

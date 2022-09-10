@@ -185,7 +185,6 @@ begin
     objectIdName := pureIdentifier(objectIdName);
     sql := format('select * from %sUuidByIdName(%L);', objectTable, objectIdName);
     begin
-        raise notice 'sql: %', sql;
         execute sql into uuid;
     exception
         when others then
@@ -205,7 +204,6 @@ begin
     objectTable := pureIdentifier(objectTable);
     sql := format('select * from %sIdNameByUuid(%L::uuid);', objectTable, objectUuid);
     begin
-        raise notice 'sql: %', sql;
         execute sql into idName;
     exception
         when others then

@@ -364,8 +364,8 @@ create table RbacGrants
 (
     uuid                uuid primary key default uuid_generate_v4(),
     grantedByRoleUuid   uuid references RbacRole (uuid) on delete cascade,
-    ascendantUuid       uuid references RbacReference (uuid) on delete cascade,
-    descendantUuid      uuid references RbacReference (uuid) on delete cascade,
+    ascendantUuid       uuid references RbacReference (uuid) on delete cascade not null,
+    descendantUuid      uuid references RbacReference (uuid) on delete cascade not null,
     assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
     unique (ascendantUuid, descendantUuid)
 );
