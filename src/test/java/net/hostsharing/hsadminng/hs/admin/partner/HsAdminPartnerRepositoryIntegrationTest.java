@@ -5,9 +5,11 @@ import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.admin.contact.HsAdminContactRepository;
 import net.hostsharing.hsadminng.hs.admin.person.HsAdminPersonEntity;
 import net.hostsharing.hsadminng.hs.admin.person.HsAdminPersonRepository;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +21,13 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantDisplayExtractor.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleNameExtractor.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantDisplayExtractor.grantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleNameExtractor.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -43,10 +47,10 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
     HsAdminContactRepository contactRepo;
 
     @Autowired
-    RbacRoleRepository roleRepo;
+    RawRbacRoleRepository rawRoleRepo;
 
     @Autowired
-    RbacGrantRepository grantRepo;
+    RawRbacGrantRepository rawGrantRepo;
 
     @Autowired
     EntityManager em;
@@ -56,6 +60,8 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
 
     @MockBean
     HttpServletRequest request;
+
+    Set<HsAdminPartnerEntity> tempPartners = new HashSet<>();
 
     @Nested
     class CreatePartner {
@@ -89,12 +95,13 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("alex@hostsharing.net");
-            final var initialRoleCount = roleRepo.findAll().size();
-            final var initialGrantCount = grantRepo.findAll().size();
+            final var initialRoleCount = rawRoleRepo.findAll().size();
+            final var initialGrantCount = rawGrantRepo.findAll().size();
+            final var initialGrantsDisplayNames = grantDisplaysOf(rawGrantRepo.findAll());
 
             // when
             attempt(em, () -> {
-                final var givenPerson = personRepo.findPersonByOptionalNameLike("Erbengemeinschaft Bessler").get(0);
+                final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newPartner = HsAdminPartnerEntity.builder()
                         .uuid(UUID.randomUUID())
@@ -105,21 +112,24 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
             });
 
             // then
-            final var roles = roleRepo.findAll();
-            assertThat(roleNamesOf(roles)).containsAll(List.of(
-                    "hs_admin_partner#ErbengemeinschaftBesslerMelBessler-forthcontact.admin",
-                    "hs_admin_partner#ErbengemeinschaftBesslerMelBessler-forthcontact.owner",
-                    "hs_admin_partner#ErbengemeinschaftBesslerMelBessler-forthcontact.tenant"));
-            assertThat(roles.size()).as("invalid number of roles created")
-                    .isEqualTo(initialRoleCount + 3);
-
-            context("customer-admin@forthcontact.example.com");
-            assertThat(grantDisplaysOf(grantRepo.findAll())).containsAll(List.of(
-                    "{ grant assumed role hs_admin_contact#forthcontact.owner to user customer-admin@forthcontact.example.com by role global#global.admin }"));
-
-            context("person-ErbengemeinschaftBesslerMelBessl@example.com");
-            assertThat(grantDisplaysOf(grantRepo.findAll())).containsAll(List.of(
-                    "{ grant assumed role hs_admin_person#ErbengemeinschaftBesslerMelBessler.owner to user person-ErbengemeinschaftBesslerMelBessl@example.com by role global#global.admin }"));
+            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsAll(List.of(
+                            "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.admin",
+                            "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner",
+                            "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant"))
+                    .as("invalid number of roles created")
+                    .hasSize(initialRoleCount + 3);
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsAll(List.of(
+                            "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner to role global#global.admin by system and assume }",
+                            "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_admin_contact#forthcontact.admin by system and assume }",
+                            "{ grant perm edit on hs_admin_partner#ErbenBesslerMelBessler-forthcontact to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
+                            "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
+                            "{ grant perm * on hs_admin_partner#ErbenBesslerMelBessler-forthcontact to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
+                            "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.admin to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
+                            "{ grant perm view on hs_admin_partner#ErbenBesslerMelBessler-forthcontact to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
+                            "{ grant role hs_admin_contact#forthcontact.tenant to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
+                            "{ grant role hs_admin_person#ErbenBesslerMelBessler.tenant to role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
+                            "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_admin_person#ErbenBesslerMelBessler.admin by system and assume }"))
+                    .as("invalid number of grants created").hasSize(initialGrantCount + 10);
         }
 
         private void assertThatPartnerIsPersisted(final HsAdminPartnerEntity saved) {
@@ -199,19 +209,20 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void nonGlobalAdmin_canNotDeleteTheirRelatedPartner() {
             // given
             context("alex@hostsharing.net", null);
-            final var givenPartner = givenSomeTemporaryPartnerBessler();
+            final var givenPartner = toCleanup(givenSomeTemporaryPartnerBessler());
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-ErbengemeinschaftBesslerMelBessl@example.com");
-                assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent();
+                context("person-ErbenBesslerMelBessler@example.com");
+                assumeThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent();
 
                 partnerRepo.deleteByUuid(givenPartner.getUuid());
             });
 
             // then
-            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] User person-ErbengemeinschaftBesslerMelBessl@example.com not allowed to delete partner");
+            result.assertExceptionWithRootCauseMessage(
+                    JpaSystemException.class,
+                    "[403] User person-ErbenBesslerMelBessler@example.com not allowed to delete partner");
             assertThat(jpaAttempt.transacted(() -> {
                 context("alex@hostsharing.net");
                 return partnerRepo.findByUuid(givenPartner.getUuid());
@@ -222,10 +233,13 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingAPartnerAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("alex@hostsharing.net");
-            final var initialRoleCount = roleRepo.findAll().size();
+            final var initialRoleNames = Array.from(roleNamesOf(rawRoleRepo.findAll()));
+            final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
             final var givenPartner = givenSomeTemporaryPartnerBessler();
-            assumeThat(roleRepo.findAll().size()).as("unexpected number of roles created")
-                    .isEqualTo(initialRoleCount + 3);;
+            assumeThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
+                    .isEqualTo(initialRoleNames.length + 3);
+            assumeThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
+                    .isEqualTo(initialGrantNames.length + 10);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -234,28 +248,23 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
             }).assertSuccessful();
 
             // then
-            final var roles = roleRepo.findAll();
-            assertThat(roleNamesOf(roles)).doesNotContainAnyElementsOf(List.of(
-                    "hs_admin_partner#ErbengemeinschaftBesslerMelBessler-forthcontact.admin",
-                    "hs_admin_partner#ErbengemeinschaftBesslerMelBessler-forthcontact.owner",
-                    "hs_admin_partner#ErbengemeinschaftBesslerMelBessler-forthcontact.tenant"));
-            assertThat(roles.size()).as("invalid number of roles created")
-                    .isEqualTo(initialRoleCount);
+            final var roles = rawRoleRepo.findAll();
+            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(initialRoleNames);
 
             context("customer-admin@forthcontact.example.com");
-            assertThat(grantDisplaysOf(grantRepo.findAll())).doesNotContain(
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
                     "{ grant assumed role hs_admin_contact#forthcontact.owner to user customer-admin@forthcontact.example.com by role global#global.admin }");
 
-            context("person-ErbengemeinschaftBesslerMelBessl@example.com");
-            assertThat(grantDisplaysOf(grantRepo.findAll())).doesNotContain(
-                    "{ grant assumed role hs_admin_person#ErbengemeinschaftBesslerMelBessler.owner to user person-ErbengemeinschaftBesslerMelBessl@example.com by role global#global.admin }");
+            context("person-ErbenBesslerMelBessler@example.com");
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
+                    "{ grant assumed role hs_admin_person#ErbenBesslerMelBessler.owner to user person-ErbenBesslerMelBessl@example.com by role global#global.admin }");
         }
     }
 
     private HsAdminPartnerEntity givenSomeTemporaryPartnerBessler() {
         return jpaAttempt.transacted(() -> {
             context("alex@hostsharing.net");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Erbengemeinschaft Bessler").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
             final var newPartner = HsAdminPartnerEntity.builder()
                     .uuid(UUID.randomUUID())
@@ -265,6 +274,21 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
 
             return partnerRepo.save(newPartner);
         }).assertSuccessful().returnedValue();
+    }
+
+    private HsAdminPartnerEntity toCleanup(final HsAdminPartnerEntity tempPartner) {
+        tempPartners.add(tempPartner);
+        return tempPartner;
+    }
+
+    @AfterEach
+    void cleanup() {
+        context("alex@hostsharing.net", null);
+        tempPartners.forEach(tempPartner -> {
+            System.out.println("DELETING temporary partner: " + tempPartner.getDisplayName());
+            final var count = partnerRepo.deleteByUuid(tempPartner.getUuid());
+            assertThat(count).isGreaterThan(0);
+        });
     }
 
     void exactlyThesePartnersAreReturned(final List<HsAdminPartnerEntity> actualResult, final String... partnerTradeNames) {

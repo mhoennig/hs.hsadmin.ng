@@ -205,6 +205,7 @@ $$;
 create or replace procedure deleteRole(roleUUid uuid)
     language plpgsql as $$
 begin
+    --raise exception '% deleting role uuid %', currentsubjectsuuids(), roleUUid;
     delete from RbacRole where uuid = roleUUid;
 end;
 $$;
@@ -265,6 +266,38 @@ begin
     return roleUuid;
 end;
 $$;
+
+
+-- ============================================================================
+--changeset hs-admin-person-rbac-ROLES-REMOVAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    RbacRole BEFORE DELETE TRIGGER function which deletes all related roles.
+ */
+create or replace function deleteRbacGrantsForRbacRole()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    if TG_OP = 'DELETE' then
+        delete from RbacGrants g where old.uuid in (g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid);
+    else
+        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
+    end if;
+    return old;
+end; $$;
+
+/*
+    Installs the RbacRole BEFORE DELETE TRIGGER.
+ */
+create trigger deleteRbacGrantsForRbacRole_Trigger
+    before delete
+    on RbacRole
+    for each row
+execute procedure deleteRbacGrantsForRbacRole();
+--//
+
 
 -- ============================================================================
 --changeset rbac-base-PERMISSION:1 endDelimiter:--//
@@ -363,9 +396,9 @@ $$;
 create table RbacGrants
 (
     uuid                uuid primary key default uuid_generate_v4(),
-    grantedByRoleUuid   uuid references RbacRole (uuid) on delete cascade,
-    ascendantUuid       uuid references RbacReference (uuid) on delete cascade not null,
-    descendantUuid      uuid references RbacReference (uuid) on delete cascade not null,
+    grantedByRoleUuid   uuid references RbacRole (uuid),
+    ascendantUuid       uuid references RbacReference (uuid),
+    descendantUuid      uuid references RbacReference (uuid),
     assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
     unique (ascendantUuid, descendantUuid)
 );

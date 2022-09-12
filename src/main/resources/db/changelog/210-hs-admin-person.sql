@@ -10,7 +10,7 @@ CREATE CAST (character varying as HsAdminPersonType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_admin_person
 (
-    uuid           uuid unique references RbacObject (uuid),
+    uuid           uuid unique references RbacObject (uuid) on delete cascade,
     personType     HsAdminPersonType not null,
     tradeName      varchar(96),
     givenName      varchar(48),

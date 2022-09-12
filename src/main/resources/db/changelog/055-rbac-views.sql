@@ -168,6 +168,8 @@ execute function insertRbacGrant();
 
 /**
     Instead of delete trigger function for RbacGrants_RV.
+
+    Checks if the current subject (user / assumed role) has the permission to revoke the grant.
  */
 create or replace function deleteRbacGrant()
     returns trigger
@@ -283,6 +285,8 @@ execute function insertRbacUser();
 
 /**
     Instead of delete trigger function for RbacUser_RV.
+
+    Checks if the current subject (user / assumed role) has the permission to delete the user.
  */
 create or replace function deleteRbacUser()
     returns trigger

@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -97,7 +98,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("drew@hostsharing.org");
             final var count = contactRepo.count();
-            final var initialRoleCount = roleRepo.findAll().size();
+            final var initialRoleNames = roleNamesOf(roleRepo.findAll());
             final var initialGrantCount = grantRepo.findAll().size();
 
             // when
@@ -107,11 +108,12 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             final var roles = roleRepo.findAll();
-            assertThat(roleNamesOf(roles)).containsAll(List.of(
-                    "hs_admin_contact#anothernewcontact.owner",
-                    "hs_admin_contact#anothernewcontact.tenant"));
-            assertThat(roles.size()).as("invalid number of roles created")
-                    .isEqualTo(initialRoleCount + 2);
+            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(
+                    Array.from(
+                            initialRoleNames,
+                            "hs_admin_contact#anothernewcontact.owner",
+                            "hs_admin_contact#anothernewcontact.admin",
+                            "hs_admin_contact#anothernewcontact.tenant"));
             final var grants = grantRepo.findAll();
             assertThat(grantDisplaysOf(grants)).containsAll(List.of(
                     "{ grant assumed role hs_admin_contact#anothernewcontact.owner to user drew@hostsharing.org by role global#global.admin }"));
@@ -265,7 +267,7 @@ class HsAdminContactRepositoryIntegrationTest extends ContextBasedTest {
         context("alex@hostsharing.net", null);
         final var result = contactRepo.findContactByOptionalLabelLike("some temporary contact");
         result.forEach(tempPerson -> {
-            System.out.println("DELETING contact: " + tempPerson.getLabel());
+            System.out.println("DELETING temporary contact: " + tempPerson.getLabel());
             contactRepo.deleteByUuid(tempPerson.getUuid());
         });
     }

@@ -224,6 +224,8 @@ execute function insertHsAdminContact();
 
 /**
     Instead of delete trigger function for hs_admin_contact_rv.
+
+    Checks if the current subject (user / assumed role) has the permission to delete the row.
  */
 create or replace function deleteHsAdminContact()
     returns trigger

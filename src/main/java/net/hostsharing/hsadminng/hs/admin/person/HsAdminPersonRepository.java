@@ -22,7 +22,7 @@ public interface HsAdminPersonRepository extends Repository<HsAdminPersonEntity,
 
     HsAdminPersonEntity save(final HsAdminPersonEntity entity);
 
-    void deleteByUuid(final UUID personUuid);
+    int deleteByUuid(final UUID personUuid);
 
     long count();
 }

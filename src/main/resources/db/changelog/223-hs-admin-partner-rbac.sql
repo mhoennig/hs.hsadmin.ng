@@ -234,6 +234,8 @@ execute function insertHsAdminPartner();
 
 /**
     Instead of delete trigger function for hs_admin_partner_rv.
+
+    Checks if the current subject (user / assumed role) has the permission to delete the row.
  */
 create or replace function deleteHsAdminPartner()
     returns trigger

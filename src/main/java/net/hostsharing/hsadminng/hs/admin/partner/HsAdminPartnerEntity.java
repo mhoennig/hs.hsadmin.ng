@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.admin.partner;
 import lombok.*;
 import net.hostsharing.hsadminng.hs.admin.contact.HsAdminContactEntity;
 import net.hostsharing.hsadminng.hs.admin.person.HsAdminPersonEntity;
-import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -33,4 +32,8 @@ public class HsAdminPartnerEntity {
     private @Column(name = "birthname") String birthName;
     private @Column(name = "birthday") LocalDate birthday;
     private @Column(name = "dateofdeath") LocalDate dateOfDeath;
+
+    public String getDisplayName() {
+        return "partner(%s, %s)".formatted(person.getDisplayName(), contact.getLabel());
+    }
 }

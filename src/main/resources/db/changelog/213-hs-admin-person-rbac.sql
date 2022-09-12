@@ -66,12 +66,12 @@ begin
 
     -- the owner role with full access for the creator assigned to the current user
     ownerRole := createRole(
-        hsAdminPersonOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(globalAdmin()),
-        withoutSubRoles(),
-        withUser(currentUser()), -- TODO.spec: Who is owner of a new person?
-        grantedByRole(globalAdmin())
+            hsAdminPersonOwner(NEW),
+            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
+            beneathRole(globalAdmin()),
+            withoutSubRoles(),
+            withUser(currentUser()), -- TODO.spec: Who is owner of a new person?
+            grantedByRole(globalAdmin())
         );
 
     -- the tenant role for those related users who can view the data
@@ -83,9 +83,9 @@ begin
 
     -- the tenant role for those related users who can view the data
     perform createRole(
-        hsAdminPersonTenant(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-        beneathRole(adminRole)
+            hsAdminPersonTenant(NEW),
+            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
+            beneathRole(adminRole)
         );
 
     return NEW;
@@ -107,6 +107,8 @@ execute procedure createRbacRolesForHsAdminPerson();
 --changeset hs-admin-person-rbac-ROLES-REMOVAL:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- TODO: can we replace all these delete triggers by a delete trigger on RbacObject?
+
 /*
     Deletes the roles and their assignments of a deleted person for the BEFORE DELETE TRIGGER.
  */
@@ -117,6 +119,7 @@ create or replace function deleteRbacRulesForHsAdminPerson()
 begin
     if TG_OP = 'DELETE' then
         call deleteRole(findRoleId(hsAdminPersonOwner(OLD)));
+        call deleteRole(findRoleId(hsAdminPersonAdmin(OLD)));
         call deleteRole(findRoleId(hsAdminPersonTenant(OLD)));
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
@@ -224,6 +227,8 @@ execute function insertHsAdminPerson();
 
 /**
     Instead of delete trigger function for hs_admin_person_rv.
+
+    Checks if the current subject (user / assumed role) has the permission to delete the row.
  */
 create or replace function deleteHsAdminPerson()
     returns trigger
@@ -255,9 +260,9 @@ execute function deleteHsAdminPerson();
  */
 do language plpgsql $$
     declare
-        addCustomerPermissions  uuid[];
-        globalObjectUuid        uuid;
-        globalAdminRoleUuid         uuid ;
+        addCustomerPermissions uuid[];
+        globalObjectUuid       uuid;
+        globalAdminRoleUuid    uuid ;
     begin
         call defineContext('granting global new-person permission to global admin role', null, null, null);
 
