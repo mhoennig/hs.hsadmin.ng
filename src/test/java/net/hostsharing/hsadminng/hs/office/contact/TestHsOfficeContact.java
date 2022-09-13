@@ -1,0 +1,17 @@
+package net.hostsharing.hsadminng.hs.office.contact;
+
+import java.util.UUID;
+
+public class TestHsOfficeContact {
+
+    public static final HsOfficeContactEntity someContact = hsOfficeContact("some contact", "some-contact@example.com");
+
+    static public HsOfficeContactEntity hsOfficeContact(final String label, final String emailAddr) {
+        return HsOfficeContactEntity.builder()
+                .uuid(UUID.randomUUID())
+                .label(label)
+                .postalAddress("address of " + label)
+                .emailAddresses(emailAddr)
+                .build();
+    }
+}

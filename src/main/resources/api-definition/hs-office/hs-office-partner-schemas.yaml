@@ -1,0 +1,45 @@
+
+components:
+
+    schemas:
+
+        HsOfficePartnerBase:
+            type: object
+            properties:
+                registrationOffice:
+                    type: string
+                registrationNumber:
+                    type: string
+                birthName:
+                    type: string
+                birthday:
+                    type: string
+                    format: date
+                dateOfDeath:
+                    type: string
+                    format: date
+
+        HsOfficePartner:
+            allOf:
+                - type: object
+                  properties:
+                      uuid:
+                          type: string
+                          format: uuid
+                      person:
+                          $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                      contact:
+                          $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                - $ref: '#/components/schemas/HsOfficePartnerBase'
+
+        HsOfficePartnerUpdate:
+            allOf:
+                - type: object
+                  properties:
+                      personUuid:
+                          type: string
+                          format: uuid
+                      contactUuid:
+                          type: string
+                          format: uuid
+                - $ref: '#/components/schemas/HsOfficePartnerBase'

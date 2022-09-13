@@ -46,20 +46,20 @@ databaseChangeLog:
     - include:
         file: db/changelog/138-test-domain-test-data.sql
     - include:
-        file: db/changelog/200-hs-admin-contact.sql
+        file: db/changelog/200-hs-office-contact.sql
     - include:
-        file: db/changelog/203-hs-admin-contact-rbac.sql
+        file: db/changelog/203-hs-office-contact-rbac.sql
     - include:
-        file: db/changelog/208-hs-admin-contact-test-data.sql
+        file: db/changelog/208-hs-office-contact-test-data.sql
     - include:
-        file: db/changelog/210-hs-admin-person.sql
+        file: db/changelog/210-hs-office-person.sql
     - include:
-        file: db/changelog/213-hs-admin-person-rbac.sql
+        file: db/changelog/213-hs-office-person-rbac.sql
     - include:
-        file: db/changelog/218-hs-admin-person-test-data.sql
+        file: db/changelog/218-hs-office-person-test-data.sql
     - include:
-        file: db/changelog/220-hs-admin-partner.sql
+        file: db/changelog/220-hs-office-partner.sql
     - include:
-        file: db/changelog/223-hs-admin-partner-rbac.sql
+        file: db/changelog/223-hs-office-partner-rbac.sql
     - include:
-        file: db/changelog/228-hs-admin-partner-test-data.sql
+        file: db/changelog/228-hs-office-partner-test-data.sql

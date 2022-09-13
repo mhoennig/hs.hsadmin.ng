@@ -131,8 +131,8 @@ openapiProcessor {
     springHs {
         processorName 'spring'
         processor 'io.openapiprocessor:openapi-processor-spring:2022.4'
-        apiPath "$projectDir/src/main/resources/api-definition/hs-admin/hs-admin.yaml"
-        mapping "$projectDir/src/main/resources/api-definition/hs-admin/api-mappings.yaml"
+        apiPath "$projectDir/src/main/resources/api-definition/hs-office/hs-office.yaml"
+        mapping "$projectDir/src/main/resources/api-definition/hs-office/api-mappings.yaml"
         targetDir "$projectDir/build/generated/sources/openapi"
         showWarnings true
         openApiNullable true
@@ -200,7 +200,7 @@ jacocoTestReport {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
                     "net/hostsharing/hsadminng/**/generated/**/*.class",
-                    "net/hostsharing/hsadminng/hs/hscustomer/HsadminNgApplication.class"
+                    "net/hostsharing/hsadminng/hs/HsadminNgApplication.class"
             ])
         }))
     }

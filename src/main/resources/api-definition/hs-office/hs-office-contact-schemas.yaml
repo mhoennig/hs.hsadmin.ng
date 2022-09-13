@@ -1,0 +1,28 @@
+
+components:
+
+    schemas:
+
+        HsOfficeContactBase:
+            type: object
+            properties:
+                label:
+                    type: string
+                postalAddress:
+                    type: string
+                emailAddresses:
+                    type: string
+                phoneNumbers:
+                    type: string
+
+        HsOfficeContact:
+            allOf:
+                - type: object
+                  properties:
+                      uuid:
+                          type: string
+                          format: uuid
+                - $ref: '#/components/schemas/HsOfficeContactBase'
+
+        HsOfficeContactUpdate:
+            $ref: '#/components/schemas/HsOfficeContactBase'

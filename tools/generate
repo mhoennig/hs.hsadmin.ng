@@ -1,47 +1,47 @@
 #!/bin/bash
 
-mkdir -p src/test/java/net/hostsharing/hsadminng/hs/admin/partner
+mkdir -p src/test/java/net/hostsharing/hsadminng/hs/office/partner
 
-sed -e 's/hs-admin-contact/hs-admin-partner/g' \
-	-e 's/hs_admin_contact/hs_admin_partner/g' \
-	-e 's/HsAdminContact/HsAdminPartner/g' \
-	-e 's/hsAdminContact/hsAdminPartner/g' \
+sed -e 's/hs-admin-contact/hs-office-partner/g' \
+	-e 's/hs_admin_contact/hs_office_partner/g' \
+	-e 's/HsOfficeContact/HsOfficePartner/g' \
+	-e 's/HsOfficeContact/HsOfficePartner/g' \
 	-e 's/contact/partner/g' \
-<src/test/java/net/hostsharing/hsadminng/hs/admin/contact/HsAdminContactRepositoryIntegrationTest.java \
->src/test/java/net/hostsharing/hsadminng/hs/admin/partner/HsAdminPartnerRepositoryIntegrationTest.java
+<src/test/java/net/hostsharing/hsadminng/hs/office/contact/HsOfficeContactRepositoryIntegrationTest.java \
+>src/test/java/net/hostsharing/hsadminng/hs/office/partner/HsOfficePartnerRepositoryIntegrationTest.java
 
 exit
 
-sed -e 's/hs-admin-contact/hs-admin-partner/g' \
-	-e 's/hs_admin_contact/hs_admin_partner/g' \
-	<src/main/resources/db/changelog/200-hs-admin-contact.sql >src/main/resources/db/changelog/220-hs-admin-partner.sql
+sed -e 's/hs-admin-contact/hs-office-partner/g' \
+	-e 's/hs_admin_contact/hs_office_partner/g' \
+	<src/main/resources/db/changelog/200-hs-admin-contact.sql >src/main/resources/db/changelog/220-hs-office-partner.sql
 
-sed -e 's/hs-admin-contact/hs-admin-partner/g' \
-	-e 's/hs_admin_contact/hs_admin_partner/g' \
-	-e 's/HsAdminCustomer/HsAdminPartner/g' \
-	-e 's/hsAdminContact/hsAdminPartner/g' \
+sed -e 's/hs-admin-contact/hs-office-partner/g' \
+	-e 's/hs_admin_contact/hs_office_partner/g' \
+	-e 's/HsAdminCustomer/HsOfficePartner/g' \
+	-e 's/HsOfficeContact/HsOfficePartner/g' \
 	-e 's/contact/partner/g' \
-	<src/main/resources/db/changelog/203-hs-admin-contact-rbac.sql >src/main/resources/db/changelog/223-hs-admin-partner-rbac.sql
+	<src/main/resources/db/changelog/203-hs-admin-contact-rbac.sql >src/main/resources/db/changelog/223-hs-office-partner-rbac.sql
 
-sed -e 's/hs-admin-contact/hs-admin-partner/g' \
-	-e 's/hs_admin_contact/hs_admin_partner/g' \
-	-e 's/HsAdminContact/HsAdminPartner/g' \
-	-e 's/hsAdminContact/hsAdminPartner/g' \
+sed -e 's/hs-admin-contact/hs-office-partner/g' \
+	-e 's/hs_admin_contact/hs_office_partner/g' \
+	-e 's/HsOfficeContact/HsOfficePartner/g' \
+	-e 's/HsOfficeContact/HsOfficePartner/g' \
 	-e 's/contact/partner/g' \
-	<src/main/resources/db/changelog/208-hs-admin-contact-test-data.sql >src/main/resources/db/changelog/228-hs-admin-partner-test-data.sql
+	<src/main/resources/db/changelog/208-hs-admin-contact-test-data.sql >src/main/resources/db/changelog/228-hs-office-partner-test-data.sql
 
 
-# mkdir -p src/main/java/net/hostsharing/hsadminng/hs/admin/partner
+# mkdir -p src/main/java/net/hostsharing/hsadminng/hs/office/partner
 # 
-# sed -e 's/HsAdminContactEntity/HsAdminPartnerEntity/g' \
+# sed -e 's/HsOfficeContactEntity/HsOfficePartnerEntity/g' \
 # sed -e 's/admin.contact/admin.partner/g' \
-# 	<src/main/java/net/hostsharing/hsadminng/hs/admin/contact/HsAdminContactEntity.java >src/main/java/net/hostsharing/hsadminng/hs/admin/partner/HsAdminPartnerEntity.java
+# 	<src/main/java/net/hostsharing/hsadminng/hs/office/contact/HsOfficeContactEntity.java >src/main/java/net/hostsharing/hsadminng/hs/office/partner/HsOfficePartnerEntity.java
 
 cat >>src/main/resources/db/changelog/db.changelog-master.yaml <<EOF
     - include:
-        file: db/changelog/220-hs-admin-partner.sql
+        file: db/changelog/220-hs-office-partner.sql
     - include:
-        file: db/changelog/223-hs-admin-partner-rbac.sql
+        file: db/changelog/223-hs-office-partner-rbac.sql
     - include:
-        file: db/changelog/228-hs-admin-partner-test-data.sql
+        file: db/changelog/228-hs-office-partner-test-data.sql
 EOF

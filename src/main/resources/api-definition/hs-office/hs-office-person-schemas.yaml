@@ -1,0 +1,33 @@
+
+components:
+
+    schemas:
+
+        HsOfficePersonBase:
+            type: object
+            properties:
+                personType:
+                    type: string
+                    enum:
+                        - NATURAL               # a human
+                        - LEGAL                 # e.g. Corp., Inc., AG, GmbH, eG
+                        - SOLE_REPRESENTATION   # e.g. OHG, GbR
+                        - JOINT_REPRESENTATION  # e.g. community of heirs
+                tradeName:
+                    type: string
+                givenName:
+                    type: string
+                familyName:
+                    type: string
+
+        HsOfficePerson:
+            allOf:
+                - type: object
+                  properties:
+                      uuid:
+                          type: string
+                          format: uuid
+                - $ref: '#/components/schemas/HsOfficePersonBase'
+
+        HsOfficePersonUpdate:
+            $ref: '#/components/schemas/HsOfficePersonBase'

@@ -53,16 +53,16 @@ public class ArchTest {
     @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsAdminPackagesRule = classes()
-            .that().resideInAPackage("..hs.admin.(*)..")
+            .that().resideInAPackage("..hs.office.(*)..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.admin.(*)..");
+            .resideInAnyPackage("..hs.office.(*)..");
 
     @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule hsAdminPartnerPackageRule = classes()
-            .that().resideInAPackage("..hs.admin.partner..")
+    public static final ArchRule HsOfficePartnerPackageRule = classes()
+            .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.admin.partner..");
+            .resideInAnyPackage("..hs.office.partner..");
 
     @com.tngtech.archunit.junit.ArchTest
     @SuppressWarnings("unused")
