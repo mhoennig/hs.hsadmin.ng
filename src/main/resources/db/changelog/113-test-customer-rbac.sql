@@ -12,7 +12,7 @@ create trigger createRbacObjectForCustomer_Trigger
     before insert
     on test_customer
     for each row
-execute procedure createRbacObject();
+execute procedure insertRelatedRbacObject();
 --//
 
 -- ============================================================================
@@ -105,40 +105,6 @@ create trigger createRbacRolesForTestCustomer_Trigger
 execute procedure createRbacRolesForTestCustomer();
 --//
 
-
--- ============================================================================
---changeset test-customer-rbac-ROLES-REMOVAL:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/*
-    Deletes the roles and their assignments of a deleted customer for the BEFORE DELETE TRIGGER.
- */
-
-create or replace function deleteRbacRulesForTestCustomer()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    if TG_OP = 'DELETE' then
-        call deleteRole(findRoleId(testCustomerOwner(OLD)));
-        call deleteRole(findRoleId(testCustomerAdmin(OLD)));
-        call deleteRole(findRoleId(testCustomerTenant(OLD)));
-    else
-        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
-    end if;
-end; $$;
-
-/*
-    An BEFORE DELETE TRIGGER which deletes the role structure of a customer.
- */
-
-drop trigger if exists deleteRbacRulesForTestCustomer_Trigger on test_customer;
-create trigger deleteRbacRulesForTestCustomer_Trigger
-    before delete
-    on test_customer
-    for each row
-execute procedure deleteRbacRulesForTestCustomer();
---//
 
 -- ============================================================================
 --changeset test-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//

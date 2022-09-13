@@ -6,7 +6,7 @@
 
 create table if not exists hs_admin_contact
 (
-    uuid           uuid unique references RbacObject (uuid) on delete cascade,
+    uuid           uuid unique references RbacObject (uuid) initially deferred,
     label          varchar(96) not null,
     postalAddress  text,
     emailAddresses text, -- TODO.feat: change to json

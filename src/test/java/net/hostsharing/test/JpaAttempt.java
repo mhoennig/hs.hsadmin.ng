@@ -71,7 +71,6 @@ public class JpaAttempt {
             });
             return JpaResult.forVoidValue();
         } catch (final RuntimeException exc) {
-
             return new JpaResult<>(null, exc);
         }
     }

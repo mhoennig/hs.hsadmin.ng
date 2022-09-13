@@ -11,7 +11,7 @@ create trigger createRbacObjectForPackage_Trigger
     before insert
     on test_package
     for each row
-execute procedure createRbacObject();
+execute procedure insertRelatedRbacObject();
 --//
 
 
@@ -101,40 +101,6 @@ create trigger createRbacRolesForTestPackage_Trigger
     on test_package
     for each row
 execute procedure createRbacRolesForTestPackage();
---//
-
--- ============================================================================
---changeset test-package-rbac-ROLES-REMOVAL:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/*
-    Deletes the roles and their assignments of a deleted package for the BEFORE DELETE TRIGGER.
- */
-
-create or replace function deleteRbacRulesForTestPackage()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    if TG_OP = 'DELETE' then
-        call deleteRole(findRoleId(testPackageOwner(OLD)));
-        call deleteRole(findRoleId(testPackageAdmin(OLD)));
-        call deleteRole(findRoleId(testPackageTenant(OLD)));
-    else
-        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
-    end if;
-end; $$;
-
-/*
-    An BEFORE DELETE TRIGGER which deletes the role structure of a package.
- */
-
-drop trigger if exists deleteRbacRulesForTestPackage_Trigger on test_package;
-create trigger deleteRbacRulesForTestPackage_Trigger
-    before delete
-    on test_package
-    for each row
-execute procedure deleteRbacRulesForTestPackage();
 --//
 
 

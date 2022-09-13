@@ -1,18 +1,11 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-admin-partner-rbac-CREATE-OBJECT:1 endDelimiter:--//
+--changeset hs-admin-partner-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates the related RbacObject through a BEFORE INSERT TRIGGER.
- */
-create trigger createRbacObjectForHsAdminPartner_Trigger
-    before insert
-    on hs_admin_partner
-    for each row
-execute procedure createRbacObject();
+call generateRelatedRbacObject('hs_admin_partner');
 --//
+
 
 -- ============================================================================
 --changeset hs-admin-partner-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
@@ -105,38 +98,6 @@ create trigger createRbacRolesForHsAdminPartner_Trigger
 execute procedure createRbacRolesForHsAdminPartner();
 --//
 
-
--- ============================================================================
---changeset hs-admin-partner-rbac-ROLES-REMOVAL:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/*
-    Deletes the roles and their assignments of a deleted partner for the BEFORE DELETE TRIGGER.
- */
-create or replace function deleteRbacRulesForHsAdminPartner()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    if TG_OP = 'DELETE' then
-        call deleteRole(findRoleId(hsAdminPartnerOwner(OLD)));
-        call deleteRole(findRoleId(hsAdminPartnerAdmin(OLD)));
-        call deleteRole(findRoleId(hsAdminPartnerTenant(OLD)));
-    else
-        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
-    end if;
-    return old;
-end; $$;
-
-/*
-    An BEFORE DELETE TRIGGER which deletes the role structure of a partner.
- */
-create trigger deleteRbacRulesForTestPartner_Trigger
-    before delete
-    on hs_admin_partner
-    for each row
-execute procedure deleteRbacRulesForHsAdminPartner();
---//
 
 -- ============================================================================
 --changeset hs-admin-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//

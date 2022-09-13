@@ -11,7 +11,7 @@ create trigger createRbacObjectFortest_domain_Trigger
     before insert
     on test_domain
     for each row
-execute procedure createRbacObject();
+execute procedure insertRelatedRbacObject();
 --//
 
 
@@ -118,41 +118,6 @@ create trigger createRbacRulesForTestDomain_Trigger
     on test_domain
     for each row
 execute procedure createRbacRulesForTestDomain();
---//
-
-
--- ============================================================================
---changeset test-domain-rbac-ROLES-REMOVAL:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/*
-    Deletes the roles and their assignments of a deleted domain for the BEFORE DELETE TRIGGER.
- */
-
-create or replace function deleteRbacRulesForTestDomain()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    if TG_OP = 'DELETE' then
-        call deleteRole(findRoleId(testdomainOwner(OLD)));
-        call deleteRole(findRoleId(testdomainAdmin(OLD)));
-        call deleteRole(findRoleId(testdomainTenant(OLD)));
-    else
-        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
-    end if;
-end; $$;
-
-/*
-    An BEFORE DELETE TRIGGER which deletes the role structure of a domain.
- */
-
-drop trigger if exists deleteRbacRulesForTestDomain_Trigger on test_package;
-create trigger deleteRbacRulesForTestDomain_Trigger
-    before delete
-    on test_domain
-    for each row
-execute procedure deleteRbacRulesForTestDomain();
 --//
 
 

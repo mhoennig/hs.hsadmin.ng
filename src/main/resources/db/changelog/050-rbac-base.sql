@@ -122,7 +122,17 @@ create table RbacObject
 
 call create_journal('RbacObject');
 
-create or replace function createRbacObject()
+--//
+
+
+-- ============================================================================
+--changeset rbac-base-GENERATE-RELATED-OBJECT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Inserts related RbacObject for use in the BEFORE ONSERT TRIGGERs on the business objects.
+ */
+create or replace function insertRelatedRbacObject()
     returns trigger
     language plpgsql
     strict as $$
@@ -147,7 +157,50 @@ begin
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 end; $$;
+
+/*
+    Deletes related RbacObject for use in the BEFORE DELETE TRIGGERs on the business objects.
+ */
+create or replace function deleteRelatedRbacObject()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    if TG_OP = 'DELETE' then
+        delete from RbacObject where rbacobject.uuid = old.uuid;
+    else
+        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
+    end if;
+    return old;
+end; $$;
+
+create or replace procedure generateRelatedRbacObject(targetTable varchar)
+    language plpgsql as $$
+declare
+    createInsertTriggerSQL text;
+    createDeleteTriggerSQL text;
+begin
+    createInsertTriggerSQL = format($sql$
+        create trigger createRbacObjectFor_%s_Trigger
+            before insert
+            on %s
+            for each row
+                execute procedure insertRelatedRbacObject();
+        $sql$, targetTable, targetTable);
+    execute createInsertTriggerSQL;
+
+    createDeleteTriggerSQL = format($sql$
+        create trigger deleteRbacRulesFor_%s_Trigger
+            before delete
+            on %s
+            for each row
+                execute procedure deleteRelatedRbacObject();
+        $sql$, targetTable, targetTable);
+    execute createDeleteTriggerSQL;
+end; $$;
+
 --//
+
 
 -- ============================================================================
 --changeset rbac-base-ROLE:1 endDelimiter:--//
@@ -160,9 +213,9 @@ create type RbacRoleType as enum ('owner', 'admin', 'tenant');
 
 create table RbacRole
 (
-    uuid       uuid primary key references RbacReference (uuid) on delete cascade,
-    objectUuid uuid references RbacObject (uuid) not null,
-    roleType   RbacRoleType                      not null,
+    uuid       uuid primary key references RbacReference (uuid) on delete cascade initially deferred, -- initially deferred
+    objectUuid uuid not null references RbacObject (uuid) initially deferred,
+    roleType   RbacRoleType not null,
     unique (objectUuid, roleType)
 );
 
@@ -269,13 +322,13 @@ $$;
 
 
 -- ============================================================================
---changeset hs-admin-person-rbac-ROLES-REMOVAL:1 endDelimiter:--//
+--changeset rbac-base-BEFORE-DELETE-ROLE-TRIGGER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     RbacRole BEFORE DELETE TRIGGER function which deletes all related roles.
  */
-create or replace function deleteRbacGrantsForRbacRole()
+create or replace function deleteRbacGrantsOfRbacRole()
     returns trigger
     language plpgsql
     strict as $$
@@ -291,11 +344,43 @@ end; $$;
 /*
     Installs the RbacRole BEFORE DELETE TRIGGER.
  */
-create trigger deleteRbacGrantsForRbacRole_Trigger
+create trigger deleteRbacGrantsOfRbacRole_Trigger
     before delete
     on RbacRole
     for each row
-execute procedure deleteRbacGrantsForRbacRole();
+execute procedure deleteRbacGrantsOfRbacRole();
+--//
+
+
+-- ============================================================================
+--changeset rbac-base-BEFORE-DELETE-OBJECT-TRIGGER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    RbacObject BEFORE DELETE TRIGGER function which deletes all related roles.
+ */
+create or replace function deleteRbacRolesOfRbacObject()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    if TG_OP = 'DELETE' then
+        delete from RbacPermission p where p.objectuuid = old.uuid;
+        delete from RbacRole r where r.objectUuid = old.uuid;
+    else
+        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
+    end if;
+    return old;
+end; $$;
+
+/*
+    Installs the RbacRole BEFORE DELETE TRIGGER.
+ */
+create trigger deleteRbacRolesOfRbacObject_Trigger
+    before delete
+    on RbacObject
+    for each row
+        execute procedure deleteRbacRolesOfRbacObject();
 --//
 
 

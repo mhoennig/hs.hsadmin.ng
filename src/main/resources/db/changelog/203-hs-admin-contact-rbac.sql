@@ -1,18 +1,11 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-admin-contact-rbac-CREATE-OBJECT:1 endDelimiter:--//
+--changeset hs-admin-contact-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates the related RbacObject through a BEFORE INSERT TRIGGER.
- */
-create trigger createRbacObjectForHsAdminCustomer_Trigger
-    before insert
-    on hs_admin_contact
-    for each row
-execute procedure createRbacObject();
+call generateRelatedRbacObject('hs_admin_contact');
 --//
+
 
 -- ============================================================================
 --changeset hs-admin-contact-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
@@ -102,37 +95,6 @@ create trigger createRbacRolesForHsAdminContact_Trigger
 execute procedure createRbacRolesForHsAdminContact();
 --//
 
-
--- ============================================================================
---changeset hs-admin-contact-rbac-ROLES-REMOVAL:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/*
-    Deletes the roles and their assignments of a deleted contact for the BEFORE DELETE TRIGGER.
- */
-create or replace function deleteRbacRulesForHsAdminContact()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    if TG_OP = 'DELETE' then
-        call deleteRole(findRoleId(hsAdminContactOwner(OLD)));
-        call deleteRole(findRoleId(hsAdminContactTenant(OLD)));
-    else
-        raise exception 'invalid usage of TRIGGER BEFORE DELETE';
-    end if;
-    return old;
-end; $$;
-
-/*
-    An BEFORE DELETE TRIGGER which deletes the role structure of a contact.
- */
-create trigger deleteRbacRulesForTestContact_Trigger
-    before delete
-    on hs_admin_contact
-    for each row
-execute procedure deleteRbacRulesForHsAdminContact();
---//
 
 -- ============================================================================
 --changeset hs-admin-contact-rbac-IDENTITY-VIEW:1 endDelimiter:--//

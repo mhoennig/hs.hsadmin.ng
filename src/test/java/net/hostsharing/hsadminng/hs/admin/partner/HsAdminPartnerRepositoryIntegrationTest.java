@@ -95,9 +95,9 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("alex@hostsharing.net");
-            final var initialRoleCount = rawRoleRepo.findAll().size();
+            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantCount = rawGrantRepo.findAll().size();
-            final var initialGrantsDisplayNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialGrantsDisplayNames = grantDisplaysOf(rawGrantRepo.findAll()); // TODO
 
             // when
             attempt(em, () -> {
@@ -112,12 +112,11 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
             });
 
             // then
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsAll(List.of(
-                            "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.admin",
-                            "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner",
-                            "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant"))
-                    .as("invalid number of roles created")
-                    .hasSize(initialRoleCount + 3);
+            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+                    initialRoleNames,
+                    "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.admin",
+                    "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner",
+                    "hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant"));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsAll(List.of(
                             "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.owner to role global#global.admin by system and assume }",
                             "{ grant role hs_admin_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_admin_contact#forthcontact.admin by system and assume }",
@@ -245,19 +244,29 @@ class HsAdminPartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = jpaAttempt.transacted(() -> {
                 context("alex@hostsharing.net");
                 partnerRepo.deleteByUuid(givenPartner.getUuid());
-            }).assertSuccessful();
+            });
 
             // then
-            final var roles = rawRoleRepo.findAll();
-            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(initialRoleNames);
+            result.assertSuccessful();
+            jpaAttempt.transacted(() -> {
+                final var remainingPartner = em.createNativeQuery("select p.uuid from hs_admin_partner p where p.uuid=?1")
+                        .setParameter(1, givenPartner.getUuid()).getResultList();
+                assertThat(remainingPartner).isEmpty();
+                final var remainingObject = em.createNativeQuery("select o.uuid from RbacObject o where o.uuid=?1")
+                        .setParameter(1, givenPartner.getUuid())
+                        .getResultList();
+                assertThat(remainingObject).isEmpty();
 
-            context("customer-admin@forthcontact.example.com");
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
-                    "{ grant assumed role hs_admin_contact#forthcontact.owner to user customer-admin@forthcontact.example.com by role global#global.admin }");
+                assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
 
-            context("person-ErbenBesslerMelBessler@example.com");
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
-                    "{ grant assumed role hs_admin_person#ErbenBesslerMelBessler.owner to user person-ErbenBesslerMelBessl@example.com by role global#global.admin }");
+                context("customer-admin@forthcontact.example.com");
+                assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
+                        "{ grant assumed role hs_admin_contact#forthcontact.owner to user customer-admin@forthcontact.example.com by role global#global.admin }");
+
+                context("person-ErbenBesslerMelBessler@example.com");
+                assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
+                        "{ grant assumed role hs_admin_person#ErbenBesslerMelBessler.owner to user person-ErbenBesslerMelBessl@example.com by role global#global.admin }");
+            }).assertSuccessful();
         }
     }
 
