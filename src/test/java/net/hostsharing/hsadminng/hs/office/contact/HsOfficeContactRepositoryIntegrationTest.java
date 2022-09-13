@@ -2,8 +2,8 @@ package net.hostsharing.hsadminng.hs.office.contact;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.hsOfficeContact;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantDisplayExtractor.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleNameExtractor.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantDisplayExtractor.grantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleNameExtractor.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -38,10 +38,10 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
     HsOfficeContactRepository contactRepo;
 
     @Autowired
-    RbacRoleRepository roleRepo;
+    RawRbacRoleRepository rawRoleRepo;
 
     @Autowired
-    RbacGrantRepository grantRepo;
+    RawRbacGrantRepository rawGrantRepo;
 
     @Autowired
     EntityManager em;
@@ -97,9 +97,8 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("drew@hostsharing.org");
-            final var count = contactRepo.count();
-            final var initialRoleNames = roleNamesOf(roleRepo.findAll());
-            final var initialGrantCount = grantRepo.findAll().size();
+            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
 
             // when
             attempt(em, () -> contactRepo.save(
@@ -107,18 +106,23 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
             ).assumeSuccessful();
 
             // then
-            final var roles = roleRepo.findAll();
-            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(
-                    Array.from(
-                            initialRoleNames,
-                            "hs_office_contact#anothernewcontact.owner",
-                            "hs_office_contact#anothernewcontact.admin",
-                            "hs_office_contact#anothernewcontact.tenant"));
-            final var grants = grantRepo.findAll();
-            assertThat(grantDisplaysOf(grants)).containsAll(List.of(
-                    "{ grant assumed role hs_office_contact#anothernewcontact.owner to user drew@hostsharing.org by role global#global.admin }"));
-            assertThat(grants.size()).as("invalid number of grants created")
-                    .isEqualTo(initialGrantCount + 1);
+            final var roles = rawRoleRepo.findAll();
+            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
+                    initialRoleNames,
+                    "hs_office_contact#anothernewcontact.owner",
+                    "hs_office_contact#anothernewcontact.admin",
+                    "hs_office_contact#anothernewcontact.tenant"
+            ));
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+                    initialGrantNames,
+                    "{ grant role hs_office_contact#anothernewcontact.owner to role global#global.admin by system and assume }",
+                    "{ grant perm edit on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.admin by system and assume }",
+                    "{ grant role hs_office_contact#anothernewcontact.tenant to role hs_office_contact#anothernewcontact.admin by system and assume }",
+                    "{ grant perm * on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.owner by system and assume }",
+                    "{ grant role hs_office_contact#anothernewcontact.admin to role hs_office_contact#anothernewcontact.owner by system and assume }",
+                    "{ grant perm view on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.tenant by system and assume }",
+                    "{ grant role hs_office_contact#anothernewcontact.owner to user drew@hostsharing.org by global#global.admin and assume }"
+            ));
         }
 
         private void assertThatContactIsPersisted(final HsOfficeContactEntity saved) {
@@ -231,25 +235,29 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingAContactAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("drew@hostsharing.org", null);
-            final var initialRoleCount = roleRepo.findAll().size();
-            final var initialGrantCount = grantRepo.findAll().size();
+            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
             final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
-            assumeThat(roleRepo.findAll().size()).as("unexpected number of roles created")
-                    .isEqualTo(initialRoleCount + 2);
-            assumeThat(grantRepo.findAll().size()).as("unexpected number of grants created")
-                    .isEqualTo(initialGrantCount + 1);
+            assumeThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
+                    .isEqualTo(initialRoleNames.size() + 3);
+            assumeThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
+                    .isEqualTo(initialGrantNames.size() + 7);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("drew@hostsharing.org", null);
-                contactRepo.deleteByUuid(givenContact.getUuid());
-            }).assumeSuccessful();
+                return contactRepo.deleteByUuid(givenContact.getUuid());
+            });
 
             // then
-            assertThat(roleRepo.findAll().size()).as("invalid number of roles deleted")
-                    .isEqualTo(initialRoleCount);
-            assertThat(grantRepo.findAll().size()).as("invalid number of grants revoked")
-                    .isEqualTo(initialGrantCount);
+            result.assertSuccessful();
+            assertThat(result.returnedValue()).isEqualTo(1);
+            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+                    initialRoleNames
+            ));
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+                    initialGrantNames
+            ));
         }
     }
 

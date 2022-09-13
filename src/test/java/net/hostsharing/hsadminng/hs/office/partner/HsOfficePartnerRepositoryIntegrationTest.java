@@ -96,8 +96,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("alex@hostsharing.net");
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantCount = rawGrantRepo.findAll().size();
-            final var initialGrantsDisplayNames = grantDisplaysOf(rawGrantRepo.findAll()); // TODO
+            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
 
             // when
             attempt(em, () -> {
@@ -117,18 +116,18 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                     "hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin",
                     "hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner",
                     "hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsAll(List.of(
-                            "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner to role global#global.admin by system and assume }",
-                            "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
-                            "{ grant perm edit on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
-                            "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
-                            "{ grant perm * on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
-                            "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
-                            "{ grant perm view on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
-                            "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
-                            "{ grant role hs_office_person#ErbenBesslerMelBessler.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
-                            "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_person#ErbenBesslerMelBessler.admin by system and assume }"))
-                    .as("invalid number of grants created").hasSize(initialGrantCount + 10);
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+                    initialGrantNames,
+                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner to role global#global.admin by system and assume }",
+                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
+                    "{ grant perm edit on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
+                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
+                    "{ grant perm * on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
+                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
+                    "{ grant perm view on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
+                    "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
+                    "{ grant role hs_office_person#ErbenBesslerMelBessler.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
+                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_person#ErbenBesslerMelBessler.admin by system and assume }"));
         }
 
         private void assertThatPartnerIsPersisted(final HsOfficePartnerEntity saved) {
@@ -243,30 +242,14 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("alex@hostsharing.net");
-                partnerRepo.deleteByUuid(givenPartner.getUuid());
+                return partnerRepo.deleteByUuid(givenPartner.getUuid());
             });
 
             // then
             result.assertSuccessful();
-            jpaAttempt.transacted(() -> {
-                final var remainingPartner = em.createNativeQuery("select p.uuid from hs_office_partner p where p.uuid=?1")
-                        .setParameter(1, givenPartner.getUuid()).getResultList();
-                assertThat(remainingPartner).isEmpty();
-                final var remainingObject = em.createNativeQuery("select o.uuid from RbacObject o where o.uuid=?1")
-                        .setParameter(1, givenPartner.getUuid())
-                        .getResultList();
-                assertThat(remainingObject).isEmpty();
-
-                assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
-
-                context("customer-admin@forthcontact.example.com");
-                assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
-                        "{ grant assumed role hs_office_contact#forthcontact.owner to user customer-admin@forthcontact.example.com by role global#global.admin }");
-
-                context("person-ErbenBesslerMelBessler@example.com");
-                assertThat(grantDisplaysOf(rawGrantRepo.findAll())).doesNotContain(
-                        "{ grant assumed role hs_office_person#ErbenBesslerMelBessler.owner to user person-ErbenBesslerMelBessl@example.com by role global#global.admin }");
-            }).assertSuccessful();
+            assertThat(result.returnedValue()).isEqualTo(1);
+            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
     }
 

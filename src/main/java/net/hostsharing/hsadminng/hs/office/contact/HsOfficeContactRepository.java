@@ -21,7 +21,7 @@ public interface HsOfficeContactRepository extends Repository<HsOfficeContactEnt
 
     HsOfficeContactEntity save(final HsOfficeContactEntity entity);
 
-    void deleteByUuid(final UUID uuid);
+    int deleteByUuid(final UUID uuid);
 
     long count();
 }
