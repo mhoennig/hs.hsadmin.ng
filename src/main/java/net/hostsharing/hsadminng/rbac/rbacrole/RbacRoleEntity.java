@@ -20,16 +20,16 @@ public class RbacRoleEntity {
     @Id
     private UUID uuid;
 
-    @Column(name="objectuuid")
+    @Column(name = "objectuuid")
     private UUID objectUuid;
 
-    @Column(name="objecttable")
+    @Column(name = "objecttable")
     private String objectTable;
 
-    @Column(name="objectidname")
+    @Column(name = "objectidname")
     private String objectIdName;
 
-    @Column(name="roletype")
+    @Column(name = "roletype")
     @Enumerated(EnumType.STRING)
     private RbacRoleType roleType;
 

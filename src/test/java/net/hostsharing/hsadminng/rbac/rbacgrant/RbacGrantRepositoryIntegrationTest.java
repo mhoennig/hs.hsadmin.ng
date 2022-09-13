@@ -42,6 +42,9 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
     RbacGrantRepository rbacGrantRepository;
 
     @Autowired
+    RawRbacGrantRepository rawRbacGrantRepository;
+
+    @Autowired
     RbacUserRepository rbacUserRepository;
 
     @Autowired
@@ -68,7 +71,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant assumed role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin }");
+                    "{ grant role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin and assume }");
         }
 
         @Test
@@ -83,10 +86,10 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant assumed role test_customer#xxx.admin to user customer-admin@xxx.example.com by role global#global.admin }",
-                    "{ grant assumed role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin }",
-                    "{ grant assumed role test_package#xxx01.admin to user pac-admin-xxx01@xxx.example.com by role test_customer#xxx.admin }",
-                    "{ grant assumed role test_package#xxx02.admin to user pac-admin-xxx02@xxx.example.com by role test_customer#xxx.admin }");
+                    "{ grant role test_customer#xxx.admin to user customer-admin@xxx.example.com by role global#global.admin and assume }",
+                    "{ grant role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin and assume }",
+                    "{ grant role test_package#xxx01.admin to user pac-admin-xxx01@xxx.example.com by role test_customer#xxx.admin and assume }",
+                    "{ grant role test_package#xxx02.admin to user pac-admin-xxx02@xxx.example.com by role test_customer#xxx.admin and assume }");
         }
 
         @Test
@@ -101,7 +104,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant assumed role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin }");
+                    "{ grant role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin and assume }");
         }
     }
 
@@ -129,7 +132,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(rbacGrantRepository.findAll())
                     .extracting(RbacGrantEntity::toDisplay)
                     .contains(
-                            "{ grant assumed role test_package#xxx00.admin to user pac-admin-zzz00@zzz.example.com by role test_customer#xxx.admin }");
+                            "{ grant role test_package#xxx00.admin to user pac-admin-zzz00@zzz.example.com by role test_customer#xxx.admin and assume }");
         }
 
         @Test
@@ -167,7 +170,6 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
                 // finally, we use the new user to make sure, no roles were granted
                 context(given.arbitraryUser.getName(), null);
                 assertThat(rbacGrantRepository.findAll())
-                        .extracting(RbacGrantEntity::toDisplay)
                         .hasSize(0);
             });
         }
@@ -255,9 +257,9 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             );
 
             assumeThat(grantAttempt.caughtException()).isNull();
-            assumeThat(rbacGrantRepository.findAll())
-                    .extracting(RbacGrantEntity::toDisplay)
-                    .contains("{ grant assumed role %s to user %s by role %s }".formatted(
+            assumeThat(rawRbacGrantRepository.findAll())
+                    .extracting(RawRbacGrantEntity::toDisplay)
+                    .contains("{ grant role %s to user %s by role %s and assume }".formatted(
                             with.grantedRole, with.granteeUserName, with.assumedRole
                     ));
 

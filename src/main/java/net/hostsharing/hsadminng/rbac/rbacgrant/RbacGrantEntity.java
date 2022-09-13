@@ -59,7 +59,10 @@ public class RbacGrantEntity {
     }
 
     public String toDisplay() {
-        return "{ grant " + (assumed ? "assumed " : "") +
-                "role " + grantedRoleIdName + " to user " + granteeUserName + " by role " + grantedByRoleIdName + " }";
+        return "{ grant role " + grantedRoleIdName +
+                " to user " + granteeUserName +
+                " by role " + grantedByRoleIdName +
+                (assumed ? " and assume" : "") +
+                " }";
     }
 }

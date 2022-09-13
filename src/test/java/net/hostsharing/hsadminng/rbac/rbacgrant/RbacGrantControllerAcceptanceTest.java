@@ -272,9 +272,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .body("granteeUserName", is(givenNewUser.getName()));
             assertThat(findAllGrantsOf(givenCurrentUserAsPackageAdmin))
                     .extracting(RbacGrantEntity::toDisplay)
-                    .contains("{ grant assumed role " + givenOwnPackageAdminRole.getRoleName() +
+                    .contains("{ grant role " + givenOwnPackageAdminRole.getRoleName() +
                             " to user " + givenNewUser.getName() +
-                            " by role " + givenRoleToGrant + " }");
+                            " by role " + givenRoleToGrant + " and assume }");
         }
 
         @Test
@@ -323,7 +323,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .toUser(givenArbitraryUser));
             assumeGrantExists(
                     givenCurrentUserAsPackageAdmin,
-                    "{ grant assumed role %s to user %s by role %s }".formatted(
+                    "{ grant role %s to user %s by role %s and assume }".formatted(
                             givenOwnPackageAdminRole.getRoleName(),
                             givenArbitraryUser.getName(),
                             givenCurrentUserAsPackageAdmin.assumedRole));

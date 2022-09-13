@@ -40,7 +40,7 @@ class RbacGrantEntityUnitTest {
         final var display = entity.toDisplay();
 
         // then
-        assertThat(display).isEqualTo("{ grant assumed role GrantED to user GrantEE by role GrantER }");
+        assertThat(display).isEqualTo("{ grant role GrantED to user GrantEE by role GrantER and assume }");
     }
 
     @Test

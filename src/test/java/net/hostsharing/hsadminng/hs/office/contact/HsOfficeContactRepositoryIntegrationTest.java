@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.hsOfficeContact;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantDisplayExtractor.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleNameExtractor.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;

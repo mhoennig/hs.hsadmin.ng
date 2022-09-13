@@ -1,10 +1,13 @@
 package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Immutable;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "rbacgrants_ev")
@@ -51,5 +54,11 @@ public class RawRbacGrantEntity {
                     ( assumed ? " and assume" : "") +
                 " }";
         // @formatter:on
+    }
+
+
+    @NotNull
+    public static List<String> grantDisplaysOf(final List<RawRbacGrantEntity> roles) {
+        return roles.stream().map(RawRbacGrantEntity::toDisplay).collect(Collectors.toList());
     }
 }
