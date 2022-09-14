@@ -24,6 +24,7 @@ import java.util.UUID;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
@@ -267,9 +268,87 @@ class HsOfficePartnerControllerAcceptanceTest {
         }
     }
 
+    @Nested
+    @Accepts({ "Partner:D(Delete)" })
+    class DeletePartner {
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canDeleteArbitraryPartner() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/hs/office/partners/" + toCleanup(givenPartner.getUuid()))
+                .then().log().body().assertThat()
+                    .statusCode(204); // @formatter:on
+
+            // then the given partner is gone
+            assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isEmpty();
+        }
+
+        @Test
+        @Accepts({ "Partner:X(Access Control)" })
+        void contactAdminUser_canNotDeleteRelatedPartner() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler();
+            assumeThat(givenPartner.getContact().getLabel()).isEqualTo("forth contact");
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "customer-admin@forthcontact.example.com")
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/hs/office/partners/" + toCleanup(givenPartner.getUuid()))
+                .then().log().body().assertThat()
+                    .statusCode(403); // @formatter:on
+
+            // then the given partner is still there
+            assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isNotEmpty();
+        }
+
+        @Test
+        @Accepts({ "Partner:X(Access Control)" })
+        void normalUser_canNotDeleteUnrelatedPartner() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler();
+            assumeThat(givenPartner.getContact().getLabel()).isEqualTo("forth contact");
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/hs/office/partners/" + toCleanup(givenPartner.getUuid()))
+                .then().log().body().assertThat()
+                    .statusCode(404); // @formatter:on
+
+            // then the given partner is still there
+            assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isNotEmpty();
+        }
+    }
+
     private UUID toCleanup(final UUID tempPartnerUuid) {
         tempPartnerUuids.add(tempPartnerUuid);
         return tempPartnerUuid;
+    }
+
+    private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler() {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
+            final var newPartner = HsOfficePartnerEntity.builder()
+                    .uuid(UUID.randomUUID())
+                    .person(givenPerson)
+                    .contact(givenContact)
+                    .build();
+
+            return partnerRepo.save(newPartner);
+        }).assertSuccessful().returnedValue();
     }
 
     @AfterEach
@@ -279,7 +358,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                 context.define("superuser-alex@hostsharing.net", null);
                 System.out.println("DELETING temporary partner: " + uuid);
                 final var count = partnerRepo.deleteByUuid(uuid);
-                assertThat(count).isGreaterThan(0);
+                System.out.println("DELETED temporary partner: " + uuid + (count > 0 ? " successful" : " failed"));
             });
         });
     }

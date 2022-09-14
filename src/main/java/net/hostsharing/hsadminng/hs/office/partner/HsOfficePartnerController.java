@@ -98,8 +98,18 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional
-    public ResponseEntity<Void> deletePartnerByUuid(final String currentUser, final String assumedRoles, final UUID userUuid) {
-        return null;
+    public ResponseEntity<Void> deletePartnerByUuid(
+            final String currentUser,
+            final String assumedRoles,
+            final UUID partnerUuid) {
+        context.define(currentUser, assumedRoles);
+
+        final var result = partnerRepo.deleteByUuid(partnerUuid);
+        if (result == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
     @Override
