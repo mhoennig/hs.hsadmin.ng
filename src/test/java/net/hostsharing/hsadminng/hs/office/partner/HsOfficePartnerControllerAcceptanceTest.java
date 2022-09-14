@@ -5,6 +5,9 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.test.JpaAttempt;
+import org.json.JSONException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +15,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonBuilder.jsonObject;
+import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = HsadminNgApplication.class
+        classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
 class HsOfficePartnerControllerAcceptanceTest {
@@ -34,31 +41,47 @@ class HsOfficePartnerControllerAcceptanceTest {
 
     @Autowired
     Context contextMock;
+
     @Autowired
-    HsOfficePartnerRepository partnerRepository;
+    HsOfficePartnerRepository partnerRepo;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
+
+    Set<UUID> tempPartnerUuids = new HashSet<>();
 
     @Nested
     @Accepts({ "Partner:F(Find)" })
     class ListPartners {
 
         @Test
-        void testHostsharingAdmin_withoutAssumedRoles_canViewAllPartners_ifNoCriteriaGiven() {
+        void globalAdmin_withoutAssumedRoles_canViewAllPartners_ifNoCriteriaGiven() throws JSONException {
+
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@hostsharing.net")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners")
-                .then().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("[0].contact.label", is("Ixx AG"))
-                    .body("[0].person.tradeName", is("Ixx AG"))
-                    .body("[1].contact.label", is("Ypsilon GmbH"))
-                    .body("[1].person.tradeName", is("Ypsilon GmbH"))
-                    .body("[2].contact.label", is("Zett OHG"))
-                    .body("[2].person.tradeName", is("Zett OHG"))
-                    .body("size()", greaterThanOrEqualTo(3));
+                    .body("", lenientlyEquals("""
+                    [
+                        {
+                            "person": { "tradeName": "First Impressions GmbH" },
+                            "contact": { "label": "first contact" }
+                        },
+                        {
+                            "person": { "tradeName": "Ostfriesische Kuhhandel OHG" },
+                            "contact": { "label": "third contact" }
+                        },
+                        {
+                            "person": { "tradeName": "Rockshop e.K." },
+                            "contact": { "label": "second contact" }
+                        }
+                    ]
+                    """));
                 // @formatter:on
         }
     }
@@ -91,13 +114,13 @@ class HsOfficePartnerControllerAcceptanceTest {
                         """;
 
         @Test
-        void hostsharingAdmin_withoutAssumedRole_canAddPartner_withExplicitUuid() {
+        void globalAdmin_withoutAssumedRole_canAddPartner_withExplicitUuid() {
 
-            final var givenUUID = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            final var givenUUID = toCleanup(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"));
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "mike@hostsharing.net")
+                        .header("current-user", "alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body(jsonObject(NEW_PARTNER_JSON_WITHOUT_UUID)
                                 .with("uuid", givenUUID.toString()).toString())
@@ -110,24 +133,25 @@ class HsOfficePartnerControllerAcceptanceTest {
                         .body("uuid", is("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
                         .body("registrationNumber", is("123456"))
                         .body("person.tradeName", is("Test Corp."))
+                        .body("contact.label", is("Test Corp."))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
-            // finally, the new partner can be viewed by its own admin
+            // finally, the new partner can be accessed under the given UUID
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isEqualTo(givenUUID);
-            // TODO.feat: context.define("partner-admin@ttt.example.com");
-            // assertThat(partnerRepository.findByUuid(newUserUuid))
-            //        .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
+            context.define("alex@hostsharing.net");
+            assertThat(partnerRepo.findByUuid(newUserUuid))
+                    .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
         }
 
         @Test
-        void hostsharingAdmin_withoutAssumedRole_canAddPartner_withGeneratedUuid() {
+        void globalAdmin_withoutAssumedRole_canAddPartner_withGeneratedUuid() {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "mike@hostsharing.net")
+                        .header("current-user", "alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body(NEW_PARTNER_JSON_WITHOUT_UUID)
                         .port(port)
@@ -142,13 +166,10 @@ class HsOfficePartnerControllerAcceptanceTest {
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
-            // finally, the new partner can be viewed by its own admin
-            final var newUserUuid = UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1));
+            // finally, the new partner can be accessed under the generated UUID
+            final var newUserUuid = toCleanup(UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1)));
             assertThat(newUserUuid).isNotNull();
-            // TODO.feat: context.define("partner-admin@ttt.example.com");
-            // assertThat(partnerRepository.findByUuid(newUserUuid))
-            //        .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
         }
     }
 
@@ -157,39 +178,82 @@ class HsOfficePartnerControllerAcceptanceTest {
     class GetPartner {
 
         @Test
-        void hostsharingAdmin_withoutAssumedRole_canGetArbitraryPartner() {
-            // TODO.feat: final var givenPartnerUuid = partnerRepository.findPartnerByOptionalNameLike("Ixx").get(0).getUuid();
-            final var givenPartnerUuid = UUID.randomUUID();
+        void globalAdmin_withoutAssumedRole_canGetArbitraryPartner() {
+            context.define("alex@hostsharing.net");
+            final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "mike@hostsharing.net")
+                    .header("current-user", "alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
                 .then().log().body().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("person.tradeName", is("Ixx AG"))
-                    .body("contact.label", is("Ixx AG"));
-                // @formatter:on
+                    .body("", lenientlyEquals("""
+                    {
+                        "person": { "tradeName": "First Impressions GmbH" },
+                        "contact": { "label": "first contact" }
+                    }
+                    """)); // @formatter:on
         }
 
         @Test
         @Accepts({ "Partner:X(Access Control)" })
         void normalUser_canNotGetUnrelatedPartner() {
-            // TODO.feat: final var givenPartnerUuid = partnerRepository.findPartnerByOptionalNameLike("Ixx").get(0).getUuid();
-            final UUID givenPartnerUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            context.define("alex@hostsharing.net");
+            final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "somebody@example.org")
+                    .header("current-user", "drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
                 .then().log().body().assertThat()
-                    .statusCode(404);
-            // @formatter:on
+                    .statusCode(404); // @formatter:on
+        }
+
+        @Test
+        @Accepts({ "Partner:X(Access Control)" })
+        void contactAdminUser_canGetRelatedPartner() {
+            context.define("alex@hostsharing.net");
+            final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("first contact").get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "customer-admin@firstcontact.example.com")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                    {
+                        "person": { "tradeName": "First Impressions GmbH" },
+                        "contact": { "label": "first contact" }
+                    }
+                    """)); // @formatter:on
         }
     }
+
+    private UUID toCleanup(final UUID tempPartnerUuid) {
+        tempPartnerUuids.add(tempPartnerUuid);
+        return tempPartnerUuid;
+    }
+
+    @AfterEach
+    void cleanup() {
+        tempPartnerUuids.forEach(uuid -> {
+            jpaAttempt.transacted(() -> {
+                context.define("alex@hostsharing.net", null);
+                System.out.println("DELETING temporary partner: " + uuid);
+                final var count = partnerRepo.deleteByUuid(uuid);
+                assertThat(count).isGreaterThan(0);
+            });
+        });
+    }
+
 }

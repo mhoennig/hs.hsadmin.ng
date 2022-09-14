@@ -45,7 +45,7 @@ end; $$;
     Creates the roles and their assignments for a new contact for the AFTER INSERT TRIGGER.
  */
 
-create or replace function createRbacRolesForhsOfficeContact()
+create or replace function createRbacRolesForHsOfficeContact()
     returns trigger
     language plpgsql
     strict as $$
@@ -88,11 +88,11 @@ end; $$;
     An AFTER INSERT TRIGGER which creates the role structure for a new customer.
  */
 
-create trigger createRbacRolesForhsOfficeContact_Trigger
+create trigger createRbacRolesForHsOfficeContact_Trigger
     after insert
     on hs_office_contact
     for each row
-execute procedure createRbacRolesForhsOfficeContact();
+execute procedure createRbacRolesForHsOfficeContact();
 --//
 
 

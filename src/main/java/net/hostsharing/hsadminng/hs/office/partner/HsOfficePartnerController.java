@@ -3,12 +3,14 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerUpdateResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,45 +33,21 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Autowired
     private HsOfficePartnerRepository partnerRepo;
 
+    @Autowired
+    private HsOfficePersonRepository personRepo;
+
+    @Autowired
+    private HsOfficeContactRepository contactRepo;
+
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficePartnerResource>> listPartners(
             final String currentUser,
             final String assumedRoles,
             final String name) {
-        // TODO.feat: context.define(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
-        // TODO.feat: final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
-
-        final var entities = List.of(
-                HsOfficePartnerEntity.builder()
-                        .uuid(UUID.randomUUID())
-                        .person(HsOfficePersonEntity.builder()
-                                .tradeName("Ixx AG")
-                                .build())
-                        .contact(HsOfficeContactEntity.builder()
-                                .label("Ixx AG")
-                                .build())
-                        .build(),
-                HsOfficePartnerEntity.builder()
-                        .uuid(UUID.randomUUID())
-                        .person(HsOfficePersonEntity.builder()
-                                .tradeName("Ypsilon GmbH")
-                                .build())
-                        .contact(HsOfficeContactEntity.builder()
-                                .label("Ypsilon GmbH")
-                                .build())
-                        .build(),
-                HsOfficePartnerEntity.builder()
-                        .uuid(UUID.randomUUID())
-                        .person(HsOfficePersonEntity.builder()
-                                .tradeName("Zett OHG")
-                                .build())
-                        .contact(HsOfficeContactEntity.builder()
-                                .label("Zett OHG")
-                                .build())
-                        .build()
-        );
+        final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
 
         final var resources = Mapper.mapList(entities, HsOfficePartnerResource.class,
                 PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER);
@@ -83,14 +61,27 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
             final String assumedRoles,
             final HsOfficePartnerResource body) {
 
-        // TODO.feat: context.define(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
         }
 
-        // TODO.feat: final var saved = partnerRepo.save(map(body, HsOfficePartnerEntity.class));
-        final var saved = map(body, HsOfficePartnerEntity.class, PARTNER_RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = map(body, HsOfficePartnerEntity.class);
+        if (entityToSave.getContact().getUuid() != null) {
+            contactRepo.findByUuid(entityToSave.getContact().getUuid()).ifPresent(entityToSave::setContact);
+        } else {
+            entityToSave.getContact().setUuid(UUID.randomUUID());
+            entityToSave.setContact(contactRepo.save(entityToSave.getContact()));
+        }
+        if (entityToSave.getPerson().getUuid() != null) {
+            personRepo.findByUuid(entityToSave.getPerson().getUuid()).ifPresent(entityToSave::setPerson);
+        } else {
+            entityToSave.getPerson().setUuid(UUID.randomUUID());
+            entityToSave.setPerson(personRepo.save(entityToSave.getPerson()));
+        }
+        
+        final var saved = partnerRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -103,37 +94,29 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseEntity<HsOfficePartnerResource> getPartnerByUuid(
             final String currentUser,
             final String assumedRoles,
             final UUID partnerUuid) {
 
-        // TODO.feat: context.define(currentUser, assumedRoles);
+        context.define(currentUser, assumedRoles);
 
-        // TODO.feat: final var result = partnerRepo.findByUuid(partnerUuid);
-        final var result =
-                partnerUuid.equals(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6")) ? null :
-                        HsOfficePartnerEntity.builder()
-                                .uuid(UUID.randomUUID())
-                                .person(HsOfficePersonEntity.builder()
-                                        .tradeName("Ixx AG")
-                                        .build())
-                                .contact(HsOfficeContactEntity.builder()
-                                        .label("Ixx AG")
-                                        .build())
-                                .build();
-        if (result == null) {
+        final var result = partnerRepo.findByUuid(partnerUuid);
+        if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result, HsOfficePartnerResource.class, PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER));
+        return ResponseEntity.ok(map(result.get(), HsOfficePartnerResource.class, PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER));
     }
 
     @Override
+    @Transactional
     public ResponseEntity<Void> deletePartnerByUuid(final String currentUser, final String assumedRoles, final UUID userUuid) {
         return null;
     }
 
     @Override
+    @Transactional
     public ResponseEntity<HsOfficePartnerResource> updatePartner(
             final String currentUser,
             final String assumedRoles,
