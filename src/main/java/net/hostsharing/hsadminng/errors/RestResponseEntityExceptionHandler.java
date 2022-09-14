@@ -13,6 +13,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @ControllerAdvice
@@ -32,6 +33,13 @@ public class RestResponseEntityExceptionHandler
             final RuntimeException exc, final WebRequest request) {
         final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
         return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    protected ResponseEntity<CustomErrorResponse> handleNoSuchElementException(
+            final RuntimeException exc, final WebRequest request) {
+        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        return errorResponse(request, HttpStatus.NOT_FOUND, message);
     }
 
     @ExceptionHandler(Throwable.class)

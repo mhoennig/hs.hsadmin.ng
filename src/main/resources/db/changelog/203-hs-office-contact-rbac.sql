@@ -156,7 +156,7 @@ grant all privileges on hs_office_contact_rv to restricted;
 /**
     Instead of insert trigger function for hs_office_contact_rv.
  */
-create or replace function inserthsOfficeContact()
+create or replace function insertHsOfficeContact()
     returns trigger
     language plpgsql as $$
 declare
@@ -173,11 +173,11 @@ $$;
 /*
     Creates an instead of insert trigger for the hs_office_contact_rv view.
  */
-create trigger inserthsOfficeContact_Trigger
+create trigger insertHsOfficeContact_Trigger
     instead of insert
     on hs_office_contact_rv
     for each row
-execute function inserthsOfficeContact();
+execute function insertHsOfficeContact();
 --//
 
 -- ============================================================================
@@ -189,7 +189,7 @@ execute function inserthsOfficeContact();
 
     Checks if the current subject (user / assumed role) has the permission to delete the row.
  */
-create or replace function deletehsOfficeContact()
+create or replace function deleteHsOfficeContact()
     returns trigger
     language plpgsql as $$
 begin
@@ -204,11 +204,11 @@ end; $$;
 /*
     Creates an instead of delete trigger for the hs_office_contact_rv view.
  */
-create trigger deletehsOfficeContact_Trigger
+create trigger deleteHsOfficeContact_Trigger
     instead of delete
     on hs_office_contact_rv
     for each row
-execute function deletehsOfficeContact();
+execute function deleteHsOfficeContact();
 --/
 
 -- ============================================================================

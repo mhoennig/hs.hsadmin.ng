@@ -5,6 +5,8 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
@@ -20,7 +22,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonBuilder.jsonObject;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -44,6 +45,12 @@ class HsOfficePartnerControllerAcceptanceTest {
 
     @Autowired
     HsOfficePartnerRepository partnerRepo;
+
+    @Autowired
+    HsOfficePersonRepository personRepo;
+
+    @Autowired
+    HsOfficeContactRepository contactRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -90,70 +97,28 @@ class HsOfficePartnerControllerAcceptanceTest {
     @Accepts({ "Partner:C(Create)" })
     class AddPartner {
 
-        private final static String NEW_PARTNER_JSON_WITHOUT_UUID =
-                """
-                                {
-                                   "person": {
-                                     "personType": "LEGAL",
-                                     "tradeName": "Test Corp.",
-                                     "givenName": null,
-                                     "familyName": null
-                                   },
-                                   "contact": {
-                                     "label": "Test Corp.",
-                                     "postalAddress": "Test Corp.\\nTestweg 50\\n20001 Hamburg",
-                                     "emailAddresses": "office@example.com",
-                                     "phoneNumbers": "040 12345"
-                                   },
+        @Test
+        void globalAdmin_withoutAssumedRole_canAddPartner_withGeneratedUuid() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                               {
+                                   "contactUuid": "%s",
+                                   "personUuid": "%s",
                                    "registrationOffice": "Registergericht Hamburg",
                                    "registrationNumber": "123456",
                                    "birthName": null,
                                    "birthday": null,
                                    "dateOfDeath": null
                                  }
-                        """;
-
-        @Test
-        void globalAdmin_withoutAssumedRole_canAddPartner_withExplicitUuid() {
-
-            final var givenUUID = toCleanup(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-
-            final var location = RestAssured // @formatter:off
-                    .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
-                        .contentType(ContentType.JSON)
-                        .body(jsonObject(NEW_PARTNER_JSON_WITHOUT_UUID)
-                                .with("uuid", givenUUID.toString()).toString())
-                        .port(port)
-                    .when()
-                        .post("http://localhost/api/hs/office/partners")
-                    .then().assertThat()
-                        .statusCode(201)
-                        .contentType(ContentType.JSON)
-                        .body("uuid", is("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
-                        .body("registrationNumber", is("123456"))
-                        .body("person.tradeName", is("Test Corp."))
-                        .body("contact.label", is("Test Corp."))
-                        .header("Location", startsWith("http://localhost"))
-                    .extract().header("Location");  // @formatter:on
-
-            // finally, the new partner can be accessed under the given UUID
-            final var newUserUuid = UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isEqualTo(givenUUID);
-            context.define("superuser-alex@hostsharing.net");
-            assertThat(partnerRepo.findByUuid(newUserUuid))
-                    .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
-        }
-
-        @Test
-        void globalAdmin_withoutAssumedRole_canAddPartner_withGeneratedUuid() {
-
-            final var location = RestAssured // @formatter:off
-                    .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
-                        .contentType(ContentType.JSON)
-                        .body(NEW_PARTNER_JSON_WITHOUT_UUID)
+                            """.formatted(givenContact.getUuid(), givenPerson.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/partners")
@@ -162,7 +127,8 @@ class HsOfficePartnerControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("registrationNumber", is("123456"))
-                        .body("person.tradeName", is("Test Corp."))
+                        .body("contact.label", is(givenContact.getLabel()))
+                        .body("person.tradeName", is(givenPerson.getTradeName()))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -170,6 +136,68 @@ class HsOfficePartnerControllerAcceptanceTest {
             final var newUserUuid = toCleanup(UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1)));
             assertThat(newUserUuid).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_canNotAddPartner_ifContactDoesNotExist() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenContactUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                               {
+                                   "contactUuid": "%s",
+                                   "personUuid": "%s",
+                                   "registrationOffice": "Registergericht Hamburg",
+                                   "registrationNumber": "123456",
+                                   "birthName": null,
+                                   "birthday": null,
+                                   "dateOfDeath": null
+                                 }
+                            """.formatted(givenContactUuid, givenPerson.getUuid()))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/partners")
+                .then().log().all().assertThat()
+                    .statusCode(404)
+                    .body("message", is("cannot find contact uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canNotAddPartner_ifPersonDoesNotExist() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPersonUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                               {
+                                   "contactUuid": "%s",
+                                   "personUuid": "%s",
+                                   "registrationOffice": "Registergericht Hamburg",
+                                   "registrationNumber": "123456",
+                                   "birthName": null,
+                                   "birthday": null,
+                                   "dateOfDeath": null
+                                 }
+                            """.formatted(givenContact.getUuid(), givenPersonUuid))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/partners")
+                .then().log().all().assertThat()
+                    .statusCode(404)
+                    .body("message", is("cannot find person uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                // @formatter:on
         }
     }
 

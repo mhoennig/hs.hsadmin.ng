@@ -39,7 +39,7 @@ post:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartnerInsert'
         required: true
     responses:
         "201":
