@@ -554,8 +554,17 @@ gw clean test # gw is from the .aliases file
 
 To run the tests against a Podman Daemon in IntelliJ IDEA too, you also need to set the environment variables `DOCKER_HOST` and `TESTCONTAINERS_RYUK_DISABLED` as show above.
 This can either be done in the environment from which IDEA is started.
-Or you can use the run config template for JUnit tests to set these variables.
+Or you can use the run config template for gradle to set these variables:
+
+![IntelliJ IDEA Gradle Run Template](./doc/.images/intellij-idea-gradle-run-template.png)
+
+If you already have Gradle run configs, you need to delete them, so they get re-created from the template.
+Alternatively you need to add the environment varibles here too:
+
+![IntelliJ IDEA Gradle Run Config Example](./doc/.images/intellij-idea-gradle-run-config.png)
+
 Find more information [here](https://www.jetbrains.com/help/idea/run-debug-configuration.html).
+
 
 #### ~/.testcontainers.properties
 
