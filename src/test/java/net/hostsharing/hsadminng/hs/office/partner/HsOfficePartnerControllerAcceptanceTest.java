@@ -59,7 +59,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners")
@@ -120,7 +120,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "alex@hostsharing.net")
+                        .header("current-user", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body(jsonObject(NEW_PARTNER_JSON_WITHOUT_UUID)
                                 .with("uuid", givenUUID.toString()).toString())
@@ -141,7 +141,7 @@ class HsOfficePartnerControllerAcceptanceTest {
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isEqualTo(givenUUID);
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
             assertThat(partnerRepo.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPerson().getTradeName()).isEqualTo("Test Corp."));
         }
@@ -151,7 +151,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "alex@hostsharing.net")
+                        .header("current-user", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body(NEW_PARTNER_JSON_WITHOUT_UUID)
                         .port(port)
@@ -179,12 +179,12 @@ class HsOfficePartnerControllerAcceptanceTest {
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryPartner() {
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
@@ -202,12 +202,12 @@ class HsOfficePartnerControllerAcceptanceTest {
         @Test
         @Accepts({ "Partner:X(Access Control)" })
         void normalUser_canNotGetUnrelatedPartner() {
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "drew@hostsharing.org")
+                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
@@ -218,7 +218,7 @@ class HsOfficePartnerControllerAcceptanceTest {
         @Test
         @Accepts({ "Partner:X(Access Control)" })
         void contactAdminUser_canGetRelatedPartner() {
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("first contact").get(0).getUuid();
 
             RestAssured // @formatter:off
@@ -248,7 +248,7 @@ class HsOfficePartnerControllerAcceptanceTest {
     void cleanup() {
         tempPartnerUuids.forEach(uuid -> {
             jpaAttempt.transacted(() -> {
-                context.define("alex@hostsharing.net", null);
+                context.define("superuser-alex@hostsharing.net", null);
                 System.out.println("DELETING temporary partner: " + uuid);
                 final var count = partnerRepo.deleteByUuid(uuid);
                 assertThat(count).isGreaterThan(0);

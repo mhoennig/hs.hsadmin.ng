@@ -57,7 +57,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewPerson() {
             // given
-            context("alex@hostsharing.net");
+            context("superuser-alex@hostsharing.net");
             final var count = personRepo.count();
 
             // when
@@ -75,7 +75,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_canCreateNewPerson() {
             // given
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var count = personRepo.count();
 
             // when
@@ -92,7 +92,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var count = personRepo.count();
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
@@ -119,7 +119,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
                             "{ grant perm * on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.owner by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.admin to role hs_office_person#anothernewperson.owner by system and assume }",
                             "{ grant perm view on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.tenant by system and assume }",
-                            "{ grant role hs_office_person#anothernewperson.owner to user drew@hostsharing.org by global#global.admin and assume }"
+                            "{ grant role hs_office_person#anothernewperson.owner to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
                     ));
         }
 
@@ -135,7 +135,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPersons() {
             // given
-            context("alex@hostsharing.net");
+            context("superuser-alex@hostsharing.net");
 
             // when
             final var result = personRepo.findPersonByOptionalNameLike(null);
@@ -169,7 +169,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPersons() {
             // given
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
 
             // when
             final var result = personRepo.findPersonByOptionalNameLike("Rockshop");
@@ -181,10 +181,10 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnPerson() {
             // given:
-            final var givenPerson = givenSomeTemporaryPerson("drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
 
             // when:
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var result = personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
 
             // then:
@@ -198,18 +198,18 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyPerson() {
             // given
-            final var givenPerson = givenSomeTemporaryPerson("drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("alex@hostsharing.net", null);
+                context("superuser-alex@hostsharing.net", null);
                 personRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("alex@hostsharing.net", null);
+                context("superuser-alex@hostsharing.net", null);
                 return personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -217,18 +217,18 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canDeleteAPersonCreatedByItself() {
             // given
-            final var givenPerson = givenSomeTemporaryPerson("drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("drew@hostsharing.org", null);
+                context("selfregistered-user-drew@hostsharing.org", null);
                 personRepo.deleteByUuid(givenPerson.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("alex@hostsharing.net", null);
+                context("superuser-alex@hostsharing.net", null);
                 return personRepo.findPersonByOptionalNameLike(givenPerson.getTradeName());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -238,10 +238,10 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void deletingAPersonAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("drew@hostsharing.org", null);
+            context("selfregistered-user-drew@hostsharing.org", null);
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
-            final var givenPerson = givenSomeTemporaryPerson("drew@hostsharing.org");
+            final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
             assumeThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
                     .isEqualTo(initialRoleNames.size() + 3);
             assumeThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
@@ -249,7 +249,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("drew@hostsharing.org", null);
+                context("selfregistered-user-drew@hostsharing.org", null);
                 return personRepo.deleteByUuid(givenPerson.getUuid());
             });
 
@@ -263,7 +263,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
 
     @AfterEach
     void cleanup() {
-        context("alex@hostsharing.net", null);
+        context("superuser-alex@hostsharing.net", null);
         final var result = personRepo.findPersonByOptionalNameLike("some temporary person");
         result.forEach(tempPerson -> {
             System.out.println("DELETING temporary person: " + tempPerson.getDisplayName());

@@ -64,7 +64,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void globalAdmin_withoutAssumedRole_canViewAllGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -89,7 +89,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                             allOf(
                                     hasEntry("grantedByRoleIdName", "global#global.admin"),
                                     hasEntry("grantedRoleIdName", "global#global.admin"),
-                                    hasEntry("granteeUserName", "fran@hostsharing.net")
+                                    hasEntry("granteeUserName", "superuser-fran@hostsharing.net")
                             )
                     ))
                     .body("", hasItem(
@@ -115,7 +115,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         void globalAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_package#yyy00.admin")
                     .port(port)
                 .when()
@@ -500,14 +500,14 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }
 
     RbacRoleEntity findRbacRoleByName(final String roleName) {
         return jpaAttempt.transacted(() -> {
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
             return rbacRoleRepository.findByRoleName(roleName);
         }).returnedValue();
     }

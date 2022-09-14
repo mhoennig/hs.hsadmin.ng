@@ -88,7 +88,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid())
@@ -107,7 +107,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
@@ -166,7 +166,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users")
@@ -176,11 +176,11 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(hasEntry("name", "customer-admin@xxx.example.com")))
                     .body("", hasItem(hasEntry("name", "customer-admin@yyy.example.com")))
                     .body("", hasItem(hasEntry("name", "customer-admin@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "alex@hostsharing.net")))
+                    .body("", hasItem(hasEntry("name", "superuser-alex@hostsharing.net")))
                     // ...
                     .body("", hasItem(hasEntry("name", "pac-admin-zzz01@zzz.example.com")))
                     .body("", hasItem(hasEntry("name", "pac-admin-zzz02@zzz.example.com")))
-                    .body("", hasItem(hasEntry("name", "fran@hostsharing.net")))
+                    .body("", hasItem(hasEntry("name", "superuser-fran@hostsharing.net")))
                     .body("size()", greaterThanOrEqualTo(14));
             // @formatter:on
         }
@@ -192,7 +192,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users?name=pac-admin-zzz0")
@@ -213,7 +213,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
@@ -282,7 +282,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid() + "/permissions")
@@ -316,7 +316,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_package#yyy00.admin")
                     .port(port)
                 .when()
@@ -455,7 +455,7 @@ class RbacUserControllerAcceptanceTest {
             // @formatter:off
             final var location = RestAssured
                     .given()
-                        .header("current-user", "alex@hostsharing.net")
+                        .header("current-user", "superuser-alex@hostsharing.net")
                         .port(port)
                     .when()
                         .delete("http://localhost/api/rbac/users/" + givenUser.getUuid())
@@ -470,7 +470,7 @@ class RbacUserControllerAcceptanceTest {
 
     RbacUserEntity findRbacUserByName(final String userName) {
         return jpaAttempt.transacted(() -> {
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
             return rbacUserRepository.findByName(userName);
         }).returnedValue();
     }

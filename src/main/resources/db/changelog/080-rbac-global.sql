@@ -122,9 +122,10 @@ do language plpgsql $$
         call defineContext('creating fake test-realm admin users', null, null, null);
 
         admins = findRoleId(globalAdmin());
-        call grantRoleToUserUnchecked(admins, admins, createRbacUser('alex@hostsharing.net'));
-        call grantRoleToUserUnchecked(admins, admins, createRbacUser('fran@hostsharing.net'));
-        perform createRbacUser('drew@hostsharing.org');
+        call grantRoleToUserUnchecked(admins, admins, createRbacUser('superuser-alex@hostsharing.net'));
+        call grantRoleToUserUnchecked(admins, admins, createRbacUser('superuser-fran@hostsharing.net'));
+        perform createRbacUser('selfregistered-user-drew@hostsharing.org');
+        perform createRbacUser('selfregistered-test-user@hostsharing.org');
     end;
 $$;
 --//
@@ -142,15 +143,15 @@ do language plpgsql $$
     declare
         userName varchar;
     begin
-        call defineContext('testing currentUserUuid', null, 'fran@hostsharing.net', null);
+        call defineContext('testing currentUserUuid', null, 'superuser-fran@hostsharing.net', null);
         select userName from RbacUser where uuid = currentUserUuid() into userName;
-        if userName <> 'fran@hostsharing.net' then
+        if userName <> 'superuser-fran@hostsharing.net' then
             raise exception 'setting or fetching initial currentUser failed, got: %', userName;
         end if;
 
-        call defineContext('testing currentUserUuid', null, 'alex@hostsharing.net', null);
+        call defineContext('testing currentUserUuid', null, 'superuser-alex@hostsharing.net', null);
         select userName from RbacUser where uuid = currentUserUuid() into userName;
-        if userName = 'alex@hostsharing.net' then
+        if userName = 'superuser-alex@hostsharing.net' then
             raise exception 'currentUser should not change in one transaction, but did change, got: %', userName;
         end if;
     end; $$;

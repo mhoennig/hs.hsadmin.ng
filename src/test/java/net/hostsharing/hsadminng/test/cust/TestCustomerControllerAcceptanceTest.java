@@ -42,7 +42,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewAllCustomers_ifNoCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -60,7 +60,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRoles_canViewMatchingCustomers_ifCriteriaGiven() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers?prefix=y")
@@ -76,7 +76,7 @@ class TestCustomerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedCustomerAdminRole_canOnlyViewOwnCustomer() {
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
@@ -114,7 +114,7 @@ class TestCustomerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "alex@hostsharing.net")
+                        .header("current-user", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                               {
@@ -148,7 +148,7 @@ class TestCustomerControllerAcceptanceTest {
 
             final var location = RestAssured // @formatter:off
                     .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                               {
@@ -184,7 +184,7 @@ class TestCustomerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -205,7 +205,7 @@ class TestCustomerControllerAcceptanceTest {
             // @formatter:on
 
             // finally, the new customer was not created
-            context.define("fran@hostsharing.net");
+            context.define("superuser-fran@hostsharing.net");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
 
@@ -234,7 +234,7 @@ class TestCustomerControllerAcceptanceTest {
                 // @formatter:on
 
             // finally, the new customer was not created
-            context.define("fran@hostsharing.net");
+            context.define("superuser-fran@hostsharing.net");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
     }

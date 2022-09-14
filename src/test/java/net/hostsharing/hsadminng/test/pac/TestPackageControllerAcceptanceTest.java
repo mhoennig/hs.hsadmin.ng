@@ -43,7 +43,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .port(port)
                 .when()
@@ -65,7 +65,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .port(port)
                 .when()
@@ -93,7 +93,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body(format("""
@@ -123,7 +123,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -152,7 +152,7 @@ class TestPackageControllerAcceptanceTest {
             // @formatter:off
             RestAssured
                 .given()
-                    .header("current-user", "alex@hostsharing.net")
+                    .header("current-user", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "test_customer#xxx.admin")
                     .contentType(ContentType.JSON)
                     .body("{}")
@@ -172,7 +172,7 @@ class TestPackageControllerAcceptanceTest {
         // @formatter:off
         return UUID.fromString(RestAssured
             .given()
-                .header("current-user", "alex@hostsharing.net")
+                .header("current-user", "superuser-alex@hostsharing.net")
                 .header("assumed-roles", "test_customer#xxx.admin")
                 .port(port)
             .when()
@@ -185,7 +185,7 @@ class TestPackageControllerAcceptanceTest {
     }
 
     String getDescriptionOfPackage(final String packageName) {
-        context.define("alex@hostsharing.net","test_customer#xxx.admin");
+        context.define("superuser-alex@hostsharing.net","test_customer#xxx.admin");
         return testPackageRepository.findAllByOptionalNameLike(packageName).get(0).getDescription();
     }
 }

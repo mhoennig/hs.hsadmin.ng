@@ -61,7 +61,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewContact() {
             // given
-            context("alex@hostsharing.net");
+            context("superuser-alex@hostsharing.net");
             final var count = contactRepo.count();
 
             // when
@@ -79,7 +79,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_canCreateNewContact() {
             // given
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var count = contactRepo.count();
 
             // when
@@ -96,7 +96,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
 
@@ -121,7 +121,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
                     "{ grant perm * on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.owner by system and assume }",
                     "{ grant role hs_office_contact#anothernewcontact.admin to role hs_office_contact#anothernewcontact.owner by system and assume }",
                     "{ grant perm view on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.tenant by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.owner to user drew@hostsharing.org by global#global.admin and assume }"
+                    "{ grant role hs_office_contact#anothernewcontact.owner to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
             ));
         }
 
@@ -137,7 +137,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
             // given
-            context("alex@hostsharing.net");
+            context("superuser-alex@hostsharing.net");
 
             // when
             final var result = contactRepo.findContactByOptionalLabelLike(null);
@@ -149,10 +149,10 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_canViewOnlyItsOwnContact() {
             // given:
-            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
 
             // when:
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var result = contactRepo.findContactByOptionalLabelLike(null);
 
             // then:
@@ -166,7 +166,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
             // given
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
 
             // when
             final var result = contactRepo.findContactByOptionalLabelLike("second");
@@ -178,10 +178,10 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnContact() {
             // given:
-            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
 
             // when:
-            context("drew@hostsharing.org");
+            context("selfregistered-user-drew@hostsharing.org");
             final var result = contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
 
             // then:
@@ -195,19 +195,19 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canDeleteAnyContact() {
             // given
-            context("alex@hostsharing.net", null);
-            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
+            context("superuser-alex@hostsharing.net", null);
+            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("alex@hostsharing.net", null);
+                context("superuser-alex@hostsharing.net", null);
                 contactRepo.deleteByUuid(givenContact.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("alex@hostsharing.net", null);
+                context("superuser-alex@hostsharing.net", null);
                 return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -215,18 +215,18 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void arbitraryUser_withoutAssumedRole_canDeleteAContactCreatedByItself() {
             // given
-            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("drew@hostsharing.org", null);
+                context("selfregistered-user-drew@hostsharing.org", null);
                 contactRepo.deleteByUuid(givenContact.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
-                context("alex@hostsharing.net", null);
+                context("superuser-alex@hostsharing.net", null);
                 return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
@@ -234,10 +234,10 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void deletingAContactAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("drew@hostsharing.org", null);
+            context("selfregistered-user-drew@hostsharing.org", null);
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
-            final var givenContact = givenSomeTemporaryContact("drew@hostsharing.org");
+            final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
             assumeThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
                     .isEqualTo(initialRoleNames.size() + 3);
             assumeThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
@@ -245,7 +245,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("drew@hostsharing.org", null);
+                context("selfregistered-user-drew@hostsharing.org", null);
                 return contactRepo.deleteByUuid(givenContact.getUuid());
             });
 
@@ -272,7 +272,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
 
     @AfterEach
     void cleanup() {
-        context("alex@hostsharing.net", null);
+        context("superuser-alex@hostsharing.net", null);
         final var result = contactRepo.findContactByOptionalLabelLike("some temporary contact");
         result.forEach(tempPerson -> {
             System.out.println("DELETING temporary contact: " + tempPerson.getLabel());

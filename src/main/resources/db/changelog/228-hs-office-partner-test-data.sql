@@ -18,7 +18,7 @@ declare
 begin
     idName := cleanIdentifier( personTradeName|| '-' || contactLabel);
     currentTask := 'creating RBAC test partner ' || idName;
-    call defineContext(currentTask, null, 'alex@hostsharing.net', 'global#global.admin');
+    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select p.* from hs_office_person p where p.tradeName = personTradeName into relatedPerson;

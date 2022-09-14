@@ -39,7 +39,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canCreateNewCustomer() {
             // given
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
             final var count = testCustomerRepository.count();
 
             // when
@@ -60,7 +60,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("alex@hostsharing.net", "test_customer#xxx.admin");
+            context("superuser-alex@hostsharing.net", "test_customer#xxx.admin");
 
             // when
             final var result = attempt(em, () -> {
@@ -106,7 +106,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -118,7 +118,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedglobalAdminRole_canViewAllCustomers() {
             given:
-            context("alex@hostsharing.net", "global#global.admin");
+            context("superuser-alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -155,7 +155,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllCustomers() {
             // given
-            context("alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", null);
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike("yyy");

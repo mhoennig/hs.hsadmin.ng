@@ -59,7 +59,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllRbacRoles() {
             // given
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
 
             // when
             final var result = rbacRoleRepository.findAll();
@@ -71,7 +71,7 @@ class RbacRoleRepositoryIntegrationTest {
         @Test
         public void globalAdmin_withAssumedglobalAdminRole_canViewAllRbacRoles() {
             given:
-            context.define("alex@hostsharing.net", "global#global.admin");
+            context.define("superuser-alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = rbacRoleRepository.findAll();

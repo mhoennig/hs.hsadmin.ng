@@ -44,7 +44,7 @@ class TestPackageRepositoryIntegrationTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             // given
-            context.define("alex@hostsharing.net");
+            context.define("superuser-alex@hostsharing.net");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -56,7 +56,7 @@ class TestPackageRepositoryIntegrationTest {
         @Test
         public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
             given:
-            context.define("alex@hostsharing.net", "global#global.admin");
+            context.define("superuser-alex@hostsharing.net", "global#global.admin");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -126,7 +126,7 @@ class TestPackageRepositoryIntegrationTest {
     }
 
     private void globalAdminWithAssumedRole(final String assumedRoles) {
-        context.define("alex@hostsharing.net", assumedRoles);
+        context.define("superuser-alex@hostsharing.net", assumedRoles);
     }
 
     void noPackagesAreReturned(final List<TestPackageEntity> actualResult) {

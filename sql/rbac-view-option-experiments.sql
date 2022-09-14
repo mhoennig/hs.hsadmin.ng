@@ -38,7 +38,7 @@ CREATE OR REPLACE RULE "_RETURN" AS
     SELECT * FROM customer WHERE isPermissionGrantedToSubject(findPermissionId('test_customer', id, 'view'), currentUserUuid());
 SELECT * from cust_view LIMIT 10;
 
-select queryAllPermissionsOfSubjectId(findRbacUser('alex@hostsharing.net'));
+select queryAllPermissionsOfSubjectId(findRbacUser('superuser-alex@hostsharing.net'));
 
 -- access control via view-rule with join to recursive permissions - really fast (38ms for 1 million rows)
 SET SESSION SESSION AUTHORIZATION DEFAULT;
@@ -73,7 +73,7 @@ GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
 SET SESSION SESSION AUTHORIZATION restricted;
 -- SET hsadminng.currentUser TO 'alex@example.com';
-SET hsadminng.currentUser TO 'alex@hostsharing.net';
+SET hsadminng.currentUser TO 'superuser-alex@hostsharing.net';
 -- SET hsadminng.currentUser TO 'aaaaouq@example.com';
 SELECT * from cust_view where reference=1144150;
 
