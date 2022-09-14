@@ -48,7 +48,6 @@ public class JsonMatcher extends BaseMatcher<CharSequence> {
         }
         try {
             final var actualJson = new ObjectMapper().writeValueAsString(actual);
-            compareMode = JSONCompareMode.LENIENT;
             JSONAssert.assertEquals(expected, actualJson, compareMode);
             return true;
         } catch (final JSONException | JsonProcessingException e) {

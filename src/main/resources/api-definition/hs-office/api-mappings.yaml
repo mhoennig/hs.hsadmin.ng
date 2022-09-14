@@ -12,5 +12,5 @@ map:
         - type: string:uuid => java.util.UUID
 
     paths:
-        /api/hs/office/partners/{packageUUID}:
+        /api/hs/office/partners/{partnerUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable

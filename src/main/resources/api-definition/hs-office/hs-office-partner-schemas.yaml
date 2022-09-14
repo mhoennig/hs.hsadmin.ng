@@ -3,58 +3,89 @@ components:
 
     schemas:
 
-        HsOfficePartnerBase:
+        HsOfficePartner:
             type: object
             properties:
+                uuid:
+                    type: string
+                    format: uuid
+                person:
+                    $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                contact:
+                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                registrationOffice:
+                   type: string
+                registrationNumber:
+                   type: string
+                birthName:
+                   type: string
+                birthday:
+                   type: string
+                   format: date
+                dateOfDeath:
+                   type: string
+                   format: date
+
+        HsOfficePartnerPatch:
+            type: object
+            properties:
+                personUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                contactUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
                 registrationOffice:
                     type: string
+                    nullable: true
                 registrationNumber:
                     type: string
+                    nullable: true
                 birthName:
                     type: string
+                    nullable: true
                 birthday:
                     type: string
                     format: date
+                    nullable: true
                 dateOfDeath:
                     type: string
                     format: date
-
-        HsOfficePartner:
-            allOf:
-                - type: object
-                  properties:
-                      uuid:
-                          type: string
-                          format: uuid
-                      person:
-                          $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
-                      contact:
-                          $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
-                - $ref: '#/components/schemas/HsOfficePartnerBase'
-
-        HsOfficePartnerPatch:
-            allOf:
-                - type: object
-                  properties:
-                      personUuid:
-                          type: string
-                          format: uuid
-                      contactUuid:
-                          type: string
-                          format: uuid
-                - $ref: '#/components/schemas/HsOfficePartnerBase'
+                    nullable: true
 
         HsOfficePartnerInsert:
-            allOf:
-                - type: object
-                  properties:
-                      personUuid:
-                          type: string
-                          format: uuid
-                      contactUuid:
-                          type: string
-                          format: uuid
-                - required:
-                      - personUuid
-                      - contactUuid
-                - $ref: '#/components/schemas/HsOfficePartnerBase'
+            type: object
+            properties:
+                personUuid:
+                    type: string
+                    format: uuid
+                contactUuid:
+                    type: string
+                    format: uuid
+                registrationOffice:
+                    type: string
+                    nullable: true
+                registrationNumber:
+                    type: string
+                    nullable: true
+                birthName:
+                    type: string
+                    nullable: true
+                birthday:
+                    type: string
+                    format: date
+                    nullable: true
+                dateOfDeath:
+                    type: string
+                    format: date
+                    nullable: true
+            required:
+              - personUuid
+              - contactUuid
+              - registrationOffice
+              - registrationNumber
+              - birthName
+              - birthday
+              - dateOfDeath

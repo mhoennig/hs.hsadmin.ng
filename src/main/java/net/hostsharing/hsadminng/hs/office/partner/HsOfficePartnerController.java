@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.Mapper;
+import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
@@ -114,13 +115,23 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficePartnerResource> updatePartner(
+    public ResponseEntity<HsOfficePartnerResource> patchPartner(
             final String currentUser,
             final String assumedRoles,
             final UUID partnerUuid,
             final HsOfficePartnerPatchResource body) {
-        return null;
+
+        context.define(currentUser, assumedRoles);
+
+        final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
+
+        new HsOfficePartnerEntityPatch(current, contactRepo::findByUuid, personRepo::findByUuid).apply(body);
+
+        final var saved = partnerRepo.save(current);
+        final var mapped = map(saved, HsOfficePartnerResource.class);
+        return ResponseEntity.ok(mapped);
     }
+
 
     final BiConsumer<HsOfficePartnerEntity, HsOfficePartnerResource> PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setPerson(map(entity.getPerson(), HsOfficePersonResource.class));

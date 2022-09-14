@@ -99,7 +99,7 @@ class HsOfficePartnerControllerAcceptanceTest {
     class AddPartner {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddPartner_withGeneratedUuid() {
+        void globalAdmin_withoutAssumedRole_canAddPartner() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
@@ -114,10 +114,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "registrationOffice": "Registergericht Hamburg",
-                                   "registrationNumber": "123456",
-                                   "birthName": null,
-                                   "birthday": null,
-                                   "dateOfDeath": null
+                                   "registrationNumber": "123456"
                                  }
                             """.formatted(givenContact.getUuid(), givenPerson.getUuid()))
                         .port(port)
@@ -153,12 +150,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .body("""
                                {
                                    "contactUuid": "%s",
-                                   "personUuid": "%s",
-                                   "registrationOffice": "Registergericht Hamburg",
-                                   "registrationNumber": "123456",
-                                   "birthName": null,
-                                   "birthday": null,
-                                   "dateOfDeath": null
+                                   "personUuid": "%s"
                                  }
                             """.formatted(givenContactUuid, givenPerson.getUuid()))
                     .port(port)
@@ -269,6 +261,104 @@ class HsOfficePartnerControllerAcceptanceTest {
     }
 
     @Nested
+    @Accepts({ "Partner:U(Update)" })
+    class PatchPartner {
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canPatchAllPropertiesOfArbitraryPartner() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler();
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                               {
+                                   "contactUuid": "%s",
+                                   "personUuid": "%s",
+                                   "registrationOffice": "Registergericht Hamburg",
+                                   "registrationNumber": "222222",
+                                   "birthName": "Maja Schmidt",
+                                   "birthday": "1938-04-08",
+                                   "dateOfDeath": "2022-01-12"
+                                 }
+                            """.formatted(givenContact.getUuid(), givenPerson.getUuid()))
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
+                .then().assertThat()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("registrationNumber", is("222222"))
+                    .body("contact.label", is(givenContact.getLabel()))
+                    .body("person.tradeName", is(givenPerson.getTradeName()));
+                // @formatter:on
+
+            // finally, the partner is actually updated
+            assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
+                    .matches(person -> {
+                        assertThat(person.getPerson().getTradeName()).isEqualTo("Ostfriesische Kuhhandel OHG");
+                        assertThat(person.getContact().getLabel()).isEqualTo("forth contact");
+                        assertThat(person.getRegistrationOffice()).isEqualTo("Registergericht Hamburg");
+                        assertThat(person.getRegistrationNumber()).isEqualTo("222222");
+                        assertThat(person.getBirthName()).isEqualTo("Maja Schmidt");
+                        assertThat(person.getBirthday()).isEqualTo("1938-04-08");
+                        assertThat(person.getDateOfDeath()).isEqualTo("2022-01-12");
+                        return true;
+                    });
+        }
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canPatchPartialPropertiesOfArbitraryPartner() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler();
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                               {
+                                   "birthName": "Maja Schmidt",
+                                   "birthday": "1938-04-08",
+                                   "dateOfDeath": "2022-01-12"
+                                 }
+                            """)
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
+                .then().assertThat()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("birthName", is("Maja Schmidt"))
+                    .body("contact.label", is(givenPartner.getContact().getLabel()))
+                    .body("person.tradeName", is(givenPartner.getPerson().getTradeName()));
+            // @formatter:on
+
+            // finally, the partner is actually updated
+            assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
+                    .matches(person -> {
+                        assertThat(person.getPerson().getTradeName()).isEqualTo(givenPartner.getPerson().getTradeName());
+                        assertThat(person.getContact().getLabel()).isEqualTo(givenPartner.getContact().getLabel());
+                        assertThat(person.getRegistrationOffice()).isEqualTo(null);
+                        assertThat(person.getRegistrationNumber()).isEqualTo(null);
+                        assertThat(person.getBirthName()).isEqualTo("Maja Schmidt");
+                        assertThat(person.getBirthday()).isEqualTo("1938-04-08");
+                        assertThat(person.getDateOfDeath()).isEqualTo("2022-01-12");
+                        return true;
+                    });
+        }
+
+    }
+
+    @Nested
     @Accepts({ "Partner:D(Delete)" })
     class DeletePartner {
 
@@ -282,7 +372,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
-                    .delete("http://localhost/api/hs/office/partners/" + toCleanup(givenPartner.getUuid()))
+                    .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
                 .then().log().body().assertThat()
                     .statusCode(204); // @formatter:on
 
@@ -302,7 +392,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .header("current-user", "customer-admin@forthcontact.example.com")
                     .port(port)
                 .when()
-                    .delete("http://localhost/api/hs/office/partners/" + toCleanup(givenPartner.getUuid()))
+                    .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
                 .then().log().body().assertThat()
                     .statusCode(403); // @formatter:on
 
@@ -322,7 +412,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .header("current-user", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
-                    .delete("http://localhost/api/hs/office/partners/" + toCleanup(givenPartner.getUuid()))
+                    .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
                 .then().log().body().assertThat()
                     .statusCode(404); // @formatter:on
 
@@ -346,6 +436,8 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .person(givenPerson)
                     .contact(givenContact)
                     .build();
+
+            toCleanup(newPartner.getUuid());
 
             return partnerRepo.save(newPartner);
         }).assertSuccessful().returnedValue();

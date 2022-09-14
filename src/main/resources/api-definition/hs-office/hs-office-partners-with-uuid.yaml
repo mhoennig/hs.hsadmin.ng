@@ -29,7 +29,8 @@ get:
 patch:
     tags:
         - hs-office-partners
-    operationId: updatePartner
+    description: 'Updates a single business partner by its uuid, if permitted for the current subject.'
+    operationId: patchPartner
     parameters:
         -   $ref: './auth.yaml#/components/parameters/currentUser'
         -   $ref: './auth.yaml#/components/parameters/assumedRoles'
