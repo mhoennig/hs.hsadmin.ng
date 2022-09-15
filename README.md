@@ -524,9 +524,15 @@ Summary for Debian-based Linux systems:
 sudo apt-get -y install podman
 ```
 
+2Then start it like this:
+
+```shell
 systemctl --user enable --now podman.socket
 systemctl --user status podman.socket
 ls -la /run/user/$UID/podman/podman.sock
+```
+
+These commands are also available in `.aliases` as `podman-start`.
 
 
 #### Use the Command Line to Run the Tests Against the Podman Daemon 
@@ -537,6 +543,8 @@ ls -la /run/user/$UID/podman/podman.sock
 export DOCKER_HOST="unix:///run/user/$UID/podman/podman.sock"
 export TESTCONTAINERS_RYUK_DISABLED=true
 ```
+
+These commands are also available in `.aliases` as `podman-use`. 
 
 Disabling RYUK is necessary, because it's not supported by Podman.
 Supposedly this means that containers are not properly cleaned up after test runs,
