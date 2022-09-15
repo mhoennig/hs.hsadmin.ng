@@ -300,6 +300,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                 // @formatter:on
 
             // finally, the partner is actually updated
+            context.define("superuser-alex@hostsharing.net");
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getPerson().getTradeName()).isEqualTo("Ostfriesische Kuhhandel OHG");

@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
@@ -21,6 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,11 +76,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = attempt(em, () -> {
-                final var newPartner = HsOfficePartnerEntity.builder()
+                final var newPartner = toCleanup(HsOfficePartnerEntity.builder()
                         .uuid(UUID.randomUUID())
                         .person(givenPerson)
                         .contact(givenContact)
-                        .build();
+                        .build());
                 return partnerRepo.save(newPartner);
             });
 
@@ -102,11 +102,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             attempt(em, () -> {
                 final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
-                final var newPartner = HsOfficePartnerEntity.builder()
+                final var newPartner = toCleanup(HsOfficePartnerEntity.builder()
                         .uuid(UUID.randomUUID())
                         .person(givenPerson)
                         .contact(givenContact)
-                        .build();
+                        .build());
                 return partnerRepo.save(newPartner);
             });
 
@@ -148,7 +148,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then
-            allThesePartnersAreReturned(result, "First Impressions GmbH", "Ostfriesische Kuhhandel OHG", "Rockshop e.K.");
+            allThesePartnersAreReturned(
+                    result,
+                    "partner(Ostfriesische Kuhhandel OHG, third contact)",
+                    "partner(Rockshop e.K., second contact)",
+                    "partner(First Impressions GmbH, first contact)");
         }
 
         @Test
@@ -160,7 +164,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then:
-            exactlyThesePartnersAreReturned(result, "First Impressions GmbH");
+            exactlyThesePartnersAreReturned(result, "partner(First Impressions GmbH, first contact)");
         }
     }
 
@@ -173,10 +177,119 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = partnerRepo.findPartnerByOptionalNameLike("Ostfriesische");
+            final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
 
             // then
-            exactlyThesePartnersAreReturned(result, "Ostfriesische Kuhhandel OHG");
+            exactlyThesePartnersAreReturned(result, "partner(Ostfriesische Kuhhandel OHG, third contact)");
+        }
+    }
+
+    @Nested
+    class UpdatePartner {
+
+        @Test
+        public void hostsharingAdmin_withoutAssumedRole_canUpdateArbitraryPartner() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler("fifth contact");
+            assertThatPartnerIsVisibleForUserWithRole(
+                    givenPartner,
+                    "hs_office_person#ErbenBesslerMelBessler.admin");
+            assertThatPartnerActuallyInDatabase(givenPartner);
+            context("superuser-alex@hostsharing.net");
+            final var givenNewPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische Kuhhandel OHG").get(0);
+            final var givenNewContact = contactRepo.findContactByOptionalLabelLike("sixth contact").get(0);
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net");
+                givenPartner.setContact(givenNewContact);
+                givenPartner.setPerson(givenNewPerson);
+                givenPartner.setDateOfDeath(LocalDate.parse("2022-09-15"));
+                return toCleanup(partnerRepo.save(givenPartner));
+            });
+
+            // then
+            result.assertSuccessful();
+            assertThatPartnerIsVisibleForUserWithRole(
+                    result.returnedValue(),
+                    "global#global.admin");
+            assertThatPartnerIsVisibleForUserWithRole(
+                    result.returnedValue(),
+                    "hs_office_person#OstfriesischeKuhhandelOHG.admin");
+            assertThatPartnerIsNotVisibleForUserWithRole(
+                    result.returnedValue(),
+                    "hs_office_person#ErbenBesslerMelBessler.admin");
+
+            partnerRepo.deleteByUuid(givenPartner.getUuid());
+        }
+
+        @Test
+        public void personAdmin_canNotUpdateRelatedPartner() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler("eighth");
+            assertThatPartnerIsVisibleForUserWithRole(
+                    givenPartner,
+                    "hs_office_person#ErbenBesslerMelBessler.admin");
+            assertThatPartnerActuallyInDatabase(givenPartner);
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", "hs_office_person#ErbenBesslerMelBessler.admin");
+                givenPartner.setDateOfDeath(LocalDate.parse("2022-09-15"));
+                return partnerRepo.save(givenPartner);
+            });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
+                    "[403] Subject ", " is not allowed to update partner uuid");
+        }
+
+        @Test
+        public void contactAdmin_canNotUpdateRelatedPartner() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler("ninth");
+            assertThatPartnerIsVisibleForUserWithRole(
+                    givenPartner,
+                    "hs_office_contact#ninthcontact.admin");
+            assertThatPartnerActuallyInDatabase(givenPartner);
+
+            // when
+            final var result = jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact.admin");
+                givenPartner.setDateOfDeath(LocalDate.parse("2022-09-15"));
+                return partnerRepo.save(givenPartner);
+            });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
+                    "[403] Subject ", " is not allowed to update partner uuid");
+        }
+
+        private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
+            final var found = partnerRepo.findByUuid(saved.getUuid());
+            assertThat(found).isNotEmpty().get().isNotSameAs(saved).usingRecursiveComparison().isEqualTo(saved);
+        }
+
+        private void assertThatPartnerIsVisibleForUserWithRole(
+                final HsOfficePartnerEntity entity,
+                final String assumedRoles) {
+            jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", assumedRoles);
+                assertThatPartnerActuallyInDatabase(entity);
+            }).assertSuccessful();
+        }
+
+        private void assertThatPartnerIsNotVisibleForUserWithRole(
+                final HsOfficePartnerEntity entity,
+                final String assumedRoles) {
+            jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", assumedRoles);
+                final var found = partnerRepo.findByUuid(entity.getUuid());
+                assertThat(found).isEmpty();
+            }).assertSuccessful();
         }
     }
 
@@ -187,7 +300,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_withoutAssumedRole_canDeleteAnyPartner() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenPartner = givenSomeTemporaryPartnerBessler();
+            final var givenPartner = givenSomeTemporaryPartnerBessler("tenth");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -207,7 +320,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void nonGlobalAdmin_canNotDeleteTheirRelatedPartner() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenPartner = toCleanup(givenSomeTemporaryPartnerBessler());
+            final var givenPartner = givenSomeTemporaryPartnerBessler("eleventh");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -220,7 +333,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] User person-ErbenBesslerMelBessler@example.com not allowed to delete partner");
+                    "[403] Subject ", " not allowed to delete partner");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return partnerRepo.findByUuid(givenPartner.getUuid());
@@ -233,7 +346,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = Array.from(roleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
-            final var givenPartner = givenSomeTemporaryPartnerBessler();
+            final var givenPartner = givenSomeTemporaryPartnerBessler("twelfth");
             assumeThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
                     .isEqualTo(initialRoleNames.length + 3);
             assumeThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
@@ -253,16 +366,18 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         }
     }
 
-    private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler() {
+    private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler(final String contact) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
             final var newPartner = HsOfficePartnerEntity.builder()
                     .uuid(UUID.randomUUID())
                     .person(givenPerson)
                     .contact(givenContact)
                     .build();
+
+            toCleanup(newPartner);
 
             return partnerRepo.save(newPartner);
         }).assertSuccessful().returnedValue();
@@ -278,23 +393,22 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         context("superuser-alex@hostsharing.net", null);
         tempPartners.forEach(tempPartner -> {
             System.out.println("DELETING temporary partner: " + tempPartner.getDisplayName());
-            final var count = partnerRepo.deleteByUuid(tempPartner.getUuid());
-            assertThat(count).isGreaterThan(0);
+            if ( tempPartner.getContact().getLabel().equals("sixth contact")) {
+                toString();
+            }
+            partnerRepo.deleteByUuid(tempPartner.getUuid());
         });
     }
 
-    void exactlyThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerTradeNames) {
+    void exactlyThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {
         assertThat(actualResult)
-                .hasSize(partnerTradeNames.length)
-                .extracting(HsOfficePartnerEntity::getPerson)
-                .extracting(HsOfficePersonEntity::getTradeName)
-                .containsExactlyInAnyOrder(partnerTradeNames);
+                .extracting(HsOfficePartnerEntity::getDisplayName)
+                .containsExactlyInAnyOrder(partnerNames);
     }
 
-    void allThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerTradeNames) {
+    void allThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {
         assertThat(actualResult)
-                .extracting(HsOfficePartnerEntity::getPerson)
-                .extracting(HsOfficePersonEntity::getTradeName)
-                .contains(partnerTradeNames);
+                .extracting(HsOfficePartnerEntity::getDisplayName)
+                .contains(partnerNames);
     }
 }

@@ -11,7 +11,7 @@ call generateRelatedRbacObject('hs_office_partner');
 --changeset hs-office-partner-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function HsOfficePartnerOwner(partner hs_office_partner)
+create or replace function hsOfficePartnerOwner(partner hs_office_partner)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$
@@ -19,7 +19,7 @@ begin
     return roleDescriptor('hs_office_partner', partner.uuid, 'owner');
 end; $$;
 
-create or replace function HsOfficePartnerAdmin(partner hs_office_partner)
+create or replace function hsOfficePartnerAdmin(partner hs_office_partner)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$
@@ -27,7 +27,7 @@ begin
     return roleDescriptor('hs_office_partner', partner.uuid, 'admin');
 end; $$;
 
-create or replace function HsOfficePartnerTenant(partner hs_office_partner)
+create or replace function hsOfficePartnerTenant(partner hs_office_partner)
     returns RbacRoleDescriptor
     language plpgsql
     strict as $$
@@ -42,47 +42,76 @@ end; $$;
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates the roles and their assignments for a new partner for the AFTER INSERT TRIGGER.
+    Creates and updates the roles and their assignments for partner entities.
  */
 
-create or replace function createRbacRolesForHsOfficePartner()
+create or replace function hsOfficePartnerRbacRolesTrigger()
     returns trigger
     language plpgsql
     strict as $$
 declare
-    ownerRole uuid;
-    adminRole uuid;
-    person hs_office_person;
-    contact hs_office_contact;
+    hsOfficePartnerTenant RbacRoleDescriptor;
+    ownerRole             uuid;
+    adminRole             uuid;
+    oldPerson             hs_office_person;
+    newPerson             hs_office_person;
+    oldContact            hs_office_contact;
+    newContact            hs_office_contact;
 begin
-    if TG_OP <> 'INSERT' then
-        raise exception 'invalid usage of TRIGGER AFTER INSERT';
+
+    hsOfficePartnerTenant := hsOfficePartnerTenant(NEW);
+
+    select * from hs_office_person as p where p.uuid = NEW.personUuid into newPerson;
+    select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
+
+    if TG_OP = 'INSERT' then
+
+        -- the owner role with full access for the global admins
+        ownerRole = createRole(
+                hsOfficePartnerOwner(NEW),
+                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
+                beneathRole(globalAdmin())
+            );
+
+        -- the admin role with full access for the global admins
+        adminRole = createRole(
+                hsOfficePartnerAdmin(NEW),
+                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
+                beneathRole(ownerRole)
+            );
+
+        -- the tenant role for those related users who can view the data
+        perform createRole(
+                hsOfficePartnerTenant,
+                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
+                beneathRoles(array[hsOfficePartnerAdmin(NEW), hsOfficePersonAdmin(newPerson), hsOfficeContactAdmin(newContact)]),
+                withSubRoles(array[hsOfficePersonTenant(newPerson), hsOfficeContactTenant(newContact)])
+            );
+
+    elsif TG_OP = 'UPDATE' then
+
+        if OLD.personUuid <> NEW.personUuid then
+            select * from hs_office_person as p where p.uuid = OLD.personUuid into oldPerson;
+
+            call revokeRoleFromRole( hsOfficePartnerTenant, hsOfficePersonAdmin(oldPerson) );
+            call grantRoleToRole( hsOfficePartnerTenant, hsOfficePersonAdmin(newPerson) );
+
+            call revokeRoleFromRole( hsOfficePersonTenant(oldPerson), hsOfficePartnerTenant );
+            call grantRoleToRole( hsOfficePersonTenant(newPerson), hsOfficePartnerTenant );
+        end if;
+
+        if OLD.contactUuid <> NEW.contactUuid then
+            select * from hs_office_contact as c where c.uuid = OLD.contactUuid into oldContact;
+
+            call revokeRoleFromRole( hsOfficePartnerTenant, hsOfficeContactAdmin(oldContact) );
+            call grantRoleToRole( hsOfficePartnerTenant, hsOfficeContactAdmin(newContact) );
+
+            call revokeRoleFromRole( hsOfficeContactTenant(oldContact), hsOfficePartnerTenant );
+            call grantRoleToRole( hsOfficeContactTenant(newContact), hsOfficePartnerTenant );
+        end if;
+    else
+        raise exception 'invalid usage of TRIGGER';
     end if;
-
-    select * from hs_office_person as p where p.uuid = NEW.personUuid into person;
-    select * from hs_office_contact as c where c.uuid = NEW.contactUuid into contact;
-
-    -- the owner role with full access for the global admins
-    ownerRole = createRole(
-            HsOfficePartnerOwner(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-            beneathRole(globalAdmin())
-        );
-
-    -- the admin role with full access for the global admins
-    adminRole = createRole(
-            HsOfficePartnerAdmin(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-            beneathRole(ownerRole)
-        );
-
-    -- the tenant role for those related users who can view the data
-    perform createRole(
-            HsOfficePartnerTenant(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-            beneathRoles(array[HsOfficePartnerAdmin(NEW), hsOfficePersonAdmin(person), hsOfficeContactAdmin(contact)]),
-            withSubRoles(array[hsOfficePersonTenant(person), hsOfficeContactTenant(contact)])
-        );
 
     return NEW;
 end; $$;
@@ -90,12 +119,20 @@ end; $$;
 /*
     An AFTER INSERT TRIGGER which creates the role structure for a new customer.
  */
-
 create trigger createRbacRolesForHsOfficePartner_Trigger
     after insert
     on hs_office_partner
     for each row
-execute procedure createRbacRolesForHsOfficePartner();
+execute procedure hsOfficePartnerRbacRolesTrigger();
+
+/*
+    An AFTER UPDATE TRIGGER which updates the role structure of a customer.
+ */
+create trigger updateRbacRolesForHsOfficePartner_Trigger
+    after update
+    on hs_office_partner
+    for each row
+execute procedure hsOfficePartnerRbacRolesTrigger();
 --//
 
 
@@ -189,6 +226,7 @@ create trigger insertHsOfficePartner_Trigger
 execute function insertHsOfficePartner();
 --//
 
+
 -- ============================================================================
 --changeset hs-office-partner-rbac-INSTEAD-OF-DELETE-TRIGGER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
@@ -202,12 +240,11 @@ create or replace function deleteHsOfficePartner()
     returns trigger
     language plpgsql as $$
 begin
-    if hasGlobalRoleGranted(currentUserUuid()) or
-       old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_office_partner', currentSubjectsUuids())) then
-        delete from hs_office_partner c where c.uuid = old.uuid;
+    if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_office_partner', currentSubjectsUuids())) then
+        delete from hs_office_partner p where p.uuid = old.uuid;
         return old;
     end if;
-    raise exception '[403] User % not allowed to delete partner uuid %', currentUser(), old.uuid;
+    raise exception '[403] Subject % is not allowed to delete partner uuid %', currentSubjectsUuids(), old.uuid;
 end; $$;
 
 /*
@@ -219,6 +256,46 @@ create trigger deleteHsOfficePartner_Trigger
     for each row
 execute function deleteHsOfficePartner();
 --/
+
+
+-- ============================================================================
+--changeset hs-office-partner-rbac-INSTEAD-OF-UPDATE-TRIGGER:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/**
+    Instead of update trigger function for hs_office_partner_rv.
+
+    Checks if the current subject (user / assumed role) has the permission to update the row.
+ */
+create or replace function updateHsOfficePartner()
+    returns trigger
+    language plpgsql as $$
+begin
+    if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('edit', 'hs_office_partner', currentSubjectsUuids())) then
+        update hs_office_partner
+            set personUuid = new.personUuid,
+                contactUuid = new.contactUuid,
+                registrationOffice = new.registrationOffice,
+                registrationNumber = new.registrationNumber,
+                birthday = new.birthday,
+                birthName = new.birthName,
+                dateOfDeath = new.dateOfDeath
+            where uuid = old.uuid;
+        return old;
+    end if;
+    raise exception '[403] Subject % is not allowed to update partner uuid %', currentSubjectsUuids(), old.uuid;
+end; $$;
+
+/*
+    Creates an instead of delete trigger for the hs_office_partner_rv view.
+ */
+create trigger updateHsOfficePartner_Trigger
+    instead of update
+    on hs_office_partner_rv
+    for each row
+execute function updateHsOfficePartner();
+--/
+
 
 -- ============================================================================
 --changeset hs-office-partner-rbac-NEW-CONTACT:1 endDelimiter:--//

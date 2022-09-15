@@ -57,10 +57,18 @@ end; $$;
 
 do language plpgsql $$
     begin
+        -- TODO: use better names
         call createHsOfficeContactTestData('first contact');
         call createHsOfficeContactTestData('second contact');
         call createHsOfficeContactTestData('third contact');
         call createHsOfficeContactTestData('forth contact');
+        call createHsOfficeContactTestData('fifth contact');
+        call createHsOfficeContactTestData('sixth contact');
+        call createHsOfficeContactTestData('eighth contact');
+        call createHsOfficeContactTestData('ninth contact');
+        call createHsOfficeContactTestData('tenth contact');
+        call createHsOfficeContactTestData('eleventh contact');
+        call createHsOfficeContactTestData('twelfth contact');
     end;
 $$;
 --//

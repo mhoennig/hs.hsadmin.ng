@@ -114,11 +114,11 @@ grant all privileges on hs_office_person_iv to restricted;
 /*
     Returns the objectUuid for a given identifying name (in this case the prefix).
  */
-create or replace function hsOfficePersonUuidByIdName(idName varchar)
+create or replace function hs_office_personUuidByIdName(idName varchar)
     returns uuid
     language sql
     strict as $$
-select uuid from hs_office_person_iv iv where iv.idName = hsOfficePersonUuidByIdName.idName;
+select uuid from hs_office_person_iv iv where iv.idName = hs_office_personUuidByIdName.idName;
 $$;
 
 /*
