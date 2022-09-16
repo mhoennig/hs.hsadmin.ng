@@ -10,30 +10,7 @@ call generateRelatedRbacObject('hs_office_partner');
 -- ============================================================================
 --changeset hs-office-partner-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-create or replace function hsOfficePartnerOwner(partner hs_office_partner)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('hs_office_partner', partner.uuid, 'owner');
-end; $$;
-
-create or replace function hsOfficePartnerAdmin(partner hs_office_partner)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('hs_office_partner', partner.uuid, 'admin');
-end; $$;
-
-create or replace function hsOfficePartnerTenant(partner hs_office_partner)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('hs_office_partner', partner.uuid, 'tenant');
-end; $$;
+call generateRbacRoleDescriptors('hsOfficePartner', 'hs_office_partner');
 --//
 
 

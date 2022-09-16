@@ -1,47 +1,16 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset test-customer-rbac-CREATE-OBJECT:1 endDelimiter:--//
+--changeset test-customer-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates the related RbacObject through a BEFORE INSERT TRIGGER.
- */
-drop trigger if exists createRbacObjectForCustomer_Trigger on test_customer;
-create trigger createRbacObjectForCustomer_Trigger
-    before insert
-    on test_customer
-    for each row
-execute procedure insertRelatedRbacObject();
+call generateRelatedRbacObject('test_customer');
 --//
+
 
 -- ============================================================================
 --changeset test-customer-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-create or replace function testCustomerOwner(customer test_customer)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('test_customer', customer.uuid, 'owner');
-end; $$;
-
-create or replace function testCustomerAdmin(customer test_customer)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('test_customer', customer.uuid, 'admin');
-end; $$;
-
-create or replace function testCustomerTenant(customer test_customer)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('test_customer', customer.uuid, 'tenant');
-end; $$;
+call generateRbacRoleDescriptors('testCustomer', 'test_customer');
 --//
 
 

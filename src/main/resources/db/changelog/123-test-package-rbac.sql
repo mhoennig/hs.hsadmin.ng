@@ -1,47 +1,16 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset test-package-rbac-CREATE-OBJECT:1 endDelimiter:--//
+--changeset test-package-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-    Creates the related RbacObject through a BEFORE INSERT TRIGGER.
- */
-drop trigger if exists createRbacObjectForPackage_Trigger on test_package;
-create trigger createRbacObjectForPackage_Trigger
-    before insert
-    on test_package
-    for each row
-execute procedure insertRelatedRbacObject();
+call generateRelatedRbacObject('test_package');
 --//
 
 
 -- ============================================================================
 --changeset test-package-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-create or replace function testPackageOwner(pac test_package)
-    returns RbacRoleDescriptor
-    returns null on null input
-    language plpgsql as $$
-begin
-    return roleDescriptor('test_package', pac.uuid, 'owner');
-end; $$;
-
-create or replace function testPackageAdmin(pac test_package)
-    returns RbacRoleDescriptor
-    returns null on null input
-    language plpgsql as $$
-begin
-    return roleDescriptor('test_package', pac.uuid, 'admin');
-end; $$;
-
-create or replace function testPackageTenant(pac test_package)
-    returns RbacRoleDescriptor
-    returns null on null input
-    language plpgsql as $$
-begin
-    return roleDescriptor('test_package', pac.uuid, 'tenant');
-end; $$;
+call generateRbacRoleDescriptors('testPackage', 'test_package');
 --//
 
 

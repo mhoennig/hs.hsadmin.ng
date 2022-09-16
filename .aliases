@@ -13,6 +13,7 @@ gradleWrapper () {
 }
 
 alias podman-start='systemctl --user enable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
+alias podman-stop='systemctl --user disable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
 alias podman-use='export DOCKER_HOST="unix:///run/user/$UID/podman/podman.sock"; export TESTCONTAINERS_RYUK_DISABLED=true'
 
 alias gw=gradleWrapper

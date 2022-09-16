@@ -174,33 +174,6 @@ begin
     return old;
 end; $$;
 
-create or replace procedure generateRelatedRbacObject(targetTable varchar)
-    language plpgsql as $$
-declare
-    createInsertTriggerSQL text;
-    createDeleteTriggerSQL text;
-begin
-    createInsertTriggerSQL = format($sql$
-        create trigger createRbacObjectFor_%s_Trigger
-            before insert
-            on %s
-            for each row
-                execute procedure insertRelatedRbacObject();
-        $sql$, targetTable, targetTable);
-    execute createInsertTriggerSQL;
-
-    createDeleteTriggerSQL = format($sql$
-        create trigger deleteRbacRulesFor_%s_Trigger
-            before delete
-            on %s
-            for each row
-                execute procedure deleteRelatedRbacObject();
-        $sql$, targetTable, targetTable);
-    execute createDeleteTriggerSQL;
-end; $$;
-
---//
-
 
 -- ============================================================================
 --changeset rbac-base-ROLE:1 endDelimiter:--//

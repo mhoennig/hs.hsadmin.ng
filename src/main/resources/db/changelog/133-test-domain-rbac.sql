@@ -1,47 +1,16 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset test-package-rbac-CREATE-OBJECT:1 endDelimiter:--//
+--changeset test-domain-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-    Creates the related RbacObject through a BEFORE INSERT TRIGGER.
- */
-drop trigger if exists createRbacObjectFortest_domain_Trigger on test_domain;
-create trigger createRbacObjectFortest_domain_Trigger
-    before insert
-    on test_domain
-    for each row
-execute procedure insertRelatedRbacObject();
+call generateRelatedRbacObject('test_domain');
 --//
 
 
 -- ============================================================================
 --changeset test-domain-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-create or replace function testdomainOwner(uu test_domain)
-    returns RbacRoleDescriptor
-    returns null on null input
-    language plpgsql as $$
-begin
-    return roleDescriptor('test_domain', uu.uuid, 'owner');
-end; $$;
-
-create or replace function testdomainAdmin(uu test_domain)
-    returns RbacRoleDescriptor
-    returns null on null input
-    language plpgsql as $$
-begin
-    return roleDescriptor('test_domain', uu.uuid, 'admin');
-end; $$;
-
-create or replace function testdomainTenant(uu test_domain)
-    returns RbacRoleDescriptor
-    returns null on null input
-    language plpgsql as $$
-begin
-    return roleDescriptor('test_domain', uu.uuid, 'tenant');
-end; $$;
+call generateRbacRoleDescriptors('testDomain', 'test_domain');
 
 create or replace function createTestDomainTenantRoleIfNotExists(domain test_domain)
     returns uuid

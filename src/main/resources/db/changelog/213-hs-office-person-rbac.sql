@@ -1,6 +1,5 @@
 --liquibase formatted sql
 
-
 -- ============================================================================
 --changeset hs-office-person-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
@@ -11,30 +10,7 @@ call generateRelatedRbacObject('hs_office_person');
 -- ============================================================================
 --changeset hs-office-person-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-create or replace function hsOfficePersonOwner(person hs_office_person)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('hs_office_person', person.uuid, 'owner');
-end; $$;
-
-create or replace function hsOfficePersonAdmin(person hs_office_person)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('hs_office_person', person.uuid, 'admin');
-end; $$;
-
-create or replace function hsOfficePersonTenant(person hs_office_person)
-    returns RbacRoleDescriptor
-    language plpgsql
-    strict as $$
-begin
-    return roleDescriptor('hs_office_person', person.uuid, 'tenant');
-end; $$;
+call generateRbacRoleDescriptors('hsOfficePerson', 'hs_office_person');
 --//
 
 
