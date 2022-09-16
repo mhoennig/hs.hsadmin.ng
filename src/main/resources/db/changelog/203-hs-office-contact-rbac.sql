@@ -77,35 +77,9 @@ execute procedure createRbacRolesForHsOfficeContact();
 --changeset hs-office-contact-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-/*
-    Creates a view to the contact main table which maps the identifying name
-    (in this case, the prefix) to the objectUuid.
- */
-create or replace view hs_office_contact_iv as
-select target.uuid, cleanIdentifier(target.label) as idName
-    from hs_office_contact as target;
--- TODO.spec: Is it ok that everybody has access to this information?
-grant all privileges on hs_office_contact_iv to restricted;
-
-/*
-    Returns the objectUuid for a given identifying name (in this case the prefix).
- */
-create or replace function hs_office_contactUuidByIdName(idName varchar)
-    returns uuid
-    language sql
-    strict as $$
-select uuid from hs_office_contact_iv iv where iv.idName = hs_office_contactUuidByIdName.idName;
-$$;
-
-/*
-    Returns the identifying name for a given objectUuid (in this case the label).
- */
-create or replace function hs_office_contactIdNameByUuid(uuid uuid)
-    returns varchar
-    language sql
-    strict as $$
-select idName from hs_office_contact_iv iv where iv.uuid = hs_office_contactIdNameByUuid.uuid;
-$$;
+call generateRbacIdentityView('hs_office_contact', $idName$
+    target.label
+    $idName$);
 --//
 
 

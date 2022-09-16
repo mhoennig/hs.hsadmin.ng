@@ -70,3 +70,46 @@ begin
     execute sql;
 end; $$;
 --//
+
+
+-- ============================================================================
+--changeset rbac-generators-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace procedure generateRbacIdentityView(targetTable text, idNameExpression text)
+    language plpgsql as $$
+declare
+    sql text;
+begin
+    -- create a view to the target main table which maps an idName to the objectUuid
+    sql = format($sql$
+            create or replace view %1$s_iv as
+            select target.uuid, cleanIdentifier(%2$s) as idName
+                from %1$s as target;
+            grant all privileges on %1$s_iv to restricted;
+        $sql$, targetTable, idNameExpression);
+    execute sql;
+
+    -- creates a function which maps an idName to the objectUuid
+    sql = format($sql$
+        create or replace function %1$sUuidByIdName(givenIdName varchar)
+            returns uuid
+            language sql
+            strict as $f$
+        select uuid from %1$s_iv iv where iv.idName = givenIdName;
+        $f$;
+        $sql$, targetTable);
+    execute sql;
+
+    -- creates a function which maps an objectUuid to the related idName
+    sql = format($sql$
+        create or replace function %1$sIdNameByUuid(givenUuid uuid)
+            returns varchar
+            language sql
+            strict as $f$
+        select idName from %1$s_iv iv where iv.uuid = givenUuid;
+        $f$;
+    $sql$, targetTable);
+    execute sql;
+end; $$;
+--//

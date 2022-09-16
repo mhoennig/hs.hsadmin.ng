@@ -93,38 +93,9 @@ execute procedure createRbacRulesForTestDomain();
 -- ============================================================================
 --changeset test-domain-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates a view to the domain main table which maps the identifying name
-    (in this case, actually the column `name`) to the objectUuid.
- */
-drop view if exists test_domain_iv;
-create or replace view test_domain_iv as
-select distinct target.uuid, target.name as idName
-    from test_domain as target;
--- TODO.spec: Is it ok that everybody has access to this information?
-grant all privileges on test_domain_iv to restricted;
-
-/*
-    Returns the objectUuid for a given identifying name (in this case, actually the column `name`).
- */
-create or replace function test_domainUuidByIdName(idName varchar)
-    returns uuid
-    language sql
-    strict as $$
-select uuid from test_domain_iv iv where iv.idName = test_domainUuidByIdName.idName;
-$$;
-
-/*
-    Returns the identifying name for a given objectUuid (in this case the name).
- */
-create or replace function test_domainIdNameByUuid(uuid uuid)
-    returns varchar
-    stable leakproof
-    language sql
-    strict as $$
-select idName from test_domain_iv iv where iv.uuid = test_domainIdNameByUuid.uuid;
-$$;
+call generateRbacIdentityView('test_domain', $idName$
+    target.name
+    $idName$);
 --//
 
 

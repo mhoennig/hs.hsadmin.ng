@@ -76,38 +76,9 @@ execute procedure createRbacRolesForTestPackage();
 -- ============================================================================
 --changeset test-package-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates a view to the package main table which maps the identifying name
-    (in this case, actually the column `name`) to the objectUuid.
- */
-drop view if exists test_package_iv;
-create or replace view test_package_iv as
-select distinct target.uuid, target.name as idName
-    from test_package as target;
--- TODO: Is it ok that everybody has access to this information?
-grant all privileges on test_package_iv to restricted;
-
-/*
-    Returns the objectUuid for a given identifying name (in this case, actually the column `name`).
- */
-create or replace function test_packageUuidByIdName(idName varchar)
-    returns uuid
-    language sql
-    strict as $$
-select uuid from test_package_iv iv where iv.idName = test_packageUuidByIdName.idName;
-$$;
-
-/*
-    Returns the identifying name for a given objectUuid (in this case the name).
- */
-create or replace function test_packageIdNameByUuid(uuid uuid)
-    returns varchar
-    stable leakproof
-    language sql
-    strict as $$
-select idName from test_package_iv iv where iv.uuid = test_packageIdNameByUuid.uuid;
-$$;
+call generateRbacIdentityView('test_package', $idName$
+    target.name
+    $idName$);
 --//
 
 

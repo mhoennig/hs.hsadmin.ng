@@ -116,42 +116,11 @@ execute procedure hsOfficePartnerRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates a view to the partner main table which maps the identifying name
-    (in this case, the prefix) to the objectUuid.
- */
-create or replace view hs_office_partner_iv as
-select target.uuid,
-       cleanIdentifier(
-                       (select idName from hs_office_person_iv p where p.uuid = target.personuuid)
-                       || '-' ||
-                       (select idName from hs_office_contact_iv c where c.uuid = target.contactuuid)
-           )
-           as idName
-    from hs_office_partner as target;
--- TODO.spec: Is it ok that everybody has access to this information?
-grant all privileges on hs_office_partner_iv to restricted;
-
-/*
-    Returns the objectUuid for a given identifying name (in this case the prefix).
- */
-create or replace function hs_office_partnerUuidByIdName(idName varchar)
-    returns uuid
-    language sql
-    strict as $$
-select uuid from hs_office_partner_iv iv where iv.idName = hs_office_partnerUuidByIdName.idName;
-$$;
-
-/*
-    Returns the identifying name for a given objectUuid (in this case the label).
- */
-create or replace function hs_office_partnerIdNameByUuid(uuid uuid)
-    returns varchar
-    language sql
-    strict as $$
-select idName from hs_office_partner_iv iv where iv.uuid = hs_office_partnerIdNameByUuid.uuid;
-$$;
+call generateRbacIdentityView('hs_office_partner', $idName$
+    (select idName from hs_office_person_iv p where p.uuid = target.personuuid)
+    || '-' ||
+    (select idName from hs_office_contact_iv c where c.uuid = target.contactuuid)
+    $idName$);
 --//
 
 

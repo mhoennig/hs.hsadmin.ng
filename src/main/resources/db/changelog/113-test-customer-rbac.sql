@@ -78,37 +78,9 @@ execute procedure createRbacRolesForTestCustomer();
 -- ============================================================================
 --changeset test-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates a view to the customer main table which maps the identifying name
-    (in this case, the prefix) to the objectUuid.
- */
-drop view if exists test_customer_iv;
-create or replace view test_customer_iv as
-select target.uuid, target.prefix as idName
-    from test_customer as target;
--- TODO.spec: Is it ok that everybody has access to this information?
-grant all privileges on test_customer_iv to restricted;
-
-/*
-    Returns the objectUuid for a given identifying name (in this case the prefix).
- */
-create or replace function test_customerUuidByIdName(idName varchar)
-    returns uuid
-    language sql
-    strict as $$
-select uuid from test_customer_iv iv where iv.idName = test_customerUuidByIdName.idName;
-$$;
-
-/*
-    Returns the identifying name for a given objectUuid (in this case the prefix).
- */
-create or replace function test_customerIdNameByUuid(uuid uuid)
-    returns varchar
-    language sql
-    strict as $$
-select idName from test_customer_iv iv where iv.uuid = test_customerIdNameByUuid.uuid;
-$$;
+call generateRbacIdentityView('test_customer', $idName$
+    target.prefix
+    $idName$);
 --//
 
 
