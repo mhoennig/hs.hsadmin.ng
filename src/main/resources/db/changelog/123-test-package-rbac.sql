@@ -38,7 +38,7 @@ begin
     -- an owner role is created and assigned to the customer's admin role
     packageOwnerRoleUuid = createRole(
         testPackageOwner(NEW),
-        withoutPermissions(),
+        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
         beneathRole(testCustomerAdmin(parentCustomer))
         );
 
@@ -64,7 +64,6 @@ end; $$;
     An AFTER INSERT TRIGGER which creates the role structure for a new package.
  */
 
-drop trigger if exists createRbacRolesForTestPackage_Trigger on test_package;
 create trigger createRbacRolesForTestPackage_Trigger
     after insert
     on test_package
@@ -76,9 +75,7 @@ execute procedure createRbacRolesForTestPackage();
 -- ============================================================================
 --changeset test-package-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('test_package', $idName$
-    target.name
-    $idName$);
+call generateRbacIdentityView('test_package', 'target.name');
 --//
 
 
@@ -90,11 +87,22 @@ call generateRbacIdentityView('test_package', $idName$
     Creates a view to the customer main table which maps the identifying name
     (in this case, the prefix) to the objectUuid.
  */
-drop view if exists test_package_rv;
-create or replace view test_package_rv as
-select target.*
-    from test_package as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'test_package', currentSubjectsUuids()))
-    order by target.name;
-grant all privileges on test_package_rv to restricted;
+-- drop view if exists test_package_rv;
+-- create or replace view test_package_rv as
+-- select target.*
+--     from test_package as target
+--     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'test_package', currentSubjectsUuids()))
+--     order by target.name;
+-- grant all privileges on test_package_rv to restricted;
+
+call generateRbacRestrictedView('test_package', 'target.name',
+    $updates$
+        version = new.version,
+        customerUuid = new.customerUuid,
+        name = new.name,
+        description = new.description
+    $updates$);
+
 --//
+
+

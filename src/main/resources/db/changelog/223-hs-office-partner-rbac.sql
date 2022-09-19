@@ -127,120 +127,18 @@ call generateRbacIdentityView('hs_office_partner', $idName$
 -- ============================================================================
 --changeset hs-office-partner-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-    Creates a view to the partner main table with row-level limitation
-    based on the 'view' permission of the current user or assumed roles.
- */
-set session session authorization default;
-drop view if exists hs_office_partner_rv;
-create or replace view hs_office_partner_rv as
-select target.*
-    from hs_office_partner as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'hs_office_partner', currentSubjectsUuids()));
-grant all privileges on hs_office_partner_rv to restricted;
+call generateRbacRestrictedView('hs_office_partner',
+    '(select idName from hs_office_person_iv p where p.uuid = target.personUuid)',
+    $updates$
+        personUuid = new.personUuid,
+        contactUuid = new.contactUuid,
+        registrationOffice = new.registrationOffice,
+        registrationNumber = new.registrationNumber,
+        birthday = new.birthday,
+        birthName = new.birthName,
+        dateOfDeath = new.dateOfDeath
+    $updates$);
 --//
-
-
--- ============================================================================
---changeset hs-office-partner-rbac-INSTEAD-OF-INSERT-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of insert trigger function for hs_office_partner_rv.
- */
-create or replace function insertHsOfficePartner()
-    returns trigger
-    language plpgsql as $$
-declare
-    newUser hs_office_partner;
-begin
-    insert
-        into hs_office_partner
-        values (new.*)
-        returning * into newUser;
-    return newUser;
-end;
-$$;
-
-/*
-    Creates an instead of insert trigger for the hs_office_partner_rv view.
- */
-create trigger insertHsOfficePartner_Trigger
-    instead of insert
-    on hs_office_partner_rv
-    for each row
-execute function insertHsOfficePartner();
---//
-
-
--- ============================================================================
---changeset hs-office-partner-rbac-INSTEAD-OF-DELETE-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of delete trigger function for hs_office_partner_rv.
-
-    Checks if the current subject (user / assumed role) has the permission to delete the row.
- */
-create or replace function deleteHsOfficePartner()
-    returns trigger
-    language plpgsql as $$
-begin
-    if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_office_partner', currentSubjectsUuids())) then
-        delete from hs_office_partner p where p.uuid = old.uuid;
-        return old;
-    end if;
-    raise exception '[403] Subject % is not allowed to delete partner uuid %', currentSubjectsUuids(), old.uuid;
-end; $$;
-
-/*
-    Creates an instead of delete trigger for the hs_office_partner_rv view.
- */
-create trigger deleteHsOfficePartner_Trigger
-    instead of delete
-    on hs_office_partner_rv
-    for each row
-execute function deleteHsOfficePartner();
---/
-
-
--- ============================================================================
---changeset hs-office-partner-rbac-INSTEAD-OF-UPDATE-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of update trigger function for hs_office_partner_rv.
-
-    Checks if the current subject (user / assumed role) has the permission to update the row.
- */
-create or replace function updateHsOfficePartner()
-    returns trigger
-    language plpgsql as $$
-begin
-    if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('edit', 'hs_office_partner', currentSubjectsUuids())) then
-        update hs_office_partner
-            set personUuid = new.personUuid,
-                contactUuid = new.contactUuid,
-                registrationOffice = new.registrationOffice,
-                registrationNumber = new.registrationNumber,
-                birthday = new.birthday,
-                birthName = new.birthName,
-                dateOfDeath = new.dateOfDeath
-            where uuid = old.uuid;
-        return old;
-    end if;
-    raise exception '[403] Subject % is not allowed to update partner uuid %', currentSubjectsUuids(), old.uuid;
-end; $$;
-
-/*
-    Creates an instead of delete trigger for the hs_office_partner_rv view.
- */
-create trigger updateHsOfficePartner_Trigger
-    instead of update
-    on hs_office_partner_rv
-    for each row
-execute function updateHsOfficePartner();
---/
 
 
 -- ============================================================================

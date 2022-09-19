@@ -243,7 +243,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update partner uuid");
+                    "[403] Subject ", " is not allowed to update hs_office_partner uuid");
         }
 
         @Test
@@ -265,7 +265,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update partner uuid");
+                    "[403] Subject ", " is not allowed to update hs_office_partner uuid");
         }
 
         private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
@@ -333,7 +333,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " not allowed to delete partner");
+                    "[403] Subject ", " not allowed to delete hs_office_partner");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return partnerRepo.findByUuid(givenPartner.getUuid());

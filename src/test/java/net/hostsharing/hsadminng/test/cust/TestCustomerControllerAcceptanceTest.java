@@ -4,6 +4,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.test.JpaAttempt;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +23,7 @@ import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = HsadminNgApplication.class
+        classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
 class TestCustomerControllerAcceptanceTest {
@@ -32,8 +36,14 @@ class TestCustomerControllerAcceptanceTest {
 
     @Autowired
     Context contextMock;
+
     @Autowired
     TestCustomerRepository testCustomerRepository;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
+
+    Set<UUID> tempPartnerUuids = new HashSet<>();
 
     @Nested
     class ListCustomers {
@@ -46,7 +56,7 @@ class TestCustomerControllerAcceptanceTest {
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
-                .then().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("[0].prefix", is("xxx"))
@@ -119,8 +129,8 @@ class TestCustomerControllerAcceptanceTest {
                         .body("""
                               {
                                 "reference": 90020,
-                                "prefix": "ttt",
-                                "adminUserName": "customer-admin@ttt.example.com"
+                                "prefix": "uuu",
+                                "adminUserName": "customer-admin@uuu.example.com"
                               }
                               """)
                         .port(port)
@@ -129,22 +139,22 @@ class TestCustomerControllerAcceptanceTest {
                     .then().assertThat()
                         .statusCode(201)
                         .contentType(ContentType.JSON)
-                        .body("prefix", is("ttt"))
+                        .body("prefix", is("uuu"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new customer can be viewed by its own admin
-            final var newUserUuid = UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1));
-            context.define("customer-admin@ttt.example.com");
+            final var newUserUuid = toCleanup(UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1)));
+            context.define("customer-admin@uuu.example.com");
             assertThat(testCustomerRepository.findByUuid(newUserUuid))
-                    .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("ttt"));
+                    .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("uuu"));
         }
 
         @Test
         void globalAdmin_withoutAssumedRole_canAddCustomerWithGivenUuid() {
 
-            final var givenUuid = UUID.randomUUID();
+            final var givenUuid = toCleanup(UUID.randomUUID());
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -237,5 +247,23 @@ class TestCustomerControllerAcceptanceTest {
             context.define("superuser-fran@hostsharing.net");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
+    }
+
+    private UUID toCleanup(final UUID tempPartnerUuid) {
+        tempPartnerUuids.add(tempPartnerUuid);
+        return tempPartnerUuid;
+    }
+
+    @AfterEach
+    void cleanup() {
+        tempPartnerUuids.forEach(uuid -> {
+            jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net", null);
+                System.out.println("DELETING temporary partner: " + uuid);
+                final var entity = testCustomerRepository.findByUuid(uuid);
+                final var count = testCustomerRepository.deleteByUuid(uuid);
+                System.out.println("DELETED temporary partner: " + uuid + (count > 0 ? " successful" : " failed") + " (" + entity.map(TestCustomerEntity::getPrefix).orElse("???") + ")");
+            }).assertSuccessful();
+        });
     }
 }

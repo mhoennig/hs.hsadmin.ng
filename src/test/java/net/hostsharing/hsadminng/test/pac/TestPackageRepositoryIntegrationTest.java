@@ -98,22 +98,22 @@ class TestPackageRepositoryIntegrationTest {
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00.admin");
+                globalAdminWithAssumedRole("test_package#xxx00.owner");
                 pac.setDescription("description set by thread 1");
                 testPackageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00.admin");
+                globalAdminWithAssumedRole("test_package#xxx00.owner");
                 pac.setDescription("description set by thread 2");
                 testPackageRepository.save(pac);
                 sleep(1500);
             });
 
             // then
-            em.refresh(pac);
-            assertThat(pac.getDescription()).isEqualTo("description set by thread 1");
             assertThat(result1.caughtException()).isNull();
             assertThat(result2.caughtException()).isInstanceOf(ObjectOptimisticLockingFailureException.class);
+            em.refresh(pac);
+            assertThat(pac.getDescription()).isEqualTo("description set by thread 1");
         }
 
         private void sleep(final int millis) {

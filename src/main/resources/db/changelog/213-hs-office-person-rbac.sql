@@ -17,11 +17,9 @@ call generateRbacRoleDescriptors('hsOfficePerson', 'hs_office_person');
 -- ============================================================================
 --changeset hs-office-person-rbac-ROLES-CREATION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
 /*
     Creates the roles and their assignments for a new person for the AFTER INSERT TRIGGER.
  */
-
 create or replace function createRbacRolesForHsOfficePerson()
     returns trigger
     language plpgsql
@@ -85,81 +83,15 @@ call generateRbacIdentityView('hs_office_person', $idName$
 -- ============================================================================
 --changeset hs-office-person-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-    Creates a view to the person main table with row-level limitation
-    based on the 'view' permission of the current user or assumed roles.
- */
-set session session authorization default;
-drop view if exists hs_office_person_rv;
-create or replace view hs_office_person_rv as
-select target.*
-    from hs_office_person as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'hs_office_person', currentSubjectsUuids()));
-grant all privileges on hs_office_person_rv to restricted;
+call generateRbacRestrictedView('hs_office_person', 'concat(target.tradeName, target.familyName, target.givenName)',
+    $updates$
+        personType = new.personType,
+        tradeName = new.tradeName,
+        givenName = new.givenName,
+        familyName = new.familyName
+    $updates$);
 --//
 
-
--- ============================================================================
---changeset hs-office-person-rbac-INSTEAD-OF-INSERT-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of insert trigger function for hs_office_person_rv.
- */
-create or replace function insertHsOfficePerson()
-    returns trigger
-    language plpgsql as $$
-declare
-    newUser hs_office_person;
-begin
-    insert
-        into hs_office_person
-        values (new.*)
-        returning * into newUser;
-    return newUser;
-end;
-$$;
-
-/*
-    Creates an instead of insert trigger for the hs_office_person_rv view.
- */
-create trigger insertHsOfficePerson_Trigger
-    instead of insert
-    on hs_office_person_rv
-    for each row
-execute function insertHsOfficePerson();
---//
-
--- ============================================================================
---changeset hs-office-person-rbac-INSTEAD-OF-DELETE-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of delete trigger function for hs_office_person_rv.
-
-    Checks if the current subject (user / assumed role) has the permission to delete the row.
- */
-create or replace function deleteHsOfficePerson()
-    returns trigger
-    language plpgsql as $$
-begin
-    if hasGlobalRoleGranted(currentUserUuid()) or
-       old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_office_person', currentSubjectsUuids())) then
-        delete from hs_office_person c where c.uuid = old.uuid;
-        return old;
-    end if;
-    raise exception '[403] User % not allowed to delete person uuid %', currentUser(), old.uuid;
-end; $$;
-
-/*
-    Creates an instead of delete trigger for the hs_office_person_rv view.
- */
-create trigger deleteHsOfficePerson_Trigger
-    instead of delete
-    on hs_office_person_rv
-    for each row
-execute function deleteHsOfficePerson();
---/
 
 -- ============================================================================
 --changeset hs-office-person-rbac-NEW-PERSON:1 endDelimiter:--//

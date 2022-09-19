@@ -31,7 +31,7 @@ begin
 
             insert
                 into test_package (customerUuid, name, description)
-                values (cust.uuid, pacName, 'Here can add your own description of package ' || pacName || '.')
+                values (cust.uuid, pacName, 'Here you can add your own description of package ' || pacName || '.')
                 returning * into pac;
 
             call grantRoleToUser(

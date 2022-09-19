@@ -86,7 +86,7 @@ class TestPackageControllerAcceptanceTest {
         void withDescriptionUpdatesDescription() {
 
             assumeThat(getDescriptionOfPackage("xxx00"))
-                    .isEqualTo("Here can add your own description of package xxx00.");
+                    .isEqualTo("Here you can add your own description of package xxx00.");
 
             final var randomDescription = RandomStringUtils.randomAlphanumeric(80);
 
@@ -104,7 +104,7 @@ class TestPackageControllerAcceptanceTest {
                     .port(port)
                 .when()
                     .patch("http://localhost/api/test/packages/{uuidOfPackage}", getUuidOfPackage("xxx00"))
-                .then()
+                .then().log().all()
                     .assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -118,7 +118,7 @@ class TestPackageControllerAcceptanceTest {
         void withNullDescriptionUpdatesDescriptionToNull() {
 
             assumeThat(getDescriptionOfPackage("xxx01"))
-                    .isEqualTo("Here can add your own description of package xxx01.");
+                    .isEqualTo("Here you can add your own description of package xxx01.");
 
             // @formatter:off
             RestAssured
@@ -147,7 +147,7 @@ class TestPackageControllerAcceptanceTest {
         void withoutDescriptionDoesNothing() {
 
             assumeThat(getDescriptionOfPackage("xxx02"))
-                    .isEqualTo("Here can add your own description of package xxx02.");
+                    .isEqualTo("Here you can add your own description of package xxx02.");
 
             // @formatter:off
             RestAssured
@@ -163,7 +163,7 @@ class TestPackageControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType("application/json")
                     .body("name", is("xxx02"))
-                    .body("description", is("Here can add your own description of package xxx02.")); // unchanged
+                    .body("description", is("Here you can add your own description of package xxx02.")); // unchanged
             // @formatter:on
         }
     }

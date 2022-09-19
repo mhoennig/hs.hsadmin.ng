@@ -18,4 +18,6 @@ public interface TestCustomerRepository extends Repository<TestCustomerEntity, U
     TestCustomerEntity save(final TestCustomerEntity entity);
 
     long count();
+
+    int deleteByUuid(UUID uuid);
 }

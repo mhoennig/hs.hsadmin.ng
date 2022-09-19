@@ -86,81 +86,15 @@ call generateRbacIdentityView('hs_office_contact', $idName$
 -- ============================================================================
 --changeset hs-office-contact-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-    Creates a view to the contact main table with row-level limitation
-    based on the 'view' permission of the current user or assumed roles.
- */
-set session session authorization default;
-drop view if exists hs_office_contact_rv;
-create or replace view hs_office_contact_rv as
-select target.*
-    from hs_office_contact as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'hs_office_contact', currentSubjectsUuids()));
-grant all privileges on hs_office_contact_rv to restricted;
---//
-
-
--- ============================================================================
---changeset hs-office-contact-rbac-INSTEAD-OF-INSERT-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of insert trigger function for hs_office_contact_rv.
- */
-create or replace function insertHsOfficeContact()
-    returns trigger
-    language plpgsql as $$
-declare
-    newUser hs_office_contact;
-begin
-    insert
-        into hs_office_contact
-        values (new.*)
-        returning * into newUser;
-    return newUser;
-end;
-$$;
-
-/*
-    Creates an instead of insert trigger for the hs_office_contact_rv view.
- */
-create trigger insertHsOfficeContact_Trigger
-    instead of insert
-    on hs_office_contact_rv
-    for each row
-execute function insertHsOfficeContact();
---//
-
--- ============================================================================
---changeset hs-office-contact-rbac-INSTEAD-OF-DELETE-TRIGGER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Instead of delete trigger function for hs_office_contact_rv.
-
-    Checks if the current subject (user / assumed role) has the permission to delete the row.
- */
-create or replace function deleteHsOfficeContact()
-    returns trigger
-    language plpgsql as $$
-begin
-    if hasGlobalRoleGranted(currentUserUuid()) or
-       old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', 'hs_office_contact', currentSubjectsUuids())) then
-        delete from hs_office_contact c where c.uuid = old.uuid;
-        return old;
-    end if;
-    raise exception '[403] User % not allowed to delete contact uuid %', currentUser(), old.uuid;
-end; $$;
-
-/*
-    Creates an instead of delete trigger for the hs_office_contact_rv view.
- */
-create trigger deleteHsOfficeContact_Trigger
-    instead of delete
-    on hs_office_contact_rv
-    for each row
-execute function deleteHsOfficeContact();
+call generateRbacRestrictedView('hs_office_contact', 'target.label',
+    $updates$
+        label = new.label,
+        postalAddress = new.postalAddress,
+        emailAddresses = new.emailAddresses,
+        phoneNumbers = new.phoneNumbers
+    $updates$);
 --/
+
 
 -- ============================================================================
 --changeset hs-office-contact-rbac-NEW-CONTACT:1 endDelimiter:--//

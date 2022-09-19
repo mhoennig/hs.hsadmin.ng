@@ -87,17 +87,12 @@ call generateRbacIdentityView('test_customer', $idName$
 -- ============================================================================
 --changeset test-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-    Creates a view to the customer main table with row-level limitation
-    based on the 'view' permission of the current user or assumed roles.
- */
-set session session authorization default;
-drop view if exists test_customer_rv;
-create or replace view test_customer_rv as
-select target.*
-    from test_customer as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'test_customer', currentSubjectsUuids()));
-grant all privileges on test_customer_rv to restricted;
+call generateRbacRestrictedView('test_customer', 'target.prefix',
+    $updates$
+        reference = new.reference,
+        prefix = new.prefix,
+        adminUserName = new.adminUserName
+    $updates$);
 --//
 
 

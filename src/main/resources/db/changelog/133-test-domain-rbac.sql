@@ -100,7 +100,7 @@ call generateRbacIdentityView('test_domain', $idName$
 
 
 -- ============================================================================
---changeset test-package-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset test-domain-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*

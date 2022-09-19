@@ -422,11 +422,6 @@ class HsOfficePartnerControllerAcceptanceTest {
         }
     }
 
-    private UUID toCleanup(final UUID tempPartnerUuid) {
-        tempPartnerUuids.add(tempPartnerUuid);
-        return tempPartnerUuid;
-    }
-
     private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler() {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
@@ -442,6 +437,11 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             return partnerRepo.save(newPartner);
         }).assertSuccessful().returnedValue();
+    }
+
+    private UUID toCleanup(final UUID tempPartnerUuid) {
+        tempPartnerUuids.add(tempPartnerUuid);
+        return tempPartnerUuid;
     }
 
     @AfterEach
