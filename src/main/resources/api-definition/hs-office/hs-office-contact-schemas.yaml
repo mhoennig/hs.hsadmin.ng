@@ -3,7 +3,22 @@ components:
 
     schemas:
 
-        HsOfficeContactBase:
+        HsOfficeContact:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                label:
+                    type: string
+                postalAddress:
+                    type: string
+                emailAddresses:
+                    type: string
+                phoneNumbers:
+                    type: string
+
+        HsOfficeContactInsert:
             type: object
             properties:
                 label:
@@ -14,15 +29,21 @@ components:
                     type: string
                 phoneNumbers:
                     type: string
+            required:
+                - label
 
-        HsOfficeContact:
-            allOf:
-                - type: object
-                  properties:
-                      uuid:
-                          type: string
-                          format: uuid
-                - $ref: '#/components/schemas/HsOfficeContactBase'
-
-        HsOfficeContactUpdate:
-            $ref: '#/components/schemas/HsOfficeContactBase'
+        HsOfficeContactPatch:
+            type: object
+            properties:
+                label:
+                    type: string
+                    nullable: true
+                postalAddress:
+                    type: string
+                    nullable: true
+                emailAddresses:
+                    type: string
+                    nullable: true
+                phoneNumbers:
+                    type: string
+                    nullable: true

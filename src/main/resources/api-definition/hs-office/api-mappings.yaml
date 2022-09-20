@@ -14,3 +14,5 @@ map:
     paths:
         /api/hs/office/partners/{partnerUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable
+        /api/hs/office/contacts/{contactUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable

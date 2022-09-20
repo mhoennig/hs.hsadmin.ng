@@ -1,9 +1,9 @@
 get:
-    summary: Returns a list of (optionally filtered) business partners.
-    description: Returns the list of (optionally filtered) business partners which are visible to the current user or any of it's assumed roles.
+    summary: Returns a list of (optionally filtered) contacts.
+    description: Returns the list of (optionally filtered) contacts which are visible to the current user or any of it's assumed roles.
     tags:
-        - hs-office-partners
-    operationId: listPartners
+        - hs-office-contacts
+    operationId: listContacts
     parameters:
         - $ref: './auth.yaml#/components/parameters/currentUser'
         - $ref: './auth.yaml#/components/parameters/assumedRoles'
@@ -12,7 +12,7 @@ get:
           required: false
           schema:
               type: string
-          description: Prefix of name properties from person or contact to filter the results.
+          description: Prefix of label to filter the results.
     responses:
         "200":
             description: OK
@@ -21,17 +21,17 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                            $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: './error-responses.yaml#/components/responses/Forbidden'
 
 post:
-    summary: Adds a new business partner.
+    summary: Adds a new contact.
     tags:
-        - hs-office-partners
-    operationId: addPartner
+        - hs-office-contacts
+    operationId: addContact
     parameters:
         - $ref: './auth.yaml#/components/parameters/currentUser'
         - $ref: './auth.yaml#/components/parameters/assumedRoles'
@@ -39,7 +39,7 @@ post:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartnerInsert'
+                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContactInsert'
         required: true
     responses:
         "201":
@@ -47,7 +47,7 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                        $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":

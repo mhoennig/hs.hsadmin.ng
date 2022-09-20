@@ -95,11 +95,11 @@ public class Context {
                 .getSingleResult();
     }
 
-    private static String getCallerMethodNameFromStack() {
+    public static String getCallerMethodNameFromStackFrame(final int skipFrames) {
         final Optional<StackWalker.StackFrame> caller =
                 StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
                         .walk(frames -> frames
-                                .skip(2)
+                                .skip(skipFrames)
                                 .filter(c -> c.getDeclaringClass() != Context.class)
                                 .filter(c -> c.getDeclaringClass()
                                         .getPackageName()
@@ -115,7 +115,7 @@ public class Context {
         if (isRequestScopeAvailable()) {
             return request.getMethod() + " " + request.getRequestURI();
         } else {
-            return getCallerMethodNameFromStack();
+            return getCallerMethodNameFromStackFrame(2);
         }
     }
 

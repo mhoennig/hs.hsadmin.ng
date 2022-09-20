@@ -8,9 +8,20 @@ servers:
 
 paths:
 
+  # Partners
+
   /api/hs/office/partners:
     $ref: "./hs-office-partners.yaml"
 
   /api/hs/office/partners/{partnerUUID}:
     $ref: "./hs-office-partners-with-uuid.yaml"
+
+
+  # Contacts
+
+  /api/hs/office/contacts:
+    $ref: "./hs-office-contacts.yaml"
+
+  /api/hs/office/contacts/{contactUUID}:
+    $ref: "./hs-office-contacts-with-uuid.yaml"
 

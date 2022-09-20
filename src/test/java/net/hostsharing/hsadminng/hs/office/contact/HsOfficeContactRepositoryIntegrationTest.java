@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.internal.bytebuddy.utility.RandomString;
@@ -270,6 +271,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         }).assumeSuccessful().returnedValue();
     }
 
+    @BeforeEach
     @AfterEach
     void cleanup() {
         context("superuser-alex@hostsharing.net", null);
