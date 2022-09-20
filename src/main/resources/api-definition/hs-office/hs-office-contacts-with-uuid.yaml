@@ -29,7 +29,7 @@ get:
 patch:
     tags:
         - hs-office-contacts
-    description: 'Updates a single business contact by its uuid, if permitted for the current subject.'
+    description: 'Updates a single contact by its uuid, if permitted for the current subject.'
     operationId: patchContact
     parameters:
         -   $ref: './auth.yaml#/components/parameters/currentUser'
