@@ -3,16 +3,28 @@ components:
 
     schemas:
 
-        HsOfficePersonBase:
+        HsOfficePersonTypeValues:
+            - NATURAL               # a human
+            - LEGAL                 # e.g. Corp., Inc., AG, GmbH, eG
+            - SOLE_REPRESENTATION   # e.g. OHG, GbR
+            - JOINT_REPRESENTATION  # e.g. community of heirs
+
+        HsOfficePersonType:
+            type: string
+            enum:
+                - NATURAL               # a human
+                - LEGAL                 # e.g. Corp., Inc., AG, GmbH, eG
+                - SOLE_REPRESENTATION   # e.g. OHG, GbR
+                - JOINT_REPRESENTATION  # e.g. community of heirs
+
+        HsOfficePerson:
             type: object
             properties:
-                personType:
+                uuid:
                     type: string
-                    enum:
-                        - NATURAL               # a human
-                        - LEGAL                 # e.g. Corp., Inc., AG, GmbH, eG
-                        - SOLE_REPRESENTATION   # e.g. OHG, GbR
-                        - JOINT_REPRESENTATION  # e.g. community of heirs
+                    format: uuid
+                personType:
+                    $ref: '#/components/schemas/HsOfficePersonType'
                 tradeName:
                     type: string
                 givenName:
@@ -20,14 +32,32 @@ components:
                 familyName:
                     type: string
 
-        HsOfficePerson:
-            allOf:
-                - type: object
-                  properties:
-                      uuid:
-                          type: string
-                          format: uuid
-                - $ref: '#/components/schemas/HsOfficePersonBase'
+        HsOfficePersonInsert:
+            type: object
+            properties:
+                personType:
+                    $ref: '#/components/schemas/HsOfficePersonType'
+                tradeName:
+                    type: string
+                givenName:
+                    type: string
+                familyName:
+                    type: string
+            required:
+                - personType
 
-        HsOfficePersonUpdate:
-            $ref: '#/components/schemas/HsOfficePersonBase'
+        HsOfficePersonPatch:
+            type: object
+            properties:
+                personType:
+                    nullable: true
+                    $ref: '#/components/schemas/HsOfficePersonType'
+                tradeName:
+                    type: string
+                    nullable: true
+                givenName:
+                    type: string
+                    nullable: true
+                familyName:
+                    type: string
+                    nullable: true

@@ -16,3 +16,5 @@ map:
             null: org.openapitools.jackson.nullable.JsonNullable
         /api/hs/office/contacts/{contactUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable
+        /api/hs/office/persons/{personUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable

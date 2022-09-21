@@ -25,3 +25,12 @@ paths:
   /api/hs/office/contacts/{contactUUID}:
     $ref: "./hs-office-contacts-with-uuid.yaml"
 
+
+  # Persons
+
+  /api/hs/office/persons:
+    $ref: "./hs-office-persons.yaml"
+
+  /api/hs/office/persons/{personUUID}:
+    $ref: "./hs-office-persons-with-uuid.yaml"
+
