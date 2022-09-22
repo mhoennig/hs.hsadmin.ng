@@ -506,6 +506,16 @@ More infos, e.g. on blacklists see on the [project's website](https://github.com
 
 ## How To ...
 
+### How to Configure .pgpass for the Default PostgreSQL Database?
+
+To access the default database schema as used during development, add this line to your `.pgpass` file in your users home directory:
+
+```
+localhost:5432:postgres:postgres:password
+```
+
+Amend host and port if necessary.
+
 
 ### How to Run the Tests Against a Local User-Space Podman Daemon?
 
