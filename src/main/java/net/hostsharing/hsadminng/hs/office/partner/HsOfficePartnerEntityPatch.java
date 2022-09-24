@@ -9,8 +9,9 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-class HsOfficePartnerEntityPatch {
+class HsOfficePartnerEntityPatch implements EntityPatch<HsOfficePartnerPatchResource> {
 
     private final HsOfficePartnerEntity entity;
     private final Function<UUID, Optional<HsOfficeContactEntity>> fetchContact;
@@ -25,21 +26,32 @@ class HsOfficePartnerEntityPatch {
         this.fetchPerson = fetchPerson;
     }
 
-    void apply(final HsOfficePartnerPatchResource resource) {
+    @Override
+    public void apply(final HsOfficePartnerPatchResource resource) {
         OptionalFromJson.of(resource.getContactUuid()).ifPresent(newValue -> {
-            entity.setContact(fetchContact.apply(newValue).orElseThrow(
-                    () -> new NoSuchElementException("cannot find contact uuid " + newValue)
-            ));
+            verifyNotNull(newValue, "contact");
+            entity.setContact(fetchContact.apply(newValue)
+                    .orElseThrow(noSuchElementException("contact", newValue)));
         });
         OptionalFromJson.of(resource.getPersonUuid()).ifPresent(newValue -> {
-            entity.setPerson(fetchPerson.apply(newValue).orElseThrow(
-                    () -> new NoSuchElementException("cannot find person uuid " + newValue)
-            ));
+            verifyNotNull(newValue, "person");
+            entity.setPerson(fetchPerson.apply(newValue)
+                    .orElseThrow(noSuchElementException("person", newValue)));
         });
         OptionalFromJson.of(resource.getRegistrationOffice()).ifPresent(entity::setRegistrationOffice);
         OptionalFromJson.of(resource.getRegistrationNumber()).ifPresent(entity::setRegistrationNumber);
         OptionalFromJson.of(resource.getBirthday()).ifPresent(entity::setBirthday);
         OptionalFromJson.of(resource.getBirthName()).ifPresent(entity::setBirthName);
         OptionalFromJson.of(resource.getDateOfDeath()).ifPresent(entity::setDateOfDeath);
+    }
+
+    private Supplier<RuntimeException> noSuchElementException(final String propertyName, final UUID newValue) {
+        return () -> new NoSuchElementException("cannot find '" + propertyName + "' uuid " + newValue);
+    }
+
+    private void verifyNotNull(final UUID newValue, final String propertyName) {
+        if (newValue == null) {
+            throw new IllegalArgumentException("property '" + propertyName + "' must not be null");
+        }
     }
 }
