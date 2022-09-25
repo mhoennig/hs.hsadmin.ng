@@ -1,9 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
+import net.hostsharing.hsadminng.EntityPatcher;
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactPatchResource;
 
-class HsOfficeContactEntityPatch {
+class HsOfficeContactEntityPatch implements EntityPatcher<HsOfficeContactPatchResource> {
 
     private final HsOfficeContactEntity entity;
 
@@ -11,7 +12,8 @@ class HsOfficeContactEntityPatch {
         this.entity = entity;
     }
 
-    void apply(final HsOfficeContactPatchResource resource) {
+    @Override
+    public void apply(final HsOfficeContactPatchResource resource) {
         OptionalFromJson.of(resource.getLabel()).ifPresent(entity::setLabel);
         OptionalFromJson.of(resource.getPostalAddress()).ifPresent(entity::setPostalAddress);
         OptionalFromJson.of(resource.getEmailAddresses()).ifPresent(entity::setEmailAddresses);

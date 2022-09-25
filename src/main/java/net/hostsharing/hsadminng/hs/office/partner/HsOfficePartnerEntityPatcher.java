@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.EntityPatch;
+import net.hostsharing.hsadminng.EntityPatcher;
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
@@ -12,13 +12,13 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-class HsOfficePartnerEntityPatch implements EntityPatch<HsOfficePartnerPatchResource> {
+class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatchResource> {
 
     private final HsOfficePartnerEntity entity;
     private final Function<UUID, Optional<HsOfficeContactEntity>> fetchContact;
     private final Function<UUID, Optional<HsOfficePersonEntity>> fetchPerson;
 
-    HsOfficePartnerEntityPatch(
+    HsOfficePartnerEntityPatcher(
             final HsOfficePartnerEntity entity,
             final Function<UUID, Optional<HsOfficeContactEntity>> fetchContact,
             final Function<UUID, Optional<HsOfficePersonEntity>> fetchPerson) {

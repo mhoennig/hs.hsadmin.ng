@@ -3,15 +3,15 @@ package net.hostsharing.hsadminng.hs.office.person;
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonTypeResource;
-import net.hostsharing.hsadminng.EntityPatch;
+import net.hostsharing.hsadminng.EntityPatcher;
 
 import java.util.Optional;
 
-class HsOfficePersonEntityPatch implements EntityPatch<HsOfficePersonPatchResource> {
+class HsOfficePersonEntityPatcher implements EntityPatcher<HsOfficePersonPatchResource> {
 
     private final HsOfficePersonEntity entity;
 
-    HsOfficePersonEntityPatch(final HsOfficePersonEntity entity) {
+    HsOfficePersonEntityPatcher(final HsOfficePersonEntity entity) {
         this.entity = entity;
     }
 

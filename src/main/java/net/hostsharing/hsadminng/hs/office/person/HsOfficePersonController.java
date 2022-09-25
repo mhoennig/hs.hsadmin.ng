@@ -6,7 +6,6 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePersonsA
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonResource;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntityPatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,7 +108,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
         final var current = personRepo.findByUuid(personUuid).orElseThrow();
 
-        new HsOfficePersonEntityPatch(current).apply(body);
+        new HsOfficePersonEntityPatcher(current).apply(body);
 
         final var saved = personRepo.save(current);
         final var mapped = map(saved, HsOfficePersonResource.class);

@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
-class HsOfficePartnerEntityPatchUnitTest extends PatchUnitTestBase<
+class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
         HsOfficePartnerPatchResource,
         HsOfficePartnerEntity
         > {
@@ -58,8 +58,8 @@ class HsOfficePartnerEntityPatchUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficePartnerEntityPatch createPatcher(final HsOfficePartnerEntity partner) {
-        return new HsOfficePartnerEntityPatch(
+    protected HsOfficePartnerEntityPatcher createPatcher(final HsOfficePartnerEntity partner) {
+        return new HsOfficePartnerEntityPatcher(
                 partner,
                 uuid -> uuid == PATCHED_CONTACT_UUID
                         ? Optional.of(newContact(uuid))

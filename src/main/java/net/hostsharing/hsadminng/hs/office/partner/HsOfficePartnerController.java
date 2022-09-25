@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.Mapper;
-import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
@@ -125,7 +124,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
 
-        new HsOfficePartnerEntityPatch(current, contactRepo::findByUuid, personRepo::findByUuid).apply(body);
+        new HsOfficePartnerEntityPatcher(current, contactRepo::findByUuid, personRepo::findByUuid).apply(body);
 
         final var saved = partnerRepo.save(current);
         final var mapped = map(saved, HsOfficePartnerResource.class);

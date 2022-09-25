@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
-class HsOfficePersonEntityPatchUnitTest extends PatchUnitTestBase<
+class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
         HsOfficePersonPatchResource,
         HsOfficePersonEntity
         > {
@@ -35,8 +35,8 @@ class HsOfficePersonEntityPatchUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficePersonEntityPatch createPatcher(final HsOfficePersonEntity entity) {
-        return new HsOfficePersonEntityPatch(entity);
+    protected HsOfficePersonEntityPatcher createPatcher(final HsOfficePersonEntity entity) {
+        return new HsOfficePersonEntityPatcher(entity);
     }
 
     @Override
@@ -66,5 +66,4 @@ class HsOfficePersonEntityPatchUnitTest extends PatchUnitTestBase<
                         HsOfficePersonEntity::setGivenName)
         );
     }
-
 }
