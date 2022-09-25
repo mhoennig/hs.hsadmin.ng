@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.partner;
+package net.hostsharing.hsadminng;
 
 public interface EntityPatch<R> {
 

@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.PatchUnitTestBase;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.LocalDate;
@@ -38,26 +39,26 @@ class HsOfficePartnerEntityPatchUnitTest extends PatchUnitTestBase<
             .build();
 
     @Override
-    HsOfficePartnerEntity newInitialEntity() {
-        final var p = new HsOfficePartnerEntity();
-        p.setUuid(INITIAL_PARTNER_UUID);
-        p.setPerson(givenInitialPerson);
-        p.setContact(givenInitialContact);
-        p.setRegistrationOffice("initial Reg-Office");
-        p.setRegistrationNumber("initial Reg-Number");
-        p.setBirthday(INITIAL_BIRTHDAY);
-        p.setBirthName("initial birth name");
-        p.setDateOfDeath(INITIAL_DAY_OF_DEATH);
-        return p;
+    protected HsOfficePartnerEntity newInitialEntity() {
+        final var entity = new HsOfficePartnerEntity();
+        entity.setUuid(INITIAL_PARTNER_UUID);
+        entity.setPerson(givenInitialPerson);
+        entity.setContact(givenInitialContact);
+        entity.setRegistrationOffice("initial Reg-Office");
+        entity.setRegistrationNumber("initial Reg-Number");
+        entity.setBirthday(INITIAL_BIRTHDAY);
+        entity.setBirthName("initial birth name");
+        entity.setDateOfDeath(INITIAL_DAY_OF_DEATH);
+        return entity;
     }
 
     @Override
-    HsOfficePartnerPatchResource newPatchResource() {
+    protected HsOfficePartnerPatchResource newPatchResource() {
         return new HsOfficePartnerPatchResource();
     }
 
     @Override
-    HsOfficePartnerEntityPatch createPatcher(final HsOfficePartnerEntity partner) {
+    protected HsOfficePartnerEntityPatch createPatcher(final HsOfficePartnerEntity partner) {
         return new HsOfficePartnerEntityPatch(
                 partner,
                 uuid -> uuid == PATCHED_CONTACT_UUID
@@ -69,9 +70,9 @@ class HsOfficePartnerEntityPatchUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    Stream<TestCase> testCases() {
+    protected Stream<Property> propertyTestDescriptors() {
         return Stream.of(
-                new TestCase(
+                new JsonNullableProperty<>(
                         "contact",
                         HsOfficePartnerPatchResource::setContactUuid,
                         PATCHED_CONTACT_UUID,
@@ -79,7 +80,7 @@ class HsOfficePartnerEntityPatchUnitTest extends PatchUnitTestBase<
                         newContact(PATCHED_CONTACT_UUID))
                         .notNullable()
                         .resolvesUuid(),
-                new TestCase(
+                new JsonNullableProperty<>(
                         "person",
                         HsOfficePartnerPatchResource::setPersonUuid,
                         PATCHED_PERSON_UUID,
@@ -87,17 +88,17 @@ class HsOfficePartnerEntityPatchUnitTest extends PatchUnitTestBase<
                         newPerson(PATCHED_PERSON_UUID))
                         .notNullable()
                         .resolvesUuid(),
-                new TestCase(
+                new JsonNullableProperty<>(
                         "registrationOffice",
                         HsOfficePartnerPatchResource::setRegistrationOffice,
                         "patched Reg-Office",
                         HsOfficePartnerEntity::setRegistrationOffice),
-                new TestCase(
+                new JsonNullableProperty<>(
                         "birthday",
                         HsOfficePartnerPatchResource::setBirthday,
                         PATCHED_BIRTHDAY,
                         HsOfficePartnerEntity::setBirthday),
-                new TestCase(
+                new JsonNullableProperty<>(
                         "dayOfDeath",
                         HsOfficePartnerPatchResource::setDateOfDeath,
                         PATCHED_DATE_OF_DEATH,

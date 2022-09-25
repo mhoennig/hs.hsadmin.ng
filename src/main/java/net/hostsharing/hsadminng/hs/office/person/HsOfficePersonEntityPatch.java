@@ -3,10 +3,11 @@ package net.hostsharing.hsadminng.hs.office.person;
 import net.hostsharing.hsadminng.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonTypeResource;
+import net.hostsharing.hsadminng.EntityPatch;
 
 import java.util.Optional;
 
-class HsOfficePersonEntityPatch {
+class HsOfficePersonEntityPatch implements EntityPatch<HsOfficePersonPatchResource> {
 
     private final HsOfficePersonEntity entity;
 
@@ -14,7 +15,8 @@ class HsOfficePersonEntityPatch {
         this.entity = entity;
     }
 
-    void apply(final HsOfficePersonPatchResource resource) {
+    @Override
+    public void apply(final HsOfficePersonPatchResource resource) {
         Optional.ofNullable(resource.getPersonType())
                 .map(HsOfficePersonTypeResource::getValue)
                 .map(HsOfficePersonType::valueOf)
