@@ -74,6 +74,7 @@ class HsOfficeContactControllerAcceptanceTest {
                             { "label": "forth contact" },
                             { "label": "fifth contact" },
                             { "label": "sixth contact" },
+                            { "label": "seventh contact" },
                             { "label": "eighth contact" },
                             { "label": "ninth contact" },
                             { "label": "tenth contact" },
@@ -173,7 +174,7 @@ class HsOfficeContactControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "customer-admin@firstcontact.example.com")
+                    .header("current-user", "contact-admin@firstcontact.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/contacts/" + givenContactUuid)
@@ -183,7 +184,7 @@ class HsOfficeContactControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                          "label": "first contact",
-                         "emailAddresses": "customer-admin@firstcontact.example.com",
+                         "emailAddresses": "contact-admin@firstcontact.example.com",
                          "phoneNumbers": "+49 123 1234567"
                      }
                     """)); // @formatter:on

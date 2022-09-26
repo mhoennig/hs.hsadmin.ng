@@ -38,7 +38,7 @@ public class RawRbacGrantEntity {
     @Column(name = "descendantidname", updatable = false, insertable = false)
     private String descendantIdName;
 
-    @Column(name = "descenantuuid", updatable = false, insertable = false)
+    @Column(name = "descendantuuid", updatable = false, insertable = false)
     private UUID descendantUuid;
 
     @Column(name = "assumed", updatable = false, insertable = false)

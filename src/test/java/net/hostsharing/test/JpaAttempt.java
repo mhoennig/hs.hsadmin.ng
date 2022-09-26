@@ -124,7 +124,7 @@ public class JpaAttempt {
         public void assertExceptionWithRootCauseMessage(
                 final Class<? extends RuntimeException> expectedExceptionClass,
                 final String... expectedRootCauseMessages) {
-            assertThat(wasSuccessful()).isFalse();
+            assertThat(wasSuccessful()).as("wasSuccessful").isFalse();
             final String firstRootCauseMessageLine = firstRootCauseMessageLineOf(caughtException(expectedExceptionClass));
             for (String expectedRootCauseMessage : expectedRootCauseMessages) {
                 assertThat(firstRootCauseMessageLine).contains(expectedRootCauseMessage);

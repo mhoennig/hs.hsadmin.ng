@@ -244,7 +244,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "customer-admin@firstcontact.example.com")
+                    .header("current-user", "contact-admin@firstcontact.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/partners/" + givenPartnerUuid)
@@ -390,7 +390,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "customer-admin@forthcontact.example.com")
+                    .header("current-user", "contact-admin@forthcontact.example.com")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())

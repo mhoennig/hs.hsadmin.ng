@@ -60,10 +60,12 @@ end; $$;
 do language plpgsql $$
     begin
         call createHsOfficePersonTestData('LEGAL', 'First Impressions GmbH');
-        call createHsOfficePersonTestData('NATURAL', null, 'Peter', 'Smith');
+        call createHsOfficePersonTestData('NATURAL', null, 'Smith', 'Peter');
         call createHsOfficePersonTestData('LEGAL', 'Rockshop e.K.', 'Sandra', 'Miller');
         call createHsOfficePersonTestData('SOLE_REPRESENTATION', 'Ostfriesische Kuhhandel OHG');
         call createHsOfficePersonTestData('JOINT_REPRESENTATION', 'Erben Bessler', 'Mel', 'Bessler');
+        call createHsOfficePersonTestData('NATURAL', null, 'Bessler', 'Anita');
+        call createHsOfficePersonTestData('NATURAL', null, 'Winkler', 'Paul');
     end;
 $$;
 --//

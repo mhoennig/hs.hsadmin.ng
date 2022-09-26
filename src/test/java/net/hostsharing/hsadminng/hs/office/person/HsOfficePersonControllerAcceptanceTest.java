@@ -70,35 +70,47 @@ class HsOfficePersonControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                         [
                              {
-                                 "personType": "JOINT_REPRESENTATION",
-                                 "tradeName": "Erben Bessler",
-                                 "givenName": "Bessler",
-                                 "familyName": "Mel"
-                             },
-                             {
-                                 "personType": "LEGAL",
-                                 "tradeName": "First Impressions GmbH",
-                                 "givenName": null,
-                                 "familyName": null
-                             },
-                             {
-                                 "personType": "SOLE_REPRESENTATION",
-                                 "tradeName": "Ostfriesische Kuhhandel OHG",
-                                 "givenName": null,
-                                 "familyName": null
-                             },
-                             {
-                                 "personType": "NATURAL",
-                                 "tradeName": null,
-                                 "givenName": "Smith",
-                                 "familyName": "Peter"
-                             },
-                             {
-                                 "personType": "LEGAL",
-                                 "tradeName": "Rockshop e.K.",
-                                 "givenName": "Miller",
-                                 "familyName": "Sandra"
-                             }
+                                  "personType": "NATURAL",
+                                  "tradeName": null,
+                                  "givenName": "Anita",
+                                  "familyName": "Bessler"
+                              },
+                              {
+                                  "personType": "JOINT_REPRESENTATION",
+                                  "tradeName": "Erben Bessler",
+                                  "givenName": "Bessler",
+                                  "familyName": "Mel"
+                              },
+                              {
+                                  "personType": "LEGAL",
+                                  "tradeName": "First Impressions GmbH",
+                                  "givenName": null,
+                                  "familyName": null
+                              },
+                              {
+                                  "personType": "SOLE_REPRESENTATION",
+                                  "tradeName": "Ostfriesische Kuhhandel OHG",
+                                  "givenName": null,
+                                  "familyName": null
+                              },
+                              {
+                                  "personType": "LEGAL",
+                                  "tradeName": "Rockshop e.K.",
+                                  "givenName": "Miller",
+                                  "familyName": "Sandra"
+                              },
+                              {
+                                  "personType": "NATURAL",
+                                  "tradeName": null,
+                                  "givenName": "Peter",
+                                  "familyName": "Smith"
+                              },
+                              {
+                                  "personType": "NATURAL",
+                                  "tradeName": null,
+                                  "givenName": "Paul",
+                                  "familyName": "Winkler"
+                              }
                          ]
                         """
                             ));

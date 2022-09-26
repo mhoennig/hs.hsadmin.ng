@@ -17,7 +17,7 @@ begin
     currentTask = 'creating RBAC test contact ' || contLabel;
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    emailAddr = 'customer-admin@' || cleanIdentifier(contLabel) || '.example.com';
+    emailAddr = 'contact-admin@' || cleanIdentifier(contLabel) || '.example.com';
     call defineContext(currentTask);
     perform createRbacUser(emailAddr);
     call defineContext(currentTask, null, emailAddr);
@@ -64,6 +64,7 @@ do language plpgsql $$
         call createHsOfficeContactTestData('forth contact');
         call createHsOfficeContactTestData('fifth contact');
         call createHsOfficeContactTestData('sixth contact');
+        call createHsOfficeContactTestData('seventh contact');
         call createHsOfficeContactTestData('eighth contact');
         call createHsOfficeContactTestData('ninth contact');
         call createHsOfficeContactTestData('tenth contact');

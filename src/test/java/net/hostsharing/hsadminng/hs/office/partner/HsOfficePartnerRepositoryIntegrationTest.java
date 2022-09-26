@@ -393,9 +393,6 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         context("superuser-alex@hostsharing.net", null);
         tempPartners.forEach(tempPartner -> {
             System.out.println("DELETING temporary partner: " + tempPartner.getDisplayName());
-            if ( tempPartner.getContact().getLabel().equals("sixth contact")) {
-                toString();
-            }
             partnerRepo.deleteByUuid(tempPartner.getUuid());
         });
     }

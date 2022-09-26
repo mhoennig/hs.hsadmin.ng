@@ -61,7 +61,7 @@ create or replace view rbacgrants_ev as
            x.descendingIdName as descendantIdName,
            x.grantedByRoleUuid,
            x.ascendantUuid as ascendantUuid,
-           x.descendantUuid as descenantUuid,
+           x.descendantUuid as descendantUuid,
            x.assumed
         from (
              select g.uuid as grantUuid,

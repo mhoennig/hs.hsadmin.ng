@@ -65,3 +65,9 @@ databaseChangeLog:
         file: db/changelog/223-hs-office-partner-rbac.sql
     - include:
         file: db/changelog/228-hs-office-partner-test-data.sql
+    - include:
+        file: db/changelog/230-hs-office-relationship.sql
+    - include:
+        file: db/changelog/233-hs-office-relationship-rbac.sql
+    - include:
+        file: db/changelog/238-hs-office-relationship-test-data.sql

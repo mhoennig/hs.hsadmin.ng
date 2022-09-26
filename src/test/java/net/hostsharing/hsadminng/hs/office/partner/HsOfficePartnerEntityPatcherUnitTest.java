@@ -56,6 +56,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
         lenient().when(em.getReference(eq(HsOfficePersonEntity.class), any())).thenAnswer(invocation ->
                 HsOfficePersonEntity.builder().uuid(invocation.getArgument(1)).build());
     }
+
     @Override
     protected HsOfficePartnerEntity newInitialEntity() {
         final var entity = new HsOfficePartnerEntity();

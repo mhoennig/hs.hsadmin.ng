@@ -143,7 +143,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allThesePersonsAreReturned(
                     result,
-                    "Peter, Smith",
+                    "Smith, Peter",
                     "Rockshop e.K.",
                     "Ostfriesische Kuhhandel OHG",
                     "Erben Bessler");

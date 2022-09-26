@@ -3,12 +3,6 @@ components:
 
     schemas:
 
-        HsOfficePersonTypeValues:
-            - NATURAL               # a human
-            - LEGAL                 # e.g. Corp., Inc., AG, GmbH, eG
-            - SOLE_REPRESENTATION   # e.g. OHG, GbR
-            - JOINT_REPRESENTATION  # e.g. community of heirs
-
         HsOfficePersonType:
             type: string
             enum:

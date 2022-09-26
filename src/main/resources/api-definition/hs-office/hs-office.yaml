@@ -34,3 +34,13 @@ paths:
   /api/hs/office/persons/{personUUID}:
     $ref: "./hs-office-persons-with-uuid.yaml"
 
+
+
+  # Relationships
+
+  /api/hs/office/relationships:
+    $ref: "./hs-office-relationships.yaml"
+
+  /api/hs/office/relationships/{relationshipUUID}:
+    $ref: "./hs-office-relationships-with-uuid.yaml"
+

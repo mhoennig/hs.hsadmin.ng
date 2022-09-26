@@ -20,6 +20,10 @@ create or replace function assertReferenceType(argument varchar, referenceId uui
 declare
     actualType ReferenceType;
 begin
+    if referenceId is null then
+        raise exception '% must be a % and not null', argument, expectedType;
+    end if;
+
     actualType = (select type from RbacReference where uuid = referenceId);
     if (actualType <> expectedType) then
         raise exception '% must reference a %, but got a %', argument, expectedType, actualType;
@@ -608,21 +612,29 @@ begin
         into RbacGrants (ascendantuuid, descendantUuid, assumed)
         values (superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
-    delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
-    insert
-        into RbacGrants (ascendantuuid, descendantUuid, assumed)
-        values (superRoleId, subRoleId, doAssume); -- allow granting multiple times
 end; $$;
 
-create or replace procedure revokeRoleFromRole(subRoleId uuid, superRoleId uuid)
+create or replace procedure grantRoleToRoleIfNotNull(subRole RbacRoleDescriptor, superRole RbacRoleDescriptor, doAssume bool = true)
     language plpgsql as $$
+declare
+    superRoleId uuid;
+    subRoleId uuid;
 begin
+    superRoleId := findRoleId(superRole);
+    if ( subRoleId is null ) then return; end if;
+    subRoleId := findRoleId(subRole);
+
     perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
     perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
 
-    if (isGranted(superRoleId, subRoleId)) then
-        delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
+    if isGranted(subRoleId, superRoleId) then
+        raise exception '[400] Cyclic role grant detected between % and %', subRoleId, superRoleId;
     end if;
+
+    insert
+        into RbacGrants (ascendantuuid, descendantUuid, assumed)
+        values (superRoleId, subRoleId, doAssume)
+    on conflict do nothing; -- allow granting multiple times
 end; $$;
 
 create or replace procedure revokeRoleFromRole(subRole RbacRoleDescriptor, superRole RbacRoleDescriptor)

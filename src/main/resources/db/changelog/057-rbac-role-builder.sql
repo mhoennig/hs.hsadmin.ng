@@ -51,7 +51,9 @@ declare
 begin
     foreach superRoleDescriptor in array roleDescriptors
         loop
-            superRoleUuids := superRoleUuids || getRoleId(superRoleDescriptor, 'fail');
+            if superRoleDescriptor is not null then
+                superRoleUuids := superRoleUuids || getRoleId(superRoleDescriptor, 'fail');
+            end if;
         end loop;
 
     return row (superRoleUuids)::RbacSuperRoles;
@@ -96,7 +98,6 @@ create type RbacSubRoles as
     roleUuids uuid[]
 );
 
--- drop FUNCTION beingItselfA(roleUuid uuid)
 create or replace function beingItselfA(roleUuid uuid)
     returns RbacSubRoles
     language plpgsql
@@ -105,7 +106,6 @@ begin
     return row (array [roleUuid]::uuid[])::RbacSubRoles;
 end; $$;
 
--- drop FUNCTION beingItselfA(roleDescriptor RbacRoleDescriptor)
 create or replace function beingItselfA(roleDescriptor RbacRoleDescriptor)
     returns RbacSubRoles
     language plpgsql
@@ -124,7 +124,9 @@ declare
 begin
     foreach subRoleDescriptor in array roleDescriptors
         loop
-            subRoleUuids := subRoleUuids || getRoleId(subRoleDescriptor, 'fail');
+            if subRoleDescriptor is not null then
+                subRoleUuids := subRoleUuids || getRoleId(subRoleDescriptor, 'fail');
+            end if;
         end loop;
 
     return row (subRoleUuids)::RbacSubRoles;

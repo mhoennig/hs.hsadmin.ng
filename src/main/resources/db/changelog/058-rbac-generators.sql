@@ -127,6 +127,7 @@ begin
     /*
         Creates a restricted view based on the 'view' permission of the current subject.
     */
+    -- TODO.refa: hoist `select queryAccessibleObjectUuidsOfSubjectIds(...)` into WITH CTE  for performance
     sql := format($sql$
         set session session authorization default;
         create view %1$s_rv as
