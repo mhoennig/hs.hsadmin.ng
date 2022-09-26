@@ -50,7 +50,7 @@ begin
                 beneathRole(globalAdmin())
             );
 
-        -- the admin role with full access for the global admins
+        -- the admin role with full access for owner
         adminRole = createRole(
                 hsOfficePartnerAdmin(NEW),
                 grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
@@ -61,8 +61,13 @@ begin
         perform createRole(
                 hsOfficePartnerTenant,
                 grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-                beneathRoles(array[hsOfficePartnerAdmin(NEW), hsOfficePersonAdmin(newPerson), hsOfficeContactAdmin(newContact)]),
-                withSubRoles(array[hsOfficePersonTenant(newPerson), hsOfficeContactTenant(newContact)])
+                beneathRoles(array[
+                    hsOfficePartnerAdmin(NEW),
+                    hsOfficePersonAdmin(newPerson),
+                    hsOfficeContactAdmin(newContact)]),
+                withSubRoles(array[
+                    hsOfficePersonTenant(newPerson),
+                    hsOfficeContactTenant(newContact)])
             );
 
     elsif TG_OP = 'UPDATE' then
@@ -142,7 +147,7 @@ call generateRbacRestrictedView('hs_office_partner',
 
 
 -- ============================================================================
---changeset hs-office-partner-rbac-NEW-CONTACT:1 endDelimiter:--//
+--changeset hs-office-partner-rbac-NEW-PARTNER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates a global permission for new-partner and assigns it to the hostsharing admins role.

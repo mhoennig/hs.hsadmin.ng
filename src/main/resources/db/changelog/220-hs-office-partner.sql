@@ -6,7 +6,7 @@
 
 create table if not exists hs_office_partner
 (
-    uuid                uuid unique references RbacObject (uuid) initially deferred, -- on delete cascade
+    uuid                uuid unique references RbacObject (uuid) initially deferred,
     personUuid          uuid not null references hs_office_person(uuid),
     contactUuid         uuid not null references hs_office_contact(uuid),
     registrationOffice  varchar(96),
