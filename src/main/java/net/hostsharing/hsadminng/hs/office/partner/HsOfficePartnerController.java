@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -34,6 +35,9 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     @Autowired
     private HsOfficeContactRepository contactRepo;
+
+    @Autowired
+    private EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -124,7 +128,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
 
-        new HsOfficePartnerEntityPatcher(current, contactRepo::findByUuid, personRepo::findByUuid).apply(body);
+        new HsOfficePartnerEntityPatcher(em, current, contactRepo::findByUuid, personRepo::findByUuid).apply(body);
 
         final var saved = partnerRepo.save(current);
         final var mapped = map(saved, HsOfficePartnerResource.class);

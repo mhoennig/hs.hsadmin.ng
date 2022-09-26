@@ -7,8 +7,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openapitools.jackson.nullable.JsonNullable;
 
-import java.util.NoSuchElementException;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -73,29 +71,8 @@ public abstract class PatchUnitTestBase<R, E> {
 
     @ParameterizedTest
     @MethodSource("propertyTestCases")
-    void willThrowIfUUidCannotBeResolved(final Property<R, Object, E, Object> testCase) {
-        assumeThat(testCase.resolvesUuid).isTrue();
-
-        // given
-        final var givenEntity = newInitialEntity();
-        final var patchResource = newPatchResource();
-        final var givenPatchValue = UUID.fromString("11111111-1111-1111-1111-111111111111");
-        testCase.patchResourceWithExplicitValue(patchResource, givenPatchValue);
-
-        // when
-        final var exception = catchThrowableOfType(() -> {
-            createPatcher(givenEntity).apply(patchResource);
-        }, NoSuchElementException.class);
-
-        // then
-        assertThat(exception).isInstanceOf(NoSuchElementException.class)
-                .hasMessage("cannot find '" + testCase.name + "' uuid " + givenPatchValue);
-    }
-
-    @ParameterizedTest
-    @MethodSource("propertyTestCases")
-    void willThrowExceptionIfNotNullableUuidIsNull(final Property<R, Object, E, Object> testCase) {
-        assumeThat(testCase.resolvesUuid).isTrue();
+    void willThrowExceptionIfNotNullableValueIsNull(final Property<R, Object, E, Object> testCase) {
+        assumeThat(testCase instanceof JsonNullableProperty).isTrue();
         assumeThat(testCase.nullable).isFalse();
 
         // given
@@ -169,7 +146,6 @@ public abstract class PatchUnitTestBase<R, E> {
         protected final BiConsumer<E, EV> entitySetter;
         protected final EV expectedPatchValue;
         protected boolean nullable = true;
-        private boolean resolvesUuid = false;
 
         protected Property(
                 final String name,
@@ -195,11 +171,6 @@ public abstract class PatchUnitTestBase<R, E> {
 
         public Property<R, RV, E, EV> notNullable() {
             nullable = false;
-            return this;
-        }
-
-        public Property<R, RV, E, EV> resolvesUuid() {
-            resolvesUuid = true;
             return this;
         }
 

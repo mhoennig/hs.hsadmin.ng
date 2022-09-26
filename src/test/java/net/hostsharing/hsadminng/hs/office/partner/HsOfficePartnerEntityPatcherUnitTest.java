@@ -4,16 +4,25 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.PatchUnitTestBase;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+import static org.mockito.Mockito.lenient;
 
 @TestInstance(PER_CLASS)
+@ExtendWith(MockitoExtension.class)
 class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
         HsOfficePartnerPatchResource,
         HsOfficePartnerEntity
@@ -37,7 +46,16 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     private final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
             .uuid(INITIAL_CONTACT_UUID)
             .build();
+    @Mock
+    private EntityManager em;
 
+    @BeforeEach
+    void initMocks() {
+        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
+            HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficePersonEntity.class), any())).thenAnswer(invocation ->
+                HsOfficePersonEntity.builder().uuid(invocation.getArgument(1)).build());
+    }
     @Override
     protected HsOfficePartnerEntity newInitialEntity() {
         final var entity = new HsOfficePartnerEntity();
@@ -60,6 +78,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     @Override
     protected HsOfficePartnerEntityPatcher createPatcher(final HsOfficePartnerEntity partner) {
         return new HsOfficePartnerEntityPatcher(
+                em,
                 partner,
                 uuid -> uuid == PATCHED_CONTACT_UUID
                         ? Optional.of(newContact(uuid))
@@ -78,16 +97,14 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
                         PATCHED_CONTACT_UUID,
                         HsOfficePartnerEntity::setContact,
                         newContact(PATCHED_CONTACT_UUID))
-                        .notNullable()
-                        .resolvesUuid(),
+                        .notNullable(),
                 new JsonNullableProperty<>(
                         "person",
                         HsOfficePartnerPatchResource::setPersonUuid,
                         PATCHED_PERSON_UUID,
                         HsOfficePartnerEntity::setPerson,
                         newPerson(PATCHED_PERSON_UUID))
-                        .notNullable()
-                        .resolvesUuid(),
+                        .notNullable(),
                 new JsonNullableProperty<>(
                         "registrationOffice",
                         HsOfficePartnerPatchResource::setRegistrationOffice,
