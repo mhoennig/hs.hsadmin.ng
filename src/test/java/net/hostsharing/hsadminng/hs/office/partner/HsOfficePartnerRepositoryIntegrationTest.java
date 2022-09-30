@@ -71,7 +71,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("superuser-alex@hostsharing.net");
             final var count = partnerRepo.count();
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("First Impressions GmbH").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("First GmbH").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("first contact").get(0);
 
             // when
@@ -150,21 +150,21 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allThesePartnersAreReturned(
                     result,
-                    "partner(Ostfriesische Kuhhandel OHG, third contact)",
-                    "partner(Rockshop e.K., second contact)",
-                    "partner(First Impressions GmbH, first contact)");
+                    "partner(Third OHG, third contact)",
+                    "partner(Second e.K., second contact)",
+                    "partner(First GmbH, first contact)");
         }
 
         @Test
         public void normalUser_canViewOnlyRelatedPartners() {
             // given:
-            context("person-FirstImpressionsGmbH@example.com");
+            context("person-FirstGmbH@example.com");
 
             // when:
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then:
-            exactlyThesePartnersAreReturned(result, "partner(First Impressions GmbH, first contact)");
+            exactlyThesePartnersAreReturned(result, "partner(First GmbH, first contact)");
         }
     }
 
@@ -180,7 +180,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
 
             // then
-            exactlyThesePartnersAreReturned(result, "partner(Ostfriesische Kuhhandel OHG, third contact)");
+            exactlyThesePartnersAreReturned(result, "partner(Third OHG, third contact)");
         }
     }
 
@@ -197,7 +197,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                     "hs_office_person#ErbenBesslerMelBessler.admin");
             assertThatPartnerActuallyInDatabase(givenPartner);
             context("superuser-alex@hostsharing.net");
-            final var givenNewPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische Kuhhandel OHG").get(0);
+            final var givenNewPerson = personRepo.findPersonByOptionalNameLike("Third OHG").get(0);
             final var givenNewContact = contactRepo.findContactByOptionalLabelLike("sixth contact").get(0);
 
             // when
@@ -216,7 +216,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                     "global#global.admin");
             assertThatPartnerIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_person#OstfriesischeKuhhandelOHG.admin");
+                    "hs_office_person#ThirdOHG.admin");
             assertThatPartnerIsNotVisibleForUserWithRole(
                     result.returnedValue(),
                     "hs_office_person#ErbenBesslerMelBessler.admin");

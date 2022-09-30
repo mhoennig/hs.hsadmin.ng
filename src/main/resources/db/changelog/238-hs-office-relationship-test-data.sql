@@ -71,11 +71,11 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficeRelationshipTestData('First Impressions GmbH', 'Smith', 'SOLE_AGENT', 'first contact');
+        call createHsOfficeRelationshipTestData('First GmbH', 'Smith', 'SOLE_AGENT', 'first contact');
 
-        call createHsOfficeRelationshipTestData('Rockshop e.K.', 'Smith', 'SOLE_AGENT', 'second contact');
+        call createHsOfficeRelationshipTestData('Second e.K.', 'Smith', 'SOLE_AGENT', 'second contact');
 
-        call createHsOfficeRelationshipTestData('Ostfriesische Kuhhandel OHG', 'Smith', 'SOLE_AGENT', 'third contact');
+        call createHsOfficeRelationshipTestData('Third OHG', 'Smith', 'SOLE_AGENT', 'third contact');
     end;
 $$;
 --//

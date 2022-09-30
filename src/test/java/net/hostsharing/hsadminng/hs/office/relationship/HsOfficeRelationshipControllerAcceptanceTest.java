@@ -85,7 +85,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                          {
                              "relAnchor": {
                                  "personType": "SOLE_REPRESENTATION",
-                                 "tradeName": "Ostfriesische Kuhhandel OHG"
+                                 "tradeName": "Third OHG"
                              },
                              "relHolder": {
                                  "personType": "NATURAL",
@@ -98,7 +98,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                          {
                              "relAnchor": {
                                  "personType": "LEGAL",
-                                 "tradeName": "Rockshop e.K.",
+                                 "tradeName": "Second e.K.",
                                  "givenName": "Miller",
                                  "familyName": "Sandra"
                              },
@@ -113,7 +113,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                          {
                              "relAnchor": {
                                  "personType": "LEGAL",
-                                 "tradeName": "First Impressions GmbH"
+                                 "tradeName": "First GmbH"
                              },
                              "relHolder": {
                                  "personType": "NATURAL",
@@ -138,7 +138,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRole_canAddRelationship() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
 
@@ -166,7 +166,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("relType", is("ACCOUNTING_CONTACT"))
-                        .body("relAnchor.tradeName", is("Ostfriesische Kuhhandel OHG"))
+                        .body("relAnchor.tradeName", is("Third OHG"))
                         .body("relHolder.givenName", is("Paul"))
                         .body("contact.label", is("forth contact"))
                         .header("Location", startsWith("http://localhost"))
@@ -215,7 +215,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         void globalAdmin_canNotAddRelationship_ifHolderPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenHolderPersonUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
 
@@ -248,7 +248,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         void globalAdmin_canNotAddRelationship_ifContactDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
             final var givenContactUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
 
@@ -298,7 +298,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "relAnchor": { "tradeName": "First Impressions GmbH" },
+                        "relAnchor": { "tradeName": "First GmbH" },
                         "relHolder": { "familyName": "Smith" },
                         "contact": { "label": "first contact" }
                     }
@@ -339,7 +339,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "relAnchor": { "tradeName": "First Impressions GmbH" },
+                        "relAnchor": { "tradeName": "First GmbH" },
                         "relHolder": { "familyName": "Smith" },
                         "contact": { "label": "first contact" }
                     }

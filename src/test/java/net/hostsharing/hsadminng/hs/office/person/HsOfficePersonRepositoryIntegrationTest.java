@@ -144,8 +144,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             allThesePersonsAreReturned(
                     result,
                     "Smith, Peter",
-                    "Rockshop e.K.",
-                    "Ostfriesische Kuhhandel OHG",
+                    "Second e.K.",
+                    "Third OHG",
                     "Erben Bessler");
         }
 
@@ -172,10 +172,10 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net", null);
 
             // when
-            final var result = personRepo.findPersonByOptionalNameLike("Rockshop");
+            final var result = personRepo.findPersonByOptionalNameLike("Second");
 
             // then
-            exactlyThesePersonsAreReturned(result, "Rockshop e.K.");
+            exactlyThesePersonsAreReturned(result, "Second e.K.");
         }
 
         @Test

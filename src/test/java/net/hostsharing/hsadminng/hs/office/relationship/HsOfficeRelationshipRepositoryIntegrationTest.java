@@ -162,15 +162,15 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='First Impressions GmbH', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='first contact')",
-                    "rel(relAnchor='Ostfriesische Kuhhandel OHG', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='third contact')",
-                    "rel(relAnchor='Rockshop e.K.', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='second contact')");
+                    "rel(relAnchor='First GmbH', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='first contact')",
+                    "rel(relAnchor='Third OHG', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='third contact')",
+                    "rel(relAnchor='Second e.K.', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='second contact')");
         }
 
         @Test
         public void normalUser_canViewRelationshipsOfOwnedPersons() {
             // given:
-            context("person-FirstImpressionsGmbH@example.com");
+            context("person-FirstGmbH@example.com");
             final var person = personRepo.findPersonByOptionalNameLike("First").stream().findFirst().orElseThrow();
 
             // when:
@@ -179,7 +179,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='First Impressions GmbH', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='first contact')");
+                    "rel(relAnchor='First GmbH', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='first contact')");
         }
     }
 

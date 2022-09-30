@@ -77,15 +77,15 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     [
                         {
-                            "person": { "tradeName": "First Impressions GmbH" },
+                            "person": { "tradeName": "First GmbH" },
                             "contact": { "label": "first contact" }
                         },
                         {
-                            "person": { "tradeName": "Ostfriesische Kuhhandel OHG" },
+                            "person": { "tradeName": "Third OHG" },
                             "contact": { "label": "third contact" }
                         },
                         {
-                            "person": { "tradeName": "Rockshop e.K." },
+                            "person": { "tradeName": "Second e.K." },
                             "contact": { "label": "second contact" }
                         }
                     ]
@@ -102,7 +102,7 @@ class HsOfficePartnerControllerAcceptanceTest {
         void globalAdmin_withoutAssumedRole_canAddPartner() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
 
             final var location = RestAssured // @formatter:off
@@ -140,7 +140,7 @@ class HsOfficePartnerControllerAcceptanceTest {
         void globalAdmin_canNotAddPartner_ifContactDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenContactUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
 
             final var location = RestAssured // @formatter:off
@@ -214,7 +214,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "person": { "tradeName": "First Impressions GmbH" },
+                        "person": { "tradeName": "First GmbH" },
                         "contact": { "label": "first contact" }
                     }
                     """)); // @formatter:on
@@ -253,7 +253,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "person": { "tradeName": "First Impressions GmbH" },
+                        "person": { "tradeName": "First GmbH" },
                         "contact": { "label": "first contact" }
                     }
                     """)); // @formatter:on
@@ -269,7 +269,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler();
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Ostfriesische").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
 
             final var location = RestAssured // @formatter:off
@@ -303,7 +303,7 @@ class HsOfficePartnerControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(person -> {
-                        assertThat(person.getPerson().getTradeName()).isEqualTo("Ostfriesische Kuhhandel OHG");
+                        assertThat(person.getPerson().getTradeName()).isEqualTo("Third OHG");
                         assertThat(person.getContact().getLabel()).isEqualTo("forth contact");
                         assertThat(person.getRegistrationOffice()).isEqualTo("Registergericht Hamburg");
                         assertThat(person.getRegistrationNumber()).isEqualTo("222222");

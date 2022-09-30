@@ -83,19 +83,19 @@ class HsOfficePersonControllerAcceptanceTest {
                               },
                               {
                                   "personType": "LEGAL",
-                                  "tradeName": "First Impressions GmbH",
+                                  "tradeName": "First GmbH",
                                   "givenName": null,
                                   "familyName": null
                               },
                               {
                                   "personType": "SOLE_REPRESENTATION",
-                                  "tradeName": "Ostfriesische Kuhhandel OHG",
+                                  "tradeName": "Third OHG",
                                   "givenName": null,
                                   "familyName": null
                               },
                               {
                                   "personType": "LEGAL",
-                                  "tradeName": "Rockshop e.K.",
+                                  "tradeName": "Second e.K.",
                                   "givenName": "Miller",
                                   "familyName": "Sandra"
                               },
