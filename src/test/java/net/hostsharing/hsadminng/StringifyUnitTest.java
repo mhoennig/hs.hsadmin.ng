@@ -2,24 +2,17 @@ package net.hostsharing.hsadminng;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import org.junit.jupiter.api.Test;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.Stringify.stringify;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class StringifyUnitTest {
 
     @Getter
     @Setter
-    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     @FieldNameConstants
@@ -27,15 +20,20 @@ class StringifyUnitTest {
 
         private static Stringify<TestBean> toString = stringify(TestBean.class, "bean")
                 .withProp(TestBean.Fields.label, TestBean::getLabel)
-                .withProp(TestBean.Fields.content, TestBean::getContent)
+                .withProp(TestBean.Fields.contentA, TestBean::getContentA)
+                .withProp(TestBean.Fields.contentB, TestBean::getContentB)
+                .withProp(TestBean.Fields.value, TestBean::getValue)
                 .withProp(TestBean.Fields.active, TestBean::isActive);
 
         private UUID uuid;
 
         private String label;
 
-        private SubBean content;
+        private SubBeanWithUnquotedValues contentA;
 
+        private SubBeanWithQuotedValues contentB;
+
+        private int value;
         private boolean active;
 
         @Override
@@ -51,15 +49,41 @@ class StringifyUnitTest {
 
     @Getter
     @Setter
-    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @FieldNameConstants
-    public static class SubBean implements Stringifyable {
+    public static class SubBeanWithUnquotedValues implements Stringifyable {
 
-        private static Stringify<SubBean> toString = stringify(SubBean.class)
-                .withProp(SubBean.Fields.key, SubBean::getKey)
-                .withProp(Fields.value, SubBean::getValue);
+        private static Stringify<SubBeanWithUnquotedValues> toString = stringify(SubBeanWithUnquotedValues.class)
+                .withProp(SubBeanWithUnquotedValues::getKey)
+                .withProp(SubBeanWithUnquotedValues::getValue)
+                .withSeparator(": ")
+                .quotedValues(false);
+
+        private String key;
+        private String value;
+
+        @Override
+        public String toString() {
+            return toString.apply(this);
+        }
+
+        @Override
+        public String toShortString() {
+            return key + ":" + value;
+        }
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubBeanWithQuotedValues implements Stringifyable {
+
+        private static Stringify<SubBeanWithQuotedValues> toString = stringify(SubBeanWithQuotedValues.class)
+                .withProp(SubBeanWithQuotedValues::getKey)
+                .withProp(SubBeanWithQuotedValues::getValue)
+                .withSeparator(": ")
+                .quotedValues(true);
 
         private String key;
         private Integer value;
@@ -78,22 +102,33 @@ class StringifyUnitTest {
     @Test
     void stringifyWhenAllPropsHaveValues() {
         final var given = new TestBean(UUID.randomUUID(), "some label",
-                new SubBean("some content", 1234), false);
+                new SubBeanWithUnquotedValues("some key", "some value"),
+                new SubBeanWithQuotedValues("some key", 1234),
+                42,
+                false);
         final var result = given.toString();
-        assertThat(result).isEqualTo("bean(label='some label', content='some content:1234', active=false)");
+        assertThat(result).isEqualTo(
+                "bean(label='some label', contentA='some key:some value', contentB='some key:1234', value=42, active=false)");
     }
 
     @Test
     void stringifyWhenAllNullablePropsHaveNulValues() {
         final var given = new TestBean();
         final var result = given.toString();
-        assertThat(result).isEqualTo("bean(active=false)");
+        assertThat(result).isEqualTo("bean(value=0, active=false)");
     }
 
     @Test
     void stringifyWithoutExplicitNameUsesSimpleClassName() {
-        final var given = new SubBean("some key", 1234);
+        final var given = new SubBeanWithUnquotedValues("some key", "some value");
         final var result = given.toString();
-        assertThat(result).isEqualTo("SubBean(key='some key', value=1234)");
+        assertThat(result).isEqualTo("SubBeanWithUnquotedValues(some key: some value)");
+    }
+
+    @Test
+    void stringifyWithQuotedValueTrueQuotesEvenIntegers() {
+        final var given = new SubBeanWithQuotedValues("some key", 1234);
+        final var result = given.toString();
+        assertThat(result).isEqualTo("SubBeanWithQuotedValues('some key': '1234')");
     }
 }

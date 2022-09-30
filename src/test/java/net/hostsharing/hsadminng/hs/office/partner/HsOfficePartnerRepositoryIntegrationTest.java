@@ -150,9 +150,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allThesePartnersAreReturned(
                     result,
-                    "partner(Third OHG, third contact)",
-                    "partner(Second e.K., second contact)",
-                    "partner(First GmbH, first contact)");
+                    "partner(Third OHG: third contact)",
+                    "partner(Second e.K.: second contact)",
+                    "partner(First GmbH: first contact)");
         }
 
         @Test
@@ -164,7 +164,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then:
-            exactlyThesePartnersAreReturned(result, "partner(First GmbH, first contact)");
+            exactlyThesePartnersAreReturned(result, "partner(First GmbH: first contact)");
         }
     }
 
@@ -180,7 +180,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
 
             // then
-            exactlyThesePartnersAreReturned(result, "partner(Third OHG, third contact)");
+            exactlyThesePartnersAreReturned(result, "partner(Third OHG: third contact)");
         }
     }
 
@@ -392,20 +392,20 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
     void cleanup() {
         context("superuser-alex@hostsharing.net", null);
         tempPartners.forEach(tempPartner -> {
-            System.out.println("DELETING temporary partner: " + tempPartner.getDisplayName());
+            System.out.println("DELETING temporary partner: " + tempPartner.toString());
             partnerRepo.deleteByUuid(tempPartner.getUuid());
         });
     }
 
     void exactlyThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {
         assertThat(actualResult)
-                .extracting(HsOfficePartnerEntity::getDisplayName)
+                .extracting(partnerEntity -> partnerEntity.toString())
                 .containsExactlyInAnyOrder(partnerNames);
     }
 
     void allThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {
         assertThat(actualResult)
-                .extracting(HsOfficePartnerEntity::getDisplayName)
+                .extracting(partnerEntity -> partnerEntity.toString())
                 .contains(partnerNames);
     }
 }

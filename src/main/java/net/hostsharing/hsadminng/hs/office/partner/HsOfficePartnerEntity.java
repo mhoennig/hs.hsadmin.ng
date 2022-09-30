@@ -1,12 +1,16 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
+import net.hostsharing.hsadminng.Stringify;
+import net.hostsharing.hsadminng.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
+
+import static net.hostsharing.hsadminng.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_partner_rv")
@@ -15,7 +19,13 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsOfficePartnerEntity {
+public class HsOfficePartnerEntity implements Stringifyable {
+
+    private static Stringify<HsOfficePartnerEntity> stringify = stringify(HsOfficePartnerEntity.class, "partner")
+            .withProp(HsOfficePartnerEntity::getPerson)
+            .withProp(HsOfficePartnerEntity::getContact)
+            .withSeparator(": ")
+            .quotedValues(false);
 
     private @Id UUID uuid;
 
@@ -33,7 +43,13 @@ public class HsOfficePartnerEntity {
     private @Column(name = "birthday") LocalDate birthday;
     private @Column(name = "dateofdeath") LocalDate dateOfDeath;
 
-    public String getDisplayName() {
-        return "partner(%s, %s)".formatted(person.getDisplayName(), contact.getLabel());
+    @Override
+    public String toString() {
+        return stringify.apply(this);
+    }
+
+    @Override
+    public String toShortString() {
+        return person.toShortString();
     }
 }

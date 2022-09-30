@@ -273,7 +273,7 @@ pitest {
     // As Java unit tests are pretty pointless in our case, this maybe makes not much sense.
     mutationThreshold = 71
     coverageThreshold = 57
-    testStrengthThreshold = 88
+    testStrengthThreshold = 87
 
     outputFormats = ['XML', 'HTML']
     timestampedReports = false
