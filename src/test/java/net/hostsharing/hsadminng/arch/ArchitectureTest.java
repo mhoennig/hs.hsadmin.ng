@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.arch;
 
 import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import net.hostsharing.hsadminng.Accepts;
 import org.junit.jupiter.api.Test;
@@ -10,75 +11,80 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
-@AnalyzeClasses(packages = ArchTest.NET_HOSTSHARING_HSADMINNG)
-public class ArchTest {
+@AnalyzeClasses(packages = ArchitectureTest.NET_HOSTSHARING_HSADMINNG)
+public class ArchitectureTest {
 
     public static final String NET_HOSTSHARING_HSADMINNG = "net.hostsharing.hsadminng";
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
+    public static final ArchRule doNotUseJUnit4 = noClasses()
+            .should().accessClassesThat()
+            .resideInAPackage("org.junit");
+
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule contextPackageRule = classes()
             .that().resideInAPackage("..context..")
             .should().onlyDependOnClassesThat()
             .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule configPackageRule = classes()
             .that().resideInAPackage("..config..")
             .should().onlyDependOnClassesThat()
             .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule errorsPackageRule = classes()
             .that().resideInAPackage("..errors..")
             .should().onlyDependOnClassesThat()
             .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule testPackagesRule = classes()
             .that().resideInAPackage("..test.(*)..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..test.(*)..");
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule testPackagePackageRule = classes()
             .that().resideInAPackage("..test.pac..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..test.pac..");
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsAdminPackagesRule = classes()
             .that().resideInAPackage("..hs.office.(*)..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.(*)..");
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule HsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.partner..");
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule acceptsAnnotationOnMethodsRule = methods()
             .that().areAnnotatedWith(Accepts.class)
             .should().beDeclaredInClassesThat().haveSimpleNameEndingWith("AcceptanceTest")
             .orShould().beDeclaredInClassesThat().haveSimpleNameNotContaining("AcceptanceTest$");
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule acceptsAnnotationOnClasesRule = classes()
             .that().areAnnotatedWith(Accepts.class)
             .should().haveSimpleNameEndingWith("AcceptanceTest")
             .orShould().haveSimpleNameNotContaining("AcceptanceTest$");
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule doNotUseJavaxTransactionAnnotationAtClassLevel = noClasses()
             .should().beAnnotatedWith(javax.transaction.Transactional.class.getName())
@@ -86,7 +92,7 @@ public class ArchTest {
                     org.springframework.transaction.annotation.Transactional.class.getName(),
                     javax.transaction.Transactional.class));
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule doNotUseJavaxTransactionAnnotationAtMethodLevel = noMethods()
             .should().beAnnotatedWith(javax.transaction.Transactional.class)
@@ -94,7 +100,7 @@ public class ArchTest {
                     org.springframework.transaction.annotation.Transactional.class.getName(),
                     javax.transaction.Transactional.class.getName()));
 
-    @com.tngtech.archunit.junit.ArchTest
+    @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule doNotUseOrgJUnitTestAnnotation = noMethods()
             .should().beAnnotatedWith(org.junit.Test.class)
