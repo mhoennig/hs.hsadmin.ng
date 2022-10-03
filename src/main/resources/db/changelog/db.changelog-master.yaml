@@ -71,3 +71,9 @@ databaseChangeLog:
         file: db/changelog/233-hs-office-relationship-rbac.sql
     - include:
         file: db/changelog/238-hs-office-relationship-test-data.sql
+    - include:
+        file: db/changelog/270-hs-office-debitor.sql
+    - include:
+        file: db/changelog/273-hs-office-debitor-rbac.sql
+    - include:
+        file: db/changelog/278-hs-office-debitor-test-data.sql

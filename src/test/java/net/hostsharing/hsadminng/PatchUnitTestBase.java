@@ -132,7 +132,7 @@ public abstract class PatchUnitTestBase<R, E> {
 
     protected abstract EntityPatcher<R> createPatcher(final E entity);
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings("types")
     protected abstract Stream<Property> propertyTestDescriptors();
 
     private Stream<Arguments> propertyTestCases() {

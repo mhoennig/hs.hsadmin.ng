@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
+import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.Stringify;
 import net.hostsharing.hsadminng.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
@@ -19,6 +20,7 @@ import static net.hostsharing.hsadminng.Stringify.stringify;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@DisplayName("Partner")
 public class HsOfficePartnerEntity implements Stringifyable {
 
     private static Stringify<HsOfficePartnerEntity> stringify = stringify(HsOfficePartnerEntity.class, "partner")

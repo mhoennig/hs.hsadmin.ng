@@ -20,3 +20,5 @@ map:
             null: org.openapitools.jackson.nullable.JsonNullable
         /api/hs/office/relationships/{relationshipUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable
+        /api/hs/office/debitors/{debitorUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable

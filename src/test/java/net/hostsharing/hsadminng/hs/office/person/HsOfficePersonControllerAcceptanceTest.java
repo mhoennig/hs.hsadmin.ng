@@ -70,6 +70,30 @@ class HsOfficePersonControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                         [
                              {
+                                  "personType": "LEGAL",
+                                  "tradeName": "First GmbH",
+                                  "givenName": null,
+                                  "familyName": null
+                              },
+                              {
+                                  "personType": "LEGAL",
+                                  "tradeName": "Second e.K.",
+                                  "givenName": "Miller",
+                                  "familyName": "Sandra"
+                              },
+                              {
+                                  "personType": "SOLE_REPRESENTATION",
+                                  "tradeName": "Third OHG",
+                                  "givenName": null,
+                                  "familyName": null
+                              },
+                              {
+                                  "personType": "SOLE_REPRESENTATION",
+                                  "tradeName": "Fourth e.G.",
+                                  "givenName": null,
+                                  "familyName": null
+                              },
+                              {
                                   "personType": "NATURAL",
                                   "tradeName": null,
                                   "givenName": "Anita",
@@ -80,24 +104,6 @@ class HsOfficePersonControllerAcceptanceTest {
                                   "tradeName": "Erben Bessler",
                                   "givenName": "Bessler",
                                   "familyName": "Mel"
-                              },
-                              {
-                                  "personType": "LEGAL",
-                                  "tradeName": "First GmbH",
-                                  "givenName": null,
-                                  "familyName": null
-                              },
-                              {
-                                  "personType": "SOLE_REPRESENTATION",
-                                  "tradeName": "Third OHG",
-                                  "givenName": null,
-                                  "familyName": null
-                              },
-                              {
-                                  "personType": "LEGAL",
-                                  "tradeName": "Second e.K.",
-                                  "givenName": "Miller",
-                                  "familyName": "Sandra"
                               },
                               {
                                   "personType": "NATURAL",
@@ -406,7 +412,7 @@ class HsOfficePersonControllerAcceptanceTest {
                 final var entity = personRepo.findByUuid(uuid);
                 final var count = personRepo.deleteByUuid(uuid);
                 System.out.println("DELETED temporary person: " + uuid + (count > 0 ? " successful" : " failed") +
-                        (" (" + entity.map(HsOfficePersonEntity::getDisplayName).orElse("null") + ")"));
+                        (" (" + entity.map(hsOfficePersonEntity -> hsOfficePersonEntity.toShortString()).orElse("null") + ")"));
             }).assertSuccessful();
         });
     }

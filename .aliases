@@ -25,3 +25,4 @@ alias pg-sql-reset='pg-sql-stop; pg-sql-remove; pg-sql-run'
 alias pg-sql-backup='docker exec -i hsadmin-ng-postgres /usr/bin/pg_dump --clean --create -U postgres postgres | gzip -9'
 alias pg-sql-restore='gunzip --stdout | docker exec -i hsadmin-ng-postgres psql -U postgres -d postgres'
 
+alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'

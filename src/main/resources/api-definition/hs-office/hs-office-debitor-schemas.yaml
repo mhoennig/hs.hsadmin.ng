@@ -1,0 +1,70 @@
+
+components:
+
+    schemas:
+
+        HsOfficeDebitor:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                debitorNumber:
+                    type: integer
+                    format: int32
+                    minimum: 10000
+                    maximum: 99999
+                partner:
+                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                billingContact:
+                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                vatId:
+                   type: string
+                vatCountryCode:
+                   type: string
+                   pattern: '^[A_Z][A-Z]$'
+                vatBusiness:
+                   type: boolean
+
+        HsOfficeDebitorPatch:
+            type: object
+            properties:
+                billingContactUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                vatId:
+                    type: string
+                    nullable: true
+                vatCountryCode:
+                    type: string
+                    pattern: '^[A_Z][A-Z]$'
+                    nullable: true
+                vatBusiness:
+                    type: boolean
+                    nullable: true
+
+        HsOfficeDebitorInsert:
+            type: object
+            properties:
+                partnerUuid:
+                    type: string
+                    format: uuid
+                billingContactUuid:
+                    type: string
+                    format: uuid
+                debitorNumber:
+                    type: integer
+                    format: int32
+                    minimum: 10000
+                    maximum: 99999
+                vatId:
+                    type: string
+                vatCountryCode:
+                    type: string
+                    pattern: '^[A_Z][A-Z]$'
+                vatBusiness:
+                    type: boolean
+            required:
+              - partnerUuid
+              - billingContactUuid

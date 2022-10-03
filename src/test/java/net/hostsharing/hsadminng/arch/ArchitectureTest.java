@@ -17,9 +17,15 @@ public class ArchitectureTest {
     public static final String NET_HOSTSHARING_HSADMINNG = "net.hostsharing.hsadminng";
 
     @ArchTest
+    @SuppressWarnings("unused")
     public static final ArchRule doNotUseJUnit4 = noClasses()
             .should().accessClassesThat()
             .resideInAPackage("org.junit");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule dontUseImplSuffix = noClasses()
+            .should().haveSimpleNameEndingWith("Impl");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -68,7 +74,7 @@ public class ArchitectureTest {
     public static final ArchRule HsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.partner..");
+            .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..");
 
     @ArchTest
     @SuppressWarnings("unused")

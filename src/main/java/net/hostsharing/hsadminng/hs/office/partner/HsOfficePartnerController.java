@@ -65,6 +65,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var entityToSave = mapToHsOfficePartnerEntity(body);
         entityToSave.setUuid(UUID.randomUUID());
+        // TODO.impl: use getReference
         entityToSave.setContact(contactRepo.findByUuid(body.getContactUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find contact uuid " + body.getContactUuid())
         ));
@@ -141,6 +142,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         resource.setContact(map(entity.getContact(), HsOfficeContactResource.class));
     };
 
+    // TODO.impl: user postmapper + getReference
     private HsOfficePartnerEntity mapToHsOfficePartnerEntity(final HsOfficePartnerInsertResource resource) {
         final var entity = new HsOfficePartnerEntity();
         entity.setBirthday(resource.getBirthday());

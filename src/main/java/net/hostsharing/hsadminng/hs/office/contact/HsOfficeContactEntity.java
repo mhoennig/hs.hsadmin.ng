@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.contact;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
+import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.Stringify;
 import net.hostsharing.hsadminng.Stringifyable;
 
@@ -21,6 +22,7 @@ import static net.hostsharing.hsadminng.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
+@DisplayName("Contact")
 public class HsOfficeContactEntity implements Stringifyable {
 
     private static Stringify<HsOfficeContactEntity> toString = stringify(HsOfficeContactEntity.class, "contact")

@@ -14,7 +14,7 @@ class HsOfficePersonEntityUnitTest {
                 .tradeName("some trade name")
                 .build();
 
-        final var actualDisplay = givenPersonEntity.getDisplayName();
+        final var actualDisplay = givenPersonEntity.toShortString();
 
         assertThat(actualDisplay).isEqualTo("some trade name");
     }
@@ -26,7 +26,7 @@ class HsOfficePersonEntityUnitTest {
                 .givenName("some given name")
                 .build();
 
-        final var actualDisplay = givenPersonEntity.getDisplayName();
+        final var actualDisplay = givenPersonEntity.toShortString();
 
         assertThat(actualDisplay).isEqualTo("some family name, some given name");
     }

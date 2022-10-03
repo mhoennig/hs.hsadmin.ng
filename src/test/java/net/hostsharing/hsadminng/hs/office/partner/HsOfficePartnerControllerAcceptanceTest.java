@@ -87,6 +87,10 @@ class HsOfficePartnerControllerAcceptanceTest {
                         {
                             "person": { "tradeName": "Second e.K." },
                             "contact": { "label": "second contact" }
+                        },
+                        {
+                            "person": { "personType": "SOLE_REPRESENTATION" },
+                            "contact": { "label": "forth contact" }
                         }
                     ]
                     """));

@@ -9,6 +9,7 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [PostgreSQL Server](#postgresql-server)
   - [Markdown](#markdown)
     - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
+    - [Render Markdown Embedded Mermaid Diagrams](#render-markdown-embedded-mermaid-diagrams)
   - [IDE Specific Settings](#ide-specific-settings)
     - [IntelliJ IDEA](#intellij-idea)
   - [Other Tools](#other-tools)
@@ -27,6 +28,7 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [Dependency-License-Compatibility](#dependency-license-compatibility)
   - [Dependency Version Upgrade](#dependency-version-upgrade)
 - [How To ...](#how-to-...)
+  - [How to Configure .pgpass for the Default PostgreSQL Database?](#how-to-configure-.pgpass-for-the-default-postgresql-database?)
   - [How to Run the Tests Against a Local User-Space Podman Daemon?](#how-to-run-the-tests-against-a-local-user-space-podman-daemon?)
     - [Install and Run Podman](#install-and-run-podman)
     - [Use the Command Line to Run the Tests Against the Podman Daemon ](#use-the-command-line-to-run-the-tests-against-the-podman-daemon-)
@@ -35,7 +37,8 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [How to Run the Tests Against a Remote Podman or Docker Daemon?](#how-to-run-the-tests-against-a-remote-podman-or-docker-daemon?)
   - [How to Run the Application on a Different Port?](#how-to-run-the-application-on-a-different-port?)
   - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
-- [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
+  - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
+  - [How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?](#how-to-re-generate-spring-controller-interfaces-from-openapi-specs?)
 - [Further Documentation](#further-documentation)
 <!-- generated TOC end. -->
 
@@ -190,6 +193,12 @@ Again, given the container is running, to restore the backup from ~/backup, run:
 To generate the TOC (Table of Contents), a little bash script from a
 [Blog Article](https://medium.com/@acrodriguez/one-liner-to-generate-a-markdown-toc-f5292112fd14) was used.
 
+Given this is in PATH as `md-toc`, use:
+
+```shell
+md-toc <README.md 2 4 | sed -e 's/^    //g'
+```
+
 To render the Markdown files, especially to watch embedded PlantUML diagrams, you can use one of the following methods:
 
 #### Render Markdown embedded PlantUML
@@ -230,6 +239,39 @@ pandoc --filter pandoc-plantuml rbac.md -o rbac.pdf
 ```
 
 ##### for other IDEs / operating systems
+
+If you have figured out how it works, please add instructions above this section.
+
+#### Render Markdown Embedded Mermaid Diagrams
+
+The source of RBAC role diagrams are much easier to read with Mermaid than with PlantUML or GraphViz, that's the main reason Mermaid ist used too.
+
+Can you see the following diagram right in your IDE?
+I mean a real graphic diagram, not just some markup code.
+@startuml
+me -> you: Can you see this diagram?
+you -> me: Sorry, I don't :-(
+me -> you: Install some tooling!
+@enduml
+
+```mermaid
+graph TD;
+    A[Can you see this diagram?];
+    A --> yes;
+    A --> no;
+    no --> F[Follow the instructions below!]
+    F --> yes
+    yes --> E[Then everything is fine.]
+```
+
+If not, you need to install some tooling.
+
+##### for IntelliJ IDEA (or derived products)
+
+You just need the bundled Markdown plugin enabled and install and activate the Mermaid plugin in its [settings](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown).
+
+
+##### for other IDEs / command-line / operating systems
 
 If you have figured out how it works, please add instructions above this section.
 
@@ -643,8 +685,8 @@ If the persistent database and the temporary database show different results, on
 2. You might have changes in the database which interfere with the tests,
    e.g. from a previous run of tests or manually applied.
    It's best to run `pg-sql-reset && gw bootRun` before each test run, to have a clean database.
-   
-## How to Amend Liquibase SQL Changesets?
+  
+### How to Amend Liquibase SQL Changesets?
 
 Liquibase changesets are meant to be immutable and based on each other.
 That means, once a changeset is written, it never changes, not even a whitespace or comment.
@@ -667,6 +709,22 @@ gw bootRun
 
 <big>**&#9888;**</big>
 Just don't forget switching to the migration mode, once there is a production database!
+
+### How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?
+
+The API is described as OpenAPI specifications in `src/main/resources/api-definition/`.
+
+Once generated, the interfaces for the Spring-Controllers can be found in `build/generated/sources/openapi`.
+
+These interfaces have to be implemented by subclasses named `*Controller`.
+
+All gradle tasks which need the generated interfaces depend on the Gradle task  `processSpring` which controls the code generation.
+It can also be executed directly:
+
+```shell
+gw processSpring
+```
+
 
 ## Further Documentation
 

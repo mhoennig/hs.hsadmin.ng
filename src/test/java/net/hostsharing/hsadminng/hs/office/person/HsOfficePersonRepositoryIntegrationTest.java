@@ -3,7 +3,9 @@ package net.hostsharing.hsadminng.hs.office.person;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
@@ -266,7 +268,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         context("superuser-alex@hostsharing.net", null);
         final var result = personRepo.findPersonByOptionalNameLike("some temporary person");
         result.forEach(tempPerson -> {
-            System.out.println("DELETING temporary person: " + tempPerson.getDisplayName());
+            System.out.println("DELETING temporary person: " + tempPerson.toShortString());
             personRepo.deleteByUuid(tempPerson.getUuid());
         });
     }
@@ -293,7 +295,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
 
     void allThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personLabels) {
         assertThat(actualResult)
-                .extracting(HsOfficePersonEntity::getDisplayName)
+                .extracting(hsOfficePersonEntity -> hsOfficePersonEntity.toShortString())
                 .contains(personLabels);
     }
 }

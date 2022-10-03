@@ -35,7 +35,6 @@ paths:
     $ref: "./hs-office-persons-with-uuid.yaml"
 
 
-
   # Relationships
 
   /api/hs/office/relationships:
@@ -44,3 +43,11 @@ paths:
   /api/hs/office/relationships/{relationshipUUID}:
     $ref: "./hs-office-relationships-with-uuid.yaml"
 
+
+  # Debitors
+
+  /api/hs/office/debitors:
+    $ref: "./hs-office-debitors.yaml"
+
+  /api/hs/office/debitors/{debitorUUID}:
+    $ref: "./hs-office-debitors-with-uuid.yaml"

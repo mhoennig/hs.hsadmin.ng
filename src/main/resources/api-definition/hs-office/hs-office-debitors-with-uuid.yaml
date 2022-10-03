@@ -1,0 +1,83 @@
+get:
+    tags:
+        - hs-office-debitors
+    description: 'Fetch a single debitor by its uuid, if visible for the current subject.'
+    operationId: getDebitorByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: debitorUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the debitor to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
+
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+patch:
+    tags:
+        - hs-office-debitors
+    description: 'Updates a single debitor by its uuid, if permitted for the current subject.'
+    operationId: patchDebitor
+    parameters:
+        -   $ref: './auth.yaml#/components/parameters/currentUser'
+        -   $ref: './auth.yaml#/components/parameters/assumedRoles'
+        -   name: debitorUUID
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitorPatch'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - hs-office-debitors
+    description: 'Delete a single debitor by its uuid, if permitted for the current subject.'
+    operationId: deleteDebitorByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: debitorUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the debitor to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: './error-responses.yaml#/components/responses/NotFound'

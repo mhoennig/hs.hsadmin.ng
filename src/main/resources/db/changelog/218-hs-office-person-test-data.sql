@@ -63,6 +63,7 @@ do language plpgsql $$
         call createHsOfficePersonTestData('NATURAL', null, 'Smith', 'Peter');
         call createHsOfficePersonTestData('LEGAL', 'Second e.K.', 'Sandra', 'Miller');
         call createHsOfficePersonTestData('SOLE_REPRESENTATION', 'Third OHG');
+        call createHsOfficePersonTestData('SOLE_REPRESENTATION', 'Fourth e.G.');
         call createHsOfficePersonTestData('JOINT_REPRESENTATION', 'Erben Bessler', 'Mel', 'Bessler');
         call createHsOfficePersonTestData('NATURAL', null, 'Bessler', 'Anita');
         call createHsOfficePersonTestData('NATURAL', null, 'Winkler', 'Paul');

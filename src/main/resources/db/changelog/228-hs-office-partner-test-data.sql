@@ -64,10 +64,9 @@ end; $$;
 do language plpgsql $$
     begin
         call createHsOfficePartnerTestData('First GmbH', 'first contact');
-
         call createHsOfficePartnerTestData('Second e.K.', 'second contact');
-
         call createHsOfficePartnerTestData('Third OHG', 'third contact');
+        call createHsOfficePartnerTestData('Fourth e.G.', 'forth contact');
     end;
 $$;
 --//

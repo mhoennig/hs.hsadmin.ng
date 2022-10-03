@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.person;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
+import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.Stringify;
 import net.hostsharing.hsadminng.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,7 @@ import static net.hostsharing.hsadminng.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
+@DisplayName("Person")
 public class HsOfficePersonEntity implements Stringifyable {
 
     private static Stringify<HsOfficePersonEntity> toString = stringify(HsOfficePersonEntity.class, "person")
@@ -49,10 +51,6 @@ public class HsOfficePersonEntity implements Stringifyable {
 
     @Column(name = "givenname")
     private String givenName;
-
-    public String getDisplayName() {
-        return toShortString();
-    }
 
     @Override
     public String toString() {

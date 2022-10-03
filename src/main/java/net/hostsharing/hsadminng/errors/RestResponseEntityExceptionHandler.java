@@ -6,15 +6,18 @@ import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler
@@ -40,6 +43,41 @@ public class RestResponseEntityExceptionHandler
             final RuntimeException exc, final WebRequest request) {
         final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
         return errorResponse(request, HttpStatus.NOT_FOUND, message);
+    }
+
+    @ExceptionHandler({ JpaObjectRetrievalFailureException.class, EntityNotFoundException.class })
+    protected ResponseEntity<CustomErrorResponse> handleJpaObjectRetrievalFailureException(
+            final RuntimeException exc, final WebRequest request) {
+        final var message =
+                userReadableEntityClassName(
+                        firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage()));
+        return errorResponse(request, HttpStatus.BAD_REQUEST, message);
+    }
+
+    private String userReadableEntityClassName(final String exceptionMessage) {
+        final var regex = "(net.hostsharing.hsadminng.[a-z0-9_.]*.[A-Za-z0-9_$]*Entity) ";
+        final var pattern = Pattern.compile(regex);
+        final var matcher = pattern.matcher(exceptionMessage);
+        if (matcher.find()) {
+            final var entityName = matcher.group(1);
+            final var entityClass = resolveClassOrNull(entityName);
+            if (entityClass != null ) {
+                return (entityClass.isAnnotationPresent(DisplayName.class)
+                        ? exceptionMessage.replace(entityName, entityClass.getAnnotation(DisplayName.class).value())
+                        : exceptionMessage.replace(entityName, entityClass.getSimpleName()))
+                        .replace(" with id ", " with uuid ");
+            }
+
+        }
+        return exceptionMessage;
+    }
+
+    private static Class<?> resolveClassOrNull(final String entityName) {
+        try {
+            return ClassLoader.getSystemClassLoader().loadClass(entityName);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 
     @ExceptionHandler(Throwable.class)
