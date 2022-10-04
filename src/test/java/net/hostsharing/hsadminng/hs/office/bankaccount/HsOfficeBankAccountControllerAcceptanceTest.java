@@ -1,0 +1,357 @@
+package net.hostsharing.hsadminng.hs.office.bankaccount;
+
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import net.hostsharing.hsadminng.Accepts;
+import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.test.JpaAttempt;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.json.JSONException;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
+
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        classes = { HsadminNgApplication.class, JpaAttempt.class }
+)
+@Transactional
+class HsOfficeBankAccountControllerAcceptanceTest {
+
+    @LocalServerPort
+    private Integer port;
+
+    @Autowired
+    Context context;
+
+    @Autowired
+    Context contextMock;
+
+    @Autowired
+    HsOfficeBankAccountRepository bankAccountRepo;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
+
+    Set<UUID> tempBankAccountUuids = new HashSet<>();
+
+    @Nested
+    @Accepts({ "bankaccount:F(Find)" })
+    class ListBankAccounts {
+
+        @Test
+        void globalAdmin_withoutAssumedRoles_canViewAllBankAaccounts_ifNoCriteriaGiven() throws JSONException {
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/bankaccounts")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                        [
+                              {
+                                  "holder": "Anita Bessler",
+                                  "iban": "DE02300606010002474689",
+                                  "bic": "DAAEDEDD"
+                              },
+                              {
+                                  "holder": "First GmbH",
+                                  "iban": "DE02120300000000202051",
+                                  "bic": "BYLADEM1001"
+                              },
+                              {
+                                  "holder": "Fourth e.G.",
+                                  "iban": "DE02200505501015871393",
+                                  "bic": "HASPDEHH"
+                              },
+                              {
+                                  "holder": "Mel Bessler",
+                                  "iban": "DE02100100100006820101",
+                                  "bic": "PBNKDEFF"
+                              },
+                              {
+                                  "holder": "Paul Winkler",
+                                  "iban": "DE02600501010002034304",
+                                  "bic": "SOLADEST600"
+                              },
+                              {
+                                  "holder": "Peter Smith",
+                                  "iban": "DE02500105170137075030",
+                                  "bic": "INGDDEFF"
+                              },
+                              {
+                                  "holder": "Second e.K.",
+                                  "iban": "DE02100500000054540402",
+                                  "bic": "BELADEBE"
+                              },
+                              {
+                                  "holder": "Third OHG",
+                                  "iban": "DE02300209000106531065",
+                                  "bic": "CMCIDEDD"
+                              }
+                          ]
+                        """
+                            ));
+                // @formatter:on
+        }
+    }
+
+    @Nested
+    @Accepts({ "bankaccount:C(Create)" })
+    class AddBankAccount {
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canAddBankAccount() {
+
+            context.define("superuser-alex@hostsharing.net");
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                               {
+                                   "holder": "new test holder",
+                                   "iban": "DE88100900001234567892",
+                                   "bic": "BEVODEBB"
+                                 }
+                            """)
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/office/bankaccounts")
+                    .then().assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("uuid", isUuidValid())
+                        .body("holder", is("new test holder"))
+                        .body("iban", is("DE88100900001234567892"))
+                        .body("bic", is("BEVODEBB"))
+                        .header("Location", startsWith("http://localhost"))
+                    .extract().header("Location");  // @formatter:on
+
+            // finally, the new bankaccount can be accessed under the generated UUID
+            final var newUserUuid = toCleanup(UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1)));
+            assertThat(newUserUuid).isNotNull();
+        }
+    }
+
+    @Nested
+    @Accepts({ "bankaccount:R(Read)" })
+    class GetBankAccount {
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canGetArbitraryBankAccount() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                    {
+                        "holder": "First GmbH"
+                    }
+                    """)); // @formatter:on
+        }
+
+        @Test
+        @Accepts({ "bankaccount:X(Access Control)" })
+        void normalUser_canNotGetUnrelatedBankAccount() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
+                .then().log().body().assertThat()
+                    .statusCode(404); // @formatter:on
+        }
+
+        @Test
+        @Accepts({ "bankaccount:X(Access Control)" })
+        @Disabled("TODO: not implemented yet")
+        void bankaccountAdminUser_canGetRelatedBankAccount() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "bankaccount-admin@firstbankaccount.example.com")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                    {
+                         "label": "first bankaccount",
+                         "emailAddresses": "bankaccount-admin@firstbankaccount.example.com",
+                         "phoneNumbers": "+49 123 1234567"
+                     }
+                    """)); // @formatter:on
+        }
+    }
+
+    @Nested
+    class PatchBankAccount {
+
+        @Test
+        void patchIsNotImplemented() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                       {
+                           "holder": "patched holder",
+                           "iban": "DE02701500000000594937",
+                           "bic": "SSKMDEMM"
+                       }
+                       """)
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
+                .then().assertThat()
+                    .statusCode(405);
+                // @formatter:on
+
+            // and the bankaccount is unchanged
+            context.define("superuser-alex@hostsharing.net");
+            assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isPresent().get()
+                    .matches(person -> {
+                        assertThat(person.getHolder()).isEqualTo(givenBankAccount.getHolder());
+                        assertThat(person.getIban()).isEqualTo(givenBankAccount.getIban());
+                        assertThat(person.getBic()).isEqualTo(givenBankAccount.getBic());
+                        return true;
+                    });
+        }
+    }
+
+    @Nested
+    @Accepts({ "bankaccount:D(Delete)" })
+    class DeleteBankAccount {
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canDeleteArbitraryBankAccount() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
+                .then().log().body().assertThat()
+                    .statusCode(204); // @formatter:on
+
+            // then the given bankaccount is gone
+            assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isEmpty();
+        }
+
+        @Test
+        @Accepts({ "bankaccount:X(Access Control)" })
+        void bankaccountOwner_canDeleteRelatedBankAaccount() {
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "selfregistered-test-user@hostsharing.org")
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
+                .then().log().body().assertThat()
+                    .statusCode(204); // @formatter:on
+
+            // then the given bankaccount is still there
+            assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isEmpty();
+        }
+
+        @Test
+        @Accepts({ "bankaccount:X(Access Control)" })
+        void normalUser_canNotDeleteUnrelatedBankAccount() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .port(port)
+                .when()
+                    .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
+                .then().log().body().assertThat()
+                    .statusCode(404); // unrelated user cannot even view the bankaccount
+            // @formatter:on
+
+            // then the given bankaccount is still there
+            assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isNotEmpty();
+        }
+    }
+
+    private HsOfficeBankAccountEntity givenSomeTemporaryBankAccountCreatedBy(final String creatingUser) {
+        return jpaAttempt.transacted(() -> {
+            context.define(creatingUser);
+            final var newBankAccount = HsOfficeBankAccountEntity.builder()
+                    .uuid(UUID.randomUUID())
+                    .holder("temp acc #" + RandomStringUtils.randomAlphabetic(3))
+                    .iban("DE93500105179473626226")
+                    .bic("INGDDEFFXXX")
+                    .build();
+
+            toCleanup(newBankAccount.getUuid());
+
+            return bankAccountRepo.save(newBankAccount);
+        }).assertSuccessful().returnedValue();
+    }
+
+    private UUID toCleanup(final UUID tempBankAccountUuid) {
+        tempBankAccountUuids.add(tempBankAccountUuid);
+        return tempBankAccountUuid;
+    }
+
+    @BeforeEach
+    @AfterEach
+    void cleanup() {
+        tempBankAccountUuids.forEach(uuid -> {
+            jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net", null);
+                System.out.println("DELETING temporary bankaccount: " + uuid);
+                final var count = bankAccountRepo.deleteByUuid(uuid);
+                System.out.println("DELETED temporary bankaccount: " + uuid + (count > 0 ? " successful" : " failed"));
+            }).assertSuccessful();
+        });
+    }
+
+}

@@ -12,7 +12,8 @@ create table hs_office_debitor
     billingContactUuid  uuid not null references hs_office_contact(uuid),
     vatId               varchar(24), -- TODO.spec: here or in person?
     vatCountryCode      varchar(2),
-    vatBusiness         boolean not null -- TODO.spec: more of such?
-    -- TODO.impl: SEPA-mandate + bank account
+    vatBusiness         boolean not null, -- TODO.spec: more of such?
+    bankAccountUuid     uuid references hs_office_bankaccount(uuid)
+    -- TODO.impl: SEPA-mandate
 );
 --//

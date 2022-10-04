@@ -69,12 +69,23 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.(*)..");
 
+    // TODO.test: rule to check if all packages have rules
+    // TODO.test: rules for contact, person, ...
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule HsOfficeBankAccountPackageRule = classes()
+            .that().resideInAPackage("..hs.office.bankaccount..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.bankaccount..", "..hs.office.debitor..");
+
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule HsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..");
+
 
     @ArchTest
     @SuppressWarnings("unused")

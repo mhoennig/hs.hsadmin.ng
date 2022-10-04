@@ -1,0 +1,31 @@
+
+components:
+
+    schemas:
+
+        HsOfficeBankAccount:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                holder:
+                    type: string
+                iban:
+                    type: string
+                bic:
+                    type: string
+
+        HsOfficeBankAccountInsert:
+            type: object
+            properties:
+                holder:
+                    type: string
+                iban:
+                    type: string
+                bic:
+                    type: string
+            required:
+                - holder
+                - iban
+                - bic

@@ -44,6 +44,15 @@ paths:
     $ref: "./hs-office-relationships-with-uuid.yaml"
 
 
+  # BankAccounts
+
+  /api/hs/office/bankaccounts:
+    $ref: "./hs-office-bankaccounts.yaml"
+
+  /api/hs/office/bankaccounts/{bankAccountUUID}:
+    $ref: "./hs-office-bankaccounts-with-uuid.yaml"
+
+
   # Debitors
 
   /api/hs/office/debitors:

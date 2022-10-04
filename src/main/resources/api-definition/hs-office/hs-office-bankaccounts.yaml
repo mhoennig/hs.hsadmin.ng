@@ -1,0 +1,56 @@
+get:
+    summary: Returns a list of (optionally filtered) bankaccounts.
+    description: Returns the list of (optionally filtered) bankaccounts which are visible to the current user or any of it's assumed roles.
+    tags:
+        - hs-office-bank-accounts
+    operationId: listBankAccounts
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: holder
+          in: query
+          required: false
+          schema:
+              type: string
+          description: Prefix of holder to filter the results.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+post:
+    summary: Adds a new bank account.
+    tags:
+        - hs-office-bank-accounts
+    operationId: addBankAccount
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccountInsert'
+        required: true
+    responses:
+        "201":
+            description: Created
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "409":
+            $ref: './error-responses.yaml#/components/responses/Conflict'
