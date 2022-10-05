@@ -343,6 +343,12 @@ class HsOfficeBankAccountControllerAcceptanceTest {
     @BeforeEach
     @AfterEach
     void cleanup() {
+        jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            tempBankAccountUuids.addAll(
+              bankAccountRepo.findByOptionalHolderLike("some temp acc").stream().map(HsOfficeBankAccountEntity::getUuid).toList()
+            );
+        });
         tempBankAccountUuids.forEach(uuid -> {
             jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net", null);

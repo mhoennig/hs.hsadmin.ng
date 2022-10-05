@@ -122,21 +122,19 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
                     "hs_office_debitor#20002Fourthe.G.-forthcontact.tenant"));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromSkippingNull(
                     initialGrantNames,
+                    "{ grant perm * on hs_office_debitor#20002Fourthe.G.-forthcontact       to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner    by system and assume }",
+                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.owner      to role global#global.admin                                     by system and assume }",
 
-                    "{ grant perm * on hs_office_debitor#20002Fourthe.G.-forthcontact to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.owner to role global#global.admin by system and assume }",
+                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner    by system and assume }",
+                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_partner#Fourthe.G.-forthcontact.admin         by system and assume }",
+                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_person#Fourthe.G..admin                       by system and assume }",
+                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_contact#forthcontact.admin                    by system and assume }",
+                    "{ grant role hs_office_contact#forthcontact.tenant                     to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
+                    "{ grant role hs_office_partner#Fourthe.G.-forthcontact.tenant          to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
+                    "{ grant role hs_office_person#Fourthe.G..tenant                        to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
+                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant     to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
 
-                    "{ grant perm edit on hs_office_debitor#20002Fourthe.G.-forthcontact to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner by system and assume }",
-
-                    "{ grant perm view on hs_office_debitor#20002Fourthe.G.-forthcontact to role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant to role hs_office_partner#Fourthe.G.-forthcontact.admin by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant to role hs_office_person#Fourthe.G..admin by system and assume }",
-                    "{ grant role hs_office_partner#Fourthe.G.-forthcontact.tenant to role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant by system and assume }",
-                    "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant by system and assume }",
-                    "{ grant role hs_office_person#Fourthe.G..tenant to role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant by system and assume }",
+                    "{ grant perm view on hs_office_debitor#20002Fourthe.G.-forthcontact    to role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant   by system and assume }",
 
                     null));
         }
@@ -394,7 +392,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(rawRoleRepo.findAll().size()).as("precondition failed: unexpected number of roles created")
                     .isEqualTo(initialRoleNames.length + 3);
             assertThat(rawGrantRepo.findAll().size()).as("precondition failed: unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.length + 12);
+                    .isEqualTo(initialGrantNames.length + 11);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

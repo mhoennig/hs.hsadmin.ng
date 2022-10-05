@@ -35,6 +35,7 @@ declare
     newPerson             hs_office_person;
     oldContact            hs_office_contact;
     newContact            hs_office_contact;
+    newBankAccount        hs_office_bankaccount;
 begin
 
     hsOfficeDebitorTenant := hsOfficeDebitorTenant(NEW);
@@ -42,7 +43,7 @@ begin
     select * from hs_office_partner as p where p.uuid = NEW.partnerUuid into newPartner;
     select * from hs_office_person as p where p.uuid = newPartner.personUuid into newPerson;
     select * from hs_office_contact as c where c.uuid = NEW.billingContactUuid into newContact;
-
+    select * from hs_office_bankaccount as b where b.uuid = NEW.refundBankAccountUuid into newBankAccount;
     if TG_OP = 'INSERT' then
 
         -- the owner role with full access for the global admins
@@ -55,23 +56,25 @@ begin
         -- the admin role with full access for owner
         adminRole = createRole(
                 hsOfficeDebitorAdmin(NEW),
-                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-                beneathRole(ownerRole)
+                withoutPermissions(),
+                beneathRoles(array [
+                    hsOfficeDebitorOwner(NEW),
+                    hsOfficePartnerAdmin(newPartner),
+                    hsOfficePersonAdmin(newPerson),
+                    hsOfficeContactAdmin(newContact),
+                    hsOfficeBankAccountAdmin(newBankAccount)]),
+                withSubRoles(array [
+                    hsOfficePartnerTenant(newPartner),
+                    hsOfficePersonTenant(newPerson),
+                    hsOfficeContactTenant(newContact),
+                    hsOfficeBankAccountTenant(newBankAccount)])
             );
 
         -- the tenant role for those related users who can view the data
         perform createRole(
                 hsOfficeDebitorTenant,
                 grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-                beneathRoles(array[
-                    hsOfficeDebitorAdmin(NEW),
-                    hsOfficePartnerAdmin(newPartner),
-                    hsOfficePersonAdmin(newPerson),
-                    hsOfficeContactAdmin(newContact)]),
-                withSubRoles(array[
-                    hsOfficePartnerTenant(newPartner),
-                    hsOfficePersonTenant(newPerson),
-                    hsOfficeContactTenant(newContact)])
+                beneathRole(hsOfficeDebitorAdmin(NEW))
             );
 
     elsif TG_OP = 'UPDATE' then
@@ -79,21 +82,23 @@ begin
         if OLD.partnerUuid <> NEW.partnerUuid then
             select * from hs_office_partner as p where p.uuid = OLD.partnerUuid into oldPartner;
 
-            call revokeRoleFromRole( hsOfficeDebitorTenant, hsOfficePartnerAdmin(oldPartner) );
-            call grantRoleToRole( hsOfficeDebitorTenant, hsOfficePartnerAdmin(newPartner) );
+            call revokeRoleFromRole(hsOfficeDebitorAdmin(OLD), hsOfficePartnerAdmin(oldPartner));
+            call grantRoleToRole(hsOfficeDebitorAdmin(NEW), hsOfficePartnerAdmin(newPartner));
 
-            call revokeRoleFromRole( hsOfficePartnerTenant(oldPartner), hsOfficeDebitorTenant );
-            call grantRoleToRole( hsOfficePartnerTenant(newPartner), hsOfficeDebitorTenant );
+            call revokeRoleFromRole(hsOfficePartnerTenant(oldPartner), hsOfficeDebitorAdmin(OLD));
+            call grantRoleToRole(hsOfficePartnerTenant(newPartner), hsOfficeDebitorAdmin(NEW));
+
+            -- TODO: What about the person of the partner? And what if the person of the partner changes?
         end if;
 
         if OLD.billingContactUuid <> NEW.billingContactUuid then
             select * from hs_office_contact as c where c.uuid = OLD.billingContactUuid into oldContact;
 
-            call revokeRoleFromRole( hsOfficeDebitorTenant, hsOfficeContactAdmin(oldContact) );
-            call grantRoleToRole( hsOfficeDebitorTenant, hsOfficeContactAdmin(newContact) );
+            call revokeRoleFromRole(hsOfficeDebitorAdmin(OLD), hsOfficeContactAdmin(oldContact));
+            call grantRoleToRole(hsOfficeDebitorAdmin(NEW), hsOfficeContactAdmin(newContact));
 
-            call revokeRoleFromRole( hsOfficeContactTenant(oldContact), hsOfficeDebitorTenant );
-            call grantRoleToRole( hsOfficeContactTenant(newContact), hsOfficeDebitorTenant );
+            call revokeRoleFromRole(hsOfficeContactTenant(oldContact), hsOfficeDebitorAdmin(OLD));
+            call grantRoleToRole(hsOfficeContactTenant(newContact), hsOfficeDebitorAdmin(NEW));
         end if;
     else
         raise exception 'invalid usage of TRIGGER';
@@ -136,8 +141,8 @@ call generateRbacIdentityView('hs_office_debitor', $idName$
 --changeset hs-office-debitor-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('hs_office_debitor',
-    'target.debitorNumber',
-    $updates$
+                                'target.debitorNumber',
+                                $updates$
         billingContactUuid = new.billingContactUuid,
         vatId = new.vatId,
         vatCountryCode = new.vatCountryCode,
@@ -153,9 +158,9 @@ call generateRbacRestrictedView('hs_office_debitor',
  */
 do language plpgsql $$
     declare
-        addDebitorPermissions  uuid[];
-        globalObjectUuid       uuid;
-        globalAdminRoleUuid    uuid ;
+        addDebitorPermissions uuid[];
+        globalObjectUuid      uuid;
+        globalAdminRoleUuid   uuid ;
     begin
         call defineContext('granting global new-debitor permission to global admin role', null, null, null);
 

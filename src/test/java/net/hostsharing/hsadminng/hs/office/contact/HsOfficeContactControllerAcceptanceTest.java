@@ -8,7 +8,9 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONException;
+import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -363,6 +365,7 @@ class HsOfficeContactControllerAcceptanceTest {
         return tempContactUuid;
     }
 
+    @BeforeEach
     @AfterEach
     void cleanup() {
         tempContactUuids.forEach(uuid -> {

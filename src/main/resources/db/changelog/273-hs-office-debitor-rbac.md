@@ -4,7 +4,6 @@
 flowchart TB;
 
 subgraph bankaccount;
-direction TB;
 
     %% oversimplified version for now
     %%   
@@ -13,36 +12,36 @@ direction TB;
     %% e.g. package admins could see the debitors bank account,
     %% except if we do NOT use the debitor in the hosting super module.
 
-    %% role:bankaccount.owner        
-    role:bankaccount.owner --> perm:bankaccount.*;
+    role:bankaccount.tenant --> perm:bankaccount.view{{bankaccount.view}};
 end;
 
 subgraph debitor[" "];
 direction TB;
 
-    %% role:debitor.owner
-    role:debitor.owner --> perm:debitor.*;
-    role:debitor.owner --> role:bankaccount.owner;
+    role:debitor.owner[[debitor.owner]]
+    role:debitor.owner --> perm:debitor.*{{debitor.*}};
 
-    %% role:debitor.admin
-    role:debitor.admin --> perm:debitor.edit;
-    role:debitor.owner --> role:debitor.admin;
+    role:debitor.admin[[debitor.admin]]
+    %% super-roles
+        role:debitor.owner --> role:debitor.admin;
+        role:partner.admin --> role:debitor.admin;
+        role:person.admin --> role:debitor.admin;
+        role:contact.admin --> role:debitor.admin;
+    %% sub-roles
+        role:debitor.admin --> role:partner.tenant;
+        role:debitor.admin --> role:person.tenant;
+        role:debitor.admin --> role:contact.tenant;
+        role:debitor.admin --> role:bankaccount.tenant;
 
-    %% role:debitor.tenant
-        role:debitor.tenant --> perm:debitor.view;
+    role:debitor.tenant[[debitor.tenant]]
+        role:debitor.tenant --> perm:debitor.view{{debitor.view}};
     %% super-roles
         role:debitor.admin --> role:debitor.tenant;
-        role:partner.admin --> role:debitor.tenant;
-        role:person.admin --> role:debitor.tenant;
-        role:contact.admin --> role:debitor.tenant;
     %% sub-roles
-        role:debitor.tenant --> role:partner.tenant;
-        role:debitor.tenant --> role:person.tenant;
-        role:debitor.tenant --> role:contact.tenant;
+        
 end;
 
 subgraph global;
-direction TB;
     role:global.admin --> role:debitor.owner;
 end;
         

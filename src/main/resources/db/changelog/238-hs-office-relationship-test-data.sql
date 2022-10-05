@@ -22,7 +22,7 @@ declare
     contact         hs_office_contact;
 
 begin
-    idName := cleanIdentifier( anchorPersonTradeName|| '-' || holderPersonFamilyName);
+    idName := cleanIdentifier( anchorPersonTradeName || '-' || holderPersonFamilyName);
     currentTask := 'creating RBAC test relationship ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);

@@ -25,6 +25,8 @@ components:
                    pattern: '^[A_Z][A-Z]$'
                 vatBusiness:
                    type: boolean
+                refundBankAccount:
+                    $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
 
         HsOfficeDebitorPatch:
             type: object
@@ -42,6 +44,10 @@ components:
                     nullable: true
                 vatBusiness:
                     type: boolean
+                    nullable: true
+                refundBankAccountUuid:
+                    type: string
+                    format: uuid
                     nullable: true
 
         HsOfficeDebitorInsert:
@@ -65,6 +71,9 @@ components:
                     pattern: '^[A_Z][A-Z]$'
                 vatBusiness:
                     type: boolean
+                refundBankAccountUuid:
+                    type: string
+                    format: uuid
             required:
               - partnerUuid
               - billingContactUuid

@@ -24,7 +24,10 @@ public class Array {
 
     public static String[] fromSkippingNull(final List<String> initialList, final String... additionalStrings) {
         final var resultList = new ArrayList<>(initialList);
-        resultList.addAll(Arrays.stream(additionalStrings).filter(Objects::nonNull).toList());
+        resultList.addAll(Arrays.stream(additionalStrings)
+                .filter(Objects::nonNull)
+                .map(s -> s.replaceAll("  *", " "))
+                .toList());
         return resultList.toArray(String[]::new);
     }
 

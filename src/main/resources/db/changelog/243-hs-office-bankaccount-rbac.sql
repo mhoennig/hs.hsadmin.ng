@@ -28,6 +28,7 @@ create or replace function createRbacRolesForHsOfficeBankAccount()
     strict as $$
 declare
     ownerRole uuid;
+    adminRole uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
@@ -43,15 +44,22 @@ begin
         grantedByRole(globalAdmin())
         );
 
+    -- the admin role for those related users who can view the data and related records
+    adminRole := createRole(
+            hsOfficeBankAccountAdmin(NEW),
+            -- Where bankaccounts can be created, assigned, re-assigned and deleted, they cannot be updated.
+            -- Thus SQL UPDATE and 'edit' permission are being implemented.
+            withoutPermissions(),
+            beneathRole(ownerRole)
+        );
+
     -- TODO.spec: assumption can not be updated
-    -- Where bankaccounts can be created, assigned, re-assigned and deleted, they cannot be updated.
-    -- Thus SQL UPDATE and 'edit' permission are being implemented.
 
     -- the tenant role for those related users who can view the data
     perform createRole(
         hsOfficeBankAccountTenant(NEW),
         grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-        beneathRole(ownerRole)
+        beneathRole(adminRole)
         );
 
     return NEW;

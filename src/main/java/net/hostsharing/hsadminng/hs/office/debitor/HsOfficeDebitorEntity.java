@@ -4,6 +4,7 @@ import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.Stringify;
 import net.hostsharing.hsadminng.Stringifyable;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 
@@ -44,6 +45,12 @@ public class HsOfficeDebitorEntity implements Stringifyable {
     private @Column(name = "vatid") String vatId;
     private @Column(name = "vatcountrycode") String vatCountryCode;
     private @Column(name = "vatbusiness") boolean vatBusiness;
+
+
+    @ManyToOne
+    @JoinColumn(name = "refundbankaccountuuid")
+    private HsOfficeBankAccountEntity refundBankAccount;
+
 
     @Override
     public String toString() {

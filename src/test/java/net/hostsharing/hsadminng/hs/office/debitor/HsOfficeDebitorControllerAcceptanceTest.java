@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import net.hostsharing.test.JpaAttempt;
@@ -56,6 +57,9 @@ class HsOfficeDebitorControllerAcceptanceTest {
     HsOfficeContactRepository contactRepo;
 
     @Autowired
+    HsOfficeBankAccountRepository bankAccountRepo;
+
+    @Autowired
     JpaAttempt jpaAttempt;
 
     Set<UUID> tempDebitorUuids = new HashSet<>();
@@ -84,7 +88,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                              "billingContact": { "label": "first contact" },
                              "vatId": null,
                              "vatCountryCode": null,
-                             "vatBusiness": true
+                             "vatBusiness": true,
+                             "refundBankAccount": { "holder": "First GmbH" }
                          },
                          {
                              "debitorNumber": 10002,
@@ -92,7 +97,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                              "billingContact": { "label": "second contact" },
                              "vatId": null,
                              "vatCountryCode": null,
-                             "vatBusiness": true
+                             "vatBusiness": true,
+                             "refundBankAccount": { "holder": "Second e.K." }
                          },
                          {
                              "debitorNumber": 10003,
@@ -100,7 +106,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                              "billingContact": { "label": "third contact" },
                              "vatId": null,
                              "vatCountryCode": null,
-                             "vatBusiness": true
+                             "vatBusiness": true,
+                             "refundBankAccount": { "holder": "Third OHG" }
                          }
                      ]
                     """));
@@ -137,14 +144,15 @@ class HsOfficeDebitorControllerAcceptanceTest {
 
     @Nested
     @Accepts({ "Debitor:C(Create)" })
-    class AddDebitor {
+    class CreateDebitor {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddDebitor() {
+        void globalAdmin_withoutAssumedRole_canAddDebitorWithBankAccount() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -157,9 +165,10 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                    "debitorNumber": "%s",
                                    "vatId": "VAT123456",
                                    "vatCountryCode": "DE",
-                                   "vatBusiness": true
+                                   "vatBusiness": true,
+                                   "refundBankAccountUuid": "%s"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), nextDebitorNumber++))
+                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), nextDebitorNumber++, givenBankAccount.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/debitors")
@@ -170,7 +179,48 @@ class HsOfficeDebitorControllerAcceptanceTest {
                         .body("vatId", is("VAT123456"))
                         .body("billingContact.label", is(givenContact.getLabel()))
                         .body("partner.person.tradeName", is(givenPartner.getPerson().getTradeName()))
+                        .body("refundBankAccount.holder", is(givenBankAccount.getHolder()))
                         .header("Location", startsWith("http://localhost"))
+                    .extract().header("Location");  // @formatter:on
+
+            // finally, the new debitor can be accessed under the generated UUID
+            final var newUserUuid = toCleanup(UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1)));
+            assertThat(newUserUuid).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canAddDebitorWithoutBankAccount() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                               {
+                                   "partnerUuid": "%s",
+                                   "billingContactUuid": "%s",
+                                   "debitorNumber": "%s",
+                                   "vatId": "VAT123456",
+                                   "vatCountryCode": "DE",
+                                   "vatBusiness": true
+                                 }
+                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), nextDebitorNumber++))
+                    .port(port)
+                    .when()
+                    .post("http://localhost/api/hs/office/debitors")
+                    .then().log().all().assertThat()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("vatId", is("VAT123456"))
+                    .body("billingContact.label", is(givenContact.getLabel()))
+                    .body("partner.person.tradeName", is(givenPartner.getPerson().getTradeName()))
+                    .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new debitor can be accessed under the generated UUID
@@ -300,7 +350,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                         "partner": { person: { "tradeName": "First GmbH" } },
-                        "billingContact": { "label": "first contact" }
+                        "billingContact": { "label": "first contact" },
+                        "refundBankAccount": { "holder": "First GmbH" }
                     }
                     """)); // @formatter:on
         }

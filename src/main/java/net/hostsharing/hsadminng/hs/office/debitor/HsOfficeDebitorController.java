@@ -2,8 +2,8 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.Mapper;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitorsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
@@ -34,12 +34,6 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Autowired
     private HsOfficeDebitorRepository debitorRepo;
-
-    @Autowired
-    private HsOfficePartnerRepository partnerRepo;
-
-    @Autowired
-    private HsOfficeContactRepository contactRepo;
 
     @Autowired
     private EntityManager em;
@@ -141,10 +135,16 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     final BiConsumer<HsOfficeDebitorEntity, HsOfficeDebitorResource> DEBITOR_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setPartner(map(entity.getPartner(), HsOfficePartnerResource.class));
         resource.setBillingContact(map(entity.getBillingContact(), HsOfficeContactResource.class));
+        if ( entity.getRefundBankAccount() != null ) {
+            resource.setRefundBankAccount(map(entity.getRefundBankAccount(), HsOfficeBankAccountResource.class));
+        }
     };
 
     final BiConsumer<HsOfficeDebitorInsertResource, HsOfficeDebitorEntity> DEBITOR_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.setPartner(em.getReference(HsOfficePartnerEntity.class, resource.getPartnerUuid()));
         entity.setBillingContact(em.getReference(HsOfficeContactEntity.class, resource.getBillingContactUuid()));
+        if ( resource.getRefundBankAccountUuid() != null ) {
+            entity.setRefundBankAccount(em.getReference(HsOfficeBankAccountEntity.class, resource.getRefundBankAccountUuid()));
+        }
     };
 }
