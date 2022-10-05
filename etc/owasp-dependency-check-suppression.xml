@@ -7,4 +7,11 @@
         <packageUrl regex="true">^pkg:maven/org\.springframework/spring-web@.*$</packageUrl>
         <cve>CVE-2016-1000027</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+           We don't use the UNWRAP_SINGLE_VALUE_ARRAYS feature and thus are not affected.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
+        <cve>CVE-2022-42003</cve>
+    </suppress>
 </suppressions>

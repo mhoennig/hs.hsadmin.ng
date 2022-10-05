@@ -1,11 +1,11 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.3'
+    id 'org.springframework.boot' version '2.7.4'
     id 'io.openapiprocessor.openapi-processor' version '2022.2'
-    id 'io.spring.dependency-management' version '1.0.13.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.14.RELEASE'
     id 'com.github.jk1.dependency-license-report' version '2.1'
-    id "org.owasp.dependencycheck" version "7.1.2"
-    id "com.diffplug.spotless" version "6.10.0"
+    id "org.owasp.dependencycheck" version "7.2.1"
+    id "com.diffplug.spotless" version "6.11.0"
     id 'jacoco'
     id 'info.solidsoft.pitest' version '1.9.0'
     id 'se.patrikerdes.use-latest-versions' version '0.2.18'
@@ -57,7 +57,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.11'
     implementation 'org.liquibase:liquibase-core'
-    implementation 'com.vladmihalcea:hibernate-types-55:2.19.0'
+    implementation 'com.vladmihalcea:hibernate-types-55:2.19.2'
     implementation 'org.openapitools:jackson-databind-nullable:0.2.3'
     implementation 'org.modelmapper:modelmapper:3.1.0'
 
@@ -75,10 +75,10 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.0.0-rc1'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.0.0'
     testImplementation 'io.rest-assured:spring-mock-mvc'
     testImplementation 'org.hamcrest:hamcrest-core:2.2'
-    testImplementation 'org.pitest:pitest-junit5-plugin:1.0.0'
+    testImplementation 'org.pitest:pitest-junit5-plugin:1.1.0'
 }
 
 dependencyManagement {
