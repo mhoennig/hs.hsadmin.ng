@@ -5,6 +5,8 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountResource;
+import org.iban4j.BicUtil;
+import org.iban4j.IbanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,9 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
             final HsOfficeBankAccountInsertResource body) {
 
         context.define(currentUser, assumedRoles);
+
+        IbanUtil.validate(body.getIban());
+        BicUtil.validate(body.getBic());
 
         final var entityToSave = map(body, HsOfficeBankAccountEntity.class);
         entityToSave.setUuid(UUID.randomUUID());

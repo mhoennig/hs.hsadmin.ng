@@ -2,6 +2,8 @@ package net.hostsharing.hsadminng.errors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
@@ -9,7 +11,6 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.context.request.WebRequest;
 
 import javax.persistence.EntityNotFoundException;
-
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -145,6 +146,25 @@ class RestResponseEntityExceptionHandlerUnitTest {
         // then
         assertThat(errorResponse.getStatusCodeValue()).isEqualTo(404);
         assertThat(errorResponse.getBody().getMessage()).isEqualTo("some error message");
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {
+            org.iban4j.InvalidCheckDigitException.class,
+            org.iban4j.IbanFormatException.class,
+            org.iban4j.BicFormatException.class })
+    void handlesIbanAndBicExceptions(final Class<? extends RuntimeException> givenExceptionClass)
+            throws Exception {
+        // given
+        final var givenException = givenExceptionClass.getConstructor(String.class).newInstance("given error message");
+        final var givenWebRequest = mock(WebRequest.class);
+
+        // when
+        final var errorResponse = exceptionHandler.handleIbanAndBicExceptions(givenException, givenWebRequest);
+
+        // then
+        assertThat(errorResponse.getStatusCodeValue()).isEqualTo(400);
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("given error message");
     }
 
     @Test

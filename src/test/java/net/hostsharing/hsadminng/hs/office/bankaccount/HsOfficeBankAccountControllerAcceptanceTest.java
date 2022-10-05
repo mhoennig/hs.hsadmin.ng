@@ -115,7 +115,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
 
     @Nested
     @Accepts({ "bankaccount:C(Create)" })
-    class AddBankAccount {
+    class CreateBankAccount {
 
         @Test
         void globalAdmin_withoutAssumedRole_canAddBankAccount() {
@@ -127,11 +127,11 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                         .header("current-user", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
-                               {
-                                   "holder": "new test holder",
-                                   "iban": "DE88100900001234567892",
-                                   "bic": "BEVODEBB"
-                                 }
+                            {
+                                "holder": "new test holder",
+                                "iban": "DE88100900001234567892",
+                                "bic": "BEVODEBB"
+                            }
                             """)
                         .port(port)
                     .when()
@@ -195,8 +195,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "bankaccount:X(Access Control)" })
-        @Disabled("TODO: not implemented yet")
+        @Disabled("TODO: not implemented yet - also add Accepts annotation when done")
         void bankaccountAdminUser_canGetRelatedBankAccount() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
@@ -212,9 +211,9 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "label": "first bankaccount",
-                         "emailAddresses": "bankaccount-admin@firstbankaccount.example.com",
-                         "phoneNumbers": "+49 123 1234567"
+                         "holder": "...",
+                         "iban": "...",
+                         "bic": "..."
                      }
                     """)); // @formatter:on
         }

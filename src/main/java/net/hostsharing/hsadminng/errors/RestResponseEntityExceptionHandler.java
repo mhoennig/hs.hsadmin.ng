@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.errors;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
+import org.iban4j.Iban4jException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,20 @@ public class RestResponseEntityExceptionHandler
         return errorResponse(request, HttpStatus.BAD_REQUEST, message);
     }
 
+    @ExceptionHandler(Iban4jException.class)
+    protected ResponseEntity<CustomErrorResponse> handleIbanAndBicExceptions(
+            final Throwable exc, final WebRequest request) {
+        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        return errorResponse(request, HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(Throwable.class)
+    protected ResponseEntity<CustomErrorResponse> handleOtherExceptions(
+            final Throwable exc, final WebRequest request) {
+        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
+    }
+
     private String userReadableEntityClassName(final String exceptionMessage) {
         final var regex = "(net.hostsharing.hsadminng.[a-z0-9_.]*.[A-Za-z0-9_$]*Entity) ";
         final var pattern = Pattern.compile(regex);
@@ -61,7 +76,7 @@ public class RestResponseEntityExceptionHandler
         if (matcher.find()) {
             final var entityName = matcher.group(1);
             final var entityClass = resolveClassOrNull(entityName);
-            if (entityClass != null ) {
+            if (entityClass != null) {
                 return (entityClass.isAnnotationPresent(DisplayName.class)
                         ? exceptionMessage.replace(entityName, entityClass.getAnnotation(DisplayName.class).value())
                         : exceptionMessage.replace(entityName, entityClass.getSimpleName()))
@@ -78,13 +93,6 @@ public class RestResponseEntityExceptionHandler
         } catch (ClassNotFoundException e) {
             return null;
         }
-    }
-
-    @ExceptionHandler(Throwable.class)
-    protected ResponseEntity<CustomErrorResponse> handleOtherExceptions(
-            final Throwable exc, final WebRequest request) {
-        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
-        return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
     }
 
     private Optional<HttpStatus> httpStatus(final String message) {
