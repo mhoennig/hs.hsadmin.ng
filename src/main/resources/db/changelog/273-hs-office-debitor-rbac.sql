@@ -36,6 +36,7 @@ declare
     oldContact            hs_office_contact;
     newContact            hs_office_contact;
     newBankAccount        hs_office_bankaccount;
+    oldBankAccount        hs_office_bankaccount;
 begin
 
     hsOfficeDebitorTenant := hsOfficeDebitorTenant(NEW);
@@ -99,6 +100,16 @@ begin
 
             call revokeRoleFromRole(hsOfficeContactTenant(oldContact), hsOfficeDebitorAdmin(OLD));
             call grantRoleToRole(hsOfficeContactTenant(newContact), hsOfficeDebitorAdmin(NEW));
+        end if;
+
+        if OLD.refundBankAccountUuid <> NEW.refundBankAccountUuid then
+            select * from hs_office_bankaccount as b where b.uuid = OLD.refundBankAccountUuid into oldBankAccount;
+
+            call revokeRoleFromRole(hsOfficeDebitorAdmin(OLD), hsOfficeBankAccountAdmin(oldBankAccount));
+            call grantRoleToRole(hsOfficeDebitorAdmin(NEW), hsOfficeBankAccountAdmin(newBankAccount));
+
+            call revokeRoleFromRole(hsOfficeBankAccountTenant(oldBankAccount), hsOfficeDebitorAdmin(OLD));
+            call grantRoleToRole(hsOfficeBankAccountTenant(newBankAccount), hsOfficeDebitorAdmin(NEW));
         end if;
     else
         raise exception 'invalid usage of TRIGGER';
