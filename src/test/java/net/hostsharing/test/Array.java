@@ -22,7 +22,7 @@ public class Array {
         return resultList.toArray(String[]::new);
     }
 
-    public static String[] fromSkippingNull(final List<String> initialList, final String... additionalStrings) {
+    public static String[] fromFormatted(final List<String> initialList, final String... additionalStrings) {
         final var resultList = new ArrayList<>(initialList);
         resultList.addAll(Arrays.stream(additionalStrings)
                 .filter(Objects::nonNull)

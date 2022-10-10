@@ -112,14 +112,17 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
                     "hs_office_bankaccount#sometempaccC.admin",
                     "hs_office_bankaccount#sometempaccC.tenant"
             ));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant role hs_office_bankaccount#sometempaccC.owner     to role global#global.admin by system and assume }",
-                    "{ grant perm delete on hs_office_bankaccount#sometempaccC to role hs_office_bankaccount#sometempaccC.owner by system and assume }",
-                    "{ grant role hs_office_bankaccount#sometempaccC.tenant    to role hs_office_bankaccount#sometempaccC.admin by system and assume }",
-                    "{ grant role hs_office_bankaccount#sometempaccC.admin     to role hs_office_bankaccount#sometempaccC.owner by system and assume }",
-                    "{ grant perm view on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.tenant by system and assume }",
-                    "{ grant role hs_office_bankaccount#sometempaccC.owner     to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
+                    "{ grant perm delete on hs_office_bankaccount#sometempaccC to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
+                    "{ grant role hs_office_bankaccount#sometempaccC.owner     to role global#global.admin                              by system and assume }",
+                    "{ grant role hs_office_bankaccount#sometempaccC.owner     to user selfregistered-user-drew@hostsharing.org         by global#global.admin and assume }",
+
+                    "{ grant role hs_office_bankaccount#sometempaccC.admin     to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
+
+                    "{ grant perm view on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.tenant        by system and assume }",
+                    "{ grant role hs_office_bankaccount#sometempaccC.tenant    to role hs_office_bankaccount#sometempaccC.admin         by system and assume }",
+                    null
             ));
         }
 

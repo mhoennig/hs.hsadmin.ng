@@ -120,7 +120,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
                     "hs_office_debitor#20002Fourthe.G.-forthcontact.admin",
                     "hs_office_debitor#20002Fourthe.G.-forthcontact.owner",
                     "hs_office_debitor#20002Fourthe.G.-forthcontact.tenant"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromSkippingNull(
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
                     "{ grant perm * on hs_office_debitor#20002Fourthe.G.-forthcontact       to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner    by system and assume }",
                     "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.owner      to role global#global.admin                                     by system and assume }",

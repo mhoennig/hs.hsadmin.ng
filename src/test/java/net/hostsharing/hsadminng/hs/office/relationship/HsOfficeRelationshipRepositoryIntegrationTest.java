@@ -121,7 +121,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                     "hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.admin",
                     "hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner",
                     "hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromSkippingNull(
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
 
                     "{ grant perm * on hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner by system and assume }",
