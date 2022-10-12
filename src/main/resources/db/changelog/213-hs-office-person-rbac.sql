@@ -24,36 +24,34 @@ create or replace function createRbacRolesForHsOfficePerson()
     returns trigger
     language plpgsql
     strict as $$
-declare
-    ownerRole uuid;
-    adminRole uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
-    -- the owner role with full access for the creator assigned to the current user
-    ownerRole := createRole(
+    perform createRoleWithGrants(
             hsOfficePersonOwner(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-            beneathRole(globalAdmin()),
-            withoutSubRoles(),
-            withUser(currentUser()), -- TODO.spec: Who is owner of a new person?
-            grantedByRole(globalAdmin())
+            permissions => array['*'],
+            incomingSuperRoles => array[globalAdmin()],
+            userUuids => array[currentUserUuid()],
+            grantedByRole => globalAdmin()
         );
 
-    -- the tenant role for those related users who can view the data
-    adminRole := createRole(
+    perform createRoleWithGrants(
             hsOfficePersonAdmin(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-            beneathRole(ownerRole)
+            permissions => array['edit'],
+            incomingSuperRoles => array[hsOfficePersonOwner(NEW)]
         );
 
-    -- the tenant role for those related users who can view the data
-    perform createRole(
+    perform createRoleWithGrants(
             hsOfficePersonTenant(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-            beneathRole(adminRole)
+            incomingSuperRoles => array[hsOfficePersonAdmin(NEW)]
+        );
+
+    perform createRoleWithGrants(
+            hsOfficePersonGuest(NEW),
+            permissions => array['view'],
+            incomingSuperRoles => array[hsOfficePersonTenant(NEW)]
         );
 
     return NEW;

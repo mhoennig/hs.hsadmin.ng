@@ -35,28 +35,28 @@ begin
     end if;
 
     -- the owner role with full access for Hostsharing administrators
-    testCustomerOwnerUuid = createRole(
+    testCustomerOwnerUuid = createRoleWithGrants(
         testCustomerOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(globalAdmin())
+        permissions => array['*'],
+        incomingSuperRoles => array[globalAdmin()]
         );
 
     -- the admin role for the customer's admins, who can view and add products
-    customerAdminUuid = createRole(
+    customerAdminUuid = createRoleWithGrants(
         testCustomerAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view', 'add-package']),
+        permissions => array['view', 'add-package'],
         -- NO auto assume for customer owner to avoid exploding permissions for administrators
-        withUser(NEW.adminUserName, 'create'), -- implicitly ignored if null
-        grantedByRole(globalAdmin())
+        userUuids => array[getRbacUserId(NEW.adminUserName, 'create')], -- implicitly ignored if null
+        grantedByRole => globalAdmin()
         );
 
     -- allow the customer owner role (thus administrators) to assume the customer admin role
     call grantRoleToRole(customerAdminUuid, testCustomerOwnerUuid, false);
 
     -- the tenant role which later can be used by owners+admins of sub-objects
-    perform createRole(
+    perform createRoleWithGrants(
         testCustomerTenant(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view'])
+        permissions =>  array['view']
         );
 
     return NEW;

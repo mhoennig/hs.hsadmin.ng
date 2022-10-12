@@ -58,12 +58,28 @@ begin
             return roleDescriptor('%2$s', entity.uuid, 'admin');
         end; $f$;
 
+        create or replace function %1$sAgent(entity %2$s)
+            returns RbacRoleDescriptor
+            language plpgsql
+            strict as $f$
+        begin
+            return roleDescriptor('%2$s', entity.uuid, 'agent');
+        end; $f$;
+
         create or replace function %1$sTenant(entity %2$s)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
             return roleDescriptor('%2$s', entity.uuid, 'tenant');
+        end; $f$;
+
+        create or replace function %1$sGuest(entity %2$s)
+            returns RbacRoleDescriptor
+            language plpgsql
+            strict as $f$
+        begin
+            return roleDescriptor('%2$s', entity.uuid, 'guest');
         end; $f$;
 
         $sql$, prefix, targetTable);

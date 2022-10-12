@@ -99,7 +99,13 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll()).stream()
+                    .map(s -> s.replace("superuser-alex@hostsharing.net", "superuser-alex"))
+                    .map(s -> s.replace("20002Fourthe.G.-forthcontact", "FeG"))
+                    .map(s -> s.replace("Fourthe.G.-forthcontact", "FeG"))
+                    .map(s -> s.replace("forthcontact", "4th"))
+                    .map(s -> s.replace("hs_office_", ""))
+                    .toList();
 
             // when
             attempt(em, () -> {
@@ -117,26 +123,44 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // then
             assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.admin",
                     "hs_office_debitor#20002Fourthe.G.-forthcontact.owner",
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.tenant"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
-                    initialGrantNames,
-                    "{ grant perm * on hs_office_debitor#20002Fourthe.G.-forthcontact       to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner    by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.owner      to role global#global.admin                                     by system and assume }",
+                    "hs_office_debitor#20002Fourthe.G.-forthcontact.admin",
+                    "hs_office_debitor#20002Fourthe.G.-forthcontact.agent",
+                    "hs_office_debitor#20002Fourthe.G.-forthcontact.tenant",
+                    "hs_office_debitor#20002Fourthe.G.-forthcontact.guest"));
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
+                    .map(s -> s.replace("superuser-alex@hostsharing.net", "superuser-alex"))
+                    .map(s -> s.replace("20002Fourthe.G.-forthcontact", "FeG"))
+                    .map(s -> s.replace("Fourthe.G.-forthcontact", "FeG"))
+                    .map(s -> s.replace("forthcontact", "4th"))
+                    .map(s -> s.replace("hs_office_", ""))
+                    .containsExactlyInAnyOrder(Array.fromFormatted(
+                            initialGrantNames,
+                            // owner
+                            "{ grant perm * on debitor#FeG      to role debitor#FeG.owner   by system and assume }",
+                            "{ grant role debitor#FeG.owner     to role global#global.admin by system and assume }",
+                            "{ grant role debitor#FeG.owner     to user superuser-alex      by global#global.admin and assume }",
 
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_debitor#20002Fourthe.G.-forthcontact.owner    by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_partner#Fourthe.G.-forthcontact.admin         by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_person#Fourthe.G..admin                       by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.admin      to role hs_office_contact#forthcontact.admin                    by system and assume }",
-                    "{ grant role hs_office_contact#forthcontact.tenant                     to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
-                    "{ grant role hs_office_partner#Fourthe.G.-forthcontact.tenant          to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
-                    "{ grant role hs_office_person#Fourthe.G..tenant                        to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
-                    "{ grant role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant     to role hs_office_debitor#20002Fourthe.G.-forthcontact.admin    by system and assume }",
+                            // admin
+                            "{ grant perm edit on debitor#FeG   to role debitor#FeG.admin   by system and assume }",
+                            "{ grant role debitor#FeG.admin     to role debitor#FeG.owner   by system and assume }",
 
-                    "{ grant perm view on hs_office_debitor#20002Fourthe.G.-forthcontact    to role hs_office_debitor#20002Fourthe.G.-forthcontact.tenant   by system and assume }",
+                            // agent
+                            "{ grant role debitor#FeG.agent     to role debitor#FeG.admin   by system and assume }",
+                            "{ grant role debitor#FeG.agent     to role contact#4th.admin   by system and assume }",
+                            "{ grant role debitor#FeG.agent     to role partner#FeG.admin   by system and assume }",
 
-                    null));
+                            // tenant
+                            "{ grant role contact#4th.guest     to role debitor#FeG.tenant  by system and assume }",
+                            "{ grant role debitor#FeG.tenant    to role debitor#FeG.agent   by system and assume }",
+                            "{ grant role debitor#FeG.tenant    to role partner#FeG.agent   by system and assume }",
+                            "{ grant role partner#FeG.tenant    to role debitor#FeG.tenant  by system and assume }",
+
+                            // guest
+                            "{ grant perm view on debitor#FeG   to role debitor#FeG.guest   by system and assume }",
+                            "{ grant role debitor#FeG.guest     to role debitor#FeG.tenant  by system and assume }",
+
+                            null));
         }
 
         private void assertThatDebitorIsPersisted(final HsOfficeDebitorEntity saved) {
@@ -247,6 +271,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 givenDebitor.setBillingContact(rawReference(givenNewContact));
+                // TODO.test: also test update of partner+bankAccount
+                // givenDebitor.setPartner(rawReference(givenNewPartner));
+                // givenDebitor.setRefundBankAccount(rawReference(givenNewBankAccount));
                 givenDebitor.setVatId(givenNewVatId);
                 givenDebitor.setVatCountryCode(givenNewVatCountryCode);
                 givenDebitor.setVatBusiness(givenNewVatBusiness);
@@ -390,9 +417,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "twelfth");
             assertThat(rawRoleRepo.findAll().size()).as("precondition failed: unexpected number of roles created")
-                    .isEqualTo(initialRoleNames.length + 3);
+                    .isEqualTo(initialRoleNames.length + 5);
             assertThat(rawGrantRepo.findAll().size()).as("precondition failed: unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.length + 11);
+                    .isEqualTo(initialGrantNames.length + 14);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

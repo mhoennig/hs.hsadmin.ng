@@ -3,41 +3,38 @@
 ```mermaid
 flowchart TB
 
-%% ---------- generated start: ---------- 
-
 subgraph global
+    style hsOfficeBankAccount fill: #e9f7ef
+
     role:global.admin[global.admin]
 end
 
-subgraph context
-    user:current([current])
+subgraph hsOfficeBankAccount
+    direction TB
+    style hsOfficeBankAccount fill: #e9f7ef
+   
+    user:hsOfficeBankAccount.creator([bankAccount.creator])       
+
+    role:hsOfficeBankAccount.owner[[bankAccount.owner]]
+    %% permissions
+        role:hsOfficeBankAccount.owner --> perm:hsOfficeBankAccount.*{{hsOfficeBankAccount.delete}}
+    %% incoming
+        role:global.admin --> role:hsOfficeBankAccount.owner
+        user:hsOfficeBankAccount.creator ---> role:hsOfficeBankAccount.owner
+       
+    role:hsOfficeBankAccount.admin[[bankAccount.admin]]
+    %% incoming
+        role:hsOfficeBankAccount.owner ---> role:hsOfficeBankAccount.admin        
+   
+    role:hsOfficeBankAccount.tenant[[bankAccount.tenant]]
+    %% incoming
+        role:hsOfficeBankAccount.admin ---> role:hsOfficeBankAccount.tenant
+   
+    role:hsOfficeBankAccount.guest[[bankAccount.guest]]
+    %% permissions
+        role:hsOfficeBankAccount.guest --> perm:hsOfficeBankAccount.view{{hsOfficeBankAccount.view}}
+    %% incoming
+        role:hsOfficeBankAccount.tenant ---> role:hsOfficeBankAccount.guest
 end
-
-subgraph bankaccount
-
-    subgraph roles[ ]
-        role:bankaccount.owner[[bankaccount.owner]]
-        role:bankaccount.admin[[bankaccount.admin]]    
-        role:bankaccount.tenant[[bankaccount.tenant]]
-    end
-
-    subgraph perms[ ]
-        perm:bankaccount.delete{{bankaccount.delete}}
-        perm:bankaccount.view{{bankaccount.view}}
-    end   
-
-end
-
-%% ---------- generated end. ----------
-
-role:bankaccount.owner --> perm:bankaccount.delete
-
-role:global.admin --> role:bankaccount.owner
-user:current --> role:bankaccount.owner
-
-role:bankaccount.owner --> role:bankaccount.admin
-
-role:bankaccount.admin --> role:bankaccount.tenant
-role:bankaccount.tenant --> perm:bankaccount.view
 ```
 

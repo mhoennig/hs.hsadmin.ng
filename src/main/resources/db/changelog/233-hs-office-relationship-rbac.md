@@ -1,79 +1,81 @@
---liquibase formatted sql
+### hs_office_relationship RBAC
 
--- ============================================================================
---changeset hs-office-relationship-rbac-OBJECT:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_relationship');
---//
+```mermaid
 
+flowchart TB
 
--- ============================================================================
---changeset hs-office-relationship-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeRelationship', 'hs_office_relationship');
---//
+subgraph global
+    style global fill:#eee
+    
+    role:global.admin[global.admin]    
+end
 
+subgraph hsOfficeContact
+    direction TB
+    style hsOfficeContact fill:#eee
+    
+    role:hsOfficeContact.admin[contact.admin]    
+    --> role:hsOfficeContact.tenant[contact.tenant]    
+    --> role:hsOfficeContact.guest[contact.guest]    
+end
 
--- ============================================================================
---changeset hs-office-relationship-rbac-ROLES-CREATION:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
+subgraph hsOfficePerson
+    direction TB
+    style hsOfficePerson fill:#eee
+    
+    role:hsOfficePerson.admin[person.admin]    
+    --> role:hsOfficePerson.tenant[person.tenant]    
+    --> role:hsOfficePerson.guest[person.guest]    
+end
 
-/*
-    Creates and updates the roles and their assignments for relationship entities.
- */
+subgraph hsOfficeRelationship
 
-create or replace function hsOfficeRelationshipRbacRolesTrigger()
-    returns trigger
-    language plpgsql
-    strict as $$
-declare
-    hsOfficeRelationshipTenant  RbacRoleDescriptor;
-    newRelAnchor                hs_office_person;
-    newRelHolder                hs_office_person;
-    oldContact                  hs_office_contact;
-    newContact                  hs_office_contact;
-begin
-
-    hsOfficeRelationshipTenant := hsOfficeRelationshipTenant(NEW);
-
-    select * from hs_office_person as p where p.uuid = NEW.relAnchorUuid into newRelAnchor;
-    select * from hs_office_person as p where p.uuid = NEW.relHolderUuid into newRelHolder;
-    select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
+    role:hsOfficePerson#relAnchor.admin[person#anchor.admin]
+    --- role:hsOfficePerson.admin
+       
+   role:hsOfficeRelationship.owner[relationship.owner]
+   %% permissions
+       role:hsOfficeRelationship.owner --> perm:hsOfficeRelationship.*{{relationship.*}}
+   %% incoming
+       role:global.admin ---> role:hsOfficeRelationship.owner
+       role:hsOfficePersonAdmin#relAnchor.admin
+end
+```
 
     if TG_OP = 'INSERT' then
 
-        perform createRoleWithGrants(
+        -- the owner role with full access for admins of the relAnchor global admins
+        ownerRole = createRole(
                 hsOfficeRelationshipOwner(NEW),
-                permissions => array['*'],
-                incomingSuperRoles => array[
+                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
+                beneathRoles(array[
                     globalAdmin(),
-                    hsOfficePersonAdmin(newRelAnchor)]
+                    hsOfficePersonAdmin(newRelAnchor)])
             );
 
-        perform createRoleWithGrants(
+        -- the admin role with full access for the owner
+        adminRole = createRole(
                 hsOfficeRelationshipAdmin(NEW),
-                permissions => array['edit'],
-                incomingSuperRoles => array[hsOfficeRelationshipOwner(NEW)]
+                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
+                beneathRole(ownerRole)
             );
 
         -- the tenant role for those related users who can view the data
-        perform createRoleWithGrants(
+        perform createRole(
                 hsOfficeRelationshipTenant,
-                permissions => array['view'],
-                incomingSuperRoles => array[
-                    hsOfficeRelationshipAdmin(NEW),
+                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
+                beneathRoles(array[
                     hsOfficePersonAdmin(newRelAnchor),
                     hsOfficePersonAdmin(newRelHolder),
-                    hsOfficeContactAdmin(newContact)],
-                outgoingSubRoles => array[
+                    hsOfficeContactAdmin(newContact)]),
+                withSubRoles(array[
                     hsOfficePersonTenant(newRelAnchor),
                     hsOfficePersonTenant(newRelHolder),
-                    hsOfficeContactTenant(newContact)]
+                    hsOfficeContactTenant(newContact)])
             );
 
         -- anchor and holder admin roles need each others tenant role
         -- to be able to see the joined relationship
-        -- TODO: this can probably be avoided through agent+guest roles
         call grantRoleToRole(hsOfficePersonTenant(newRelAnchor), hsOfficePersonAdmin(newRelHolder));
         call grantRoleToRole(hsOfficePersonTenant(newRelHolder), hsOfficePersonAdmin(newRelAnchor));
         call grantRoleToRoleIfNotNull(hsOfficePersonTenant(newRelHolder), hsOfficeContactAdmin(newContact));

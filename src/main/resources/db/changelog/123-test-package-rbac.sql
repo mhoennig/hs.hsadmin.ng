@@ -36,25 +36,25 @@ begin
     select * from test_customer as c where c.uuid = NEW.customerUuid into parentCustomer;
 
     -- an owner role is created and assigned to the customer's admin role
-    packageOwnerRoleUuid = createRole(
-        testPackageOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(testCustomerAdmin(parentCustomer))
+    perform createRoleWithGrants(
+            testPackageOwner(NEW),
+            permissions => array ['*'],
+            incomingSuperRoles => array[testCustomerAdmin(parentCustomer)]
         );
 
     -- an owner role is created and assigned to the package owner role
-    packageAdminRoleUuid = createRole(
-        testPackageAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['add-domain']),
-        beneathRole(packageOwnerRoleUuid)
+    perform createRoleWithGrants(
+            testPackageAdmin(NEW),
+            permissions => array ['add-domain'],
+            incomingSuperRoles => array[testPackageOwner(NEW)]
         );
 
     -- and a package tenant role is created and assigned to the package admin as well
-    perform createRole(
-        testPackageTenant(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-        beneathRole(packageAdminRoleUuid),
-        beingItselfA(testCustomerTenant(parentCustomer))
+    perform createRoleWithGrants(
+            testPackageTenant(NEW),
+            permissions => array['view'],
+            incomingsuperroles => array[testPackageAdmin(NEW)],
+            outgoingSubRoles => array[testCustomerTenant(parentCustomer)]
         );
 
     return NEW;

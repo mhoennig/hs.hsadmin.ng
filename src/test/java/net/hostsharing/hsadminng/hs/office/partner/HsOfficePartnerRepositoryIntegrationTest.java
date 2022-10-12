@@ -96,7 +96,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll()).stream()
+                    .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
+                    .map(s -> s.replace("forthcontact", "4th"))
+                    .map(s -> s.replace("hs_office_", ""))
+                    .toList();
 
             // when
             attempt(em, () -> {
@@ -114,20 +118,40 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
                     "hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin",
+                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.agent",
                     "hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner",
-                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
-                    initialGrantNames,
-                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner to role global#global.admin by system and assume }",
-                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
-                    "{ grant perm edit on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
-                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin by system and assume }",
-                    "{ grant perm * on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
-                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner by system and assume }",
-                    "{ grant perm view on hs_office_partner#ErbenBesslerMelBessler-forthcontact to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
-                    "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
-                    "{ grant role hs_office_person#ErbenBesslerMelBessler.tenant to role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant by system and assume }",
-                    "{ grant role hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant to role hs_office_person#ErbenBesslerMelBessler.admin by system and assume }"));
+                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant",
+                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.guest"));
+            assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
+                    .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
+                    .map(s -> s.replace("forthcontact", "4th"))
+                    .map(s -> s.replace("hs_office_", ""))
+                    .containsExactlyInAnyOrder(Array.fromFormatted(
+                            initialGrantNames,
+                            // owner
+                            "{ grant perm * on partner#EBess-4th    to role partner#EBess-4th.owner     by system and assume }",
+                            "{ grant role partner#EBess-4th.owner   to role global#global.admin         by system and assume }",
+
+                            // admin
+                            "{ grant perm edit on partner#EBess-4th to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant role partner#EBess-4th.admin   to role partner#EBess-4th.owner     by system and assume }",
+                            "{ grant role person#EBess.tenant       to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant role contact#4th.tenant        to role partner#EBess-4th.admin     by system and assume }",
+
+                            // agent
+                            "{ grant role partner#EBess-4th.agent   to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant role partner#EBess-4th.agent   to role person#EBess.admin          by system and assume }",
+                            "{ grant role partner#EBess-4th.agent   to role contact#4th.admin           by system and assume }",
+
+                            // tenant
+                            "{ grant role partner#EBess-4th.tenant  to role partner#EBess-4th.agent     by system and assume }",
+                            "{ grant role person#EBess.guest        to role partner#EBess-4th.tenant    by system and assume }",
+                            "{ grant role contact#4th.guest         to role partner#EBess-4th.tenant    by system and assume }",
+
+                            // guest
+                            "{ grant perm view on partner#EBess-4th to role partner#EBess-4th.guest     by system and assume }",
+                            "{ grant role partner#EBess-4th.guest   to role partner#EBess-4th.tenant    by system and assume }",
+                            null));
         }
 
         private void assertThatPartnerIsPersisted(final HsOfficePartnerEntity saved) {

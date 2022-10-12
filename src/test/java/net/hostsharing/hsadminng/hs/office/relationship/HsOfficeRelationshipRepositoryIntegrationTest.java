@@ -135,6 +135,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                     "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
                     "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant to role hs_office_person#BesslerAnita.admin by system and assume }",
 
+                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.admin by system and assume }",
                     "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant by system and assume }",
                     "{ grant role hs_office_person#BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant by system and assume }",
                     null)
@@ -353,7 +354,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
                     .isEqualTo(initialRoleNames.length + 3);
             assertThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.length + 12);
+                    .isEqualTo(initialGrantNames.length + 13);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

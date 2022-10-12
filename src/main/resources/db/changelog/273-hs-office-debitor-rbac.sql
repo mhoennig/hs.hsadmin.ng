@@ -47,35 +47,48 @@ begin
     select * from hs_office_bankaccount as b where b.uuid = NEW.refundBankAccountUuid into newBankAccount;
     if TG_OP = 'INSERT' then
 
-        -- the owner role with full access for the global admins
-        ownerRole = createRole(
+
+        perform createRoleWithGrants(
                 hsOfficeDebitorOwner(NEW),
-                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-                beneathRole(globalAdmin())
+                permissions => array['*'],
+                incomingSuperRoles => array[globalAdmin()],
+                userUuids => array[currentUserUuid()],
+                grantedByRole => globalAdmin()
             );
 
-        -- the admin role with full access for owner
-        adminRole = createRole(
+        perform createRoleWithGrants(
                 hsOfficeDebitorAdmin(NEW),
-                withoutPermissions(),
-                beneathRoles(array [
-                    hsOfficeDebitorOwner(NEW),
-                    hsOfficePartnerAdmin(newPartner),
-                    hsOfficePersonAdmin(newPerson),
-                    hsOfficeContactAdmin(newContact),
-                    hsOfficeBankAccountAdmin(newBankAccount)]),
-                withSubRoles(array [
-                    hsOfficePartnerTenant(newPartner),
-                    hsOfficePersonTenant(newPerson),
-                    hsOfficeContactTenant(newContact),
-                    hsOfficeBankAccountTenant(newBankAccount)])
+                permissions => array['edit'],
+                incomingSuperRoles => array[hsOfficeDebitorOwner(NEW)]
             );
 
-        -- the tenant role for those related users who can view the data
-        perform createRole(
-                hsOfficeDebitorTenant,
-                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-                beneathRole(hsOfficeDebitorAdmin(NEW))
+        perform createRoleWithGrants(
+                hsOfficeDebitorAgent(NEW),
+                incomingSuperRoles => array[
+                    hsOfficeDebitorAdmin(NEW),
+                    hsOfficePartnerAdmin(newPartner),
+                    hsOfficeContactAdmin(newContact)],
+                outgoingSubRoles => array[
+                    hsOfficeBankAccountTenant(newBankaccount)]
+            );
+
+        perform createRoleWithGrants(
+                hsOfficeDebitorTenant(NEW),
+                incomingSuperRoles => array[
+                    hsOfficeDebitorAgent(NEW),
+                    hsOfficePartnerAgent(newPartner),
+                    hsOfficeBankAccountAdmin(newBankaccount)],
+                outgoingSubRoles => array[
+                    hsOfficePartnerTenant(newPartner),
+                    hsOfficeContactGuest(newContact),
+                    hsOfficeBankAccountGuest(newBankaccount)]
+            );
+
+        perform createRoleWithGrants(
+                hsOfficeDebitorGuest(NEW),
+                permissions => array['view'],
+                incomingSuperRoles => array[
+                    hsOfficeDebitorTenant(NEW)]
             );
 
     elsif TG_OP = 'UPDATE' then
@@ -83,33 +96,37 @@ begin
         if OLD.partnerUuid <> NEW.partnerUuid then
             select * from hs_office_partner as p where p.uuid = OLD.partnerUuid into oldPartner;
 
-            call revokeRoleFromRole(hsOfficeDebitorAdmin(OLD), hsOfficePartnerAdmin(oldPartner));
-            call grantRoleToRole(hsOfficeDebitorAdmin(NEW), hsOfficePartnerAdmin(newPartner));
+            call revokeRoleFromRole(hsOfficeDebitorAgent(OLD), hsOfficePartnerAdmin(oldPartner));
+            call grantRoleToRole(hsOfficeDebitorAgent(NEW), hsOfficePartnerAdmin(newPartner));
 
-            call revokeRoleFromRole(hsOfficePartnerTenant(oldPartner), hsOfficeDebitorAdmin(OLD));
-            call grantRoleToRole(hsOfficePartnerTenant(newPartner), hsOfficeDebitorAdmin(NEW));
+            call revokeRoleFromRole(hsOfficeDebitorTenant(OLD), hsOfficePartnerAgent(oldPartner));
+            call grantRoleToRole(hsOfficeDebitorTenant(NEW), hsOfficePartnerAgent(newPartner));
 
-            -- TODO: What about the person of the partner? And what if the person of the partner changes?
+            call revokeRoleFromRole(hsOfficePartnerTenant(oldPartner), hsOfficeDebitorTenant(OLD));
+            call grantRoleToRole(hsOfficePartnerTenant(newPartner), hsOfficeDebitorTenant(NEW));
         end if;
 
         if OLD.billingContactUuid <> NEW.billingContactUuid then
             select * from hs_office_contact as c where c.uuid = OLD.billingContactUuid into oldContact;
 
-            call revokeRoleFromRole(hsOfficeDebitorAdmin(OLD), hsOfficeContactAdmin(oldContact));
-            call grantRoleToRole(hsOfficeDebitorAdmin(NEW), hsOfficeContactAdmin(newContact));
+            call revokeRoleFromRole(hsOfficeDebitorAgent(OLD), hsOfficeContactAdmin(oldContact));
+            call grantRoleToRole(hsOfficeDebitorAgent(NEW), hsOfficeContactAdmin(newContact));
 
-            call revokeRoleFromRole(hsOfficeContactTenant(oldContact), hsOfficeDebitorAdmin(OLD));
-            call grantRoleToRole(hsOfficeContactTenant(newContact), hsOfficeDebitorAdmin(NEW));
+            call revokeRoleFromRole(hsOfficeContactGuest(oldContact), hsOfficeDebitorTenant(OLD));
+            call grantRoleToRole(hsOfficeContactGuest(newContact), hsOfficeDebitorTenant(NEW));
         end if;
 
         if OLD.refundBankAccountUuid <> NEW.refundBankAccountUuid then
             select * from hs_office_bankaccount as b where b.uuid = OLD.refundBankAccountUuid into oldBankAccount;
 
-            call revokeRoleFromRole(hsOfficeDebitorAdmin(OLD), hsOfficeBankAccountAdmin(oldBankAccount));
-            call grantRoleToRole(hsOfficeDebitorAdmin(NEW), hsOfficeBankAccountAdmin(newBankAccount));
+            call revokeRoleFromRole(hsOfficeBankAccountTenant(oldBankaccount), hsOfficeDebitorAgent(OLD));
+            call grantRoleToRole(hsOfficeBankAccountTenant(newBankaccount), hsOfficeDebitorAgent(NEW));
 
-            call revokeRoleFromRole(hsOfficeBankAccountTenant(oldBankAccount), hsOfficeDebitorAdmin(OLD));
-            call grantRoleToRole(hsOfficeBankAccountTenant(newBankAccount), hsOfficeDebitorAdmin(NEW));
+            call revokeRoleFromRole(hsOfficeDebitorTenant(OLD), hsOfficeBankAccountAdmin(oldBankaccount));
+            call grantRoleToRole(hsOfficeDebitorTenant(NEW), hsOfficeBankAccountAdmin(newBankaccount));
+
+            call revokeRoleFromRole(hsOfficeBankAccountGuest(oldBankaccount), hsOfficeDebitorTenant(OLD));
+            call grantRoleToRole(hsOfficeBankAccountGuest(newBankaccount), hsOfficeDebitorTenant(NEW));
         end if;
     else
         raise exception 'invalid usage of TRIGGER';

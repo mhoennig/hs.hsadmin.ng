@@ -34,28 +34,29 @@ begin
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
-    -- the owner role with full access for the creator assigned to the current user
-    ownerRole := createRole(
-        hsOfficeContactOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(globalAdmin()),
-        withoutSubRoles(),
-        withUser(currentUser()), -- TODO.spec: Who is owner of a new contact?
-        grantedByRole(globalAdmin())
+    perform createRoleWithGrants(
+            hsOfficeContactOwner(NEW),
+            permissions => array['*'],
+            incomingSuperRoles => array[globalAdmin()],
+            userUuids => array[currentUserUuid()],
+            grantedByRole => globalAdmin()
         );
 
-    -- the tenant role for those related users who can view the data
-    adminRole := createRole(
+    perform createRoleWithGrants(
             hsOfficeContactAdmin(NEW),
-            grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-            beneathRole(ownerRole)
+            permissions => array['edit'],
+            incomingSuperRoles => array[hsOfficeContactOwner(NEW)]
         );
 
-    -- the tenant role for those related users who can view the data
-    perform createRole(
-        hsOfficeContactTenant(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-        beneathRole(adminRole)
+    perform createRoleWithGrants(
+            hsOfficeContactTenant(NEW),
+            incomingSuperRoles => array[hsOfficeContactAdmin(NEW)]
+        );
+
+    perform createRoleWithGrants(
+            hsOfficeContactGuest(NEW),
+            permissions => array['view'],
+            incomingSuperRoles => array[hsOfficeContactTenant(NEW)]
         );
 
     return NEW;

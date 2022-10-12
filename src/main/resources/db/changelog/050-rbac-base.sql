@@ -186,7 +186,7 @@ end; $$;
 
  */
 
-create type RbacRoleType as enum ('owner', 'admin', 'tenant');
+create type RbacRoleType as enum ('owner', 'admin', 'agent', 'tenant', 'guest');
 
 create table RbacRole
 (

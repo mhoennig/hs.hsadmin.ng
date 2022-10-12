@@ -110,7 +110,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
                             initialRoleNames,
                             "hs_office_person#anothernewperson.owner",
                             "hs_office_person#anothernewperson.admin",
-                            "hs_office_person#anothernewperson.tenant"
+                            "hs_office_person#anothernewperson.tenant",
+                            "hs_office_person#anothernewperson.guest"
                     ));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(
                     Array.from(
@@ -120,7 +121,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
                             "{ grant role hs_office_person#anothernewperson.tenant to role hs_office_person#anothernewperson.admin by system and assume }",
                             "{ grant perm * on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.owner by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.admin to role hs_office_person#anothernewperson.owner by system and assume }",
-                            "{ grant perm view on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.tenant by system and assume }",
+                            "{ grant perm view on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.guest by system and assume }",
+                            "{ grant role hs_office_person#anothernewperson.guest to role hs_office_person#anothernewperson.tenant by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.owner to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
                     ));
         }

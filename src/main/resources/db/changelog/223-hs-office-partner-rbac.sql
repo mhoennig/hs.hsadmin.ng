@@ -28,46 +28,56 @@ create or replace function hsOfficePartnerRbacRolesTrigger()
     strict as $$
 declare
     hsOfficePartnerTenant RbacRoleDescriptor;
-    ownerRole             uuid;
-    adminRole             uuid;
     oldPerson             hs_office_person;
     newPerson             hs_office_person;
     oldContact            hs_office_contact;
     newContact            hs_office_contact;
 begin
 
-    hsOfficePartnerTenant := hsOfficePartnerTenant(NEW);
-
     select * from hs_office_person as p where p.uuid = NEW.personUuid into newPerson;
     select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
 
     if TG_OP = 'INSERT' then
 
-        -- the owner role with full access for the global admins
-        ownerRole = createRole(
+        perform createRoleWithGrants(
                 hsOfficePartnerOwner(NEW),
-                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-                beneathRole(globalAdmin())
+                permissions => array['*'],
+                incomingSuperRoles => array[globalAdmin()]
             );
 
-        -- the admin role with full access for owner
-        adminRole = createRole(
+        perform createRoleWithGrants(
                 hsOfficePartnerAdmin(NEW),
-                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-                beneathRole(ownerRole)
+                permissions => array['edit'],
+                incomingSuperRoles => array[
+                    hsOfficePartnerOwner(NEW)],
+                outgoingSubRoles => array[
+                    hsOfficePersonTenant(newPerson),
+                    hsOfficeContactTenant(newContact)]
             );
 
-        -- the tenant role for those related users who can view the data
-        perform createRole(
-                hsOfficePartnerTenant,
-                grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['view']),
-                beneathRoles(array[
+        perform createRoleWithGrants(
+                hsOfficePartnerAgent(NEW),
+                incomingSuperRoles => array[
                     hsOfficePartnerAdmin(NEW),
                     hsOfficePersonAdmin(newPerson),
-                    hsOfficeContactAdmin(newContact)]),
-                withSubRoles(array[
-                    hsOfficePersonTenant(newPerson),
-                    hsOfficeContactTenant(newContact)])
+                    hsOfficeContactAdmin(newContact)]
+            );
+
+        perform createRoleWithGrants(
+                hsOfficePartnerTenant(NEW),
+                incomingSuperRoles => array[
+                    hsOfficePartnerAgent(NEW)],
+                outgoingSubRoles => array[
+                    hsOfficePersonGuest(newPerson),
+                    hsOfficeContactGuest(newContact)]
+            );
+
+
+        perform createRoleWithGrants(
+                hsOfficePartnerGuest(NEW),
+                permissions => array['view'],
+                incomingSuperRoles => array[
+                    hsOfficePartnerTenant(NEW)]
             );
 
     elsif TG_OP = 'UPDATE' then
@@ -75,21 +85,27 @@ begin
         if OLD.personUuid <> NEW.personUuid then
             select * from hs_office_person as p where p.uuid = OLD.personUuid into oldPerson;
 
-            call revokeRoleFromRole( hsOfficePartnerTenant, hsOfficePersonAdmin(oldPerson) );
-            call grantRoleToRole( hsOfficePartnerTenant, hsOfficePersonAdmin(newPerson) );
-
-            call revokeRoleFromRole( hsOfficePersonTenant(oldPerson), hsOfficePartnerTenant );
-            call grantRoleToRole( hsOfficePersonTenant(newPerson), hsOfficePartnerTenant );
+            call revokeRoleFromRole(hsOfficePersonTenant(oldPerson), hsOfficePartnerAdmin(OLD));
+            call grantRoleToRole(hsOfficePersonTenant(newPerson), hsOfficePartnerAdmin(NEW));
+            
+            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficePersonAdmin(oldPerson));
+            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficePersonAdmin(newPerson));
+            
+            call revokeRoleFromRole(hsOfficePersonGuest(oldPerson), hsOfficePartnerTenant(OLD));
+            call grantRoleToRole(hsOfficePersonGuest(newPerson), hsOfficePartnerTenant(NEW));
         end if;
 
         if OLD.contactUuid <> NEW.contactUuid then
             select * from hs_office_contact as c where c.uuid = OLD.contactUuid into oldContact;
 
-            call revokeRoleFromRole( hsOfficePartnerTenant, hsOfficeContactAdmin(oldContact) );
-            call grantRoleToRole( hsOfficePartnerTenant, hsOfficeContactAdmin(newContact) );
+            call revokeRoleFromRole(hsOfficeContactTenant(oldContact), hsOfficePartnerAdmin(OLD));
+            call grantRoleToRole(hsOfficeContactTenant(newContact), hsOfficePartnerAdmin(NEW));
 
-            call revokeRoleFromRole( hsOfficeContactTenant(oldContact), hsOfficePartnerTenant );
-            call grantRoleToRole( hsOfficeContactTenant(newContact), hsOfficePartnerTenant );
+            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficeContactAdmin(oldContact));
+            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficeContactAdmin(newContact));
+
+            call revokeRoleFromRole(hsOfficeContactGuest(oldContact), hsOfficePartnerTenant(OLD));
+            call grantRoleToRole(hsOfficeContactGuest(newContact), hsOfficePartnerTenant(NEW));
         end if;
     else
         raise exception 'invalid usage of TRIGGER';

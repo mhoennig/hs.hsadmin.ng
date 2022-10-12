@@ -110,7 +110,8 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
                     initialRoleNames,
                     "hs_office_bankaccount#sometempaccC.owner",
                     "hs_office_bankaccount#sometempaccC.admin",
-                    "hs_office_bankaccount#sometempaccC.tenant"
+                    "hs_office_bankaccount#sometempaccC.tenant",
+                    "hs_office_bankaccount#sometempaccC.guest"
             ));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
@@ -120,8 +121,10 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
                     "{ grant role hs_office_bankaccount#sometempaccC.admin     to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
 
-                    "{ grant perm view on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.tenant        by system and assume }",
                     "{ grant role hs_office_bankaccount#sometempaccC.tenant    to role hs_office_bankaccount#sometempaccC.admin         by system and assume }",
+
+                    "{ grant perm view on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.guest         by system and assume }",
+                    "{ grant role hs_office_bankaccount#sometempaccC.guest     to role hs_office_bankaccount#sometempaccC.tenant        by system and assume }",
                     null
             ));
         }
@@ -258,9 +261,9 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
             final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
             assertThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
-                    .isEqualTo(initialRoleNames.size() + 3);
+                    .isEqualTo(initialRoleNames.size() + 4);
             assertThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.size() + 6);
+                    .isEqualTo(initialGrantNames.size() + 7);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

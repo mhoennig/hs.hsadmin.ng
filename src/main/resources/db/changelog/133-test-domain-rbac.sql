@@ -26,10 +26,10 @@ begin
         return domainTenantRoleUuid;
     end if;
 
-    return createRole(
+    return createRoleWithGrants(
         domainTenantRoleDesc,
-        grantingPermissions(forObjectUuid => domain.uuid, permitOps => array ['view']),
-        beneathRole(testdomainAdmin(domain))
+        permissions => array['view'],
+        incomingSuperRoles => array[testdomainAdmin(domain)]
         );
 end; $$;
 --//
@@ -48,8 +48,6 @@ create or replace function createRbacRulesForTestDomain()
     strict as $$
 declare
     parentPackage       test_package;
-    domainOwnerRoleId uuid;
-    domainAdminRoleId uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
@@ -58,18 +56,18 @@ begin
     select * from test_package where uuid = NEW.packageUuid into parentPackage;
 
     -- an owner role is created and assigned to the package's admin group
-    domainOwnerRoleId = createRole(
-        testdomainOwner(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['*']),
-        beneathRole(testPackageAdmin(parentPackage))
+    perform createRoleWithGrants(
+        testDomainOwner(NEW),
+        permissions => array['*'],
+        incomingSuperRoles => array[testPackageAdmin(parentPackage)]
         );
 
     -- and a domain admin role is created and assigned to the domain owner as well
-    domainAdminRoleId = createRole(
-        testdomainAdmin(NEW),
-        grantingPermissions(forObjectUuid => NEW.uuid, permitOps => array ['edit']),
-        beneathRole(domainOwnerRoleId),
-        beingItselfA(testPackageTenant(parentPackage))
+    perform createRoleWithGrants(
+        testDomainAdmin(NEW),
+        permissions => array['edit'],
+        incomingSuperRoles => array[testDomainOwner(NEW)],
+        outgoingSubRoles => array[testPackageTenant(parentPackage)]
         );
 
     -- a tenent role is only created on demand

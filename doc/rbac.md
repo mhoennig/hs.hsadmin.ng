@@ -220,18 +220,51 @@ By this, all roles ob sub-objects, which are assigned to the 'admin' role, are a
 The admin-role is granted to a role of those subjects who manage the business object.
 E.g. a 'package' is manged by the admin of the customer.
 
-Whoever has the admin-role assigned, do everything with the related business-object, including deleting (or deactivating) it.
+Whoever has the admin-role assigned, can usually edit the related business-object but not deleting (or deactivating) it.
 
-In most cases, the permissions to the 'view' operation is granted through the 'tenant' role.
-By this, all roles ob sub-objects, which are assigned to the 'tenent' role, are also granted to the 'admin'.
+The admin-role also comprises lesser roles, through which the view-permission is granted.
 
+#### agent
+
+The agent-role is not used in the examples of this document, because it's for more complex cases.
+It's usually granted to those roles and users who represent the related business-object, but are not allowed to edit it.
+
+Other than the tenant-role, it usually offers broader visibility of sub-business-objects (joined entities).
+E.g. a package-admin is allowed to see the related debitor-business-object, 
+but not its banking data.
 
 #### tenant
 
-The tenant-role is granted to everybody who needs to be able to view the business-object.
+The tenant-role is granted to everybody who needs to be able to view the business-object and (probably some) related business-objects.
 Usually all owners, admins and tenants of sub-objects get this role granted.
 
 Some business-objects only have very limited data directly in the main business-object and store more sensitive data in special sub-objects (e.g. 'customer-details') to which tenants of sub-objects of the main-object (e.g. package admins) do not get view permission.
+
+#### guest
+
+Like the agent-role, the guest-role too is not used in the examples of this document, because it's for more complex cases.
+
+If the guest-role exists, the view-permission is granted to it, instead of to the tenant-role.
+Other than the tenant-role, the guest-roles does never grant any roles of related objects. 
+
+Also, if the guest-role exists, the tenant-role receives the view-permission through the guest-role.
+
+
+### Referenced Business Objects and Role-Depreciation
+
+A general rule is, if one business object *origin* references another object *target* (in other words: one database table joins another table),
+**and** a role for *origin* needs also access to *target*,
+then usually the *target* role is granted to the *origin* role which is one level lower.
+
+E.g. the admin-role of the *origin* object gets granted the agent-role (or, if it does not exist, then the tenant-role) of the *target* object. 
+
+Following this rule, also implies, that the number of indirections to which visibility can be granted is limited.
+The admin-role of one object could be granted visibility to another object through at maximum 3 joins (agent->tenant->guest).
+
+But not in all cases role-depreciation takes place. 
+E.g. often a tenant-role is granted another tenant-role,
+because it should be again allowed to view sub-objects.
+The same for the agent-role, often it is granted another agent-role.
 
 
 ## Example Users, Roles, Permissions and Business-Objects
