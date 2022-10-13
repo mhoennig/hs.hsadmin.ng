@@ -12,6 +12,8 @@ end
 subgraph office
     style office fill:#eee
     
+    subgraph sepa
+    
     subgraph bankaccount
         style bankaccount fill: #e9f7ef
         
@@ -39,6 +41,11 @@ subgraph office
             role:hsOfficeBankAccount.guest --> perm:hsOfficeBankAccount.view{{bankaccount.view}}
         %% incoming
             role:hsOfficeBankAccount.tenant ---> role:hsOfficeBankAccount.guest
+    end
+    
+    subgraph hsOfficeSepaMandate
+    end
+    
     end
    
     subgraph contact
@@ -186,6 +193,42 @@ subgraph office
     
 end
 
+subgraph hsOfficeSepaMandate
+                    
+   role:hsOfficeSepaMandate.owner[sepaMandate.owner]
+   %% permissions
+       role:hsOfficeSepaMandate.owner --> perm:hsOfficeSepaMandate.*{{sepaMandate.*}}
+   %% incoming
+       role:global.admin ---> role:hsOfficeSepaMandate.owner
+  
+   role:hsOfficeSepaMandate.admin[sepaMandate.admin]
+   %% permissions
+       role:hsOfficeSepaMandate.admin --> perm:hsOfficeSepaMandate.edit{{sepaMandate.edit}}
+   %% incoming
+       role:hsOfficeSepaMandate.owner ---> role:hsOfficeSepaMandate.admin
+  
+   role:hsOfficeSepaMandate.agent[sepaMandate.agent]
+   %% incoming
+       role:hsOfficeSepaMandate.admin ---> role:hsOfficeSepaMandate.agent
+       role:hsOfficeDebitor.admin --> role:hsOfficeSepaMandate.agent
+       role:hsOfficeBankAccount.admin --> role:hsOfficeSepaMandate.agent
+   %% outgoing
+       role:hsOfficeSepaMandate.agent --> role:hsOfficeDebitor.tenant
+       role:hsOfficeSepaMandate.admin --> role:hsOfficeBankAccount.tenant
+  
+   role:hsOfficeSepaMandate.tenant[sepaMandate.tenant]
+   %% incoming
+       role:hsOfficeSepaMandate.agent --> role:hsOfficeSepaMandate.tenant
+   %% outgoing   
+       role:hsOfficeSepaMandate.tenant --> role:hsOfficeDebitor.guest
+       role:hsOfficeSepaMandate.tenant --> role:hsOfficeBankAccount.guest
+
+   role:hsOfficeSepaMandate.guest[sepaMandate.guest]
+   %% permissions
+       role:hsOfficeSepaMandate.guest -->  perm:hsOfficeSepaMandate.view{{sepaMandate.view}}
+   %% incoming
+       role:hsOfficeSepaMandate.tenant --> role:hsOfficeSepaMandate.guest
+end
 
 subgraph hosting
     style hosting fill:#eee

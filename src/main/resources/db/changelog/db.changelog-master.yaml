@@ -85,3 +85,9 @@ databaseChangeLog:
         file: db/changelog/273-hs-office-debitor-rbac.sql
     - include:
         file: db/changelog/278-hs-office-debitor-test-data.sql
+    - include:
+        file: db/changelog/250-hs-office-sepamandate.sql
+    - include:
+        file: db/changelog/253-hs-office-sepamandate-rbac.sql
+    - include:
+        file: db/changelog/258-hs-office-sepamandate-test-data.sql
