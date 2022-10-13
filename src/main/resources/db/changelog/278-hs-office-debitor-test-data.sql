@@ -19,7 +19,7 @@ declare
     newDebitorNumber        numeric(6);
 begin
     idName := cleanIdentifier( partnerTradeName|| '-' || billingContactLabel);
-    currentTask := 'creating RBAC test debitor ' || idName;
+    currentTask := 'creating debitor test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 

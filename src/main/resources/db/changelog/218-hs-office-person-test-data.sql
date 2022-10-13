@@ -21,7 +21,7 @@ declare
     emailAddr   varchar;
 begin
     fullName := concat_ws(', ', newTradeName, newFamilyName, newGivenName);
-    currentTask = 'creating RBAC test person ' || fullName;
+    currentTask = 'creating person test-data ' || fullName;
     emailAddr = 'person-' || left(cleanIdentifier(fullName), 32) || '@example.com';
     call defineContext(currentTask);
     perform createRbacUser(emailAddr);

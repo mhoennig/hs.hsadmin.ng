@@ -438,7 +438,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         final var query = em.createNativeQuery("""
                 select c.currenttask, j.targettable, j.targetop
                     from tx_journal j
-                    join tx_context c on j.txid = c.txid
+                    join tx_context c on j.contextId = c.contextId
                     where targettable = 'hs_office_debitor';
                     """);
 
@@ -446,8 +446,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
 
         // then
-        assertThat(customerLogEntries).map(Arrays::toString)
-                .contains("[creating RBAC test debitor FirstGmbH-firstcontact, hs_office_debitor, INSERT]");
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating debitor test-data FirstGmbH-firstcontact, hs_office_debitor, INSERT]",
+                "[creating debitor test-data Seconde.K.-secondcontact, hs_office_debitor, INSERT]");
     }
 
     private HsOfficePartnerEntity rawReference(final HsOfficePartnerEntity givenPartner) {

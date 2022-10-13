@@ -14,7 +14,7 @@ declare
     currentTask   varchar;
     emailAddr varchar;
 begin
-    currentTask = 'creating RBAC test contact ' || contLabel;
+    currentTask = 'creating contact test-data ' || contLabel;
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     emailAddr = 'contact-admin@' || cleanIdentifier(contLabel) || '.example.com';

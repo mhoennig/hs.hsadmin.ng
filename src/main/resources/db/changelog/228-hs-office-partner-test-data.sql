@@ -17,7 +17,7 @@ declare
     relatedContact  hs_office_contact;
 begin
     idName := cleanIdentifier( personTradeName|| '-' || contactLabel);
-    currentTask := 'creating RBAC test partner ' || idName;
+    currentTask := 'creating partner test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 

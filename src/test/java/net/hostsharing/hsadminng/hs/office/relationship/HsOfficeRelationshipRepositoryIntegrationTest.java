@@ -26,7 +26,6 @@ import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantD
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
 @ComponentScan(basePackageClasses = { HsOfficeRelationshipRepository.class, Context.class, JpaAttempt.class })
@@ -373,7 +372,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
         final var query = em.createNativeQuery("""
                 select c.currenttask, j.targettable, j.targetop
                     from tx_journal j
-                    join tx_context c on j.txid = c.txid
+                    join tx_context c on j.contextId = c.contextId
                     where targettable = 'hs_office_relationship';
                     """);
 
@@ -381,8 +380,9 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
 
         // then
-        assertThat(customerLogEntries).map(Arrays::toString)
-                .contains("[creating RBAC test relationship FirstGmbH-Smith, hs_office_relationship, INSERT]");
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating relationship test-data FirstGmbH-Smith, hs_office_relationship, INSERT]",
+                "[creating relationship test-data Seconde.K.-Smith, hs_office_relationship, INSERT]");
     }
 
     private HsOfficeRelationshipEntity givenSomeTemporaryRelationshipBessler(final String holderPerson, final String contact) {

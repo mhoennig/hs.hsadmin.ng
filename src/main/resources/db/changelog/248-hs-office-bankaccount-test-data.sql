@@ -14,7 +14,7 @@ declare
     currentTask   varchar;
     emailAddr varchar;
 begin
-    currentTask = 'creating RBAC test bankaccount ' || givenHolder;
+    currentTask = 'creating bankaccount test-data ' || givenHolder;
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     emailAddr = 'bankaccount-admin@' || cleanIdentifier(givenHolder) || '.example.com';

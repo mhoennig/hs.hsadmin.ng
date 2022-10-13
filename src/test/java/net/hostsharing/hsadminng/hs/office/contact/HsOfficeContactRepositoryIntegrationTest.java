@@ -271,7 +271,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         final var query = em.createNativeQuery("""
                 select c.currenttask, j.targettable, j.targetop
                     from tx_journal j
-                    join tx_context c on j.txid = c.txid
+                    join tx_context c on j.contextId = c.contextId
                     where targettable = 'hs_office_contact';
                     """);
 
@@ -279,8 +279,9 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
 
         // then
-        assertThat(customerLogEntries).map(Arrays::toString)
-                .contains("[creating RBAC test contact first contact, hs_office_contact, INSERT]");
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating contact test-data first contact, hs_office_contact, INSERT]",
+                "[creating contact test-data second contact, hs_office_contact, INSERT]");
     }
 
     private HsOfficeContactEntity givenSomeTemporaryContact(

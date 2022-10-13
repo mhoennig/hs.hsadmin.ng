@@ -23,7 +23,7 @@ declare
 
 begin
     idName := cleanIdentifier( anchorPersonTradeName || '-' || holderPersonFamilyName);
-    currentTask := 'creating RBAC test relationship ' || idName;
+    currentTask := 'creating relationship test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 

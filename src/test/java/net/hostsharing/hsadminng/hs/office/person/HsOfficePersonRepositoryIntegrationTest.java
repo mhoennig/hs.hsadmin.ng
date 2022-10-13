@@ -3,9 +3,7 @@ package net.hostsharing.hsadminng.hs.office.person;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
@@ -272,7 +270,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         final var query = em.createNativeQuery("""
                 select c.currenttask, j.targettable, j.targetop
                     from tx_journal j
-                    join tx_context c on j.txid = c.txid
+                    join tx_context c on j.contextId = c.contextId
                     where targettable = 'hs_office_person';
                     """);
 
@@ -280,8 +278,9 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
 
         // then
-        assertThat(customerLogEntries).map(Arrays::toString)
-                .contains("[creating RBAC test person First GmbH, hs_office_person, INSERT]");
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating person test-data First GmbH, hs_office_person, INSERT]",
+                "[creating person test-data Second e.K., Sandra, Miller, hs_office_person, INSERT]");
     }
 
     @AfterEach

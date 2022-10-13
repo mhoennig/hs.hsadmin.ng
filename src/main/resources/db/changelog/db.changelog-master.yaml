@@ -10,6 +10,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/005-uuid-ossp-extension.sql
     - include:
+        file: db/changelog/006-numeric-hash-functions.sql
+    - include:
         file: db/changelog/010-context.sql
     - include:
         file: db/changelog/020-audit-log.sql

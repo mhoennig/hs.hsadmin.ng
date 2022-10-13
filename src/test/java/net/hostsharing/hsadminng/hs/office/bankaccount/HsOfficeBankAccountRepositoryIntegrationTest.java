@@ -293,14 +293,13 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
         }).assertSuccessful().returnedValue();
     }
 
-
     @Test
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
                 select c.currenttask, j.targettable, j.targetop
                     from tx_journal j
-                    join tx_context c on j.txid = c.txid
+                    join tx_context c on j.contextId = c.contextId
                     where targettable = 'hs_office_bankaccount';
                     """);
 
@@ -308,8 +307,9 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
 
         // then
-        assertThat(customerLogEntries).map(Arrays::toString)
-                .contains("[creating RBAC test bankaccount First GmbH, hs_office_bankaccount, INSERT]");
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating bankaccount test-data First GmbH, hs_office_bankaccount, INSERT]",
+                "[creating bankaccount test-data Second e.K., hs_office_bankaccount, INSERT]");
     }
 
     @BeforeEach
