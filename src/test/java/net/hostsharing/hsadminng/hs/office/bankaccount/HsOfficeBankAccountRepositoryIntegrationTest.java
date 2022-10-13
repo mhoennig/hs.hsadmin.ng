@@ -20,6 +20,7 @@ import org.testcontainers.junit.jupiter.Container;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -290,6 +291,25 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             context(createdByUser);
             return bankaccountRepo.save(entitySupplier.get());
         }).assertSuccessful().returnedValue();
+    }
+
+
+    @Test
+    public void auditJournalLogIsAvailable() {
+        // given
+        final var query = em.createNativeQuery("""
+                select c.currenttask, j.targettable, j.targetop
+                    from tx_journal j
+                    join tx_context c on j.txid = c.txid
+                    where targettable = 'hs_office_bankaccount';
+                    """);
+
+        // when
+        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
+
+        // then
+        assertThat(customerLogEntries).map(Arrays::toString)
+                .contains("[creating RBAC test bankaccount First GmbH, hs_office_bankaccount, INSERT]");
     }
 
     @BeforeEach

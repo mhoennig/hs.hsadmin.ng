@@ -11,3 +11,11 @@ create table hs_office_bankaccount
     bic                 varchar(11) not null
 );
 --//
+
+
+-- ============================================================================
+--changeset hs-office-bankaccount-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call create_journal('hs_office_bankaccount');
+--//
