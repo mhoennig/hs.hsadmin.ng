@@ -17,3 +17,11 @@ create table if not exists hs_office_relationship
     relType             HsOfficeRelationshipType not null
 );
 --//
+
+
+-- ============================================================================
+--changeset hs-office-relationship-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call create_journal('hs_office_relationship');
+--//
