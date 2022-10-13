@@ -17,3 +17,11 @@ create table if not exists hs_office_person
     familyName     varchar(48)
 );
 --//
+
+
+-- ============================================================================
+--changeset hs-office-person-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call create_journal('hs_office_person');
+--//
