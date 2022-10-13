@@ -17,3 +17,11 @@ create table hs_office_debitor
     -- TODO.impl: SEPA-mandate
 );
 --//
+
+
+-- ============================================================================
+--changeset hs-office-debitor-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call create_journal('hs_office_debitor');
+--//

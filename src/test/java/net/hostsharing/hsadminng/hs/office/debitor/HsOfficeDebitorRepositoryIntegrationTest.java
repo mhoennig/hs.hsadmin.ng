@@ -24,10 +24,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
@@ -433,6 +430,24 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
             assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
+    }
+
+    @Test
+    public void auditJournalLogIsAvailable() {
+        // given
+        final var query = em.createNativeQuery("""
+                select c.currenttask, j.targettable, j.targetop
+                    from tx_journal j
+                    join tx_context c on j.txid = c.txid
+                    where targettable = 'hs_office_debitor';
+                    """);
+
+        // when
+        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
+
+        // then
+        assertThat(customerLogEntries).map(Arrays::toString)
+                .contains("[creating RBAC test debitor FirstGmbH-firstcontact, hs_office_debitor, INSERT]");
     }
 
     private HsOfficePartnerEntity rawReference(final HsOfficePartnerEntity givenPartner) {
