@@ -77,7 +77,7 @@ public class ArchitectureTest {
     public static final ArchRule HsOfficeBankAccountPackageRule = classes()
             .that().resideInAPackage("..hs.office.bankaccount..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.bankaccount..", "..hs.office.debitor..");
+            .resideInAnyPackage("..hs.office.bankaccount..", "..hs.office.sepamandate..", "..hs.office.debitor..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -85,7 +85,6 @@ public class ArchitectureTest {
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..");
-
 
     @ArchTest
     @SuppressWarnings("unused")

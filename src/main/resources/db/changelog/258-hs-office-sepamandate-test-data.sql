@@ -31,7 +31,7 @@ begin
     raise notice '- using debitor (%): %', relatedDebitor.uuid, relatedDebitor;
     raise notice '- using bankAccount (%): %', relatedBankAccount.uuid, relatedBankAccount;
     insert
-        into hs_office_sepaMandate (uuid, debitoruuid, bankAccountuuid, reference, validity)
+        into hs_office_sepamandate (uuid, debitoruuid, bankAccountuuid, reference, validity)
         values (uuid_generate_v4(), relatedDebitor.uuid, relatedBankAccount.uuid, 'ref'||idName, daterange('20221001' , '20261231', '[]'));
 end; $$;
 --//

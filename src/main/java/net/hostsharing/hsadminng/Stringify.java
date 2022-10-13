@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng;
 
+import net.hostsharing.hsadminng.errors.DisplayName;
+
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,16 @@ public final class Stringify<B> {
 
     private Stringify(final Class<B> clazz, final String name) {
         this.clazz = clazz;
-        this.name = name;
+        if (name != null) {
+            this.name = name;
+        } else {
+            final var displayName = clazz.getAnnotation(DisplayName.class);
+            if (displayName != null) {
+                this.name = displayName.value();
+            } else {
+                this.name = clazz.getSimpleName();
+            }
+        }
     }
 
     public Stringify<B> withProp(final String propName, final Function<B, ?> getter) {
@@ -53,7 +64,7 @@ public final class Stringify<B> {
                 })
                 .map(propVal -> propName(propVal, "=") + optionallyQuoted(propVal))
                 .collect(Collectors.joining(separator));
-        return (name != null ? name : object.getClass().getSimpleName()) + "(" + propValues + ")";
+        return name + "(" + propValues + ")";
     }
 
     public Stringify<B> withSeparator(final String separator) {

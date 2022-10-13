@@ -1,21 +1,21 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-sepaMandate-rbac-OBJECT:1 endDelimiter:--//
+--changeset hs-office-sepamandate-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_sepaMandate');
+call generateRelatedRbacObject('hs_office_sepamandate');
 --//
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset hs-office-sepamandate-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office_sepaMandate');
+call generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office_sepamandate');
 --//
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-sepamandate-rbac-ROLES-CREATION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -36,9 +36,7 @@ begin
 
     if TG_OP = 'INSERT' then
 
-
         -- === ATTENTION: code generated from related Mermaid flowchart: ===
-
 
         perform createRoleWithGrants(
                 hsOfficeSepaMandateOwner(NEW),
@@ -73,7 +71,6 @@ begin
 
         -- === END of code generated from Mermaid flowchart. ===
 
-
     else
         raise exception 'invalid usage of TRIGGER';
     end if;
@@ -86,23 +83,23 @@ end; $$;
  */
 create trigger createRbacRolesForHsOfficeSepaMandate_Trigger
     after insert
-    on hs_office_sepaMandate
+    on hs_office_sepamandate
     for each row
 execute procedure hsOfficeSepaMandateRbacRolesTrigger();
 --//
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-office-sepamandate-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_sepaMandate', idNameExpression => 'target.reference');
+call generateRbacIdentityView('hs_office_sepamandate', idNameExpression => 'target.reference');
 --//
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset hs-office-sepamandate-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_sepaMandate',
+call generateRbacRestrictedView('hs_office_sepamandate',
     orderby => 'target.reference',
     columnUpdates => $updates$
         validity = new.validity
@@ -111,7 +108,7 @@ call generateRbacRestrictedView('hs_office_sepaMandate',
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-rbac-NEW-SepaMandate:1 endDelimiter:--//
+--changeset hs-office-sepamandate-rbac-NEW-SepaMandate:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates a global permission for new-sepaMandate and assigns it to the hostsharing admins role.
@@ -146,9 +143,9 @@ end; $$;
 /**
     Checks if the user or assumed roles are allowed to create a new customer.
  */
-create trigger hs_office_sepaMandate_insert_trigger
+create trigger hs_office_sepamandate_insert_trigger
     before insert
-    on hs_office_sepaMandate
+    on hs_office_sepamandate
     for each row
     -- TODO.spec: who is allowed to create new sepaMandates
     when ( not hasAssumedRole() )

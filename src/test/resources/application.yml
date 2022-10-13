@@ -30,6 +30,7 @@ spring:
 logging:
     level:
         liquibase: INFO
-        org.hibernate.SQL: DEBUG
-        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+        X.org.hibernate.SQL: DEBUG
+        X.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
         X.org.springframework.jdbc.core: TRACE
+        net.ttddyy.dsproxy.listener: debug

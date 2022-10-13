@@ -9,7 +9,7 @@ create table if not exists hs_office_sepamandate
     uuid                uuid unique references RbacObject (uuid) initially deferred,
     debitorUuid         uuid not null references hs_office_debitor(uuid),
     bankAccountUuid     uuid not null references hs_office_bankaccount(uuid),
-    reference           varchar(96),
+    reference           varchar(96) not null,
     validity            daterange not null
 );
 --//

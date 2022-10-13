@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.UUID;
