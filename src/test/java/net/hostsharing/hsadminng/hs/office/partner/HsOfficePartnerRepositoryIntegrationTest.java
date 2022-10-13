@@ -21,10 +21,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
@@ -390,6 +387,33 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         }
     }
 
+    @Test
+    public void auditJournalLogIsAvailable() {
+        // given
+        final var query = em.createNativeQuery("""
+                select c.currenttask, j.targettable, j.targetop
+                    from tx_journal j
+                    join tx_context c on j.txid = c.txid
+                    where targettable = 'hs_office_partner';
+                    """);
+
+        // when
+        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
+
+        // then
+        assertThat(customerLogEntries).map(Arrays::toString)
+                .contains("[creating RBAC test partner FirstGmbH-firstcontact, hs_office_partner, INSERT]");
+    }
+
+    @AfterEach
+    void cleanup() {
+        context("superuser-alex@hostsharing.net", null);
+        tempPartners.forEach(tempPartner -> {
+            System.out.println("DELETING temporary partner: " + tempPartner.toString());
+            partnerRepo.deleteByUuid(tempPartner.getUuid());
+        });
+    }
+
     private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler(final String contact) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
@@ -410,15 +434,6 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
     private HsOfficePartnerEntity toCleanup(final HsOfficePartnerEntity tempPartner) {
         tempPartners.add(tempPartner);
         return tempPartner;
-    }
-
-    @AfterEach
-    void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        tempPartners.forEach(tempPartner -> {
-            System.out.println("DELETING temporary partner: " + tempPartner.toString());
-            partnerRepo.deleteByUuid(tempPartner.getUuid());
-        });
     }
 
     void exactlyThesePartnersAreReturned(final List<HsOfficePartnerEntity> actualResult, final String... partnerNames) {

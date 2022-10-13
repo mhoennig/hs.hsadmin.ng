@@ -16,3 +16,11 @@ create table if not exists hs_office_partner
     dateOfDeath         date
 );
 --//
+
+
+-- ============================================================================
+--changeset hs-office-partner-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call create_journal('hs_office_partner');
+--//
