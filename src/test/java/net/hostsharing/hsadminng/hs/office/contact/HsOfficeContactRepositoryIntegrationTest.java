@@ -20,6 +20,7 @@ import org.testcontainers.junit.jupiter.Container;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -262,6 +263,24 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
                     initialGrantNames
             ));
         }
+    }
+
+    @Test
+    public void auditJournalLogIsAvailable() {
+        // given
+        final var query = em.createNativeQuery("""
+                select c.currenttask, j.targettable, j.targetop
+                    from tx_journal j
+                    join tx_context c on j.txid = c.txid
+                    where targettable = 'hs_office_contact';
+                    """);
+
+        // when
+        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
+
+        // then
+        assertThat(customerLogEntries).map(Arrays::toString)
+                .contains("[creating RBAC test contact first contact, hs_office_contact, INSERT]");
     }
 
     private HsOfficeContactEntity givenSomeTemporaryContact(

@@ -13,3 +13,11 @@ create table if not exists hs_office_contact
     phoneNumbers   text  -- TODO.feat: change to json
 );
 --//
+
+
+-- ============================================================================
+--changeset hs-office-contact-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call create_journal('hs_office_contact');
+--//
