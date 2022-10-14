@@ -77,6 +77,11 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     [
                         {
+                            "person": { "familyName": "Smith" },
+                            "contact": { "label": "fifth contact" },
+                            "birthday": "1987-10-31"
+                        },
+                        {
                             "person": { "tradeName": "First GmbH" },
                             "contact": { "label": "first contact" }
                         },

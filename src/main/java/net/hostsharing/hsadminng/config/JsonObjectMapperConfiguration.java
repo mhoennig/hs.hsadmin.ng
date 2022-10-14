@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.config;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,7 @@ public class JsonObjectMapperConfiguration {
     @Primary
     public Jackson2ObjectMapperBuilder customObjectMapper() {
         return new Jackson2ObjectMapperBuilder()
-            .modules(new JsonNullableModule(), new JavaTimeModule());
+                .modules(new JsonNullableModule(), new JavaTimeModule())
+                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 }

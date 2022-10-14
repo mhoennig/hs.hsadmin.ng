@@ -8,28 +8,37 @@
 /*
     Creates a single partner test record.
  */
-create or replace procedure createHsOfficePartnerTestData( personTradeName varchar, contactLabel varchar )
+create or replace procedure createHsOfficePartnerTestData( personTradeOrFamilyName varchar, contactLabel varchar )
     language plpgsql as $$
 declare
     currentTask     varchar;
     idName          varchar;
     relatedPerson   hs_office_person;
     relatedContact  hs_office_contact;
+    birthday        date;
 begin
-    idName := cleanIdentifier( personTradeName|| '-' || contactLabel);
+    idName := cleanIdentifier( personTradeOrFamilyName|| '-' || contactLabel);
     currentTask := 'creating partner test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    select p.* from hs_office_person p where p.tradeName = personTradeName into relatedPerson;
-    select c.* from hs_office_contact c where c.label = contactLabel into relatedContact;
+    select p.* from hs_office_person p
+               where p.tradeName = personTradeOrFamilyName or p.familyName = personTradeOrFamilyName
+               into relatedPerson;
+    select c.* from hs_office_contact c
+               where c.label = contactLabel
+               into relatedContact;
+
+    if relatedPerson.persontype = 'NATURAL' then
+        birthday := '1987-10-31'::date;
+    end if;
 
     raise notice 'creating test partner: %', idName;
     raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
     raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
     insert
-        into hs_office_partner (uuid, personuuid, contactuuid)
-        values (uuid_generate_v4(), relatedPerson.uuid, relatedContact.uuid);
+        into hs_office_partner (uuid, personuuid, contactuuid, birthday)
+        values (uuid_generate_v4(), relatedPerson.uuid, relatedContact.uuid, birthDay);
 end; $$;
 --//
 
@@ -67,6 +76,7 @@ do language plpgsql $$
         call createHsOfficePartnerTestData('Second e.K.', 'second contact');
         call createHsOfficePartnerTestData('Third OHG', 'third contact');
         call createHsOfficePartnerTestData('Fourth e.G.', 'forth contact');
+        call createHsOfficePartnerTestData('Smith', 'fifth contact');
     end;
 $$;
 --//
