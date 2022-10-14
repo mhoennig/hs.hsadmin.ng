@@ -17,7 +17,7 @@ spring:
                 format_sql: false
         hibernate:
             ddl-auto: none
-        show-sql: true
+        show-sql: false
 
     test:
         database:
@@ -30,7 +30,4 @@ spring:
 logging:
     level:
         liquibase: INFO
-        X.org.hibernate.SQL: DEBUG
-        X.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-        X.org.springframework.jdbc.core: TRACE
-        net.ttddyy.dsproxy.listener: debug
+        net.ttddyy.dsproxy.listener: DEBUG

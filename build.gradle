@@ -55,6 +55,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.8.1'
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.11'
     implementation 'org.liquibase:liquibase-core'
     implementation 'com.vladmihalcea:hibernate-types-55:2.19.2'
