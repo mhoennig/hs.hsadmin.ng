@@ -60,3 +60,12 @@ paths:
 
   /api/hs/office/debitors/{debitorUUID}:
     $ref: "./hs-office-debitors-with-uuid.yaml"
+
+
+  # SepaMandates
+
+  /api/hs/office/sepamandates:
+    $ref: "./hs-office-sepamandates.yaml"
+
+  /api/hs/office/sepamandates/{sepaMandateUUID}:
+    $ref: "./hs-office-sepamandates-with-uuid.yaml"

@@ -1,0 +1,60 @@
+
+components:
+
+    schemas:
+
+        HsOfficeSepaMandate:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                debitor:
+                    $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
+                bankAccount:
+                    $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                reference:
+                   type: string
+                validFrom:
+                   type: string
+                   format: date
+                validTo:
+                   type: string
+                   format: date
+
+        HsOfficeSepaMandatePatch:
+            type: object
+            properties:
+                validTo:
+                    type: string
+                    format: date
+            additionalProperties: false
+
+        HsOfficeSepaMandateInsert:
+            type: object
+            properties:
+                debitorUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                bankAccountUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                reference:
+                    type: string
+                    nullable: false
+                validFrom:
+                    type: string
+                    format: date
+                    nullable: false
+                validTo:
+                    type: string
+                    format: date
+                    nullable: true
+            required:
+                - debitorUuid
+                - bankAccountUuid
+                - reference
+                - validFrom
+            additionalProperties: false

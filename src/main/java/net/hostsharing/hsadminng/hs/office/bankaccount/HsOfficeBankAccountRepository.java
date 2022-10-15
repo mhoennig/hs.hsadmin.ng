@@ -15,8 +15,11 @@ public interface HsOfficeBankAccountRepository extends Repository<HsOfficeBankAc
             SELECT c FROM HsOfficeBankAccountEntity c
                 WHERE :holder is null
                     OR lower(c.holder) like lower(concat(:holder, '%'))
+                ORDER BY c.holder
                """)
     List<HsOfficeBankAccountEntity> findByOptionalHolderLike(String holder);
+
+    List<HsOfficeBankAccountEntity> findByIbanOrderByIban(String iban);
 
     HsOfficeBankAccountEntity save(final HsOfficeBankAccountEntity entity);
 

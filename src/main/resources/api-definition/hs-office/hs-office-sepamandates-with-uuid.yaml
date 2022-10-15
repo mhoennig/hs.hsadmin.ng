@@ -1,0 +1,83 @@
+get:
+    tags:
+        - hs-office-sepaMandates
+    description: 'Fetch a single SEPA Mandate by its uuid, if visible for the current subject.'
+    operationId: getSepaMandateByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: sepaMandateUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the SEPA Mandate to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandate'
+
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+patch:
+    tags:
+        - hs-office-sepaMandates
+    description: 'Updates a single SEPA Mandate by its uuid, if permitted for the current subject.'
+    operationId: patchSepaMandate
+    parameters:
+        -   $ref: './auth.yaml#/components/parameters/currentUser'
+        -   $ref: './auth.yaml#/components/parameters/assumedRoles'
+        -   name: sepaMandateUUID
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: './hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandatePatch'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandate'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - hs-office-sepaMandates
+    description: 'Delete a single SEPA Mandate by its uuid, if permitted for the current subject.'
+    operationId: deleteSepaMandateByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: sepaMandateUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the sepaMandate to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: './error-responses.yaml#/components/responses/NotFound'

@@ -176,7 +176,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = sepaMandateRepo.findSepaMandateByOptionalIBAN(null);
+            final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
 
             // then
             allTheseSepaMandatesAreReturned(
@@ -192,7 +192,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             context("bankaccount-admin@FirstGmbH.example.com");
 
             // when:
-            final var result = sepaMandateRepo.findSepaMandateByOptionalIBAN(null);
+            final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
 
             // then:
             exactlyTheseSepaMandatesAreReturned(
@@ -210,7 +210,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = sepaMandateRepo.findSepaMandateByOptionalIBAN(null);
+            final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
 
             // then
             exactlyTheseSepaMandatesAreReturned(
@@ -226,7 +226,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             context("bankaccount-admin@ThirdOHG.example.com");
 
             // when
-            final var result = sepaMandateRepo.findSepaMandateByOptionalIBAN(null);
+            final var result = sepaMandateRepo.findSepaMandateByOptionalIban(null);
 
             // then
             exactlyTheseSepaMandatesAreReturned(

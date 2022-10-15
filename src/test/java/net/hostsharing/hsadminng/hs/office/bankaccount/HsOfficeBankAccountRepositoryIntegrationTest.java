@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
-    HsOfficeBankAccountRepository bankaccountRepo;
+    HsOfficeBankAccountRepository bankAccountRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -60,37 +60,37 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
     class CreateBankAccount {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canCreateNewBankAccount() {
+        public void globalAdmin_canCreateNewBankAccount() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var count = bankaccountRepo.count();
+            final var count = bankAccountRepo.count();
 
             // when
-            final var result = attempt(em, () -> bankaccountRepo.save(
+            final var result = attempt(em, () -> bankAccountRepo.save(
                     hsOfficeBankAccount("some temp acc A", "DE37500105177419788228", "")));
 
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeBankAccountEntity::getUuid).isNotNull();
             assertThatBankAccountIsPersisted(result.returnedValue());
-            assertThat(bankaccountRepo.count()).isEqualTo(count + 1);
+            assertThat(bankAccountRepo.count()).isEqualTo(count + 1);
         }
 
         @Test
         public void arbitraryUser_canCreateNewBankAccount() {
             // given
             context("selfregistered-user-drew@hostsharing.org");
-            final var count = bankaccountRepo.count();
+            final var count = bankAccountRepo.count();
 
             // when
-            final var result = attempt(em, () -> bankaccountRepo.save(
+            final var result = attempt(em, () -> bankAccountRepo.save(
                     hsOfficeBankAccount("some temp acc B", "DE49500105174516484892", "INGDDEFFXXX")));
 
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeBankAccountEntity::getUuid).isNotNull();
             assertThatBankAccountIsPersisted(result.returnedValue());
-            assertThat(bankaccountRepo.count()).isEqualTo(count + 1);
+            assertThat(bankAccountRepo.count()).isEqualTo(count + 1);
         }
 
         @Test
@@ -101,7 +101,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            attempt(em, () -> bankaccountRepo.save(
+            attempt(em, () -> bankAccountRepo.save(
                     hsOfficeBankAccount("some temp acc C", "DE25500105176934832579", "INGDDEFFXXX"))
             ).assumeSuccessful();
 
@@ -131,21 +131,21 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         private void assertThatBankAccountIsPersisted(final HsOfficeBankAccountEntity saved) {
-            final var found = bankaccountRepo.findByUuid(saved.getUuid());
+            final var found = bankAccountRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
         }
     }
 
     @Nested
-    class FindAllBankAccounts {
+    class ListBankAccounts {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllBankAccounts() {
+        public void globalAdmin_canViewAllBankAccounts() {
             // given
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = bankaccountRepo.findByOptionalHolderLike(null);
+            final var result = bankAccountRepo.findByOptionalHolderLike(null);
 
             // then
             allTheseBankAccountsAreReturned(
@@ -167,45 +167,32 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
             // when:
             context("selfregistered-user-drew@hostsharing.org");
-            final var result = bankaccountRepo.findByOptionalHolderLike(null);
+            final var result = bankAccountRepo.findByOptionalHolderLike(null);
 
             // then:
             exactlyTheseBankAccountsAreReturned(result, givenBankAccount.getHolder());
         }
-    }
-
-    @Nested
-    class FindByLabelLike {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllBankAccounts() {
+        public void globalAdmin_canViewBankAccountsByIban() {
             // given
             context("superuser-alex@hostsharing.net", null);
 
             // when
-            final var result = bankaccountRepo.findByOptionalHolderLike(null);
+            final var result = bankAccountRepo.findByIbanOrderByIban("DE02120300000000202051");
 
             // then
-            exactlyTheseBankAccountsAreReturned(
-                    result,
-                    "Anita Bessler",
-                    "First GmbH",
-                    "Fourth e.G.",
-                    "Mel Bessler",
-                    "Paul Winkler",
-                    "Peter Smith",
-                    "Second e.K.",
-                    "Third OHG");
+            exactlyTheseBankAccountsAreReturned(result, "First GmbH");
         }
 
         @Test
-        public void arbitraryUser_withoutAssumedRole_canViewOnlyItsOwnBankAccount() {
+        public void arbitraryUser_canViewItsOwnBankAccount() {
             // given:
             final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
 
             // when:
             context("selfregistered-user-drew@hostsharing.org");
-            final var result = bankaccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
+            final var result = bankAccountRepo.findByIbanOrderByIban(givenBankAccount.getIban());
 
             // then:
             exactlyTheseBankAccountsAreReturned(result, givenBankAccount.getHolder());
@@ -216,7 +203,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
     class DeleteByUuid {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canDeleteAnyBankAccount() {
+        public void globalAdmin_canDeleteAnyBankAccount() {
             // given
             context("superuser-alex@hostsharing.net", null);
             final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
@@ -224,33 +211,33 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                bankaccountRepo.deleteByUuid(givenBankAccount.getUuid());
+                bankAccountRepo.deleteByUuid(givenBankAccount.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                return bankaccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
+                return bankAccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
         @Test
-        public void arbitraryUser_withoutAssumedRole_canDeleteABankAccountCreatedByItself() {
+        public void arbitraryUser_canDeleteABankAccountCreatedByItself() {
             // given
             final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("selfregistered-user-drew@hostsharing.org", null);
-                bankaccountRepo.deleteByUuid(givenBankAccount.getUuid());
+                bankAccountRepo.deleteByUuid(givenBankAccount.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                return bankaccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
+                return bankAccountRepo.findByOptionalHolderLike(givenBankAccount.getHolder());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
@@ -269,7 +256,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("selfregistered-user-drew@hostsharing.org", null);
-                return bankaccountRepo.deleteByUuid(givenBankAccount.getUuid());
+                return bankAccountRepo.deleteByUuid(givenBankAccount.getUuid());
             });
 
             // then
@@ -289,7 +276,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             Supplier<HsOfficeBankAccountEntity> entitySupplier) {
         return jpaAttempt.transacted(() -> {
             context(createdByUser);
-            return bankaccountRepo.save(entitySupplier.get());
+            return bankAccountRepo.save(entitySupplier.get());
         }).assertSuccessful().returnedValue();
     }
 
@@ -316,10 +303,10 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
     @AfterEach
     void cleanup() {
         context("superuser-alex@hostsharing.net", null);
-        final var result = bankaccountRepo.findByOptionalHolderLike("some temp acc");
+        final var result = bankAccountRepo.findByOptionalHolderLike("some temp acc");
         result.forEach(tempPerson -> {
             System.out.println("DELETING temporary bankaccount: " + tempPerson.getHolder());
-            bankaccountRepo.deleteByUuid(tempPerson.getUuid());
+            bankAccountRepo.deleteByUuid(tempPerson.getUuid());
         });
     }
 

@@ -3,6 +3,7 @@ openapi-processor-mapping: v2
 options:
     package-name: net.hostsharing.hsadminng.hs.office.generated.api.v1
     model-name-suffix: Resource
+    bean-validation: true
 
 map:
     result: org.springframework.http.ResponseEntity
@@ -10,6 +11,7 @@ map:
     types:
         - type: array => java.util.List
         - type: string:uuid => java.util.UUID
+        - type: string:format => java.lang.String
 
     paths:
         /api/hs/office/partners/{partnerUUID}:
@@ -23,4 +25,6 @@ map:
         /api/hs/office/bankaccounts/{bankAccountUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable
         /api/hs/office/debitors/{debitorUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable
+        /api/hs/office/sepamandates/{debitorUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable

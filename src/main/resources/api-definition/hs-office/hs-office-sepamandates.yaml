@@ -1,0 +1,57 @@
+get:
+    summary: Returns a list of (optionally filtered) SEPA Mandates.
+    description: Returns the list of (optionally filtered) SEPA Mandates which are visible to the current user or any of it's assumed roles.
+    tags:
+        - hs-office-sepaMandates
+    operationId: listSepaMandatesByIBAN
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: name
+          in: query
+          required: false
+          schema:
+              type: string
+          description: (Beginning of) IBAN to filter the results.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: './hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandate'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+post:
+    summary: Adds a new SEPA Mandate.
+    tags:
+        - hs-office-sepaMandates
+    operationId: addSepaMandate
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    requestBody:
+        description: A JSON object describing the new SEPA-Mandate.
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: '/hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandateInsert'
+    responses:
+        "201":
+            description: Created
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-sepamandate-schemas.yaml#/components/schemas/HsOfficeSepaMandate'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "409":
+            $ref: './error-responses.yaml#/components/responses/Conflict'
