@@ -22,7 +22,7 @@ components:
                    type: string
                 vatCountryCode:
                    type: string
-                   pattern: '^[A_Z][A-Z]$'
+                   pattern: '^[A-Z][A-Z]$'
                 vatBusiness:
                    type: boolean
                 refundBankAccount:
@@ -40,7 +40,7 @@ components:
                     nullable: true
                 vatCountryCode:
                     type: string
-                    pattern: '^[A_Z][A-Z]$'
+                    pattern: '^[A-Z][A-Z]$'
                     nullable: true
                 vatBusiness:
                     type: boolean
@@ -56,9 +56,11 @@ components:
                 partnerUuid:
                     type: string
                     format: uuid
+                    nullable: false
                 billingContactUuid:
                     type: string
                     format: uuid
+                    nullable: false
                 debitorNumber:
                     type: integer
                     format: int32
@@ -68,7 +70,7 @@ components:
                     type: string
                 vatCountryCode:
                     type: string
-                    pattern: '^[A_Z][A-Z]$'
+                    pattern: '^[A-Z][A-Z]$'
                 vatBusiness:
                     type: boolean
                 refundBankAccountUuid:

@@ -15,16 +15,21 @@ components:
                     $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
                 registrationOffice:
                    type: string
+                   nullable: true
                 registrationNumber:
                    type: string
+                   nullable: true
                 birthName:
                    type: string
+                   nullable: true
                 birthday:
                    type: string
                    format: date
+                   nullable: true
                 dateOfDeath:
                    type: string
                    format: date
+                   nullable: true
 
         HsOfficePartnerPatch:
             type: object
@@ -84,8 +89,3 @@ components:
             required:
               - personUuid
               - contactUuid
-              - registrationOffice
-              - registrationNumber
-              - birthName
-              - birthday
-              - dateOfDeath

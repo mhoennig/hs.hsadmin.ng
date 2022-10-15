@@ -26,8 +26,7 @@ import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -190,36 +189,36 @@ class HsOfficeDebitorControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_withoutAssumedRole_canAddDebitorWithoutBankAccount() {
+        void globalAdmin_canAddDebitorWithoutJustRequiredData() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
 
             final var location = RestAssured // @formatter:off
-                    .given()
+                .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
                                    "partnerUuid": "%s",
                                    "billingContactUuid": "%s",
-                                   "debitorNumber": "%s",
-                                   "vatId": "VAT123456",
-                                   "vatCountryCode": "DE",
-                                   "vatBusiness": true
+                                   "debitorNumber": "%s"
                                  }
                             """.formatted( givenPartner.getUuid(), givenContact.getUuid(), nextDebitorNumber++))
                     .port(port)
-                    .when()
+                .when()
                     .post("http://localhost/api/hs/office/debitors")
-                    .then().log().all().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(201)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("vatId", is("VAT123456"))
                     .body("billingContact.label", is(givenContact.getLabel()))
                     .body("partner.person.tradeName", is(givenPartner.getPerson().getTradeName()))
+                    .body("vatId", equalTo(null))
+                    .body("vatCountryCode", equalTo(null))
+                    .body("vatBusiness", equalTo(false))
+                    .body("refundBankAccount", equalTo(null))
                     .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 

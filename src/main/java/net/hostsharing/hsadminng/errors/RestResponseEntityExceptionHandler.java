@@ -5,10 +5,12 @@ import lombok.Getter;
 import org.iban4j.Iban4jException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -65,8 +67,25 @@ public class RestResponseEntityExceptionHandler
     @ExceptionHandler(Throwable.class)
     protected ResponseEntity<CustomErrorResponse> handleOtherExceptions(
             final Throwable exc, final WebRequest request) {
-        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        final var message = firstMessageLine(NestedExceptionUtils.getMostSpecificCause(exc));
         return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked,rawtypes")
+    protected ResponseEntity handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exc,
+            HttpHeaders headers,
+            HttpStatus status,
+            WebRequest request) {
+        final var errorList = exc
+                .getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage() + " but is \""
+                        + fieldError.getRejectedValue() + "\"")
+                .toList();
+        return errorResponse(request, HttpStatus.BAD_REQUEST, errorList.toString());
     }
 
     private String userReadableEntityClassName(final String exceptionMessage) {
@@ -75,11 +94,11 @@ public class RestResponseEntityExceptionHandler
         final var matcher = pattern.matcher(exceptionMessage);
         if (matcher.find()) {
             final var entityName = matcher.group(1);
-            final var entityClass = resolveClassOrNull(entityName);
-            if (entityClass != null) {
-                return (entityClass.isAnnotationPresent(DisplayName.class)
-                        ? exceptionMessage.replace(entityName, entityClass.getAnnotation(DisplayName.class).value())
-                        : exceptionMessage.replace(entityName, entityClass.getSimpleName()))
+            final var entityClass = resolveClass(entityName);
+            if (entityClass.isPresent()) {
+                return (entityClass.get().isAnnotationPresent(DisplayName.class)
+                        ? exceptionMessage.replace(entityName, entityClass.get().getAnnotation(DisplayName.class).value())
+                        : exceptionMessage.replace(entityName, entityClass.get().getSimpleName()))
                         .replace(" with id ", " with uuid ");
             }
 
@@ -87,11 +106,11 @@ public class RestResponseEntityExceptionHandler
         return exceptionMessage;
     }
 
-    private static Class<?> resolveClassOrNull(final String entityName) {
+    private static Optional<Class<?>> resolveClass(final String entityName) {
         try {
-            return ClassLoader.getSystemClassLoader().loadClass(entityName);
+            return Optional.of(ClassLoader.getSystemClassLoader().loadClass(entityName));
         } catch (ClassNotFoundException e) {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -113,6 +132,13 @@ public class RestResponseEntityExceptionHandler
             final String message) {
         return new ResponseEntity<>(
                 new CustomErrorResponse(request.getContextPath(), httpStatus, message), httpStatus);
+    }
+
+    private String firstMessageLine(final Throwable exception) {
+        if (exception.getMessage() != null) {
+            return firstLine(exception.getMessage());
+        }
+        return "ERROR: [500] " + exception.getClass().getName();
     }
 
     private String firstLine(final String message) {

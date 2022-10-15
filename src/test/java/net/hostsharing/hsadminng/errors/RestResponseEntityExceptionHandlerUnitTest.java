@@ -5,16 +5,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.context.request.WebRequest;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RestResponseEntityExceptionHandlerUnitTest {
@@ -168,6 +176,32 @@ class RestResponseEntityExceptionHandlerUnitTest {
     }
 
     @Test
+    void handleMethodArgumentNotValidException() {
+        // given
+        final var givenBindingResult = mock(BindingResult.class);
+        when(givenBindingResult.getFieldErrors()).thenReturn(List.of(
+                new FieldError("someObject", "someField", "someRejectedValue", false, null, null, "expected to be something")
+        ));
+        final var givenException = new MethodArgumentNotValidException(
+                mock(MethodParameter.class),
+                givenBindingResult
+
+        );
+        final var givenWebRequest = mock(WebRequest.class);
+
+        // when
+        final var errorResponse = exceptionHandler.handleMethodArgumentNotValid(givenException,
+                HttpHeaders.EMPTY, HttpStatus.BAD_REQUEST, givenWebRequest);
+
+        // then
+        assertThat(errorResponse.getStatusCodeValue()).isEqualTo(400);
+        assertThat(errorResponse.getBody())
+                .isInstanceOf(CustomErrorResponse.class)
+                .extracting("message")
+                .isEqualTo("[someField expected to be something but is \"someRejectedValue\"]");
+    }
+
+    @Test
     void handleOtherExceptionsWithoutErrorCode() {
         // given
         final var givenThrowable = new Error("First Line\nSecond Line\nThird Line");
@@ -193,6 +227,20 @@ class RestResponseEntityExceptionHandlerUnitTest {
         // then
         assertThat(errorResponse.getStatusCodeValue()).isEqualTo(418);
         assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [418] First Line");
+    }
+
+    @Test
+    void handleOtherExceptionsWithoutMessage() {
+        // given
+        final var givenThrowable = new Error();
+        final var givenWebRequest = mock(WebRequest.class);
+
+        // when
+        final var errorResponse = exceptionHandler.handleOtherExceptions(givenThrowable, givenWebRequest);
+
+        // then
+        assertThat(errorResponse.getStatusCodeValue()).isEqualTo(500);
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [500] java.lang.Error");
     }
 
     public static class NoDisplayNameEntity {

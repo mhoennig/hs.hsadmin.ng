@@ -19,7 +19,6 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import javax.persistence.EntityManager;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
