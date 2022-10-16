@@ -1,13 +1,12 @@
 package net.hostsharing.hsadminng.errors;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Getter;
 import org.iban4j.Iban4jException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,10 +16,11 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
+import static net.hostsharing.hsadminng.errors.CustomErrorResponse.*;
 
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler
@@ -72,6 +72,16 @@ public class RestResponseEntityExceptionHandler
     }
 
     @Override
+    @SuppressWarnings("unchecked,rawtypes")
+    protected ResponseEntity handleExceptionInternal(
+            Exception exc, @Nullable Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+
+        final var response = super.handleExceptionInternal(exc, body, headers, status, request);
+        return errorResponse(request, response.getStatusCode(),
+                Optional.ofNullable(response.getBody()).map(Object::toString).orElse(firstMessageLine(exc)));
+    }
+
+    //@ExceptionHandler({ MethodArgumentNotValidException.class })
     @SuppressWarnings("unchecked,rawtypes")
     protected ResponseEntity handleMethodArgumentNotValid(
             MethodArgumentNotValidException exc,
@@ -126,45 +136,4 @@ public class RestResponseEntityExceptionHandler
         return Optional.empty();
     }
 
-    private static ResponseEntity<CustomErrorResponse> errorResponse(
-            final WebRequest request,
-            final HttpStatus httpStatus,
-            final String message) {
-        return new ResponseEntity<>(
-                new CustomErrorResponse(request.getContextPath(), httpStatus, message), httpStatus);
-    }
-
-    private String firstMessageLine(final Throwable exception) {
-        if (exception.getMessage() != null) {
-            return firstLine(exception.getMessage());
-        }
-        return "ERROR: [500] " + exception.getClass().getName();
-    }
-
-    private String firstLine(final String message) {
-        return message.split("\\r|\\n|\\r\\n", 0)[0];
-    }
-}
-
-@Getter
-class CustomErrorResponse {
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
-    private final LocalDateTime timestamp;
-
-    private final String path;
-
-    private final int status;
-
-    private final String error;
-
-    private final String message;
-
-    public CustomErrorResponse(final String path, final HttpStatus status, final String message) {
-        this.timestamp = LocalDateTime.now();
-        this.path = path;
-        this.status = status.value();
-        this.error = status.getReasonPhrase();
-        this.message = message;
-    }
 }

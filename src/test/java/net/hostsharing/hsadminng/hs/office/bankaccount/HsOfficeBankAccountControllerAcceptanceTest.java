@@ -136,7 +136,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/bankaccounts")
-                    .then().assertThat()
+                    .then().log().all().assertThat()
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
@@ -346,7 +346,10 @@ class HsOfficeBankAccountControllerAcceptanceTest {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
             tempBankAccountUuids.addAll(
-              bankAccountRepo.findByOptionalHolderLike("some temp acc").stream().map(HsOfficeBankAccountEntity::getUuid).toList()
+                    bankAccountRepo.findByOptionalHolderLike("some temp acc")
+                            .stream()
+                            .map(HsOfficeBankAccountEntity::getUuid)
+                            .toList()
             );
         });
         tempBankAccountUuids.forEach(uuid -> {

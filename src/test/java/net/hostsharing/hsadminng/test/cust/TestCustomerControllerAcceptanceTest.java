@@ -247,6 +247,26 @@ class TestCustomerControllerAcceptanceTest {
             context.define("superuser-fran@hostsharing.net");
             assertThat(testCustomerRepository.findCustomerByOptionalPrefixLike("uuu")).hasSize(0);
         }
+
+        @Test
+        void invalidRequestBodyJson_raisesClientError() {
+
+            RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("{]") // deliberately invalid JSON
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/test/customers")
+                .then().assertThat()
+                    .statusCode(400)
+                    .contentType(ContentType.JSON)
+                    .body("message", containsString("JSON parse error: Unexpected close marker ']': expected '}'"))
+                    .body("message", containsString("line: 1, column: 1"));
+            // @formatter:on
+        }
+
     }
 
     private UUID toCleanup(final UUID tempPartnerUuid) {
@@ -262,7 +282,9 @@ class TestCustomerControllerAcceptanceTest {
                 System.out.println("DELETING temporary partner: " + uuid);
                 final var entity = testCustomerRepository.findByUuid(uuid);
                 final var count = testCustomerRepository.deleteByUuid(uuid);
-                System.out.println("DELETED temporary partner: " + uuid + (count > 0 ? " successful" : " failed") + " (" + entity.map(TestCustomerEntity::getPrefix).orElse("???") + ")");
+                System.out.println(
+                        "DELETED temporary partner: " + uuid + (count > 0 ? " successful" : " failed") + " (" + entity.map(
+                                TestCustomerEntity::getPrefix).orElse("???") + ")");
             }).assertSuccessful();
         });
     }
