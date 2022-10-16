@@ -725,6 +725,17 @@ It can also be executed directly:
 gw processSpring
 ```
 
+### How to Generate Database Table Diagrams?
+
+Some overview documentation about the database can be generated via [postgresql_autodoc](https://github.com/cbbrowne/autodoc").
+To make it easier, the command line is included in the `.aliases`, just call:
+
+```shell
+postgres-autodoc
+```
+
+The output will list the generated files.
+
 
 ## Further Documentation
 

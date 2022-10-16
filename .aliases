@@ -1,7 +1,7 @@
 gradleWrapper () {
     if [ ! -f gradlew ]; then
         echo "No 'gradlew' found. Maybe you are not in the root dir of a gradle project?"
-        exit 1
+        return 1
     fi
 
     TEMPFILE=$(mktemp /tmp/gw.XXXXXX)
@@ -11,6 +11,33 @@ gradleWrapper () {
     grep --color=never "Report:" $TEMPFILE
     rm $TEMPFILE
 }
+
+postgresAutodoc () {
+	if ! [ -x "$(command -v postgresql_autodoc)" ]; then
+        echo "Program 'postgresql_autodoc' not found. Please install, e.g. via: sudo apt install postgresql-autodoc" >&2
+		echo "See also https://github.com/cbbrowne/autodoc" >&2
+        return 1
+    fi
+
+	if ! [ -x "$(command -v dot)" ]; then
+        echo "Program 'graphviz dot' not found. Please install, e.g. via: sudo apt install graphviz" >&2
+		echo "See also https://graphviz.org" >&2
+        return 1
+    fi
+	postgresql_autodoc -d postgres -f build/postgres-autodoc -h localhost -u postgres --password=password \
+		-m '(rbacobject|hs).*' \
+		-l /usr/share/postgresql-autodoc -t neato && 
+	dot -Tsvg build/postgres-autodoc.neato >build/postgres-autodoc-hs.svg && \
+	echo "generated: $PWD/build/postgres-autodoc-hs.svg"
+
+	postgresql_autodoc -d postgres -f build/postgres-autodoc -h localhost -u postgres --password=password \
+		-m '(global|rbac).*' \
+		-l /usr/share/postgresql-autodoc -t neato && 
+	dot -Tsvg build/postgres-autodoc.neato >build/postgres-autodoc-rbac.svg && \
+	echo "generated $PWD/build/postgres-autodoc-rbac.svg"
+}
+
+alias postgres-autodoc=postgresAutodoc
 
 alias podman-start='systemctl --user enable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
 alias podman-stop='systemctl --user disable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
