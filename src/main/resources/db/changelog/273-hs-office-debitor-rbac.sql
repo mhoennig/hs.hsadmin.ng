@@ -28,8 +28,6 @@ create or replace function hsOfficeDebitorRbacRolesTrigger()
     strict as $$
 declare
     hsOfficeDebitorTenant RbacRoleDescriptor;
-    ownerRole             uuid;
-    adminRole             uuid;
     oldPartner            hs_office_partner;
     newPartner            hs_office_partner;
     newPerson             hs_office_person;
