@@ -18,7 +18,7 @@ declare
     newMemberNumber numeric;
 begin
     idName := cleanIdentifier( forPartnerTradeName || '#' || forMainDebitorNumber);
-    currentTask := 'creating SEPA-mandate test-data ' || idName;
+    currentTask := 'creating Membership test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
@@ -28,7 +28,7 @@ begin
     select d.* from hs_office_debitor d where d.debitorNumber = forMainDebitorNumber into relatedDebitor;
     select coalesce(max(memberNumber)+1, 10001) from hs_office_membership into newMemberNumber;
 
-    raise notice 'creating test SEPA-mandate: %', idName;
+    raise notice 'creating test Membership: %', idName;
     raise notice '- using partner (%): %', relatedPartner.uuid, relatedPartner;
     raise notice '- using debitor (%): %', relatedDebitor.uuid, relatedDebitor;
     insert

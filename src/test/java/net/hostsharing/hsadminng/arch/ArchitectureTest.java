@@ -84,7 +84,14 @@ public class ArchitectureTest {
     public static final ArchRule HsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..");
+            .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule HsOfficeMembershipPackageRule = classes()
+            .that().resideInAPackage("..hs.office.membership..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.membership..");
 
     @ArchTest
     @SuppressWarnings("unused")

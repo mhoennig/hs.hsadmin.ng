@@ -47,26 +47,25 @@ begin
         perform createRoleWithGrants(
                 hsOfficeMembershipAdmin(NEW),
                 permissions => array['edit'],
-                incomingSuperRoles => array[hsOfficeMembershipOwner(NEW)],
-                outgoingSubRoles => array[hsOfficeDebitorTenant(newHsOfficeDebitor)]
+                incomingSuperRoles => array[hsOfficeMembershipOwner(NEW)]
             );
 
         perform createRoleWithGrants(
                 hsOfficeMembershipAgent(NEW),
                 incomingSuperRoles => array[hsOfficeMembershipAdmin(NEW), hsOfficePartnerAdmin(newHsOfficePartner), hsOfficeDebitorAdmin(newHsOfficeDebitor)],
-                outgoingSubRoles => array[hsOfficePartnerTenant(newHsOfficePartner)]
+                outgoingSubRoles => array[hsOfficePartnerTenant(newHsOfficePartner), hsOfficeDebitorTenant(newHsOfficeDebitor)]
             );
 
         perform createRoleWithGrants(
                 hsOfficeMembershipTenant(NEW),
-                incomingSuperRoles => array[hsOfficeMembershipAgent(NEW)],
+                incomingSuperRoles => array[hsOfficeMembershipAgent(NEW), hsOfficePartnerAgent(newHsOfficePartner), hsOfficeDebitorAgent(newHsOfficeDebitor)],
                 outgoingSubRoles => array[hsOfficePartnerGuest(newHsOfficePartner), hsOfficeDebitorGuest(newHsOfficeDebitor)]
             );
 
         perform createRoleWithGrants(
                 hsOfficeMembershipGuest(NEW),
                 permissions => array['view'],
-                incomingSuperRoles => array[hsOfficeMembershipTenant(NEW)]
+                incomingSuperRoles => array[hsOfficeMembershipTenant(NEW), hsOfficePartnerTenant(newHsOfficePartner), hsOfficeDebitorTenant(newHsOfficeDebitor)]
             );
 
         -- === END of code generated from Mermaid flowchart. ===

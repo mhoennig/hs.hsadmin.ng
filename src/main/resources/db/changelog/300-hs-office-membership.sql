@@ -15,7 +15,7 @@ create table if not exists hs_office_membership
     mainDebitorUuid         uuid not null references hs_office_debitor(uuid),
     memberNumber            numeric(5) not null,
     validity                daterange not null,
-    reasonForTermination    HsOfficeReasonForTermination not null
+    reasonForTermination    HsOfficeReasonForTermination not null default 'NONE'
 );
 --//
 

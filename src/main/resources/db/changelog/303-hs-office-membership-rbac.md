@@ -51,11 +51,13 @@ subgraph hsOfficeMembership
        role:hsOfficeDebitor.admin --> role:hsOfficeMembership.agent
    %% outgoing
        role:hsOfficeMembership.agent --> role:hsOfficePartner.tenant
-       role:hsOfficeMembership.admin --> role:hsOfficeDebitor.tenant
+       role:hsOfficeMembership.agent --> role:hsOfficeDebitor.tenant
   
    role:hsOfficeMembership.tenant[membership.tenant]
    %% incoming
        role:hsOfficeMembership.agent --> role:hsOfficeMembership.tenant
+       role:hsOfficePartner.agent --> role:hsOfficeMembership.tenant
+       role:hsOfficeDebitor.agent --> role:hsOfficeMembership.tenant
    %% outgoing   
        role:hsOfficeMembership.tenant --> role:hsOfficePartner.guest
        role:hsOfficeMembership.tenant --> role:hsOfficeDebitor.guest
@@ -65,6 +67,8 @@ subgraph hsOfficeMembership
        role:hsOfficeMembership.guest -->  perm:hsOfficeMembership.view{{membership.view}}
    %% incoming
        role:hsOfficeMembership.tenant --> role:hsOfficeMembership.guest
+       role:hsOfficePartner.tenant --> role:hsOfficeMembership.guest
+       role:hsOfficeDebitor.tenant --> role:hsOfficeMembership.guest
 end
 
 
