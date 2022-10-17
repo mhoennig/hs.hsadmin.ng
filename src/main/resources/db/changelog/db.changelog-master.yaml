@@ -91,3 +91,5 @@ databaseChangeLog:
         file: db/changelog/253-hs-office-sepamandate-rbac.sql
     - include:
         file: db/changelog/258-hs-office-sepamandate-test-data.sql
+    - include:
+        file: db/changelog/300-hs-office-membership.sql
