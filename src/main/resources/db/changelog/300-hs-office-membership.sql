@@ -6,7 +6,6 @@
 
 CREATE TYPE HsOfficeReasonForTermination AS ENUM ('NONE', 'CANCELLATION', 'TRANSFER', 'DEATH', 'LIQUIDATION', 'EXPULSION');
 
-
 CREATE CAST (character varying as HsOfficeReasonForTermination) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office_membership
