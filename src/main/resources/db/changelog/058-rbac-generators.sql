@@ -143,15 +143,17 @@ begin
     /*
         Creates a restricted view based on the 'view' permission of the current subject.
     */
-    -- TODO.refa: hoist `select queryAccessibleObjectUuidsOfSubjectIds(...)` into WITH CTE  for performance
     sql := format($sql$
         set session session authorization default;
         create view %1$s_rv as
-        select target.*
-            from %1$s as target
-            where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', '%1$s', currentSubjectsUuids()))
-            order by %2$s;
-        grant all privileges on %1$s_rv to restricted;
+            with accessibleObjects as (
+                select queryAccessibleObjectUuidsOfSubjectIds('view', '%1$s', currentSubjectsUuids())
+            )
+            select target.*
+                from %1$s as target
+                where target.uuid in (select * from accessibleObjects)
+                order by %2$s;
+            grant all privileges on %1$s_rv to restricted;
         $sql$, targetTable, orderBy);
     execute sql;
 
