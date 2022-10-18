@@ -13,13 +13,12 @@ public interface HsOfficeMembershipRepository extends Repository<HsOfficeMembers
 
     @Query("""
             SELECT membership FROM HsOfficeMembershipEntity membership
-                WHERE :memberNumber is null
-                    OR membership.memberNumber = :memberNumber
+                WHERE (:memberNumber is null OR membership.memberNumber = :memberNumber)
+                    AND ( CAST(:partnerUuid as org.hibernate.type.UUIDCharType) IS NULL
+                         OR membership.partner.uuid = :partnerUuid )
                 ORDER BY membership.memberNumber
                """)
-    List<HsOfficeMembershipEntity> findMembershipByOptionalMemberNumber(Integer memberNumber);
-
-    List<HsOfficeMembershipEntity> findMembershipsByPartnerUuid(UUID partnerUuid);
+    List<HsOfficeMembershipEntity> findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(UUID partnerUuid, Integer memberNumber);
 
     HsOfficeMembershipEntity save(final HsOfficeMembershipEntity entity);
 
