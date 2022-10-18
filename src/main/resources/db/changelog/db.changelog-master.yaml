@@ -99,3 +99,7 @@ databaseChangeLog:
         file: db/changelog/308-hs-office-membership-test-data.sql
     - include:
         file: db/changelog/310-hs-office-coopshares.sql
+    - include:
+        file: db/changelog/313-hs-office-coopshares-rbac.sql
+    - include:
+        file: db/changelog/318-hs-office-coopshares-test-data.sql
