@@ -339,7 +339,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         void globalAdmin_canPatchValidToOfArbitrarySepaMandate() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler();
+            final var givenSepaMandate = givenSomeTemporarySepaMandate();
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -379,7 +379,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         void globalAdmin_canNotPatchReferenceOfArbitrarySepaMandate() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler();
+            final var givenSepaMandate = givenSomeTemporarySepaMandate();
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -415,7 +415,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         @Test
         void globalAdmin_canDeleteArbitrarySepaMandate() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler();
+            final var givenSepaMandate = givenSomeTemporarySepaMandate();
 
             RestAssured // @formatter:off
                 .given()
@@ -434,7 +434,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         @Accepts({ "SepaMandate:X(Access Control)" })
         void bankAccountAdminUser_canNotDeleteRelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler();
+            final var givenSepaMandate = givenSomeTemporarySepaMandate();
             assertThat(givenSepaMandate.getReference()).isEqualTo("temp ref X");
 
             RestAssured // @formatter:off
@@ -454,7 +454,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         @Accepts({ "SepaMandate:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler();
+            final var givenSepaMandate = givenSomeTemporarySepaMandate();
             assertThat(givenSepaMandate.getReference()).isEqualTo("temp ref X");
 
             RestAssured // @formatter:off
@@ -471,7 +471,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         }
     }
 
-    private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandateBessler() {
+    private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandate() {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);

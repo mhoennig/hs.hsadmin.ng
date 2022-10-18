@@ -3,10 +3,10 @@ package net.hostsharing.hsadminng.hs.office.sepamandate;
 import com.vladmihalcea.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.Mapper;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeSepaMandatesApi;
-import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateInsertResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandatePatchResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -135,8 +135,6 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     }
 
     final BiConsumer<HsOfficeSepaMandateEntity, HsOfficeSepaMandateResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        resource.setDebitor(map(entity.getDebitor(), HsOfficeDebitorResource.class));
-        resource.setBankAccount(map(entity.getBankAccount(), HsOfficeBankAccountResource.class));
         resource.setValidFrom(entity.getValidity().lower());
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
@@ -144,8 +142,6 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     };
 
     final BiConsumer<HsOfficeSepaMandateInsertResource, HsOfficeSepaMandateEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        entity.setDebitor(em.getReference(HsOfficeDebitorEntity.class, resource.getDebitorUuid()));
-        entity.setBankAccount(em.getReference(HsOfficeBankAccountEntity.class, resource.getBankAccountUuid()));
         entity.setValidity(toPostgresDateRange(resource.getValidFrom(), resource.getValidTo()));
     };
 }
