@@ -1,0 +1,83 @@
+get:
+    tags:
+        - hs-office-memberships
+    description: 'Fetch a single membership by its uuid, if visible for the current subject.'
+    operationId: getMembershipByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: membershipUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the membership to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
+
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+patch:
+    tags:
+        - hs-office-memberships
+    description: 'Updates a single membership by its uuid, if permitted for the current subject.'
+    operationId: patchMembership
+    parameters:
+        -   $ref: './auth.yaml#/components/parameters/currentUser'
+        -   $ref: './auth.yaml#/components/parameters/assumedRoles'
+        -   name: membershipUUID
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: './hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembershipPatch'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - hs-office-memberships
+    description: 'Delete a single membership by its uuid, if permitted for the current subject.'
+    operationId: deleteMembershipByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: membershipUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the membership to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: './error-responses.yaml#/components/responses/NotFound'

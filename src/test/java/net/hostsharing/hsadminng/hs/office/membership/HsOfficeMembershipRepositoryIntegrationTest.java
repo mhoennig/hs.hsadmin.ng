@@ -169,63 +169,49 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     @Nested
-    class FindByPartnerUuidMemberships {
+    class ListMemberships {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllMemberships() {
             // given
             context("superuser-alex@hostsharing.net");
+
+            // when
+            final var result = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, null);
+
+            // then
+            exactlyTheseMembershipsAreReturned(
+                    result,
+                    "Membership(10001, First GmbH, 10001, [2022-10-01,), NONE)",
+                    "Membership(10002, Second e.K., 10002, [2022-10-01,), NONE)",
+                    "Membership(10003, Third OHG, 10003, [2022-10-01,), NONE)");
+        }
+
+        @Test
+        public void globalAdmin_withoutAssumedRole_canFindAllMembershipByPartnerUuid() {
+            // given
+            context("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
 
             // when
-            final var result = membershipRepo.findMembershipsByPartnerUuid(givenPartner.getUuid());
+            final var result = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(
+                    givenPartner.getUuid(),
+                    null);
 
             // then
-            allTheseMembershipsAreReturned(result, "Membership(10001, First GmbH, 10001, [2022-10-01,), NONE)");
-        }
-
-        @Test
-        public void normalUser_canViewOnlyRelatedMemberships() {
-            // given:
-            context("person-FirstGmbH@example.com");
-            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
-
-            // when:
-            final var result = membershipRepo.findMembershipsByPartnerUuid(givenPartner.getUuid());
-
-            // then:
             exactlyTheseMembershipsAreReturned(result, "Membership(10001, First GmbH, 10001, [2022-10-01,), NONE)");
         }
-    }
-
-    @Nested
-    class FindByOptionalMemberNumber {
 
         @Test
-        public void globalAdmin_canViewArbitraryMembership() {
+        public void globalAdmin_withoutAssumedRole_canFindAllMembershipByMemberNumber() {
             // given
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = membershipRepo.findMembershipByOptionalMemberNumber(10002);
+            final var result = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002);
 
             // then
             exactlyTheseMembershipsAreReturned(result, "Membership(10002, Second e.K., 10002, [2022-10-01,), NONE)");
-        }
-
-        @Test
-        public void debitorAdmin_canViewRelatedMemberships() {
-            // given
-            // context("person-FirstGmbH@example.com");
-            context("superuser-alex@hostsharing.net", "hs_office_partner#FirstGmbH-firstcontact.agent");
-            //            context("superuser-alex@hostsharing.net", "hs_office_debitor#10001FirstGmbH-firstcontact.agent");
-            //            context("superuser-alex@hostsharing.net", "hs_office_membership#10001FirstGmbH-firstcontact.admin");
-
-            // when
-            final var result = membershipRepo.findMembershipByOptionalMemberNumber(null);
-
-            // then
-            exactlyTheseMembershipsAreReturned(result, "Membership(10001, First GmbH, 10001, [2022-10-01,), NONE)");
         }
     }
 

@@ -28,3 +28,5 @@ map:
             null: org.openapitools.jackson.nullable.JsonNullable
         /api/hs/office/sepamandates/{debitorUUID}:
             null: org.openapitools.jackson.nullable.JsonNullable
+        /api/hs/office/memberships/{membershipUUID}:
+            null: org.openapitools.jackson.nullable.JsonNullable

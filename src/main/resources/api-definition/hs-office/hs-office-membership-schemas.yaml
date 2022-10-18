@@ -1,0 +1,75 @@
+
+components:
+
+    schemas:
+
+        HsOfficeReasonForTermination:
+            type: string
+            enum:
+                - NONE
+                - CANCELLATION
+                - TRANSFER
+                - DEATH
+                - LIQUIDATION
+                - EXPULSION
+
+        HsOfficeMembership:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                partner:
+                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                mainDebitor:
+                    $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
+                memberNumber:
+                    type: integer
+                validFrom:
+                   type: string
+                   format: date
+                validTo:
+                   type: string
+                   format: date
+                reasonForTermination:
+                   $ref: '#/components/schemas/HsOfficeReasonForTermination'
+
+        HsOfficeMembershipPatch:
+            type: object
+            properties:
+                validTo:
+                    type: string
+                    format: date
+                reasonForTermination:
+                    $ref: '#/components/schemas/HsOfficeReasonForTermination'
+            additionalProperties: false
+
+        HsOfficeMembershipInsert:
+            type: object
+            properties:
+                partnerUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                mainDebitorUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                memberNumber:
+                    type: integer
+                    nullable: false
+                validFrom:
+                    type: string
+                    format: date
+                    nullable: false
+                validTo:
+                    type: string
+                    format: date
+                    nullable: true
+                reasonForTermination:
+                    $ref: '#/components/schemas/HsOfficeReasonForTermination'
+            required:
+                - partnerUuid
+                - debitorUuid
+                - validFrom
+            additionalProperties: false

@@ -69,3 +69,12 @@ paths:
 
   /api/hs/office/sepamandates/{sepaMandateUUID}:
     $ref: "./hs-office-sepamandates-with-uuid.yaml"
+
+
+  # Membership
+
+  /api/hs/office/memberships:
+    $ref: "./hs-office-memberships.yaml"
+
+  /api/hs/office/memberships/{membershipUUID}:
+    $ref: "./hs-office-memberships-with-uuid.yaml"
