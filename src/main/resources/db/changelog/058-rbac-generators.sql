@@ -135,7 +135,7 @@ end; $$;
 --changeset rbac-generators-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text)
+create or replace procedure generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text = null)
     language plpgsql as $$
 declare
     sql text;
@@ -221,32 +221,34 @@ begin
         Instead of update trigger function for the restricted view
         based on the 'edit' permission of the current subject.
      */
-    sql := format($sql$
-        create or replace function %1$sUpdate()
-            returns trigger
-            language plpgsql as $f$
-        begin
-            if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('edit', '%1$s', currentSubjectsUuids())) then
-                update %1$s
-                    set %2$s
-                    where uuid = old.uuid;
-                return old;
-            end if;
-            raise exception '[403] Subject %% is not allowed to update %1$s uuid %%', currentSubjectsUuids(), old.uuid;
-        end; $f$;
-    $sql$, targetTable, columnUpdates);
-    execute sql;
+    if columnUpdates is not null then
+        sql := format($sql$
+            create or replace function %1$sUpdate()
+                returns trigger
+                language plpgsql as $f$
+            begin
+                if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('edit', '%1$s', currentSubjectsUuids())) then
+                    update %1$s
+                        set %2$s
+                        where uuid = old.uuid;
+                    return old;
+                end if;
+                raise exception '[403] Subject %% is not allowed to update %1$s uuid %%', currentSubjectsUuids(), old.uuid;
+            end; $f$;
+        $sql$, targetTable, columnUpdates);
+        execute sql;
 
-    /*
-        Creates an instead of delete trigger for the restricted view.
-     */
-    sql = format($sql$
-        create trigger %1$sUpdate_tg
-            instead of update
-            on %1$s_rv
-            for each row
-        execute function %1$sUpdate();
-    $sql$, targetTable);
-    execute sql;
+        /*
+            Creates an instead of delete trigger for the restricted view.
+         */
+        sql = format($sql$
+            create trigger %1$sUpdate_tg
+                instead of update
+                on %1$s_rv
+                for each row
+            execute function %1$sUpdate();
+        $sql$, targetTable);
+        execute sql;
+    end if;
 end; $$;
 --//
