@@ -91,7 +91,7 @@ public class ArchitectureTest {
     public static final ArchRule HsOfficeMembershipPackageRule = classes()
             .that().resideInAPackage("..hs.office.membership..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.membership..");
+            .resideInAnyPackage("..hs.office.membership..", "..hs.office.coopshares..");
 
     @ArchTest
     @SuppressWarnings("unused")
