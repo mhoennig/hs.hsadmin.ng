@@ -1,0 +1,54 @@
+
+components:
+
+    schemas:
+
+        HsOfficeCoopSharesTransactionType:
+            type: string
+            enum:
+                - ADJUSTMENT
+                - SUBSCRIPTION
+                - CANCELLATION;
+
+        HsOfficeCoopSharesTransaction:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
+                sharesCount:
+                    type: integer
+                valueDate:
+                   type: string
+                   format: date
+                reference:
+                    type: string
+                comment:
+                    type: string
+
+        HsOfficeCoopSharesTransactionInsert:
+            type: object
+            properties:
+                membershipUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
+                sharesCount:
+                    type: integer
+                valueDate:
+                    type: string
+                    format: date
+                reference:
+                    type: string
+                comment:
+                    type: string
+            required:
+                - transactionType
+                - sharesCount
+                - valueDate
+                - reference
+            additionalProperties: false

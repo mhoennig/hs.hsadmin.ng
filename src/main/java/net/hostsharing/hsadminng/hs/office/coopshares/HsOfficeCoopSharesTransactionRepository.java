@@ -15,8 +15,8 @@ public interface HsOfficeCoopSharesTransactionRepository extends Repository<HsOf
     @Query("""
             SELECT st FROM HsOfficeCoopSharesTransactionEntity st
                 WHERE (:memberNumber IS NULL OR st.membership.memberNumber = :memberNumber)
-                    AND (:fromValueDate IS NULL OR (st.valueDate >= :fromValueDate))
-                    AND (:toValueDate IS NULL OR (st.valueDate <= :toValueDate))
+                    AND ( CAST(:fromValueDate AS java.time.LocalDate) IS NULL OR (st.valueDate >= :fromValueDate))
+                    AND ( CAST(:toValueDate AS java.time.LocalDate)IS NULL OR (st.valueDate <= :toValueDate))
                 ORDER BY st.membership.memberNumber, st.valueDate
                """)
     List<HsOfficeCoopSharesTransactionEntity> findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(

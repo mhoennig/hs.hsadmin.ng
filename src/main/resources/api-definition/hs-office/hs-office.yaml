@@ -78,3 +78,9 @@ paths:
 
   /api/hs/office/memberships/{membershipUUID}:
     $ref: "./hs-office-memberships-with-uuid.yaml"
+
+
+  # Coop Shares Transaction
+
+  /api/hs/office/coopsharestransactions:
+    $ref: "./hs-office-coopshares.yaml"
