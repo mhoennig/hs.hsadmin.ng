@@ -40,14 +40,13 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
             final String currentUser,
             final String assumedRoles,
             final UUID membershipUuid,
-            Integer memberNumber, // TODO: remove
             final @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromValueDate,
             final @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toValueDate) {
         context.define(currentUser, assumedRoles);
 
 
         final var entities = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
-                memberNumber,
+                membershipUuid,
                 fromValueDate,
                 toValueDate);
 

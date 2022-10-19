@@ -14,12 +14,6 @@ get:
         type: string
         format: uuid
       description: Optional UUID of the related membership.
-    - name: memberNumber
-      in: query
-      required: false
-      schema:
-        type: integer
-      description: Optional member number of the related membership.
     - name: fromValueDate
       in: query
       required: false

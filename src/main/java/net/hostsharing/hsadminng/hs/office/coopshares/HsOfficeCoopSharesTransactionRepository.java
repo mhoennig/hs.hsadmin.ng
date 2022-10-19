@@ -14,13 +14,13 @@ public interface HsOfficeCoopSharesTransactionRepository extends Repository<HsOf
 
     @Query("""
             SELECT st FROM HsOfficeCoopSharesTransactionEntity st
-                WHERE (:memberNumber IS NULL OR st.membership.memberNumber = :memberNumber)
+                WHERE ( CAST(:membershipUuid AS org.hibernate.type.UUIDCharType) IS NULL OR st.membership.uuid = :membershipUuid)
                     AND ( CAST(:fromValueDate AS java.time.LocalDate) IS NULL OR (st.valueDate >= :fromValueDate))
                     AND ( CAST(:toValueDate AS java.time.LocalDate)IS NULL OR (st.valueDate <= :toValueDate))
                 ORDER BY st.membership.memberNumber, st.valueDate
                """)
     List<HsOfficeCoopSharesTransactionEntity> findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
-            Integer memberNumber, LocalDate fromValueDate, LocalDate toValueDate);
+            UUID membershipUuid, LocalDate fromValueDate, LocalDate toValueDate);
 
     HsOfficeCoopSharesTransactionEntity save(final HsOfficeCoopSharesTransactionEntity entity);
 

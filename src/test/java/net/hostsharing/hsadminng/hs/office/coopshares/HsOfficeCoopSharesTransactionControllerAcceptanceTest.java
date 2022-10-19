@@ -75,12 +75,16 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
         @Test
         void globalAdmin_canFindCoopSharesTransactionsByMemberNumber() {
 
+            context.define("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
+                    .get(0);
+
             RestAssured // @formatter:off
                     .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/hs/office/coopsharestransactions?memberNumber=10002")
+                    .get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid="+givenMembership.getUuid())
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -114,13 +118,18 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
         @Test
         void globalAdmin_canFindCoopSharesTransactionsByMemberNumberAndDateRange() {
 
+            context.define("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
+                    .get(0);
+
             RestAssured // @formatter:off
-                    .given()
+                .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
-                    .when()
-                    .get("http://localhost/api/hs/office/coopsharestransactions?memberNumber=10002&fromValueDate=2020-01-01&toValueDate=2021-12-31")
-                    .then().log().all().assertThat()
+                .when()
+                    .get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid="
+                            + givenMembership.getUuid() + "&fromValueDate=2020-01-01&toValueDate=2021-12-31")
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""

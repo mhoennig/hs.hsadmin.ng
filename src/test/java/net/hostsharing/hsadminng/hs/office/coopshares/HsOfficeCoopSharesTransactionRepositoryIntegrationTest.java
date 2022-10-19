@@ -134,7 +134,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
     class FindAllCoopSharesTransactions {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllCoopSharesTransactions() {
+        public void globalAdmin_anViewAllCoopSharesTransactions() {
             // given
             context("superuser-alex@hostsharing.net");
 
@@ -158,6 +158,44 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     "CoopShareTransaction(10003, 2010-03-15, SUBSCRIPTION, 2, ref 10003-1)",
                     "CoopShareTransaction(10003, 2021-09-01, SUBSCRIPTION, 24, ref 10003-2)",
                     "CoopShareTransaction(10003, 2022-10-20, CANCELLATION, 12, ref 10003-3)");
+        }
+
+        @Test
+        public void globalAdmin_canViewCoopSharesTransactions_filteredByMembershipUuid() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002).get(0);
+
+            // when
+            final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
+                    givenMembership.getUuid(),
+                    null,
+                    null);
+
+            // then
+            allTheseCoopSharesTransactionsAreReturned(
+                    result,
+                    "CoopShareTransaction(10002, 2010-03-15, SUBSCRIPTION, 2, ref 10002-1)",
+                    "CoopShareTransaction(10002, 2021-09-01, SUBSCRIPTION, 24, ref 10002-2)",
+                    "CoopShareTransaction(10002, 2022-10-20, CANCELLATION, 12, ref 10002-3)");
+        }
+
+        @Test
+        public void globalAdmin_canViewCoopSharesTransactions_filteredByMembershipUuidAndValueDateRange() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002).get(0);
+
+            // when
+            final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
+                    givenMembership.getUuid(),
+                    LocalDate.parse("2021-09-01"),
+                    LocalDate.parse("2021-09-01"));
+
+            // then
+            allTheseCoopSharesTransactionsAreReturned(
+                    result,
+                    "CoopShareTransaction(10002, 2021-09-01, SUBSCRIPTION, 24, ref 10002-2)");
         }
 
         @Test
