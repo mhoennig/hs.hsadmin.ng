@@ -109,6 +109,8 @@ create or replace procedure create_journal(targetTable varchar)
 declare
     createTriggerSQL varchar;
 begin
+    targetTable := lower(targetTable);
+
     createTriggerSQL = 'CREATE TRIGGER ' || targetTable || '_journal' ||
                        ' AFTER INSERT OR UPDATE OR DELETE ON ' || targetTable ||
                        '   FOR EACH ROW EXECUTE PROCEDURE tx_journal_trigger()';

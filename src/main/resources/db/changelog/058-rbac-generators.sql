@@ -97,6 +97,8 @@ create or replace procedure generateRbacIdentityView(targetTable text, idNameExp
 declare
     sql text;
 begin
+    targettable := lower(targettable);
+
     -- create a view to the target main table which maps an idName to the objectUuid
     sql = format($sql$
             create or replace view %1$s_iv as
@@ -140,6 +142,8 @@ create or replace procedure generateRbacRestrictedView(targetTable text, orderBy
 declare
     sql text;
 begin
+    targetTable := lower(targetTable);
+
     /*
         Creates a restricted view based on the 'view' permission of the current subject.
     */
