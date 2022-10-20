@@ -21,7 +21,7 @@ public class JsonBuilder {
     }
 
     /**
-     * Add a property (key/value pair).
+     * Add a string property (key/value pair).
      *
      * @param key   JSON key
      * @param value JSON value
@@ -33,6 +33,33 @@ public class JsonBuilder {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        return this;
+    }
+
+    /**
+     * Add a numeric property (key/value pair).
+     *
+     * @param key   JSON key
+     * @param value JSON value
+     * @return this JsonBuilder
+     */
+    public JsonBuilder with(final String key, final Number value) {
+        try {
+            jsonObject.put(key, value);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        return this;
+    }
+
+    /**
+     * Removes a property (key/value pair).
+     *
+     * @param name JSON key
+     * @return this JsonBuilder
+     */
+    public JsonBuilder without(final String name) {
+        jsonObject.remove(name);
         return this;
     }
 
@@ -52,5 +79,4 @@ public class JsonBuilder {
             throw new RuntimeException(e);
         }
     }
-
 }

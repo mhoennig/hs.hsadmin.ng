@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.test.JsonBuilder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.UUID;
+import java.util.function.Function;
 
+import static net.hostsharing.test.JsonBuilder.jsonObject;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,117 +31,72 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
     @MockBean
     HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
 
+    static final String VALID_INSERT_REQUEST_BODY = """
+            {
+               "membershipUuid": "%s",
+               "transactionType": "SUBSCRIPTION",
+               "sharesCount": 8,
+               "valueDate": "2022-10-13",
+               "reference": "valid reference",
+               "comment": "valid comment"
+            }
+            """.formatted(UUID.randomUUID());
+
     enum BadRequestTestCases {
         MEMBERSHIP_UUID_MISSING(
-                """
-                        {
-                           "transactionType": "SUBSCRIPTION",
-                           "sharesCount": 8,
-                           "valueDate": "2022-10-13",
-                           "reference": "temp ref A"
-                         }
-                        """,
+                requestBody -> requestBody.without("membershipUuid"),
                 "[membershipUuid must not be null but is \"null\"]"),
 
         TRANSACTION_TYPE_MISSING(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "sharesCount": 8,
-                           "valueDate": "2022-10-13",
-                           "reference": "temp ref A"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody.without("transactionType"),
                 "[transactionType must not be null but is \"null\"]"),
 
         VALUE_DATE_MISSING(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "SUBSCRIPTION",
-                           "sharesCount": 8,
-                           "reference": "temp ref A"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody.without("valueDate"),
                 "[valueDate must not be null but is \"null\"]"),
 
         SHARES_COUNT_FOR_SUBSCRIPTION_MUST_BE_POSITIVE(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "SUBSCRIPTION",
-                           "sharesCount": -1,
-                           "valueDate": "2022-10-13",
-                           "reference": "temp ref A"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody
+                        .with("transactionType", "SUBSCRIPTION")
+                        .with("sharesCount", -1),
                 "[for SUBSCRIPTION, sharesCount must be positive but is \"-1\"]"),
 
         SHARES_COUNT_FOR_CANCELLATION_MUST_BE_NEGATIVE(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "CANCELLATION",
-                           "sharesCount": 1,
-                           "valueDate": "2022-10-13",
-                           "reference": "temp ref A"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody
+                        .with("transactionType", "CANCELLATION")
+                        .with("sharesCount", 1),
                 "[for CANCELLATION, sharesCount must be negative but is \"1\"]"),
 
         SHARES_COUNT_MUST_NOT_BE_NULL(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "ADJUSTMENT",
-                           "sharesCount": 0,
-                           "valueDate": "2022-10-13",
-                           "reference": "temp ref A"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody
+                        .with("transactionType", "ADJUSTMENT")
+                        .with("sharesCount", 0),
                 "[sharesCount must not be 0 but is \"0\"]"),
 
         REFERENCE_MISSING(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "SUBSCRIPTION",
-                           "sharesCount": 8,
-                           "valueDate": "2022-10-13"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody.without("reference"),
                 "[reference must not be null but is \"null\"]"),
 
         REFERENCE_TOO_SHORT(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "SUBSCRIPTION",
-                           "sharesCount": 8,
-                           "valueDate": "2022-10-13",
-                           "reference": "12345"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody.with("reference", "12345"),
                 "[reference size must be between 6 and 48 but is \"12345\"]"),
 
         REFERENCE_TOO_LONG(
-                """
-                        {
-                           "membershipUuid": "%s",
-                           "transactionType": "SUBSCRIPTION",
-                           "sharesCount": 8,
-                           "valueDate": "2022-10-13",
-                           "reference": "0123456789012345678901234567890123456789012345678"
-                         }
-                        """.formatted(UUID.randomUUID()),
+                requestBody -> requestBody.with("reference", "0123456789012345678901234567890123456789012345678"),
                 "[reference size must be between 6 and 48 but is \"0123456789012345678901234567890123456789012345678\"]");
 
-        private final String givenBody;
+        private final Function<JsonBuilder, JsonBuilder> givenBodyTransformation;
         private final String expectedErrorMessage;
 
-        BadRequestTestCases(final String givenBody, final String expectedErrorMessage) {
-            this.givenBody = givenBody;
+        BadRequestTestCases(
+                final Function<JsonBuilder, JsonBuilder> givenBodyTransformation,
+                final String expectedErrorMessage) {
+            this.givenBodyTransformation = givenBodyTransformation;
             this.expectedErrorMessage = expectedErrorMessage;
+        }
+
+        String givenRequestBody() {
+            return givenBodyTransformation.apply(jsonObject(VALID_INSERT_REQUEST_BODY)).toString();
         }
     }
 
@@ -151,7 +109,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
                         .post("/api/hs/office/coopsharestransactions")
                         .header("current-user", "superuser-alex@hostsharing.net")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(testCase.givenBody)
+                        .content(testCase.givenRequestBody())
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
