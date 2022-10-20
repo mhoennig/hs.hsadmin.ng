@@ -92,21 +92,21 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                         [
                             {
                                 "transactionType": "SUBSCRIPTION",
-                                "sharesCount": 4,
+                                "shareCount": 4,
                                 "valueDate": "2010-03-15",
                                 "reference": "ref 10002-1",
                                 "comment": "initial subscription"
                             },
                             {
                                 "transactionType": "CANCELLATION",
-                                "sharesCount": -2,
+                                "shareCount": -2,
                                 "valueDate": "2021-09-01",
                                 "reference": "ref 10002-2",
                                 "comment": "cancelling some"
                             },
                             {
                                 "transactionType": "ADJUSTMENT",
-                                "sharesCount": 2,
+                                "shareCount": 2,
                                 "valueDate": "2022-10-20",
                                 "reference": "ref 10002-3",
                                 "comment": "some adjustment"
@@ -136,7 +136,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                         [
                             {
                                 "transactionType": "CANCELLATION",
-                                "sharesCount": -2,
+                                "shareCount": -2,
                                 "valueDate": "2021-09-01",
                                 "reference": "ref 10002-2",
                                 "comment": "cancelling some"
@@ -165,7 +165,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                                {
                                    "membershipUuid": "%s",
                                    "transactionType": "SUBSCRIPTION",
-                                   "sharesCount": 8,
+                                   "shareCount": 8,
                                    "valueDate": "2022-10-13",
                                    "reference": "temp ref A",
                                    "comment": "just some test coop shares transaction" 
@@ -181,7 +181,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                         .body("", lenientlyEquals("""
                             {
                                 "transactionType": "SUBSCRIPTION",
-                                "sharesCount": 0,
+                                "shareCount": 8,
                                 "valueDate": "2022-10-13",
                                 "reference": "temp ref A",
                                 "comment": "just some test coop shares transaction"
@@ -194,6 +194,42 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_canNotCancelMoreSharesThanCurrentlySubscribed() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10001)
+                    .get(0);
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                           {
+                               "membershipUuid": "%s",
+                               "transactionType": "CANCELLATION",
+                               "shareCount": -80,
+                               "valueDate": "2022-10-13",
+                               "reference": "temp ref X",
+                               "comment": "just some test coop shares transaction"
+                             }
+                            """.formatted(givenMembership.getUuid()))
+                    .port(port)
+                .when()
+                    .post("http://localhost/api/hs/office/coopsharestransactions")
+                .then().log().all().assertThat()
+                    .statusCode(400)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
+                            {
+                                 "status": 400,
+                                 "error": "Bad Request",
+                                 "message": "ERROR: [400] coop shares transaction would result in a negative number of shares"
+                             }
+                        """));  // @formatter:on
         }
     }
 

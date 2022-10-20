@@ -18,7 +18,7 @@ components:
                     format: uuid
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
-                sharesCount:
+                shareCount:
                     type: integer
                 valueDate:
                    type: string
@@ -37,7 +37,7 @@ components:
                     nullable: false
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
-                sharesCount:
+                shareCount:
                     type: integer
                 valueDate:
                     type: string
@@ -51,7 +51,7 @@ components:
             required:
                 - membershipUuid
                 - transactionType
-                - sharesCount
+                - shareCount
                 - valueDate
                 - reference
             additionalProperties: false

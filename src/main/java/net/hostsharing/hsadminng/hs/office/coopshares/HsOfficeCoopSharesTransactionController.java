@@ -26,7 +26,6 @@ import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOffic
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.SUBSCRIPTION;
 
 @RestController
-
 public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopSharesApi {
 
     @Autowired
@@ -71,7 +70,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/hs/office/CoopSharesTransactions/{id}")
+                        .path("/api/hs/office/coopsharestransactions/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
         final var mapped = map(saved, HsOfficeCoopSharesTransactionResource.class);
@@ -82,7 +81,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         final var violations = new ArrayList<String>();
         validateSubscriptionTransaction(requestBody, violations);
         validateCancellationTransaction(requestBody, violations);
-        validateSharesCount(requestBody, violations);
+        validateshareCount(requestBody, violations);
         if (violations.size() > 0) {
             throw new ValidationException("[" + join(", ", violations) + "]");
         }
@@ -92,9 +91,9 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getTransactionType() == SUBSCRIPTION
-                && requestBody.getSharesCount() < 0) {
-            violations.add("for %s, sharesCount must be positive but is \"%d\"".formatted(
-                    requestBody.getTransactionType(), requestBody.getSharesCount()));
+                && requestBody.getShareCount() < 0) {
+            violations.add("for %s, shareCount must be positive but is \"%d\"".formatted(
+                    requestBody.getTransactionType(), requestBody.getShareCount()));
         }
     }
 
@@ -102,18 +101,18 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
         if (requestBody.getTransactionType() == CANCELLATION
-                && requestBody.getSharesCount() > 0) {
-            violations.add("for %s, sharesCount must be negative but is \"%d\"".formatted(
-                    requestBody.getTransactionType(), requestBody.getSharesCount()));
+                && requestBody.getShareCount() > 0) {
+            violations.add("for %s, shareCount must be negative but is \"%d\"".formatted(
+                    requestBody.getTransactionType(), requestBody.getShareCount()));
         }
     }
 
-    private static void validateSharesCount(
+    private static void validateshareCount(
             final HsOfficeCoopSharesTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
-        if (requestBody.getSharesCount() == 0) {
-            violations.add("sharesCount must not be 0 but is \"%d\"".formatted(
-                    requestBody.getSharesCount()));
+        if (requestBody.getShareCount() == 0) {
+            violations.add("shareCount must not be 0 but is \"%d\"".formatted(
+                    requestBody.getShareCount()));
         }
     }
 

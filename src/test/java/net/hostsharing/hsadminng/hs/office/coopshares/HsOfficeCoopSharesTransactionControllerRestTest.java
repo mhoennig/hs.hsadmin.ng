@@ -35,7 +35,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
             {
                "membershipUuid": "%s",
                "transactionType": "SUBSCRIPTION",
-               "sharesCount": 8,
+               "shareCount": 8,
                "valueDate": "2022-10-13",
                "reference": "valid reference",
                "comment": "valid comment"
@@ -58,20 +58,20 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
         SHARES_COUNT_FOR_SUBSCRIPTION_MUST_BE_POSITIVE(
                 requestBody -> requestBody
                         .with("transactionType", "SUBSCRIPTION")
-                        .with("sharesCount", -1),
-                "[for SUBSCRIPTION, sharesCount must be positive but is \"-1\"]"),
+                        .with("shareCount", -1),
+                "[for SUBSCRIPTION, shareCount must be positive but is \"-1\"]"),
 
         SHARES_COUNT_FOR_CANCELLATION_MUST_BE_NEGATIVE(
                 requestBody -> requestBody
                         .with("transactionType", "CANCELLATION")
-                        .with("sharesCount", 1),
-                "[for CANCELLATION, sharesCount must be negative but is \"1\"]"),
+                        .with("shareCount", 1),
+                "[for CANCELLATION, shareCount must be negative but is \"1\"]"),
 
         SHARES_COUNT_MUST_NOT_BE_NULL(
                 requestBody -> requestBody
                         .with("transactionType", "ADJUSTMENT")
-                        .with("sharesCount", 0),
-                "[sharesCount must not be 0 but is \"0\"]"),
+                        .with("shareCount", 0),
+                "[shareCount must not be 0 but is \"0\"]"),
 
         REFERENCE_MISSING(
                 requestBody -> requestBody.without("reference"),

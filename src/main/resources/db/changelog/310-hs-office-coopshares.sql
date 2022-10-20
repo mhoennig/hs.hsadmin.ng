@@ -20,6 +20,33 @@ create table if not exists hs_office_coopsharestransaction
 );
 --//
 
+-- ============================================================================
+--changeset hs-office-coopshares-SHARE-COUNT-CONSTRAINT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace function checkSharesByMembershipUuid(forMembershipUuid UUID, newShareCount integer)
+returns boolean
+language plpgsql as $$
+declare
+    currentShareCount integer;
+    totalShareCount integer;
+begin
+    select sum(cst.shareCount)
+    from hs_office_coopsharestransaction cst
+    where cst.membershipUuid = forMembershipUuid
+    into currentShareCount;
+    totalShareCount := currentShareCount + newShareCount;
+    if totalShareCount < 0 then
+        raise exception '[400] coop shares transaction would result in a negative number of shares';
+    end if;
+    return true;
+end; $$;
+
+alter table hs_office_coopsharestransaction
+    add constraint hs_office_coopshares_positive
+        check ( checkSharesByMembershipUuid(membershipUuid, shareCount) );
+
+--//
 
 -- ============================================================================
 --changeset hs-office-coopshares-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
