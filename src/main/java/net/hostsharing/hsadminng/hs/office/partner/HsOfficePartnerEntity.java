@@ -6,6 +6,8 @@ import net.hostsharing.hsadminng.Stringify;
 import net.hostsharing.hsadminng.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -32,18 +34,17 @@ public class HsOfficePartnerEntity implements Stringifyable {
     private @Id UUID uuid;
 
     @ManyToOne
-    @JoinColumn(name = "personuuid")
+    @JoinColumn(name = "personuuid", nullable = false)
     private HsOfficePersonEntity person;
 
     @ManyToOne
-    @JoinColumn(name = "contactuuid")
+    @JoinColumn(name = "contactuuid", nullable = false)
     private HsOfficeContactEntity contact;
 
-    private @Column(name = "registrationoffice") String registrationOffice;
-    private @Column(name = "registrationnumber") String registrationNumber;
-    private @Column(name = "birthname") String birthName;
-    private @Column(name = "birthday") LocalDate birthday;
-    private @Column(name = "dateofdeath") LocalDate dateOfDeath;
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH}, optional = true)
+    @JoinColumn(name = "detailsuuid", nullable = true)
+    @NotFound(action= NotFoundAction.IGNORE)
+    private HsOfficePartnerDetailsEntity details;
 
     @Override
     public String toString() {

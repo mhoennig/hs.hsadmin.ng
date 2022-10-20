@@ -72,6 +72,8 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         entityToSave.setPerson(personRepo.findByUuid(body.getPersonUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find person uuid " + body.getPersonUuid())
         ));
+        entityToSave.setDetails(map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
+        entityToSave.getDetails().setUuid(UUID.randomUUID());
 
         final var saved = partnerRepo.save(entityToSave);
 
@@ -129,13 +131,12 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
 
-        new HsOfficePartnerEntityPatcher(em, current, contactRepo::findByUuid, personRepo::findByUuid).apply(body);
+        new HsOfficePartnerEntityPatcher(em, current).apply(body);
 
         final var saved = partnerRepo.save(current);
         final var mapped = map(saved, HsOfficePartnerResource.class);
         return ResponseEntity.ok(mapped);
     }
-
 
     final BiConsumer<HsOfficePartnerEntity, HsOfficePartnerResource> PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setPerson(map(entity.getPerson(), HsOfficePersonResource.class));
@@ -145,11 +146,11 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     // TODO.impl: user postmapper + getReference
     private HsOfficePartnerEntity mapToHsOfficePartnerEntity(final HsOfficePartnerInsertResource resource) {
         final var entity = new HsOfficePartnerEntity();
-        entity.setBirthday(resource.getBirthday());
-        entity.setBirthName(resource.getBirthName());
-        entity.setDateOfDeath(resource.getDateOfDeath());
-        entity.setRegistrationNumber(resource.getRegistrationNumber());
-        entity.setRegistrationOffice(resource.getRegistrationOffice());
+        //        entity.setBirthday(resource.getBirthday());
+        //        entity.setBirthName(resource.getBirthName());
+        //        entity.setDateOfDeath(resource.getDateOfDeath());
+        //        entity.setRegistrationNumber(resource.getRegistrationNumber());
+        //        entity.setRegistrationOffice(resource.getRegistrationOffice());
         return entity;
     }
 }

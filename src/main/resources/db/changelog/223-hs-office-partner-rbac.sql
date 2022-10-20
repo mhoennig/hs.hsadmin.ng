@@ -39,6 +39,8 @@ begin
 
     if TG_OP = 'INSERT' then
 
+        -- === ATTENTION: code generated from related Mermaid flowchart: ===
+
         perform createRoleWithGrants(
                 hsOfficePartnerOwner(NEW),
                 permissions => array['*'],
@@ -72,13 +74,39 @@ begin
                     hsOfficeContactGuest(newContact)]
             );
 
-
         perform createRoleWithGrants(
                 hsOfficePartnerGuest(NEW),
                 permissions => array['view'],
-                incomingSuperRoles => array[
-                    hsOfficePartnerTenant(NEW)]
+                incomingSuperRoles => array[hsOfficePartnerTenant(NEW)]
             );
+
+        -- === END of code generated from Mermaid flowchart. ===
+
+        -- Each partner-details entity belong exactly to one partner entity
+        -- and it makes little sense just to delegate partner-details roles.
+        -- Therefore, we did not model partner-details roles,
+        -- but instead just assign extra permissions to existing partner-roles.
+
+        --Attention: Cannot be in partner-details because of insert order (partner is not in database yet)
+
+        call grantPermissionsToRole(
+                getRoleId(hsOfficePartnerOwner(NEW), 'fail'),
+                createPermissions(NEW.detailsUuid, array ['*'])
+            );
+
+        call grantPermissionsToRole(
+                getRoleId(hsOfficePartnerAdmin(NEW), 'fail'),
+                createPermissions(NEW.detailsUuid, array ['edit'])
+            );
+
+        call grantPermissionsToRole(
+            -- Yes, here hsOfficePartnerAGENT is used, not hsOfficePartnerTENANT.
+            -- Do NOT grant view permission on partner-details to hsOfficePartnerTENANT!
+            -- Otherwise package-admins etc. would be able to read the data.
+                getRoleId(hsOfficePartnerAgent(NEW), 'fail'),
+                createPermissions(NEW.detailsUuid, array ['view'])
+            );
+
 
     elsif TG_OP = 'UPDATE' then
 
@@ -87,10 +115,10 @@ begin
 
             call revokeRoleFromRole(hsOfficePersonTenant(oldPerson), hsOfficePartnerAdmin(OLD));
             call grantRoleToRole(hsOfficePersonTenant(newPerson), hsOfficePartnerAdmin(NEW));
-            
+
             call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficePersonAdmin(oldPerson));
             call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficePersonAdmin(newPerson));
-            
+
             call revokeRoleFromRole(hsOfficePersonGuest(oldPerson), hsOfficePartnerTenant(OLD));
             call grantRoleToRole(hsOfficePersonGuest(newPerson), hsOfficePartnerTenant(NEW));
         end if;
@@ -152,12 +180,7 @@ call generateRbacRestrictedView('hs_office_partner',
     '(select idName from hs_office_person_iv p where p.uuid = target.personUuid)',
     $updates$
         personUuid = new.personUuid,
-        contactUuid = new.contactUuid,
-        registrationOffice = new.registrationOffice,
-        registrationNumber = new.registrationNumber,
-        birthday = new.birthday,
-        birthName = new.birthName,
-        dateOfDeath = new.dateOfDeath
+        contactUuid = new.contactUuid
     $updates$);
 --//
 

@@ -23,7 +23,7 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                 JOIN HsOfficePersonEntity person ON person.uuid = partner.person
                 JOIN HsOfficeContactEntity contact ON contact.uuid = debitor.billingContact
                 WHERE :name is null
-                    OR partner.birthName like concat(:name, '%')
+                    OR partner.details.birthName like concat(:name, '%')
                     OR person.tradeName like concat(:name, '%')
                     OR person.familyName like concat(:name, '%')
                     OR person.givenName like concat(:name, '%')

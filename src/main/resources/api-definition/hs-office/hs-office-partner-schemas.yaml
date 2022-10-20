@@ -13,23 +13,32 @@ components:
                     $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
                 contact:
                     $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                details:
+                    $ref: '#/components/schemas/HsOfficePartnerDetails'
+
+        HsOfficePartnerDetails:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
                 registrationOffice:
-                   type: string
-                   nullable: true
+                    type: string
+                    nullable: true
                 registrationNumber:
-                   type: string
-                   nullable: true
+                    type: string
+                    nullable: true
                 birthName:
-                   type: string
-                   nullable: true
+                    type: string
+                    nullable: true
                 birthday:
-                   type: string
-                   format: date
-                   nullable: true
+                    type: string
+                    format: date
+                    nullable: true
                 dateOfDeath:
-                   type: string
-                   format: date
-                   nullable: true
+                    type: string
+                    format: date
+                    nullable: true
 
         HsOfficePartnerPatch:
             type: object
@@ -42,6 +51,13 @@ components:
                     type: string
                     format: uuid
                     nullable: true
+                details:
+                    $ref: '#/components/schemas/HsOfficePartnerDetailsPatch'
+
+        HsOfficePartnerDetailsPatch:
+            type: object
+            nullable: true
+            properties:
                 registrationOffice:
                     type: string
                     nullable: true
@@ -69,6 +85,15 @@ components:
                 contactUuid:
                     type: string
                     format: uuid
+                details:
+                    $ref: '#/components/schemas/HsOfficePartnerDetailsInsert'
+            required:
+                - personUuid
+                - contactUuid
+
+        HsOfficePartnerDetailsInsert:
+            type: object
+            properties:
                 registrationOffice:
                     type: string
                     nullable: true
@@ -86,6 +111,3 @@ components:
                     type: string
                     format: date
                     nullable: true
-            required:
-              - personUuid
-              - contactUuid

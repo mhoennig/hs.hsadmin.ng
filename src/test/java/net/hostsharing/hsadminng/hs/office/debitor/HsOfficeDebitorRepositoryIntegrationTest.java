@@ -66,7 +66,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     class CreateDebitor {
 
         @Test
-        public void testHostsharingAdmin_withoutAssumedRole_canCreateNewDebitor() {
+        public void globalAdmin_canCreateNewDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
             final var count = debitorRepo.count();
@@ -170,7 +170,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     class FindByOptionalName {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllDebitors() {
+        public void globalAdmin_canViewAllDebitors() {
             // given
             context("superuser-alex@hostsharing.net");
 
@@ -219,7 +219,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     class FindByDebitorNumberLike {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllDebitors() {
+        public void globalAdmin_canViewAllDebitors() {
             // given
             context("superuser-alex@hostsharing.net");
 
@@ -235,7 +235,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     class FindByNameLike {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllDebitors() {
+        public void globalAdmin_canViewAllDebitors() {
             // given
             context("superuser-alex@hostsharing.net");
 
@@ -251,7 +251,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     class UpdateDebitor {
 
         @Test
-        public void hostsharingAdmin_withoutAssumedRole_canUpdateArbitraryDebitor() {
+        public void globalAdmin_canUpdateArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact");
@@ -336,7 +336,8 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
 
         private void assertThatDebitorActuallyInDatabase(final HsOfficeDebitorEntity saved) {
             final var found = debitorRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().isNotSameAs(saved).usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().isNotSameAs(saved)
+                    .extracting(Object::toString).isEqualTo(saved.toString());
         }
 
         private void assertThatDebitorIsVisibleForUserWithRole(
@@ -363,7 +364,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     class DeleteByUuid {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canDeleteAnyDebitor() {
+        public void globalAdmin_canDeleteAnyDebitor() {
             // given
             context("superuser-alex@hostsharing.net", null);
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "tenth");

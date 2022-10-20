@@ -63,7 +63,7 @@ begin
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
             if roleUuidToAssume is null then
-                raise exception '[403] role % not accessible for user %', roleName, currentUser();
+                raise exception '[403] role % not accessible for user %', roleName, currentSubjects();
             end if;
             if not isGranted(currentUserUuid, roleUuidToAssume) then
                 raise exception '[403] user % has no permission to assume role %', currentUser(), roleName;

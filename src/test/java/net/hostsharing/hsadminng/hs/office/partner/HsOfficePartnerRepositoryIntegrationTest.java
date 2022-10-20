@@ -20,7 +20,6 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDate;
 import java.util.*;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
@@ -77,6 +76,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                         .uuid(UUID.randomUUID())
                         .person(givenPerson)
                         .contact(givenContact)
+                        .details(HsOfficePartnerDetailsEntity.builder()
+                                .uuid(UUID.randomUUID())
+                                .build())
                         .build());
                 return partnerRepo.save(newPartner);
             });
@@ -107,6 +109,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                         .uuid(UUID.randomUUID())
                         .person(givenPerson)
                         .contact(givenContact)
+                        .details(HsOfficePartnerDetailsEntity.builder().uuid(UUID.randomUUID()).build())
                         .build());
                 return partnerRepo.save(newPartner);
             });
@@ -126,28 +129,32 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             // owner
-                            "{ grant perm * on partner#EBess-4th    to role partner#EBess-4th.owner     by system and assume }",
-                            "{ grant role partner#EBess-4th.owner   to role global#global.admin         by system and assume }",
+                            "{ grant perm * on partner#EBess-4th                    to role partner#EBess-4th.owner     by system and assume }",
+                            "{ grant perm * on partner_details#EBess-4th-details    to role partner#EBess-4th.owner     by system and assume }",
+                            "{ grant role partner#EBess-4th.owner                   to role global#global.admin         by system and assume }",
 
                             // admin
-                            "{ grant perm edit on partner#EBess-4th to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant role partner#EBess-4th.admin   to role partner#EBess-4th.owner     by system and assume }",
-                            "{ grant role person#EBess.tenant       to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant role contact#4th.tenant        to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant perm edit on partner#EBess-4th                 to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant perm edit on partner_details#EBess-4th-details to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant role partner#EBess-4th.admin                   to role partner#EBess-4th.owner     by system and assume }",
+                            "{ grant role person#EBess.tenant                       to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant role contact#4th.tenant                        to role partner#EBess-4th.admin     by system and assume }",
 
                             // agent
-                            "{ grant role partner#EBess-4th.agent   to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant role partner#EBess-4th.agent   to role person#EBess.admin          by system and assume }",
-                            "{ grant role partner#EBess-4th.agent   to role contact#4th.admin           by system and assume }",
+                            "{ grant perm view on partner_details#EBess-4th-details to role partner#EBess-4th.agent     by system and assume }",
+                            "{ grant role partner#EBess-4th.agent                   to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant role partner#EBess-4th.agent                   to role person#EBess.admin          by system and assume }",
+                            "{ grant role partner#EBess-4th.agent                   to role contact#4th.admin           by system and assume }",
 
                             // tenant
-                            "{ grant role partner#EBess-4th.tenant  to role partner#EBess-4th.agent     by system and assume }",
-                            "{ grant role person#EBess.guest        to role partner#EBess-4th.tenant    by system and assume }",
-                            "{ grant role contact#4th.guest         to role partner#EBess-4th.tenant    by system and assume }",
+                            "{ grant role partner#EBess-4th.tenant                  to role partner#EBess-4th.agent     by system and assume }",
+                            "{ grant role person#EBess.guest                        to role partner#EBess-4th.tenant    by system and assume }",
+                            "{ grant role contact#4th.guest                         to role partner#EBess-4th.tenant    by system and assume }",
 
                             // guest
-                            "{ grant perm view on partner#EBess-4th to role partner#EBess-4th.guest     by system and assume }",
-                            "{ grant role partner#EBess-4th.guest   to role partner#EBess-4th.tenant    by system and assume }",
+                            "{ grant perm view on partner#EBess-4th                 to role partner#EBess-4th.guest     by system and assume }",
+                            "{ grant role partner#EBess-4th.guest                   to role partner#EBess-4th.tenant    by system and assume }",
+
                             null));
         }
 
@@ -226,7 +233,6 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                 context("superuser-alex@hostsharing.net");
                 givenPartner.setContact(givenNewContact);
                 givenPartner.setPerson(givenNewPerson);
-                givenPartner.setDateOfDeath(LocalDate.parse("2022-09-15"));
                 return toCleanup(partnerRepo.save(givenPartner));
             });
 
@@ -246,47 +252,26 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void personAdmin_canNotUpdateRelatedPartner() {
-            // given
-            context("superuser-alex@hostsharing.net");
-            final var givenPartner = givenSomeTemporaryPartnerBessler("eighth");
-            assertThatPartnerIsVisibleForUserWithRole(
-                    givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler.admin");
-            assertThatPartnerActuallyInDatabase(givenPartner);
-
-            // when
-            final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_person#ErbenBesslerMelBessler.admin");
-                givenPartner.setDateOfDeath(LocalDate.parse("2022-09-15"));
-                return partnerRepo.save(givenPartner);
-            });
-
-            // then
-            result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update hs_office_partner uuid");
-        }
-
-        @Test
-        public void contactAdmin_canNotUpdateRelatedPartner() {
+        public void partnerAgent_canNotUpdateRelatedPartner() {
             // given
             context("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler("ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_contact#ninthcontact.admin");
+                    "hs_office_partner#ErbenBesslerMelBessler-ninthcontact.agent");
             assertThatPartnerActuallyInDatabase(givenPartner);
+            final var givenNewContact = contactRepo.findContactByOptionalLabelLike("tenth").get(0);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact.admin");
-                givenPartner.setDateOfDeath(LocalDate.parse("2022-09-15"));
+                context("superuser-alex@hostsharing.net", "hs_office_partner#ErbenBesslerMelBessler-ninthcontact.agent");
+                givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update hs_office_partner uuid");
+                    "[403] Subject ", " is not allowed to update hs_office_partner_details uuid");
         }
 
         private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
@@ -424,6 +409,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                     .uuid(UUID.randomUUID())
                     .person(givenPerson)
                     .contact(givenContact)
+                    .details(HsOfficePartnerDetailsEntity.builder()
+                            .uuid(UUID.randomUUID())
+                            .build())
                     .build();
 
             toCleanup(newPartner);

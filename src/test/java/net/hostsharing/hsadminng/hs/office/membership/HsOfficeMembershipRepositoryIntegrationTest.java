@@ -271,7 +271,8 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
 
         private void assertThatMembershipExistsAndIsAccessibleToCurrentContext(final HsOfficeMembershipEntity saved) {
             final var found = membershipRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().isNotSameAs(saved).usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().isNotSameAs(saved)
+                    .extracting(Object::toString).isEqualTo(saved.toString());
         }
 
         private void assertThatMembershipIsVisibleForUserWithRole(

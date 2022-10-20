@@ -290,7 +290,8 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
 
         private void assertThatSepaMandateActuallyInDatabase(final HsOfficeSepaMandateEntity saved) {
             final var found = sepaMandateRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().isNotSameAs(saved).usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().isNotSameAs(saved)
+                    .extracting(Object::toString).isEqualTo(saved.toString());
         }
 
         private void assertThatSepaMandateIsVisibleForUserWithRole(

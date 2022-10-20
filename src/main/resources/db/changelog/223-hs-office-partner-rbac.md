@@ -27,17 +27,27 @@ subgraph hsOfficePerson
     --> role:hsOfficePerson.guest[person.guest]    
 end
 
+subgraph hsOfficePartnerDetails
+    direction TB
+    
+    perm:hsOfficePartnerDetails.*{{partner.*}}
+    perm:hsOfficePartnerDetails.edit{{partner.edit}}
+    perm:hsOfficePartnerDetails.view{{partner.view}}
+end
+
 subgraph hsOfficePartner
                     
    role:hsOfficePartner.owner[partner.owner]
    %% permissions
        role:hsOfficePartner.owner --> perm:hsOfficePartner.*{{partner.*}}
+       role:hsOfficePartner.owner --> perm:hsOfficePartnerDetails.*{{partner.*}}
    %% incoming
        role:global.admin ---> role:hsOfficePartner.owner
   
    role:hsOfficePartner.admin[partner.admin]
    %% permissions
        role:hsOfficePartner.admin --> perm:hsOfficePartner.edit{{partner.edit}}
+       role:hsOfficePartner.admin --> perm:hsOfficePartnerDetails.edit{{partner.edit}}
    %% incoming
        role:hsOfficePartner.owner ---> role:hsOfficePartner.admin
    %% outgoing
@@ -45,6 +55,8 @@ subgraph hsOfficePartner
        role:hsOfficePartner.admin --> role:hsOfficeContact.tenant
   
    role:hsOfficePartner.agent[partner.agent]
+   %% permissions
+       role:hsOfficePartner.agent --> perm:hsOfficePartnerDetails.view{{partner.view}}
    %% incoming
        role:hsOfficePartner.admin ---> role:hsOfficePartner.agent
        role:hsOfficePerson.admin --> role:hsOfficePartner.agent

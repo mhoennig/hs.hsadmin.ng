@@ -11,11 +11,12 @@
 create or replace procedure createHsOfficePartnerTestData( personTradeOrFamilyName varchar, contactLabel varchar )
     language plpgsql as $$
 declare
-    currentTask     varchar;
-    idName          varchar;
-    relatedPerson   hs_office_person;
-    relatedContact  hs_office_contact;
-    birthday        date;
+    currentTask         varchar;
+    idName              varchar;
+    relatedPerson       hs_office_person;
+    relatedContact      hs_office_contact;
+    relatedDetailsUuid  uuid;
+    birthday            date;
 begin
     idName := cleanIdentifier( personTradeOrFamilyName|| '-' || contactLabel);
     currentTask := 'creating partner test-data ' || idName;
@@ -36,34 +37,25 @@ begin
     raise notice 'creating test partner: %', idName;
     raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
     raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
+
+    if relatedPerson.persontype = 'NATURAL' then
+        insert
+            into hs_office_partner_details (uuid, birthName, birthday)
+            values (uuid_generate_v4(), 'Meyer', '1987-10-31')
+            returning uuid into relatedDetailsUuid;
+    else
+        insert
+            into hs_office_partner_details (uuid, registrationOffice, registrationNumber)
+            values (uuid_generate_v4(), 'Hamburg', '12345')
+            returning uuid into relatedDetailsUuid;
+    end if;
+
     insert
-        into hs_office_partner (uuid, personuuid, contactuuid, birthday)
-        values (uuid_generate_v4(), relatedPerson.uuid, relatedContact.uuid, birthDay);
+        into hs_office_partner (uuid, personuuid, contactuuid, detailsUuid)
+        values (uuid_generate_v4(), relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
 end; $$;
 --//
 
-/*
-    Creates a range of test partner for mass data generation.
- */
-create or replace procedure createHsOfficePartnerTestData(
-    startCount integer,  -- count of auto generated rows before the run
-    endCount integer     -- count of auto generated rows after the run
-)
-    language plpgsql as $$
-declare
-    person hs_office_person;
-    contact hs_office_contact;
-begin
-    for t in startCount..endCount
-        loop
-            select p.* from hs_office_person p where tradeName = intToVarChar(t, 4) into person;
-            select c.* from hs_office_contact c where c.label = intToVarChar(t, 4) || '#' || t into contact;
-
-            call createHsOfficePartnerTestData(person.uuid, contact.uuid);
-            commit;
-        end loop;
-end; $$;
---//
 
 
 -- ============================================================================

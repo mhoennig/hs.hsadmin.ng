@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,8 @@ class HsOfficeDebitorEntityTest {
                         .person(HsOfficePersonEntity.builder()
                                 .tradeName("some trade name")
                                 .build())
-                        .birthName("some birth name")
+                        .details(HsOfficePartnerDetailsEntity.builder().birthName("some birth name").build())
+
                         .build())
                 .billingContact(HsOfficeContactEntity.builder().label("some label").build())
                 .build();

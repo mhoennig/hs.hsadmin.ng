@@ -79,23 +79,27 @@ class HsOfficePartnerControllerAcceptanceTest {
                         {
                             "person": { "familyName": "Smith" },
                             "contact": { "label": "fifth contact" },
-                            "birthday": "1987-10-31"
+                            "details": { "birthday": "1987-10-31" }
                         },
                         {
                             "person": { "tradeName": "First GmbH" },
-                            "contact": { "label": "first contact" }
+                            "contact": { "label": "first contact" },
+                            "details": { "registrationOffice": "Hamburg" }
                         },
                         {
                             "person": { "tradeName": "Third OHG" },
-                            "contact": { "label": "third contact" }
+                            "contact": { "label": "third contact" },
+                            "details": { "registrationOffice": "Hamburg" }
                         },
                         {
                             "person": { "tradeName": "Second e.K." },
-                            "contact": { "label": "second contact" }
+                            "contact": { "label": "second contact" },
+                            "details": { "registrationOffice": "Hamburg" }
                         },
                         {
                             "person": { "personType": "SOLE_REPRESENTATION" },
-                            "contact": { "label": "forth contact" }
+                            "contact": { "label": "forth contact" },
+                            "details": { "registrationOffice": "Hamburg" }
                         }
                     ]
                     """));
@@ -122,8 +126,10 @@ class HsOfficePartnerControllerAcceptanceTest {
                                {
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
-                                   "registrationOffice": "Registergericht Hamburg",
-                                   "registrationNumber": "123456"
+                                   "details": {
+                                       "registrationOffice": "Registergericht Aurich",
+                                       "registrationNumber": "123456"
+                                   }
                                  }
                             """.formatted(givenContact.getUuid(), givenPerson.getUuid()))
                         .port(port)
@@ -133,7 +139,8 @@ class HsOfficePartnerControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("registrationNumber", is("123456"))
+                        .body("details.registrationOffice", is("Registergericht Aurich"))
+                        .body("details.registrationNumber", is("123456"))
                         .body("contact.label", is(givenContact.getLabel()))
                         .body("person.tradeName", is(givenPerson.getTradeName()))
                         .header("Location", startsWith("http://localhost"))
@@ -289,11 +296,13 @@ class HsOfficePartnerControllerAcceptanceTest {
                                {
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
-                                   "registrationOffice": "Registergericht Hamburg",
-                                   "registrationNumber": "222222",
-                                   "birthName": "Maja Schmidt",
-                                   "birthday": "1938-04-08",
-                                   "dateOfDeath": "2022-01-12"
+                                   "details": {
+                                       "registrationOffice": "Registergericht Hamburg",
+                                       "registrationNumber": "222222",
+                                       "birthName": "Maja Schmidt",
+                                       "birthday": "1938-04-08",
+                                       "dateOfDeath": "2022-01-12"
+                                   }
                                  }
                             """.formatted(givenContact.getUuid(), givenPerson.getUuid()))
                     .port(port)
@@ -303,7 +312,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("registrationNumber", is("222222"))
+                    .body("details.registrationNumber", is("222222"))
                     .body("contact.label", is(givenContact.getLabel()))
                     .body("person.tradeName", is(givenPerson.getTradeName()));
                 // @formatter:on
@@ -314,11 +323,11 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .matches(person -> {
                         assertThat(person.getPerson().getTradeName()).isEqualTo("Third OHG");
                         assertThat(person.getContact().getLabel()).isEqualTo("forth contact");
-                        assertThat(person.getRegistrationOffice()).isEqualTo("Registergericht Hamburg");
-                        assertThat(person.getRegistrationNumber()).isEqualTo("222222");
-                        assertThat(person.getBirthName()).isEqualTo("Maja Schmidt");
-                        assertThat(person.getBirthday()).isEqualTo("1938-04-08");
-                        assertThat(person.getDateOfDeath()).isEqualTo("2022-01-12");
+                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo("Registergericht Hamburg");
+                        assertThat(person.getDetails().getRegistrationNumber()).isEqualTo("222222");
+                        assertThat(person.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
+                        assertThat(person.getDetails().getBirthday()).isEqualTo("1938-04-08");
+                        assertThat(person.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
                         return true;
                     });
         }
@@ -335,9 +344,11 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "birthName": "Maja Schmidt",
-                                   "birthday": "1938-04-08",
-                                   "dateOfDeath": "2022-01-12"
+                                    "details": {
+                                       "birthName": "Maja Schmidt",
+                                       "birthday": "1938-04-08",
+                                       "dateOfDeath": "2022-01-12"
+                                    }
                                  }
                             """)
                     .port(port)
@@ -347,7 +358,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("birthName", is("Maja Schmidt"))
+                    .body("details.birthName", is("Maja Schmidt"))
                     .body("contact.label", is(givenPartner.getContact().getLabel()))
                     .body("person.tradeName", is(givenPartner.getPerson().getTradeName()));
             // @formatter:on
@@ -357,11 +368,11 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .matches(person -> {
                         assertThat(person.getPerson().getTradeName()).isEqualTo(givenPartner.getPerson().getTradeName());
                         assertThat(person.getContact().getLabel()).isEqualTo(givenPartner.getContact().getLabel());
-                        assertThat(person.getRegistrationOffice()).isEqualTo(null);
-                        assertThat(person.getRegistrationNumber()).isEqualTo(null);
-                        assertThat(person.getBirthName()).isEqualTo("Maja Schmidt");
-                        assertThat(person.getBirthday()).isEqualTo("1938-04-08");
-                        assertThat(person.getDateOfDeath()).isEqualTo("2022-01-12");
+                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo(null);
+                        assertThat(person.getDetails().getRegistrationNumber()).isEqualTo(null);
+                        assertThat(person.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
+                        assertThat(person.getDetails().getBirthday()).isEqualTo("1938-04-08");
+                        assertThat(person.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
                         return true;
                     });
         }
@@ -440,6 +451,9 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .uuid(UUID.randomUUID())
                     .person(givenPerson)
                     .contact(givenContact)
+                    .details(HsOfficePartnerDetailsEntity.builder()
+                            .uuid((UUID.randomUUID()))
+                            .build())
                     .build();
 
             toCleanup(newPartner.getUuid());
