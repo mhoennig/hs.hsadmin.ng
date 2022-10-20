@@ -259,9 +259,6 @@ begin
     roleTypeFromRoleIdName = split_part(roleParts, '#', 3);
     objectUuidOfRole = findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
 
-    raise notice $sql$findObjectUuidByIdName('%', '%') = %;$sql$, objectTableFromRoleIdName, objectNameFromRoleIdName, objectUuidOfRole;
-    raise notice 'finding %, % (%), %', objectTableFromRoleIdName, objectNameFromRoleIdName, objectUuidOfRole, roleTypeFromRoleIdName;
-
     select uuid
         from RbacRole
         where objectUuid = objectUuidOfRole
@@ -406,7 +403,6 @@ declare
     refId         uuid;
     permissionIds uuid[] = array []::uuid[];
 begin
-    raise notice 'createPermission for: % %', forObjectUuid, permitOps;
     if (forObjectUuid is null) then
         raise exception 'forObjectUuid must not be null';
     end if;
@@ -418,7 +414,6 @@ begin
         loop
             refId = (select uuid from RbacPermission where objectUuid = forObjectUuid and op = permitOps[i]);
             if (refId is null) then
-                raise notice 'createPermission: % %', forObjectUuid, permitOps[i];
                 insert
                     into RbacReference ("type")
                     values ('RbacPermission')
@@ -427,11 +422,9 @@ begin
                     into RbacPermission (uuid, objectUuid, op)
                     values (refId, forObjectUuid, permitOps[i]);
             end if;
-            raise notice 'addPermission: %', refId;
             permissionIds = permissionIds || refId;
         end loop;
 
-    raise notice 'createPermissions returning: %', permissionIds;
     return permissionIds;
 end;
 $$;
@@ -559,7 +552,6 @@ $$;
 create or replace procedure grantPermissionsToRole(roleUuid uuid, permissionIds uuid[])
     language plpgsql as $$
 begin
-    raise notice 'grantPermissionsToRole: % -> %', roleUuid, permissionIds;
     if cardinality(permissionIds) = 0 then return; end if;
 
     for i in array_lower(permissionIds, 1)..array_upper(permissionIds, 1)

@@ -36,7 +36,6 @@ begin
     custRowId = uuid_generate_v4();
     custAdminName = 'customer-admin@' || custPrefix || '.example.com';
 
-    raise notice 'creating customer %:%', custReference, custPrefix;
     insert
         into test_customer (reference, prefix, adminUserName)
         values (custReference, custPrefix, custAdminName);

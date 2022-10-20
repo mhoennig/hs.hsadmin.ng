@@ -55,7 +55,6 @@ declare
     userUuid      uuid;
     grantedByRoleUuid uuid;
 begin
-    raise notice 'will createRole for %', roleDescriptor;
     roleUuid := createRole(roleDescriptor);
 
     if cardinality(permissions)  >0 then
