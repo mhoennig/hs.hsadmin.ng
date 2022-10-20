@@ -24,9 +24,9 @@ begin
     insert
         into hs_office_coopsharestransaction(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment)
         values
-            (uuid_generate_v4(), membership.uuid, 'SUBSCRIPTION', '2010-03-15', 2, 'ref '||givenMembershipNumber||'-1', 'initial subscription'),
-            (uuid_generate_v4(), membership.uuid, 'SUBSCRIPTION', '2021-09-01', 24, 'ref '||givenMembershipNumber||'-2', 'subscibing more'),
-            (uuid_generate_v4(), membership.uuid, 'CANCELLATION', '2022-10-20', 12, 'ref '||givenMembershipNumber||'-3', 'cancelling some');
+            (uuid_generate_v4(), membership.uuid, 'SUBSCRIPTION', '2010-03-15', 4, 'ref '||givenMembershipNumber||'-1', 'initial subscription'),
+            (uuid_generate_v4(), membership.uuid, 'CANCELLATION', '2021-09-01', -2, 'ref '||givenMembershipNumber||'-2', 'cancelling some'),
+            (uuid_generate_v4(), membership.uuid, 'ADJUSTMENT', '2022-10-20', 2, 'ref '||givenMembershipNumber||'-3', 'some adjustment');
 end; $$;
 --//
 

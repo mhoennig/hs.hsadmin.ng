@@ -8,7 +8,7 @@ components:
             enum:
                 - ADJUSTMENT
                 - SUBSCRIPTION
-                - CANCELLATION;
+                - CANCELLATION
 
         HsOfficeCoopSharesTransaction:
             type: object
@@ -44,9 +44,12 @@ components:
                     format: date
                 reference:
                     type: string
+                    minLength: 6
+                    maxLength: 48
                 comment:
                     type: string
             required:
+                - membershipUuid
                 - transactionType
                 - sharesCount
                 - valueDate

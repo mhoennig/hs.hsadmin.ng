@@ -92,24 +92,24 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                         [
                             {
                                 "transactionType": "SUBSCRIPTION",
-                                "sharesCount": 2,
+                                "sharesCount": 4,
                                 "valueDate": "2010-03-15",
                                 "reference": "ref 10002-1",
                                 "comment": "initial subscription"
                             },
                             {
-                                "transactionType": "SUBSCRIPTION",
-                                "sharesCount": 24,
+                                "transactionType": "CANCELLATION",
+                                "sharesCount": -2,
                                 "valueDate": "2021-09-01",
                                 "reference": "ref 10002-2",
-                                "comment": "subscibing more"
+                                "comment": "cancelling some"
                             },
                             {
-                                "transactionType": "CANCELLATION;",
-                                "sharesCount": 12,
+                                "transactionType": "ADJUSTMENT",
+                                "sharesCount": 2,
                                 "valueDate": "2022-10-20",
                                 "reference": "ref 10002-3",
-                                "comment": "cancelling some"
+                                "comment": "some adjustment"
                             }
                         ]
                         """)); // @formatter:on
@@ -135,11 +135,11 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                         [
                             {
-                                "transactionType": "SUBSCRIPTION",
-                                "sharesCount": 24,
+                                "transactionType": "CANCELLATION",
+                                "sharesCount": -2,
                                 "valueDate": "2021-09-01",
                                 "reference": "ref 10002-2",
-                                "comment": "subscibing more"
+                                "comment": "cancelling some"
                             }
                         ]
                         """)); // @formatter:on
@@ -195,13 +195,6 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
-
-        // TODO.test: move validation tests to a ...WebMvcTest
-        @Test
-        void globalAdmin_canNotAddCoopSharesTransactionWhenMembershipUuidIsMissing() {
-
-        }
-
     }
 
     @BeforeEach

@@ -7,19 +7,23 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSh
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import javax.persistence.EntityManager;
 import javax.validation.Valid;
+import javax.validation.ValidationException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
+import static java.lang.String.join;
 import static net.hostsharing.hsadminng.Mapper.map;
+import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.CANCELLATION;
+import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.SUBSCRIPTION;
 
 @RestController
 
@@ -31,27 +35,22 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     @Autowired
     private HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
 
-    @Autowired
-    private EntityManager em;
-
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeCoopSharesTransactionResource>> listCoopShares(
             final String currentUser,
             final String assumedRoles,
             final UUID membershipUuid,
-            final @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromValueDate,
-            final @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toValueDate) {
+            final @DateTimeFormat(iso = ISO.DATE) LocalDate fromValueDate,
+            final @DateTimeFormat(iso = ISO.DATE) LocalDate toValueDate) {
         context.define(currentUser, assumedRoles);
-
 
         final var entities = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
                 membershipUuid,
                 fromValueDate,
                 toValueDate);
 
-        final var resources = Mapper.mapList(entities, HsOfficeCoopSharesTransactionResource.class,
-                COOP_SHARES_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var resources = Mapper.mapList(entities, HsOfficeCoopSharesTransactionResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -60,14 +59,12 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     public ResponseEntity<HsOfficeCoopSharesTransactionResource> addCoopSharesTransaction(
             final String currentUser,
             final String assumedRoles,
-            @Valid final HsOfficeCoopSharesTransactionInsertResource body) {
+            @Valid final HsOfficeCoopSharesTransactionInsertResource requestBody) {
 
         context.define(currentUser, assumedRoles);
+        validate(requestBody);
 
-        final var entityToSave = map(
-                body,
-                HsOfficeCoopSharesTransactionEntity.class,
-                COOP_SHARES_RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = map(requestBody, HsOfficeCoopSharesTransactionEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = coopSharesTransactionRepo.save(entityToSave);
@@ -77,19 +74,47 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
                         .path("/api/hs/office/CoopSharesTransactions/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeCoopSharesTransactionResource.class,
-                COOP_SHARES_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var mapped = map(saved, HsOfficeCoopSharesTransactionResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
-    final BiConsumer<HsOfficeCoopSharesTransactionEntity, HsOfficeCoopSharesTransactionResource> COOP_SHARES_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        //        resource.setValidFrom(entity.getValidity().lower());
-        //        if (entity.getValidity().hasUpperBound()) {
-        //            resource.setValidTo(entity.getValidity().upper().minusDays(1));
-        //        }
-    };
+    private void validate(final HsOfficeCoopSharesTransactionInsertResource requestBody) {
+        final var violations = new ArrayList<String>();
+        validateSubscriptionTransaction(requestBody, violations);
+        validateCancellationTransaction(requestBody, violations);
+        validateSharesCount(requestBody, violations);
+        if (violations.size() > 0) {
+            throw new ValidationException("[" + join(", ", violations) + "]");
+        }
+    }
 
-    final BiConsumer<HsOfficeCoopSharesTransactionInsertResource, HsOfficeCoopSharesTransactionEntity> COOP_SHARES_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        //        entity.setValidity(toPostgresDateRange(resource.getValidFrom(), resource.getValidTo()));
-    };
+    private static void validateSubscriptionTransaction(
+            final HsOfficeCoopSharesTransactionInsertResource requestBody,
+            final ArrayList<String> violations) {
+        if (requestBody.getTransactionType() == SUBSCRIPTION
+                && requestBody.getSharesCount() < 0) {
+            violations.add("for %s, sharesCount must be positive but is \"%d\"".formatted(
+                    requestBody.getTransactionType(), requestBody.getSharesCount()));
+        }
+    }
+
+    private static void validateCancellationTransaction(
+            final HsOfficeCoopSharesTransactionInsertResource requestBody,
+            final ArrayList<String> violations) {
+        if (requestBody.getTransactionType() == CANCELLATION
+                && requestBody.getSharesCount() > 0) {
+            violations.add("for %s, sharesCount must be negative but is \"%d\"".formatted(
+                    requestBody.getTransactionType(), requestBody.getSharesCount()));
+        }
+    }
+
+    private static void validateSharesCount(
+            final HsOfficeCoopSharesTransactionInsertResource requestBody,
+            final ArrayList<String> violations) {
+        if (requestBody.getSharesCount() == 0) {
+            violations.add("sharesCount must not be 0 but is \"%d\"".formatted(
+                    requestBody.getSharesCount()));
+        }
+    }
+
 }

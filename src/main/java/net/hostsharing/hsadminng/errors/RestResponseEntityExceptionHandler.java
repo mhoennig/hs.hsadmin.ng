@@ -16,6 +16,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.persistence.EntityNotFoundException;
+import javax.validation.ValidationException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -57,7 +58,7 @@ public class RestResponseEntityExceptionHandler
         return errorResponse(request, HttpStatus.BAD_REQUEST, message);
     }
 
-    @ExceptionHandler(Iban4jException.class)
+    @ExceptionHandler({ Iban4jException.class, ValidationException.class })
     protected ResponseEntity<CustomErrorResponse> handleIbanAndBicExceptions(
             final Throwable exc, final WebRequest request) {
         final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());

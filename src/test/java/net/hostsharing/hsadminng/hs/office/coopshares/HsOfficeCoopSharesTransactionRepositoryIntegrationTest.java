@@ -147,24 +147,25 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(10001, 2010-03-15, SUBSCRIPTION, 2, ref 10001-1)",
-                    "CoopShareTransaction(10001, 2021-09-01, SUBSCRIPTION, 24, ref 10001-2)",
-                    "CoopShareTransaction(10001, 2022-10-20, CANCELLATION, 12, ref 10001-3)",
+                    "CoopShareTransaction(10001, 2010-03-15, SUBSCRIPTION, 4, ref 10001-1)",
+                    "CoopShareTransaction(10001, 2021-09-01, CANCELLATION, -2, ref 10001-2)",
+                    "CoopShareTransaction(10001, 2022-10-20, ADJUSTMENT, 2, ref 10001-3)",
 
-                    "CoopShareTransaction(10002, 2010-03-15, SUBSCRIPTION, 2, ref 10002-1)",
-                    "CoopShareTransaction(10002, 2021-09-01, SUBSCRIPTION, 24, ref 10002-2)",
-                    "CoopShareTransaction(10002, 2022-10-20, CANCELLATION, 12, ref 10002-3)",
+                    "CoopShareTransaction(10002, 2010-03-15, SUBSCRIPTION, 4, ref 10002-1)",
+                    "CoopShareTransaction(10002, 2021-09-01, CANCELLATION, -2, ref 10002-2)",
+                    "CoopShareTransaction(10002, 2022-10-20, ADJUSTMENT, 2, ref 10002-3)",
 
-                    "CoopShareTransaction(10003, 2010-03-15, SUBSCRIPTION, 2, ref 10003-1)",
-                    "CoopShareTransaction(10003, 2021-09-01, SUBSCRIPTION, 24, ref 10003-2)",
-                    "CoopShareTransaction(10003, 2022-10-20, CANCELLATION, 12, ref 10003-3)");
+                    "CoopShareTransaction(10003, 2010-03-15, SUBSCRIPTION, 4, ref 10003-1)",
+                    "CoopShareTransaction(10003, 2021-09-01, CANCELLATION, -2, ref 10003-2)",
+                    "CoopShareTransaction(10003, 2022-10-20, ADJUSTMENT, 2, ref 10003-3)");
         }
 
         @Test
         public void globalAdmin_canViewCoopSharesTransactions_filteredByMembershipUuid() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002).get(0);
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
+                    .get(0);
 
             // when
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
@@ -175,16 +176,17 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(10002, 2010-03-15, SUBSCRIPTION, 2, ref 10002-1)",
-                    "CoopShareTransaction(10002, 2021-09-01, SUBSCRIPTION, 24, ref 10002-2)",
-                    "CoopShareTransaction(10002, 2022-10-20, CANCELLATION, 12, ref 10002-3)");
+                    "CoopShareTransaction(10002, 2010-03-15, SUBSCRIPTION, 4, ref 10002-1)",
+                    "CoopShareTransaction(10002, 2021-09-01, CANCELLATION, -2, ref 10002-2)",
+                    "CoopShareTransaction(10002, 2022-10-20, ADJUSTMENT, 2, ref 10002-3)");
         }
 
         @Test
         public void globalAdmin_canViewCoopSharesTransactions_filteredByMembershipUuidAndValueDateRange() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002).get(0);
+            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
+                    .get(0);
 
             // when
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
@@ -195,7 +197,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(10002, 2021-09-01, SUBSCRIPTION, 24, ref 10002-2)");
+                    "CoopShareTransaction(10002, 2021-09-01, CANCELLATION, -2, ref 10002-2)");
         }
 
         @Test
@@ -213,9 +215,9 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then:
             exactlyTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(10001, 2010-03-15, SUBSCRIPTION, 2, ref 10001-1)",
-                    "CoopShareTransaction(10001, 2021-09-01, SUBSCRIPTION, 24, ref 10001-2)",
-                    "CoopShareTransaction(10001, 2022-10-20, CANCELLATION, 12, ref 10001-3)");
+                    "CoopShareTransaction(10001, 2010-03-15, SUBSCRIPTION, 4, ref 10001-1)",
+                    "CoopShareTransaction(10001, 2021-09-01, CANCELLATION, -2, ref 10001-2)",
+                    "CoopShareTransaction(10001, 2022-10-20, ADJUSTMENT, 2, ref 10001-3)");
         }
     }
 
