@@ -78,12 +78,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = attempt(em, () -> {
-                final var newDebitor = toCleanup(HsOfficeDebitorEntity.builder()
+                final var newDebitor = HsOfficeDebitorEntity.builder()
                         .uuid(UUID.randomUUID())
                         .debitorNumber(20001)
                         .partner(givenPartner)
                         .billingContact(givenContact)
-                        .build());
+                        .build();
                 return debitorRepo.save(newDebitor);
             });
 
@@ -111,12 +111,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             attempt(em, () -> {
                 final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
-                final var newDebitor = toCleanup(HsOfficeDebitorEntity.builder()
+                final var newDebitor = HsOfficeDebitorEntity.builder()
                         .uuid(UUID.randomUUID())
                         .debitorNumber(20002)
                         .partner(givenPartner)
                         .billingContact(givenContact)
-                        .build());
+                        .build();
                 return debitorRepo.save(newDebitor);
             }).assertSuccessful();
 
@@ -278,7 +278,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
                 givenDebitor.setVatId(givenNewVatId);
                 givenDebitor.setVatCountryCode(givenNewVatCountryCode);
                 givenDebitor.setVatBusiness(givenNewVatBusiness);
-                return toCleanup(debitorRepo.save(givenDebitor));
+                return debitorRepo.save(givenDebitor);
             });
 
             // then
@@ -327,7 +327,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 givenDebitor.setRefundBankAccount(givenNewBankAccount);
-                return toCleanup(debitorRepo.save(givenDebitor));
+                return debitorRepo.save(givenDebitor);
             });
 
             // then
@@ -356,7 +356,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 givenDebitor.setRefundBankAccount(null);
-                return toCleanup(debitorRepo.save(givenDebitor));
+                return debitorRepo.save(givenDebitor);
             });
 
             // then
@@ -551,25 +551,15 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
                     .refundBankAccount(givenBankAccount)
                     .build();
 
-            toCleanup(newDebitor);
-
             return debitorRepo.save(newDebitor);
         }).assertSuccessful().returnedValue();
-    }
-
-    private HsOfficeDebitorEntity toCleanup(final HsOfficeDebitorEntity tempDebitor) {
-        tempDebitors.add(tempDebitor);
-        return tempDebitor;
     }
 
     @BeforeEach
     @AfterEach
     void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        tempDebitors.forEach(tempDebitor -> {
-            System.out.println("DELETING temporary debitor: " + tempDebitor.toString());
-            debitorRepo.deleteByUuid(tempDebitor.getUuid());
-        });
+        context("superuser-alex@hostsharing.net");
+        em.createQuery("DELETE FROM HsOfficeDebitorEntity d where d.debitorNumber >= 20000").executeUpdate();
     }
 
     void exactlyTheseDebitorsAreReturned(final List<HsOfficeDebitorEntity> actualResult, final String... debitorNames) {

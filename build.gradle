@@ -230,8 +230,8 @@ jacocoTestCoverageVerification {
             excludes = [
                     'net.hostsharing.hsadminng.**.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication',
-                    'net.hostsharing.hsadminng.PingController',
-                    'net.hostsharing.hsadminng.Mapper'
+                    'net.hostsharing.hsadminng.ping.PingController',
+                    'net.hostsharing.hsadminng.mapper.Mapper'
             ]
 
             limit {
@@ -245,7 +245,7 @@ jacocoTestCoverageVerification {
             excludes = [
                     'net.hostsharing.hsadminng.**.generated.**',
                     'net.hostsharing.hsadminng.HsadminNgApplication.main',
-                    'net.hostsharing.hsadminng.PingController.*'
+                    'net.hostsharing.hsadminng.ping.PingController.*'
             ]
 
             limit {
