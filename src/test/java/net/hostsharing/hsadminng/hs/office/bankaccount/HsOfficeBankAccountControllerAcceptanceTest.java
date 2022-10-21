@@ -14,8 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.persistence.EntityManager;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -46,7 +45,8 @@ class HsOfficeBankAccountControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempBankAccountUuids = new HashSet<>();
+    @Autowired
+    EntityManager em;
 
     @Nested
     @Accepts({ "bankaccount:F(Find)" })
@@ -128,7 +128,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "holder": "new test holder",
+                                "holder": "temp test holder",
                                 "iban": "DE88100900001234567892",
                                 "bic": "BEVODEBB"
                             }
@@ -140,15 +140,15 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("holder", is("new test holder"))
+                        .body("holder", is("temp test holder"))
                         .body("iban", is("DE88100900001234567892"))
                         .body("bic", is("BEVODEBB"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new bankaccount can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
     }
@@ -234,7 +234,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                        {
-                           "holder": "patched holder",
+                           "holder": "temp holder - patched",
                            "iban": "DE02701500000000594937",
                            "bic": "SSKMDEMM"
                        }
@@ -329,15 +329,8 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                     .bic("INGDDEFFXXX")
                     .build();
 
-            toCleanup(newBankAccount.getUuid());
-
             return bankAccountRepo.save(newBankAccount);
         }).assertSuccessful().returnedValue();
-    }
-
-    private UUID toCleanup(final UUID tempBankAccountUuid) {
-        tempBankAccountUuids.add(tempBankAccountUuid);
-        return tempBankAccountUuid;
     }
 
     @BeforeEach
@@ -345,20 +338,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
     void cleanup() {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
-            tempBankAccountUuids.addAll(
-                    bankAccountRepo.findByOptionalHolderLike("some temp acc")
-                            .stream()
-                            .map(HsOfficeBankAccountEntity::getUuid)
-                            .toList()
-            );
-        });
-        tempBankAccountUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary bankaccount: " + uuid);
-                final var count = bankAccountRepo.deleteByUuid(uuid);
-                System.out.println("DELETED temporary bankaccount: " + uuid + (count > 0 ? " successful" : " failed"));
-            }).assertSuccessful();
+            em.createQuery("DELETE FROM HsOfficeBankAccountEntity b WHERE b.holder LIKE 'temp %'").executeUpdate();
         });
     }
 
