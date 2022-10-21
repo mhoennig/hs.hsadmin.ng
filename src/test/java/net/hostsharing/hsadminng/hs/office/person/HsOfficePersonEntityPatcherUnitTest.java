@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
-import net.hostsharing.hsadminng.PatchUnitTestBase;
+import net.hostsharing.test.PatchUnitTestBase;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonTypeResource;
 import org.junit.jupiter.api.TestInstance;

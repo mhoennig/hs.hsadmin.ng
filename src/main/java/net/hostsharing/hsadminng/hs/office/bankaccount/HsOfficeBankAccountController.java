@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
-import net.hostsharing.hsadminng.Mapper;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 

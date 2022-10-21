@@ -1,16 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import net.hostsharing.hsadminng.Mapper;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitorsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntityPatcher;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 

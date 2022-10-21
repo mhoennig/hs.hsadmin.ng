@@ -1,5 +1,6 @@
-package net.hostsharing.hsadminng;
+package net.hostsharing.test;
 
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

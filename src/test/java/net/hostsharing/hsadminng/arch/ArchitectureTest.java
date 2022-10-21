@@ -3,7 +3,8 @@ package net.hostsharing.hsadminng.arch;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import net.hostsharing.hsadminng.Accepts;
+import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.test.Accepts;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,38 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
+    public static final ArchRule onlyValidPackages = noClasses()
+            .that().doNotBelongToAnyOf(HsadminNgApplication.class, ArchitectureTest.class)
+            .should().resideOutsideOfPackages(
+                    // ATTENTION: Don't simply add packages here, also add arch rules for the new package!
+                    "..config",
+                    "..test",
+                    "..test.cust",
+                    "..test.pac",
+                    "..context",
+                    "..generated..",
+                    "..hs.office.person",
+                    "..hs.office.partner",
+                    "..hs.office.bankaccount",
+                    "..hs.office.debitor",
+                    "..hs.office.relationship",
+                    "..hs.office.contact",
+                    "..hs.office.sepamandate",
+                    "..hs.office.coopshares",
+                    "..hs.office.membership",
+                    "..errors",
+                    "..mapper",
+                    "..ping",
+                    "..rbac",
+                    "..rbac.rbacuser",
+                    "..rbac.rbacgrant",
+                    "..rbac.rbacrole",
+                    "..stringify"
+                    // ATTENTION: Don't simply add packages here, also add arch rules for the new package!
+            );
+
+    @ArchTest
+    @SuppressWarnings("unused")
     public static final ArchRule doNotUseJUnit4 = noClasses()
             .should().accessClassesThat()
             .resideInAPackage("org.junit");
@@ -26,6 +59,11 @@ public class ArchitectureTest {
     @SuppressWarnings("unused")
     public static final ArchRule dontUseImplSuffix = noClasses()
             .should().haveSimpleNameEndingWith("Impl");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule allPackagesBelowNetHostsharingHsAdmin = noClasses()
+            .should().resideOutsideOfPackages(NET_HOSTSHARING_HSADMINNG + "..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -69,29 +107,63 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.(*)..");
 
-    // TODO.test: rule to check if all packages have rules
-    // TODO.test: rules for contact, person, ...
-
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule HsOfficeBankAccountPackageRule = classes()
+    public static final ArchRule hsOfficeBankAccountPackageRule = classes()
             .that().resideInAPackage("..hs.office.bankaccount..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.bankaccount..", "..hs.office.sepamandate..", "..hs.office.debitor..");
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule HsOfficePartnerPackageRule = classes()
+    public static final ArchRule hsOfficeSepaMandatePackageRule = classes()
+            .that().resideInAPackage("..hs.office.sepamandate..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.sepamandate..", "..hs.office.debitor..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficeContactPackageRule = classes()
+            .that().resideInAPackage("..hs.office.contact..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.contact..", "..hs.office.relationship..",
+                    "..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficePersonPackageRule = classes()
+            .that().resideInAPackage("..hs.office.person..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.person..", "..hs.office.relationship..",
+                    "..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficeRelationshipPackageRule = classes()
+            .that().resideInAPackage("..hs.office.relationship..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.relationship..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule HsOfficeMembershipPackageRule = classes()
+    public static final ArchRule hsOfficeMembershipPackageRule = classes()
             .that().resideInAPackage("..hs.office.membership..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.membership..", "..hs.office.coopshares..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficeCoopSharesPackageRule = classes()
+            .that().resideInAPackage("..hs.office.coopshares..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.coopshares..");
 
     @ArchTest
     @SuppressWarnings("unused")

@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng;
+package net.hostsharing.hsadminng.mapper;
 
 import org.openapitools.jackson.nullable.JsonNullable;
 

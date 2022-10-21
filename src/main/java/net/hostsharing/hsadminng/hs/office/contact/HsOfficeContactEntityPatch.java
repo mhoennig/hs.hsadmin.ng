@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
-import net.hostsharing.hsadminng.EntityPatcher;
-import net.hostsharing.hsadminng.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactPatchResource;
 
 class HsOfficeContactEntityPatch implements EntityPatcher<HsOfficeContactPatchResource> {

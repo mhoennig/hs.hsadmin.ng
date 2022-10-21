@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import com.vladmihalcea.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.Mapper;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeSepaMandatesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateInsertResource;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static net.hostsharing.hsadminng.Mapper.mapList;
+import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
 
 @RestController
 

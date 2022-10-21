@@ -13,8 +13,8 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.Mapper.map;
-import static net.hostsharing.hsadminng.Mapper.mapList;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
 
 @RestController
 public class RbacUserController implements RbacUsersApi {

@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
-import net.hostsharing.hsadminng.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonTypeResource;
-import net.hostsharing.hsadminng.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
 
 import java.util.Optional;
 

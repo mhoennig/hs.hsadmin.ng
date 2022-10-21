@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
-import net.hostsharing.hsadminng.EntityPatcher;
-import net.hostsharing.hsadminng.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationshipPatchResource;
 

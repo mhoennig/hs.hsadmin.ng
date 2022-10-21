@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import net.hostsharing.hsadminng.Accepts;
+import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;

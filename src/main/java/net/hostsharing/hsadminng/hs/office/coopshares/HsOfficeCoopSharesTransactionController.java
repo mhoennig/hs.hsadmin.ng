@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
-import net.hostsharing.hsadminng.Mapper;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionInsertResource;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static java.lang.String.join;
-import static net.hostsharing.hsadminng.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.CANCELLATION;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.SUBSCRIPTION;
 

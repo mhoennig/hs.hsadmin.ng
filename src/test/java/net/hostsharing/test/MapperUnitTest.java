@@ -1,9 +1,10 @@
-package net.hostsharing.hsadminng;
+package net.hostsharing.test;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.PatchUnitTestBase;
+import net.hostsharing.test.PatchUnitTestBase;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;

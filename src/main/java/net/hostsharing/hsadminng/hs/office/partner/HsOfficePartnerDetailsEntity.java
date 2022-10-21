@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
-import net.hostsharing.hsadminng.Stringify;
-import net.hostsharing.hsadminng.Stringifyable;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.errors.DisplayName;
 
 import javax.persistence.Column;
@@ -12,7 +12,7 @@ import javax.persistence.Table;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.Stringify.stringify;
+import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_partner_details_rv")

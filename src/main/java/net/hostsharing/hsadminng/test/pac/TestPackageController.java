@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.test.pac;
 
-import net.hostsharing.hsadminng.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestPackagesApi;
 import net.hostsharing.hsadminng.test.generated.api.v1.model.TestPackageResource;
@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.Mapper.map;
-import static net.hostsharing.hsadminng.Mapper.mapList;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
 
 @RestController
 public class TestPackageController implements TestPackagesApi {

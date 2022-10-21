@@ -1,18 +1,13 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.EntityPatcher;
-import net.hostsharing.hsadminng.OptionalFromJson;
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 
 import javax.persistence.EntityManager;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 
 class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatchResource> {
     private final EntityManager em;

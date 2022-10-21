@@ -4,8 +4,8 @@ import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.Stringify;
-import net.hostsharing.hsadminng.Stringifyable;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
@@ -13,7 +13,7 @@ import org.hibernate.annotations.TypeDef;
 import javax.persistence.*;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.Stringify.stringify;
+import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_person_rv")

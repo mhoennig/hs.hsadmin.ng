@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
-import net.hostsharing.hsadminng.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelationshipsApi;
@@ -18,8 +17,8 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.Mapper.map;
-import static net.hostsharing.hsadminng.Mapper.mapList;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
 
 @RestController
 

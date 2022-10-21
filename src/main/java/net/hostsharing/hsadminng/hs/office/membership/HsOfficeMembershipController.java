@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import com.vladmihalcea.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.Mapper;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembershipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 

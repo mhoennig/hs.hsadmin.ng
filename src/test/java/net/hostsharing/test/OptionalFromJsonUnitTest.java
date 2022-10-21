@@ -1,5 +1,6 @@
-package net.hostsharing.hsadminng;
+package net.hostsharing.test;
 
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullable;
 

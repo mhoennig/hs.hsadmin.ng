@@ -2,17 +2,16 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.Stringify;
-import net.hostsharing.hsadminng.Stringifyable;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.Stringify.stringify;
+import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_debitor_rv")

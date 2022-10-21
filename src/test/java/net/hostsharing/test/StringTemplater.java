@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng;
+package net.hostsharing.test;
 
 import lombok.experimental.UtilityClass;
 
