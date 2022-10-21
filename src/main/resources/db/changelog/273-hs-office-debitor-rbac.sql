@@ -114,17 +114,32 @@ begin
             call grantRoleToRole(hsOfficeContactGuest(newContact), hsOfficeDebitorTenant(NEW));
         end if;
 
-        if OLD.refundBankAccountUuid <> NEW.refundBankAccountUuid then
+        if (OLD.refundBankAccountUuid is not null or NEW.refundBankAccountUuid is not null) and
+            ( OLD.refundBankAccountUuid is null or NEW.refundBankAccountUuid is null or
+                OLD.refundBankAccountUuid <> NEW.refundBankAccountUuid ) then
+
             select * from hs_office_bankaccount as b where b.uuid = OLD.refundBankAccountUuid into oldBankAccount;
 
-            call revokeRoleFromRole(hsOfficeBankAccountTenant(oldBankaccount), hsOfficeDebitorAgent(OLD));
-            call grantRoleToRole(hsOfficeBankAccountTenant(newBankaccount), hsOfficeDebitorAgent(NEW));
+            if oldBankAccount is not null then
+                call revokeRoleFromRole(hsOfficeBankAccountTenant(oldBankaccount), hsOfficeDebitorAgent(OLD));
+            end if;
+            if newBankAccount is not null then
+                call grantRoleToRole(hsOfficeBankAccountTenant(newBankaccount), hsOfficeDebitorAgent(NEW));
+            end if;
 
-            call revokeRoleFromRole(hsOfficeDebitorTenant(OLD), hsOfficeBankAccountAdmin(oldBankaccount));
-            call grantRoleToRole(hsOfficeDebitorTenant(NEW), hsOfficeBankAccountAdmin(newBankaccount));
+            if oldBankAccount is not null then
+                call revokeRoleFromRole(hsOfficeDebitorTenant(OLD), hsOfficeBankAccountAdmin(oldBankaccount));
+            end if;
+            if newBankAccount is not null then
+                call grantRoleToRole(hsOfficeDebitorTenant(NEW), hsOfficeBankAccountAdmin(newBankaccount));
+            end if;
 
-            call revokeRoleFromRole(hsOfficeBankAccountGuest(oldBankaccount), hsOfficeDebitorTenant(OLD));
-            call grantRoleToRole(hsOfficeBankAccountGuest(newBankaccount), hsOfficeDebitorTenant(NEW));
+            if oldBankAccount is not null then
+                call revokeRoleFromRole(hsOfficeBankAccountGuest(oldBankaccount), hsOfficeDebitorTenant(OLD));
+            end if;
+            if newBankAccount is not null then
+                call grantRoleToRole(hsOfficeBankAccountGuest(newBankaccount), hsOfficeDebitorTenant(NEW));
+            end if;
         end if;
     else
         raise exception 'invalid usage of TRIGGER';
@@ -166,10 +181,11 @@ call generateRbacIdentityView('hs_office_debitor', $idName$
 -- ============================================================================
 --changeset hs-office-debitor-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_debitor',
-                                'target.debitorNumber',
-                                $updates$
+call generateRbacRestrictedView('hs_office_debitor', 'target.debitorNumber',
+    $updates$
+        partnerUuid = new.partnerUuid,
         billingContactUuid = new.billingContactUuid,
+        refundBankAccountUuid = new.refundBankAccountUuid,
         vatId = new.vatId,
         vatCountryCode = new.vatCountryCode,
         vatBusiness = new.vatBusiness

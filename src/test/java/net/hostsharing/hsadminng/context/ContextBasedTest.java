@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class ContextBasedTest {
+public abstract class ContextBasedTest {
 
     @Autowired
     Context context;
@@ -16,7 +16,6 @@ public class ContextBasedTest {
         this.test = testInfo;
     }
 
-    // TODO: remove the class and check which task is recorded
     protected void context(final String currentUser, final String assumedRoles) {
         context.define(test.getDisplayName(), null, currentUser, assumedRoles);
     }
