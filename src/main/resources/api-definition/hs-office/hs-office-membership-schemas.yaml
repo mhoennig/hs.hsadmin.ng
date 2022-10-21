@@ -70,6 +70,6 @@ components:
                     $ref: '#/components/schemas/HsOfficeReasonForTermination'
             required:
                 - partnerUuid
-                - debitorUuid
+                - mainDebitorUuid
                 - validFrom
             additionalProperties: false

@@ -154,19 +154,6 @@ class HsOfficeMembershipControllerAcceptanceTest {
             assertThat(newUserUuid).isNotNull();
             assertThat(membershipRepo.findByUuid(newUserUuid)).isPresent();
         }
-
-        // TODO.test: move validation tests to a ...WebMvcTest
-        @Test
-        void globalAdmin_canNotAddMembershipWhenDebitorUuidIsMissing() {
-        }
-
-        @Test
-        void globalAdmin_canNotAddMembership_ifPartnerDoesNotExist() {
-        }
-
-        @Test
-        void globalAdmin_canNotAddMembership_ifPersonDoesNotExist() {
-        }
     }
 
     @Nested
