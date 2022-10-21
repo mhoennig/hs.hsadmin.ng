@@ -36,6 +36,7 @@ public class ArchitectureTest {
                     "..hs.office.relationship",
                     "..hs.office.contact",
                     "..hs.office.sepamandate",
+                    "..hs.office.coopassets",
                     "..hs.office.coopshares",
                     "..hs.office.membership",
                     "..errors",
@@ -156,7 +157,14 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficeMembershipPackageRule = classes()
             .that().resideInAPackage("..hs.office.membership..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.membership..", "..hs.office.coopshares..");
+            .resideInAnyPackage("..hs.office.membership..", "..hs.office.coopassets..", "..hs.office.coopshares..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficeCoopAssetsPackageRule = classes()
+        .that().resideInAPackage("..hs.office.coopassets..")
+        .should().onlyBeAccessed().byClassesThat()
+        .resideInAnyPackage("..hs.office.coopassets..");
 
     @ArchTest
     @SuppressWarnings("unused")

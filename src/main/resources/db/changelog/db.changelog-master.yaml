@@ -105,3 +105,9 @@ databaseChangeLog:
         file: db/changelog/313-hs-office-coopshares-rbac.sql
     - include:
         file: db/changelog/318-hs-office-coopshares-test-data.sql
+    - include:
+          file: db/changelog/320-hs-office-coopassets.sql
+    - include:
+          file: db/changelog/323-hs-office-coopassets-rbac.sql
+    - include:
+          file: db/changelog/328-hs-office-coopassets-test-data.sql

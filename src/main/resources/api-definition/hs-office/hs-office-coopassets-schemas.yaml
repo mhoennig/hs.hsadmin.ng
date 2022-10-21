@@ -1,0 +1,63 @@
+
+components:
+
+    schemas:
+
+        HsOfficeCoopAssetsTransactionType:
+            type: string
+            enum:
+                - ADJUSTMENT
+                - DEPOSIT
+                - DISBURSAL
+                - TRANSFER
+                - ADOPTION
+                - CLEARING
+                - LOSS
+
+        HsOfficeCoopAssetsTransaction:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
+                assetValue:
+                    type: number
+                    format: currency
+                valueDate:
+                   type: string
+                   format: date
+                reference:
+                    type: string
+                comment:
+                    type: string
+
+        HsOfficeCoopAssetsTransactionInsert:
+            type: object
+            properties:
+                membershipUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
+                assetValue:
+                    type: number
+                    format: currency
+                valueDate:
+                    type: string
+                    format: date
+                reference:
+                    type: string
+                    minLength: 6
+                    maxLength: 48
+                comment:
+                    type: string
+            required:
+                - membershipUuid
+                - transactionType
+                - assetValue
+                - valueDate
+                - reference
+            additionalProperties: false
