@@ -35,7 +35,7 @@ public abstract class Mapper {
     }
 
     public static <S, T> T map(final S source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
-        if (source == null ) {
+        if (source == null) {
             return null;
         }
         final var target = modelMapper.map(source, targetClass);

@@ -1,12 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembershipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipResource;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +19,6 @@ import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.mapper.Mapper.map;
 import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
 
@@ -62,7 +59,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapX(body, HsOfficeMembershipEntity.class);
+        final var entityToSave = map(body, HsOfficeMembershipEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = membershipRepo.save(entityToSave);
@@ -135,16 +132,4 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
     };
-
-    private HsOfficeMembershipEntity mapX(
-            final HsOfficeMembershipInsertResource resource,
-            final Class<HsOfficeMembershipEntity> entityClass) {
-        final var entity = new HsOfficeMembershipEntity();
-        entity.setPartner(em.getReference(HsOfficePartnerEntity.class, resource.getPartnerUuid()));
-        entity.setMainDebitor(em.getReference(HsOfficeDebitorEntity.class, resource.getMainDebitorUuid()));
-        entity.setMemberNumber(resource.getMemberNumber());
-        entity.setValidity(toPostgresDateRange(resource.getValidFrom(), resource.getValidTo()));
-        entity.setReasonForTermination(map(resource.getReasonForTermination(), HsOfficeReasonForTermination.class));
-        return entity;
-    }
 }

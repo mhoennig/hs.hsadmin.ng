@@ -11,8 +11,12 @@ public class PostgresDateRange {
     public static Range<LocalDate> toPostgresDateRange(
             final LocalDate validFrom,
             final LocalDate validTo) {
-        return validTo != null
-                ? Range.closedOpen(validFrom, validTo.plusDays(1))
-                : Range.closedInfinite(validFrom);
+        return validFrom != null
+                ? validTo != null
+                    ? Range.closedOpen(validFrom, validTo.plusDays(1))
+                    : Range.closedInfinite(validFrom)
+                : validTo != null
+                    ? Range.infiniteOpen(validTo.plusDays(1))
+                    : Range.infinite(LocalDate.class);
     }
 }

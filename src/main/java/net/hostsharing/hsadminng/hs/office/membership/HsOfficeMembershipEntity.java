@@ -4,11 +4,11 @@ import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import com.vladmihalcea.hibernate.type.range.PostgreSQLRangeType;
 import com.vladmihalcea.hibernate.type.range.Range;
 import lombok.*;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
@@ -63,12 +63,16 @@ public class HsOfficeMembershipEntity implements Stringifyable {
     private int memberNumber;
 
     @Column(name = "validity", columnDefinition = "daterange")
-    private Range<LocalDate> validity;
+    private Range<LocalDate> validity = Range.infinite(LocalDate.class);
 
     @Column(name = "reasonfortermination")
     @Enumerated(EnumType.STRING)
     @Type(type = "pgsql_enum")
     private HsOfficeReasonForTermination reasonForTermination;
+
+    public void setValidFrom(final LocalDate validFrom) {
+        validity = toPostgresDateRange(validFrom, getValidity().upper());
+    }
 
     public void setValidTo(final LocalDate validTo) {
         validity = toPostgresDateRange(getValidity().lower(), validTo);
