@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 
-import static net.hostsharing.hsadminng.hs.office.membership.TestHsMembership.testMembership;
+import static net.hostsharing.hsadminng.hs.office.membership.TestHsMembership.TEST_MEMBERSHIP;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeCoopSharesTransactionEntityTest {
 
     final HsOfficeCoopSharesTransactionEntity givenCoopSharesTransaction = HsOfficeCoopSharesTransactionEntity.builder()
-            .membership(testMembership)
+            .membership(TEST_MEMBERSHIP)
             .reference("some-ref")
             .valueDate(LocalDate.parse("2020-01-01"))
             .transactionType(HsOfficeCoopSharesTransactionType.SUBSCRIPTION)

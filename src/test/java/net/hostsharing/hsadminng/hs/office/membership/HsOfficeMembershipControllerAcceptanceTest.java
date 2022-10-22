@@ -3,11 +3,11 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
@@ -300,7 +300,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             final var givenMembership = givenSomeTemporaryMembershipBessler();
             final var givenNewMainDebitor = debitorRepo.findDebitorByDebitorNumber(10003).get(0);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
@@ -317,8 +317,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
-                    // TODO.impl: implement patching the mainDebitor
-                    // .body("mainDebitor.debitorNumber", is(10003))
+                    .body("mainDebitor.debitorNumber", is(10003))
                     .body("memberNumber", is(givenMembership.getMemberNumber()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", nullValue())
@@ -329,8 +328,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getPartner().toShortString()).isEqualTo("First GmbH");
-                        // TODO.impl: implement patching the mainDebitor
-                        // assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
+                        assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
                         assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");
                         assertThat(mandate.getReasonForTermination()).isEqualTo(NONE);

@@ -8,13 +8,11 @@ import javax.persistence.EntityManager;
 
 class HsOfficePartnerDetailsEntityPatcher implements EntityPatcher<HsOfficePartnerDetailsPatchResource> {
 
-    private final EntityManager em;
     private final HsOfficePartnerDetailsEntity entity;
 
     HsOfficePartnerDetailsEntityPatcher(
             final EntityManager em,
             final HsOfficePartnerDetailsEntity entity) {
-        this.em = em;
         this.entity = entity;
     }
 

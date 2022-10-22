@@ -6,13 +6,13 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.testDebitor;
+import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeSepaMandateEntityTest {
 
     final HsOfficeSepaMandateEntity givenSepaMandate = HsOfficeSepaMandateEntity.builder()
-            .debitor(testDebitor)
+            .debitor(TEST_DEBITOR)
             .reference("some-ref")
             .validity(Range.closedOpen(LocalDate.parse("2020-01-01"), LocalDate.parse("2031-01-01")))
             .bankAccount(HsOfficeBankAccountEntity.builder().iban("some label").build())

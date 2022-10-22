@@ -9,7 +9,7 @@ import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGA
 
 public class TestHsOfficePartner {
 
-    public static final HsOfficePartnerEntity testPartner = HsOfficePartnerWithLegalPerson("Test Ltd.");
+    public static final HsOfficePartnerEntity TEST_PARTNER = HsOfficePartnerWithLegalPerson("Test Ltd.");
 
     static public HsOfficePartnerEntity HsOfficePartnerWithLegalPerson(final String tradeName) {
         return HsOfficePartnerEntity.builder()

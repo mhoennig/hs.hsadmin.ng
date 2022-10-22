@@ -8,17 +8,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.Arrays;
 
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.testDebitor;
-import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.testPartner;
+import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
+import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeMembershipEntityUnitTest {
 
+    public static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-01-01");
     final HsOfficeMembershipEntity givenMembership = HsOfficeMembershipEntity.builder()
             .memberNumber(10001)
-            .partner(testPartner)
-            .mainDebitor(testDebitor)
-            .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
+            .partner(TEST_PARTNER)
+            .mainDebitor(TEST_DEBITOR)
+            .validity(Range.closedInfinite(GIVEN_VALID_FROM))
             .build();
 
     @Test
@@ -50,6 +51,12 @@ class HsOfficeMembershipEntityUnitTest {
 
         invokePrePersist(givenMembership);
         assertThat(givenMembership.getReasonForTermination()).isEqualTo(HsOfficeReasonForTermination.CANCELLATION);
+    }
+
+    @Test
+    void settingValidToKeepsValidFrom() {
+        givenMembership.setValidTo(LocalDate.parse("2024-12-31"));
+        assertThat(givenMembership.getValidity().lower()).isEqualTo(GIVEN_VALID_FROM);
     }
 
     private static void invokePrePersist(final HsOfficeMembershipEntity membershipEntity)

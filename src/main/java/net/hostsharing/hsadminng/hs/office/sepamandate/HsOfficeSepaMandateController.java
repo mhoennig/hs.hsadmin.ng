@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.mapper.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
 
@@ -124,14 +125,6 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         final var saved = SepaMandateRepo.save(current);
         final var mapped = map(saved, HsOfficeSepaMandateResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
-    }
-
-    private static Range<LocalDate> toPostgresDateRange(
-            final LocalDate validFrom,
-            final LocalDate validTo) {
-        return validTo != null
-                ? Range.closedOpen(validFrom, validTo.plusDays(1))
-                : Range.closedInfinite(validFrom);
     }
 
     final BiConsumer<HsOfficeSepaMandateEntity, HsOfficeSepaMandateResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {

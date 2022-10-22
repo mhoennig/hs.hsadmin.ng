@@ -18,6 +18,7 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -68,6 +69,10 @@ public class HsOfficeMembershipEntity implements Stringifyable {
     @Enumerated(EnumType.STRING)
     @Type(type = "pgsql_enum")
     private HsOfficeReasonForTermination reasonForTermination;
+
+    public void setValidTo(final LocalDate validTo) {
+        validity = toPostgresDateRange(getValidity().lower(), validTo);
+    }
 
     @Override
     public String toString() {

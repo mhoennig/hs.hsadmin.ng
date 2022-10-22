@@ -1,12 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
-import com.vladmihalcea.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembershipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipResource;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,13 +15,13 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import javax.persistence.EntityManager;
 import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.mapper.Mapper.map;
+import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
 
@@ -48,7 +48,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         final var entities =
                 membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(partnerUuid, memberNumber);
 
-        final var resources = Mapper.mapList(entities, HsOfficeMembershipResource.class,
+        final var resources = mapList(entities, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
@@ -62,7 +62,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = map(body, HsOfficeMembershipEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapX(body, HsOfficeMembershipEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = membershipRepo.save(entityToSave);
@@ -122,23 +122,11 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         final var current = membershipRepo.findByUuid(membershipUuid).orElseThrow();
 
-        current.setValidity(toPostgresDateRange(current.getValidity().lower(), body.getValidTo()));
-//        current.setReasonForTermination(HsOfficeReasonForTermination.valueOf(body.getReasonForTermination().name()));
-        current.setReasonForTermination(
-                Optional.ofNullable(body.getReasonForTermination()).map(Enum::name).map(HsOfficeReasonForTermination::valueOf).orElse(current.getReasonForTermination())
-        );
+        new HsOfficeMembershipEntityPatcher(em, current).apply(body);
 
         final var saved = membershipRepo.save(current);
         final var mapped = map(saved, HsOfficeMembershipResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
-    }
-
-    private static Range<LocalDate> toPostgresDateRange(
-            final LocalDate validFrom,
-            final LocalDate validTo) {
-        return validTo != null
-                ? Range.closedOpen(validFrom, validTo.plusDays(1))
-                : Range.closedInfinite(validFrom);
     }
 
     final BiConsumer<HsOfficeMembershipEntity, HsOfficeMembershipResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
@@ -148,7 +136,15 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         }
     };
 
-    final BiConsumer<HsOfficeMembershipInsertResource, HsOfficeMembershipEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+    private HsOfficeMembershipEntity mapX(
+            final HsOfficeMembershipInsertResource resource,
+            final Class<HsOfficeMembershipEntity> entityClass) {
+        final var entity = new HsOfficeMembershipEntity();
+        entity.setPartner(em.getReference(HsOfficePartnerEntity.class, resource.getPartnerUuid()));
+        entity.setMainDebitor(em.getReference(HsOfficeDebitorEntity.class, resource.getMainDebitorUuid()));
+        entity.setMemberNumber(resource.getMemberNumber());
         entity.setValidity(toPostgresDateRange(resource.getValidFrom(), resource.getValidTo()));
-    };
+        entity.setReasonForTermination(map(resource.getReasonForTermination(), HsOfficeReasonForTermination.class));
+        return entity;
+    }
 }

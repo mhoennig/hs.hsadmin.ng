@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public class TestHsOfficeContact {
 
-    public static final HsOfficeContactEntity someContact = hsOfficeContact("some contact", "some-contact@example.com");
+    public static final HsOfficeContactEntity TEST_CONTACT = hsOfficeContact("some contact", "some-contact@example.com");
 
     static public HsOfficeContactEntity hsOfficeContact(final String label, final String emailAddr) {
         return HsOfficeContactEntity.builder()

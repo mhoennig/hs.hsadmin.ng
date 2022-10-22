@@ -37,10 +37,16 @@ components:
         HsOfficeMembershipPatch:
             type: object
             properties:
+                mainDebitorUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
                 validTo:
                     type: string
                     format: date
+                    nullable: true
                 reasonForTermination:
+                    nullable: true
                     $ref: '#/components/schemas/HsOfficeReasonForTermination'
             additionalProperties: false
 
