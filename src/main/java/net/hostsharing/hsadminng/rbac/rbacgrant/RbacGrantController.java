@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacGrantsApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacGrantResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,15 +14,14 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-
 @RestController
-
 public class RbacGrantController implements RbacGrantsApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private RbacGrantRepository rbacGrantRepository;
@@ -44,7 +44,7 @@ public class RbacGrantController implements RbacGrantsApi {
         if (result == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result, RbacGrantResource.class));
+        return ResponseEntity.ok(mapper.map(result, RbacGrantResource.class));
     }
 
     @Override
@@ -55,7 +55,7 @@ public class RbacGrantController implements RbacGrantsApi {
 
         context.define(currentUser, assumedRoles);
 
-        return ResponseEntity.ok(mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
+        return ResponseEntity.ok(mapper.mapList(rbacGrantRepository.findAll(), RbacGrantResource.class));
     }
 
     @Override
@@ -67,7 +67,7 @@ public class RbacGrantController implements RbacGrantsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var granted = rbacGrantRepository.save(map(body, RbacGrantEntity.class));
+        final var granted = rbacGrantRepository.save(mapper.map(body, RbacGrantEntity.class));
         em.flush();
         em.refresh(granted);
 
@@ -76,7 +76,7 @@ public class RbacGrantController implements RbacGrantsApi {
                         .path("/api/rbac.yaml/grants/{roleUuid}")
                         .buildAndExpand(body.getGrantedRoleUuid())
                         .toUri();
-        return ResponseEntity.created(uri).body(map(granted, RbacGrantResource.class));
+        return ResponseEntity.created(uri).body(mapper.map(granted, RbacGrantResource.class));
     }
 
     @Override

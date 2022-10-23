@@ -1,11 +1,15 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -19,12 +23,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacUserController.class)
+@Import(Mapper.class)
+@RunWith(SpringRunner.class)
 class RbacUserControllerRestTest {
 
     @Autowired
     MockMvc mockMvc;
+
     @MockBean
     Context contextMock;
+
     @MockBean
     RbacUserRepository rbacUserRepository;
 

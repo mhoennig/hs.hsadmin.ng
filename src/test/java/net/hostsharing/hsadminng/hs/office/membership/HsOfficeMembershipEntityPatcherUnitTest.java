@@ -4,12 +4,14 @@ import com.vladmihalcea.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeReasonForTerminationResource;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
@@ -31,13 +33,14 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
         > {
 
     private static final UUID INITIAL_MEMBERSHIP_UUID = UUID.randomUUID();
-    private static final UUID INITIAL_MAIN_DEBITOR_UUID = UUID.randomUUID();
     private static final UUID PATCHED_MAIN_DEBITOR_UUID = UUID.randomUUID();
     private static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-04-15");
     private static final LocalDate PATCHED_VALID_TO = LocalDate.parse("2022-12-31");
 
     @Mock
     private EntityManager em;
+
+    private Mapper mapper = new Mapper();
 
     @BeforeEach
     void initMocks() {
@@ -63,8 +66,8 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficeMembershipEntityPatcher createPatcher(final HsOfficeMembershipEntity Membership) {
-        return new HsOfficeMembershipEntityPatcher(em, Membership);
+    protected HsOfficeMembershipEntityPatcher createPatcher(final HsOfficeMembershipEntity membership) {
+        return new HsOfficeMembershipEntityPatcher(em, mapper, membership);
     }
 
     @Override

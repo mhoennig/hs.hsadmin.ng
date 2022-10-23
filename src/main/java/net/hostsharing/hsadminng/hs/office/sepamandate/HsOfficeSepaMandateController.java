@@ -15,12 +15,10 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import javax.persistence.EntityManager;
 import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
@@ -29,6 +27,9 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeSepaMandateRepository SepaMandateRepo;
@@ -46,7 +47,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
         final var entities = SepaMandateRepo.findSepaMandateByOptionalIban(iban);
 
-        final var resources = Mapper.mapList(entities, HsOfficeSepaMandateResource.class,
+        final var resources = mapper.mapList(entities, HsOfficeSepaMandateResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
@@ -60,7 +61,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = map(body, HsOfficeSepaMandateEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(body, HsOfficeSepaMandateEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = SepaMandateRepo.save(entityToSave);
@@ -70,7 +71,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
                         .path("/api/hs/office/SepaMandates/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeSepaMandateResource.class,
+        final var mapped = mapper.map(saved, HsOfficeSepaMandateResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
@@ -88,7 +89,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficeSepaMandateResource.class,
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeSepaMandateResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER));
     }
 
@@ -123,7 +124,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         current.setValidity(toPostgresDateRange(current.getValidity().lower(), body.getValidTo()));
 
         final var saved = SepaMandateRepo.save(current);
-        final var mapped = map(saved, HsOfficeSepaMandateResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var mapped = mapper.map(saved, HsOfficeSepaMandateResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 

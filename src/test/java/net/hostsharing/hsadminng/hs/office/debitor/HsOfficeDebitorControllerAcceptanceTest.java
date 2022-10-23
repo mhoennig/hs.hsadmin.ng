@@ -44,9 +44,6 @@ class HsOfficeDebitorControllerAcceptanceTest {
     Context context;
 
     @Autowired
-    Context contextMock;
-
-    @Autowired
     HsOfficeDebitorRepository debitorRepo;
 
     @Autowired

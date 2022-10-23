@@ -15,14 +15,15 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-
 @RestController
 
 public class HsOfficeContactController implements HsOfficeContactsApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeContactRepository contactRepo;
@@ -37,7 +38,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
         final var entities = contactRepo.findContactByOptionalLabelLike(label);
 
-        final var resources = Mapper.mapList(entities, HsOfficeContactResource.class);
+        final var resources = mapper.mapList(entities, HsOfficeContactResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -50,7 +51,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = map(body, HsOfficeContactEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficeContactEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = contactRepo.save(entityToSave);
@@ -60,7 +61,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
                         .path("/api/hs/office/contacts/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeContactResource.class);
+        final var mapped = mapper.map(saved, HsOfficeContactResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -77,7 +78,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficeContactResource.class));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeContactResource.class));
     }
 
     @Override
@@ -111,7 +112,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
         new HsOfficeContactEntityPatch(current).apply(body);
 
         final var saved = contactRepo.save(current);
-        final var mapped = map(saved, HsOfficeContactResource.class);
+        final var mapped = mapper.map(saved, HsOfficeContactResource.class);
         return ResponseEntity.ok(mapped);
     }
 }

@@ -6,16 +6,19 @@ import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.modelmapper.internal.bytebuddy.utility.RandomString;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.junit.jupiter.Container;
 
 import javax.persistence.EntityManager;
@@ -31,8 +34,7 @@ import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { HsOfficeBankAccountRepository.class, Context.class, JpaAttempt.class })
-@DirtiesContext
+@Import( { Context.class, JpaAttempt.class })
 class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
@@ -311,7 +313,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     private HsOfficeBankAccountEntity givenSomeTemporaryBankAccount(final String createdByUser) {
-        final var random = RandomString.make(3);
+        final var random = RandomStringUtils.randomAlphabetic(3);
         return givenSomeTemporaryBankAccount(createdByUser, () ->
                 hsOfficeBankAccount(
                         "some temp acc #" + random,

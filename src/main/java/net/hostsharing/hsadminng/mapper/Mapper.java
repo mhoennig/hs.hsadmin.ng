@@ -9,15 +9,17 @@ import java.util.stream.Collectors;
 /**
  * A nicer API for ModelMapper.
  */
-public abstract class Mapper {
+public class Mapper extends ModelMapper {
 
-    public final static ModelMapper modelMapper = new ModelMapper();
+    public Mapper() {
+        getConfiguration().setAmbiguityIgnored(true);
+    }
 
-    public static <S, T> List<T> mapList(final List<S> source, final Class<T> targetClass) {
+    public <S, T> List<T> mapList(final List<S> source, final Class<T> targetClass) {
         return mapList(source, targetClass, null);
     }
 
-    public static <S, T> List<T> mapList(final List<S> source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
+    public <S, T> List<T> mapList(final List<S> source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
         return source
                 .stream()
                 .map(element -> {
@@ -30,18 +32,12 @@ public abstract class Mapper {
                 .collect(Collectors.toList());
     }
 
-    public static <S, T> T map(final S source, final Class<T> targetClass) {
-        return map(source, targetClass, null);
-    }
-
-    public static <S, T> T map(final S source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
+    public <S, T> T map(final S source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
         if (source == null) {
             return null;
         }
-        final var target = modelMapper.map(source, targetClass);
-        if (postMapper != null) {
-            postMapper.accept(source, target);
-        }
+        final var target = map(source, targetClass);
+        postMapper.accept(source, target);
         return target;
     }
 }

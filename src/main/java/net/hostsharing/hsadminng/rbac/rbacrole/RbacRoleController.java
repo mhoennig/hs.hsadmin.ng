@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacRolesApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacRoleResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,14 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-
 @RestController
-
 public class RbacRoleController implements RbacRolesApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private RbacRoleRepository rbacRoleRepository;
@@ -30,7 +31,9 @@ public class RbacRoleController implements RbacRolesApi {
 
         context.define(currentUser, assumedRoles);
 
-        return ResponseEntity.ok(mapList(rbacRoleRepository.findAll(), RbacRoleResource.class));
+        final List<RbacRoleEntity> result = rbacRoleRepository.findAll();
+
+        return ResponseEntity.ok(mapper.mapList(result, RbacRoleResource.class));
     }
 
 }

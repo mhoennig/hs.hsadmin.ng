@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.test.pac;
 
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestPackagesApi;
@@ -13,14 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-
 @RestController
 public class TestPackageController implements TestPackagesApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private TestPackageRepository testPackageRepository;
@@ -35,7 +36,7 @@ public class TestPackageController implements TestPackagesApi {
         context.define(currentUser, assumedRoles);
 
         final var result = testPackageRepository.findAllByOptionalNameLike(name);
-        return ResponseEntity.ok(mapList(result, TestPackageResource.class));
+        return ResponseEntity.ok(mapper.mapList(result, TestPackageResource.class));
     }
 
     @Override
@@ -51,7 +52,7 @@ public class TestPackageController implements TestPackagesApi {
         final var current = testPackageRepository.findByUuid(packageUuid);
         OptionalFromJson.of(body.getDescription()).ifPresent(current::setDescription);
         final var saved = testPackageRepository.save(current);
-        final var mapped = map(saved, TestPackageResource.class);
+        final var mapped = mapper.map(saved, TestPackageResource.class);
         return ResponseEntity.ok(mapped);
     }
 }

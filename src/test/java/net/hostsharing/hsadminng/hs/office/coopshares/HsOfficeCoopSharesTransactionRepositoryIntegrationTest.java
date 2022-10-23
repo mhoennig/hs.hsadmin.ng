@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
@@ -30,8 +31,7 @@ import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { HsOfficeCoopSharesTransactionRepository.class, Context.class, JpaAttempt.class })
-@DirtiesContext
+@Import( { Context.class, JpaAttempt.class })
 class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired

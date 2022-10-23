@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.test.cust;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestCustomersApi;
 import net.hostsharing.hsadminng.test.generated.api.v1.model.TestCustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,15 +13,14 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-
 @RestController
-
 public class TestCustomerController implements TestCustomersApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private TestCustomerRepository testCustomerRepository;
@@ -36,7 +36,7 @@ public class TestCustomerController implements TestCustomersApi {
 
         final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(prefix);
 
-        return ResponseEntity.ok(mapList(result, TestCustomerResource.class));
+        return ResponseEntity.ok(mapper.mapList(result, TestCustomerResource.class));
     }
 
     @Override
@@ -52,14 +52,14 @@ public class TestCustomerController implements TestCustomersApi {
             customer.setUuid(UUID.randomUUID());
         }
 
-        final var saved = testCustomerRepository.save(map(customer, TestCustomerEntity.class));
+        final var saved = testCustomerRepository.save(mapper.map(customer, TestCustomerEntity.class));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/test/customers/{id}")
                         .buildAndExpand(customer.getUuid())
                         .toUri();
-        return ResponseEntity.created(uri).body(map(saved, TestCustomerResource.class));
+        return ResponseEntity.created(uri).body(mapper.map(saved, TestCustomerResource.class));
     }
 
 }

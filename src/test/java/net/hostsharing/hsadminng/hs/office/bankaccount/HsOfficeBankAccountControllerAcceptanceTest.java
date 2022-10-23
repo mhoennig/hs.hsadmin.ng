@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
@@ -35,9 +36,6 @@ class HsOfficeBankAccountControllerAcceptanceTest {
 
     @Autowired
     Context context;
-
-    @Autowired
-    Context contextMock;
 
     @Autowired
     HsOfficeBankAccountRepository bankAccountRepo;

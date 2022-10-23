@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeMembersh
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipResource;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,15 +18,15 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-
 @RestController
 
 public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeMembershipRepository membershipRepo;
@@ -45,7 +46,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         final var entities =
                 membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(partnerUuid, memberNumber);
 
-        final var resources = mapList(entities, HsOfficeMembershipResource.class,
+        final var resources = mapper.mapList(entities, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
@@ -59,7 +60,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = map(body, HsOfficeMembershipEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = membershipRepo.save(entityToSave);
@@ -69,7 +70,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
                         .path("/api/hs/office/Memberships/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeMembershipResource.class,
+        final var mapped = mapper.map(saved, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
@@ -87,7 +88,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficeMembershipResource.class,
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER));
     }
 
@@ -119,14 +120,15 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         final var current = membershipRepo.findByUuid(membershipUuid).orElseThrow();
 
-        new HsOfficeMembershipEntityPatcher(em, current).apply(body);
+        new HsOfficeMembershipEntityPatcher(em, mapper, current).apply(body);
 
         final var saved = membershipRepo.save(current);
-        final var mapped = map(saved, HsOfficeMembershipResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var mapped = mapper.map(saved, HsOfficeMembershipResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
     final BiConsumer<HsOfficeMembershipEntity, HsOfficeMembershipResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        // TODO.refa: this should be possible via ModelMapper config
         resource.setValidFrom(entity.getValidity().lower());
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));

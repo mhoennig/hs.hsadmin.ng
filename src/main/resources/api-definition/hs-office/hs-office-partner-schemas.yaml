@@ -18,6 +18,7 @@ components:
 
         HsOfficePartnerDetails:
             type: object
+            nullable: false
             properties:
                 uuid:
                     type: string
@@ -56,7 +57,7 @@ components:
 
         HsOfficePartnerDetailsPatch:
             type: object
-            nullable: true
+            nullable: false
             properties:
                 registrationOffice:
                     type: string
@@ -90,9 +91,11 @@ components:
             required:
                 - personUuid
                 - contactUuid
+                - details
 
         HsOfficePartnerDetailsInsert:
             type: object
+            nullable: false
             properties:
                 registrationOffice:
                     type: string

@@ -22,7 +22,6 @@ import java.util.UUID;
 
 import static java.lang.String.join;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.*;
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAssetsApi {
@@ -31,48 +30,51 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     private Context context;
 
     @Autowired
+    private Mapper mapper;
+
+    @Autowired
     private HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeCoopAssetsTransactionResource>> listCoopAssets(
-        final String currentUser,
-        final String assumedRoles,
-        final UUID membershipUuid,
-        final @DateTimeFormat(iso = ISO.DATE) LocalDate fromValueDate,
-        final @DateTimeFormat(iso = ISO.DATE) LocalDate toValueDate) {
+            final String currentUser,
+            final String assumedRoles,
+            final UUID membershipUuid,
+            final @DateTimeFormat(iso = ISO.DATE) LocalDate fromValueDate,
+            final @DateTimeFormat(iso = ISO.DATE) LocalDate toValueDate) {
         context.define(currentUser, assumedRoles);
 
         final var entities = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
-            membershipUuid,
-            fromValueDate,
-            toValueDate);
+                membershipUuid,
+                fromValueDate,
+                toValueDate);
 
-        final var resources = Mapper.mapList(entities, HsOfficeCoopAssetsTransactionResource.class);
+        final var resources = mapper.mapList(entities, HsOfficeCoopAssetsTransactionResource.class);
         return ResponseEntity.ok(resources);
     }
 
     @Override
     @Transactional
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> addCoopAssetsTransaction(
-        final String currentUser,
-        final String assumedRoles,
-        @Valid final HsOfficeCoopAssetsTransactionInsertResource requestBody) {
+            final String currentUser,
+            final String assumedRoles,
+            @Valid final HsOfficeCoopAssetsTransactionInsertResource requestBody) {
 
         context.define(currentUser, assumedRoles);
         validate(requestBody);
 
-        final var entityToSave = map(requestBody, HsOfficeCoopAssetsTransactionEntity.class);
+        final var entityToSave = mapper.map(requestBody, HsOfficeCoopAssetsTransactionEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = coopAssetsTransactionRepo.save(entityToSave);
 
         final var uri =
-            MvcUriComponentsBuilder.fromController(getClass())
-                .path("/api/hs/office/coopassetstransactions/{id}")
-                .buildAndExpand(entityToSave.getUuid())
-                .toUri();
-        final var mapped = map(saved, HsOfficeCoopAssetsTransactionResource.class);
+                MvcUriComponentsBuilder.fromController(getClass())
+                        .path("/api/hs/office/coopassetstransactions/{id}")
+                        .buildAndExpand(entityToSave.getUuid())
+                        .toUri();
+        final var mapped = mapper.map(saved, HsOfficeCoopAssetsTransactionResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -87,31 +89,31 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     }
 
     private static void validateDebitTransaction(
-        final HsOfficeCoopAssetsTransactionInsertResource requestBody,
-        final ArrayList<String> violations) {
+            final HsOfficeCoopAssetsTransactionInsertResource requestBody,
+            final ArrayList<String> violations) {
         if (List.of(DEPOSIT, ADOPTION).contains(requestBody.getTransactionType())
-            && requestBody.getAssetValue().signum() < 0) {
+                && requestBody.getAssetValue().signum() < 0) {
             violations.add("for %s, assetValue must be positive but is \"%.2f\"".formatted(
-                requestBody.getTransactionType(), requestBody.getAssetValue()));
+                    requestBody.getTransactionType(), requestBody.getAssetValue()));
         }
     }
 
     private static void validateCreditTransaction(
-        final HsOfficeCoopAssetsTransactionInsertResource requestBody,
-        final ArrayList<String> violations) {
+            final HsOfficeCoopAssetsTransactionInsertResource requestBody,
+            final ArrayList<String> violations) {
         if (List.of(DISBURSAL, TRANSFER, CLEARING, LOSS).contains(requestBody.getTransactionType())
-            && requestBody.getAssetValue().signum() > 0) {
+                && requestBody.getAssetValue().signum() > 0) {
             violations.add("for %s, assetValue must be negative but is \"%.2f\"".formatted(
-                requestBody.getTransactionType(), requestBody.getAssetValue()));
+                    requestBody.getTransactionType(), requestBody.getAssetValue()));
         }
     }
 
     private static void validateAssetValue(
-        final HsOfficeCoopAssetsTransactionInsertResource requestBody,
-        final ArrayList<String> violations) {
+            final HsOfficeCoopAssetsTransactionInsertResource requestBody,
+            final ArrayList<String> violations) {
         if (requestBody.getAssetValue().signum() == 0) {
             violations.add("assetValue must not be 0 but is \"%.2f\"".formatted(
-                requestBody.getAssetValue()));
+                    requestBody.getAssetValue()));
         }
     }
 

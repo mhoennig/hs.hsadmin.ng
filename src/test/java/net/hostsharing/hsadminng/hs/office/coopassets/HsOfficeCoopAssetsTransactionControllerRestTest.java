@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.test.JsonBuilder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -27,6 +28,9 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
     @MockBean
     Context contextMock;
+
+    @MockBean
+    Mapper mapper;
 
     @MockBean
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;

@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacUsersApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserPermissionResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacUserResource;
@@ -13,14 +14,14 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
-
 @RestController
 public class RbacUserController implements RbacUsersApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private RbacUserRepository rbacUserRepository;
@@ -35,14 +36,14 @@ public class RbacUserController implements RbacUsersApi {
         if (body.getUuid() == null) {
             body.setUuid(UUID.randomUUID());
         }
-        final var saved = map(body, RbacUserEntity.class);
+        final var saved = mapper.map(body, RbacUserEntity.class);
         rbacUserRepository.create(saved);
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/rbac.yaml/users/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
-        return ResponseEntity.created(uri).body(map(saved, RbacUserResource.class));
+        return ResponseEntity.created(uri).body(mapper.map(saved, RbacUserResource.class));
     }
 
     @Override
@@ -72,7 +73,7 @@ public class RbacUserController implements RbacUsersApi {
         if (result == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result, RbacUserResource.class));
+        return ResponseEntity.ok(mapper.map(result, RbacUserResource.class));
     }
 
     @Override
@@ -84,7 +85,7 @@ public class RbacUserController implements RbacUsersApi {
     ) {
         context.define(currentUser, assumedRoles);
 
-        return ResponseEntity.ok(mapList(rbacUserRepository.findByOptionalNameLike(userName), RbacUserResource.class));
+        return ResponseEntity.ok(mapper.mapList(rbacUserRepository.findByOptionalNameLike(userName), RbacUserResource.class));
     }
 
     @Override
@@ -96,7 +97,7 @@ public class RbacUserController implements RbacUsersApi {
     ) {
         context.define(currentUser, assumedRoles);
 
-        return ResponseEntity.ok(mapList(
+        return ResponseEntity.ok(mapper.mapList(
                 rbacUserRepository.findPermissionsOfUserByUuid(userUuid),
                 RbacUserPermissionResource.class));
     }

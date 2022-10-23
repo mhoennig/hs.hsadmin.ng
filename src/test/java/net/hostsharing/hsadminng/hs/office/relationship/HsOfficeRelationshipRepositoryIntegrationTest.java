@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
+import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -28,8 +30,7 @@ import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { HsOfficeRelationshipRepository.class, Context.class, JpaAttempt.class })
-@DirtiesContext
+@Import( { Context.class, JpaAttempt.class })
 class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired

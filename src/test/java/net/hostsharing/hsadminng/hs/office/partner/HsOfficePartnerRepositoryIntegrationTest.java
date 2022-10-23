@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -29,8 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { HsOfficePartnerRepository.class, Context.class, JpaAttempt.class })
-@DirtiesContext
+@Import( { Context.class, JpaAttempt.class })
 class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired

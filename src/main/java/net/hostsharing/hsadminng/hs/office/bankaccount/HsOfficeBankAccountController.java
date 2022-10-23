@@ -16,14 +16,15 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-
 @RestController
 
 public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeBankAccountRepository bankAccountRepo;
@@ -38,7 +39,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
         final var entities = bankAccountRepo.findByOptionalHolderLike(holder);
 
-        final var resources = Mapper.mapList(entities, HsOfficeBankAccountResource.class);
+        final var resources = mapper.mapList(entities, HsOfficeBankAccountResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -54,7 +55,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
         IbanUtil.validate(body.getIban());
         BicUtil.validate(body.getBic());
 
-        final var entityToSave = map(body, HsOfficeBankAccountEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficeBankAccountEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = bankAccountRepo.save(entityToSave);
@@ -64,7 +65,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
                         .path("/api/hs/office/BankAccounts/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeBankAccountResource.class);
+        final var mapped = mapper.map(saved, HsOfficeBankAccountResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -81,7 +82,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficeBankAccountResource.class));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeBankAccountResource.class));
     }
 
     @Override

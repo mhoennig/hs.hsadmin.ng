@@ -1,11 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
-import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerInsertResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import javax.persistence.EntityManager;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.function.BiConsumer;
-
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 
@@ -28,13 +24,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     private Context context;
 
     @Autowired
+    private Mapper mapper;
+
+    @Autowired
     private HsOfficePartnerRepository partnerRepo;
-
-    @Autowired
-    private HsOfficePersonRepository personRepo;
-
-    @Autowired
-    private HsOfficeContactRepository contactRepo;
 
     @Autowired
     private EntityManager em;
@@ -49,8 +42,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
 
-        final var resources = Mapper.mapList(entities, HsOfficePartnerResource.class,
-                PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var resources = mapper.mapList(entities, HsOfficePartnerResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -63,16 +55,9 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapToHsOfficePartnerEntity(body);
+        final var entityToSave = mapper.map(body, HsOfficePartnerEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
-        // TODO.impl: use getReference
-        entityToSave.setContact(contactRepo.findByUuid(body.getContactUuid()).orElseThrow(
-                () -> new NoSuchElementException("cannot find contact uuid " + body.getContactUuid())
-        ));
-        entityToSave.setPerson(personRepo.findByUuid(body.getPersonUuid()).orElseThrow(
-                () -> new NoSuchElementException("cannot find person uuid " + body.getPersonUuid())
-        ));
-        entityToSave.setDetails(map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
+        entityToSave.setDetails(mapper.map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
         entityToSave.getDetails().setUuid(UUID.randomUUID());
 
         final var saved = partnerRepo.save(entityToSave);
@@ -82,8 +67,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
                         .path("/api/hs/office/partners/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficePartnerResource.class,
-                PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var mapped = mapper.map(saved, HsOfficePartnerResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -100,7 +84,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficePartnerResource.class, PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficePartnerResource.class));
     }
 
     @Override
@@ -134,23 +118,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         new HsOfficePartnerEntityPatcher(em, current).apply(body);
 
         final var saved = partnerRepo.save(current);
-        final var mapped = map(saved, HsOfficePartnerResource.class);
+        final var mapped = mapper.map(saved, HsOfficePartnerResource.class);
         return ResponseEntity.ok(mapped);
-    }
-
-    final BiConsumer<HsOfficePartnerEntity, HsOfficePartnerResource> PARTNER_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        resource.setPerson(map(entity.getPerson(), HsOfficePersonResource.class));
-        resource.setContact(map(entity.getContact(), HsOfficeContactResource.class));
-    };
-
-    // TODO.impl: user postmapper + getReference
-    private HsOfficePartnerEntity mapToHsOfficePartnerEntity(final HsOfficePartnerInsertResource resource) {
-        final var entity = new HsOfficePartnerEntity();
-        //        entity.setBirthday(resource.getBirthday());
-        //        entity.setBirthName(resource.getBirthName());
-        //        entity.setDateOfDeath(resource.getDateOfDeath());
-        //        entity.setRegistrationNumber(resource.getRegistrationNumber());
-        //        entity.setRegistrationOffice(resource.getRegistrationOffice());
-        return entity;
     }
 }

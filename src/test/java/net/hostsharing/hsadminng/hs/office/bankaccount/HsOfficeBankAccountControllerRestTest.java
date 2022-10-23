@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ class HsOfficeBankAccountControllerRestTest {
 
     @MockBean
     Context contextMock;
+
+    @MockBean
+    Mapper mapper;
 
     @MockBean
     HsOfficeBankAccountRepository bankAccountRepo;

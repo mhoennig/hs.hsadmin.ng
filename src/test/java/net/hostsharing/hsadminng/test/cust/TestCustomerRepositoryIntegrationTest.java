@@ -2,12 +2,14 @@ package net.hostsharing.hsadminng.test.cust;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
@@ -20,8 +22,7 @@ import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, TestCustomerRepository.class })
-@DirtiesContext
+@Import( { Context.class, JpaAttempt.class })
 class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired

@@ -15,14 +15,15 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-
 @RestController
 
 public class HsOfficePersonController implements HsOfficePersonsApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficePersonRepository personRepo;
@@ -37,7 +38,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
         final var entities = personRepo.findPersonByOptionalNameLike(label);
 
-        final var resources = Mapper.mapList(entities, HsOfficePersonResource.class);
+        final var resources = mapper.mapList(entities, HsOfficePersonResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -50,7 +51,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = map(body, HsOfficePersonEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficePersonEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = personRepo.save(entityToSave);
@@ -60,7 +61,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
                         .path("/api/hs/office/persons/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficePersonResource.class);
+        final var mapped = mapper.map(saved, HsOfficePersonResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -77,7 +78,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficePersonResource.class));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficePersonResource.class));
     }
 
     @Override
@@ -111,7 +112,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
         new HsOfficePersonEntityPatcher(current).apply(body);
 
         final var saved = personRepo.save(current);
-        final var mapped = map(saved, HsOfficePersonResource.class);
+        final var mapped = mapper.map(saved, HsOfficePersonResource.class);
         return ResponseEntity.ok(mapped);
     }
 }

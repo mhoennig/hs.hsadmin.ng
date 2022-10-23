@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static java.lang.String.join;
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.CANCELLATION;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.SUBSCRIPTION;
 
@@ -30,6 +29,9 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
@@ -49,7 +51,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
                 fromValueDate,
                 toValueDate);
 
-        final var resources = Mapper.mapList(entities, HsOfficeCoopSharesTransactionResource.class);
+        final var resources = mapper.mapList(entities, HsOfficeCoopSharesTransactionResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -63,7 +65,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         context.define(currentUser, assumedRoles);
         validate(requestBody);
 
-        final var entityToSave = map(requestBody, HsOfficeCoopSharesTransactionEntity.class);
+        final var entityToSave = mapper.map(requestBody, HsOfficeCoopSharesTransactionEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = coopSharesTransactionRepo.save(entityToSave);
@@ -73,7 +75,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
                         .path("/api/hs/office/coopsharestransactions/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeCoopSharesTransactionResource.class);
+        final var mapped = mapper.map(saved, HsOfficeCoopSharesTransactionResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 

@@ -2,11 +2,11 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
@@ -166,15 +166,16 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .body("""
                                {
                                    "contactUuid": "%s",
-                                   "personUuid": "%s"
+                                   "personUuid": "%s",
+                                   "details": {}
                                  }
                             """.formatted(givenContactUuid, givenPerson.getUuid()))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/partners")
                 .then().log().all().assertThat()
-                    .statusCode(404)
-                    .body("message", is("cannot find contact uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .statusCode(400)
+                    .body("message", is("Unable to find Contact with uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
             // @formatter:on
         }
 
@@ -193,19 +194,15 @@ class HsOfficePartnerControllerAcceptanceTest {
                                {
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
-                                   "registrationOffice": "Registergericht Hamburg",
-                                   "registrationNumber": "123456",
-                                   "birthName": null,
-                                   "birthday": null,
-                                   "dateOfDeath": null
+                                   "details": {}
                                  }
                             """.formatted(givenContact.getUuid(), givenPersonUuid))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/partners")
                 .then().log().all().assertThat()
-                    .statusCode(404)
-                    .body("message", is("cannot find person uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .statusCode(400)
+                    .body("message", is("Unable to find Person with uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
                 // @formatter:on
         }
     }

@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelationshipsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +18,6 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
-import static net.hostsharing.hsadminng.mapper.Mapper.mapList;
 
 @RestController
 
@@ -26,6 +25,9 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeRelationshipRepository relationshipRepo;
@@ -49,9 +51,9 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
         context.define(currentUser, assumedRoles);
 
         final var entities = relationshipRepo.findRelationshipRelatedToPersonUuid(personUuid,
-                map(relationshipType, HsOfficeRelationshipType.class));
+                mapper.map(relationshipType, HsOfficeRelationshipType.class));
 
-        final var resources = mapList(entities, HsOfficeRelationshipResource.class,
+        final var resources = mapper.mapList(entities, HsOfficeRelationshipResource.class,
                 RELATIONSHIP_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
@@ -85,7 +87,7 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
                         .path("/api/hs/office/relationships/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeRelationshipResource.class,
+        final var mapped = mapper.map(saved, HsOfficeRelationshipResource.class,
                 RELATIONSHIP_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
@@ -103,7 +105,7 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficeRelationshipResource.class, RELATIONSHIP_ENTITY_TO_RESOURCE_POSTMAPPER));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeRelationshipResource.class, RELATIONSHIP_ENTITY_TO_RESOURCE_POSTMAPPER));
     }
 
     @Override
@@ -137,14 +139,14 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
         new HsOfficeRelationshipEntityPatcher(em, current).apply(body);
 
         final var saved = relationshipRepo.save(current);
-        final var mapped = map(saved, HsOfficeRelationshipResource.class);
+        final var mapped = mapper.map(saved, HsOfficeRelationshipResource.class);
         return ResponseEntity.ok(mapped);
     }
 
 
     final BiConsumer<HsOfficeRelationshipEntity, HsOfficeRelationshipResource> RELATIONSHIP_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        resource.setRelAnchor(map(entity.getRelAnchor(), HsOfficePersonResource.class));
-        resource.setRelHolder(map(entity.getRelHolder(), HsOfficePersonResource.class));
-        resource.setContact(map(entity.getContact(), HsOfficeContactResource.class));
+        resource.setRelAnchor(mapper.map(entity.getRelAnchor(), HsOfficePersonResource.class));
+        resource.setRelHolder(mapper.map(entity.getRelHolder(), HsOfficePersonResource.class));
+        resource.setContact(mapper.map(entity.getContact(), HsOfficeContactResource.class));
     };
 }

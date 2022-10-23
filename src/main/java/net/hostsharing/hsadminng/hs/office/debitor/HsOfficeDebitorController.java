@@ -1,12 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitorsApi;
-import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorInsertResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorResource;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +15,6 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiConsumer;
-
-import static net.hostsharing.hsadminng.mapper.Mapper.map;
 
 @RestController
 
@@ -26,6 +22,9 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Autowired
     private Context context;
+
+    @Autowired
+    private Mapper mapper;
 
     @Autowired
     private HsOfficeDebitorRepository debitorRepo;
@@ -46,8 +45,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
                 ? debitorRepo.findDebitorByDebitorNumber(debitorNumber)
                 : debitorRepo.findDebitorByOptionalNameLike(name);
 
-        final var resources = Mapper.mapList(entities, HsOfficeDebitorResource.class,
-                DEBITOR_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var resources = mapper.mapList(entities, HsOfficeDebitorResource.class);
         return ResponseEntity.ok(resources);
     }
 
@@ -60,7 +58,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = map(body, HsOfficeDebitorEntity.class, DEBITOR_RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(body, HsOfficeDebitorEntity.class);
         entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = debitorRepo.save(entityToSave);
@@ -70,8 +68,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
                         .path("/api/hs/office/debitors/{id}")
                         .buildAndExpand(entityToSave.getUuid())
                         .toUri();
-        final var mapped = map(saved, HsOfficeDebitorResource.class,
-                DEBITOR_ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var mapped = mapper.map(saved, HsOfficeDebitorResource.class);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -88,7 +85,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(map(result.get(), HsOfficeDebitorResource.class, DEBITOR_ENTITY_TO_RESOURCE_POSTMAPPER));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeDebitorResource.class));
     }
 
     @Override
@@ -122,24 +119,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         new HsOfficeDebitorEntityPatcher(em, current).apply(body);
 
         final var saved = debitorRepo.save(current);
-        final var mapped = map(saved, HsOfficeDebitorResource.class);
+        final var mapped = mapper.map(saved, HsOfficeDebitorResource.class);
         return ResponseEntity.ok(mapped);
     }
-
-
-    final BiConsumer<HsOfficeDebitorEntity, HsOfficeDebitorResource> DEBITOR_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        resource.setPartner(map(entity.getPartner(), HsOfficePartnerResource.class));
-        resource.setBillingContact(map(entity.getBillingContact(), HsOfficeContactResource.class));
-        if ( entity.getRefundBankAccount() != null ) {
-            resource.setRefundBankAccount(map(entity.getRefundBankAccount(), HsOfficeBankAccountResource.class));
-        }
-    };
-
-    final BiConsumer<HsOfficeDebitorInsertResource, HsOfficeDebitorEntity> DEBITOR_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        entity.setPartner(em.getReference(HsOfficePartnerEntity.class, resource.getPartnerUuid()));
-        entity.setBillingContact(em.getReference(HsOfficeContactEntity.class, resource.getBillingContactUuid()));
-        if ( resource.getRefundBankAccountUuid() != null ) {
-            entity.setRefundBankAccount(em.getReference(HsOfficeBankAccountEntity.class, resource.getRefundBankAccountUuid()));
-        }
-    };
 }
