@@ -98,9 +98,11 @@ tasks.withType(JavaCompile) {
     ]
 }
 
-// Use JUnit Jupiter
+// Configure tests
 tasks.named('test') {
     useJUnitPlatform()
+    jvmArgs '-Duser.language=en'
+    jvmArgs '-Duser.country=US'
 }
 
 // OpenAPI Source Code Generation
