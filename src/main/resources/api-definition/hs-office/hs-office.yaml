@@ -85,8 +85,13 @@ paths:
   /api/hs/office/coopsharestransactions:
     $ref: "./hs-office-coopshares.yaml"
 
+  /api/hs/office/coopsharestransactions/{shareTransactionUUID}:
+      $ref: "./hs-office-coopshares-with-uuid.yaml"
 
-    # Coop Assets Transaction
+  # Coop Assets Transaction
 
   /api/hs/office/coopassetstransactions:
       $ref: "./hs-office-coopassets.yaml"
+
+  /api/hs/office/coopassetstransactions/{assetTransactionUUID}:
+      $ref: "./hs-office-coopassets-with-uuid.yaml"

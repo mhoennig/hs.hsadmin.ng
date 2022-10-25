@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopAssetsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionResource;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -76,6 +77,22 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeCoopAssetsTransactionResource.class);
         return ResponseEntity.created(uri).body(mapped);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+
+    public ResponseEntity<HsOfficeCoopAssetsTransactionResource> getCoopAssetTransactionByUuid(
+        final String currentUser, final String assumedRoles, final UUID assetTransactionUuid) {
+
+        context.define(currentUser, assumedRoles);
+
+        final var result = coopAssetsTransactionRepo.findByUuid(assetTransactionUuid);
+        if (result.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeCoopAssetsTransactionResource.class));
+
     }
 
     private void validate(final HsOfficeCoopAssetsTransactionInsertResource requestBody) {

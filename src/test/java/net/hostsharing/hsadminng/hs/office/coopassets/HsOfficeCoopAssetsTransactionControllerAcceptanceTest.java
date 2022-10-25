@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -38,6 +40,9 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
 
     @Autowired
     Context context;
+
+    @Autowired
+    HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
     @Autowired
     HsOfficeMembershipRepository membershipRepo;
@@ -225,6 +230,49 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
                                  "message": "ERROR: [400] coop assets transaction would result in a negative balance of assets"
                              }
                         """));  // @formatter:on
+        }
+    }
+
+    @Nested
+    @Accepts({"CoopAssetTransaction:R(Read)"})
+    class GetCoopAssetTransaction {
+
+        @Test
+        void globalAdmin_withoutAssumedRole_canGetArbitraryCoopAssetTransaction() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                    {
+                        "transactionType": "DEPOSIT"
+                    }
+                    """)); // @formatter:on
+        }
+
+        @Test
+        @Accepts({"CoopAssetTransaction:X(Access Control)"})
+        void normalUser_canNotGetUnrelatedCoopAssetTransaction() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given().header("current-user", "selfregistered-user-drew@hostsharing.org").port(port).when().get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid).then().log().body().assertThat().statusCode(404); // @formatter:on
+        }
+
+        @Test
+        @Accepts({"CoopAssetTransaction:X(Access Control)"})
+        void contactAdminUser_canGetRelatedCoopAssetTransaction() {
+            context.define("superuser-alex@hostsharing.net");
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
+
+            RestAssured // @formatter:off
+                .given().header("current-user", "contact-admin@firstcontact.example.com").port(port).when().get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                    {
+                         "transactionType": "DEPOSIT",
+                         "assetValue": 320
+                     }
+                    """)); // @formatter:on
         }
     }
 

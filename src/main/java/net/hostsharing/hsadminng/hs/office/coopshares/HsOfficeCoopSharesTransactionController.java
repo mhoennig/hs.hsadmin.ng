@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactResource;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
@@ -77,6 +78,21 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeCoopSharesTransactionResource.class);
         return ResponseEntity.created(uri).body(mapped);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseEntity<HsOfficeCoopSharesTransactionResource> getCoopShareTransactionByUuid(
+        final String currentUser, final String assumedRoles, final UUID shareTransactionUuid) {
+
+            context.define(currentUser, assumedRoles);
+
+            final var result = coopSharesTransactionRepo.findByUuid(shareTransactionUuid);
+            if (result.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(mapper.map(result.get(), HsOfficeCoopSharesTransactionResource.class));
+
     }
 
     private void validate(final HsOfficeCoopSharesTransactionInsertResource requestBody) {

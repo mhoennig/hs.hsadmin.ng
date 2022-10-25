@@ -1,0 +1,27 @@
+get:
+    tags:
+        - hs-office-coopShares
+    description: 'Fetch a single share transaction by its uuid, if visible for the current subject.'
+    operationId: getCoopShareTransactionByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: shareTransactionUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the share transaction to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransaction'
+
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
