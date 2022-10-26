@@ -17,8 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.persistence.EntityManager;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -49,7 +48,8 @@ class HsOfficeContactControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempContactUuids = new HashSet<>();
+    @Autowired
+    EntityManager em;
 
     @Nested
     @Accepts({ "Contact:F(Find)" })
@@ -103,7 +103,7 @@ class HsOfficeContactControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "label": "Test Contact",
+                                   "label": "Temp Contact",
                                    "emailAddresses": "test@example.org"
                                  }
                             """)
@@ -114,14 +114,14 @@ class HsOfficeContactControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("label", is("Test Contact"))
+                        .body("label", is("Temp Contact"))
                         .body("emailAddresses", is("test@example.org"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new contact can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
     }
@@ -208,7 +208,7 @@ class HsOfficeContactControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                        {
-                           "label": "patched contact",
+                           "label": "Temp patched contact",
                            "emailAddresses": "patched@example.org",
                            "postalAddress": "Patched Address",
                            "phoneNumbers": "+01 100 123456"
@@ -221,7 +221,7 @@ class HsOfficeContactControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("label", is("patched contact"))
+                    .body("label", is("Temp patched contact"))
                     .body("emailAddresses", is("patched@example.org"))
                     .body("postalAddress", is("Patched Address"))
                     .body("phoneNumbers", is("+01 100 123456"));
@@ -231,7 +231,7 @@ class HsOfficeContactControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             assertThat(contactRepo.findByUuid(givenContact.getUuid())).isPresent().get()
                     .matches(person -> {
-                        assertThat(person.getLabel()).isEqualTo("patched contact");
+                        assertThat(person.getLabel()).isEqualTo("Temp patched contact");
                         assertThat(person.getEmailAddresses()).isEqualTo("patched@example.org");
                         assertThat(person.getPostalAddress()).isEqualTo("Patched Address");
                         assertThat(person.getPhoneNumbers()).isEqualTo("+01 100 123456");
@@ -353,28 +353,16 @@ class HsOfficeContactControllerAcceptanceTest {
                     .phoneNumbers("+01 200 " + RandomStringUtils.randomNumeric(8))
                     .build();
 
-            toCleanup(newContact.getUuid());
-
             return contactRepo.save(newContact);
         }).assertSuccessful().returnedValue();
-    }
-
-    private UUID toCleanup(final UUID tempContactUuid) {
-        tempContactUuids.add(tempContactUuid);
-        return tempContactUuid;
     }
 
     @BeforeEach
     @AfterEach
     void cleanup() {
-        tempContactUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary contact: " + uuid);
-                final var count = contactRepo.deleteByUuid(uuid);
-                System.out.println("DELETED temporary contact: " + uuid + (count > 0 ? " successful" : " failed"));
-            }).assertSuccessful();
-        });
+        jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            em.createQuery("DELETE FROM HsOfficeContactEntity c WHERE c.label LIKE 'Temp %'").executeUpdate();
+        }).assertSuccessful();
     }
-
 }

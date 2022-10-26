@@ -1,5 +1,6 @@
 package net.hostsharing.test;
 
+import org.assertj.core.api.ObjectAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,11 @@ public class JpaAttempt {
 
         public T returnedValue() {
             return result;
+        }
+
+        public ObjectAssert<T> assertThatResult() {
+            assertSuccessful();
+            return assertThat(returnedValue());
         }
 
         public RuntimeException caughtException() {

@@ -54,9 +54,6 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
     @MockBean
     HttpServletRequest request;
 
-    @Container
-    Container postgres;
-
     @Nested
     class CreateContact {
 

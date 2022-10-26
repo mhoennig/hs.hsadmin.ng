@@ -9,6 +9,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.validation.BindingResult;
@@ -41,6 +42,25 @@ class RestResponseEntityExceptionHandlerUnitTest {
         // then
         assertThat(errorResponse.getStatusCodeValue()).isEqualTo(409);
         assertThat(errorResponse.getBody().getMessage()).isEqualTo("First Line");
+    }
+
+    @Test
+    void handleForeignKeyViolation() {
+        // given
+        final var givenException = new DataIntegrityViolationException("""
+            ... violates foreign key constraint ...
+               Detail:   Second Line
+            Third Line
+            """);
+        final var givenWebRequest = mock(WebRequest.class);
+
+        // when
+        final var errorResponse = exceptionHandler.handleConflict(givenException, givenWebRequest);
+
+        // then
+        assertThat(errorResponse.getStatusCodeValue()).isEqualTo(400);
+        assertThat(errorResponse.getBody()).isNotNull()
+                .extracting(CustomErrorResponse::getMessage).isEqualTo("Second Line");
     }
 
     @Test

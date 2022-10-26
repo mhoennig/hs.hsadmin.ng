@@ -69,7 +69,6 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
 
         final var entityToSave = new HsOfficeRelationshipEntity();
         entityToSave.setRelType(HsOfficeRelationshipType.valueOf(body.getRelType()));
-        entityToSave.setUuid(UUID.randomUUID());
         entityToSave.setRelAnchor(relHolderRepo.findByUuid(body.getRelAnchorUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find relAnchorUuid " + body.getRelAnchorUuid())
         ));
@@ -85,7 +84,7 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/office/relationships/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeRelationshipResource.class,
                 RELATIONSHIP_ENTITY_TO_RESOURCE_POSTMAPPER);

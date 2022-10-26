@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
-import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
@@ -15,10 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -74,7 +71,6 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newRelationship = toCleanup(HsOfficeRelationshipEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .relAnchor(givenAnchorPerson)
                         .relHolder(givenHolderPerson)
                         .relType(HsOfficeRelationshipType.JOINT_AGENT)
@@ -103,7 +99,6 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Anita").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newRelationship = toCleanup(HsOfficeRelationshipEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .relAnchor(givenAnchorPerson)
                         .relHolder(givenHolderPerson)
                         .relType(HsOfficeRelationshipType.JOINT_AGENT)
@@ -393,7 +388,6 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
             final var newRelationship = HsOfficeRelationshipEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .relType(HsOfficeRelationshipType.JOINT_AGENT)
                     .relAnchor(givenAnchorPerson)
                     .relHolder(givenHolderPerson)

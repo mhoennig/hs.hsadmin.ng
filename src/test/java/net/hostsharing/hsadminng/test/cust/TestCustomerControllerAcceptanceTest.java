@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.persistence.EntityManager;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +43,8 @@ class TestCustomerControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempPartnerUuids = new HashSet<>();
+    @Autowired
+    EntityManager em;
 
     @Nested
     class ListCustomers {
@@ -144,49 +145,11 @@ class TestCustomerControllerAcceptanceTest {
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new customer can be viewed by its own admin
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             context.define("customer-admin@uuu.example.com");
             assertThat(testCustomerRepository.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("uuu"));
-        }
-
-        @Test
-        void globalAdmin_withoutAssumedRole_canAddCustomerWithGivenUuid() {
-
-            final var givenUuid = toCleanup(UUID.randomUUID());
-
-            final var location = RestAssured // @formatter:off
-                    .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
-                    .contentType(ContentType.JSON)
-                    .body("""
-                              {
-                                "uuid": "%s",
-                                "reference": 90010,
-                                "prefix": "vvv",
-                                "adminUserName": "customer-admin@vvv.example.com"
-                              }
-                              """.formatted(givenUuid))
-                    .port(port)
-                    .when()
-                    .post("http://localhost/api/test/customers")
-                    .then().assertThat()
-                    .statusCode(201)
-                    .contentType(ContentType.JSON)
-                    .body("prefix", is("vvv"))
-                    .header("Location", startsWith("http://localhost"))
-                    .extract().header("Location");  // @formatter:on
-
-            // finally, the new customer can be viewed by its own admin
-            final var newUserUuid = UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1));
-            context.define("customer-admin@vvv.example.com");
-            assertThat(testCustomerRepository.findByUuid(newUserUuid))
-                    .hasValueSatisfying(c -> {
-                        assertThat(c.getPrefix()).isEqualTo("vvv");
-                        assertThat(c.getUuid()).isEqualTo(givenUuid);
-                    });
         }
 
         @Test
@@ -266,26 +229,14 @@ class TestCustomerControllerAcceptanceTest {
                     .body("message", containsString("line: 1, column: 1"));
             // @formatter:on
         }
-
     }
 
-    private UUID toCleanup(final UUID tempPartnerUuid) {
-        tempPartnerUuids.add(tempPartnerUuid);
-        return tempPartnerUuid;
-    }
-
+    @BeforeEach
     @AfterEach
     void cleanup() {
-        tempPartnerUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary partner: " + uuid);
-                final var entity = testCustomerRepository.findByUuid(uuid);
-                final var count = testCustomerRepository.deleteByUuid(uuid);
-                System.out.println(
-                        "DELETED temporary partner: " + uuid + (count > 0 ? " successful" : " failed") + " (" + entity.map(
-                                TestCustomerEntity::getPrefix).orElse("???") + ")");
-            }).assertSuccessful();
-        });
+        jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            em.createQuery("DELETE FROM TestCustomerEntity c WHERE c.reference < 99900").executeUpdate();
+        }).assertSuccessful();
     }
 }

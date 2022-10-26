@@ -5,11 +5,9 @@ import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
+import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
@@ -29,7 +27,11 @@ public class HsOfficeContactEntity implements Stringifyable {
             .withProp(Fields.label, HsOfficeContactEntity::getLabel)
             .withProp(Fields.emailAddresses, HsOfficeContactEntity::getEmailAddresses);
 
-    private @Id UUID uuid;
+
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
     private String label;
 
     @Column(name = "postaladdress")

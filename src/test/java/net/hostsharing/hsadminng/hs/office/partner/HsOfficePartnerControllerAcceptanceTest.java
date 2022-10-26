@@ -17,8 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.persistence.EntityManager;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -32,7 +31,6 @@ import static org.hamcrest.Matchers.startsWith;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
-@Transactional
 class HsOfficePartnerControllerAcceptanceTest {
 
     @LocalServerPort
@@ -56,10 +54,12 @@ class HsOfficePartnerControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempPartnerUuids = new HashSet<>();
+    @Autowired
+    EntityManager em;
 
     @Nested
     @Accepts({ "Partner:F(Find)" })
+    @Transactional
     class ListPartners {
 
         @Test
@@ -109,6 +109,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
     @Nested
     @Accepts({ "Partner:C(Create)" })
+    @Transactional
     class AddPartner {
 
         @Test
@@ -127,8 +128,8 @@ class HsOfficePartnerControllerAcceptanceTest {
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "details": {
-                                       "registrationOffice": "Registergericht Aurich",
-                                       "registrationNumber": "123456"
+                                       "registrationOffice": "Temp Registergericht Aurich",
+                                       "registrationNumber": "111111"
                                    }
                                  }
                             """.formatted(givenContact.getUuid(), givenPerson.getUuid()))
@@ -139,16 +140,16 @@ class HsOfficePartnerControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("details.registrationOffice", is("Registergericht Aurich"))
-                        .body("details.registrationNumber", is("123456"))
+                        .body("details.registrationOffice", is("Temp Registergericht Aurich"))
+                        .body("details.registrationNumber", is("111111"))
                         .body("contact.label", is(givenContact.getLabel()))
                         .body("person.tradeName", is(givenPerson.getTradeName()))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new partner can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
 
@@ -209,6 +210,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
     @Nested
     @Accepts({ "Partner:R(Read)" })
+    @Transactional
     class GetPartner {
 
         @Test
@@ -275,6 +277,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
     @Nested
     @Accepts({ "Partner:U(Update)" })
+    @Transactional
     class PatchPartner {
 
         @Test
@@ -294,7 +297,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "details": {
-                                       "registrationOffice": "Registergericht Hamburg",
+                                       "registrationOffice": "Temp Registergericht Aurich",
                                        "registrationNumber": "222222",
                                        "birthName": "Maja Schmidt",
                                        "birthday": "1938-04-08",
@@ -320,7 +323,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .matches(person -> {
                         assertThat(person.getPerson().getTradeName()).isEqualTo("Third OHG");
                         assertThat(person.getContact().getLabel()).isEqualTo("forth contact");
-                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo("Registergericht Hamburg");
+                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Aurich");
                         assertThat(person.getDetails().getRegistrationNumber()).isEqualTo("222222");
                         assertThat(person.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
                         assertThat(person.getDetails().getBirthday()).isEqualTo("1938-04-08");
@@ -365,8 +368,8 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .matches(person -> {
                         assertThat(person.getPerson().getTradeName()).isEqualTo(givenPartner.getPerson().getTradeName());
                         assertThat(person.getContact().getLabel()).isEqualTo(givenPartner.getContact().getLabel());
-                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo(null);
-                        assertThat(person.getDetails().getRegistrationNumber()).isEqualTo(null);
+                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Leer");
+                        assertThat(person.getDetails().getRegistrationNumber()).isEqualTo("333333");
                         assertThat(person.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
                         assertThat(person.getDetails().getBirthday()).isEqualTo("1938-04-08");
                         assertThat(person.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
@@ -378,6 +381,7 @@ class HsOfficePartnerControllerAcceptanceTest {
 
     @Nested
     @Accepts({ "Partner:D(Delete)" })
+    @Transactional
     class DeletePartner {
 
         @Test
@@ -445,35 +449,41 @@ class HsOfficePartnerControllerAcceptanceTest {
             final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
             final var newPartner = HsOfficePartnerEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .person(givenPerson)
                     .contact(givenContact)
                     .details(HsOfficePartnerDetailsEntity.builder()
-                            .uuid((UUID.randomUUID()))
+                            .registrationOffice("Temp Registergericht Leer")
+                            .registrationNumber("333333")
                             .build())
                     .build();
-
-            toCleanup(newPartner.getUuid());
 
             return partnerRepo.save(newPartner);
         }).assertSuccessful().returnedValue();
     }
 
-    private UUID toCleanup(final UUID tempPartnerUuid) {
-        tempPartnerUuids.add(tempPartnerUuid);
-        return tempPartnerUuid;
-    }
-
     @AfterEach
     void cleanup() {
-        tempPartnerUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary partner: " + uuid);
-                final var count = partnerRepo.deleteByUuid(uuid);
-                System.out.println("DELETED temporary partner: " + uuid + (count > 0 ? " successful" : " failed"));
-            });
-        });
+        final var deleted = jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            em.createNativeQuery("""
+                            delete from hs_office_partner p
+                                where p.detailsuuid in (
+                                    select d.uuid from hs_office_partner_details d
+                                        where d.registrationoffice like 'Temp %')
+                            """)
+                    .executeUpdate();
+        }).assertSuccessful().returnedValue();
+
+        final var remaining = jpaAttempt.transacted(() -> {
+            em.createNativeQuery("""
+                            select count(p) from hs_office_partner p
+                                where p.detailsuuid in (
+                                    select d.uuid from hs_office_partner_details d
+                                        where d.registrationoffice like 'Temp %')
+                            """)
+                    .getSingleResult();
+        }).assertSuccessful().returnedValue();
+        System.err.println("@AfterEach" + ": " + deleted + " records deleted, " + remaining + " remaining");
     }
 
 }

@@ -6,6 +6,7 @@ import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -34,7 +35,10 @@ public class HsOfficeRelationshipEntity {
             .withProp(Fields.relHolder, HsOfficeRelationshipEntity::getRelHolder)
             .withProp(Fields.contact, HsOfficeRelationshipEntity::getContact);
 
-    private @Id UUID uuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
 
     @ManyToOne
     @JoinColumn(name = "relanchoruuid")

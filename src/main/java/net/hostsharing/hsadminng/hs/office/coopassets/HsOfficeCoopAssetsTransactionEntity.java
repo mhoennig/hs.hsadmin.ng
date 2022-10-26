@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -40,7 +41,10 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable {
             .withSeparator(", ")
             .quotedValues(false);
 
-    private @Id UUID uuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
 
     @ManyToOne
     @JoinColumn(name = "membershipuuid")

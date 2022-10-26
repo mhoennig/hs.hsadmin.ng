@@ -59,14 +59,13 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         context.define(currentUser, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeDebitorEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = debitorRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/office/debitors/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeDebitorResource.class);
         return ResponseEntity.created(uri).body(mapped);

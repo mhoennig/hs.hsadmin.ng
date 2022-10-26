@@ -8,7 +8,6 @@ public class TestHsOfficePerson {
 
     static public HsOfficePersonEntity hsOfficePerson(final String tradeName) {
         return HsOfficePersonEntity.builder()
-                .uuid(UUID.randomUUID())
                 .personType(HsOfficePersonType.NATURAL)
                 .tradeName(tradeName)
                 .build();

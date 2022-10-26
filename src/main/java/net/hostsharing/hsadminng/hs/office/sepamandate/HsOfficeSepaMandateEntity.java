@@ -8,6 +8,7 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
@@ -37,7 +38,10 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
             .withSeparator(", ")
             .quotedValues(false);
 
-    private @Id UUID uuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
 
     @ManyToOne
     @JoinColumn(name = "debitoruuid")

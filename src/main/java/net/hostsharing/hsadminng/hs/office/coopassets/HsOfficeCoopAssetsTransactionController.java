@@ -66,14 +66,13 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         validate(requestBody);
 
         final var entityToSave = mapper.map(requestBody, HsOfficeCoopAssetsTransactionEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = coopAssetsTransactionRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/office/coopassetstransactions/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeCoopAssetsTransactionResource.class);
         return ResponseEntity.created(uri).body(mapped);

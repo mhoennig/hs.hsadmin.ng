@@ -52,14 +52,13 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
         context.define(currentUser, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeContactEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = contactRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/office/contacts/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeContactResource.class);
         return ResponseEntity.created(uri).body(mapped);

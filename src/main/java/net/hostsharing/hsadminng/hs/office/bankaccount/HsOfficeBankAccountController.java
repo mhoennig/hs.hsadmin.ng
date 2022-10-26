@@ -56,14 +56,13 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
         BicUtil.validate(body.getBic());
 
         final var entityToSave = mapper.map(body, HsOfficeBankAccountEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = bankAccountRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/hs/office/BankAccounts/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .path("/api/hs/office/bankaccounts/{id}")
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeBankAccountResource.class);
         return ResponseEntity.created(uri).body(mapped);

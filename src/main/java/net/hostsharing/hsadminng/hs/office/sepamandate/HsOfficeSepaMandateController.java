@@ -1,12 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
-import com.vladmihalcea.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeSepaMandatesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandatePatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeSepaMandateResource;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,14 +61,13 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         context.define(currentUser, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeSepaMandateEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = SepaMandateRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/hs/office/SepaMandates/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .path("/api/hs/office/sepamandates/{id}")
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeSepaMandateResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);

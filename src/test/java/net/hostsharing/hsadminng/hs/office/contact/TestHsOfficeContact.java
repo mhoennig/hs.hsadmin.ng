@@ -8,7 +8,6 @@ public class TestHsOfficeContact {
 
     static public HsOfficeContactEntity hsOfficeContact(final String label, final String emailAddr) {
         return HsOfficeContactEntity.builder()
-                .uuid(UUID.randomUUID())
                 .label(label)
                 .postalAddress("address of " + label)
                 .emailAddresses(emailAddr)

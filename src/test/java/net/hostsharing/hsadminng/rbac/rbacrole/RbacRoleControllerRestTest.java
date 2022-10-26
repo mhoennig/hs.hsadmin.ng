@@ -13,6 +13,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import javax.persistence.EntityManager;
+
 import static java.util.Arrays.asList;
 import static net.hostsharing.hsadminng.rbac.rbacrole.TestRbacRole.*;
 import static org.hamcrest.Matchers.hasSize;
@@ -34,6 +36,9 @@ class RbacRoleControllerRestTest {
 
     @MockBean
     RbacRoleRepository rbacRoleRepository;
+
+    @MockBean
+    EntityManager em;
 
     @Test
     void apiCustomersWillReturnCustomersFromRepository() throws Exception {

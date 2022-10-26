@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.UUID;
@@ -30,27 +31,34 @@ public class HsOfficeDebitorEntity implements Stringifyable {
                     .withSeparator(": ")
                     .quotedValues(false);
 
-    private @Id UUID uuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
 
     @ManyToOne
     @JoinColumn(name = "partneruuid")
     private HsOfficePartnerEntity partner;
 
-    private @Column(name = "debitornumber") Integer debitorNumber;
+    @Column(name = "debitornumber")
+    private Integer debitorNumber;
 
     @ManyToOne
     @JoinColumn(name = "billingcontactuuid")
     private HsOfficeContactEntity billingContact;
 
-    private @Column(name = "vatid") String vatId;
-    private @Column(name = "vatcountrycode") String vatCountryCode;
-    private @Column(name = "vatbusiness") boolean vatBusiness;
+    @Column(name = "vatid")
+    private String vatId;
 
+    @Column(name = "vatcountrycode")
+    private String vatCountryCode;
+
+    @Column(name = "vatbusiness")
+    private boolean vatBusiness;
 
     @ManyToOne
     @JoinColumn(name = "refundbankaccountuuid")
     private HsOfficeBankAccountEntity refundBankAccount;
-
 
     @Override
     public String toString() {

@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
@@ -56,16 +57,13 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         context.define(currentUser, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficePartnerEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
-        entityToSave.setDetails(mapper.map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
-        entityToSave.getDetails().setUuid(UUID.randomUUID());
 
         final var saved = partnerRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/office/partners/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficePartnerResource.class);
         return ResponseEntity.created(uri).body(mapped);

@@ -61,14 +61,13 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         context.define(currentUser, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = membershipRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
-                        .path("/api/hs/office/Memberships/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .path("/api/hs/office/memberships/{id}")
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);

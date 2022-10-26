@@ -21,13 +21,13 @@ class CustomErrorResponse {
 
     static String firstMessageLine(final Throwable exception) {
         if (exception.getMessage() != null) {
-            return firstLine(exception.getMessage());
+            return line(exception.getMessage(), 0);
         }
         return "ERROR: [500] " + exception.getClass().getName();
     }
 
-    static String firstLine(final String message) {
-        return message.split("\\r|\\n|\\r\\n", 0)[0];
+    static String line(final String message, final int lineNo) {
+        return message.split("\\r|\\n|\\r\\n", 0)[lineNo];
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")

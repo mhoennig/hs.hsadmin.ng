@@ -71,7 +71,6 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // when
             final var result = attempt(em, () -> {
                 final var newCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .membership(givenMembership)
                         .transactionType(HsOfficeCoopAssetsTransactionType.DEPOSIT)
                         .assetValue(new BigDecimal("128.00"))
@@ -104,7 +103,6 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
                         null,
                         10001).get(0);
                 final var newCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .membership(givenMembership)
                         .transactionType(HsOfficeCoopAssetsTransactionType.DEPOSIT)
                         .assetValue(new BigDecimal("128.00"))

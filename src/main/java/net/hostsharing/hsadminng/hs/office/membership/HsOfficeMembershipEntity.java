@@ -9,12 +9,11 @@ import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.*;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -48,7 +47,10 @@ public class HsOfficeMembershipEntity implements Stringifyable {
             .withSeparator(", ")
             .quotedValues(false);
 
-    private @Id UUID uuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
 
     @ManyToOne
     @JoinColumn(name = "partneruuid")
@@ -63,7 +65,7 @@ public class HsOfficeMembershipEntity implements Stringifyable {
     private int memberNumber;
 
     @Column(name = "validity", columnDefinition = "daterange")
-    private Range<LocalDate> validity = Range.infinite(LocalDate.class);
+    private Range<LocalDate> validity;
 
     @Column(name = "reasonfortermination")
     @Enumerated(EnumType.STRING)
@@ -76,6 +78,13 @@ public class HsOfficeMembershipEntity implements Stringifyable {
 
     public void setValidTo(final LocalDate validTo) {
         validity = toPostgresDateRange(getValidity().lower(), validTo);
+    }
+
+    public Range<LocalDate> getValidity() {
+        if ( validity == null ) {
+            validity  = Range.infinite(LocalDate.class);
+        };
+        return validity;
     }
 
     @Override

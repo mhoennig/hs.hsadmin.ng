@@ -16,15 +16,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@Import({ Context.class, JpaAttempt.class })
 class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
@@ -52,15 +52,13 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
     RawRbacGrantRepository rawGrantRepo;
 
     @Autowired
-    EntityManager em;
+    JpaAttempt jpaAttempt;
 
     @Autowired
-    JpaAttempt jpaAttempt;
+    EntityManager em;
 
     @MockBean
     HttpServletRequest request;
-
-    Set<HsOfficeSepaMandateEntity> tempEntities = new HashSet<>();
 
     @Nested
     class CreateSepaMandate {
@@ -75,14 +73,13 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = attempt(em, () -> {
-                final var newSepaMandate = toCleanup(HsOfficeSepaMandateEntity.builder()
-                        .uuid(UUID.randomUUID())
+                final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
                         .debitor(givenDebitor)
                         .bankAccount(givenBankAccount)
                         .reference("temp ref A")
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
-                        .build());
+                        .build();
                 return sepaMandateRepo.save(newSepaMandate);
             });
 
@@ -108,14 +105,13 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             attempt(em, () -> {
                 final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
                 final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Paul Winkler").get(0);
-                final var newSepaMandate = toCleanup(HsOfficeSepaMandateEntity.builder()
-                        .uuid(UUID.randomUUID())
+                final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
                         .debitor(givenDebitor)
                         .bankAccount(givenBankAccount)
                         .reference("temp ref B")
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
-                        .build());
+                        .build();
                 return sepaMandateRepo.save(newSepaMandate);
             });
 
@@ -255,7 +251,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                 context("superuser-alex@hostsharing.net");
                 givenSepaMandate.setValidity(Range.closedOpen(
                         givenSepaMandate.getValidity().lower(), newValidityEnd));
-                return toCleanup(sepaMandateRepo.save(givenSepaMandate));
+                return sepaMandateRepo.save(givenSepaMandate);
             });
 
             // then
@@ -408,18 +404,10 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
 
     @BeforeEach
     @AfterEach
+    @Transactional
     void cleanup() {
-        tempEntities.forEach(tempSepaMandate -> {
-            jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary sepaMandate: " + tempSepaMandate.toString());
-                sepaMandateRepo.deleteByUuid(tempSepaMandate.getUuid());
-            });
-        });
-        jpaAttempt.transacted(() -> {
-            context("superuser-alex@hostsharing.net", null);
-            em.createQuery("DELETE FROM HsOfficeSepaMandateEntity WHERE reference like 'temp ref%'");
-        });
+        context("superuser-alex@hostsharing.net", null);
+        em.createQuery("DELETE FROM HsOfficeSepaMandateEntity WHERE reference like 'temp ref%'").executeUpdate();
     }
 
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandateBessler(final String bankAccountHolder) {
@@ -428,7 +416,6 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike(bankAccountHolder).get(0);
             final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)
                     .reference("temp ref X")
@@ -436,15 +423,8 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                             LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                     .build();
 
-            toCleanup(newSepaMandate);
-
             return sepaMandateRepo.save(newSepaMandate);
         }).assertSuccessful().returnedValue();
-    }
-
-    private HsOfficeSepaMandateEntity toCleanup(final HsOfficeSepaMandateEntity tempEntity) {
-        tempEntities.add(tempEntity);
-        return tempEntity;
     }
 
     void exactlyTheseSepaMandatesAreReturned(

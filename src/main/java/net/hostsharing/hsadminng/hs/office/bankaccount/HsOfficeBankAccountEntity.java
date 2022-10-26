@@ -2,11 +2,13 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
+import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import net.hostsharing.hsadminng.errors.DisplayName;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.UUID;
@@ -29,7 +31,10 @@ public class HsOfficeBankAccountEntity implements Stringifyable {
             .withProp(Fields.iban, HsOfficeBankAccountEntity::getIban)
             .withProp(Fields.bic, HsOfficeBankAccountEntity::getBic);
 
-    private @Id UUID uuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID uuid;
     private String holder;
 
     private String iban;

@@ -13,7 +13,6 @@ public class TestHsOfficePartner {
 
     static public HsOfficePartnerEntity HsOfficePartnerWithLegalPerson(final String tradeName) {
         return HsOfficePartnerEntity.builder()
-                .uuid(UUID.randomUUID())
                 .person(HsOfficePersonEntity.builder()
                         .personType(LEGAL)
                         .tradeName(tradeName)

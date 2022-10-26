@@ -52,14 +52,13 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
         context.define(currentUser, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficePersonEntity.class);
-        entityToSave.setUuid(UUID.randomUUID());
 
         final var saved = personRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/office/persons/{id}")
-                        .buildAndExpand(entityToSave.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         final var mapped = mapper.map(saved, HsOfficePersonResource.class);
         return ResponseEntity.created(uri).body(mapped);

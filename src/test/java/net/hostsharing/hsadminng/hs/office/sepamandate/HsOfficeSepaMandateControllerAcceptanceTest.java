@@ -3,14 +3,15 @@ package net.hostsharing.hsadminng.hs.office.sepamandate;
 import com.vladmihalcea.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
+import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -56,7 +56,8 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempSepaMandateUuids = new HashSet<>();
+    @Autowired
+    EntityManager em;
 
     @Nested
     @Accepts({ "SepaMandate:F(Find)" })
@@ -131,7 +132,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                                {
                                    "debitorUuid": "%s",
                                    "bankAccountUuid": "%s",
-                                   "reference": "temp ref A",
+                                   "reference": "temp ref CAT A",
                                    "validFrom": "2022-10-13"
                                  }
                             """.formatted(givenDebitor.getUuid(), givenBankAccount.getUuid()))
@@ -144,15 +145,15 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                         .body("uuid", isUuidValid())
                         .body("debitor.partner.person.tradeName", is("Third OHG"))
                         .body("bankAccount.iban", is("DE02200505501015871393"))
-                        .body("reference", is("temp ref A"))
+                        .body("reference", is("temp ref CAT A"))
                         .body("validFrom", is("2022-10-13"))
                         .body("validTo", equalTo(null))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new sepaMandate can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
 
@@ -171,7 +172,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .body("""
                                {
                                    "bankAccountUuid": "%s",
-                                   "reference": "temp ref A",
+                                   "reference": "temp ref CAT B",
                                    "validFrom": "2022-10-13"
                                  }
                             """.formatted(givenBankAccount.getUuid()))
@@ -197,7 +198,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                                {
                                    "debitorUuid": "%s",
                                    "bankAccountUuid": "%s",
-                                   "reference": "temp ref A",
+                                   "reference": "temp ref CAT C",
                                    "validFrom": "2022-10-13",
                                    "validTo": "2024-12-31"
                                  }
@@ -226,7 +227,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                                {
                                    "debitorUuid": "%s",
                                    "bankAccountUuid": "%s",
-                                   "reference": "temp ref A",
+                                   "reference": "temp refCAT D",
                                    "validFrom": "2022-10-13",
                                    "validTo": "2024-12-31"
                                  }
@@ -267,7 +268,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                              "debitorNumber": 10001,
                              "billingContact": { "label": "first contact" }
                          },
-                         "bankAccount": { 
+                         "bankAccount": {
                             "holder": "First GmbH",
                             "iban": "DE02120300000000202051"
                          },
@@ -319,7 +320,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                              "debitorNumber": 10001,
                              "billingContact": { "label": "first contact" }
                          },
-                         "bankAccount": { 
+                         "bankAccount": {
                             "holder": "First GmbH",
                             "iban": "DE02120300000000202051"
                          },
@@ -359,7 +360,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .body("uuid", isUuidValid())
                     .body("debitor.partner.person.tradeName", is("First GmbH"))
                     .body("bankAccount.iban", is("DE02120300000000202051"))
-                    .body("reference", is("temp ref X"))
+                    .body("reference", is("temp ref CAT Z"))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2022-12-31"));
             // @formatter:on
@@ -369,7 +370,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .matches(mandate -> {
                         assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(10001: First GmbH)");
                         assertThat(mandate.getBankAccount().toShortString()).isEqualTo("First GmbH");
-                        assertThat(mandate.getReference()).isEqualTo("temp ref X");
+                        assertThat(mandate.getReference()).isEqualTo("temp ref CAT Z");
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2023-01-01)");
                         return true;
                     });
@@ -387,7 +388,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "reference": "new ref"
+                               "reference": "temp ref CAT new"
                            }
                            """)
                     .port(port)
@@ -405,7 +406,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                         return true;
                     });
         }
-
     }
 
     @Nested
@@ -435,7 +435,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         void bankAccountAdminUser_canNotDeleteRelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandate = givenSomeTemporarySepaMandate();
-            assertThat(givenSepaMandate.getReference()).isEqualTo("temp ref X");
 
             RestAssured // @formatter:off
                 .given()
@@ -455,7 +454,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         void normalUser_canNotDeleteUnrelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandate = givenSomeTemporarySepaMandate();
-            assertThat(givenSepaMandate.getReference()).isEqualTo("temp ref X");
 
             RestAssured // @formatter:off
                 .given()
@@ -480,32 +478,25 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)
-                    .reference("temp ref X")
+                    .reference("temp ref CAT Z")
                     .validity(Range.closedOpen(
                             LocalDate.parse("2022-11-01"), LocalDate.parse("2023-03-31")))
                     .build();
-
-            toCleanup(newSepaMandate.getUuid());
 
             return sepaMandateRepo.save(newSepaMandate);
         }).assertSuccessful().returnedValue();
     }
 
-    private UUID toCleanup(final UUID tempSepaMandateUuid) {
-        tempSepaMandateUuids.add(tempSepaMandateUuid);
-        return tempSepaMandateUuid;
-    }
-
+    @BeforeEach
     @AfterEach
     void cleanup() {
-        tempSepaMandateUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary sepaMandate: " + uuid);
-                final var count = sepaMandateRepo.deleteByUuid(uuid);
-                System.out.println("DELETED temporary sepaMandate: " + uuid + (count > 0 ? " successful" : " failed"));
-            });
-        });
+        jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            final var count = em.createQuery("DELETE FROM HsOfficeSepaMandateEntity s WHERE s.reference like 'temp %'")
+                    .executeUpdate();
+            if (count == 0) {
+                System.out.println("nothing deleted");
+            }
+        }).assertSuccessful();
     }
-
 }

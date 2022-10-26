@@ -2,15 +2,16 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.persistence.EntityManager;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -35,7 +35,8 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 class HsOfficeDebitorControllerAcceptanceTest {
 
-    private static int nextDebitorNumber = 20001;
+    private static final int LOWEST_TEMP_DEBITOR_NUMBER = 20000;
+    private static int nextDebitorNumber = LOWEST_TEMP_DEBITOR_NUMBER;
 
     @LocalServerPort
     private Integer port;
@@ -58,7 +59,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempDebitorUuids = new HashSet<>();
+    @Autowired
+    EntityManager em;
 
     @Nested
     @Accepts({ "Debitor:F(Find)" })
@@ -164,7 +166,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                    "vatBusiness": true,
                                    "refundBankAccountUuid": "%s"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), nextDebitorNumber++, givenBankAccount.getUuid()))
+                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorNumber, givenBankAccount.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/debitors")
@@ -180,8 +182,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new debitor can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
 
@@ -202,7 +204,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                    "billingContactUuid": "%s",
                                    "debitorNumber": "%s"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), nextDebitorNumber++))
+                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorNumber))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -220,8 +222,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new debitor can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1)));
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
         }
 
@@ -245,7 +247,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                    "vatCountryCode": "DE",
                                    "vatBusiness": true
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContactUuid, nextDebitorNumber++))
+                            """.formatted( givenPartner.getUuid(), givenContactUuid, ++nextDebitorNumber))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -275,7 +277,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                    "vatCountryCode": "DE",
                                    "vatBusiness": true
                                  }
-                            """.formatted( givenPartnerUuid, givenContact.getUuid(), nextDebitorNumber++))
+                            """.formatted( givenPartnerUuid, givenContact.getUuid(), ++nextDebitorNumber))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -520,33 +522,24 @@ class HsOfficeDebitorControllerAcceptanceTest {
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
-                    .uuid(UUID.randomUUID())
-                    .debitorNumber(nextDebitorNumber++)
+                    .debitorNumber(++nextDebitorNumber)
                     .partner(givenPartner)
                     .billingContact(givenContact)
                     .build();
-
-            toCleanup(newDebitor.getUuid());
 
             return debitorRepo.save(newDebitor);
         }).assertSuccessful().returnedValue();
     }
 
-    private UUID toCleanup(final UUID tempDebitorUuid) {
-        tempDebitorUuids.add(tempDebitorUuid);
-        return tempDebitorUuid;
-    }
-
+    @BeforeEach
     @AfterEach
     void cleanup() {
-        tempDebitorUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary debitor: " + uuid);
-                final var count = debitorRepo.deleteByUuid(uuid);
-                System.out.println("DELETED temporary debitor: " + uuid + (count > 0 ? " successful" : " failed"));
-            });
+        jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            final var count = em.createQuery(
+                            "DELETE FROM HsOfficeDebitorEntity d WHERE d.debitorNumber > " + LOWEST_TEMP_DEBITOR_NUMBER)
+                    .executeUpdate();
+            System.out.printf("deleted %d entities%n", count);
         });
     }
-
 }

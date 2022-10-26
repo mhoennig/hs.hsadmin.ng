@@ -73,11 +73,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newPartner = toCleanup(HsOfficePartnerEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .person(givenPerson)
                         .contact(givenContact)
                         .details(HsOfficePartnerDetailsEntity.builder()
-                                .uuid(UUID.randomUUID())
                                 .build())
                         .build());
                 return partnerRepo.save(newPartner);
@@ -106,10 +104,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newPartner = toCleanup(HsOfficePartnerEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .person(givenPerson)
                         .contact(givenContact)
-                        .details(HsOfficePartnerDetailsEntity.builder().uuid(UUID.randomUUID()).build())
+                        .details(HsOfficePartnerDetailsEntity.builder().build())
                         .build());
                 return partnerRepo.save(newPartner);
             });
@@ -406,12 +403,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
             final var newPartner = HsOfficePartnerEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .person(givenPerson)
                     .contact(givenContact)
-                    .details(HsOfficePartnerDetailsEntity.builder()
-                            .uuid(UUID.randomUUID())
-                            .build())
+                    .details(HsOfficePartnerDetailsEntity.builder().build())
                     .build();
 
             toCleanup(newPartner);

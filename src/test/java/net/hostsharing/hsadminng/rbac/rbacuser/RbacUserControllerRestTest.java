@@ -13,6 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import javax.persistence.EntityManager;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -35,6 +36,9 @@ class RbacUserControllerRestTest {
 
     @MockBean
     RbacUserRepository rbacUserRepository;
+
+    @MockBean
+    EntityManager em;
 
     @Test
     void createUserUsesGivenUuid() throws Exception {

@@ -9,7 +9,6 @@ public class TestHsOfficeBankAccount {
 
     static public HsOfficeBankAccountEntity hsOfficeBankAccount(final String holder, final String iban, final String bic) {
         return HsOfficeBankAccountEntity.builder()
-                .uuid(UUID.randomUUID())
                 .holder(holder)
                 .iban(iban)
                 .bic(bic)

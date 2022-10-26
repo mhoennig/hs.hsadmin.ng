@@ -1,9 +1,11 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.Immutable;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
@@ -25,6 +27,8 @@ public class RbacUserEntity {
     private static DateTimeFormatter DATE_FORMAT_WITH_FULLHOUR = DateTimeFormatter.ofPattern("MM-dd-yyyy HH");
 
     @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID uuid;
 
     private String name;

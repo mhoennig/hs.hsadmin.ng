@@ -48,16 +48,12 @@ public class TestCustomerController implements TestCustomersApi {
 
         context.define(currentUser, assumedRoles);
 
-        if (customer.getUuid() == null) {
-            customer.setUuid(UUID.randomUUID());
-        }
-
         final var saved = testCustomerRepository.save(mapper.map(customer, TestCustomerEntity.class));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/test/customers/{id}")
-                        .buildAndExpand(customer.getUuid())
+                        .buildAndExpand(saved.getUuid())
                         .toUri();
         return ResponseEntity.created(uri).body(mapper.map(saved, TestCustomerResource.class));
     }

@@ -11,7 +11,6 @@ import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TE
 public class TestHsOfficeDebitor {
 
     public static final HsOfficeDebitorEntity TEST_DEBITOR = HsOfficeDebitorEntity.builder()
-            .uuid(UUID.randomUUID())
             .debitorNumber(10001)
             .partner(TEST_PARTNER)
             .billingContact(TEST_CONTACT)

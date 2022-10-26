@@ -69,7 +69,6 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // when
             final var result = attempt(em, () -> {
                 final var newCoopSharesTransaction = HsOfficeCoopSharesTransactionEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .membership(givenMembership)
                         .transactionType(HsOfficeCoopSharesTransactionType.SUBSCRIPTION)
                         .shareCount(4)
@@ -102,7 +101,6 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                         null,
                         10001).get(0);
                 final var newCoopSharesTransaction = HsOfficeCoopSharesTransactionEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .membership(givenMembership)
                         .transactionType(HsOfficeCoopSharesTransactionType.SUBSCRIPTION)
                         .shareCount(4)

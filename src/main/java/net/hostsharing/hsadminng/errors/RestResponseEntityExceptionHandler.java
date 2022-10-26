@@ -31,21 +31,25 @@ public class RestResponseEntityExceptionHandler
     protected ResponseEntity<CustomErrorResponse> handleConflict(
             final RuntimeException exc, final WebRequest request) {
 
-        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        final var rawMessage = NestedExceptionUtils.getMostSpecificCause(exc).getMessage();
+        var message = line(rawMessage, 0);
+        if (message.contains("violates foreign key constraint")) {
+            return errorResponse(request, HttpStatus.BAD_REQUEST, line(rawMessage, 1).replaceAll(" *Detail: *", ""));
+        }
         return errorResponse(request, HttpStatus.CONFLICT, message);
     }
 
     @ExceptionHandler(JpaSystemException.class)
     protected ResponseEntity<CustomErrorResponse> handleJpaExceptions(
             final RuntimeException exc, final WebRequest request) {
-        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        final var message = line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0);
         return errorResponse(request, httpStatus(message).orElse(HttpStatus.INTERNAL_SERVER_ERROR), message);
     }
 
     @ExceptionHandler(NoSuchElementException.class)
     protected ResponseEntity<CustomErrorResponse> handleNoSuchElementException(
             final RuntimeException exc, final WebRequest request) {
-        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        final var message = line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0);
         return errorResponse(request, HttpStatus.NOT_FOUND, message);
     }
 
@@ -54,14 +58,14 @@ public class RestResponseEntityExceptionHandler
             final RuntimeException exc, final WebRequest request) {
         final var message =
                 userReadableEntityClassName(
-                        firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage()));
+                        line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0));
         return errorResponse(request, HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler({ Iban4jException.class, ValidationException.class })
     protected ResponseEntity<CustomErrorResponse> handleIbanAndBicExceptions(
             final Throwable exc, final WebRequest request) {
-        final var message = firstLine(NestedExceptionUtils.getMostSpecificCause(exc).getMessage());
+        final var message = line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0);
         return errorResponse(request, HttpStatus.BAD_REQUEST, message);
     }
 

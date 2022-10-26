@@ -79,7 +79,6 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .debitorNumber(20001)
                         .partner(givenPartner)
                         .billingContact(givenContact)
@@ -112,7 +111,6 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .debitorNumber(20002)
                         .partner(givenPartner)
                         .billingContact(givenContact)
@@ -544,7 +542,6 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var givenBankAccount =
                     bankAccount != null ? bankAccountRepo.findByOptionalHolderLike(bankAccount).get(0) : null;
             final var newDebitor = HsOfficeDebitorEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .debitorNumber(20000)
                     .partner(givenPartner)
                     .billingContact(givenContact)

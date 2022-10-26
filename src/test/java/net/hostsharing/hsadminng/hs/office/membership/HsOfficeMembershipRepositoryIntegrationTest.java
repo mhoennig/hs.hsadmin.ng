@@ -76,7 +76,6 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newMembership = toCleanup(HsOfficeMembershipEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .memberNumber(20001)
                         .partner(givenPartner)
                         .mainDebitor(givenDebitor)
@@ -107,7 +106,6 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
                 final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
                 final var newMembership = toCleanup(HsOfficeMembershipEntity.builder()
-                        .uuid(UUID.randomUUID())
                         .memberNumber(20002)
                         .partner(givenPartner)
                         .mainDebitor(givenDebitor)
@@ -409,7 +407,6 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partnerTradeName).get(0);
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike(debitorName).get(0);
             final var newMembership = HsOfficeMembershipEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .memberNumber(20002)
                     .partner(givenPartner)
                     .mainDebitor(givenDebitor)
