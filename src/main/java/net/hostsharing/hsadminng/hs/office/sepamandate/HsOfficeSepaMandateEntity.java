@@ -4,11 +4,10 @@ import com.vladmihalcea.hibernate.type.range.PostgreSQLRangeType;
 import com.vladmihalcea.hibernate.type.range.Range;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import org.hibernate.annotations.GenericGenerator;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
@@ -39,8 +38,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
             .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @ManyToOne
@@ -53,7 +51,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
 
     private @Column(name = "reference") String reference;
 
-    @Column(name="validity", columnDefinition = "daterange")
+    @Column(name = "validity", columnDefinition = "daterange")
     private Range<LocalDate> validity;
 
     @Override

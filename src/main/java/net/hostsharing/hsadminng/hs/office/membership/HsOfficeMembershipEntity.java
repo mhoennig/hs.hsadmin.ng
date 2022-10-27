@@ -9,11 +9,12 @@ import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -48,8 +49,7 @@ public class HsOfficeMembershipEntity implements Stringifyable {
             .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @ManyToOne
@@ -81,9 +81,10 @@ public class HsOfficeMembershipEntity implements Stringifyable {
     }
 
     public Range<LocalDate> getValidity() {
-        if ( validity == null ) {
-            validity  = Range.infinite(LocalDate.class);
-        };
+        if (validity == null) {
+            validity = Range.infinite(LocalDate.class);
+        }
+        ;
         return validity;
     }
 

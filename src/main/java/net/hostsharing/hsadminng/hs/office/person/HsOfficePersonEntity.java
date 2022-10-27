@@ -7,7 +7,6 @@ import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -38,13 +37,12 @@ public class HsOfficePersonEntity implements Stringifyable {
             .withProp(Fields.givenName, HsOfficePersonEntity::getGivenName);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @Column(name = "persontype")
     @Enumerated(EnumType.STRING)
-    @Type( type = "pgsql_enum" )
+    @Type(type = "pgsql_enum")
     private HsOfficePersonType personType;
 
     @Column(name = "tradename")

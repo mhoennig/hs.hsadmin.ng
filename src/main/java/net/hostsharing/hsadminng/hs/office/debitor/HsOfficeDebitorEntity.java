@@ -2,11 +2,11 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -32,7 +32,7 @@ public class HsOfficeDebitorEntity implements Stringifyable {
                     .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
+    @GeneratedValue
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID uuid;
 

@@ -3,10 +3,9 @@ package net.hostsharing.hsadminng.hs.office.relationship;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import org.hibernate.annotations.GenericGenerator;
+import net.hostsharing.hsadminng.stringify.Stringify;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -36,8 +35,7 @@ public class HsOfficeRelationshipEntity {
             .withProp(Fields.contact, HsOfficeRelationshipEntity::getContact);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @ManyToOne
@@ -54,7 +52,7 @@ public class HsOfficeRelationshipEntity {
 
     @Column(name = "reltype")
     @Enumerated(EnumType.STRING)
-    @Type( type = "pgsql_enum" )
+    @Type(type = "pgsql_enum")
     private HsOfficeRelationshipType relType;
 
     @Override

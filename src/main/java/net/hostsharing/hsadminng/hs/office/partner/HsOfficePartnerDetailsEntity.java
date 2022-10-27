@@ -1,10 +1,9 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
+import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import net.hostsharing.hsadminng.errors.DisplayName;
-import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -34,8 +33,7 @@ public class HsOfficePartnerDetailsEntity implements Stringifyable {
             .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     private @Column(name = "registrationoffice") String registrationOffice;

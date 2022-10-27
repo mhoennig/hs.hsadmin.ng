@@ -2,11 +2,10 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.*;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import org.hibernate.annotations.GenericGenerator;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -40,8 +39,7 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable {
             .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @ManyToOne
@@ -50,7 +48,7 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable {
 
     @Column(name = "transactiontype")
     @Enumerated(EnumType.STRING)
-    @Type( type = "pgsql_enum" )
+    @Type(type = "pgsql_enum")
     private HsOfficeCoopSharesTransactionType transactionType;
 
     @Column(name = "valuedate")

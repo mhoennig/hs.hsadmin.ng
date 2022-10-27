@@ -32,8 +32,7 @@ public class HsOfficeBankAccountEntity implements Stringifyable {
             .withProp(Fields.bic, HsOfficeBankAccountEntity::getBic);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
     private String holder;
 

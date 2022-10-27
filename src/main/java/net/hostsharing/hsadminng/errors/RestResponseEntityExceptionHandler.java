@@ -86,7 +86,7 @@ public class RestResponseEntityExceptionHandler
                 Optional.ofNullable(response.getBody()).map(Object::toString).orElse(firstMessageLine(exc)));
     }
 
-    //@ExceptionHandler({ MethodArgumentNotValidException.class })
+    @Override
     @SuppressWarnings("unchecked,rawtypes")
     protected ResponseEntity handleMethodArgumentNotValid(
             MethodArgumentNotValidException exc,

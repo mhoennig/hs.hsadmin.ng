@@ -2,11 +2,10 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import org.hibernate.annotations.GenericGenerator;
+import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
@@ -32,8 +31,7 @@ public class HsOfficePartnerEntity implements Stringifyable {
             .quotedValues(false);
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @ManyToOne
@@ -44,9 +42,9 @@ public class HsOfficePartnerEntity implements Stringifyable {
     @JoinColumn(name = "contactuuid", nullable = false)
     private HsOfficeContactEntity contact;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH}, optional = true)
+    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH }, optional = true)
     @JoinColumn(name = "detailsuuid", nullable = true)
-    @NotFound(action= NotFoundAction.IGNORE)
+    @NotFound(action = NotFoundAction.IGNORE)
     private HsOfficePartnerDetailsEntity details;
 
     @Override
