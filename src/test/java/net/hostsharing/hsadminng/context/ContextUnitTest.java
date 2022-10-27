@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class ContextUnitTest {
 
-    private String defineContextQueryString = """
+    private static final String DEFINE_CONTEXT_QUERY_STRING = """
             call defineContext(
                 cast(:currentTask as varchar),
                 cast(:currentRequest as varchar),
@@ -58,7 +58,7 @@ class ContextUnitTest {
 
             context.define("current-user");
 
-            verify(em).createNativeQuery(defineContextQueryString);
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter(
                     "currentTask",
                     "WithoutHttpRequest.registerWithoutHttpServletRequestUsesCallStackForTask");
@@ -70,7 +70,7 @@ class ContextUnitTest {
 
             context.define("current-user");
 
-            verify(em).createNativeQuery(defineContextQueryString);
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentRequest", "");
         }
     }
@@ -115,7 +115,7 @@ class ContextUnitTest {
 
             context.define("current-user");
 
-            verify(em).createNativeQuery(defineContextQueryString);
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentTask", "POST http://localhost:9999/api/endpoint");
         }
 
@@ -129,7 +129,7 @@ class ContextUnitTest {
 
             context.define("current-user");
 
-            verify(em).createNativeQuery(defineContextQueryString);
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentRequest", """
                     curl -0 -v -X POST http://localhost:9999/api/endpoint \\
                     -H 'current-user:given-user' \\
@@ -152,7 +152,7 @@ class ContextUnitTest {
 
             context.define("current-user");
 
-            verify(em).createNativeQuery(defineContextQueryString);
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter(eq("currentTask"), argThat((String t) -> t.length() == 96));
         }
 
@@ -171,7 +171,7 @@ class ContextUnitTest {
 
             context.define("current-user");
 
-            verify(em).createNativeQuery(defineContextQueryString);
+            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String t) -> t.length() == 512));
         }
 
