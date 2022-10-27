@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HsOfficeSepaMandateEntityTest {
+class HsOfficeSepaMandateEntityUnitTest {
 
     final HsOfficeSepaMandateEntity givenSepaMandate = HsOfficeSepaMandateEntity.builder()
             .debitor(TEST_DEBITOR)

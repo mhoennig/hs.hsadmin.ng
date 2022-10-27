@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import static net.hostsharing.hsadminng.hs.office.membership.TestHsMembership.TEST_MEMBERSHIP;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HsOfficeCoopSharesTransactionEntityTest {
+class HsOfficeCoopSharesTransactionEntityUnitTest {
 
     final HsOfficeCoopSharesTransactionEntity givenCoopSharesTransaction = HsOfficeCoopSharesTransactionEntity.builder()
             .membership(TEST_MEMBERSHIP)

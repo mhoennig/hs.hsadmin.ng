@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HsOfficePartnerDetailsEntityTest {
+class HsOfficePartnerDetailsEntityUnitTest {
 
     final HsOfficePartnerDetailsEntity given = HsOfficePartnerDetailsEntity.builder()
             .registrationOffice("Hamburg")

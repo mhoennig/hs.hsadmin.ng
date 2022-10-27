@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.tngtech.archunit.core.domain.JavaModifier.*;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
@@ -60,6 +61,13 @@ public class ArchitectureTest {
     @SuppressWarnings("unused")
     public static final ArchRule dontUseImplSuffix = noClasses()
             .should().haveSimpleNameEndingWith("Impl");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule testClassesAreProperlyNamed = classes()
+            .that().haveSimpleNameEndingWith("Test")
+            .and().doNotHaveModifier(ABSTRACT)
+            .should().haveNameMatching(".*(UnitTest|RestTest|IntegrationTest|AcceptanceTest|ArchitectureTest)$");
 
     @ArchTest
     @SuppressWarnings("unused")
