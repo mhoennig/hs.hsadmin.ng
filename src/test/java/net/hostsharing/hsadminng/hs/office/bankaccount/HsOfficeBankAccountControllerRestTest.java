@@ -75,8 +75,8 @@ class HsOfficeBankAccountControllerRestTest {
 
                 // then
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("status", is(400)))
-                .andExpect(jsonPath("error", is("Bad Request")))
+                .andExpect(jsonPath("statusCode", is(400)))
+                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", is(testCase.expectedErrorMessage())));
     }
 
@@ -122,8 +122,8 @@ class HsOfficeBankAccountControllerRestTest {
 
                 // then
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("status", is(400)))
-                .andExpect(jsonPath("error", is("Bad Request")))
+                .andExpect(jsonPath("statusCode", is(400)))
+                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", is(testCase.expectedErrorMessage())));
     }
 }

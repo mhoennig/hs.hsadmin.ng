@@ -7,6 +7,7 @@ import org.springframework.util.ReflectionUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.ManyToOne;
+import javax.persistence.PersistenceContext;
 import javax.validation.ValidationException;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class Mapper extends ModelMapper {
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     public Mapper() {

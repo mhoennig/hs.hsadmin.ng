@@ -17,6 +17,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -32,16 +33,19 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
 
     @Autowired
     Context context;
-    @Autowired
-    Context contextMock;
+
     @Autowired
     HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
+
     @Autowired
     HsOfficeMembershipRepository membershipRepo;
+
     @Autowired
     JpaAttempt jpaAttempt;
-    @Autowired
+
+    @PersistenceContext
     EntityManager em;
+
     @LocalServerPort
     private Integer port;
 
@@ -175,8 +179,8 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                       }
                      """.formatted(givenMembership.getUuid())).port(port).when().post("http://localhost/api/hs/office/coopsharestransactions").then().log().all().assertThat().statusCode(400).contentType(ContentType.JSON).body("", lenientlyEquals("""
                         {
-                             "status": 400,
-                             "error": "Bad Request",
+                             "statusCode": 400,
+                             "statusPhrase": "Bad Request",
                              "message": "ERROR: [400] coop shares transaction would result in a negative number of shares"
                          }
                     """));  // @formatter:on

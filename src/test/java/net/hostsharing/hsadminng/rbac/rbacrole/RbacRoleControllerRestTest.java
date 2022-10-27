@@ -2,8 +2,10 @@ package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.Mapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,11 +16,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.SynchronizationType;
+
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static net.hostsharing.hsadminng.rbac.rbacrole.TestRbacRole.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,8 +44,19 @@ class RbacRoleControllerRestTest {
     @MockBean
     RbacRoleRepository rbacRoleRepository;
 
-    @MockBean
+    @Mock
     EntityManager em;
+
+    @MockBean
+    EntityManagerFactory emf;
+
+    @BeforeEach
+    void init() {
+        when(emf.createEntityManager()).thenReturn(em);
+        when(emf.createEntityManager(any(Map.class))).thenReturn(em);
+        when(emf.createEntityManager(any(SynchronizationType.class))).thenReturn(em);
+        when(emf.createEntityManager(any(SynchronizationType.class), any(Map.class))).thenReturn(em);
+    }
 
     @Test
     void apiCustomersWillReturnCustomersFromRepository() throws Exception {

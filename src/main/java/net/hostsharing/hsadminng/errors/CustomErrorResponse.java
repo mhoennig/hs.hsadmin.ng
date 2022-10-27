@@ -35,17 +35,17 @@ class CustomErrorResponse {
 
     private final String path;
 
-    private final int status;
+    private final int statusCode;
 
-    private final String error;
+    private final String statusPhrase;
 
     private final String message;
 
     CustomErrorResponse(final String path, final HttpStatus status, final String message) {
         this.timestamp = LocalDateTime.now();
         this.path = path;
-        this.status = status.value();
-        this.error = status.getReasonPhrase();
+        this.statusCode = status.value();
+        this.statusPhrase = status.getReasonPhrase();
         this.message = message;
     }
 }

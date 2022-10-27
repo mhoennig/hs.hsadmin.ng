@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +44,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     RawRbacGrantRepository rawGrantRepo;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

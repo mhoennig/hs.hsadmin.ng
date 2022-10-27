@@ -5,9 +5,14 @@ import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransact
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.mapper.Mapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -17,9 +22,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.SynchronizationType;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -27,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(HsOfficeMembershipController.class)
 @Import(Mapper.class)
-@RunWith(SpringRunner.class)
 public class HsOfficeMembershipControllerRestTest {
 
     @Autowired
@@ -37,13 +45,24 @@ public class HsOfficeMembershipControllerRestTest {
     Context contextMock;
 
     @MockBean
-    EntityManager em;
-
-    @MockBean
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
 
     @MockBean
     HsOfficeMembershipRepository membershipRepo;
+
+    @Mock
+    EntityManager em;
+
+    @MockBean
+    EntityManagerFactory emf;
+
+    @BeforeEach
+    void init() {
+        when(emf.createEntityManager()).thenReturn(em);
+        when(emf.createEntityManager(any(Map.class))).thenReturn(em);
+        when(emf.createEntityManager(any(SynchronizationType.class))).thenReturn(em);
+        when(emf.createEntityManager(any(SynchronizationType.class), any(Map.class))).thenReturn(em);
+    }
 
     @Test
     void respondBadRequest_ifPartnerUuidIsMissing() throws Exception {
@@ -65,8 +84,8 @@ public class HsOfficeMembershipControllerRestTest {
 
                 // then
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("status", is(400)))
-                .andExpect(jsonPath("error", is("Bad Request")))
+                .andExpect(jsonPath("statusCode", is(400)))
+                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", is("[partnerUuid must not be null but is \"null\"]")));
     }
 
@@ -90,8 +109,8 @@ public class HsOfficeMembershipControllerRestTest {
 
                 // then
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("status", is(400)))
-                .andExpect(jsonPath("error", is("Bad Request")))
+                .andExpect(jsonPath("statusCode", is(400)))
+                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", is("[mainDebitorUuid must not be null but is \"null\"]")));
     }
 
@@ -121,8 +140,8 @@ public class HsOfficeMembershipControllerRestTest {
 
                 // then
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("status", is(400)))
-                .andExpect(jsonPath("error", is("Bad Request")))
+                .andExpect(jsonPath("statusCode", is(400)))
+                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", is("Unable to find Partner with uuid " + givenPartnerUuid)));
     }
 
@@ -152,8 +171,8 @@ public class HsOfficeMembershipControllerRestTest {
 
                 // then
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("status", is(400)))
-                .andExpect(jsonPath("error", is("Bad Request")))
+                .andExpect(jsonPath("statusCode", is(400)))
+                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
                 .andExpect(jsonPath("message", is("Unable to find Debitor with uuid " + givenMainDebitorUuid)));
     }
 }

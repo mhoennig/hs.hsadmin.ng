@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,7 +30,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Autowired
     private HsOfficeDebitorRepository debitorRepo;
 
-    @Autowired
+    @PersistenceContext
     private EntityManager em;
 
     @Override

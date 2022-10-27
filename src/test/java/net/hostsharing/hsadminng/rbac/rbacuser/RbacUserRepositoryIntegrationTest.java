@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +35,7 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @MockBean

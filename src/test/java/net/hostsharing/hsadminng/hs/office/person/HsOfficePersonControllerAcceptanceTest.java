@@ -17,6 +17,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -46,7 +47,7 @@ class HsOfficePersonControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Nested

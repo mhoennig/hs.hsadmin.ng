@@ -22,6 +22,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.*;
@@ -51,7 +52,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     RawRbacGrantRepository rawGrantRepo;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

@@ -20,6 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,7 +49,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
     @Autowired
     RawRbacGrantRepository rawGrantRepo;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

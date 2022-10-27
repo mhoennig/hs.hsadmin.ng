@@ -20,6 +20,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -56,7 +57,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Nested

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
     @Autowired
     private HsOfficeContactRepository contactRepo;
 
-    @Autowired
+    @PersistenceContext
     private EntityManager em;
 
     @Override

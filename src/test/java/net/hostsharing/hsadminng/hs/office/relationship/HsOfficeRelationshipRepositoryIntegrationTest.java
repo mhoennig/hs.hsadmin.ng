@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
@@ -45,7 +46,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     RawRbacGrantRepository rawGrantRepo;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

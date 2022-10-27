@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +42,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     @LocalServerPort
     Integer port;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

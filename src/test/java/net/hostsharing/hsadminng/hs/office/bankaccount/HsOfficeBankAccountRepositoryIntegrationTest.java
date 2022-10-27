@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.junit.jupiter.Container;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +47,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     RawRbacGrantRepository rawGrantRepo;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

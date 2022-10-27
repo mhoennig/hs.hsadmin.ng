@@ -14,6 +14,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
@@ -29,7 +30,7 @@ class TestPackageRepositoryIntegrationTest {
     @Autowired
     TestPackageRepository testPackageRepository;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Autowired

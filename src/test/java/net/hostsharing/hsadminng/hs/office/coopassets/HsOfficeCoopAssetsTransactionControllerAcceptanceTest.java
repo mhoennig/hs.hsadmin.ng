@@ -19,6 +19,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -36,7 +37,7 @@ import static org.hamcrest.Matchers.startsWith;
 class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
 
     @LocalServerPort
-    private Integer port;
+    Integer port;
 
     @Autowired
     Context context;
@@ -50,7 +51,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @Nested
@@ -225,8 +226,8 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("", lenientlyEquals("""
                             {
-                                 "status": 400,
-                                 "error": "Bad Request",
+                                 "statusCode": 400,
+                                 "statusPhrase": "Bad Request",
                                  "message": "ERROR: [400] coop assets transaction would result in a negative balance of assets"
                              }
                         """));  // @formatter:on

@@ -21,6 +21,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -54,7 +55,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @MockBean

@@ -11,6 +11,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -26,7 +27,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     TestCustomerRepository testCustomerRepository;
 
-    @Autowired
+    @PersistenceContext
     EntityManager em;
 
     @MockBean

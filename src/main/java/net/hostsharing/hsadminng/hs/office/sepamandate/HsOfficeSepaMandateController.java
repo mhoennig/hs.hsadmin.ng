@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +34,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Autowired
     private HsOfficeSepaMandateRepository SepaMandateRepo;
 
-    @Autowired
+    @PersistenceContext
     private EntityManager em;
 
     @Override
