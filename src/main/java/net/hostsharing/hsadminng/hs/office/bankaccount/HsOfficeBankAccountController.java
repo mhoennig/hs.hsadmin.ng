@@ -1,10 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
-import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountResource;
+import net.hostsharing.hsadminng.mapper.Mapper;
 import org.iban4j.BicUtil;
 import org.iban4j.IbanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +57,11 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
         final var entityToSave = mapper.map(body, HsOfficeBankAccountEntity.class);
 
+
         final var saved = bankAccountRepo.save(entityToSave);
+//        em.persist(entityToSave);
+//        final var saved = entityToSave;
+//        em.flush();
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())

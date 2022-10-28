@@ -5,7 +5,9 @@ import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -15,8 +17,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.ValidationException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ValidationException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -79,11 +81,18 @@ public class RestResponseEntityExceptionHandler
     @Override
     @SuppressWarnings("unchecked,rawtypes")
     protected ResponseEntity handleExceptionInternal(
-            Exception exc, @Nullable Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+            Exception exc, @Nullable Object body, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
 
-        final var response = super.handleExceptionInternal(exc, body, headers, status, request);
-        return errorResponse(request, response.getStatusCode(),
+        final var response = super.handleExceptionInternal(exc, body, headers, statusCode, request);
+        return errorResponse(request, HttpStatus.valueOf(statusCode.value()),
                 Optional.ofNullable(response.getBody()).map(Object::toString).orElse(firstMessageLine(exc)));
+    }
+    @Override
+    @SuppressWarnings("unchecked,rawtypes")
+    protected ResponseEntity handleHttpMessageNotReadable(
+            HttpMessageNotReadableException exc, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        final var message = line(exc.getMessage(), 0);
+        return errorResponse(request, HttpStatus.BAD_REQUEST, message);
     }
 
     @Override
@@ -91,7 +100,7 @@ public class RestResponseEntityExceptionHandler
     protected ResponseEntity handleMethodArgumentNotValid(
             MethodArgumentNotValidException exc,
             HttpHeaders headers,
-            HttpStatus status,
+            HttpStatusCode statusCode,
             WebRequest request) {
         final var errorList = exc
                 .getBindingResult()

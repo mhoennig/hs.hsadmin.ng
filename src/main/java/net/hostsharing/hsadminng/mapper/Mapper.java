@@ -2,13 +2,12 @@ package net.hostsharing.hsadminng.mapper;
 
 import net.hostsharing.hsadminng.errors.DisplayName;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ReflectionUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.ManyToOne;
-import javax.persistence.PersistenceContext;
-import javax.validation.ValidationException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PersistenceContext;
+import jakarta.validation.ValidationException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.function.BiConsumer;

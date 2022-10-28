@@ -6,7 +6,7 @@ import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.Optional;
 import java.util.UUID;
 

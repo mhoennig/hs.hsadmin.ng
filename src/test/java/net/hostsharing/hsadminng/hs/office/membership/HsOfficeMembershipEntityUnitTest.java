@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import com.vladmihalcea.hibernate.type.range.Range;
 import org.junit.jupiter.api.Test;
 
-import javax.persistence.PrePersist;
+import jakarta.persistence.PrePersist;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.Arrays;

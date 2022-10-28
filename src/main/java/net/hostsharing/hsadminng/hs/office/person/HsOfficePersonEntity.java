@@ -8,19 +8,14 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_person_rv")
-@TypeDef(
-        name = "pgsql_enum",
-        typeClass = PostgreSQLEnumType.class
-)
 @Getter
 @Setter
 @Builder
@@ -42,7 +37,7 @@ public class HsOfficePersonEntity implements Stringifyable {
 
     @Column(name = "persontype")
     @Enumerated(EnumType.STRING)
-    @Type(type = "pgsql_enum")
+    @Type(PostgreSQLEnumType.class)
     private HsOfficePersonType personType;
 
     @Column(name = "tradename")

@@ -1,11 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import net.hostsharing.hsadminng.mapper.EntityPatcher;
-import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
 class HsOfficeDebitorEntityPatcher implements EntityPatcher<HsOfficeDebitorPatchResource> {
 

@@ -718,11 +718,11 @@ Once generated, the interfaces for the Spring-Controllers can be found in `build
 
 These interfaces have to be implemented by subclasses named `*Controller`.
 
-All gradle tasks which need the generated interfaces depend on the Gradle task  `processSpring` which controls the code generation.
+All gradle tasks which need the generated interfaces depend on the Gradle task  `openApiGenerate` which controls the code generation.
 It can also be executed directly:
 
 ```shell
-gw processSpring
+gw openApiGenerate
 ```
 
 ### How to Generate Database Table Diagrams?

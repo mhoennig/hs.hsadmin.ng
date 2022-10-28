@@ -10,7 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,7 +64,7 @@ class ContextIntegrationTests {
 
         // then
         result.assertExceptionWithRootCauseMessage(
-                javax.persistence.PersistenceException.class,
+                jakarta.persistence.PersistenceException.class,
                 "ERROR: [403] undefined has no permission to assume role test_package#yyy00.admin");
     }
 
@@ -77,7 +77,7 @@ class ContextIntegrationTests {
 
         // then
         result.assertExceptionWithRootCauseMessage(
-                javax.persistence.PersistenceException.class,
+                jakarta.persistence.PersistenceException.class,
                 "[401] user unknown@example.org given in `defineContext(...)` does not exist");
     }
 
@@ -106,7 +106,7 @@ class ContextIntegrationTests {
 
         // then
         result.assertExceptionWithRootCauseMessage(
-                javax.persistence.PersistenceException.class,
+                jakarta.persistence.PersistenceException.class,
                 "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role test_package#yyy00.admin");
     }
 }

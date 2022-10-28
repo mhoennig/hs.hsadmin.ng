@@ -11,19 +11,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.testcontainers.junit.jupiter.Container;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -35,7 +30,7 @@ import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import( { Context.class, JpaAttempt.class })
+@Import({ Context.class, JpaAttempt.class })
 class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
@@ -55,9 +50,6 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
     @MockBean
     HttpServletRequest request;
-
-    @Container
-    Container postgres;
 
     @Nested
     class CreateBankAccount {
@@ -106,7 +98,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             // when
             attempt(em, () -> bankAccountRepo.save(
                     hsOfficeBankAccount("some temp acc C", "DE25500105176934832579", "INGDDEFFXXX"))
-            ).assumeSuccessful();
+            ).assertSuccessful();
 
             // then
             final var roles = rawRoleRepo.findAll();

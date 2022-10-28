@@ -8,9 +8,9 @@ import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -25,10 +25,6 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("SEPA-Mandate")
-@TypeDef(
-        typeClass = PostgreSQLRangeType.class,
-        defaultForType = Range.class
-)
 public class HsOfficeSepaMandateEntity implements Stringifyable {
 
     private static Stringify<HsOfficeSepaMandateEntity> stringify = stringify(HsOfficeSepaMandateEntity.class)
@@ -57,6 +53,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
     private LocalDate agreement;
 
     @Column(name = "validity", columnDefinition = "daterange")
+    @Type(PostgreSQLRangeType.class)
     private Range<LocalDate> validity = Range.infinite(LocalDate.class);
 
     public void setValidFrom(final LocalDate validFrom) {

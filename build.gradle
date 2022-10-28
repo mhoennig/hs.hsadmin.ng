@@ -1,8 +1,8 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.5'
-    id 'io.openapiprocessor.openapi-processor' version '2022.2'
+    id 'org.springframework.boot' version '3.0.0-SNAPSHOT'
     id 'io.spring.dependency-management' version '1.1.0'
+    id 'io.openapiprocessor.openapi-processor' version '2022.2'
     id 'com.github.jk1.dependency-license-report' version '2.1'
     id "org.owasp.dependencycheck" version "7.3.0"
     id "com.diffplug.spotless" version "6.11.0"
@@ -36,6 +36,8 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
 }
 
 java {
@@ -57,11 +59,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.8.1'
-    implementation 'org.springdoc:springdoc-openapi-ui:1.6.12'
+    implementation 'org.springdoc:springdoc-openapi:2.0.0-M7'
     implementation 'org.liquibase:liquibase-core'
-    implementation 'com.vladmihalcea:hibernate-types-55:2.20.0'
+    implementation 'com.vladmihalcea:hibernate-types-60:2.20.0'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.3'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.4'
+    implementation 'org.apache.commons:commons-text:1.10.0'
     implementation 'org.modelmapper:modelmapper:3.1.0'
     implementation 'org.iban4j:iban4j:3.2.3-RELEASE'
 
@@ -112,7 +115,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition.yaml"
         mapping "$projectDir/src/main/resources/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi"
+        targetDir "$projectDir/build/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -121,7 +124,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/rbac/rbac.yaml"
         mapping "$projectDir/src/main/resources/api-definition/rbac/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi"
+        targetDir "$projectDir/build/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -130,7 +133,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/test/test.yaml"
         mapping "$projectDir/src/main/resources/api-definition/test/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi"
+        targetDir "$projectDir/build/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -139,7 +142,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/hs-office/hs-office.yaml"
         mapping "$projectDir/src/main/resources/api-definition/hs-office/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi"
+        targetDir "$projectDir/build/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -152,6 +155,17 @@ tasks.register('processSpring', ProcessSpring)
 }
 project.tasks.processResources.dependsOn processSpring
 project.tasks.compileJava.dependsOn processSpring
+
+// Rename javax to jakarta in OpenApi generated java files because
+// io.openapiprocessor.openapi-processor 2022.2 does not yet support the openapiprocessor useSpringBoot3 config option.
+task openApiGenerate(type: Copy) {
+    from "$buildDir/generated/sources/openapi-javax"
+    into "$buildDir/generated/sources/openapi"
+    filter { line -> line.replaceAll('javax', 'jakarta') }
+}
+compileJava.source "$buildDir/generated/sources/openapi"
+compileJava.dependsOn openApiGenerate
+openApiGenerate.dependsOn processSpring
 
 // Spotless Code Formatting
 spotless {
@@ -271,8 +285,8 @@ pitest {
     targetTests = ['net.hostsharing.hsadminng.**.*UnitTest', 'net.hostsharing.hsadminng.**.*RestTest']
     excludedTestClasses = ['**AcceptanceTest*', '**IntegrationTest*']
 
-    pitestVersion = '1.9.0'
-    junit5PluginVersion = '1.0.0'
+    pitestVersion = '1.9.9'
+    junit5PluginVersion = '1.1.0'
 
     threads = 4
 

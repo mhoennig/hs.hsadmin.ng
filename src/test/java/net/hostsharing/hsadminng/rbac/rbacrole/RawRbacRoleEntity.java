@@ -5,7 +5,7 @@ import org.hibernate.annotations.Formula;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Immutable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;

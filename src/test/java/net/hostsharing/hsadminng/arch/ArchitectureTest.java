@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.tngtech.archunit.core.domain.JavaModifier.*;
+import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
@@ -197,19 +197,19 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule doNotUseJavaxTransactionAnnotationAtClassLevel = noClasses()
-            .should().beAnnotatedWith(javax.transaction.Transactional.class.getName())
+    public static final ArchRule doNotUsejakartaTransactionAnnotationAtClassLevel = noClasses()
+            .should().beAnnotatedWith(jakarta.transaction.Transactional.class.getName())
             .as("Use @%s instead of @%s.".formatted(
                     org.springframework.transaction.annotation.Transactional.class.getName(),
-                    javax.transaction.Transactional.class));
+                    jakarta.transaction.Transactional.class));
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule doNotUseJavaxTransactionAnnotationAtMethodLevel = noMethods()
-            .should().beAnnotatedWith(javax.transaction.Transactional.class)
+    public static final ArchRule doNotUsejakartaTransactionAnnotationAtMethodLevel = noMethods()
+            .should().beAnnotatedWith(jakarta.transaction.Transactional.class)
             .as("Use @%s instead of @%s.".formatted(
                     org.springframework.transaction.annotation.Transactional.class.getName(),
-                    javax.transaction.Transactional.class.getName()));
+                    jakarta.transaction.Transactional.class.getName()));
 
     @ArchTest
     @SuppressWarnings("unused")

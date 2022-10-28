@@ -1,11 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
-import net.hostsharing.hsadminng.mapper.EntityPatcher;
-import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationshipPatchResource;
+import net.hostsharing.hsadminng.mapper.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.UUID;
 
 class HsOfficeRelationshipEntityPatcher implements EntityPatcher<HsOfficeRelationshipPatchResource> {

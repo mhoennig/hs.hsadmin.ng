@@ -21,7 +21,7 @@ public interface HsOfficeBankAccountRepository extends Repository<HsOfficeBankAc
 
     List<HsOfficeBankAccountEntity> findByIbanOrderByIban(String iban);
 
-    HsOfficeBankAccountEntity save(final HsOfficeBankAccountEntity entity);
+    <S extends HsOfficeBankAccountEntity> S save(S entity);
 
     int deleteByUuid(final UUID uuid);
 

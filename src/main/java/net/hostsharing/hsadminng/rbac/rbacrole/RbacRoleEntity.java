@@ -2,10 +2,9 @@ package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import lombok.*;
 import org.hibernate.annotations.Formula;
-import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.Immutable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -19,8 +18,7 @@ import java.util.UUID;
 public class RbacRoleEntity {
 
     @Id
-    @GeneratedValue(generator = "UUID")
-    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue
     private UUID uuid;
 
     @Column(name = "objectuuid")

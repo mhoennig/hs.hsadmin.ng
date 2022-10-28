@@ -1,7 +1,5 @@
 package net.hostsharing.hsadminng.context;
 
-import com.vladmihalcea.hibernate.type.array.StringArrayType;
-import com.vladmihalcea.hibernate.type.array.UUIDArrayType;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -10,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -79,21 +77,15 @@ public class Context {
     }
 
     public UUID getCurrentUserUUid() {
-        return (UUID) em.createNativeQuery("select currentUserUUid()").getSingleResult();
+        return (UUID) em.createNativeQuery("select currentUserUUid()", UUID.class).getSingleResult();
     }
 
     public String[] getAssumedRoles() {
-        return (String[]) em.createNativeQuery("select assumedRoles() as roles")
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("roles", StringArrayType.INSTANCE)
-                .getSingleResult();
+        return (String[]) em.createNativeQuery("select assumedRoles() as roles", String[].class).getSingleResult();
     }
 
     public UUID[] currentSubjectsUuids() {
-        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids() as uuids")
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("uuids", UUIDArrayType.INSTANCE) // TODO.blog
-                .getSingleResult();
+        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids() as uuids", UUID[].class).getSingleResult();
     }
 
     public static String getCallerMethodNameFromStackFrame(final int skipFrames) {
@@ -105,7 +97,7 @@ public class Context {
                                 .filter(c -> c.getDeclaringClass()
                                         .getPackageName()
                                         .startsWith("net.hostsharing.hsadminng"))
-                                .filter(c -> !c.getDeclaringClass().getName().contains("BySpringCGLIB$$"))
+                                .filter(c -> !c.getDeclaringClass().getName().contains("$$SpringCGLIB$$"))
                                 .findFirst());
         return caller.map(
                         c -> c.getDeclaringClass().getSimpleName() + "." + c.getMethodName())

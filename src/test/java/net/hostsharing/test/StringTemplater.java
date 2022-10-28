@@ -2,11 +2,11 @@ package net.hostsharing.test;
 
 import lombok.experimental.UtilityClass;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 
-import static liquibase.repackaged.org.apache.commons.text.StringSubstitutor.replace;
 import static org.apache.commons.lang3.StringUtils.stripEnd;
+import static org.apache.commons.text.StringSubstitutor.replace;
 
 @UtilityClass
 public class StringTemplater {

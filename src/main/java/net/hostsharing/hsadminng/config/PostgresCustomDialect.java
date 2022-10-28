@@ -1,15 +1,14 @@
 package net.hostsharing.hsadminng.config;
 
-import org.hibernate.dialect.PostgreSQL95Dialect;
+import org.hibernate.dialect.PostgreSQLDialect;
 
-import java.sql.Types;
+import static org.hibernate.dialect.DatabaseVersion.make;
 
 @SuppressWarnings("unused") // configured in application.yml
-public class PostgresCustomDialect extends PostgreSQL95Dialect {
+public class PostgresCustomDialect extends PostgreSQLDialect {
 
     public PostgresCustomDialect() {
-        this.registerHibernateType(Types.OTHER, "pg-uuid");
-        this.registerHibernateType(Types.ARRAY, "array");
+        super(make(13, 7));
     }
 
 }

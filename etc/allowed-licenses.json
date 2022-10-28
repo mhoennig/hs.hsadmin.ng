@@ -1,12 +1,14 @@
 {
     "allowedLicenses": [
         { "moduleLicense": "Apache 2.0" },
+        { "moduleLicense": "Apache 2" },
         { "moduleLicense": "Apache License 2.0" },
         { "moduleLicense": "Apache License, Version 2.0" },
         { "moduleLicense": "The Apache Software License, Version 2.0" },
 
         { "moduleLicense": "BSD License" },
         { "moduleLicense": "BSD-2-Clause" },
+        { "moduleLicense": "The BSD License" },
 
         { "moduleLicense": "CDDL 1.1" },
         { "moduleLicense": "CDDL/GPLv2+CE" },
@@ -29,6 +31,8 @@
         { "moduleLicense": "MIT License" },
         { "moduleLicense": "MIT" },
         { "moduleLicense": "The MIT License (MIT)" },
-        { "moduleLicense": "The MIT License" }
+        { "moduleLicense": "The MIT License" },
+
+        { "moduleName": "org.springdoc:springdoc-openapi" }
     ]
 }

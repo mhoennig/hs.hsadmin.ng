@@ -12,9 +12,8 @@ import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -23,20 +22,12 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_membership_rv")
-@TypeDef(
-        name = "pgsql_enum",
-        typeClass = PostgreSQLEnumType.class
-)
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Membership")
-@TypeDef(
-        typeClass = PostgreSQLRangeType.class,
-        defaultForType = Range.class
-)
 public class HsOfficeMembershipEntity implements Stringifyable {
 
     private static Stringify<HsOfficeMembershipEntity> stringify = stringify(HsOfficeMembershipEntity.class)
@@ -65,11 +56,12 @@ public class HsOfficeMembershipEntity implements Stringifyable {
     private int memberNumber;
 
     @Column(name = "validity", columnDefinition = "daterange")
+    @Type(PostgreSQLRangeType.class)
     private Range<LocalDate> validity;
 
     @Column(name = "reasonfortermination")
     @Enumerated(EnumType.STRING)
-    @Type(type = "pgsql_enum")
+    @Type(PostgreSQLEnumType.class)
     private HsOfficeReasonForTermination reasonForTermination;
 
     public void setValidFrom(final LocalDate validFrom) {

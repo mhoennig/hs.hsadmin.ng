@@ -8,9 +8,8 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -20,10 +19,6 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
 @Table(name = "hs_office_coopassetstransaction_rv")
-@TypeDef(
-        name = "pgsql_enum",
-        typeClass = PostgreSQLEnumType.class
-)
 @Getter
 @Setter
 @Builder
@@ -52,7 +47,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable {
 
     @Column(name = "transactiontype")
     @Enumerated(EnumType.STRING)
-    @Type( type = "pgsql_enum" )
+    @Type(PostgreSQLEnumType.class)
     private HsOfficeCoopAssetsTransactionType transactionType;
 
     @Column(name = "valuedate")

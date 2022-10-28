@@ -4,8 +4,6 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
-import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
@@ -18,8 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -235,16 +233,26 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
     }
 
     @Nested
-    @Accepts({"CoopAssetTransaction:R(Read)"})
+    @Accepts({ "CoopAssetTransaction:R(Read)" })
     class GetCoopAssetTransaction {
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryCoopAssetTransaction() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+                    null,
+                    LocalDate.of(2010, 3, 15),
+                    LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                .given().header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
                     {
                         "transactionType": "DEPOSIT"
                     }
@@ -252,23 +260,42 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({"CoopAssetTransaction:X(Access Control)"})
+        @Accepts({ "CoopAssetTransaction:X(Access Control)" })
         void normalUser_canNotGetUnrelatedCoopAssetTransaction() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+                    null,
+                    LocalDate.of(2010, 3, 15),
+                    LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "selfregistered-user-drew@hostsharing.org").port(port).when().get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid).then().log().body().assertThat().statusCode(404); // @formatter:on
+                .given().header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
+                .then().log().body().assertThat()
+                    .statusCode(404); // @formatter:on
         }
 
         @Test
-        @Accepts({"CoopAssetTransaction:X(Access Control)"})
+        @Accepts({ "CoopAssetTransaction:X(Access Control)" })
         void contactAdminUser_canGetRelatedCoopAssetTransaction() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
+            final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
+                    null,
+                    LocalDate.of(2010, 3, 15),
+                    LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "contact-admin@firstcontact.example.com").port(port).when().get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                .given()
+                    .header("current-user", "contact-admin@firstcontact.example.com")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
+                .then().log().body().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
                     {
                          "transactionType": "DEPOSIT",
                          "assetValue": 320

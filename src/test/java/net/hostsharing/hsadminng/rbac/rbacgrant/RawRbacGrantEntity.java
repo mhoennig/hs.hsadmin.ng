@@ -4,7 +4,10 @@ import lombok.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Immutable;
 
-import javax.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;

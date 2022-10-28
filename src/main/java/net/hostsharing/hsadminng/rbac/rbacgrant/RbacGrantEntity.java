@@ -4,7 +4,7 @@ import lombok.*;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleType;
 import org.springframework.data.annotation.Immutable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
