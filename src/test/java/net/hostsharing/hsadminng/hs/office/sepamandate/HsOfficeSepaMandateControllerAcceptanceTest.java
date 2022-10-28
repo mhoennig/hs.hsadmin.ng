@@ -134,6 +134,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                                    "debitorUuid": "%s",
                                    "bankAccountUuid": "%s",
                                    "reference": "temp ref CAT A",
+                                   "agreement": "2020-01-02",
                                    "validFrom": "2022-10-13"
                                  }
                             """.formatted(givenDebitor.getUuid(), givenBankAccount.getUuid()))
@@ -200,6 +201,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                                    "debitorUuid": "%s",
                                    "bankAccountUuid": "%s",
                                    "reference": "temp ref CAT C",
+                                   "agreement": "2022-10-12",
                                    "validFrom": "2022-10-13",
                                    "validTo": "2024-12-31"
                                  }
@@ -229,6 +231,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                                    "debitorUuid": "%s",
                                    "bankAccountUuid": "%s",
                                    "reference": "temp refCAT D",
+                                   "agreement": "2022-10-12",
                                    "validFrom": "2022-10-13",
                                    "validTo": "2024-12-31"
                                  }
@@ -403,7 +406,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
             // finally, the sepaMandate is actually updated
             assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");
+                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2023-03-31)");
                         return true;
                     });
         }
@@ -480,6 +483,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)
                     .reference("temp ref CAT Z")
+                    .agreement(LocalDate.parse("2022-10-31"))
                     .validity(Range.closedOpen(
                             LocalDate.parse("2022-11-01"), LocalDate.parse("2023-03-31")))
                     .build();

@@ -15,6 +15,9 @@ components:
                     $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
                 reference:
                    type: string
+                agreement:
+                    type: string
+                    format: date
                 validFrom:
                    type: string
                    format: date
@@ -25,9 +28,21 @@ components:
         HsOfficeSepaMandatePatch:
             type: object
             properties:
+                reference:
+                    type: string
+                    nullable: true
+                agreement:
+                    type: string
+                    format: date
+                    nullable: true
+                validFrom:
+                    type: string
+                    format: date
+                    nullable: true
                 validTo:
                     type: string
                     format: date
+                    nullable: true
             additionalProperties: false
 
         HsOfficeSepaMandateInsert:
@@ -44,6 +59,10 @@ components:
                 reference:
                     type: string
                     nullable: false
+                agreement:
+                    type: string
+                    format: date
+                    nullable: false
                 validFrom:
                     type: string
                     format: date
@@ -56,5 +75,6 @@ components:
                 - debitorUuid
                 - bankAccountUuid
                 - reference
+                - agreement
                 - validFrom
             additionalProperties: false

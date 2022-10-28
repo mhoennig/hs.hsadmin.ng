@@ -78,6 +78,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                         .debitor(givenDebitor)
                         .bankAccount(givenBankAccount)
                         .reference("temp ref A")
+                        .agreement(LocalDate.parse( "2020-01-02"))
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
@@ -110,6 +111,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                         .debitor(givenDebitor)
                         .bankAccount(givenBankAccount)
                         .reference("temp ref B")
+                        .agreement(LocalDate.parse("2020-01-02"))
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
@@ -178,9 +180,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02100500000054540402, refSeconde.K., [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02100500000054540402, refSeconde.K., 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, 2022-09-30, [2022-10-01,2027-01-01))");
         }
 
         @Test
@@ -194,7 +196,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
@@ -212,9 +214,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02100500000054540402, refSeconde.K., [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02100500000054540402, refSeconde.K., 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, 2022-09-30, [2022-10-01,2027-01-01))");
         }
 
         @Test
@@ -228,7 +230,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
@@ -420,6 +422,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)
                     .reference("temp ref X")
+                    .agreement(LocalDate.parse( "2020-01-02"))
                     .validity(Range.closedOpen(
                             LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                     .build();

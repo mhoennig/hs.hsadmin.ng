@@ -14,6 +14,7 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -33,6 +34,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
     private static Stringify<HsOfficeSepaMandateEntity> stringify = stringify(HsOfficeSepaMandateEntity.class)
             .withProp(e -> e.getBankAccount().getIban())
             .withProp(HsOfficeSepaMandateEntity::getReference)
+            .withProp(HsOfficeSepaMandateEntity::getAgreement)
             .withProp(e -> e.getValidity().asString())
             .withSeparator(", ")
             .quotedValues(false);
@@ -51,8 +53,27 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
 
     private @Column(name = "reference") String reference;
 
+    @Column(name="agreement", columnDefinition = "date")
+    private LocalDate agreement;
+
     @Column(name = "validity", columnDefinition = "daterange")
-    private Range<LocalDate> validity;
+    private Range<LocalDate> validity = Range.infinite(LocalDate.class);
+
+    public void setValidFrom(final LocalDate validFrom) {
+        setValidity(toPostgresDateRange(validFrom, getValidTo()));
+    }
+
+    public void setValidTo(final LocalDate validTo) {
+        setValidity(toPostgresDateRange(getValidFrom(), validTo));
+    }
+
+    public LocalDate getValidFrom() {
+        return lowerInclusiveFromPostgresDateRange(getValidity());
+    }
+
+    public LocalDate getValidTo() {
+        return upperInclusiveFromPostgresDateRange(getValidity());
+    }
 
     @Override
     public String toString() {
@@ -63,4 +84,5 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
     public String toShortString() {
         return reference;
     }
+
 }

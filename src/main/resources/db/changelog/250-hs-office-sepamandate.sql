@@ -10,6 +10,7 @@ create table if not exists hs_office_sepamandate
     debitorUuid         uuid not null references hs_office_debitor(uuid),
     bankAccountUuid     uuid not null references hs_office_bankaccount(uuid),
     reference           varchar(96) not null,
+    agreement           date not null,
     validity            daterange not null
 );
 --//

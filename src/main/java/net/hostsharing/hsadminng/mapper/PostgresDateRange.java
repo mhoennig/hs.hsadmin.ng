@@ -9,14 +9,25 @@ import java.time.LocalDate;
 public class PostgresDateRange {
 
     public static Range<LocalDate> toPostgresDateRange(
-            final LocalDate validFrom,
-            final LocalDate validTo) {
-        return validFrom != null
-                ? validTo != null
-                    ? Range.closedOpen(validFrom, validTo.plusDays(1))
-                    : Range.closedInfinite(validFrom)
-                : validTo != null
-                    ? Range.infiniteOpen(validTo.plusDays(1))
+            final LocalDate lowerInclusive,
+            final LocalDate upperInclusive) {
+        return lowerInclusive != null
+                ? upperInclusive != null
+                    ? Range.closedOpen(lowerInclusive, upperInclusive.plusDays(1))
+                    : Range.closedInfinite(lowerInclusive)
+                : upperInclusive != null
+                    ? Range.infiniteOpen(upperInclusive.plusDays(1))
                     : Range.infinite(LocalDate.class);
     }
+
+    public static LocalDate lowerInclusiveFromPostgresDateRange(
+            final Range<LocalDate> range) {
+        return range.lower();
+    }
+
+    public static LocalDate upperInclusiveFromPostgresDateRange(
+        final Range<LocalDate> range) {
+        return range.upper() != null ? range.upper().minusDays(1) : null;
+    }
+
 }

@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsOfficeMembershipEntityUnitTest {
 
     public static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-01-01");
+
     final HsOfficeMembershipEntity givenMembership = HsOfficeMembershipEntity.builder()
             .memberNumber(10001)
             .partner(TEST_PARTNER)
@@ -54,9 +55,19 @@ class HsOfficeMembershipEntityUnitTest {
     }
 
     @Test
+    void settingValidFromKeepsValidTo() {
+        givenMembership.setValidFrom(LocalDate.parse("2020-01-01"));
+        assertThat(givenMembership.getValidFrom()).isEqualTo(LocalDate.parse("2020-01-01"));
+        assertThat(givenMembership.getValidTo()).isNull();
+
+    }
+
+    @Test
     void settingValidToKeepsValidFrom() {
         givenMembership.setValidTo(LocalDate.parse("2024-12-31"));
-        assertThat(givenMembership.getValidity().lower()).isEqualTo(GIVEN_VALID_FROM);
+        assertThat(givenMembership.getValidFrom()).isEqualTo(GIVEN_VALID_FROM);
+        assertThat(givenMembership.getValidTo()).isEqualTo(LocalDate.parse("2024-12-31"));
+
     }
 
     private static void invokePrePersist(final HsOfficeMembershipEntity membershipEntity)

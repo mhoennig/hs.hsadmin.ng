@@ -18,7 +18,7 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -73,12 +73,21 @@ public class HsOfficeMembershipEntity implements Stringifyable {
     private HsOfficeReasonForTermination reasonForTermination;
 
     public void setValidFrom(final LocalDate validFrom) {
-        validity = toPostgresDateRange(validFrom, getValidity().upper());
+        setValidity(toPostgresDateRange(validFrom, getValidTo()));
     }
 
     public void setValidTo(final LocalDate validTo) {
-        validity = toPostgresDateRange(getValidity().lower(), validTo);
+        setValidity(toPostgresDateRange(getValidFrom(), validTo));
     }
+
+    public LocalDate getValidFrom() {
+        return lowerInclusiveFromPostgresDateRange(getValidity());
+    }
+
+    public LocalDate getValidTo() {
+        return upperInclusiveFromPostgresDateRange(getValidity());
+    }
+
 
     public Range<LocalDate> getValidity() {
         if (validity == null) {
