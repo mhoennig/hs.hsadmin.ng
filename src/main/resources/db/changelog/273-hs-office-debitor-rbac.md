@@ -171,7 +171,6 @@ subgraph office
         %% incoming
             role:hsOfficeDebitor.admin ---> role:hsOfficeDebitor.agent         
             role:hsOfficePartner.admin --> role:hsOfficeDebitor.agent
-            role:hsOfficeContact.admin --> role:hsOfficeDebitor.agent
         %% outgoing
             role:hsOfficeDebitor.agent --> role:hsOfficeBankAccount.tenant
     
