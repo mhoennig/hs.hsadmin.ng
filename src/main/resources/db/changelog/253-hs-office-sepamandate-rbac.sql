@@ -102,6 +102,7 @@ call generateRbacIdentityView('hs_office_sepamandate', idNameExpression => 'targ
 call generateRbacRestrictedView('hs_office_sepamandate',
     orderby => 'target.reference',
     columnUpdates => $updates$
+        reference = new.reference,
         agreement = new.agreement,
         validity = new.validity
     $updates$);

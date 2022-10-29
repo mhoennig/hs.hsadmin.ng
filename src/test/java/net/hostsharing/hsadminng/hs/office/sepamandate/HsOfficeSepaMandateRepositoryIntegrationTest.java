@@ -78,7 +78,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                         .debitor(givenDebitor)
                         .bankAccount(givenBankAccount)
                         .reference("temp ref A")
-                        .agreement(LocalDate.parse( "2020-01-02"))
+                        .agreement(LocalDate.parse("2020-01-02"))
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
@@ -238,29 +238,30 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
     class UpdateSepaMandate {
 
         @Test
-        public void hostsharingAdmin_canUpdateValidityOfArbitrarySepaMandate() {
+        public void hostsharingAdmin_canUpdateArbitrarySepaMandate() {
             // given
-            context("superuser-alex@hostsharing.net");
             final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Peter Smith");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
                     "hs_office_bankaccount#PeterSmith.admin");
-            assertThatSepaMandateActuallyInDatabase(givenSepaMandate);
-            final var newValidityEnd = LocalDate.now();
 
             // when
-            context("superuser-alex@hostsharing.net");
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
+                givenSepaMandate.setReference("temp ref X - updated");
+                givenSepaMandate.setAgreement(LocalDate.parse("2019-05-13"));
                 givenSepaMandate.setValidity(Range.closedOpen(
-                        givenSepaMandate.getValidity().lower(), newValidityEnd));
+                        LocalDate.parse("2019-05-17"), LocalDate.parse("2023-01-01")));
                 return sepaMandateRepo.save(givenSepaMandate);
             });
 
             // then
             result.assertSuccessful();
-
-            sepaMandateRepo.deleteByUuid(givenSepaMandate.getUuid());
+            jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net");
+                assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isNotEmpty().get()
+                        .usingRecursiveComparison().isEqualTo(givenSepaMandate);
+            }).assertSuccessful();
         }
 
         @Test
@@ -422,7 +423,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)
                     .reference("temp ref X")
-                    .agreement(LocalDate.parse( "2020-01-02"))
+                    .agreement(LocalDate.parse("2020-01-02"))
                     .validity(Range.closedOpen(
                             LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                     .build();

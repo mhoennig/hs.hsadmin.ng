@@ -341,7 +341,52 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
     class PatchSepaMandate {
 
         @Test
-        void globalAdmin_canPatchValidToOfArbitrarySepaMandate() {
+        void globalAdmin_canPatchAllUpdatablePropertiesOfSepaMandate() {
+
+            final var givenSepaMandate = givenSomeTemporarySepaMandate();
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                           {
+                               "reference": "temp ref CAT Z - patched",
+                               "agreement": "2020-06-01",
+                               "validFrom": "2020-06-05",
+                               "validTo": "2022-12-31"
+                           }
+                          """)
+                    .port(port)
+                .when()
+                    .patch("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("uuid", isUuidValid())
+                    .body("debitor.partner.person.tradeName", is("First GmbH"))
+                    .body("bankAccount.iban", is("DE02120300000000202051"))
+                    .body("reference", is("temp ref CAT Z - patched"))
+                    .body("agreement", is("2020-06-01"))
+                    .body("validFrom", is("2020-06-05"))
+                    .body("validTo", is("2022-12-31"));
+            // @formatter:on
+
+            // finally, the sepaMandate is actually updated
+            context.define("superuser-alex@hostsharing.net");
+            assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
+                    .matches(mandate -> {
+                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(10001: First GmbH)");
+                        assertThat(mandate.getBankAccount().toShortString()).isEqualTo("First GmbH");
+                        assertThat(mandate.getReference()).isEqualTo("temp ref CAT Z - patched");
+                        assertThat(mandate.getValidFrom()).isEqualTo("2020-06-05");
+                        assertThat(mandate.getValidTo()).isEqualTo("2022-12-31");
+                        return true;
+                    });
+        }
+
+        @Test
+        void globalAdmin_canPatchJustValidToOfArbitrarySepaMandate() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandate = givenSomeTemporarySepaMandate();
