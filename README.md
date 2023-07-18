@@ -56,6 +56,20 @@ To be able to build and run the Java Spring Boot application, you need the follo
   (JDK 17.x will be automatically installed by Gradle toolchain support)
 - Gradle in some not too outdated version (7.4 will be installed via wrapper)
 
+For Ubuntu 22.02:
+
+    sudo apt install -y openjdk-17-jdk
+    # see https://gradle.org/releases/ for direct link to current release 7.2.6
+    export VERSION=7.2.6
+    wget https://services.gradle.org/distributions/gradle-7.2.6-bin.zip?-.... -O gradle-${VERSION}-bin.zip
+    sudo unzip -d /opt/gradle gradle-${VERSION}-bin.zip
+    cd /opt/gradle && sudo ln -s gradle-${VERSION} latest && cd -
+    sudo nano /etc/profile.d/gradle.sh
+      export GRADLE_HOME=/opt/gradle/latest
+      export PATH=${GRADLE_HOME}/bin:${PATH}
+    sudo chmod +x /etc/profile.d/gradle.sh
+    source /etc/profile.d/gradle.sh
+
 You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
 If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
