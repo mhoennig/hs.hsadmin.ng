@@ -20,7 +20,7 @@ public interface HsOfficeRelationshipRepository extends Repository<HsOfficeRelat
             SELECT p.* FROM hs_office_relationship_rv AS p
                 WHERE p.relAnchorUuid = :personUuid OR p.relHolderUuid = :personUuid
                """, nativeQuery = true)
-    List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuid(@NotNull UUID personUuid);
+    List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuid2(@NotNull UUID personUuid);
 
     @Query(value = """
             SELECT p.* FROM hs_office_relationship_rv AS p
