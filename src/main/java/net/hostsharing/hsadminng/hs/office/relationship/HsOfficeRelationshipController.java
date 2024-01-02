@@ -51,7 +51,7 @@ public class HsOfficeRelationshipController implements HsOfficeRelationshipsApi 
             final HsOfficeRelationshipTypeResource relationshipType) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = relationshipRepo.findRelationshipRelatedToPersonUuid(personUuid,
+        final var entities = relationshipRepo.findRelationshipRelatedToPersonUuidAndRelationshipType(personUuid,
                 mapper.map(relationshipType, HsOfficeRelationshipType.class));
 
         final var resources = mapper.mapList(entities, HsOfficeRelationshipResource.class,

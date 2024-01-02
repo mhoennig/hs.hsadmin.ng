@@ -54,7 +54,6 @@ To be able to build and run the Java Spring Boot application, you need the follo
   (see instructions below to install and run in Docker)
 - Java JDK at least recent enough to run Gradle
   (JDK 17.x will be automatically installed by Gradle toolchain support)
-- Gradle in some not too outdated version (7.4 will be installed via wrapper)
 
 You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
@@ -62,12 +61,16 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
 
     cd your-hsadmin-ng-directory
     
-    gradle wrapper  # downloads the configured Gradle version into the project
-    source .aliases # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
+    source .aliases # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
+    gw              # initially downloads the configured Gradle version into the project
 
     gw test         # compiles and runs unit- and integration-tests
     
+    # if the container has not been built yet, run this:
     pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
+    # if the container has been built already, run this:
+    pg-sql-start
+
     gw bootRun      # compiles and runs the application on localhost:8080
 
     # the following command should reply with "pong":
@@ -418,6 +421,21 @@ Underneath of rbac and hs, the structure is business oriented, NOT technical / l
 Some of these rules are checked with *ArchUnit* unit tests.
 
 
+### Run Tests from Command Line
+
+Run all tests which have not yet been passed with the current source code:
+
+```shell
+gw test 
+```
+
+Force running all tests:
+
+```shell
+gw cleanTest test 
+```
+
+
 ### Spotless Code Formatting
 
 Code formatting for Java is checked via *spotless*.
@@ -576,7 +594,7 @@ Summary for Debian-based Linux systems:
 sudo apt-get -y install podman
 ```
 
-2Then start it like this:
+Then start it like this:
 
 ```shell
 systemctl --user enable --now podman.socket
@@ -607,7 +625,7 @@ we need to register a shutdown-hook in the test source code.
 2. Now You Can Run the Tests
 
 ```shell
-gw clean test # gw is from the .aliases file
+gw test # gw is from the .aliases file
 ```
 
 #### Use IntelliJ IDEA Run the Tests Against the Podman Daemon
