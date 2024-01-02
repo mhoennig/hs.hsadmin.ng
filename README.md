@@ -62,7 +62,7 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
     cd your-hsadmin-ng-directory
     
     source .aliases # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
-    gw  # downloads the configured Gradle version into the project
+    gw              # initially downloads the configured Gradle version into the project
 
     gw test         # compiles and runs unit- and integration-tests
     

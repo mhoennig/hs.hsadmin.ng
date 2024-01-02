@@ -4,7 +4,7 @@ spring:
             platform: postgres
 
     datasource:
-        url: jdbc:tc:postgresql:13.7-bullseye:///spring_boot_testcontainers
+        url: jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers
         url-local: jdbc:postgresql://localhost:5432/postgres
         username: postgres
         password: password
