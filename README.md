@@ -50,7 +50,7 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
 - Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
-- PostgreSQL Server 13.7-bullseye 
+- PostgreSQL Server 15.5-bookworm 
   (see instructions below to install and run in Docker)
 - Java JDK at least recent enough to run Gradle
   (JDK 17.x will be automatically installed by Gradle toolchain support)
@@ -133,14 +133,14 @@ But the easiest way to run PostgreSQL is via Docker.
 
 Initially, pull an image compatible to current PostgreSQL version of Hostsharing:
 
-    docker pull postgres:13.7-bullseye 
+    docker pull postgres:15.5-bookworm 
 
 <big>**&#9888;**</big>
 If we switch the version, please also amend the documentation as well as the aliases file. Thanks! 
 
 Create and run a container with the given PostgreSQL version:
 
-    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:13.7-bullseye
+    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15.5-bookworm
 
     # or via alias: 
     pg-sql-run
