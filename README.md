@@ -54,7 +54,6 @@ To be able to build and run the Java Spring Boot application, you need the follo
   (see instructions below to install and run in Docker)
 - Java JDK at least recent enough to run Gradle
   (JDK 17.x will be automatically installed by Gradle toolchain support)
-- Gradle in some not too outdated version (7.4 will be installed via wrapper)
 
 You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
@@ -62,7 +61,7 @@ If you have at least Docker, the Java JDK and Gradle installed in appropriate ve
 
     cd your-hsadmin-ng-directory
     
-    gradle wrapper  # downloads the configured Gradle version into the project
+    ./gradlew  # downloads the configured Gradle version into the project
     source .aliases # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
 
     gw test         # compiles and runs unit- and integration-tests
