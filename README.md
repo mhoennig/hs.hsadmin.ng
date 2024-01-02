@@ -421,6 +421,21 @@ Underneath of rbac and hs, the structure is business oriented, NOT technical / l
 Some of these rules are checked with *ArchUnit* unit tests.
 
 
+### Run Tests from Command Line
+
+Run all tests which have not yet been passed with the current source code:
+
+```shell
+gw test 
+```
+
+Force running all tests:
+
+```shell
+gw cleanTest test 
+```
+
+
 ### Spotless Code Formatting
 
 Code formatting for Java is checked via *spotless*.
@@ -579,7 +594,7 @@ Summary for Debian-based Linux systems:
 sudo apt-get -y install podman
 ```
 
-2Then start it like this:
+Then start it like this:
 
 ```shell
 systemctl --user enable --now podman.socket
@@ -610,7 +625,7 @@ we need to register a shutdown-hook in the test source code.
 2. Now You Can Run the Tests
 
 ```shell
-gw clean test # gw is from the .aliases file
+gw test # gw is from the .aliases file
 ```
 
 #### Use IntelliJ IDEA Run the Tests Against the Podman Daemon
