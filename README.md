@@ -576,7 +576,16 @@ Summary for Debian-based Linux systems:
 sudo apt-get -y install podman
 ```
 
-2Then start it like this:
+It is possible to move the storage directory to /tmp, e.g. to increase performance or to avoid issues with NFS mounted home directories:
+
+```shell
+cat .config/containers/storage.conf
+[storage]
+driver = "vfs"
+graphRoot = "/tmp/containers/storage"
+```
+
+2. Then start it like this:
 
 ```shell
 systemctl --user enable --now podman.socket
