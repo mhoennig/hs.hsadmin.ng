@@ -12,22 +12,22 @@ public interface HsOfficeRelationshipRepository extends Repository<HsOfficeRelat
 
     Optional<HsOfficeRelationshipEntity> findByUuid(UUID id);
 
-    default List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuid(@NotNull UUID personUuid, HsOfficeRelationshipType relationshipType) {
-        return findRelationshipRelatedToPersonUuid(personUuid, relationshipType.toString());
+    default List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuidAndRelationshipType(@NotNull UUID personUuid, HsOfficeRelationshipType relationshipType) {
+        return findRelationshipRelatedToPersonUuidAndRelationshipTypeString(personUuid, relationshipType.toString());
     }
 
     @Query(value = """
             SELECT p.* FROM hs_office_relationship_rv AS p
                 WHERE p.relAnchorUuid = :personUuid OR p.relHolderUuid = :personUuid
                """, nativeQuery = true)
-    List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuid2(@NotNull UUID personUuid);
+    List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuid(@NotNull UUID personUuid);
 
     @Query(value = """
             SELECT p.* FROM hs_office_relationship_rv AS p
                 WHERE (:relationshipType IS NULL OR p.relType = cast(:relationshipType AS HsOfficeRelationshipType))
                     AND ( p.relAnchorUuid = :personUuid OR p.relHolderUuid = :personUuid)
                """, nativeQuery = true)
-    List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuid(@NotNull UUID personUuid, String relationshipType);
+    List<HsOfficeRelationshipEntity> findRelationshipRelatedToPersonUuidAndRelationshipTypeString(@NotNull UUID personUuid, String relationshipType);
 
     HsOfficeRelationshipEntity save(final HsOfficeRelationshipEntity entity);
 
