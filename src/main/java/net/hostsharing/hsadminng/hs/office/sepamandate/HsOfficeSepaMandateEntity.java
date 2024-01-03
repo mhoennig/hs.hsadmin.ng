@@ -54,6 +54,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable {
 
     @Column(name = "validity", columnDefinition = "daterange")
     @Type(PostgreSQLRangeType.class)
+    @Builder.Default
     private Range<LocalDate> validity = Range.infinite(LocalDate.class);
 
     public void setValidFrom(final LocalDate validFrom) {

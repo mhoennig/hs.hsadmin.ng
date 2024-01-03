@@ -14,4 +14,39 @@
         <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
         <cve>CVE-2022-42003</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            We don't parse external XML.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.angus/angus\-activation@.*$</packageUrl>
+        <cpe>cpe:/a:eclipse:eclipse_ide</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+               We don't parse external XML.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/jakarta\.activation/jakarta\.activation\-api@.*$</packageUrl>
+        <cpe>cpe:/a:eclipse:eclipse_ide</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+           Cyclic references are not possible if file comes in JSON text format.
+       ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
+        <cpe>cpe:/a:fasterxml:jackson-databind</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+           As far as I see Criteria.parse(...) cannot be reached with external data.
+       ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.jayway\.jsonpath/json\-path@.*$</packageUrl>
+        <vulnerabilityName>CVE-2023-51074</vulnerabilityName>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+           Internal tooling, not exposed to the Internet.
+       ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.pitest/pitest\-command\-line@.*$</packageUrl>
+        <cpe>cpe:/a:line:line</cpe>
+    </suppress>
 </suppressions>
