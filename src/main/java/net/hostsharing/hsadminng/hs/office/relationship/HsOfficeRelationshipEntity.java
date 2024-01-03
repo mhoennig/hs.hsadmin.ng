@@ -47,7 +47,7 @@ public class HsOfficeRelationshipEntity {
 
     @Column(name = "reltype")
     @Enumerated(EnumType.STRING)
-    @Type(PostgreSQLEnumType.class)
+    //@Type(PostgreSQLEnumType.class)
     private HsOfficeRelationshipType relType;
 
     @Override

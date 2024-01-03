@@ -47,7 +47,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable {
 
     @Column(name = "transactiontype")
     @Enumerated(EnumType.STRING)
-    @Type(PostgreSQLEnumType.class)
+    //@Type(PostgreSQLEnumType.class)
     private HsOfficeCoopAssetsTransactionType transactionType;
 
     @Column(name = "valuedate")

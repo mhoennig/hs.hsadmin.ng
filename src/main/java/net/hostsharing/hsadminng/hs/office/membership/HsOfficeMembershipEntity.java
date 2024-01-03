@@ -61,7 +61,7 @@ public class HsOfficeMembershipEntity implements Stringifyable {
 
     @Column(name = "reasonfortermination")
     @Enumerated(EnumType.STRING)
-    @Type(PostgreSQLEnumType.class)
+    //@Type(PostgreSQLEnumType.class)
     private HsOfficeReasonForTermination reasonForTermination;
 
     public void setValidFrom(final LocalDate validFrom) {

@@ -13,8 +13,8 @@ public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEnt
 
     @Query("""
             SELECT partner FROM HsOfficePartnerEntity partner
-                JOIN HsOfficeContactEntity contact ON contact.uuid = partner.contact
-                JOIN HsOfficePersonEntity person ON person.uuid = partner.person
+                JOIN HsOfficeContactEntity contact ON contact.uuid = partner.contact.uuid
+                JOIN HsOfficePersonEntity person ON person.uuid = partner.person.uuid
                 WHERE :name is null
                     OR partner.details.birthName like concat(:name, '%')
                     OR contact.label like concat(:name, '%')
