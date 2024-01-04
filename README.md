@@ -20,6 +20,7 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [Directory and Package Structure](#directory-and-package-structure)
     - [General Directory Structure](#general-directory-structure)
     - [Source Code Package Structure](#source-code-package-structure)
+  - [Run Tests from Command Line](#run-tests-from-command-line)
   - [Spotless Code Formatting](#spotless-code-formatting)
   - [JaCoCo Test Code Coverage Check](#jacoco-test-code-coverage-check)
   - [PiTest Mutation Testing](#pitest-mutation-testing)
@@ -39,6 +40,7 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
   - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
   - [How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?](#how-to-re-generate-spring-controller-interfaces-from-openapi-specs?)
+  - [How to Generate Database Table Diagrams?](#how-to-generate-database-table-diagrams?)
 - [Further Documentation](#further-documentation)
 <!-- generated TOC end. -->
 
@@ -199,7 +201,7 @@ To generate the TOC (Table of Contents), a little bash script from a
 Given this is in PATH as `md-toc`, use:
 
 ```shell
-md-toc <README.md 2 4 | sed -e 's/^    //g'
+md-toc <README.md 2 4 | cut -c5-'
 ```
 
 To render the Markdown files, especially to watch embedded PlantUML diagrams, you can use one of the following methods:
@@ -292,12 +294,22 @@ If you have figured out how it works, please add instructions above this section
 
 #### IntelliJ IDEA
 
+##### Build Settings
+
 Go to [Gradle Settings}(jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Build+Tools--Gradle) and select "Build and run using" and "Run tests using" both to "gradle".
 Otherwise, settings from `build.gradle`, like compiler arguments, are not applied when compiling through *IntelliJ IDEA*.
+
+##### Annotation Processor
 
 Go to [Annotations Processors](jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Compiler--Annotation+Processors) and activate annotation processing.
 Otherwise, *IntelliJ IDEA* can't see *Lombok* generated classes 
 and will show false errors (missing identifiers).
+
+
+##### Suggested Plugins
+
+- [Jetbrains Mermaid Integration](https://plugins.jetbrains.com/plugin/20146-mermaid)
+- [Vojtěch Krása PlantUML Integration](https://plugins.jetbrains.com/plugin/7017-plantuml-integration)
 
 ### Other Tools
 
