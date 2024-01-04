@@ -2,7 +2,6 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import lombok.experimental.UtilityClass;
 
-import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.TEST_CONTACT;
 import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;

@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
-import java.util.UUID;
 
 public class TestHsOfficeBankAccount {
 
