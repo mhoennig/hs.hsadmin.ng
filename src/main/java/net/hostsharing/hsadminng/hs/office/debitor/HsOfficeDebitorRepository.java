@@ -23,11 +23,11 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                 JOIN HsOfficePersonEntity person ON person.uuid = partner.person.uuid
                 JOIN HsOfficeContactEntity contact ON contact.uuid = debitor.billingContact.uuid
                 WHERE :name is null
-                    OR partner.details.birthName like concat(:name, '%')
-                    OR person.tradeName like concat(:name, '%')
-                    OR person.familyName like concat(:name, '%')
-                    OR person.givenName like concat(:name, '%')
-                    OR contact.label like concat(:name, '%')
+                    OR partner.details.birthName like concat(cast(:name as text), '%')
+                    OR person.tradeName like concat(cast(:name as text), '%')
+                    OR person.familyName like concat(cast(:name as text), '%')
+                    OR person.givenName like concat(cast(:name as text), '%')
+                    OR contact.label like concat(cast(:name as text), '%')
                """)
     List<HsOfficeDebitorEntity> findDebitorByOptionalNameLike(String name);
 

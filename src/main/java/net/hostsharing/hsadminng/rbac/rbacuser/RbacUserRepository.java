@@ -11,7 +11,7 @@ public interface RbacUserRepository extends Repository<RbacUserEntity, UUID> {
 
     @Query("""
              select u from RbacUserEntity u
-                 where :userName is null or u.name like concat(:userName, '%')
+                 where :userName is null or u.name like concat(cast(:userName as text), '%')
                  order by u.name
             """)
     List<RbacUserEntity> findByOptionalNameLike(String userName);
