@@ -42,7 +42,10 @@ public class PostgresArray {
         tokenizer.remove("\"", "\"");
         final T[] array = newGenericArray(elementClass, tokenizer.getSize()); // Create a new array of the specified type and length
         for ( int n = 0; n < tokenizer.getSize(); ++n ) {
-            array[n] = itemParser.apply(tokenizer.getToken(n).trim().replace("\\\"", "\""));
+            final String token = tokenizer.getToken(n);
+            if ( !"NULL".equals(token) ) {
+                array[n] = itemParser.apply(token.trim().replace("\\\"", "\""));
+            }
         }
         return array;
     }
