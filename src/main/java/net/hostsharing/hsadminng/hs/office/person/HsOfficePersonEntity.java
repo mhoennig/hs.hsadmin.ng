@@ -37,7 +37,6 @@ public class HsOfficePersonEntity implements Stringifyable {
 
     @Column(name = "persontype")
     @Enumerated(EnumType.STRING)
-    //@Type(PostgreSQLEnumType.class)
     private HsOfficePersonType personType;
 
     @Column(name = "tradename")
