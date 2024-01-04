@@ -254,7 +254,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(grantAttempt.caughtException()).isNull();
             assertThat(rawRbacGrantRepository.findAll())
                     .extracting(RawRbacGrantEntity::toDisplay)
-                    .contains("{ grant role %s to user %s by role %s and assume }".formatted(
+                    .contains("{ grant role %s to user %s by %s and assume }".formatted(
                             with.grantedRole, with.granteeUserName, with.assumedRole
                     ));
 
