@@ -49,15 +49,13 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
-- Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
-- PostgreSQL Server 13.7-bullseye 
-  (see instructions below to install and run in Docker)
+- Docker 20.x (on MacOS you also need *Docker Desktop* or similar) or Podman
 - Java JDK at least recent enough to run Gradle
   (JDK 17.x will be automatically installed by Gradle toolchain support)
 
-You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
+We recommend to use an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and optionally a GUI Frontend for *PostgreSQL* like *Postbird*.
 
-If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
+If you have at least Docker, the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
     cd your-hsadmin-ng-directory
     
