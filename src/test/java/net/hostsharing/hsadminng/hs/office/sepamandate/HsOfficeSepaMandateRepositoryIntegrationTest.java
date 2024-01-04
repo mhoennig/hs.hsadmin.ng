@@ -31,7 +31,6 @@ import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantD
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
 @Import({ Context.class, JpaAttempt.class })
@@ -346,7 +345,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("bankaccount-admin@ThirdOHG.example.com");
-                assumeThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent();
+                assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent();
 
                 sepaMandateRepo.deleteByUuid(givenSepaMandate.getUuid());
             });
