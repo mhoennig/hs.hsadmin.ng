@@ -7,4 +7,21 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    components {
+        all {
+            allVariants {
+                withDependencies {
+                    removeAll {
+                        // TODO: Remove this transient dependency exclude once we are on SpringBoot 3.2.x
+                        // as well as the related explicit dependency in build.gradle
+                        // and the dependency suppression in owasp-dependency-check-suppression.xml.
+                        it.module in [ 'snakeyaml' ]
+                    }
+                }
+            }
+        }
+    }
+}
+
 rootProject.name = 'hsadmin-ng'

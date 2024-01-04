@@ -49,4 +49,13 @@
         <packageUrl regex="true">^pkg:maven/org\.pitest/pitest\-command\-line@.*$</packageUrl>
         <cpe>cpe:/a:line:line</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+            We've explicitly bumped to 2.2, but the dependency checker does not seem to notice that.
+            TODO: Remove this suppression once we are on SpringBoot 3.2,
+            as well as the explicit version bump and the transient dependency exclude.
+       ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.yaml/snakeyaml@.*$</packageUrl>
+        <cve>CVE-2022-1471</cve>
+    </suppress>
 </suppressions>

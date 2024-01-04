@@ -50,8 +50,6 @@ ext {
     set('testcontainersVersion', "1.17.3")
 }
 
-// wrapper
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
@@ -70,6 +68,17 @@ dependencies {
     implementation 'org.modelmapper:modelmapper:3.2.0'
     implementation 'org.iban4j:iban4j:3.2.7-RELEASE'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // fixes vulnerability CVE-2022-1471
+    // The dependency usually comes from Spring Boot, just in the wrong version.
+    // TODO: Remove this explicit dependency once we are on SpringBoot 3.2.x
+    // as well as the related exclude in settings.gradle
+    // and the dependency suppression in owasp-dependency-check-suppression.xml.
+    implementation('org.yaml:snakeyaml') {
+        version {
+            strictly('2.2')
+        }
+    }
 
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
