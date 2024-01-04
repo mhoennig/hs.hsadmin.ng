@@ -233,12 +233,19 @@ sudo apt install graphviz
 
 ##### Ubuntu Linux command line
 
-```sh
-sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra pandoc-plantuml-filter
+1. Install Pandoc with some extra libraries:
+```shell
+sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra pandoc-plantuml-filter 
 ```
 
-```sh
-pandoc --filter pandoc-plantuml rbac.md -o rbac.pdf
+2. Install mermaid-filter, e.g. this way:
+```shell
+npm install -g mermaid-filter
+```
+
+3. Run Pandoc to generate a PDF from a Markdown file with PlantUML and Mermaid diagrams:
+```shell
+pandoc --filter mermaid-filter --filter pandoc-plantuml rbac.md -o rbac.pdf
 ```
 
 ##### for other IDEs / operating systems
@@ -247,7 +254,7 @@ If you have figured out how it works, please add instructions above this section
 
 #### Render Markdown Embedded Mermaid Diagrams
 
-The source of RBAC role diagrams are much easier to read with Mermaid than with PlantUML or GraphViz, that's the main reason Mermaid ist used too.
+The source of RBAC role diagrams are much easier to read with Mermaid than with PlantUML or GraphViz, that's also the main reason Mermaid is used.
 
 Can you see the following diagram right in your IDE?
 I mean a real graphic diagram, not just some markup code.
@@ -271,8 +278,11 @@ If not, you need to install some tooling.
 
 ##### for IntelliJ IDEA (or derived products)
 
-You just need the bundled Markdown plugin enabled and install and activate the Mermaid plugin in its [settings](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown).
+1. Activate the bundled Jebrains Markdown PlantUML Extension via
+    [File | Settings | Languages & Frameworks | Markdown](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown)  
+2. Install the Jetbrains Mermaid plugin: https://plugins.jetbrains.com/plugin/20146-mermaid, it also works embedded in Markdown files.
 
+Now the above diagram should be rendered.
 
 ##### for other IDEs / command-line / operating systems
 
