@@ -55,7 +55,7 @@ To be able to build and run the Java Spring Boot application, you need the follo
 
 We recommend to use an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and optionally a GUI Frontend for *PostgreSQL* like *Postbird*.
 
-If you have at least Docker, the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
+If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
     cd your-hsadmin-ng-directory
     
