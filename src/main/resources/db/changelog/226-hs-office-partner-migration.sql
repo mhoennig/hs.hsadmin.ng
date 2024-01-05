@@ -41,7 +41,7 @@ ALTER TABLE hs_office_partner_legacy_id
 
 CALL defineContext('schema-migration');
 INSERT INTO hs_office_partner_legacy_id(uuid, bp_id)
-SELECT uuid, nextVal('hs_office_partner_legacy_id_seq') FROM hs_office_partner;
+    SELECT uuid, nextVal('hs_office_partner_legacy_id_seq') FROM hs_office_partner;
 --/
 
 

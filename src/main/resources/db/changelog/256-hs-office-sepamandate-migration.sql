@@ -43,7 +43,7 @@ ALTER TABLE hs_office_sepamandate_legacy_id
 
 CALL defineContext('schema-migration');
 INSERT INTO hs_office_sepamandate_legacy_id(uuid, sepa_mandat_id)
-SELECT uuid, nextVal('hs_office_sepamandate_legacy_id_seq') FROM hs_office_sepamandate;
+    SELECT uuid, nextVal('hs_office_sepamandate_legacy_id_seq') FROM hs_office_sepamandate;
 --/
 
 
@@ -67,8 +67,8 @@ end; $$;
 
 create trigger createSepaMandateLegacyIdMapping
     after insert on hs_office_sepamandate
-    for each row
-execute procedure insertSepaMandateLegacyIdMapping();
+        for each row
+            execute procedure insertSepaMandateLegacyIdMapping();
 --/
 
 
@@ -92,6 +92,6 @@ end; $$;
 
 create trigger removeSepaMandateLegacyIdMapping
     before delete on hs_office_sepamandate
-    for each row
-execute procedure deleteSepaMandateLegacyIdMapping();
+        for each row
+            execute procedure deleteSepaMandateLegacyIdMapping();
 --/

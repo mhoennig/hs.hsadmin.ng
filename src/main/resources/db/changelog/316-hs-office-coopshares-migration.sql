@@ -42,7 +42,7 @@ ALTER TABLE hs_office_coopsharestransaction_legacy_id
 
 CALL defineContext('schema-migration');
 INSERT INTO hs_office_coopsharestransaction_legacy_id(uuid, member_share_id)
-SELECT uuid, nextVal('hs_office_coopsharestransaction_legacy_id_seq') FROM hs_office_coopsharestransaction;
+    SELECT uuid, nextVal('hs_office_coopsharestransaction_legacy_id_seq') FROM hs_office_coopsharestransaction;
 --/
 
 
@@ -66,8 +66,8 @@ end; $$;
 
 create trigger createCoopSharesLegacyIdMapping
     after insert on hs_office_coopsharestransaction
-    for each row
-execute procedure insertCoopSharesLegacyIdMapping();
+        for each row
+            execute procedure insertCoopSharesLegacyIdMapping();
 --/
 
 
@@ -91,6 +91,6 @@ end; $$;
 
 create trigger removeCoopSharesLegacyIdMapping
     before delete on hs_office_coopsharestransaction
-    for each row
-execute procedure deleteCoopSharesLegacyIdMapping();
+        for each row
+            execute procedure deleteCoopSharesLegacyIdMapping();
 --/

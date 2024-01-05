@@ -10,7 +10,7 @@
 CREATE TABLE hs_office_coopassetstransaction_legacy_id
 (
     uuid            uuid NOT NULL REFERENCES hs_office_coopassetstransaction(uuid),
-    member_asstr_id  integer NOT NULL
+    member_asset_id  integer NOT NULL
 );
 --//
 
@@ -22,7 +22,7 @@ CREATE TABLE hs_office_coopassetstransaction_legacy_id
 CREATE SEQUENCE IF NOT EXISTS hs_office_coopassetstransaction_legacy_id_seq
     AS integer
     START 1000000000
-    OWNED BY hs_office_coopassetstransaction_legacy_id.member_asstr_id;
+    OWNED BY hs_office_coopassetstransaction_legacy_id.member_asset_id;
 --//
 
 
@@ -31,18 +31,18 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_coopassetstransaction_legacy_id_seq
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE hs_office_coopassetstransaction_legacy_id
-    ALTER COLUMN member_asstr_id
+    ALTER COLUMN member_asset_id
         SET DEFAULT nextVal('hs_office_coopassetstransaction_legacy_id_seq');
-
 --/
+
 
 -- ============================================================================
 --changeset hs-office-coopassets-MIGRATION-insert:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CALL defineContext('schema-migration');
-INSERT INTO hs_office_coopassetstransaction_legacy_id(uuid, member_asstr_id)
-SELECT uuid, nextVal('hs_office_coopassetstransaction_legacy_id_seq') FROM hs_office_coopassetstransaction;
+INSERT INTO hs_office_coopassetstransaction_legacy_id(uuid, member_asset_id)
+    SELECT uuid, nextVal('hs_office_coopassetstransaction_legacy_id_seq') FROM hs_office_coopassetstransaction;
 --/
 
 
@@ -66,8 +66,8 @@ end; $$;
 
 create trigger createCoopAssetsLegacyIdMapping
     after insert on hs_office_coopassetstransaction
-    for each row
-execute procedure insertCoopAssetsLegacyIdMapping();
+        for each row
+            execute procedure insertCoopAssetsLegacyIdMapping();
 --/
 
 
@@ -91,6 +91,6 @@ end; $$;
 
 create trigger removeCoopAssetsLegacyIdMapping
     before delete on hs_office_coopassetstransaction
-    for each row
-execute procedure deleteCoopAssetsLegacyIdMapping();
+        for each row
+            execute procedure deleteCoopAssetsLegacyIdMapping();
 --/

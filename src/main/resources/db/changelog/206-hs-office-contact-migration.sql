@@ -42,7 +42,7 @@ ALTER TABLE hs_office_contact_legacy_id
 
 CALL defineContext('schema-migration');
 INSERT INTO hs_office_contact_legacy_id(uuid, contact_id)
-SELECT uuid, nextVal('hs_office_contact_legacy_id_seq') FROM hs_office_contact;
+    SELECT uuid, nextVal('hs_office_contact_legacy_id_seq') FROM hs_office_contact;
 --/
 
 
@@ -66,8 +66,8 @@ end; $$;
 
 create trigger createContactLegacyIdMapping
     after insert on hs_office_contact
-    for each row
-execute procedure insertContactLegacyIdMapping();
+        for each row
+            execute procedure insertContactLegacyIdMapping();
 --/
 
 
@@ -91,6 +91,6 @@ end; $$;
 
 create trigger removeContactLegacyIdMapping
     before delete on hs_office_contact
-    for each row
-execute procedure deleteContactLegacyIdMapping();
+        for each row
+            execute procedure deleteContactLegacyIdMapping();
 --/
