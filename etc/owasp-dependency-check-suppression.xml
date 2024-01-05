@@ -51,7 +51,11 @@
     </suppress>
     <suppress>
         <notes><![CDATA[
-            We've explicitly bumped to 2.2, but the dependency checker does not seem to notice that.
+            Spring Boot 3.1.x has a transient dependency to snakeyaml 1.3
+            which contains this vulnerability.
+
+            We've explicitly bumped to 2.2, but the vulnerability checker does not seem to notice that.
+
             TODO: Remove this suppression once we are on SpringBoot 3.2,
             as well as the explicit version bump and the transient dependency exclude.
        ]]></notes>

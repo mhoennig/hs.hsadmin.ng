@@ -208,7 +208,6 @@ dependencyCheck {
         apiKey = project.property('OWASP_API_KEY') // set it in ~/.gradle/gradle.properties
         delay = 16000
     }
-    // cveValidForHours = 4
     format = 'ALL'
     suppressionFile = 'etc/owasp-dependency-check-suppression.xml'
     failOnError = true
