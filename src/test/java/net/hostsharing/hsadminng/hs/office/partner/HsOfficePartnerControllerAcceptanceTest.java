@@ -24,7 +24,6 @@ import java.util.UUID;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
@@ -408,7 +407,7 @@ class HsOfficePartnerControllerAcceptanceTest {
         void contactAdminUser_canNotDeleteRelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler();
-            assumeThat(givenPartner.getContact().getLabel()).isEqualTo("forth contact");
+            assertThat(givenPartner.getContact().getLabel()).isEqualTo("forth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -428,7 +427,7 @@ class HsOfficePartnerControllerAcceptanceTest {
         void normalUser_canNotDeleteUnrelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler();
-            assumeThat(givenPartner.getContact().getLabel()).isEqualTo("forth contact");
+            assertThat(givenPartner.getContact().getLabel()).isEqualTo("forth contact");
 
             RestAssured // @formatter:off
                 .given()

@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.test.cust;
 
-import static java.util.UUID.randomUUID;
 
 public class TestCustomer {
 

@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 
-import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL;
 

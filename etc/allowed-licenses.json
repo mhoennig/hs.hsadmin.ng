@@ -8,6 +8,7 @@
 
         { "moduleLicense": "BSD License" },
         { "moduleLicense": "BSD-2-Clause" },
+        { "moduleLicense": "BSD-3-Clause" },
         { "moduleLicense": "The BSD License" },
 
         { "moduleLicense": "CDDL 1.1" },

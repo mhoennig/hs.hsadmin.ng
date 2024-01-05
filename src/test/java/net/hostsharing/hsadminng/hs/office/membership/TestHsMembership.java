@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import com.vladmihalcea.hibernate.type.range.Range;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
 

@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static java.lang.String.format;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
@@ -85,7 +85,8 @@ class TestPackageControllerAcceptanceTest {
         @Test
         void withDescriptionUpdatesDescription() {
 
-            assumeThat(getDescriptionOfPackage("xxx00"))
+            assertThat(getDescriptionOfPackage("xxx00"))
+                    .as("precondition failed")
                     .isEqualTo("Here you can add your own description of package xxx00.");
 
             final var randomDescription = RandomStringUtils.randomAlphanumeric(80);
@@ -117,7 +118,8 @@ class TestPackageControllerAcceptanceTest {
         @Test
         void withNullDescriptionUpdatesDescriptionToNull() {
 
-            assumeThat(getDescriptionOfPackage("xxx01"))
+            assertThat(getDescriptionOfPackage("xxx01"))
+                    .as("precondition failed")
                     .isEqualTo("Here you can add your own description of package xxx01.");
 
             // @formatter:off
@@ -146,7 +148,8 @@ class TestPackageControllerAcceptanceTest {
         @Test
         void withoutDescriptionDoesNothing() {
 
-            assumeThat(getDescriptionOfPackage("xxx02"))
+            assertThat(getDescriptionOfPackage("xxx02"))
+                    .as("precondition failed")
                     .isEqualTo("Here you can add your own description of package xxx02.");
 
             // @formatter:off

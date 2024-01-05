@@ -8,7 +8,7 @@ import static org.hibernate.dialect.DatabaseVersion.make;
 public class PostgresCustomDialect extends PostgreSQLDialect {
 
     public PostgresCustomDialect() {
-        super(make(13, 7));
+        super(make(15, 5));
     }
 
 }
