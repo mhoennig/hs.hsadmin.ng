@@ -207,7 +207,7 @@ project.tasks.spotlessJava.dependsOn(
 // OWASP Dependency Security Test
 dependencyCheck {
     nvd {
-        apiKey = project.property('OWASP_API_KEY') // set it in ~/.gradle/gradle.properties
+        apiKey = project.properties['OWASP_API_KEY'] // set it in ~/.gradle/gradle.properties
         delay = 16000
     }
     format = 'ALL'
