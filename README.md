@@ -5,7 +5,6 @@ For architecture consider the files in the `doc` and `adr` folder.
 
 <!-- generated TOC begin: -->
 - [Setting up the Development Environment](#setting-up-the-development-environment)
-  - [SDKMAN](#sdkman)
   - [PostgreSQL Server](#postgresql-server)
   - [Markdown](#markdown)
     - [Render Markdown embedded PlantUML](#render-markdown-embedded-plantuml)
@@ -52,12 +51,10 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
 - Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
-- PostgreSQL Server 15.5-bookworm 
+- optionally: PostgreSQL Server 15.5-bookworm 
   (see instructions below to install and run in Docker)
-- Java JDK at least recent enough to run Gradle
-  (JDK 17.x will be automatically installed by Gradle toolchain support)
-
-You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
+- The matching Java JDK at will be automatically installed by Gradle toolchain support.
+- You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
 If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
 
@@ -105,30 +102,9 @@ And to see the full, currently implemented, API, open http://localhost:8080/swag
 If you still need to install some of these tools, find some hints in the next chapters. 
 
 
-### SDKMAN
-
-*SdkMan* is not necessary, but helpful to install and switch between different versions of SDKs (Software-Development-Kits) and development tools in general, e.g. *JDK* and *Gradle*.
-It is available for _Linux_ and _MacOS_, _WSL_, _Cygwin_, _Solaris_ and _FreeBSD_.
-
-You can get it from: https://sdkman.io/.
-
-<big>**&#9888;**</big>
-Yeah, the `curl ... | bash` install method looks quite scary;
-but in a development environment you're downloading executables all the time,
-e.g. through `npm`, `Maven` or `Gradle` when downloading dependencies.
-Thus, maybe you should at least use a separate Linux account for development.
-
-Once it's installed, you can install *JDK* and *Gradle*:
-
-    sdk install java 17.0.3-tem
-    sdk install gradle
-
-    sdk use java 17.0.3-tem # use this to switch between installed JDK versions
-
-
 ### PostgreSQL Server
 
-You could use any PostgreSQL Server (from version 13 on) installed on your machine.
+You could use any PostgreSQL Server (version 15) installed on your machine.
 You might amend the port and user settings in `src/main/resources/application.yml`, though.
 
 But the easiest way to run PostgreSQL is via Docker.
