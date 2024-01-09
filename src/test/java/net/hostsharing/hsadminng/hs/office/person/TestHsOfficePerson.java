@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
-import java.util.UUID;
 
 public class TestHsOfficePerson {
 

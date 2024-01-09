@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
  * Wraps the 'when' part of a DataJpaTest to improve readability of tests.
@@ -138,7 +137,7 @@ public class JpaAttempt {
         }
 
         public JpaResult<T> assumeSuccessful() {
-            assumeThat(exception).as(firstRootCauseMessageLineOf(exception)).isNull();
+            assertThat(exception).as(firstRootCauseMessageLineOf(exception)).isNull();
             return this;
         }
 

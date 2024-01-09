@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import com.vladmihalcea.hibernate.type.range.PostgreSQLRangeType;
 import com.vladmihalcea.hibernate.type.range.Range;
 import lombok.*;
@@ -61,7 +60,6 @@ public class HsOfficeMembershipEntity implements Stringifyable {
 
     @Column(name = "reasonfortermination")
     @Enumerated(EnumType.STRING)
-    @Type(PostgreSQLEnumType.class)
     private HsOfficeReasonForTermination reasonForTermination;
 
     public void setValidFrom(final LocalDate validFrom) {

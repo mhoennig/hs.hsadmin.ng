@@ -27,7 +27,6 @@ import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantD
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
@@ -244,10 +243,6 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
             final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
-            assumeThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
-                    .isEqualTo(initialRoleNames.size() + 3);
-            assumeThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.size() + 7);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

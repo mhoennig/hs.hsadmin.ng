@@ -25,7 +25,6 @@ import java.util.UUID;
 
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
@@ -186,9 +185,8 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             context("customer-admin@xxx.example.com", "test_customer#xxx.admin");
-            final var revokeAttempt = attempt(em, () -> {
-                rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
-            });
+            final var revokeAttempt = attempt(em, () ->
+                    rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId()));
 
             // then
             context("customer-admin@xxx.example.com", "test_customer#xxx.admin");
@@ -208,9 +206,8 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             context("pac-admin-xxx00@xxx.example.com", "test_package#xxx00.admin");
-            final var revokeAttempt = attempt(em, () -> {
-                rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
-            });
+            final var revokeAttempt = attempt(em, () ->
+                    rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId()));
 
             // then
             assertThat(revokeAttempt.caughtExceptionsRootCause()).isNull();
@@ -230,9 +227,8 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             context("pac-admin-xxx00@xxx.example.com", "test_package#xxx00.admin");
-            final var revokeAttempt = attempt(em, () -> {
-                rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId());
-            });
+            final var revokeAttempt = attempt(em, () ->
+                    rbacGrantRepository.deleteByRbacGrantId(grant.getRbacGrantId()));
 
             // then
             revokeAttempt.assertExceptionWithRootCauseMessage(
@@ -255,10 +251,10 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
                     rbacGrantRepository.save(grant)
             );
 
-            assumeThat(grantAttempt.caughtException()).isNull();
-            assumeThat(rawRbacGrantRepository.findAll())
+            assertThat(grantAttempt.caughtException()).isNull();
+            assertThat(rawRbacGrantRepository.findAll())
                     .extracting(RawRbacGrantEntity::toDisplay)
-                    .contains("{ grant role %s to user %s by role %s and assume }".formatted(
+                    .contains("{ grant role %s to user %s by %s and assume }".formatted(
                             with.grantedRole, with.granteeUserName, with.assumedRole
                     ));
 

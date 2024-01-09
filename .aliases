@@ -44,7 +44,7 @@ alias podman-stop='systemctl --user disable --now podman.socket && systemctl --u
 alias podman-use='export DOCKER_HOST="unix:///run/user/$UID/podman/podman.sock"; export TESTCONTAINERS_RYUK_DISABLED=true'
 
 alias gw=gradleWrapper
-alias pg-sql-run='docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:13.7-bullseye'
+alias pg-sql-run='docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15.5-bookworm'
 alias pg-sql-stop='docker stop hsadmin-ng-postgres'
 alias pg-sql-start='docker container start hsadmin-ng-postgres'
 alias pg-sql-remove='docker rm hsadmin-ng-postgres'

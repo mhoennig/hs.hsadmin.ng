@@ -1,15 +1,15 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.0.0'
-    id 'io.spring.dependency-management' version '1.1.0'
-    id 'io.openapiprocessor.openapi-processor' version '2022.2'
-    id 'com.github.jk1.dependency-license-report' version '2.1'
-    id "org.owasp.dependencycheck" version "7.3.0"
-    id "com.diffplug.spotless" version "6.11.0"
+    id 'org.springframework.boot' version '3.1.7'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'io.openapiprocessor.openapi-processor' version '2023.2'
+    id 'com.github.jk1.dependency-license-report' version '2.5'
+    id "org.owasp.dependencycheck" version "9.0.7"
+    id "com.diffplug.spotless" version "6.23.3"
     id 'jacoco'
-    id 'info.solidsoft.pitest' version '1.9.0'
+    id 'info.solidsoft.pitest' version '1.15.0'
     id 'se.patrikerdes.use-latest-versions' version '0.2.18'
-    id 'com.github.ben-manes.versions' version '0.43.0'
+    id 'com.github.ben-manes.versions' version '0.50.0'
 }
 
 group = 'net.hostsharing'
@@ -17,7 +17,7 @@ version = '0.0.1-SNAPSHOT'
 
 wrapper {
     distributionType = Wrapper.DistributionType.BIN
-    gradleVersion = '7.5'
+    gradleVersion = '8.5'
 }
 
 configurations {
@@ -42,7 +42,9 @@ repositories {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+        implementation = JvmImplementation.VENDOR_SPECIFIC
     }
 }
 
@@ -50,30 +52,41 @@ ext {
     set('testcontainersVersion', "1.17.3")
 }
 
-// wrapper
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.8.1'
-    implementation 'org.springdoc:springdoc-openapi:2.0.0-M7'
-    implementation 'org.liquibase:liquibase-core'
-    implementation 'com.vladmihalcea:hibernate-types-60:2.20.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.4'
-    implementation 'org.apache.commons:commons-text:1.10.0'
-    implementation 'org.modelmapper:modelmapper:3.1.0'
-    implementation 'org.iban4j:iban4j:3.2.3-RELEASE'
+    implementation 'com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.9.1'
+    implementation 'org.springdoc:springdoc-openapi:2.3.0'
+    implementation 'org.postgresql:postgresql:42.7.1'
+    implementation 'org.liquibase:liquibase-core:4.25.1'
+    implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
+    implementation 'org.apache.commons:commons-text:1.11.0'
+    implementation 'org.modelmapper:modelmapper:3.2.0'
+    implementation 'org.iban4j:iban4j:3.2.7-RELEASE'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // fixes vulnerability CVE-2022-1471
+    // The dependency usually comes from Spring Boot, just in the wrong version.
+    // TODO: Remove this explicit dependency once we are on SpringBoot 3.2.x
+    // as well as the related exclude in settings.gradle
+    // and the dependency suppression in owasp-dependency-check-suppression.xml.
+    implementation('org.yaml:snakeyaml') {
+        version {
+            strictly('2.2')
+        }
+    }
 
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    runtimeOnly 'org.postgresql:postgresql'
 
     annotationProcessor 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
@@ -81,11 +94,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.0.0'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.2.1'
     testImplementation 'io.rest-assured:spring-mock-mvc'
     testImplementation 'org.hamcrest:hamcrest-core:2.2'
-    testImplementation 'org.pitest:pitest-junit5-plugin:1.1.0'
+    testImplementation 'org.pitest:pitest-junit5-plugin:1.2.1'
 }
 
 dependencyManagement {
@@ -170,7 +184,7 @@ openApiGenerate.dependsOn processSpring
 // Spotless Code Formatting
 spotless {
     java {
-        // removeUnusedImports() TODO: reactivate once it can deal with multi-line-strings
+        removeUnusedImports()
         indentWithSpaces(4)
         endWithNewline()
         toggleOffOn()
@@ -182,14 +196,24 @@ spotless {
     }
 }
 project.tasks.check.dependsOn(spotlessCheck)
+// HACK: no idea why spotless uses the output of these tasks, but we get warnings without those
+project.tasks.spotlessJava.dependsOn(
+        tasks.generateLicenseReport,
+        tasks.pitest,
+        tasks.jacocoTestReport,
+        tasks.processResources,
+        tasks.processTestResources)
 
 // OWASP Dependency Security Test
 dependencyCheck {
-    cveValidForHours=4
+    nvd {
+        apiKey = project.property('OWASP_API_KEY') // set it in ~/.gradle/gradle.properties
+        delay = 16000
+    }
     format = 'ALL'
     suppressionFile = 'etc/owasp-dependency-check-suppression.xml'
     failOnError = true
-    failBuildOnCVSS = 7
+    failBuildOnCVSS = 5
 }
 project.tasks.check.dependsOn(dependencyCheckAnalyze)
 project.tasks.dependencyCheckAnalyze.doFirst { // Why not doLast? See README.md!
@@ -206,7 +230,7 @@ project.tasks.check.dependsOn(checkLicense)
 
 // JaCoCo Test Code Coverage
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.10"
 }
 test {
     finalizedBy jacocoTestReport // generate report after tests
@@ -285,7 +309,7 @@ pitest {
     targetTests = ['net.hostsharing.hsadminng.**.*UnitTest', 'net.hostsharing.hsadminng.**.*RestTest']
     excludedTestClasses = ['**AcceptanceTest*', '**IntegrationTest*']
 
-    pitestVersion = '1.9.9'
+    pitestVersion = '1.15.3'
     junit5PluginVersion = '1.1.0'
 
     threads = 4

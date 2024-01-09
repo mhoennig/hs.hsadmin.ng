@@ -1,12 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
-import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
 import java.util.UUID;
@@ -47,7 +45,6 @@ public class HsOfficeRelationshipEntity {
 
     @Column(name = "reltype")
     @Enumerated(EnumType.STRING)
-    @Type(PostgreSQLEnumType.class)
     private HsOfficeRelationshipType relType;
 
     @Override

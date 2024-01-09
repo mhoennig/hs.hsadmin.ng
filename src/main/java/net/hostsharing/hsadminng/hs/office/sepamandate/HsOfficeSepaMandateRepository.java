@@ -14,7 +14,7 @@ public interface HsOfficeSepaMandateRepository extends Repository<HsOfficeSepaMa
     @Query("""
             SELECT mandate FROM HsOfficeSepaMandateEntity mandate
                 WHERE :iban is null
-                    OR mandate.bankAccount.iban like concat(:iban, '%')
+                    OR mandate.bankAccount.iban like concat(cast(:iban as text), '%')
                 ORDER BY mandate.bankAccount.iban
                """)
     List<HsOfficeSepaMandateEntity> findSepaMandateByOptionalIban(String iban);

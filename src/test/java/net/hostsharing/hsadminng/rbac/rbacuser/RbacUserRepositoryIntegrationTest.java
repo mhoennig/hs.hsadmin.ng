@@ -61,11 +61,6 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(result.returnedValue()).isNotNull()
                     .extracting(RbacUserEntity::getUuid).isEqualTo(givenUuid);
             assertThat(rbacUserRepository.findByName(result.returnedValue().getName())).isNotNull();
-            //        jpaAttempt.transacted(() -> {
-            //            context(givenUser.getName());
-            //            assertThat(em.find(RbacUserEntity.class, givenUser.getUuid()))
-            //                    .isNotNull().extracting(RbacUserEntity::getName).isEqualTo(givenUser.getName());
-            //        }).assertSuccessful();
         }
     }
 
@@ -87,9 +82,6 @@ class RbacUserRepositoryIntegrationTest extends ContextBasedTest {
             // then the user is deleted
             result.assertSuccessful();
             assertThat(rbacUserRepository.findByName(givenUser.getName())).isNull();
-            //        jpaAttempt.transacted(() -> {
-            //            assertThat(rbacUserRepository.findByName(givenUser.getName())).isNull();
-            //        }).assertSuccessful();
         }
     }
 

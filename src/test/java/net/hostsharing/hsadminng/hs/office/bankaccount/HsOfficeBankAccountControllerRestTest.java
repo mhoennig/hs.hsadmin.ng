@@ -83,7 +83,7 @@ class HsOfficeBankAccountControllerRestTest {
     enum InvalidBicTestCase {
         TOO_SHORT("BEVODEB", "Bic length must be 8 or 11"),
         TOO_LONG("BEVODEBBX", "Bic length must be 8 or 11"),
-        INVALID_CHARACTER("BEV-ODEB", "Bank code must contain only letters.");
+        INVALID_CHARACTER("BEV-ODEB", "Bank code must contain only alphanumeric.");
 
         private final String givenBic;
         private final String expectedErrorMessage;

@@ -1,13 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
-import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
 import java.util.UUID;
@@ -37,7 +35,6 @@ public class HsOfficePersonEntity implements Stringifyable {
 
     @Column(name = "persontype")
     @Enumerated(EnumType.STRING)
-    @Type(PostgreSQLEnumType.class)
     private HsOfficePersonType personType;
 
     @Column(name = "tradename")

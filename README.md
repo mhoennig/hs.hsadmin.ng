@@ -20,6 +20,7 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [Directory and Package Structure](#directory-and-package-structure)
     - [General Directory Structure](#general-directory-structure)
     - [Source Code Package Structure](#source-code-package-structure)
+  - [Run Tests from Command Line](#run-tests-from-command-line)
   - [Spotless Code Formatting](#spotless-code-formatting)
   - [JaCoCo Test Code Coverage Check](#jacoco-test-code-coverage-check)
   - [PiTest Mutation Testing](#pitest-mutation-testing)
@@ -39,6 +40,7 @@ For architecture consider the files in the `doc` and `adr` folder.
   - [How to Use a Persistent Database for Integration Tests?](#how-to-use-a-persistent-database-for-integration-tests?)
   - [How to Amend Liquibase SQL Changesets?](#how-to-amend-liquibase-sql-changesets?)
   - [How to Re-Generate Spring-Controller-Interfaces from OpenAPI specs?](#how-to-re-generate-spring-controller-interfaces-from-openapi-specs?)
+  - [How to Generate Database Table Diagrams?](#how-to-generate-database-table-diagrams?)
 - [Further Documentation](#further-documentation)
 <!-- generated TOC end. -->
 
@@ -49,25 +51,28 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
-- Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
-- PostgreSQL Server 13.7-bullseye 
+- Docker 20.x (on MacOS you also need *Docker Desktop* or similar) or Podman
+- PostgreSQL Server 15.5-bookworm 
   (see instructions below to install and run in Docker)
 - Java JDK at least recent enough to run Gradle
   (JDK 17.x will be automatically installed by Gradle toolchain support)
-- Gradle in some not too outdated version (7.4 will be installed via wrapper)
 
-You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
+We recommend to use an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and optionally a GUI Frontend for *PostgreSQL* like *Postbird*.
 
-If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
+If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
     cd your-hsadmin-ng-directory
     
-    gradle wrapper  # downloads the configured Gradle version into the project
-    source .aliases # creates some comforable bash aliases, e.g. 'gw'='./gradlew'
+    source .aliases # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
+    gw              # initially downloads the configured Gradle version into the project
 
     gw test         # compiles and runs unit- and integration-tests
     
+    # if the container has not been built yet, run this:
     pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
+    # if the container has been built already, run this:
+    pg-sql-start
+
     gw bootRun      # compiles and runs the application on localhost:8080
 
     # the following command should reply with "pong":
@@ -130,14 +135,14 @@ But the easiest way to run PostgreSQL is via Docker.
 
 Initially, pull an image compatible to current PostgreSQL version of Hostsharing:
 
-    docker pull postgres:13.7-bullseye 
+    docker pull postgres:15.5-bookworm 
 
 <big>**&#9888;**</big>
 If we switch the version, please also amend the documentation as well as the aliases file. Thanks! 
 
 Create and run a container with the given PostgreSQL version:
 
-    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:13.7-bullseye
+    docker run --name hsadmin-ng-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15.5-bookworm
 
     # or via alias: 
     pg-sql-run
@@ -196,7 +201,7 @@ To generate the TOC (Table of Contents), a little bash script from a
 Given this is in PATH as `md-toc`, use:
 
 ```shell
-md-toc <README.md 2 4 | sed -e 's/^    //g'
+md-toc <README.md 2 4 | cut -c5-'
 ```
 
 To render the Markdown files, especially to watch embedded PlantUML diagrams, you can use one of the following methods:
@@ -230,12 +235,19 @@ sudo apt install graphviz
 
 ##### Ubuntu Linux command line
 
-```sh
-sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra pandoc-plantuml-filter
+1. Install Pandoc with some extra libraries:
+```shell
+sudo apt-get install pandoc texlive-latex-base texlive-fonts-recommended texlive-extra-utils texlive-latex-extra pandoc-plantuml-filter 
 ```
 
-```sh
-pandoc --filter pandoc-plantuml rbac.md -o rbac.pdf
+2. Install mermaid-filter, e.g. this way:
+```shell
+npm install -g mermaid-filter
+```
+
+3. Run Pandoc to generate a PDF from a Markdown file with PlantUML and Mermaid diagrams:
+```shell
+pandoc --filter mermaid-filter --filter pandoc-plantuml rbac.md -o rbac.pdf
 ```
 
 ##### for other IDEs / operating systems
@@ -244,7 +256,7 @@ If you have figured out how it works, please add instructions above this section
 
 #### Render Markdown Embedded Mermaid Diagrams
 
-The source of RBAC role diagrams are much easier to read with Mermaid than with PlantUML or GraphViz, that's the main reason Mermaid ist used too.
+The source of RBAC role diagrams are much easier to read with Mermaid than with PlantUML or GraphViz, that's also the main reason Mermaid is used.
 
 Can you see the following diagram right in your IDE?
 I mean a real graphic diagram, not just some markup code.
@@ -268,8 +280,11 @@ If not, you need to install some tooling.
 
 ##### for IntelliJ IDEA (or derived products)
 
-You just need the bundled Markdown plugin enabled and install and activate the Mermaid plugin in its [settings](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown).
+1. Activate the bundled Jebrains Markdown PlantUML Extension via
+    [File | Settings | Languages & Frameworks | Markdown](jetbrains://idea/settings?name=Languages+%26+Frameworks--Markdown)  
+2. Install the Jetbrains Mermaid plugin: https://plugins.jetbrains.com/plugin/20146-mermaid, it also works embedded in Markdown files.
 
+Now the above diagram should be rendered.
 
 ##### for other IDEs / command-line / operating systems
 
@@ -279,12 +294,22 @@ If you have figured out how it works, please add instructions above this section
 
 #### IntelliJ IDEA
 
+##### Build Settings
+
 Go to [Gradle Settings}(jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Build+Tools--Gradle) and select "Build and run using" and "Run tests using" both to "gradle".
 Otherwise, settings from `build.gradle`, like compiler arguments, are not applied when compiling through *IntelliJ IDEA*.
+
+##### Annotation Processor
 
 Go to [Annotations Processors](jetbrains://idea/settings?name=Build%2C+Execution%2C+Deployment--Compiler--Annotation+Processors) and activate annotation processing.
 Otherwise, *IntelliJ IDEA* can't see *Lombok* generated classes 
 and will show false errors (missing identifiers).
+
+
+##### Suggested Plugins
+
+- [Jetbrains Mermaid Integration](https://plugins.jetbrains.com/plugin/20146-mermaid)
+- [Vojtěch Krása PlantUML Integration](https://plugins.jetbrains.com/plugin/7017-plantuml-integration)
 
 ### Other Tools
 
@@ -416,6 +441,21 @@ The Java package structure below contains:
 Underneath of rbac and hs, the structure is business oriented, NOT technical / layer -oriented.
 
 Some of these rules are checked with *ArchUnit* unit tests.
+
+
+### Run Tests from Command Line
+
+Run all tests which have not yet been passed with the current source code:
+
+```shell
+gw test 
+```
+
+Force running all tests:
+
+```shell
+gw cleanTest test 
+```
 
 
 ### Spotless Code Formatting
@@ -616,7 +656,7 @@ we need to register a shutdown-hook in the test source code.
 2. Now You Can Run the Tests
 
 ```shell
-gw clean test # gw is from the .aliases file
+gw test # gw is from the .aliases file
 ```
 
 #### Use IntelliJ IDEA Run the Tests Against the Podman Daemon

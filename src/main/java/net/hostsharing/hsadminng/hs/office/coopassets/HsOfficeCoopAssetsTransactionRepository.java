@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
-import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransactionEntity;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 

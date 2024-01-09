@@ -12,7 +12,7 @@ public interface TestCustomerRepository extends Repository<TestCustomerEntity, U
 
     Optional<TestCustomerEntity> findByUuid(UUID id);
 
-    @Query("SELECT c FROM TestCustomerEntity c WHERE :prefix is null or c.prefix like concat(:prefix, '%')")
+    @Query("SELECT c FROM TestCustomerEntity c WHERE :prefix is null or c.prefix like concat(cast(:prefix as text), '%')")
     List<TestCustomerEntity> findCustomerByOptionalPrefixLike(String prefix);
 
     TestCustomerEntity save(final TestCustomerEntity entity);
