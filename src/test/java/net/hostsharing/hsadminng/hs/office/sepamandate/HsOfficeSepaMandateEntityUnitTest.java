@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
-import com.vladmihalcea.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import org.junit.jupiter.api.Test;
 

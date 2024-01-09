@@ -14,9 +14,9 @@ public interface HsOfficePersonRepository extends Repository<HsOfficePersonEntit
     @Query("""
             SELECT p FROM HsOfficePersonEntity p
                 WHERE :name is null
-                    OR p.tradeName like concat(:name, '%')
-                    OR p.givenName like concat(:name, '%')
-                    OR p.familyName like concat(:name, '%')
+                    OR p.tradeName like concat(cast(:name as text), '%')
+                    OR p.givenName like concat(cast(:name as text), '%')
+                    OR p.familyName like concat(cast(:name as text), '%')
                """)
     List<HsOfficePersonEntity> findPersonByOptionalNameLike(String name);
 

@@ -26,7 +26,6 @@ import java.util.UUID;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
@@ -481,7 +480,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
         void contactAdminUser_canNotDeleteRelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assumeThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("forth contact");
+            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("forth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -501,7 +500,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
         void normalUser_canNotDeleteUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assumeThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("forth contact");
+            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("forth contact");
 
             RestAssured // @formatter:off
                 .given()

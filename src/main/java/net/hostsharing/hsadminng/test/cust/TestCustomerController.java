@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 public class TestCustomerController implements TestCustomersApi {

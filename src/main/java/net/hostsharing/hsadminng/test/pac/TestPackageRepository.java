@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface TestPackageRepository extends Repository<TestPackageEntity, UUID> {
 
-    @Query("SELECT p FROM TestPackageEntity p WHERE :name is null or p.name like concat(:name, '%')")
+    @Query("SELECT p FROM TestPackageEntity p WHERE :name is null or p.name like concat(cast(:name as text), '%')")
     List<TestPackageEntity> findAllByOptionalNameLike(final String name);
 
     TestPackageEntity findByUuid(UUID packageUuid);

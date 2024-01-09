@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.*;
@@ -343,7 +342,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     }
 
     private void assumeCreated(final ValidatableResponse response) {
-        assumeThat(response.extract().response().statusCode()).isEqualTo(201);
+        assertThat(response.extract().response().statusCode()).isEqualTo(201);
     }
 
     class Subject {
@@ -479,7 +478,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     }
 
     private void assumeGrantExists(final Subject grantingSubject, final String expectedGrant) {
-        assumeThat(findAllGrantsOf(grantingSubject))
+        assertThat(findAllGrantsOf(grantingSubject))
                 .extracting(RbacGrantEntity::toDisplay)
                 .contains(expectedGrant);
     }
