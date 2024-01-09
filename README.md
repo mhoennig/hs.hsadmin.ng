@@ -50,13 +50,13 @@ Everything is tested on _Ubuntu Linux 22.04_ and _MacOS Monterey (12.4)_.
 
 To be able to build and run the Java Spring Boot application, you need the following tools:
 
-- Docker 20.x (on MacOS you also need *Docker Desktop* or similar)
+- Docker 20.x (on MacOS you also need *Docker Desktop* or similar) or Podman
 - optionally: PostgreSQL Server 15.5-bookworm 
   (see instructions below to install and run in Docker)
 - The matching Java JDK at will be automatically installed by Gradle toolchain support.
 - You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
-If you have at least Docker, the Java JDK and Gradle installed in appropriate versions and in your `PATH`, then you can start like this:
+If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:
 
     cd your-hsadmin-ng-directory
     
@@ -592,7 +592,16 @@ Summary for Debian-based Linux systems:
 sudo apt-get -y install podman
 ```
 
-Then start it like this:
+It is possible to move the storage directory to /tmp, e.g. to increase performance or to avoid issues with NFS mounted home directories:
+
+```shell
+cat .config/containers/storage.conf
+[storage]
+driver = "vfs"
+graphRoot = "/tmp/containers/storage"
+```
+
+2. Then start it like this:
 
 ```shell
 systemctl --user enable --now podman.socket
