@@ -59,9 +59,6 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
 
 
         final var saved = bankAccountRepo.save(entityToSave);
-//        em.persist(entityToSave);
-//        final var saved = entityToSave;
-//        em.flush();
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
