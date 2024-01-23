@@ -37,6 +37,7 @@ begin
             grantedByRole => globalAdmin()
         );
 
+    -- TODO: who is admin? the person itself? is it allowed for the person itself or a representative to edit the data?
     perform createRoleWithGrants(
             hsOfficePersonAdmin(NEW),
             permissions => array['edit'],

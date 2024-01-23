@@ -10,7 +10,7 @@
 CREATE TABLE hs_office_sepamandate_legacy_id
 (
     uuid            uuid NOT NULL REFERENCES hs_office_sepamandate(uuid),
-    sepa_mandat_id  integer NOT NULL
+    sepa_mandate_id  integer NOT NULL
 );
 --//
 
@@ -22,7 +22,7 @@ CREATE TABLE hs_office_sepamandate_legacy_id
 CREATE SEQUENCE IF NOT EXISTS hs_office_sepamandate_legacy_id_seq
     AS integer
     START 1000000000
-    OWNED BY hs_office_sepamandate_legacy_id.sepa_mandat_id;
+    OWNED BY hs_office_sepamandate_legacy_id.sepa_mandate_id;
 --//
 
 
@@ -31,7 +31,7 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_sepamandate_legacy_id_seq
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE hs_office_sepamandate_legacy_id
-    ALTER COLUMN sepa_mandat_id
+    ALTER COLUMN sepa_mandate_id
         SET DEFAULT nextVal('hs_office_sepamandate_legacy_id_seq');
 
 --/
@@ -42,7 +42,7 @@ ALTER TABLE hs_office_sepamandate_legacy_id
 -- ----------------------------------------------------------------------------
 
 CALL defineContext('schema-migration');
-INSERT INTO hs_office_sepamandate_legacy_id(uuid, sepa_mandat_id)
+INSERT INTO hs_office_sepamandate_legacy_id(uuid, sepa_mandate_id)
     SELECT uuid, nextVal('hs_office_sepamandate_legacy_id_seq') FROM hs_office_sepamandate;
 --/
 

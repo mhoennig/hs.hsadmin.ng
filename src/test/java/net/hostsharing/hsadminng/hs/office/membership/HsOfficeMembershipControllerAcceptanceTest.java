@@ -83,7 +83,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                       [
                           {
                               "partner": { "person": { "tradeName": "First GmbH" } },
-                              "mainDebitor": { "debitorNumber": 10001 },
+                              "mainDebitor": { "debitorNumber": 1000111 },
                               "memberNumber": 10001,
                               "validFrom": "2022-10-01",
                               "validTo": null,
@@ -91,7 +91,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                           },
                           {
                               "partner": { "person": { "tradeName": "Second e.K." } },
-                              "mainDebitor": { "debitorNumber": 10002 },
+                              "mainDebitor": { "debitorNumber": 1000212 },
                               "memberNumber": 10002,
                               "validFrom": "2022-10-01",
                               "validTo": null,
@@ -99,7 +99,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                           },
                           {
                               "partner": { "person": { "tradeName": "Third OHG" } },
-                              "mainDebitor": { "debitorNumber": 10003 },
+                              "mainDebitor": { "debitorNumber": 1000313 },
                               "memberNumber": 10003,
                               "validFrom": "2022-10-01",
                               "validTo": null,
@@ -131,7 +131,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                                    "partnerUuid": "%s",
                                    "mainDebitorUuid": "%s",
                                    "memberNumber": 20001,
-                                   "validFrom": "2022-10-13"
+                                   "validFrom": "2022-10-13",
+                                   "membershipFeeBillable": "true"
                                  }
                             """.formatted(givenPartner.getUuid(), givenDebitor.getUuid()))
                         .port(port)
@@ -142,6 +143,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("mainDebitor.debitorNumber", is(givenDebitor.getDebitorNumber()))
+                        .body("mainDebitor.debitorNumberSuffix", is((int) givenDebitor.getDebitorNumberSuffix()))
                         .body("partner.person.tradeName", is("Third OHG"))
                         .body("memberNumber", is(20001))
                         .body("validFrom", is("2022-10-13"))
@@ -182,7 +184,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                          "partner": { "person": { "tradeName": "First GmbH" } },
-                         "mainDebitor": { "debitorNumber": 10001 },
+                         "mainDebitor": { "debitorNumber": 1000111 },
                          "memberNumber": 10001,
                          "validFrom": "2022-10-01",
                          "validTo": null,
@@ -224,7 +226,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_debitor#10003ThirdOHG-thirdcontact.agent")
+                    .header("assumed-roles", "hs_office_debitor#1000313:ThirdOHG-thirdcontact.agent")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -235,7 +237,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     {
                          "partner": { "person": { "tradeName": "Third OHG" } },
                          "mainDebitor": {
-                             "debitorNumber": 10003,
+                             "debitorNumber": 1000313,
                              "billingContact": { "label": "third contact" }
                          },
                          "memberNumber": 10003,
@@ -276,6 +278,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .body("uuid", isUuidValid())
                     .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
                     .body("mainDebitor.debitorNumber", is(givenMembership.getMainDebitor().getDebitorNumber()))
+                    .body("mainDebitor.debitorNumberSuffix", is((int) givenMembership.getMainDebitor().getDebitorNumberSuffix()))
                     .body("memberNumber", is(givenMembership.getMemberNumber()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2023-12-31"))
@@ -285,7 +288,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getPartner().toShortString()).isEqualTo("First GmbH");
+                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LEGAL First GmbH");
                         assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
                         assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-01)");
@@ -299,7 +302,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = givenSomeTemporaryMembershipBessler();
-            final var givenNewMainDebitor = debitorRepo.findDebitorByDebitorNumber(10003).get(0);
+            final var givenNewMainDebitor = debitorRepo.findDebitorByDebitorNumber(1000313).get(0);
 
             RestAssured // @formatter:off
                 .given()
@@ -318,7 +321,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
-                    .body("mainDebitor.debitorNumber", is(10003))
+                    .body("mainDebitor.debitorNumber", is(1000313))
                     .body("memberNumber", is(givenMembership.getMemberNumber()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", nullValue())
@@ -328,7 +331,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getPartner().toShortString()).isEqualTo("First GmbH");
+                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LEGAL First GmbH");
                         assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
                         assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");
@@ -340,13 +343,13 @@ class HsOfficeMembershipControllerAcceptanceTest {
         @Test
         void partnerAgent_canViewButNotPatchValidityOfRelatedMembership() {
 
-            context.define("superuser-alex@hostsharing.net", "hs_office_partner#FirstGmbH-firstcontact.agent");
+            context.define("superuser-alex@hostsharing.net", "hs_office_partner#10001:FirstGmbH-firstcontact.agent");
             final var givenMembership = givenSomeTemporaryMembershipBessler();
 
             final var location = RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_partner#FirstGmbH-firstcontact.agent")
+                    .header("assumed-roles", "hs_office_partner#10001:FirstGmbH-firstcontact.agent")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -444,6 +447,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .memberNumber(++tempMemberNumber)
                     .validity(Range.closedInfinite(LocalDate.parse("2022-11-01")))
                     .reasonForTermination(NONE)
+                    .membershipFeeBillable(true)
                     .build();
 
             return membershipRepo.save(newMembership);

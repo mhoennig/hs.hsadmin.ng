@@ -58,7 +58,7 @@ begin
             select p.* from hs_office_person p where tradeName = intToVarChar(t, 4) into person;
             select c.* from hs_office_contact c where c.label = intToVarChar(t, 4) || '#' || t into contact;
 
-            call createHsOfficeRelationshipTestData(person.uuid, contact.uuid, 'SOLE_AGENT');
+            call createHsOfficeRelationshipTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
             commit;
         end loop;
 end; $$;
@@ -71,11 +71,11 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficeRelationshipTestData('First GmbH', 'Smith', 'SOLE_AGENT', 'first contact');
+        call createHsOfficeRelationshipTestData('First GmbH', 'Smith', 'REPRESENTATIVE', 'first contact');
 
-        call createHsOfficeRelationshipTestData('Second e.K.', 'Smith', 'SOLE_AGENT', 'second contact');
+        call createHsOfficeRelationshipTestData('Second e.K.', 'Smith', 'REPRESENTATIVE', 'second contact');
 
-        call createHsOfficeRelationshipTestData('Third OHG', 'Smith', 'SOLE_AGENT', 'third contact');
+        call createHsOfficeRelationshipTestData('Third OHG', 'Smith', 'REPRESENTATIVE', 'third contact');
     end;
 $$;
 --//

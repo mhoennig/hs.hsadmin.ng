@@ -11,11 +11,11 @@
 create or replace procedure createHsOfficeMembershipTestData( forPartnerTradeName varchar, forMainDebitorNumber numeric )
     language plpgsql as $$
 declare
-    currentTask     varchar;
-    idName          varchar;
-    relatedPartner  hs_office_partner;
-    relatedDebitor  hs_office_debitor;
-    newMemberNumber numeric;
+    currentTask         varchar;
+    idName              varchar;
+    relatedPartner      hs_office_partner;
+    relatedDebitor      hs_office_debitor;
+    newMemberNumber     numeric;
 begin
     idName := cleanIdentifier( forPartnerTradeName || '#' || forMainDebitorNumber);
     currentTask := 'creating Membership test-data ' || idName;
@@ -25,7 +25,7 @@ begin
     select partner.* from hs_office_partner partner
                       join hs_office_person person on person.uuid = partner.personUuid
                      where person.tradeName = forPartnerTradeName into relatedPartner;
-    select d.* from hs_office_debitor d where d.debitorNumber = forMainDebitorNumber into relatedDebitor;
+    select d.* from hs_office_debitor d where d.debitorNumberSuffix = forMainDebitorNumber into relatedDebitor;
     select coalesce(max(memberNumber)+1, 10001) from hs_office_membership into newMemberNumber;
 
     raise notice 'creating test Membership: %', idName;
@@ -44,9 +44,9 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficeMembershipTestData('First GmbH', 10001);
-        call createHsOfficeMembershipTestData('Second e.K.', 10002);
-        call createHsOfficeMembershipTestData('Third OHG', 10003);
+        call createHsOfficeMembershipTestData('First GmbH', 11);
+        call createHsOfficeMembershipTestData('Second e.K.', 12);
+        call createHsOfficeMembershipTestData('Third OHG', 13);
     end;
 $$;
 --//

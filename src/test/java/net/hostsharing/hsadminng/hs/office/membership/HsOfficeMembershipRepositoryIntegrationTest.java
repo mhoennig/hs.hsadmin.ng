@@ -81,6 +81,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                         .partner(givenPartner)
                         .mainDebitor(givenDebitor)
                         .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
+                        .membershipFeeBillable(true)
                         .build());
                 return membershipRepo.save(newMembership);
             });
@@ -111,6 +112,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                         .partner(givenPartner)
                         .mainDebitor(givenDebitor)
                         .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
+                        .membershipFeeBillable(true)
                         .build());
                 return membershipRepo.save(newMembership);
             });
@@ -119,11 +121,11 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             final var all = rawRoleRepo.findAll();
             assertThat(roleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_membership#20002FirstGmbH-firstcontact.admin",
-                    "hs_office_membership#20002FirstGmbH-firstcontact.agent",
-                    "hs_office_membership#20002FirstGmbH-firstcontact.guest",
-                    "hs_office_membership#20002FirstGmbH-firstcontact.owner",
-                    "hs_office_membership#20002FirstGmbH-firstcontact.tenant"));
+                    "hs_office_membership#20002:FirstGmbH-firstcontact.admin",
+                    "hs_office_membership#20002:FirstGmbH-firstcontact.agent",
+                    "hs_office_membership#20002:FirstGmbH-firstcontact.guest",
+                    "hs_office_membership#20002:FirstGmbH-firstcontact.owner",
+                    "hs_office_membership#20002:FirstGmbH-firstcontact.tenant"));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("GmbH-firstcontact", ""))
                     .map(s -> s.replace("hs_office_", ""))
@@ -131,32 +133,33 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                             initialGrantNames,
 
                             // owner
-                            "{ grant perm * on membership#20002First        to role membership#20002First.owner     by system and assume }",
-                            "{ grant role membership#20002First.owner       to role global#global.admin             by system and assume }",
+                            "{ grant perm * on membership#20002:First        to role membership#20002:First.owner     by system and assume }",
+                            "{ grant role membership#20002:First.owner       to role global#global.admin             by system and assume }",
 
                             // admin
-                            "{ grant perm edit on membership#20002First     to role membership#20002First.admin     by system and assume }",
-                            "{ grant role membership#20002First.admin       to role membership#20002First.owner     by system and assume }",
+                            "{ grant perm edit on membership#20002:First     to role membership#20002:First.admin     by system and assume }",
+                            "{ grant role membership#20002:First.admin       to role membership#20002:First.owner     by system and assume }",
 
                             // agent
-                            "{ grant role membership#20002First.agent       to role membership#20002First.admin     by system and assume }",
-                            "{ grant role partner#First.tenant              to role membership#20002First.agent     by system and assume }",
-                            "{ grant role membership#20002First.agent       to role debitor#10001First.admin        by system and assume }",
-                            "{ grant role membership#20002First.agent       to role partner#First.admin             by system and assume }",
-                            "{ grant role debitor#10001First.tenant         to role membership#20002First.agent     by system and assume }",
+                            "{ grant role membership#20002:First.agent       to role membership#20002:First.admin     by system and assume }",
+                            "{ grant role partner#10001:First.tenant              to role membership#20002:First.agent     by system and assume }",
+                            "{ grant role membership#20002:First.agent       to role debitor#1000111:First.admin        by system and assume }",
+                            "{ grant role membership#20002:First.agent       to role partner#10001:First.admin             by system and assume }",
+                            "{ grant role debitor#1000111:First.tenant       to role membership#20002:First.agent     by system and assume }",
 
                             // tenant
-                            "{ grant role membership#20002First.tenant      to role membership#20002First.agent     by system and assume }",
-                            "{ grant role partner#First.guest               to role membership#20002First.tenant    by system and assume }",
-                            "{ grant role debitor#10001First.guest          to role membership#20002First.tenant    by system and assume }",
-                            "{ grant role membership#20002First.tenant      to role debitor#10001First.agent        by system and assume }",
-                            "{ grant role membership#20002First.tenant      to role partner#First.agent             by system and assume }",
+                            "{ grant role membership#20002:First.tenant      to role membership#20002:First.agent     by system and assume }",
+                            "{ grant role partner#10001:First.guest               to role membership#20002:First.tenant    by system and assume }",
+                            "{ grant role debitor#1000111:First.guest          to role membership#20002:First.tenant    by system and assume }",
+                            "{ grant role membership#20002:First.tenant      to role debitor#1000111:First.agent        by system and assume }",
+
+                            "{ grant role membership#20002:First.tenant      to role partner#10001:First.agent             by system and assume }",
 
                             // guest
-                            "{ grant perm view on membership#20002First     to role membership#20002First.guest     by system and assume }",
-                            "{ grant role membership#20002First.guest       to role membership#20002First.tenant    by system and assume }",
-                            "{ grant role membership#20002First.guest       to role partner#First.tenant            by system and assume }",
-                            "{ grant role membership#20002First.guest       to role debitor#10001First.tenant       by system and assume }",
+                            "{ grant perm view on membership#20002:First     to role membership#20002:First.guest     by system and assume }",
+                            "{ grant role membership#20002:First.guest       to role membership#20002:First.tenant    by system and assume }",
+                            "{ grant role membership#20002:First.guest       to role partner#10001:First.tenant            by system and assume }",
+                            "{ grant role membership#20002:First.guest       to role debitor#1000111:First.tenant       by system and assume }",
 
                             null));
         }
@@ -181,9 +184,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(10001, First GmbH, 10001, [2022-10-01,), NONE)",
-                    "Membership(10002, Second e.K., 10002, [2022-10-01,), NONE)",
-                    "Membership(10003, Third OHG, 10003, [2022-10-01,), NONE)");
+                    "Membership(10001, LEGAL First GmbH, 1000111, [2022-10-01,), NONE)",
+                    "Membership(10002, LEGAL Second e.K., 1000212, [2022-10-01,), NONE)",
+                    "Membership(10003, SOLE_REPRESENTATION Third OHG, 1000313, [2022-10-01,), NONE)");
         }
 
         @Test
@@ -198,7 +201,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                     null);
 
             // then
-            exactlyTheseMembershipsAreReturned(result, "Membership(10001, First GmbH, 10001, [2022-10-01,), NONE)");
+            exactlyTheseMembershipsAreReturned(result, "Membership(10001, LEGAL First GmbH, 1000111, [2022-10-01,), NONE)");
         }
 
         @Test
@@ -210,7 +213,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             final var result = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002);
 
             // then
-            exactlyTheseMembershipsAreReturned(result, "Membership(10002, Second e.K., 10002, [2022-10-01,), NONE)");
+            exactlyTheseMembershipsAreReturned(result, "Membership(10002, LEGAL Second e.K., 1000212, [2022-10-01,), NONE)");
         }
     }
 
@@ -224,7 +227,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             final var givenMembership = givenSomeTemporaryMembership("First", "First");
             assertThatMembershipIsVisibleForUserWithRole(
                     givenMembership,
-                    "hs_office_debitor#10001FirstGmbH-firstcontact.admin");
+                    "hs_office_debitor#1000111:FirstGmbH-firstcontact.admin");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             final var newValidityEnd = LocalDate.now();
 
@@ -251,13 +254,13 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             final var givenMembership = givenSomeTemporaryMembership("First", "First");
             assertThatMembershipIsVisibleForUserWithRole(
                     givenMembership,
-                    "hs_office_debitor#10001FirstGmbH-firstcontact.admin");
+                    "hs_office_debitor#1000111:FirstGmbH-firstcontact.admin");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_debitor#10001FirstGmbH-firstcontact.admin");
+                context("superuser-alex@hostsharing.net", "hs_office_debitor#1000111:FirstGmbH-firstcontact.admin");
                 givenMembership.setValidity(Range.closedOpen(
                         givenMembership.getValidity().lower(), newValidityEnd));
                 return membershipRepo.save(givenMembership);
@@ -325,7 +328,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_debitor#10003ThirdOHG-thirdcontact.admin");
+                context("superuser-alex@hostsharing.net", "hs_office_debitor#1000313:ThirdOHG-thirdcontact.admin");
                 assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent();
 
                 membershipRepo.deleteByUuid(givenMembership.getUuid());
@@ -382,8 +385,8 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating Membership test-data FirstGmbH10001, hs_office_membership, INSERT]",
-                "[creating Membership test-data Seconde.K.10002, hs_office_membership, INSERT]");
+                "[creating Membership test-data FirstGmbH11, hs_office_membership, INSERT]",
+                "[creating Membership test-data Seconde.K.12, hs_office_membership, INSERT]");
     }
 
     @BeforeEach
@@ -412,6 +415,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                     .partner(givenPartner)
                     .mainDebitor(givenDebitor)
                     .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
+                    .membershipFeeBillable(true)
                     .build();
 
             toCleanup(newMembership);

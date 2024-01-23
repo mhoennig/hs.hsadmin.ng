@@ -104,7 +104,7 @@ begin
             create or replace view %1$s_iv as
             select target.uuid, cleanIdentifier(%2$s) as idName
                 from %1$s as target;
-            grant all privileges on %1$s_iv to restricted;
+            grant all privileges on %1$s_iv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
         $sql$, targetTable, idNameExpression);
     execute sql;
 
@@ -157,7 +157,7 @@ begin
                 from %1$s as target
                 where target.uuid in (select * from accessibleObjects)
                 order by %2$s;
-            grant all privileges on %1$s_rv to restricted;
+            grant all privileges on %1$s_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
         $sql$, targetTable, orderBy);
     execute sql;
 

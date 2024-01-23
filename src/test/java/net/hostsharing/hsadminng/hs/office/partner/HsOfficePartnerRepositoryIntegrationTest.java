@@ -105,6 +105,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newPartner = toCleanup(HsOfficePartnerEntity.builder()
+                        .debitorNumberPrefix(22222)
                         .person(givenPerson)
                         .contact(givenContact)
                         .details(HsOfficePartnerDetailsEntity.builder().build())
@@ -115,11 +116,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.admin",
-                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.agent",
-                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.owner",
-                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.tenant",
-                    "hs_office_partner#ErbenBesslerMelBessler-forthcontact.guest"));
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-forthcontact.admin",
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-forthcontact.agent",
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-forthcontact.owner",
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-forthcontact.tenant",
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-forthcontact.guest"));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
                     .map(s -> s.replace("forthcontact", "4th"))
@@ -127,31 +128,31 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             // owner
-                            "{ grant perm * on partner#EBess-4th                    to role partner#EBess-4th.owner     by system and assume }",
-                            "{ grant perm * on partner_details#EBess-4th-details    to role partner#EBess-4th.owner     by system and assume }",
-                            "{ grant role partner#EBess-4th.owner                   to role global#global.admin         by system and assume }",
+                            "{ grant perm * on partner#22222:EBess-4th              to role partner#22222:EBess-4th.owner     by system and assume }",
+                            "{ grant perm * on partner_details#22222:EBess-4th-details    to role partner#22222:EBess-4th.owner     by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.owner             to role global#global.admin         by system and assume }",
 
                             // admin
-                            "{ grant perm edit on partner#EBess-4th                 to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant perm edit on partner_details#EBess-4th-details to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant role partner#EBess-4th.admin                   to role partner#EBess-4th.owner     by system and assume }",
-                            "{ grant role person#EBess.tenant                       to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant role contact#4th.tenant                        to role partner#EBess-4th.admin     by system and assume }",
+                            "{ grant perm edit on partner#22222:EBess-4th           to role partner#22222:EBess-4th.admin     by system and assume }",
+                            "{ grant perm edit on partner_details#22222:EBess-4th-details to role partner#22222:EBess-4th.admin     by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.admin             to role partner#22222:EBess-4th.owner     by system and assume }",
+                            "{ grant role person#EBess.tenant                       to role partner#22222:EBess-4th.admin     by system and assume }",
+                            "{ grant role contact#4th.tenant                        to role partner#22222:EBess-4th.admin     by system and assume }",
 
                             // agent
-                            "{ grant perm view on partner_details#EBess-4th-details to role partner#EBess-4th.agent     by system and assume }",
-                            "{ grant role partner#EBess-4th.agent                   to role partner#EBess-4th.admin     by system and assume }",
-                            "{ grant role partner#EBess-4th.agent                   to role person#EBess.admin          by system and assume }",
-                            "{ grant role partner#EBess-4th.agent                   to role contact#4th.admin           by system and assume }",
+                            "{ grant perm view on partner_details#22222:EBess-4th-details to role partner#22222:EBess-4th.agent     by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.agent             to role partner#22222:EBess-4th.admin     by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.agent             to role person#EBess.admin          by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.agent             to role contact#4th.admin           by system and assume }",
 
                             // tenant
-                            "{ grant role partner#EBess-4th.tenant                  to role partner#EBess-4th.agent     by system and assume }",
-                            "{ grant role person#EBess.guest                        to role partner#EBess-4th.tenant    by system and assume }",
-                            "{ grant role contact#4th.guest                         to role partner#EBess-4th.tenant    by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.tenant            to role partner#22222:EBess-4th.agent     by system and assume }",
+                            "{ grant role person#EBess.guest                        to role partner#22222:EBess-4th.tenant    by system and assume }",
+                            "{ grant role contact#4th.guest                         to role partner#22222:EBess-4th.tenant    by system and assume }",
 
                             // guest
-                            "{ grant perm view on partner#EBess-4th                 to role partner#EBess-4th.guest     by system and assume }",
-                            "{ grant role partner#EBess-4th.guest                   to role partner#EBess-4th.tenant    by system and assume }",
+                            "{ grant perm view on partner#22222:EBess-4th           to role partner#22222:EBess-4th.guest     by system and assume }",
+                            "{ grant role partner#22222:EBess-4th.guest             to role partner#22222:EBess-4th.tenant    by system and assume }",
 
                             null));
         }
@@ -176,9 +177,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allThesePartnersAreReturned(
                     result,
-                    "partner(Third OHG: third contact)",
-                    "partner(Second e.K.: second contact)",
-                    "partner(First GmbH: first contact)");
+                    "partner(SOLE_REPRESENTATION Third OHG: third contact)",
+                    "partner(LEGAL Second e.K.: second contact)",
+                    "partner(LEGAL First GmbH: first contact)");
         }
 
         @Test
@@ -190,7 +191,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then:
-            exactlyThesePartnersAreReturned(result, "partner(First GmbH: first contact)");
+            exactlyThesePartnersAreReturned(result, "partner(LEGAL First GmbH: first contact)");
         }
     }
 
@@ -206,7 +207,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
 
             // then
-            exactlyThesePartnersAreReturned(result, "partner(Third OHG: third contact)");
+            exactlyThesePartnersAreReturned(result, "partner(SOLE_REPRESENTATION Third OHG: third contact)");
         }
     }
 
@@ -217,10 +218,10 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void hostsharingAdmin_withoutAssumedRole_canUpdateArbitraryPartner() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenPartner = givenSomeTemporaryPartnerBessler("fifth contact");
+            final var givenPartner = givenSomeTemporaryPartnerBessler(22222, "Erben Bessler", "fifth contact");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler.admin");
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-fifthcontact.admin");
             assertThatPartnerActuallyInDatabase(givenPartner);
             context("superuser-alex@hostsharing.net");
             final var givenNewPerson = personRepo.findPersonByOptionalNameLike("Third OHG").get(0);
@@ -253,16 +254,16 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void partnerAgent_canNotUpdateRelatedPartner() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenPartner = givenSomeTemporaryPartnerBessler("ninth");
+            final var givenPartner = givenSomeTemporaryPartnerBessler(22222, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_partner#ErbenBesslerMelBessler-ninthcontact.agent");
+                    "hs_office_partner#22222:ErbenBesslerMelBessler-ninthcontact.agent");
             assertThatPartnerActuallyInDatabase(givenPartner);
-            final var givenNewContact = contactRepo.findContactByOptionalLabelLike("tenth").get(0);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_partner#ErbenBesslerMelBessler-ninthcontact.agent");
+                context("superuser-alex@hostsharing.net",
+                        "hs_office_partner#22222:ErbenBesslerMelBessler-ninthcontact.agent");
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
@@ -304,7 +305,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_withoutAssumedRole_canDeleteAnyPartner() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenPartner = givenSomeTemporaryPartnerBessler("tenth");
+            final var givenPartner = givenSomeTemporaryPartnerBessler(22222, "Erben Bessler", "tenth");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -324,7 +325,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         public void nonGlobalAdmin_canNotDeleteTheirRelatedPartner() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenPartner = givenSomeTemporaryPartnerBessler("eleventh");
+            final var givenPartner = givenSomeTemporaryPartnerBessler(22222, "Erben Bessler", "eleventh");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -350,7 +351,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = Array.from(roleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
-            final var givenPartner = givenSomeTemporaryPartnerBessler("twelfth");
+            final var givenPartner = givenSomeTemporaryPartnerBessler(22222, "Erben Bessler", "twelfth");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -394,12 +395,14 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
         });
     }
 
-    private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler(final String contact) {
+    private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler(
+            final Integer debitorNumberPrefix, final String person, final String contact) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike(person).get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
             final var newPartner = HsOfficePartnerEntity.builder()
+                    .debitorNumberPrefix(debitorNumberPrefix)
                     .person(givenPerson)
                     .contact(givenContact)
                     .details(HsOfficePartnerDetailsEntity.builder().build())

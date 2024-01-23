@@ -27,7 +27,7 @@ create or replace function hsOfficeMembershipRbacRolesTrigger()
     language plpgsql
     strict as $$
 declare
-    newHsOfficePartner      hs_office_partner;
+    newHsOfficePartner  hs_office_partner;
     newHsOfficeDebitor  hs_office_debitor;
 begin
 
@@ -92,7 +92,8 @@ execute procedure hsOfficeMembershipRbacRolesTrigger();
 --changeset hs-office-membership-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacIdentityView('hs_office_membership', idNameExpression => $idName$
-    target.memberNumber || (select idName from hs_office_partner_iv p where p.uuid = target.partnerUuid)
+    target.memberNumber ||
+    ':' || (select split_part(idName, ':', 2) from hs_office_partner_iv p where p.uuid = target.partnerUuid)
     $idName$);
 --//
 
@@ -104,7 +105,8 @@ call generateRbacRestrictedView('hs_office_membership',
     orderby => 'target.memberNumber',
     columnUpdates => $updates$
         validity = new.validity,
-        reasonForTermination = new.reasonForTermination
+        reasonForTermination = new.reasonForTermination,
+        membershipFeeBillable = new.membershipFeeBillable
     $updates$);
 --//
 

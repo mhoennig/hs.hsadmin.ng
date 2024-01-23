@@ -100,6 +100,7 @@ dependencies {
     testImplementation 'io.rest-assured:spring-mock-mvc'
     testImplementation 'org.hamcrest:hamcrest-core:2.2'
     testImplementation 'org.pitest:pitest-junit5-plugin:1.2.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api'
 }
 
 dependencyManagement {
@@ -129,7 +130,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition.yaml"
         mapping "$projectDir/src/main/resources/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi-javax"
+        targetDir "$buildDir/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -138,7 +139,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/rbac/rbac.yaml"
         mapping "$projectDir/src/main/resources/api-definition/rbac/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi-javax"
+        targetDir "$buildDir/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -147,7 +148,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/test/test.yaml"
         mapping "$projectDir/src/main/resources/api-definition/test/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi-javax"
+        targetDir "$buildDir/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -156,7 +157,7 @@ openapiProcessor {
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/hs-office/hs-office.yaml"
         mapping "$projectDir/src/main/resources/api-definition/hs-office/api-mappings.yaml"
-        targetDir "$projectDir/build/generated/sources/openapi-javax"
+        targetDir "$buildDir/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true
     }
@@ -237,6 +238,9 @@ test {
     excludes = [
             'net.hostsharing.hsadminng.**.generated.**',
     ]
+    useJUnitPlatform {
+        excludeTags 'import'
+    }
 }
 jacocoTestReport {
     dependsOn test
@@ -296,6 +300,16 @@ jacocoTestCoverageVerification {
         }
     }
 }
+
+tasks.register('importOfficeData', Test) {
+    useJUnitPlatform {
+        includeTags 'import'
+    }
+
+    group 'verification'
+    description 'run the import jobs as tests'
+}
+
 
 // pitest mutation testing
 pitest {

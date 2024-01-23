@@ -7,7 +7,7 @@
 create table if not exists hs_office_contact
 (
     uuid           uuid unique references RbacObject (uuid) initially deferred,
-    label          varchar(96) not null,
+    label          varchar(128) not null,
     postalAddress  text,
     emailAddresses text, -- TODO.feat: change to json
     phoneNumbers   text  -- TODO.feat: change to json

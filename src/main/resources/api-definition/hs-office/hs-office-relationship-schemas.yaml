@@ -6,10 +6,12 @@ components:
         HsOfficeRelationshipType:
             type: string
             enum:
-                - SOLE_AGENT        # e.g. CEO
-                - JOINT_AGENT       # e.g. heir
-                - ACCOUNTING_CONTACT
-                - TECHNICAL_CONTACT
+                - UNKNOWN
+                - EX_PARTNER
+                - REPRESENTATIVE,
+                - VIP_CONTACT
+                - ACCOUNTING,
+                - OPERATIONS
 
         HsOfficeRelationship:
             type: object

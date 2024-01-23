@@ -1,8 +1,10 @@
+
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
@@ -13,6 +15,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -23,14 +26,15 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("CoopAssetsTransaction")
-public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable {
+public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUuid {
 
     private static Stringify<HsOfficeCoopAssetsTransactionEntity> stringify = stringify(HsOfficeCoopAssetsTransactionEntity.class)
-            .withProp(e -> e.getMembership().getMemberNumber())
+            .withProp(HsOfficeCoopAssetsTransactionEntity::getMemberNumber)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getValueDate)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getTransactionType)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getAssetValue)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getReference)
+            .withProp(HsOfficeCoopAssetsTransactionEntity::getComment)
             .withSeparator(", ")
             .quotedValues(false);
 
@@ -54,10 +58,15 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable {
     private BigDecimal assetValue;
 
     @Column(name = "reference")
-    private String reference;
+    private String reference; // TODO: what is this for?
 
     @Column(name = "comment")
     private String comment;
+
+
+    public Integer getMemberNumber() {
+        return ofNullable(membership).map(HsOfficeMembershipEntity::getMemberNumber).orElse(null);
+    }
 
     @Override
     public String toString() {
@@ -66,6 +75,6 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable {
 
     @Override
     public String toShortString() {
-        return membership.getMemberNumber() + new DecimalFormat("+0.00").format(assetValue);
+        return "%s%+1.2f".formatted(getMemberNumber(), assetValue);
     }
 }

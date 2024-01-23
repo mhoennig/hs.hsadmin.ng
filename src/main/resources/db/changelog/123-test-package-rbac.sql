@@ -93,7 +93,7 @@ call generateRbacIdentityView('test_package', 'target.name');
 --     from test_package as target
 --     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'test_package', currentSubjectsUuids()))
 --     order by target.name;
--- grant all privileges on test_package_rv to restricted;
+-- grant all privileges on test_package_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 
 call generateRbacRestrictedView('test_package', 'target.name',
     $updates$

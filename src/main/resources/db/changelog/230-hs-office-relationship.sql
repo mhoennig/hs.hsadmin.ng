@@ -4,7 +4,13 @@
 --changeset hs-office-relationship-MAIN-TABLE:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficeRelationshipType AS ENUM ('SOLE_AGENT', 'JOINT_AGENT', 'CO_OWNER', 'ACCOUNTING_CONTACT', 'TECHNICAL_CONTACT');
+CREATE TYPE HsOfficeRelationshipType AS ENUM (
+    'UNKNOWN',
+    'EX_PARTNER',
+    'REPRESENTATIVE',
+    'VIP_CONTACT',
+    'ACCOUNTING',
+    'OPERATIONS');
 
 CREATE CAST (character varying as HsOfficeRelationshipType) WITH INOUT AS IMPLICIT;
 

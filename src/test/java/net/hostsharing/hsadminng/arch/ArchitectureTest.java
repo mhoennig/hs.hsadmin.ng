@@ -30,16 +30,17 @@ public class ArchitectureTest {
                     "..test.pac",
                     "..context",
                     "..generated..",
-                    "..hs.office.person",
-                    "..hs.office.partner",
                     "..hs.office.bankaccount",
-                    "..hs.office.debitor",
-                    "..hs.office.relationship",
                     "..hs.office.contact",
-                    "..hs.office.sepamandate",
                     "..hs.office.coopassets",
                     "..hs.office.coopshares",
+                    "..hs.office.debitor",
                     "..hs.office.membership",
+                    "..hs.office.migration",
+                    "..hs.office.partner",
+                    "..hs.office.person",
+                    "..hs.office.relationship",
+                    "..hs.office.sepamandate",
                     "..errors",
                     "..mapper",
                     "..ping",
@@ -121,14 +122,19 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficeBankAccountPackageRule = classes()
             .that().resideInAPackage("..hs.office.bankaccount..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.bankaccount..", "..hs.office.sepamandate..", "..hs.office.debitor..");
+            .resideInAnyPackage("..hs.office.bankaccount..",
+                    "..hs.office.sepamandate..",
+                    "..hs.office.debitor..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeSepaMandatePackageRule = classes()
             .that().resideInAPackage("..hs.office.sepamandate..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.sepamandate..", "..hs.office.debitor..");
+            .resideInAnyPackage("..hs.office.sepamandate..",
+                    "..hs.office.debitor..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -136,7 +142,10 @@ public class ArchitectureTest {
             .that().resideInAPackage("..hs.office.contact..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.contact..", "..hs.office.relationship..",
-                    "..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
+                    "..hs.office.partner..",
+                    "..hs.office.debitor..",
+                    "..hs.office.membership..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -144,42 +153,63 @@ public class ArchitectureTest {
             .that().resideInAPackage("..hs.office.person..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.person..", "..hs.office.relationship..",
-                    "..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
+                    "..hs.office.partner..",
+                    "..hs.office.debitor..",
+                    "..hs.office.membership..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeRelationshipPackageRule = classes()
             .that().resideInAPackage("..hs.office.relationship..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.relationship..");
+            .resideInAnyPackage("..hs.office.relationship..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.partner..", "..hs.office.debitor..", "..hs.office.membership..");
+            .resideInAnyPackage("..hs.office.partner..",
+                    "..hs.office.debitor..",
+                    "..hs.office.membership..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeMembershipPackageRule = classes()
             .that().resideInAPackage("..hs.office.membership..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.membership..", "..hs.office.coopassets..", "..hs.office.coopshares..");
+            .resideInAnyPackage("..hs.office.membership..",
+                    "..hs.office.coopassets..",
+                    "..hs.office.coopshares..",
+                    "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeCoopAssetsPackageRule = classes()
         .that().resideInAPackage("..hs.office.coopassets..")
         .should().onlyBeAccessed().byClassesThat()
-        .resideInAnyPackage("..hs.office.coopassets..");
+        .resideInAnyPackage(
+                "..hs.office.coopassets..",
+                "..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeCoopSharesPackageRule = classes()
             .that().resideInAPackage("..hs.office.coopshares..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.coopshares..");
+            .resideInAnyPackage(
+                    "..hs.office.coopshares..",
+                    "..hs.office.migration..");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsOfficeMigrationPackageRule = classes()
+            .that().resideInAPackage("..hs.office.migration..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage("..hs.office.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -197,7 +227,7 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule doNotUsejakartaTransactionAnnotationAtClassLevel = noClasses()
+    public static final ArchRule doNotUseJakartaTransactionAnnotationAtClassLevel = noClasses()
             .should().beAnnotatedWith(jakarta.transaction.Transactional.class.getName())
             .as("Use @%s instead of @%s.".formatted(
                     org.springframework.transaction.annotation.Transactional.class.getName(),
@@ -205,7 +235,7 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule doNotUsejakartaTransactionAnnotationAtMethodLevel = noMethods()
+    public static final ArchRule doNotUseJakartaTransactionAnnotationAtMethodLevel = noMethods()
             .should().beAnnotatedWith(jakarta.transaction.Transactional.class)
             .as("Use @%s instead of @%s.".formatted(
                     org.springframework.transaction.annotation.Transactional.class.getName(),

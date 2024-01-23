@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
@@ -31,9 +32,19 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final UUID INITIAL_CONTACT_UUID = UUID.randomUUID();
     private static final UUID PATCHED_CONTACT_UUID = UUID.randomUUID();
 
+    private static final String PATCHED_DEFAULT_PREFIX = "xyz";
     private static final String PATCHED_VAT_COUNTRY_CODE = "ZZ";
 
     private static final boolean PATCHED_VAT_BUSINESS = false;
+
+    private static final boolean INITIAL_BILLABLE = false;
+    private static final boolean PATCHED_BILLABLE = true;
+
+    private static final boolean INITIAL_VAT_REVERSE_CHARGE = true;
+    private static final boolean PATCHED_VAT_REVERSE_CHARGE = false;
+
+    private static final UUID INITIAL_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
+    private static final UUID PATCHED_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
 
     private final HsOfficePartnerEntity givenInitialPartner = HsOfficePartnerEntity.builder()
             .uuid(INITIAL_PARTNER_UUID)
@@ -42,6 +53,10 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     private final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
             .uuid(INITIAL_CONTACT_UUID)
             .build();
+
+    private final HsOfficeBankAccountEntity givenInitialBankAccount = HsOfficeBankAccountEntity.builder()
+            .uuid(INITIAL_REFUND_BANK_ACCOUNT_UUID)
+            .build();
     @Mock
     private EntityManager em;
 
@@ -49,8 +64,8 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     void initMocks() {
         lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeBankAccountEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeBankAccountEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
@@ -59,9 +74,13 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
         entity.setUuid(INITIAL_DEBITOR_UUID);
         entity.setPartner(givenInitialPartner);
         entity.setBillingContact(givenInitialContact);
+        entity.setBillable(INITIAL_BILLABLE);
         entity.setVatId("initial VAT-ID");
         entity.setVatCountryCode("AA");
         entity.setVatBusiness(true);
+        entity.setVatReverseCharge(INITIAL_VAT_REVERSE_CHARGE);
+        entity.setDefaultPrefix("abc");
+        entity.setRefundBankAccount(givenInitialBankAccount);
         return entity;
     }
 
@@ -85,6 +104,12 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsOfficeDebitorEntity::setBillingContact,
                         newBillingContact(PATCHED_CONTACT_UUID))
                         .notNullable(),
+                new SimpleProperty<>(
+                        "billable",
+                        HsOfficeDebitorPatchResource::setBillable,
+                        PATCHED_BILLABLE,
+                        HsOfficeDebitorEntity::setBillable)
+                        .notNullable(),
                 new JsonNullableProperty<>(
                         "vatId",
                         HsOfficeDebitorPatchResource::setVatId,
@@ -95,11 +120,30 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsOfficeDebitorPatchResource::setVatCountryCode,
                         PATCHED_VAT_COUNTRY_CODE,
                         HsOfficeDebitorEntity::setVatCountryCode),
-                new JsonNullableProperty<>(
+                new SimpleProperty<>(
                         "vatBusiness",
                         HsOfficeDebitorPatchResource::setVatBusiness,
                         PATCHED_VAT_BUSINESS,
                         HsOfficeDebitorEntity::setVatBusiness)
+                        .notNullable(),
+                new SimpleProperty<>(
+                        "vatReverseCharge",
+                        HsOfficeDebitorPatchResource::setVatReverseCharge,
+                        PATCHED_BILLABLE,
+                        HsOfficeDebitorEntity::setVatReverseCharge)
+                        .notNullable(),
+                new JsonNullableProperty<>(
+                        "defaultPrefix",
+                        HsOfficeDebitorPatchResource::setDefaultPrefix,
+                        PATCHED_DEFAULT_PREFIX,
+                        HsOfficeDebitorEntity::setDefaultPrefix)
+                        .notNullable(),
+                new JsonNullableProperty<>(
+                        "refundBankAccount",
+                        HsOfficeDebitorPatchResource::setRefundBankAccountUuid,
+                        PATCHED_REFUND_BANK_ACCOUNT_UUID,
+                        HsOfficeDebitorEntity::setRefundBankAccount,
+                        newBankAccount(PATCHED_REFUND_BANK_ACCOUNT_UUID))
                         .notNullable()
         );
     }
@@ -108,5 +152,11 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
         final var newContact = new HsOfficeContactEntity();
         newContact.setUuid(uuid);
         return newContact;
+    }
+
+    private HsOfficeBankAccountEntity newBankAccount(final UUID uuid) {
+        final var newBankAccount = new HsOfficeBankAccountEntity();
+        newBankAccount.setUuid(uuid);
+        return newBankAccount;
     }
 }

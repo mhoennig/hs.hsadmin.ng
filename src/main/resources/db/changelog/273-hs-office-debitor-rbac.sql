@@ -172,8 +172,10 @@ execute procedure hsOfficeDebitorRbacRolesTrigger();
 --changeset hs-office-debitor-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacIdentityView('hs_office_debitor', $idName$
-    '#' || debitorNumber || ':' ||
-    (select idName from hs_office_partner_iv p where p.uuid = target.partnerUuid)
+    '#' ||
+        (select debitornumberprefix from hs_office_partner p where p.uuid = target.partnerUuid) ||
+        to_char(debitorNumberSuffix, 'fm00') ||
+    ':' || (select split_part(idName, ':', 2) from hs_office_partner_iv pi where pi.uuid = target.partnerUuid)
     $idName$);
 --//
 
@@ -181,14 +183,18 @@ call generateRbacIdentityView('hs_office_debitor', $idName$
 -- ============================================================================
 --changeset hs-office-debitor-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_debitor', 'target.debitorNumber',
+call generateRbacRestrictedView('hs_office_debitor', 'target.debitorNumberSuffix',
     $updates$
-        partnerUuid = new.partnerUuid,
+        partnerUuid = new.partnerUuid, -- TODO: remove? should never do anything
+        billable = new.billable,
         billingContactUuid = new.billingContactUuid,
+        debitorNumberSuffix = new.debitorNumberSuffix, -- TODO: Should it be allowed to updated this value?
         refundBankAccountUuid = new.refundBankAccountUuid,
         vatId = new.vatId,
         vatCountryCode = new.vatCountryCode,
-        vatBusiness = new.vatBusiness
+        vatBusiness = new.vatBusiness,
+        vatreversecharge = new.vatreversecharge,
+        defaultPrefix = new.defaultPrefix -- TODO: Should it be allowed to updated this value?
     $updates$);
 --//
 

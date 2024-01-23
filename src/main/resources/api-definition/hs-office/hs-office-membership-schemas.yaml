@@ -33,6 +33,8 @@ components:
                    format: date
                 reasonForTermination:
                    $ref: '#/components/schemas/HsOfficeReasonForTermination'
+                membershipFeeBillable:
+                    type: boolean
 
         HsOfficeMembershipPatch:
             type: object
@@ -48,6 +50,9 @@ components:
                 reasonForTermination:
                     nullable: true
                     $ref: '#/components/schemas/HsOfficeReasonForTermination'
+                membershipFeeBillable:
+                    nullable: true
+                    type: boolean
             additionalProperties: false
 
         HsOfficeMembershipInsert:
@@ -74,8 +79,12 @@ components:
                     nullable: true
                 reasonForTermination:
                     $ref: '#/components/schemas/HsOfficeReasonForTermination'
+                membershipFeeBillable:
+                    nullable: false
+                    type: boolean
             required:
                 - partnerUuid
                 - mainDebitorUuid
                 - validFrom
+                - membershipFeeBillable
             additionalProperties: false

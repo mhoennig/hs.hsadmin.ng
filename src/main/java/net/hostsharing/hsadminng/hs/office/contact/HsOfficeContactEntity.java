@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.contact;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
@@ -21,7 +22,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("Contact")
-public class HsOfficeContactEntity implements Stringifyable {
+public class HsOfficeContactEntity implements Stringifyable, HasUuid {
 
     private static Stringify<HsOfficeContactEntity> toString = stringify(HsOfficeContactEntity.class, "contact")
             .withProp(Fields.label, HsOfficeContactEntity::getLabel)
@@ -38,10 +39,10 @@ public class HsOfficeContactEntity implements Stringifyable {
     private String postalAddress;
 
     @Column(name = "emailaddresses", columnDefinition = "json")
-    private String emailAddresses;
+    private String emailAddresses; // TODO: check if we can really add multiple. format: ["eins@...", "zwei@..."]
 
     @Column(name = "phonenumbers", columnDefinition = "json")
-    private String phoneNumbers;
+    private String phoneNumbers; // TODO: check if we can really add multiple. format: { "office": "+49 40 12345-10", "fax": "+49 40 12345-05" }
 
     @Override
     public String toString() {

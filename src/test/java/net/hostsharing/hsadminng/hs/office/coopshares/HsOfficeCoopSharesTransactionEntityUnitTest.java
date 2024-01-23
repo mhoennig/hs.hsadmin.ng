@@ -16,6 +16,7 @@ class HsOfficeCoopSharesTransactionEntityUnitTest {
             .transactionType(HsOfficeCoopSharesTransactionType.SUBSCRIPTION)
             .shareCount(4)
             .build();
+    final HsOfficeCoopSharesTransactionEntity givenEmptyCoopSharesTransaction = HsOfficeCoopSharesTransactionEntity.builder().build();
 
     @Test
     void toStringContainsAlmostAllPropertiesAccount() {
@@ -25,9 +26,23 @@ class HsOfficeCoopSharesTransactionEntityUnitTest {
     }
 
     @Test
-    void toShortStringContainsOnlyMemberNumberAndshareCountOnly() {
+    void toShortStringContainsOnlyMemberNumberAndShareCountOnly() {
         final var result = givenCoopSharesTransaction.toShortString();
 
         assertThat(result).isEqualTo("300001+4");
+    }
+
+    @Test
+    void toStringEmptyTransactionDoesNotThrowException() {
+        final var result = givenEmptyCoopSharesTransaction.toString();
+
+        assertThat(result).isEqualTo("CoopShareTransaction(0)");
+    }
+
+    @Test
+    void toShortStringEmptyTransactionDoesNotThrowException() {
+        final var result = givenEmptyCoopSharesTransaction.toShortString();
+
+        assertThat(result).isEqualTo("null+0");
     }
 }

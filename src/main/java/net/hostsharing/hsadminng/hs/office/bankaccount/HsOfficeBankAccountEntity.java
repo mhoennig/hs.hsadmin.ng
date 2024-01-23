@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -23,7 +24,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("BankAccount")
-public class HsOfficeBankAccountEntity implements Stringifyable {
+public class HsOfficeBankAccountEntity implements HasUuid, Stringifyable {
 
     private static Stringify<HsOfficeBankAccountEntity> toString = stringify(HsOfficeBankAccountEntity.class, "bankAccount")
             .withProp(Fields.holder, HsOfficeBankAccountEntity::getHolder)

@@ -22,7 +22,7 @@ class PostgresArrayIntegrationTest {
         em.createNativeQuery("""            
             create or replace function returnEmptyArray()
                 returns text[]
-                stable leakproof
+                stable -- leakproof
                 language plpgsql as $$
             declare
                 emptyArray text[] = '{}';
@@ -42,7 +42,7 @@ class PostgresArrayIntegrationTest {
         em.createNativeQuery("""            
             create or replace function returnStringArray()
                 returns varchar(63)[]
-                stable leakproof
+                stable -- leakproof
                 language plpgsql as $$
             declare
                 text1 text = 'one';
@@ -65,7 +65,7 @@ class PostgresArrayIntegrationTest {
         em.createNativeQuery("""            
             create or replace function returnUuidArray()
                 returns uuid[]
-                stable leakproof
+                stable -- leakproof
                 language plpgsql as $$
             declare
                 uuid1 UUID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';

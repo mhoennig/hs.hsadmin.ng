@@ -1,5 +1,6 @@
 package net.hostsharing.test;
 
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -232,7 +233,7 @@ public abstract class PatchUnitTestBase<R, E> {
         }
     }
 
-    protected static class JsonNullableProperty<R, RV, E, EV> extends Property<R, RV, E, EV> {
+    protected static class JsonNullableProperty<R, RV, E extends HasUuid, EV> extends Property<R, RV, E, EV> {
 
         private final BiConsumer<R, JsonNullable<RV>> resourceSetter;
         public final RV givenPatchValue;

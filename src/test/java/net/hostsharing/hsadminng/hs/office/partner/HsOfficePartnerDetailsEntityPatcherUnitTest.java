@@ -28,8 +28,9 @@ class HsOfficePartnerDetailsEntityPatcherUnitTest extends PatchUnitTestBase<
         > {
 
     private static final UUID INITIAL_PARTNER_UUID = UUID.randomUUID();
-    private static final UUID INITIAL_CONTACT_UUID = UUID.randomUUID();
-    private static final UUID INITIAL_PERSON_UUID = UUID.randomUUID();
+
+    private static final String INITIAL_BIRTHPLACE = null;
+    private static final String PATCHED_BIRTHPLACE = "Essen (Ruhr)";
 
     private static final LocalDate INITIAL_BIRTHDAY = LocalDate.parse("1900-01-01");
     private static final LocalDate PATCHED_BIRTHDAY = LocalDate.parse("1990-12-31");
@@ -54,6 +55,7 @@ class HsOfficePartnerDetailsEntityPatcherUnitTest extends PatchUnitTestBase<
         entity.setUuid(INITIAL_PARTNER_UUID);
         entity.setRegistrationOffice("initial Reg-Office");
         entity.setRegistrationNumber("initial Reg-Number");
+        entity.setBirthPlace(INITIAL_BIRTHPLACE);
         entity.setBirthday(INITIAL_BIRTHDAY);
         entity.setBirthName("initial birth name");
         entity.setDateOfDeath(INITIAL_DAY_OF_DEATH);
@@ -78,6 +80,16 @@ class HsOfficePartnerDetailsEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsOfficePartnerDetailsPatchResource::setRegistrationOffice,
                         "patched Reg-Office",
                         HsOfficePartnerDetailsEntity::setRegistrationOffice),
+                new JsonNullableProperty<>(
+                        "birthplace",
+                        HsOfficePartnerDetailsPatchResource::setBirthPlace,
+                        PATCHED_BIRTHPLACE,
+                        HsOfficePartnerDetailsEntity::setBirthPlace),
+                new JsonNullableProperty<>(
+                        "birthname",
+                        HsOfficePartnerDetailsPatchResource::setBirthName,
+                        "patched birth name",
+                        HsOfficePartnerDetailsEntity::setBirthName),
                 new JsonNullableProperty<>(
                         "birthday",
                         HsOfficePartnerDetailsPatchResource::setBirthday,

@@ -8,10 +8,11 @@ import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGA
 
 public class TestHsOfficePartner {
 
-    public static final HsOfficePartnerEntity TEST_PARTNER = HsOfficePartnerWithLegalPerson("Test Ltd.");
+    public static final HsOfficePartnerEntity TEST_PARTNER = hsOfficePartnerWithLegalPerson("Test Ltd.");
 
-    static public HsOfficePartnerEntity HsOfficePartnerWithLegalPerson(final String tradeName) {
+    static public HsOfficePartnerEntity hsOfficePartnerWithLegalPerson(final String tradeName) {
         return HsOfficePartnerEntity.builder()
+                .debitorNumberPrefix(10001)
                 .person(HsOfficePersonEntity.builder()
                         .personType(LEGAL)
                         .tradeName(tradeName)

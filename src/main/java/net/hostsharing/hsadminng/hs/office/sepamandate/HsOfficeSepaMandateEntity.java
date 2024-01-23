@@ -6,6 +6,7 @@ import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
@@ -25,7 +26,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("SEPA-Mandate")
-public class HsOfficeSepaMandateEntity implements Stringifyable {
+public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
 
     private static Stringify<HsOfficeSepaMandateEntity> stringify = stringify(HsOfficeSepaMandateEntity.class)
             .withProp(e -> e.getBankAccount().getIban())

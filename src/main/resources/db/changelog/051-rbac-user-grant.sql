@@ -6,7 +6,7 @@
 
 create or replace function assumedRoleUuid()
     returns uuid
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentSubjectsUuids uuid[];

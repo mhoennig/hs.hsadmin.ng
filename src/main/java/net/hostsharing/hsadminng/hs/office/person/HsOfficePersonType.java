@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
 public enum HsOfficePersonType {
+    UNKNOWN,
     NATURAL,
     LEGAL,
     SOLE_REPRESENTATION,

@@ -27,7 +27,7 @@ class HsOfficeMembershipEntityUnitTest {
     void toStringContainsAllProps() {
         final var result = givenMembership.toString();
 
-        assertThat(result).isEqualTo("Membership(10001, Test Ltd., 10001, [2020-01-01,))");
+        assertThat(result).isEqualTo("Membership(10001, LEGAL Test Ltd., 1000100, [2020-01-01,))");
     }
 
     @Test

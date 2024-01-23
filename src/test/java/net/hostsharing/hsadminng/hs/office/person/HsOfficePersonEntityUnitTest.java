@@ -11,29 +11,32 @@ class HsOfficePersonEntityUnitTest {
     @Test
     void getDisplayReturnsTradeNameIfAvailable() {
         final var givenPersonEntity = HsOfficePersonEntity.builder()
+                .personType(HsOfficePersonType.LEGAL)
                 .tradeName("some trade name")
                 .build();
 
         final var actualDisplay = givenPersonEntity.toShortString();
 
-        assertThat(actualDisplay).isEqualTo("some trade name");
+        assertThat(actualDisplay).isEqualTo("LEGAL some trade name");
     }
 
     @Test
     void getDisplayReturnsFamilyAndGivenNameIfNoTradeNameAvailable() {
         final var givenPersonEntity = HsOfficePersonEntity.builder()
+                .personType(HsOfficePersonType.NATURAL)
                 .familyName("some family name")
                 .givenName("some given name")
                 .build();
 
         final var actualDisplay = givenPersonEntity.toShortString();
 
-        assertThat(actualDisplay).isEqualTo("some family name, some given name");
+        assertThat(actualDisplay).isEqualTo("NATURAL some family name, some given name");
     }
 
     @Test
     void toShortStringWithTradeNameReturnsTradeName() {
         final var givenPersonEntity = HsOfficePersonEntity.builder()
+                .personType(HsOfficePersonType.LEGAL)
                 .tradeName("some trade name")
                 .familyName("some family name")
                 .givenName("some given name")
@@ -41,19 +44,20 @@ class HsOfficePersonEntityUnitTest {
 
         final var actualDisplay = givenPersonEntity.toShortString();
 
-        assertThat(actualDisplay).isEqualTo("some trade name");
+        assertThat(actualDisplay).isEqualTo("LEGAL some trade name");
     }
 
     @Test
     void toShortStringWithoutTradeNameReturnsFamilyAndGivenName() {
         final var givenPersonEntity = HsOfficePersonEntity.builder()
+                .personType(HsOfficePersonType.NATURAL)
                 .familyName("some family name")
                 .givenName("some given name")
                 .build();
 
         final var actualDisplay = givenPersonEntity.toShortString();
 
-        assertThat(actualDisplay).isEqualTo("some family name, some given name");
+        assertThat(actualDisplay).isEqualTo("NATURAL some family name, some given name");
     }
 
     @Test

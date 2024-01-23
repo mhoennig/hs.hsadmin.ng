@@ -3,8 +3,10 @@ package net.hostsharing.hsadminng.hs.office.relationship;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
+import net.hostsharing.hsadminng.stringify.Stringifyable;
 
 import jakarta.persistence.*;
 import java.util.UUID;
@@ -19,13 +21,18 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
-public class HsOfficeRelationshipEntity {
+public class HsOfficeRelationshipEntity implements HasUuid, Stringifyable {
 
     private static Stringify<HsOfficeRelationshipEntity> toString = stringify(HsOfficeRelationshipEntity.class, "rel")
             .withProp(Fields.relAnchor, HsOfficeRelationshipEntity::getRelAnchor)
             .withProp(Fields.relType, HsOfficeRelationshipEntity::getRelType)
             .withProp(Fields.relHolder, HsOfficeRelationshipEntity::getRelHolder)
             .withProp(Fields.contact, HsOfficeRelationshipEntity::getContact);
+
+    private static Stringify<HsOfficeRelationshipEntity> toShortString = stringify(HsOfficeRelationshipEntity.class, "rel")
+            .withProp(Fields.relAnchor, HsOfficeRelationshipEntity::getRelAnchor)
+            .withProp(Fields.relType, HsOfficeRelationshipEntity::getRelType)
+            .withProp(Fields.relHolder, HsOfficeRelationshipEntity::getRelHolder);
 
     @Id
     @GeneratedValue
@@ -50,5 +57,10 @@ public class HsOfficeRelationshipEntity {
     @Override
     public String toString() {
         return toString.apply(this);
+    }
+
+    @Override
+    public String toShortString() {
+        return toShortString.apply(this);
     }
 }

@@ -21,7 +21,8 @@ class HsOfficePartnerDetailsEntityUnitTest {
 
         final var result = given.toString();
 
-        assertThat(result).isEqualTo("partnerDetails(Hamburg, 12345, 2002-01-15, 2002-01-15, 2081-12-21)");
+        assertThat(result).isEqualTo(
+                "partnerDetails(Hamburg, 12345, 2002-01-15, Melly Miller, 2081-12-21)");
     }
 
     @Test

@@ -7,7 +7,7 @@
 
 create or replace function determineCurrentUserUuid(currentUser varchar)
     returns uuid
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentUserUuid uuid;
@@ -25,11 +25,11 @@ end; $$;
 
 create or replace function determineCurrentSubjectsUuids(currentUserUuid uuid, assumedRoles varchar)
     returns uuid[]
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
-    roleName            varchar(63);
-    roleNameParts       varchar(63);
+    roleName            text;
+    roleNameParts       text;
     objectTableToAssume varchar(63);
     objectNameToAssume  varchar(63);
     objectUuidToAssume  uuid;
@@ -116,7 +116,7 @@ end; $$;
 
 create or replace function currentUserUuid()
     returns uuid
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentUserUuid text;
@@ -150,7 +150,7 @@ end; $$;
  */
 create or replace function currentSubjectsUuids()
     returns uuid[]
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentSubjectsUuids text;

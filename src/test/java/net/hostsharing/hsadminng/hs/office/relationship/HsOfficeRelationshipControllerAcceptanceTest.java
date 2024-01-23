@@ -75,7 +75,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relationships?personUuid=%s&relationshipType=%s"
-                            .formatted(givenPerson.getUuid(), HsOfficeRelationshipTypeResource.SOLE_AGENT))
+                            .formatted(givenPerson.getUuid(), HsOfficeRelationshipTypeResource.REPRESENTATIVE))
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -91,7 +91,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                  "givenName": "Peter",
                                  "familyName": "Smith"
                              },
-                             "relType": "SOLE_AGENT",
+                             "relType": "REPRESENTATIVE",
                              "contact": { "label": "third contact" }
                          },
                          {
@@ -106,7 +106,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                  "givenName": "Peter",
                                  "familyName": "Smith"
                              },
-                             "relType": "SOLE_AGENT",
+                             "relType": "REPRESENTATIVE",
                              "contact": { "label": "second contact" }
                          },
                          {
@@ -120,7 +120,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                  "givenName": "Peter",
                                  "familyName": "Smith"
                              },
-                             "relType": "SOLE_AGENT",
+                             "relType": "REPRESENTATIVE",
                              "contact": { "label": "first contact" }
                          }
                      ]
@@ -153,7 +153,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                    "contactUuid": "%s"
                                  }
                             """.formatted(
-                                HsOfficeRelationshipTypeResource.ACCOUNTING_CONTACT,
+                                HsOfficeRelationshipTypeResource.ACCOUNTING,
                                 givenAnchorPerson.getUuid(),
                                 givenHolderPerson.getUuid(),
                                 givenContact.getUuid()))
@@ -164,7 +164,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("relType", is("ACCOUNTING_CONTACT"))
+                        .body("relType", is("ACCOUNTING"))
                         .body("relAnchor.tradeName", is("Third OHG"))
                         .body("relHolder.givenName", is("Paul"))
                         .body("contact.label", is("forth contact"))
@@ -197,7 +197,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                    "contactUuid": "%s"
                                  }
                             """.formatted(
-                            HsOfficeRelationshipTypeResource.ACCOUNTING_CONTACT,
+                            HsOfficeRelationshipTypeResource.ACCOUNTING,
                             givenAnchorPersonUuid,
                             givenHolderPerson.getUuid(),
                             givenContact.getUuid()))
@@ -230,7 +230,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                    "contactUuid": "%s"
                                  }
                             """.formatted(
-                            HsOfficeRelationshipTypeResource.ACCOUNTING_CONTACT,
+                            HsOfficeRelationshipTypeResource.ACCOUNTING,
                             givenAnchorPerson.getUuid(),
                             givenHolderPersonUuid,
                             givenContact.getUuid()))
@@ -263,7 +263,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                                "contactUuid": "%s"
                              }
                             """.formatted(
-                                    HsOfficeRelationshipTypeResource.ACCOUNTING_CONTACT,
+                                    HsOfficeRelationshipTypeResource.ACCOUNTING,
                                     givenAnchorPerson.getUuid(),
                                     givenHolderPerson.getUuid(),
                                     givenContactUuid))
@@ -387,7 +387,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("relType", is("JOINT_AGENT"))
+                    .body("relType", is("REPRESENTATIVE"))
                     .body("relAnchor.tradeName", is("Erben Bessler"))
                     .body("relHolder.familyName", is("Winkler"))
                     .body("contact.label", is("forth contact"));
@@ -400,7 +400,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                         assertThat(rel.getRelAnchor().getTradeName()).contains("Bessler");
                         assertThat(rel.getRelHolder().getFamilyName()).contains("Winkler");
                         assertThat(rel.getContact().getLabel()).isEqualTo("forth contact");
-                        assertThat(rel.getRelType()).isEqualTo(HsOfficeRelationshipType.JOINT_AGENT);
+                        assertThat(rel.getRelType()).isEqualTo(HsOfficeRelationshipType.REPRESENTATIVE);
                         return true;
                     });
         }
@@ -477,7 +477,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
             final var givenContact = contactRepo.findContactByOptionalLabelLike("seventh contact").get(0);
             final var newRelationship = HsOfficeRelationshipEntity.builder()
                     .uuid(UUID.randomUUID())
-                    .relType(HsOfficeRelationshipType.JOINT_AGENT)
+                    .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                     .relAnchor(givenAnchorPerson)
                     .relHolder(givenHolderPerson)
                     .contact(givenContact)

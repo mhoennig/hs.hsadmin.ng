@@ -72,7 +72,8 @@ public class HsOfficeMembershipControllerRestTest {
                                        "partnerUuid": null,
                                        "mainDebitorUuid": "%s",
                                        "memberNumber": 20001,
-                                       "validFrom": "2022-10-13"
+                                       "validFrom": "2022-10-13",
+                                       "membershipFeeBillable": "true"
                                      }
                                 """.formatted(UUID.randomUUID()))
                         .accept(MediaType.APPLICATION_JSON))
@@ -97,7 +98,8 @@ public class HsOfficeMembershipControllerRestTest {
                                        "partnerUuid": "%s",
                                        "mainDebitorUuid": null,
                                        "memberNumber": 20001,
-                                       "validFrom": "2022-10-13"
+                                       "validFrom": "2022-10-13",
+                                       "membershipFeeBillable": "true"
                                      }
                                 """.formatted(UUID.randomUUID()))
                         .accept(MediaType.APPLICATION_JSON))
@@ -128,7 +130,8 @@ public class HsOfficeMembershipControllerRestTest {
                                        "partnerUuid": "%s",
                                        "mainDebitorUuid": "%s",
                                        "memberNumber": 20001,
-                                       "validFrom": "2022-10-13"
+                                       "validFrom": "2022-10-13",
+                                       "membershipFeeBillable": "true"
                                      }
                                 """.formatted(givenPartnerUuid, givenMainDebitorUuid))
                         .accept(MediaType.APPLICATION_JSON))
@@ -159,7 +162,8 @@ public class HsOfficeMembershipControllerRestTest {
                                        "partnerUuid": "%s",
                                        "mainDebitorUuid": "%s",
                                        "memberNumber": 20001,
-                                       "validFrom": "2022-10-13"
+                                       "validFrom": "2022-10-13",
+                                       "membershipFeeBillable": "true"
                                      }
                                 """.formatted(givenPartnerUuid, givenMainDebitorUuid))
                         .accept(MediaType.APPLICATION_JSON))

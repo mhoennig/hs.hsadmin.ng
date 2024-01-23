@@ -17,6 +17,7 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
             .transactionType(HsOfficeCoopAssetsTransactionType.DEPOSIT)
             .assetValue(new BigDecimal("128.00"))
             .build();
+    final HsOfficeCoopAssetsTransactionEntity givenEmptyCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder().build();
 
     @Test
     void toStringContainsAlmostAllPropertiesAccount() {
@@ -30,5 +31,19 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
         final var result = givenCoopAssetTransaction.toShortString();
 
         assertThat(result).isEqualTo("300001+128.00");
+    }
+
+    @Test
+    void toStringWithEmptyTransactionDoesNotThrowException() {
+        final var result = givenEmptyCoopAssetsTransaction.toString();
+
+        assertThat(result).isEqualTo("CoopAssetsTransaction()");
+    }
+
+    @Test
+    void toShortStringEmptyTransactionDoesNotThrowException() {
+        final var result = givenEmptyCoopAssetsTransaction.toShortString();
+
+        assertThat(result).isEqualTo("nullnu");
     }
 }

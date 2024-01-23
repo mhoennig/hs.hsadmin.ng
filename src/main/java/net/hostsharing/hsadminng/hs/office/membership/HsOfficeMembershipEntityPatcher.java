@@ -37,6 +37,8 @@ public class HsOfficeMembershipEntityPatcher implements EntityPatcher<HsOfficeMe
         Optional.ofNullable(resource.getReasonForTermination())
                 .map(v -> mapper.map(v, HsOfficeReasonForTermination.class))
                 .ifPresent(entity::setReasonForTermination);
+        OptionalFromJson.of(resource.getMembershipFeeBillable()).ifPresent(
+                entity::setMembershipFeeBillable);
     }
 
     private void verifyNotNull(final UUID newValue, final String propertyName) {

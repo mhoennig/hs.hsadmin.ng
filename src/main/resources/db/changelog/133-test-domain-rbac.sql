@@ -110,5 +110,5 @@ create or replace view test_domain_rv as
 select target.*
     from test_domain as target
     where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'domain', currentSubjectsUuids()));
-grant all privileges on test_domain_rv to restricted;
+grant all privileges on test_domain_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//

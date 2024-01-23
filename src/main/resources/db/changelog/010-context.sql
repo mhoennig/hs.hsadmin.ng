@@ -55,7 +55,7 @@ end; $$;
  */
 create or replace function currentTask()
     returns varchar(96)
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentTask varchar(96);
@@ -83,7 +83,7 @@ end; $$;
  */
 create or replace function currentRequest()
     returns varchar(512)
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentRequest varchar(512);
@@ -107,7 +107,7 @@ end; $$;
  */
 create or replace function currentUser()
     returns varchar(63)
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentUser varchar(63);
@@ -131,7 +131,7 @@ end; $$;
  */
 create or replace function assumedRoles()
     returns varchar(63)[]
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     currentSubject varchar(63);
@@ -155,7 +155,7 @@ create or replace function cleanIdentifier(rawIdentifier varchar)
 declare
     cleanIdentifier varchar;
 begin
-    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._]+', '', 'g');
+    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._:]+', '', 'g');
     return cleanIdentifier;
 end; $$;
 
@@ -214,7 +214,7 @@ end ; $$;
 
 create or replace function currentSubjects()
     returns varchar(63)[]
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 declare
     assumedRoles varchar(63)[];
@@ -229,7 +229,7 @@ end; $$;
 
 create or replace function hasAssumedRole()
     returns boolean
-    stable leakproof
+    stable -- leakproof
     language plpgsql as $$
 begin
     return array_length(assumedRoles(), 1) > 0;

@@ -10,6 +10,7 @@ create table hs_office_partner_details
     uuid                uuid unique references RbacObject (uuid) initially deferred,
     registrationOffice  varchar(96),
     registrationNumber  varchar(96),
+    birthPlace          varchar(96),
     birthName           varchar(96),
     birthday            date,
     dateOfDeath         date
@@ -31,6 +32,7 @@ call create_journal('hs_office_partner_details');
 create table hs_office_partner
 (
     uuid                uuid unique references RbacObject (uuid) initially deferred,
+    debitorNumberPrefix varchar(5),
     personUuid          uuid not null references hs_office_person(uuid),
     contactUuid         uuid not null references hs_office_contact(uuid),
     detailsUuid         uuid not null references hs_office_partner_details(uuid) on delete cascade

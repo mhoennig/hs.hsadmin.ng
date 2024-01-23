@@ -8,7 +8,12 @@
 /*
     Creates a single debitor test record.
  */
-create or replace procedure createHsOfficeDebitorTestData( partnerTradeName varchar, billingContactLabel varchar )
+create or replace procedure createHsOfficeDebitorTestData(
+        debitorNumberSuffix numeric(5),
+        partnerTradeName varchar,
+        billingContactLabel varchar,
+        defaultPrefix varchar
+    )
     language plpgsql as $$
 declare
     currentTask             varchar;
@@ -16,7 +21,6 @@ declare
     relatedPartner          hs_office_partner;
     relatedContact          hs_office_contact;
     relatedBankAccountUuid  uuid;
-    newDebitorNumber        numeric(6);
 begin
     idName := cleanIdentifier( partnerTradeName|| '-' || billingContactLabel);
     currentTask := 'creating debitor test-data ' || idName;
@@ -28,14 +32,13 @@ begin
                where person.tradeName = partnerTradeName into relatedPartner;
     select c.* from hs_office_contact c where c.label = billingContactLabel into relatedContact;
     select b.uuid from hs_office_bankaccount b where b.holder = partnerTradeName into relatedBankAccountUuid;
-    select coalesce(max(debitorNumber)+1, 10001) from hs_office_debitor into newDebitorNumber;
 
-    raise notice 'creating test debitor: % (#%)', idName, newDebitorNumber;
+    raise notice 'creating test debitor: % (#%)', idName, debitorNumberSuffix;
     raise notice '- using partner (%): %', relatedPartner.uuid, relatedPartner;
     raise notice '- using billingContact (%): %', relatedContact.uuid, relatedContact;
     insert
-        into hs_office_debitor (uuid, partneruuid, debitornumber, billingcontactuuid, vatbusiness, refundbankaccountuuid)
-        values (uuid_generate_v4(), relatedPartner.uuid, newDebitorNumber, relatedContact.uuid, true, relatedBankAccountUuid);
+        into hs_office_debitor (uuid, partneruuid, debitornumbersuffix, billable, billingcontactuuid, vatbusiness, vatreversecharge, refundbankaccountuuid, defaultprefix)
+            values (uuid_generate_v4(), relatedPartner.uuid, debitorNumberSuffix, true, relatedContact.uuid, true, false, relatedBankAccountUuid, defaultPrefix);
 end; $$;
 --//
 
@@ -46,9 +49,9 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficeDebitorTestData('First GmbH', 'first contact');
-        call createHsOfficeDebitorTestData('Second e.K.', 'second contact');
-        call createHsOfficeDebitorTestData('Third OHG', 'third contact');
+        call createHsOfficeDebitorTestData(11, 'First GmbH', 'first contact', 'fir');
+        call createHsOfficeDebitorTestData(12, 'Second e.K.', 'second contact', 'sec');
+        call createHsOfficeDebitorTestData(13, 'Third OHG', 'third contact', 'thi');
     end;
 $$;
 --//

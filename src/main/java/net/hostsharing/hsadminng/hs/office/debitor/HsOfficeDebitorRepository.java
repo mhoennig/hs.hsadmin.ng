@@ -13,9 +13,14 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
 
     @Query("""
             SELECT debitor FROM HsOfficeDebitorEntity debitor
-                WHERE debitor.debitorNumber = :debitorNumber
+                WHERE cast(debitor.partner.debitorNumberPrefix as integer) = :debitorNumberPrefix
+                  AND cast(debitor.debitorNumberSuffix as integer) = :debitorNumberSuffix
                """)
-    List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int debitorNumber);
+     List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int debitorNumberPrefix, byte debitorNumberSuffix);
+
+    default List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int debitorNumber) {
+        return  findDebitorByDebitorNumber( debitorNumber/100, (byte) (debitorNumber%100));
+    }
 
     @Query("""
             SELECT debitor FROM HsOfficeDebitorEntity debitor

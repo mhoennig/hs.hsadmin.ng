@@ -8,7 +8,10 @@
 /*
     Creates a single partner test record.
  */
-create or replace procedure createHsOfficePartnerTestData( personTradeOrFamilyName varchar, contactLabel varchar )
+create or replace procedure createHsOfficePartnerTestData(
+        debitorNumberPrefix numeric(5),
+        personTradeOrFamilyName varchar,
+        contactLabel varchar )
     language plpgsql as $$
 declare
     currentTask         varchar;
@@ -51,8 +54,8 @@ begin
     end if;
 
     insert
-        into hs_office_partner (uuid, personuuid, contactuuid, detailsUuid)
-        values (uuid_generate_v4(), relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
+        into hs_office_partner (uuid, debitorNumberPrefix, personuuid, contactuuid, detailsUuid)
+        values (uuid_generate_v4(), debitorNumberPrefix, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
 end; $$;
 --//
 
@@ -64,11 +67,11 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficePartnerTestData('First GmbH', 'first contact');
-        call createHsOfficePartnerTestData('Second e.K.', 'second contact');
-        call createHsOfficePartnerTestData('Third OHG', 'third contact');
-        call createHsOfficePartnerTestData('Fourth e.G.', 'forth contact');
-        call createHsOfficePartnerTestData('Smith', 'fifth contact');
+        call createHsOfficePartnerTestData(10001, 'First GmbH', 'first contact');
+        call createHsOfficePartnerTestData(10002, 'Second e.K.', 'second contact');
+        call createHsOfficePartnerTestData(10003, 'Third OHG', 'third contact');
+        call createHsOfficePartnerTestData(10004, 'Fourth e.G.', 'forth contact');
+        call createHsOfficePartnerTestData(10010, 'Smith', 'fifth contact');
     end;
 $$;
 --//

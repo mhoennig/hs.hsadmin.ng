@@ -6,7 +6,7 @@
 create table hs_office_bankaccount
 (
     uuid                uuid unique references RbacObject (uuid) initially deferred,
-    holder              varchar(27) not null,
+    holder              varchar(64) not null,
     iban                varchar(34) not null,
     bic                 varchar(11) not null
 );

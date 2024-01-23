@@ -18,7 +18,7 @@ create table Global
 );
 create unique index Global_Singleton on Global ((0));
 
-grant select on global to restricted;
+grant select on global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 
@@ -48,7 +48,7 @@ drop view if exists global_iv;
 create or replace view global_iv as
 select target.uuid, target.name as idName
     from global as target;
-grant all privileges on global_iv to restricted;
+grant all privileges on global_iv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 
 /*
     Returns the objectUuid for a given identifying name (in this case the idName).
@@ -99,7 +99,7 @@ commit;
 create or replace function globalAdmin()
     returns RbacRoleDescriptor
     returns null on null input
-    stable leakproof
+    stable -- leakproof
     language sql as $$
 select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType;
 $$;

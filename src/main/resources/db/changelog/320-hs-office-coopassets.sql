@@ -10,7 +10,8 @@ CREATE TYPE HsOfficeCoopAssetsTransactionType AS ENUM ('ADJUSTMENT',
                                                        'TRANSFER',
                                                        'ADOPTION',
                                                        'CLEARING',
-                                                       'LOSS');
+                                                       'LOSS',
+                                                       'LIMITATION');
 
 CREATE CAST (character varying as HsOfficeCoopAssetsTransactionType) WITH INOUT AS IMPLICIT;
 

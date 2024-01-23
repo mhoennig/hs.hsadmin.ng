@@ -35,8 +35,8 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 class HsOfficeDebitorControllerAcceptanceTest {
 
-    private static final int LOWEST_TEMP_DEBITOR_NUMBER = 20000;
-    private static int nextDebitorNumber = LOWEST_TEMP_DEBITOR_NUMBER;
+    private static final int LOWEST_TEMP_DEBITOR_SUFFIX = 90;
+    private static byte nextDebitorSuffix = LOWEST_TEMP_DEBITOR_SUFFIX;
 
     @LocalServerPort
     private Integer port;
@@ -81,7 +81,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     [
                          {
-                             "debitorNumber": 10001,
+                             "debitorNumber": 1000111,
+                             "debitorNumberSuffix": 11,
                              "partner": { "person": { "personType": "LEGAL" } },
                              "billingContact": { "label": "first contact" },
                              "vatId": null,
@@ -90,7 +91,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                              "refundBankAccount": { "holder": "First GmbH" }
                          },
                          {
-                             "debitorNumber": 10002,
+                             "debitorNumber": 1000212,
+                             "debitorNumberSuffix": 12,
                              "partner": { "person": { "tradeName": "Second e.K." } },
                              "billingContact": { "label": "second contact" },
                              "vatId": null,
@@ -99,7 +101,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                              "refundBankAccount": { "holder": "Second e.K." }
                          },
                          {
-                             "debitorNumber": 10003,
+                             "debitorNumber": 1000313,
+                             "debitorNumberSuffix": 13,
                              "partner": { "person": { "tradeName": "Third OHG" } },
                              "billingContact": { "label": "third contact" },
                              "vatId": null,
@@ -120,14 +123,14 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                     .when()
-                    .get("http://localhost/api/hs/office/debitors?debitorNumber=10002")
+                    .get("http://localhost/api/hs/office/debitors?debitorNumber=1000212")
                     .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                      [
                          {
-                             "debitorNumber": 10002,
+                             "debitorNumber": 1000212,
                              "partner": { "person": { "tradeName": "Second e.K." } },
                              "billingContact": { "label": "second contact" },
                              "vatId": null,
@@ -160,13 +163,16 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                {
                                    "partnerUuid": "%s",
                                    "billingContactUuid": "%s",
-                                   "debitorNumber": "%s",
+                                   "debitorNumberSuffix": "%s",
+                                   "billable": "true",
                                    "vatId": "VAT123456",
                                    "vatCountryCode": "DE",
                                    "vatBusiness": true,
-                                   "refundBankAccountUuid": "%s"
+                                   "vatReverseCharge": "false",
+                                   "refundBankAccountUuid": "%s",
+                                   "defaultPrefix": "for"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorNumber, givenBankAccount.getUuid()))
+                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorSuffix, givenBankAccount.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/debitors")
@@ -175,6 +181,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("vatId", is("VAT123456"))
+                        .body("defaultPrefix", is("for"))
                         .body("billingContact.label", is(givenContact.getLabel()))
                         .body("partner.person.tradeName", is(givenPartner.getPerson().getTradeName()))
                         .body("refundBankAccount.holder", is(givenBankAccount.getHolder()))
@@ -202,9 +209,12 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                {
                                    "partnerUuid": "%s",
                                    "billingContactUuid": "%s",
-                                   "debitorNumber": "%s"
+                                   "debitorNumberSuffix": "%s",
+                                   "defaultPrefix": "for",
+                                   "billable": "true",
+                                   "vatReverseCharge": "false"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorNumber))
+                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorSuffix))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -218,6 +228,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .body("vatCountryCode", equalTo(null))
                     .body("vatBusiness", equalTo(false))
                     .body("refundBankAccount", equalTo(null))
+                    .body("defaultPrefix", equalTo("for"))
                     .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -242,12 +253,16 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                {
                                    "partnerUuid": "%s",
                                    "billingContactUuid": "%s",
-                                   "debitorNumber": "%s",
+                                   "debitorNumberSuffix": "%s",
+                                   "billable": "true",
                                    "vatId": "VAT123456",
                                    "vatCountryCode": "DE",
-                                   "vatBusiness": true
+                                   "vatBusiness": true,
+                                   "vatReverseCharge": "false",
+                                   "defaultPrefix": "thi"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContactUuid, ++nextDebitorNumber))
+                            """
+                            .formatted( givenPartner.getUuid(), givenContactUuid, ++nextDebitorSuffix))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -272,12 +287,15 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                {
                                    "partnerUuid": "%s",
                                    "billingContactUuid": "%s",
-                                   "debitorNumber": "%s",
+                                   "debitorNumberSuffix": "%s",
+                                   "billable": "true",
                                    "vatId": "VAT123456",
                                    "vatCountryCode": "DE",
-                                   "vatBusiness": true
+                                   "vatBusiness": true,
+                                   "vatReverseCharge": "false",
+                                   "defaultPrefix": "for"
                                  }
-                            """.formatted( givenPartnerUuid, givenContact.getUuid(), ++nextDebitorNumber))
+                            """.formatted( givenPartnerUuid, givenContact.getUuid(), ++nextDebitorSuffix))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -375,7 +393,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
                                    "contactUuid": "%s",
                                    "vatId": "VAT222222",
                                    "vatCountryCode": "AA",
-                                   "vatBusiness": true
+                                   "vatBusiness": true,
+                                   "defaultPrefix": "for"
                                  }
                             """.formatted(givenContact.getUuid()))
                     .port(port)
@@ -388,6 +407,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .body("vatId", is("VAT222222"))
                     .body("vatCountryCode", is("AA"))
                     .body("vatBusiness", is(true))
+                    .body("defaultPrefix", is("for"))
                     .body("billingContact.label", is(givenContact.getLabel()))
                     .body("partner.person.tradeName", is(givenDebitor.getPartner().getPerson().getTradeName()));
                 // @formatter:on
@@ -522,9 +542,12 @@ class HsOfficeDebitorControllerAcceptanceTest {
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
-                    .debitorNumber(++nextDebitorNumber)
+                    .debitorNumberSuffix(++nextDebitorSuffix)
+                    .billable(true)
                     .partner(givenPartner)
                     .billingContact(givenContact)
+                    .defaultPrefix("abc")
+                    .vatReverseCharge(false)
                     .build();
 
             return debitorRepo.save(newDebitor);
@@ -537,7 +560,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var count = em.createQuery(
-                            "DELETE FROM HsOfficeDebitorEntity d WHERE d.debitorNumber > " + LOWEST_TEMP_DEBITOR_NUMBER)
+                            "DELETE FROM HsOfficeDebitorEntity d WHERE d.debitorNumberSuffix >= " + LOWEST_TEMP_DEBITOR_SUFFIX)
                     .executeUpdate();
             System.out.printf("deleted %d entities%n", count);
         });

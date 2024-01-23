@@ -9,6 +9,11 @@ components:
                 uuid:
                     type: string
                     format: uuid
+                debitorNumberPrefix:
+                    type: integer
+                    format: int8
+                    minimum: 10000
+                    maximum: 99999
                 person:
                     $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
                 contact:
@@ -30,6 +35,9 @@ components:
                     type: string
                     nullable: true
                 birthName:
+                    type: string
+                    nullable: true
+                birthPlace:
                     type: string
                     nullable: true
                 birthday:
@@ -68,6 +76,9 @@ components:
                 birthName:
                     type: string
                     nullable: true
+                birthPlace:
+                    type: string
+                    nullable: true
                 birthday:
                     type: string
                     format: date
@@ -80,6 +91,11 @@ components:
         HsOfficePartnerInsert:
             type: object
             properties:
+                debitorNumberPrefix:
+                    type: integer
+                    format: int8
+                    minimum: 10000
+                    maximum: 99999
                 personUuid:
                     type: string
                     format: uuid
@@ -89,6 +105,7 @@ components:
                 details:
                     $ref: '#/components/schemas/HsOfficePartnerDetailsInsert'
             required:
+                - debitorNumberPrefix
                 - personUuid
                 - contactUuid
                 - details
@@ -104,6 +121,9 @@ components:
                     type: string
                     nullable: true
                 birthName:
+                    type: string
+                    nullable: true
+                birthPlace:
                     type: string
                     nullable: true
                 birthday:

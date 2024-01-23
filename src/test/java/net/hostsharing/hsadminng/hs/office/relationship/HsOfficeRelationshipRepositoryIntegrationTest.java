@@ -77,7 +77,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                 final var newRelationship = toCleanup(HsOfficeRelationshipEntity.builder()
                         .relAnchor(givenAnchorPerson)
                         .relHolder(givenHolderPerson)
-                        .relType(HsOfficeRelationshipType.JOINT_AGENT)
+                        .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                         .contact(givenContact)
                         .build());
                 return relationshipRepo.save(newRelationship);
@@ -105,7 +105,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                 final var newRelationship = toCleanup(HsOfficeRelationshipEntity.builder()
                         .relAnchor(givenAnchorPerson)
                         .relHolder(givenHolderPerson)
-                        .relType(HsOfficeRelationshipType.JOINT_AGENT)
+                        .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                         .contact(givenContact)
                         .build());
                 return relationshipRepo.save(newRelationship);
@@ -114,26 +114,26 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.admin",
-                    "hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner",
-                    "hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant"));
+                    "hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin",
+                    "hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner",
+                    "hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant"));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
 
-                    "{ grant perm * on hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner by system and assume }",
-                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner to role global#global.admin by system and assume }",
-                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner to role hs_office_person#BesslerAnita.admin by system and assume }",
+                    "{ grant perm * on hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner to role global#global.admin by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner to role hs_office_person#BesslerAnita.admin by system and assume }",
 
-                    "{ grant perm edit on hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.admin by system and assume }",
-                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.admin to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.owner by system and assume }",
+                    "{ grant perm edit on hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner by system and assume }",
 
-                    "{ grant perm view on hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant by system and assume }",
-                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
-                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant to role hs_office_person#BesslerAnita.admin by system and assume }",
+                    "{ grant perm view on hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_person#BesslerAnita.admin by system and assume }",
 
-                    "{ grant role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.admin by system and assume }",
-                    "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant by system and assume }",
-                    "{ grant role hs_office_person#BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-JOINT_AGENT-BesslerAnita.tenant by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin by system and assume }",
+                    "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
+                    "{ grant role hs_office_person#BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
                     null)
             );
         }
@@ -159,9 +159,9 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='First GmbH', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='first contact')",
-                    "rel(relAnchor='Third OHG', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='third contact')",
-                    "rel(relAnchor='Second e.K.', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='second contact')");
+                    "rel(relAnchor='LEGAL First GmbH', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='first contact')",
+                    "rel(relAnchor='SOLE_REPRESENTATION Third OHG', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='third contact')",
+                    "rel(relAnchor='LEGAL Second e.K.', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='second contact')");
         }
 
         @Test
@@ -176,7 +176,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='First GmbH', relType='SOLE_AGENT', relHolder='Smith, Peter', contact='first contact')");
+                    "rel(relAnchor='LEGAL First GmbH', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='first contact')");
         }
     }
 
@@ -392,7 +392,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
             final var newRelationship = HsOfficeRelationshipEntity.builder()
-                    .relType(HsOfficeRelationshipType.JOINT_AGENT)
+                    .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                     .relAnchor(givenAnchorPerson)
                     .relHolder(givenHolderPerson)
                     .contact(givenContact)

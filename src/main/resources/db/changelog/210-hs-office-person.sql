@@ -4,7 +4,7 @@
 --changeset hs-office-person-MAIN-TABLE:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficePersonType AS ENUM ('NATURAL', 'LEGAL', 'SOLE_REPRESENTATION', 'JOINT_REPRESENTATION');
+CREATE TYPE HsOfficePersonType AS ENUM ('UNKNOWN', 'NATURAL', 'LEGAL', 'SOLE_REPRESENTATION', 'JOINT_REPRESENTATION');
 
 CREATE CAST (character varying as HsOfficePersonType) WITH INOUT AS IMPLICIT;
 

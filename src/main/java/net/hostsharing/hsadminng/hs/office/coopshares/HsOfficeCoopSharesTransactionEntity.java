@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -10,6 +11,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -20,14 +22,15 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("CoopShareTransaction")
-public class HsOfficeCoopSharesTransactionEntity implements Stringifyable {
+public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, HasUuid {
 
     private static Stringify<HsOfficeCoopSharesTransactionEntity> stringify = stringify(HsOfficeCoopSharesTransactionEntity.class)
-            .withProp(e -> e.getMembership().getMemberNumber())
+            .withProp(HsOfficeCoopSharesTransactionEntity::getMemberNumber)
             .withProp(HsOfficeCoopSharesTransactionEntity::getValueDate)
             .withProp(HsOfficeCoopSharesTransactionEntity::getTransactionType)
             .withProp(HsOfficeCoopSharesTransactionEntity::getShareCount)
             .withProp(HsOfficeCoopSharesTransactionEntity::getReference)
+            .withProp(HsOfficeCoopSharesTransactionEntity::getComment)
             .withSeparator(", ")
             .quotedValues(false);
 
@@ -50,7 +53,7 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable {
     private int shareCount;
 
     @Column(name = "reference")
-    private String reference;
+    private String reference; // TODO: what is this for?
 
     @Column(name = "comment")
     private String comment;
@@ -60,8 +63,12 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable {
         return stringify.apply(this);
     }
 
+    public Integer getMemberNumber() {
+        return ofNullable(membership).map(HsOfficeMembershipEntity::getMemberNumber).orElse(null);
+    }
+
     @Override
     public String toShortString() {
-        return "%s%+d".formatted(membership.getMemberNumber(), shareCount);
+        return "%s%+d".formatted(getMemberNumber(), shareCount);
     }
 }

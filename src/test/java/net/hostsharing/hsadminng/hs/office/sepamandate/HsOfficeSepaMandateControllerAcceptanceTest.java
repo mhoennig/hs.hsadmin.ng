@@ -80,7 +80,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     [
                          {
                              "debitor": {
-                                 "debitorNumber": 10002,
+                                 "debitorNumber": 1000212,
                                  "billingContact": { "label": "second contact" }
                              },
                              "bankAccount": { "holder": "Second e.K." },
@@ -90,7 +90,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                          },
                          {
                              "debitor": {
-                                 "debitorNumber": 10001,
+                                 "debitorNumber": 1000111,
                                  "billingContact": { "label": "first contact" }
                              },
                              "bankAccount": { "holder": "First GmbH" },
@@ -100,7 +100,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                          },
                          {
                              "debitor": {
-                                 "debitorNumber": 10003,
+                                 "debitorNumber": 1000313,
                                  "billingContact": { "label": "third contact" }
                              },
                              "bankAccount": { "holder": "Third OHG" },
@@ -269,7 +269,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                          "debitor": {
-                             "debitorNumber": 10001,
+                             "debitorNumber": 1000111,
                              "billingContact": { "label": "first contact" }
                          },
                          "bankAccount": {
@@ -321,7 +321,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                          "debitor": {
-                             "debitorNumber": 10001,
+                             "debitorNumber": 1000111,
                              "billingContact": { "label": "first contact" }
                          },
                          "bankAccount": {
@@ -376,7 +376,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(10001: First GmbH)");
+                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(1000111: LEGAL First GmbH: fir)");
                         assertThat(mandate.getBankAccount().toShortString()).isEqualTo("First GmbH");
                         assertThat(mandate.getReference()).isEqualTo("temp ref CAT Z - patched");
                         assertThat(mandate.getValidFrom()).isEqualTo("2020-06-05");
@@ -417,7 +417,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
             // finally, the sepaMandate is actually updated
             assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(10001: First GmbH)");
+                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(1000111: LEGAL First GmbH: fir)");
                         assertThat(mandate.getBankAccount().toShortString()).isEqualTo("First GmbH");
                         assertThat(mandate.getReference()).isEqualTo("temp ref CAT Z");
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2023-01-01)");

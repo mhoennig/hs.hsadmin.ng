@@ -1,0 +1,1038 @@
+package net.hostsharing.hsadminng.hs.office.migration;
+
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType;
+import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransactionEntity;
+import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransactionType;
+import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeReasonForTermination;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
+import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
+import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
+import net.hostsharing.test.JpaAttempt;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestWatcher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.Commit;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import java.io.*;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.stream;
+import static java.util.Objects.requireNonNull;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.assertj.core.api.Fail.fail;
+
+/*
+ * This 'test' includes the complete legacy 'office' data import.
+ *
+ * There is no code in 'main' because the import is not needed a normal runtime.
+ * There is some test data in Java resources to verify the data conversion.
+ * For a real import a main method will be added later
+ * which reads CSV files from the file system.
+ *
+ * When run on a Hostsharing database, it needs the following settings (hsh99_... just examples).
+ *
+ * In a real Hostsharing environment, these are created via (the old) hsadmin:
+
+    CREATE USER hsh99_admin WITH PASSWORD 'password';
+    CREATE DATABASE hsh99_hsadminng  ENCODING 'UTF8' TEMPLATE template0;
+    REVOKE ALL ON DATABASE hsh99_hsadminng FROM public; -- why does hsadmin do that?
+    ALTER DATABASE hsh99_hsadminng OWNER TO hsh99_admin;
+
+    CREATE USER hsh99_restricted WITH PASSWORD 'password';
+
+    \c hsh99_hsadminng
+
+    GRANT ALL PRIVILEGES ON SCHEMA public to hsh99_admin;
+
+ * Additionally, we need these settings (because the Hostsharing DB-Admin has no CREATE right):
+
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+    -- maybe something like that is needed for the 2nd user
+    -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to hsh99_restricted;
+
+ * Then copy this to a file named .environment (excluded from git) and fill in your specific values:
+
+   export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://localhost:6432/hsh99_hsadminng
+   export HSADMINNG_POSTGRES_ADMIN_USERNAME=hsh99_admin
+   export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
+   export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=hsh99_restricted
+   export HSADMINNG_SUPERUSER=some-precreated-superuser@example.org
+
+ * To finally import the office data, run:
+ *
+ *   import-office-tables # comes from .aliases file and uses .environment
+ */
+@Tag("import")
+@DataJpaTest(properties = {
+        "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers}",
+        "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:admin}",
+        "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
+        "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
+})
+@DirtiesContext
+@Import({ Context.class, JpaAttempt.class })
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ExtendWith(OrderedDependedTestsExtension.class)
+public class ImportOfficeData extends ContextBasedTest {
+
+    static int relationshipId = 2000000;
+
+    @Value("${spring.datasource.url}")
+    private String jdbcUrl;
+
+    @Value("${spring.datasource.username}")
+    private String postgresAdminUser;
+
+    @Value("${hsadminng.superuser}")
+    private String rbacSuperuser;
+
+    private static NavigableMap<Integer, HsOfficeContactEntity> contacts = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficePersonEntity> persons = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficePartnerEntity> partners = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficeDebitorEntity> debitors = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficeMembershipEntity> memberships = new TreeMap<>();
+
+    private static NavigableMap<Integer, HsOfficeRelationshipEntity> relationships = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficeSepaMandateEntity> sepaMandates = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficeBankAccountEntity> bankAccounts = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficeCoopSharesTransactionEntity> coopShares = new TreeMap<>();
+    private static NavigableMap<Integer, HsOfficeCoopAssetsTransactionEntity> coopAssets = new TreeMap<>();
+
+    @PersistenceContext
+    EntityManager em;
+
+    @Autowired
+    TransactionTemplate txTemplate;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
+
+    @MockBean
+    HttpServletRequest request;
+
+    @Test
+    @Order(1010)
+    void importBusinessPartners() {
+
+        try (Reader reader = resourceReader("migration/business-partners.csv")) {
+            final var lines = readAllLines(reader);
+            importBusinessPartners(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(1011)
+    void verifyBusinessPartners() {
+        assumeThat(postgresAdminUser).isEqualTo("admin");
+
+        // no contacts yet => mostly null values
+        assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
+                {
+                    17=partner(null null, null),
+                    20=partner(null null, null),
+                    22=partner(null null, null)
+                }
+                """);
+        assertThat(toFormattedString(contacts)).isEqualTo("{}");
+        assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
+                {
+                    17=debitor(1001700: null null, null: mih),
+                    20=debitor(1002000: null null, null: xyz),
+                    22=debitor(1102200: null null, null: xxx)}
+                """);
+        assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
+                {
+                    17=Membership(10017, null null, null, 1001700, [2000-12-06,), NONE),
+                    20=Membership(10020, null null, null, 1002000, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(11022, null null, null, 1102200, [2021-04-01,), NONE)
+                }
+                """);
+    }
+
+    @Test
+    @Order(1020)
+    void importContacts() {
+
+        try (Reader reader = resourceReader("migration/contacts.csv")) {
+            final var lines = readAllLines(reader);
+            importContacts(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(1021)
+    void verifyContacts() {
+        assumeThat(postgresAdminUser).isEqualTo("admin");
+
+        assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
+                {
+                    17=partner(NATURAL Mellies, Michael: Herr Michael Mellies ),
+                    20=partner(LEGAL JM GmbH: Herr Philip Meyer-Contract , JM GmbH),
+                    22=partner(LEGAL Test PS: Petra Schmidt , Test PS)
+                }
+                """);
+        assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
+                {
+                    1101=contact(label='Herr Michael Mellies ', emailAddresses='mih@example.org'),
+                    1200=contact(label='JM e.K.', emailAddresses='jm-ex-partner@example.org'),
+                    1201=contact(label='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='jm-billing@example.org'),
+                    1202=contact(label='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='am-operation@example.org'),
+                    1203=contact(label='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='pm-partner@example.org'),
+                    1301=contact(label='Petra Schmidt , Test PS', emailAddresses='ps@example.com')
+                }
+                """);
+        assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
+                {
+                    1101=person(personType='NATURAL', tradeName='', familyName='Mellies', givenName='Michael'),
+                    1200=person(personType='LEGAL', tradeName='JM e.K.', familyName='', givenName=''),
+                    1201=person(personType='LEGAL', tradeName='JM GmbH', familyName='Meyer-Billing', givenName='Jenny'),
+                    1202=person(personType='LEGAL', tradeName='JM GmbH', familyName='Meyer-Operation', givenName='Andrew'),
+                    1203=person(personType='LEGAL', tradeName='JM GmbH', familyName='Meyer-Contract', givenName='Philip'),
+                    1301=person(personType='LEGAL', tradeName='Test PS', familyName='Schmidt', givenName='Petra')
+                }
+                """);
+        assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
+                {
+                    17=debitor(1001700: NATURAL Mellies, Michael: mih), 
+                    20=debitor(1002000: LEGAL JM GmbH: xyz), 
+                    22=debitor(1102200: LEGAL Test PS: xxx)
+                }
+                """);
+        assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
+                {
+                    17=Membership(10017, NATURAL Mellies, Michael, 1001700, [2000-12-06,), NONE),
+                    20=Membership(10020, LEGAL JM GmbH, 1002000, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(11022, LEGAL Test PS, 1102200, [2021-04-01,), NONE)
+                }
+                """);
+        assertThat(toFormattedString(relationships)).isEqualToIgnoringWhitespace("""
+                {
+                    2000000=rel(relAnchor='NATURAL Mellies, Michael', relType='OPERATIONS', relHolder='NATURAL Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000001=rel(relAnchor='LEGAL JM GmbH', relType='EX_PARTNER', relHolder='LEGAL JM e.K.', contact='JM e.K.'),
+                    2000002=rel(relAnchor='LEGAL JM GmbH', relType='OPERATIONS', relHolder='LEGAL JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000003=rel(relAnchor='LEGAL JM GmbH', relType='VIP_CONTACT', relHolder='LEGAL JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000004=rel(relAnchor='LEGAL JM GmbH', relType='REPRESENTATIVE', relHolder='LEGAL JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000005=rel(relAnchor='LEGAL Test PS', relType='OPERATIONS', relHolder='LEGAL Test PS', contact='Petra Schmidt , Test PS'),
+                    2000006=rel(relAnchor='LEGAL Test PS', relType='REPRESENTATIVE', relHolder='LEGAL Test PS', contact='Petra Schmidt , Test PS'),
+                    2000007=rel(relAnchor='NATURAL Mellies, Michael', relType='REPRESENTATIVE', relHolder='NATURAL Mellies, Michael', contact='Herr Michael Mellies ')
+                }
+                """);
+    }
+
+    @Test
+    @Order(1030)
+    void importSepaMandates() {
+
+        try (Reader reader = resourceReader("migration/sepa-mandates.csv")) {
+            final var lines = readAllLines(reader);
+            importSepaMandates(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(1031)
+    void verifySepaMandates() {
+        assumeThat(postgresAdminUser).isEqualTo("admin");
+
+        assertThat(toFormattedString(bankAccounts)).isEqualToIgnoringWhitespace("""
+            {
+                234234=bankAccount(holder='Michael Mellies', iban='DE37500105177419788228', bic='INGDDEFFXXX'),
+                235600=bankAccount(holder='JM e.K.', iban='DE02300209000106531065', bic='CMCIDEDD'),
+                235662=bankAccount(holder='JM GmbH', iban='DE49500105174516484892', bic='INGDDEFFXXX')
+            }
+            """);
+        assertThat(toFormattedString(sepaMandates)).isEqualToIgnoringWhitespace("""
+            {
+                234234=SEPA-Mandate(DE37500105177419788228, MH12345, 2004-06-12, [2004-06-15,)),
+                235600=SEPA-Mandate(DE02300209000106531065, JM33344, 2004-01-15, [2004-01-20,2005-06-28)),
+                235662=SEPA-Mandate(DE49500105174516484892, JM33344, 2005-06-28, [2005-07-01,))
+            }
+            """);
+    }
+
+    @Test
+    @Order(1040)
+    void importCoopShares() {
+        try (Reader reader = resourceReader("migration/share-transactions.csv")) {
+            final var lines = readAllLines(reader);
+            importCoopShares(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(1041)
+    void verifyCoopShares() {
+        assumeThat(postgresAdminUser).isEqualTo("admin");
+
+        assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
+                {
+                    33443=CoopShareTransaction(10017, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
+                    33451=CoopShareTransaction(10020, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
+                    33701=CoopShareTransaction(10017, 2005-01-10, SUBSCRIPTION, 40, increase),
+                    33810=CoopShareTransaction(10020, 2016-12-31, CANCELLATION, 22, membership ended)
+                }
+                """);
+    }
+
+    @Test
+    @Order(1050)
+    void importCoopAssets() {
+
+        try (Reader reader = resourceReader("migration/asset-transactions.csv")) {
+            final var lines = readAllLines(reader);
+            importCoopAssets(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(1051)
+    void verifyCoopAssets() {
+        assumeThat(postgresAdminUser).isEqualTo("admin");
+
+        assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
+                {
+                    30000=CoopAssetsTransaction(10017, 2000-12-06, DEPOSIT, 1280.00, for subscription A),
+                    31000=CoopAssetsTransaction(10020, 2000-12-06, DEPOSIT, 128.00, for subscription B),
+                    32000=CoopAssetsTransaction(10017, 2005-01-10, DEPOSIT, 2560.00, for subscription C),
+                    33001=CoopAssetsTransaction(10017, 2005-01-10, TRANSFER, -512.00, for transfer to 10),
+                    33002=CoopAssetsTransaction(10020, 2005-01-10, ADOPTION, 512.00, for transfer from 7),
+                    34001=CoopAssetsTransaction(10020, 2016-12-31, CLEARING, -8.00, for cancellation D),
+                    34002=CoopAssetsTransaction(10020, 2016-12-31, DISBURSAL, -100.00, for cancellation D),
+                    34003=CoopAssetsTransaction(10020, 2016-12-31, LOSS, -20.00, for cancellation D)
+                }
+                """);
+    }
+
+    @Test
+    @Order(2000)
+    @Commit
+    void persistEntities() {
+
+        System.out.println("PERSISTING to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        deleteTestDataFromHsOfficeTables();
+        resetFromHsOfficeSequences();
+        deleteFromTestTables();
+        deleteFromRbacTables();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            contacts.forEach(this::persist);
+            updateLegacyIds(contacts, "hs_office_contact_legacy_id", "contact_id");
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            persons.forEach(this::persist);
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            partners.forEach(this::persist);
+            updateLegacyIds(partners, "hs_office_partner_legacy_id", "bp_id");
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            debitors.forEach(this::persist);
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            memberships.forEach(this::persist);
+
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            relationships.forEach(this::persist);
+
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            bankAccounts.forEach(this::persist);
+
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            sepaMandates.forEach(this::persist);
+            updateLegacyIds(sepaMandates, "hs_office_sepamandate_legacy_id", "sepa_mandate_id");
+
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            coopShares.forEach(this::persist);
+            updateLegacyIds(coopShares, "hs_office_coopsharestransaction_legacy_id", "member_share_id");
+
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            coopAssets.forEach(this::persist);
+            updateLegacyIds(coopShares, "hs_office_coopassetstransaction_legacy_id", "member_asset_id");
+        }).assertSuccessful();
+
+    }
+
+    private void persist(final Integer id, final HasUuid entity) {
+        try {
+            System.out.println("persisting #" + entity.hashCode() + ": " + entity.toString());
+            em.persist(entity);
+            em.flush();
+            System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
+        } catch (Exception x) {
+            System.out.println("failed to persist: " + entity.toString());
+            throw x;
+        }
+
+    }
+
+    private void deleteTestDataFromHsOfficeTables() {
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            em.createNativeQuery("delete from hs_office_relationship where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_coopassetstransaction where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_coopassetstransaction_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_coopsharestransaction where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_coopsharestransaction_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_membership where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_sepamandate where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_sepamandate_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_debitor where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_bankaccount where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_partner where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_partner_details where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_contact where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_person where true").executeUpdate();
+        }).assertSuccessful();
+    }
+
+    private void resetFromHsOfficeSequences() {
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            em.createNativeQuery("alter sequence hs_office_contact_legacy_id_seq restart with 1000000000;").executeUpdate();
+            em.createNativeQuery("alter sequence hs_office_coopassetstransaction_legacy_id_seq restart with 1000000000;")
+                    .executeUpdate();
+            em.createNativeQuery("alter sequence public.hs_office_coopsharestransaction_legacy_id_seq restart with 1000000000;")
+                    .executeUpdate();
+            em.createNativeQuery("alter sequence public.hs_office_partner_legacy_id_seq restart with 1000000000;")
+                    .executeUpdate();
+            em.createNativeQuery("alter sequence public.hs_office_sepamandate_legacy_id_seq restart with 1000000000;")
+                    .executeUpdate();
+        });
+    }
+
+    private void deleteFromTestTables() {
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            em.createNativeQuery("delete from test_domain where true").executeUpdate();
+            em.createNativeQuery("delete from test_package where true").executeUpdate();
+            em.createNativeQuery("delete from test_customer where true").executeUpdate();
+        }).assertSuccessful();
+    }
+
+    private void deleteFromRbacTables() {
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            em.createNativeQuery("delete from rbacuser_rv where name not like 'superuser-%'").executeUpdate();
+            em.createNativeQuery("delete from tx_journal where true").executeUpdate();
+            em.createNativeQuery("delete from tx_context where true").executeUpdate();
+        }).assertSuccessful();
+    }
+
+    private <E extends HasUuid> void updateLegacyIds(
+            Map<Integer, E> entities,
+            final String legacyIdTable,
+            final String legacyIdColumn) {
+        entities.forEach((id, entity) -> em.createNativeQuery("""
+                            UPDATE ${legacyIdTable}
+                                SET ${legacyIdColumn} = :legacyId
+                                WHERE uuid = :uuid
+                        """
+                        .replace("${legacyIdTable}", legacyIdTable)
+                        .replace("${legacyIdColumn}", legacyIdColumn))
+                .setParameter("legacyId", id)
+                .setParameter("uuid", entity.getUuid())
+                .executeUpdate()
+        );
+    }
+
+    public List<String[]> readAllLines(Reader reader) throws Exception {
+
+        final var parser = new CSVParserBuilder()
+                .withSeparator(';')
+                .withQuoteChar('"')
+                .build();
+
+        final var filteredReader = skippingEmptyAndCommentLines(reader);
+        try (CSVReader csvReader = new CSVReaderBuilder(filteredReader)
+                .withCSVParser(parser)
+                .build()) {
+            return csvReader.readAll();
+        }
+    }
+
+    public static Reader skippingEmptyAndCommentLines(Reader reader) throws IOException {
+        try (var bufferedReader = new BufferedReader(reader);
+             StringWriter writer = new StringWriter()) {
+
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                if (!line.isBlank() && !line.startsWith("#")) {
+                    writer.write(line);
+                    writer.write("\n");
+                }
+            }
+
+            return new StringReader(writer.toString());
+        }
+    }
+
+    private void importBusinessPartners(final String[] header, final List<String[]> records) {
+
+        final var columns = new Columns(header);
+
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var person = HsOfficePersonEntity.builder().build();
+
+                    final var partner = HsOfficePartnerEntity.builder()
+                            .debitorNumberPrefix(rec.getInteger("member_id"))
+                            .details(HsOfficePartnerDetailsEntity.builder().build())
+                            .contact(null) // is set during contacts import depending on assigned roles
+                            .person(person)
+                            .build();
+                    partners.put(rec.getInteger("bp_id"), partner);
+
+                    final var debitor = HsOfficeDebitorEntity.builder()
+                            .partner(partner)
+                            .debitorNumberSuffix((byte) 0)
+                            .defaultPrefix(rec.getString("member_code").replace("hsh00-", ""))
+                            .partner(partner)
+                            .billable(rec.isEmpty("free"))
+                            .vatReverseCharge(rec.getBoolean("exempt_vat"))
+                            .vatBusiness("GROSS".equals(rec.getString("indicator_vat"))) // TODO: remove
+                            .vatId(rec.getString("uid_vat"))
+                            .build();
+                    debitors.put(rec.getInteger("bp_id"), debitor);
+
+                    partners.put(rec.getInteger("bp_id"), partner);
+
+                    if (isNotBlank(rec.getString("member_since"))) {
+                        final var membership = HsOfficeMembershipEntity.builder()
+                                .partner(partner)
+                                .memberNumber(rec.getInteger("member_id"))
+                                .validity(toPostgresDateRange(
+                                        rec.getLocalDate("member_since"),
+                                        rec.getLocalDate("member_until")))
+                                .membershipFeeBillable(rec.isEmpty("member_role"))
+                                .reasonForTermination(
+                                        isBlank(rec.getString("member_until"))
+                                                ? HsOfficeReasonForTermination.NONE
+                                                : HsOfficeReasonForTermination.UNKNOWN)
+                                .mainDebitor(debitor)
+                                .build();
+                        memberships.put(rec.getInteger("bp_id"), membership);
+                    }
+                });
+    }
+
+    private void importCoopShares(final String[] header, final List<String[]> records) {
+
+        final var columns = new Columns(header);
+
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var member = memberships.get(rec.getInteger("bp_id"));
+
+                    final var shareTransaction = HsOfficeCoopSharesTransactionEntity.builder()
+                            .membership(member)
+                            .valueDate(rec.getLocalDate("date"))
+                            .transactionType(
+                                    "SUBSCRIPTION".equals(rec.getString("action"))
+                                            ? HsOfficeCoopSharesTransactionType.SUBSCRIPTION
+                                            : "UNSUBSCRIPTION".equals(rec.getString("action"))
+                                            ? HsOfficeCoopSharesTransactionType.CANCELLATION
+                                            : HsOfficeCoopSharesTransactionType.ADJUSTMENT
+                            )
+                            .shareCount(rec.getInteger("quantity"))
+                            .comment(rec.getString("comment"))
+                            .build();
+
+                    coopShares.put(rec.getInteger("member_share_id"), shareTransaction);
+                });
+    }
+
+    private void importCoopAssets(final String[] header, final List<String[]> records) {
+
+        final var columns = new Columns(header);
+
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var member = memberships.get(rec.getInteger("bp_id"));
+
+                    final var assetTypeMapping = new HashMap<String, HsOfficeCoopAssetsTransactionType>() {
+
+                        {
+                            put("HANDOVER", HsOfficeCoopAssetsTransactionType.TRANSFER);
+                            put("ADOPTION", HsOfficeCoopAssetsTransactionType.ADOPTION);
+                            put("LOSS", HsOfficeCoopAssetsTransactionType.LOSS);
+                            put("CLEARING", HsOfficeCoopAssetsTransactionType.CLEARING);
+                            put("PRESCRIPTION", HsOfficeCoopAssetsTransactionType.LIMITATION);
+                            put("PAYBACK", HsOfficeCoopAssetsTransactionType.DISBURSAL);
+                            put("PAYMENT", HsOfficeCoopAssetsTransactionType.DEPOSIT);
+                        }
+
+                        public HsOfficeCoopAssetsTransactionType get(final String key) {
+                            final var value = super.get(key);
+                            if (value != null) {
+                                return value;
+                            }
+                            throw new IllegalStateException("no mapping value found for: " + key);
+                        }
+                    };
+
+                    final var assetTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
+                            .membership(member)
+                            .valueDate(rec.getLocalDate("date"))
+                            .transactionType(assetTypeMapping.get(rec.getString("action")))
+                            .assetValue(rec.getBigDecimal("amount"))
+                            .comment(rec.getString("comment"))
+                            .build();
+
+                    coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
+                });
+    }
+
+    private void importSepaMandates(final String[] header, final List<String[]> records) {
+
+        final var columns = new Columns(header);
+
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var debitor = debitors.get(rec.getInteger("bp_id"));
+
+                    final var sepaMandate = HsOfficeSepaMandateEntity.builder()
+                            .debitor(debitor)
+                            .bankAccount(HsOfficeBankAccountEntity.builder()
+                                    .holder(rec.getString("bank_customer"))
+                                    // .bankName(rec.get("bank_name")) // not supported
+                                    .iban(rec.getString("bank_iban"))
+                                    .bic(rec.getString("bank_bic"))
+                                    .build())
+                            .reference(rec.getString("mandat_ref"))
+                            .agreement(LocalDate.parse(rec.getString("mandat_signed")))
+                            .validity(toPostgresDateRange(
+                                    rec.getLocalDate("mandat_since"),
+                                    rec.getLocalDate("mandat_until")))
+                            .build();
+
+                    sepaMandates.put(rec.getInteger("sepa_mandat_id"), sepaMandate);
+                    bankAccounts.put(rec.getInteger("sepa_mandat_id"), sepaMandate.getBankAccount());
+                });
+    }
+
+    private void importContacts(final String[] header, final List<String[]> records) {
+
+        final var columns = new Columns(header);
+
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var contactId = rec.getInteger("contact_id");
+
+                    if (rec.getString("roles").isBlank()) {
+                        fail("empty roles assignment not allowed for contact_id: " + contactId);
+                    }
+
+                    final var partner = partners.get(rec.getInteger("bp_id"));
+                    final var debitor = debitors.get(rec.getInteger("bp_id"));
+
+                    final var partnerPerson = partner.getPerson();
+                    if (containsRole(rec)) {
+                        initPerson(partner.getPerson(), rec);
+                    }
+
+                    HsOfficePersonEntity contactPerson = partnerPerson;
+                    if (!StringUtils.equals(rec.getString("firma"), partnerPerson.getTradeName()) ||
+                            !StringUtils.equals(rec.getString("first_name"), partnerPerson.getGivenName()) ||
+                            !StringUtils.equals(rec.getString("last_name"), partnerPerson.getFamilyName())) {
+                        contactPerson = initPerson(HsOfficePersonEntity.builder().build(), rec);
+                    }
+
+                    final var contact = HsOfficeContactEntity.builder().build();
+                    initContact(contact, rec);
+
+                    if (containsRole(rec, "partner")) {
+                        assertThat(partner.getContact()).isNull();
+                        partner.setContact(contact);
+                    }
+                    if (containsRole(rec, "billing")) {
+                        assertThat(debitor.getBillingContact()).isNull();
+                        debitor.setBillingContact(contact);
+                    }
+                    if (containsRole(rec, "operation")) {
+                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.OPERATIONS);
+                    }
+                    if (containsRole(rec, "contractual")) {
+                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.REPRESENTATIVE);
+                    }
+                    if (containsRole(rec, "ex-partner")) {
+                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.EX_PARTNER);
+                    }
+                    if (containsRole(rec, "vip-contact")) {
+                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.VIP_CONTACT);
+                    }
+                    verifyContainsOnly(rec.getString("roles"), "partner", "vip-contact", "ex-partner", "billing", "contractual", "operation");
+                });
+
+        optionallyAddMissingContractualRelationships();
+    }
+
+    private static void optionallyAddMissingContractualRelationships() {
+        partners.forEach( (id, partner) -> {
+            final var partnerPerson = partner.getPerson();
+            if (relationships.values().stream().filter(rel -> rel.getRelHolder() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE).findFirst().isEmpty()) {
+                addRelationship(partnerPerson, partnerPerson, partner.getContact(), HsOfficeRelationshipType.REPRESENTATIVE);
+            }
+        });
+    }
+
+    private static boolean containsRole(final Record rec, final String role) {
+        final var roles = rec.getString("roles");
+        return ("," + roles + ",").contains("," + role + ",");
+    }
+
+    private static boolean containsRole(final Record rec) {
+        return containsRole(rec, "partner");
+    }
+
+    private static void addRelationship(
+            final HsOfficePersonEntity partnerPerson,
+            final HsOfficePersonEntity contactPerson,
+            final HsOfficeContactEntity contact,
+            final HsOfficeRelationshipType representative) {
+        final var rel = HsOfficeRelationshipEntity.builder()
+                .relAnchor(partnerPerson)
+                .relHolder(contactPerson)
+                .contact(contact)
+                .relType(representative)
+                .build();
+        relationships.put(relationshipId++, rel);
+    }
+
+    private HsOfficePersonEntity initPerson(final HsOfficePersonEntity person, final Record contactRecord) {
+        // TODO: title+salutation: add to person
+        person.setGivenName(contactRecord.getString("first_name"));
+        person.setFamilyName(contactRecord.getString("last_name"));
+        person.setTradeName(contactRecord.getString("firma"));
+        determinePersonType(person, contactRecord.getString("roles"));
+
+        persons.put(contactRecord.getInteger("contact_id"), person);
+        return person;
+    }
+
+    private static void determinePersonType(final HsOfficePersonEntity person, final String roles) {
+        if (person.getTradeName().isBlank()) {
+            person.setPersonType(HsOfficePersonType.NATURAL);
+        } else if (roles.contains("partner")) {
+            person.setPersonType(HsOfficePersonType.LEGAL);
+        } else if (roles.contains("contractual") &&
+                !person.getFamilyName().isBlank() && !person.getGivenName().isBlank()) {
+            person.setPersonType(HsOfficePersonType.NATURAL);
+        } else if ( endsWithWord(person.getTradeName(), "e.K.", "e.G.", "eG", "GmbH", "AG")  ) {
+            person.setPersonType(HsOfficePersonType.LEGAL);
+        } else {
+            // TODO: detect the other person types as soon as we've switche to the new person types
+            person.setPersonType(HsOfficePersonType.UNKNOWN);
+        }
+    }
+
+    private static boolean endsWithWord(final String value, final String... endings) {
+        final var lowerCaseValue = value.toLowerCase();
+        for( String ending: endings ) {
+            if (lowerCaseValue.endsWith(" " + ending.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void verifyContainsOnly(final String roles, final String... allowedRoles) {
+        final var givenRolesSet = stream(roles.replace(" ", "").split(",")).collect(Collectors.toSet());
+        final var allowedRolesSet = stream(allowedRoles).collect(Collectors.toSet());
+        final var unexpectedRolesSet = new HashSet<>(givenRolesSet);
+        unexpectedRolesSet.removeAll(allowedRolesSet);
+        assertThat(unexpectedRolesSet).isEmpty();
+    }
+
+    private HsOfficeContactEntity initContact(final HsOfficeContactEntity contact, final Record contactRecord) {
+
+        contact.setLabel(toLabel(
+                contactRecord.getString("salut"),
+                contactRecord.getString("title"),
+                contactRecord.getString("first_name"),
+                contactRecord.getString("last_name"),
+                contactRecord.getString("firma")));
+        contact.setEmailAddresses(contactRecord.getString("email"));
+        contact.setPostalAddress(toAddress(contactRecord));
+        contact.setPhoneNumbers(toPhoneNumbers(contactRecord));
+
+        contacts.put(contactRecord.getInteger("contact_id"), contact);
+        return contact;
+    }
+
+    private <E> String toFormattedString(final Map<Integer, E> map) {
+        if ( map.isEmpty() ) {
+            return "{}";
+        }
+        return "{\n" +
+                map.keySet().stream()
+                        .map(id -> "   " + id + "=" + map.get(id).toString())
+                        .collect(Collectors.joining(",\n")) +
+                "\n}\n";
+    }
+
+    private String[] trimAll(final String[] record) {
+        for (int i = 0; i < record.length; ++i) {
+            if (record[i] != null) {
+                record[i] = record[i].trim();
+            }
+        }
+        return record;
+    }
+
+    private String toPhoneNumbers(final Record rec) {
+        final var result = new StringBuilder("{\n");
+        if (isNotBlank(rec.getString("phone_private")))
+            result.append("    \"private\": " + "\"" + rec.getString("phone_private") + "\",\n");
+        if (isNotBlank(rec.getString("phone_office")))
+            result.append("    \"office\": " + "\"" + rec.getString("phone_office") + "\",\n");
+        if (isNotBlank(rec.getString("phone_mobile")))
+            result.append("    \"mobile\": " + "\"" + rec.getString("phone_mobile") + "\",\n");
+        if (isNotBlank(rec.getString("fax")))
+            result.append("    \"fax\": " + "\"" + rec.getString("fax") + "\",\n");
+        return (result + "}").replace("\",\n}", "\"\n}");
+    }
+
+    private String toAddress(final Record rec) {
+        final var result = new StringBuilder();
+        final var name = toName(
+                rec.getString("salut"),
+                rec.getString("title"),
+                rec.getString("first_name"),
+                rec.getString("last_name"));
+        if (isNotBlank(name))
+            result.append(name + "\n");
+        if (isNotBlank(rec.getString("firma")))
+            result.append(rec.getString("firma") + "\n");
+        if (isNotBlank(rec.getString("co")))
+            result.append("c/o " + rec.getString("co") + "\n");
+        if (isNotBlank(rec.getString("street")))
+            result.append(rec.getString("street") + "\n");
+        final var zipcodeAndCity = toZipcodeAndCity(rec);
+        if (isNotBlank(zipcodeAndCity))
+            result.append(zipcodeAndCity + "\n");
+        return result.toString();
+    }
+
+    private String toZipcodeAndCity(final Record rec) {
+        final var result = new StringBuilder();
+        if (isNotBlank(rec.getString("country")))
+            result.append(rec.getString("country") + " ");
+        if (isNotBlank(rec.getString("zipcode")))
+            result.append(rec.getString("zipcode") + " ");
+        if (isNotBlank(rec.getString("city")))
+            result.append(rec.getString("city"));
+        return result.toString();
+    }
+
+    private String toLabel(
+            final String salut,
+            final String title,
+            final String firstname,
+            final String lastname,
+            final String firm) {
+        final var result = new StringBuilder();
+        if (isNotBlank(salut))
+            result.append(salut + " ");
+        if (isNotBlank(title))
+            result.append(title + " ");
+        if (isNotBlank(firstname))
+            result.append(firstname + " ");
+        if (isNotBlank(lastname))
+            result.append(lastname + " ");
+        if (isNotBlank(firm)) {
+            result.append( (isBlank(result) ? "" : ", ") + firm);
+        }
+        return result.toString();
+    }
+
+    private String toName(final String salut, final String title, final String firstname, final String lastname) {
+        return toLabel(salut, title, firstname, lastname, null);
+    }
+
+    private Reader resourceReader(@NotNull final String resourcePath) {
+        return new InputStreamReader(requireNonNull(getClass().getClassLoader().getResourceAsStream(resourcePath)));
+    }
+
+    private Reader fileReader(@NotNull final Path filePath) throws IOException {
+        //        Path path = Paths.get(
+        //                ClassLoader.getSystemResource("csv/twoColumn.csv").toURI())
+        //    );
+        return Files.newBufferedReader(filePath);
+    }
+
+    private static String[] justHeader(final List<String[]> lines) {
+        return stream(lines.getFirst()).map(String::trim).toArray(String[]::new);
+    }
+
+    private List<String[]> withoutHeader(final List<String[]> records) {
+        return records.subList(1, records.size());
+    }
+
+}
+
+class Columns {
+
+    private final List<String> columnNames;
+
+    public Columns(final String[] header) {
+        columnNames = List.of(header);
+    }
+
+    int indexOf(final String columnName) {
+        int index = columnNames.indexOf(columnName);
+        if (index < 0) {
+            throw new RuntimeException("column name '" + columnName + "' not found in: " + columnNames);
+        }
+        return index;
+    }
+}
+
+class Record {
+
+    private final Columns columns;
+    private final String[] row;
+
+    public Record(final Columns columns, final String[] row) {
+        this.columns = columns;
+        this.row = row;
+    }
+
+    String getString(final String columnName) {
+        return row[columns.indexOf(columnName)];
+    }
+
+    boolean isEmpty(final String columnName) {
+        final String value = getString(columnName);
+        return value == null || value.isBlank();
+    }
+
+    Byte getByte(final String columnName) {
+        final String value = getString(columnName);
+        return isNotBlank(value) ? Byte.valueOf(value.trim()) : 0;
+    }
+
+    boolean getBoolean(final String columnName) {
+        final String value = getString(columnName);
+        return isNotBlank(value) && Boolean.parseBoolean(value.trim());
+    }
+
+    Integer getInteger(final String columnName) {
+        final String value = getString(columnName);
+        return isNotBlank(value) ? Integer.parseInt(value.trim()) : 0;
+    }
+
+    BigDecimal getBigDecimal(final String columnName) {
+        final String value = getString(columnName);
+        if (isNotBlank(value)) {
+            return new BigDecimal(value);
+        }
+        return null;
+    }
+
+    LocalDate getLocalDate(final String columnName) {
+        final String dateString = getString(columnName);
+        if (isNotBlank(dateString)) {
+            return LocalDate.parse(dateString);
+        }
+        return null;
+    }
+}
+
+class OrderedDependedTestsExtension implements TestWatcher, BeforeEachCallback {
+
+    private static boolean previousTestsPassed = true;
+
+    public void testFailed(ExtensionContext context, Throwable cause) {
+        previousTestsPassed = false;
+    }
+
+    @Override
+    public void beforeEach(final ExtensionContext extensionContext) {
+        if (!previousTestsPassed) {
+            System.err.println("ignoring because previous fest has failed");
+        }
+        assumeThat(previousTestsPassed).isTrue();
+    }
+}

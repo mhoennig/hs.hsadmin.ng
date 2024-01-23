@@ -208,7 +208,7 @@ create type RbacRoleDescriptor as
 create or replace function roleDescriptor(objectTable varchar(63), objectUuid uuid, roleType RbacRoleType)
     returns RbacRoleDescriptor
     returns null on null input
-    stable leakproof
+    stable -- leakproof
     language sql as $$
 select objectTable, objectUuid, roleType::RbacRoleType;
 $$;
@@ -432,7 +432,7 @@ $$;
 create or replace function findPermissionId(forObjectUuid uuid, forOp RbacOp)
     returns uuid
     returns null on null input
-    stable leakproof
+    stable -- leakproof
     language sql as $$
 select uuid
     from RbacPermission p
@@ -515,7 +515,7 @@ end; $$;
 
 create or replace function isPermissionGrantedToSubject(permissionId uuid, subjectId uuid)
     returns BOOL
-    stable leakproof
+    stable -- leakproof
     language sql as $$
 select exists(
            select *
@@ -537,7 +537,7 @@ $$;
 
 create or replace function hasGlobalRoleGranted(userUuid uuid)
     returns bool
-    stable leakproof
+    stable -- leakproof
     language sql as $$
 select exists(
            select r.uuid
@@ -758,13 +758,20 @@ $$;
 
 
 -- ============================================================================
---changeset rbac-base-PGSQL-ROLES:1 endDelimiter:--//
+--changeset rbac-base-PGSQL-ROLES:1 context:dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create role admin;
-grant all privileges on all tables in schema public to admin;
+do $$
+    begin
+        if '${HSADMINNG_POSTGRES_ADMIN_USERNAME}'='admin' then
+            create role admin;
+            grant all privileges on all tables in schema public to admin;
+        end if;
 
-create role restricted;
-grant all privileges on all tables in schema public to restricted;
-
+        if '${HSADMINNG_POSTGRES_RESTRICTED_USERNAME}'='restricted' then
+            create role restricted;
+        end if;
+        -- grant all privileges on all tables in schema public to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+    end $$
 --//
+

@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.person;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +22,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("Person")
-public class HsOfficePersonEntity implements Stringifyable {
+public class HsOfficePersonEntity implements HasUuid, Stringifyable {
 
     private static Stringify<HsOfficePersonEntity> toString = stringify(HsOfficePersonEntity.class, "person")
             .withProp(Fields.personType, HsOfficePersonEntity::getPersonType)
@@ -53,6 +54,7 @@ public class HsOfficePersonEntity implements Stringifyable {
 
     @Override
     public String toShortString() {
-        return !StringUtils.isEmpty(tradeName) ? tradeName : (familyName + ", " + givenName);
+        return personType + " " +
+                (!StringUtils.isEmpty(tradeName) ? tradeName : (familyName + ", " + givenName));
     }
 }

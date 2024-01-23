@@ -26,9 +26,6 @@ create or replace function createRbacRolesForHsOfficeContact()
     returns trigger
     language plpgsql
     strict as $$
-declare
-    ownerRole uuid;
-    adminRole uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
@@ -107,7 +104,7 @@ do language plpgsql $$
     declare
         addCustomerPermissions  uuid[];
         globalObjectUuid        uuid;
-        globalAdminRoleUuid         uuid ;
+        globalAdminRoleUuid     uuid;
     begin
         call defineContext('granting global new-contact permission to global admin role', null, null, null);
 

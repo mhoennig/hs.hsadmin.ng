@@ -52,7 +52,7 @@ class HsOfficeRelationshipEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsOfficeRelationshipEntity newInitialEntity() {
         final var entity = new HsOfficeRelationshipEntity();
         entity.setUuid(INITIAL_RELATIONSHIP_UUID);
-        entity.setRelType(HsOfficeRelationshipType.SOLE_AGENT);
+        entity.setRelType(HsOfficeRelationshipType.REPRESENTATIVE);
         entity.setRelAnchor(givenInitialAnchorPerson);
         entity.setRelHolder(givenInitialHolderPerson);
         entity.setContact(givenInitialContact);

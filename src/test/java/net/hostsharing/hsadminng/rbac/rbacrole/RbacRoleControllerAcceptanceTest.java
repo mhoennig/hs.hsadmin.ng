@@ -10,9 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
@@ -24,9 +21,6 @@ class RbacRoleControllerAcceptanceTest {
 
     @LocalServerPort
     private Integer port;
-
-    @PersistenceContext
-    EntityManager em;
 
     @Autowired
     Context context;

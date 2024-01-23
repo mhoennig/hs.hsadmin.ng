@@ -1,3 +1,10 @@
+# For using the alias import-office-tables, # copy these exports to .environment (ignored by git) 
+# and amend them according to your external DB:
+export HSADMINNG_POSTGRES_JDBC_URL=jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers
+export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
+export HSADMINNG_POSTGRES_ADMIN_PASSWORD=
+export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+
 gradleWrapper () {
     if [ ! -f gradlew ]; then
         echo "No 'gradlew' found. Maybe you are not in the root dir of a gradle project?"
@@ -36,8 +43,25 @@ postgresAutodoc () {
 	dot -Tsvg build/postgres-autodoc.neato >build/postgres-autodoc-rbac.svg && \
 	echo "generated $PWD/build/postgres-autodoc-rbac.svg"
 }
-
 alias postgres-autodoc=postgresAutodoc
+
+function importOfficeData() {
+	export HSADMINNG_POSTGRES_JDBC=jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers
+	export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
+	export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
+	export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+	export HSADMINNG_SUPERUSER=superuser-alex@hostsharing.net
+	
+	if [ -f .environment ]; then
+		source .environment
+	fi
+
+    echo "using environment (with ending ';' for use in IntelliJ IDEA):"
+    set | grep ^HSADMINNG_ | sed 's/$/;/'
+
+	./gradlew importOfficeData --rerun
+}
+alias gw-importOfficeData=importOfficeData
 
 alias podman-start='systemctl --user enable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
 alias podman-stop='systemctl --user disable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
@@ -53,3 +77,6 @@ alias pg-sql-backup='docker exec -i hsadmin-ng-postgres /usr/bin/pg_dump --clean
 alias pg-sql-restore='gunzip --stdout | docker exec -i hsadmin-ng-postgres psql -U postgres -d postgres'
 
 alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
+
+alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
+alias gw-test='. .aliases; ./gradlew test'

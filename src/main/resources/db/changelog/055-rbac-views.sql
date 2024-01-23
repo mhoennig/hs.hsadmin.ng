@@ -41,7 +41,7 @@ select *
         ) as unordered
         -- @formatter:on
         order by objectTable || '#' || objectIdName || '.' || roleType;
-grant all privileges on rbacrole_rv to restricted;
+grant all privileges on rbacrole_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 
@@ -126,7 +126,7 @@ select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || 
              join RbacObject as o on o.uuid = r.objectUuid
     order by grantedRoleIdName;
 -- @formatter:on
-grant all privileges on rbacrole_rv to restricted;
+grant all privileges on rbacrole_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 
@@ -240,7 +240,7 @@ create or replace view RbacUser_rv as
         ) as unordered
         -- @formatter:on
         order by unordered.name;
-grant all privileges on RbacUser_rv to restricted;
+grant all privileges on RbacUser_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 -- ============================================================================
@@ -326,7 +326,7 @@ select r.uuid as roleuuid, p.uuid as permissionUuid,
     join rbacgrants g on g.ascendantuuid = r.uuid
     join rbacpermission p on p.uuid = g.descendantuuid
     join rbacobject o on o.uuid = p.objectuuid;
-grant all privileges on RbacOwnGrantedPermissions_rv to restricted;
+grant all privileges on RbacOwnGrantedPermissions_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 -- @formatter:om
 
 -- ============================================================================

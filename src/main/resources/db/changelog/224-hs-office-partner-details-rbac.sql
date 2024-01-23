@@ -29,6 +29,7 @@ call generateRbacRestrictedView('hs_office_partner_details',
     $updates$
         registrationOffice = new.registrationOffice,
         registrationNumber = new.registrationNumber,
+        birthPlace         = new.birthPlace,
         birthName          = new.birthName,
         birthday           = new.birthday,
         dateOfDeath        = new.dateOfDeath

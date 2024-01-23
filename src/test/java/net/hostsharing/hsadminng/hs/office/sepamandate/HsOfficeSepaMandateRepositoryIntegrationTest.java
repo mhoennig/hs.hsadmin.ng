@@ -134,24 +134,24 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                             initialGrantNames,
 
                             // owner
-                            "{ grant perm * on sepamandate#temprefB         to role sepamandate#temprefB.owner           by system and assume }",
-                            "{ grant role sepamandate#temprefB.owner        to role global#global.admin                 by system and assume }",
+                            "{ grant perm * on sepamandate#temprefB            to role sepamandate#temprefB.owner           by system and assume }",
+                            "{ grant role sepamandate#temprefB.owner           to role global#global.admin                 by system and assume }",
 
                             // admin
-                            "{ grant perm edit on sepamandate#temprefB      to role sepamandate#temprefB.admin           by system and assume }",
-                            "{ grant role sepamandate#temprefB.admin        to role sepamandate#temprefB.owner           by system and assume }",
-                            "{ grant role bankaccount#Paul....tenant        to role sepamandate#temprefB.admin           by system and assume }",
+                            "{ grant perm edit on sepamandate#temprefB         to role sepamandate#temprefB.admin           by system and assume }",
+                            "{ grant role sepamandate#temprefB.admin           to role sepamandate#temprefB.owner           by system and assume }",
+                            "{ grant role bankaccount#Paul....tenant           to role sepamandate#temprefB.admin           by system and assume }",
 
                             // agent
-                            "{ grant role sepamandate#temprefB.agent        to role sepamandate#temprefB.admin           by system and assume }",
-                            "{ grant role debitor#10001FirstGmbH-....tenant to role sepamandate#temprefB.agent           by system and assume }",
-                            "{ grant role sepamandate#temprefB.agent        to role bankaccount#Paul....admin           by system and assume }",
-                            "{ grant role sepamandate#temprefB.agent        to role debitor#10001FirstGmbH-....admin    by system and assume }",
+                            "{ grant role sepamandate#temprefB.agent           to role sepamandate#temprefB.admin           by system and assume }",
+                            "{ grant role debitor#1000111:FirstGmbH-....tenant to role sepamandate#temprefB.agent           by system and assume }",
+                            "{ grant role sepamandate#temprefB.agent           to role bankaccount#Paul....admin           by system and assume }",
+                            "{ grant role sepamandate#temprefB.agent           to role debitor#1000111:FirstGmbH-....admin    by system and assume }",
 
                             // tenant
-                            "{ grant role sepamandate#temprefB.tenant       to role sepamandate#temprefB.agent           by system and assume }",
-                            "{ grant role debitor#10001FirstGmbH-....guest  to role sepamandate#temprefB.tenant          by system and assume }",
-                            "{ grant role bankaccount#Paul....guest         to role sepamandate#temprefB.tenant          by system and assume }",
+                            "{ grant role sepamandate#temprefB.tenant          to role sepamandate#temprefB.agent           by system and assume }",
+                            "{ grant role debitor#1000111:FirstGmbH-....guest  to role sepamandate#temprefB.tenant          by system and assume }",
+                            "{ grant role bankaccount#Paul....guest            to role sepamandate#temprefB.tenant          by system and assume }",
 
                             // guest
                             "{ grant perm view on sepamandate#temprefB      to role sepamandate#temprefB.guest           by system and assume }",

@@ -9,8 +9,6 @@ import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,14 +18,13 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
@@ -65,8 +62,6 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     @MockBean
     HttpServletRequest request;
 
-    Set<HsOfficeDebitorEntity> tempDebitors = new HashSet<>();
-
     @Nested
     class CreateDebitor {
 
@@ -81,9 +76,11 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .debitorNumber(20001)
+                        .debitorNumberSuffix((byte)21)
                         .partner(givenPartner)
                         .billingContact(givenContact)
+                        .defaultPrefix("abc")
+                        .billable(false)
                         .build();
                 return debitorRepo.save(newDebitor);
             });
@@ -95,14 +92,43 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             assertThat(debitorRepo.count()).isEqualTo(count + 1);
         }
 
+        @ParameterizedTest
+        @ValueSource(strings = {"", "a", "ab", "a12", "123", "12a"})
+        @Transactional
+        public void canNotCreateNewDebitorWithInvalidDefaultPrefix(final String givenPrefix) {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var count = debitorRepo.count();
+            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First GmbH").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("first contact").get(0);
+
+            // when
+            final var result = attempt(em, () -> {
+                final var newDebitor = HsOfficeDebitorEntity.builder()
+                        .debitorNumberSuffix((byte)21)
+                        .partner(givenPartner)
+                        .billingContact(givenContact)
+                        .billable(true)
+                        .vatReverseCharge(false)
+                        .vatBusiness(false)
+                        .defaultPrefix(givenPrefix)
+                        .build();
+                return debitorRepo.save(newDebitor);
+            });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(org.hibernate.exception.ConstraintViolationException.class);
+        }
+
         @Test
         public void createsAndGrantsRoles() {
             // given
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll()).stream()
+                    // some search+replace to make the output fit into the screen width
                     .map(s -> s.replace("superuser-alex@hostsharing.net", "superuser-alex"))
-                    .map(s -> s.replace("20002Fourthe.G.-forthcontact", "FeG"))
+                    .map(s -> s.replace("22Fourthe.G.-forthcontact", "FeG"))
                     .map(s -> s.replace("Fourthe.G.-forthcontact", "FeG"))
                     .map(s -> s.replace("forthcontact", "4th"))
                     .map(s -> s.replace("hs_office_", ""))
@@ -113,9 +139,11 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .debitorNumber(20002)
+                        .debitorNumberSuffix((byte)22)
                         .partner(givenPartner)
                         .billingContact(givenContact)
+                        .defaultPrefix("abc")
+                        .billable(false)
                         .build();
                 return debitorRepo.save(newDebitor);
             }).assertSuccessful();
@@ -123,42 +151,42 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // then
             assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.owner",
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.admin",
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.agent",
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.tenant",
-                    "hs_office_debitor#20002Fourthe.G.-forthcontact.guest"));
+                    "hs_office_debitor#1000422:Fourthe.G.-forthcontact.owner",
+                    "hs_office_debitor#1000422:Fourthe.G.-forthcontact.admin",
+                    "hs_office_debitor#1000422:Fourthe.G.-forthcontact.agent",
+                    "hs_office_debitor#1000422:Fourthe.G.-forthcontact.tenant",
+                    "hs_office_debitor#1000422:Fourthe.G.-forthcontact.guest"));
             assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("superuser-alex@hostsharing.net", "superuser-alex"))
-                    .map(s -> s.replace("20002Fourthe.G.-forthcontact", "FeG"))
+                    .map(s -> s.replace("22Fourthe.G.-forthcontact", "FeG"))
                     .map(s -> s.replace("Fourthe.G.-forthcontact", "FeG"))
                     .map(s -> s.replace("forthcontact", "4th"))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             // owner
-                            "{ grant perm * on debitor#FeG      to role debitor#FeG.owner   by system and assume }",
-                            "{ grant role debitor#FeG.owner     to role global#global.admin by system and assume }",
-                            "{ grant role debitor#FeG.owner     to user superuser-alex      by global#global.admin and assume }",
+                            "{ grant perm * on debitor#1000422:FeG      to role debitor#1000422:FeG.owner   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.owner     to role global#global.admin by system and assume }",
+                            "{ grant role debitor#1000422:FeG.owner     to user superuser-alex      by global#global.admin and assume }",
 
                             // admin
-                            "{ grant perm edit on debitor#FeG   to role debitor#FeG.admin   by system and assume }",
-                            "{ grant role debitor#FeG.admin     to role debitor#FeG.owner   by system and assume }",
+                            "{ grant perm edit on debitor#1000422:FeG   to role debitor#1000422:FeG.admin   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.admin     to role debitor#1000422:FeG.owner   by system and assume }",
 
                             // agent
-                            "{ grant role debitor#FeG.agent     to role debitor#FeG.admin   by system and assume }",
-                            "{ grant role debitor#FeG.agent     to role contact#4th.admin   by system and assume }",
-                            "{ grant role debitor#FeG.agent     to role partner#FeG.admin   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.agent     to role debitor#1000422:FeG.admin   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.agent     to role contact#4th.admin   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.agent     to role partner#10004:FeG.admin   by system and assume }",
 
                             // tenant
-                            "{ grant role contact#4th.guest     to role debitor#FeG.tenant  by system and assume }",
-                            "{ grant role debitor#FeG.tenant    to role debitor#FeG.agent   by system and assume }",
-                            "{ grant role debitor#FeG.tenant    to role partner#FeG.agent   by system and assume }",
-                            "{ grant role partner#FeG.tenant    to role debitor#FeG.tenant  by system and assume }",
+                            "{ grant role contact#4th.guest     to role debitor#1000422:FeG.tenant  by system and assume }",
+                            "{ grant role debitor#1000422:FeG.tenant    to role debitor#1000422:FeG.agent   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.tenant    to role partner#10004:FeG.agent   by system and assume }",
+                            "{ grant role partner#10004:FeG.tenant    to role debitor#1000422:FeG.tenant  by system and assume }",
 
                             // guest
-                            "{ grant perm view on debitor#FeG   to role debitor#FeG.guest   by system and assume }",
-                            "{ grant role debitor#FeG.guest     to role debitor#FeG.tenant  by system and assume }",
+                            "{ grant perm view on debitor#1000422:FeG   to role debitor#1000422:FeG.guest   by system and assume }",
+                            "{ grant role debitor#1000422:FeG.guest     to role debitor#1000422:FeG.tenant  by system and assume }",
 
                             null));
         }
@@ -183,14 +211,14 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseDebitorsAreReturned(
                     result,
-                    "debitor(10001: First GmbH)",
-                    "debitor(10002: Second e.K.)",
-                    "debitor(10003: Third OHG)");
+                    "debitor(1000111: LEGAL First GmbH: fir)",
+                    "debitor(1000212: LEGAL Second e.K.: sec)",
+                    "debitor(1000313: SOLE_REPRESENTATION Third OHG: thi)");
         }
 
         @ParameterizedTest
         @ValueSource(strings = {
-                "hs_office_partner#FirstGmbH-firstcontact.admin",
+                "hs_office_partner#10001:FirstGmbH-firstcontact.admin",
                 "hs_office_person#FirstGmbH.admin",
                 "hs_office_contact#firstcontact.admin",
         })
@@ -202,7 +230,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = debitorRepo.findDebitorByOptionalNameLike(null);
 
             // then:
-            exactlyTheseDebitorsAreReturned(result, "debitor(10001: First GmbH)");
+            exactlyTheseDebitorsAreReturned(result,
+                    "debitor(1000111: LEGAL First GmbH: fir)",
+                    "debitor(1000120: LEGAL First GmbH: fif)");
         }
 
         @Test
@@ -227,10 +257,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = debitorRepo.findDebitorByDebitorNumber(10003);
+            final var result = debitorRepo.findDebitorByDebitorNumber(1000313);
 
             // then
-            exactlyTheseDebitorsAreReturned(result, "debitor(10003: Third OHG)");
+            exactlyTheseDebitorsAreReturned(result, "debitor(1000313: SOLE_REPRESENTATION Third OHG: thi)");
         }
     }
 
@@ -246,7 +276,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = debitorRepo.findDebitorByOptionalNameLike("third contact");
 
             // then
-            exactlyTheseDebitorsAreReturned(result, "debitor(10003: Third OHG)");
+            exactlyTheseDebitorsAreReturned(result, "debitor(1000313: SOLE_REPRESENTATION Third OHG: thi)");
         }
     }
 
@@ -257,10 +287,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_canUpdateArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fif");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_partner#Fourthe.G.-forthcontact.admin");
+                    "hs_office_partner#10004:Fourthe.G.-forthcontact.admin");
             assertThatDebitorActuallyInDatabase(givenDebitor);
             final var givenNewPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
             final var givenNewContact = contactRepo.findContactByOptionalLabelLike("sixth contact").get(0);
@@ -290,10 +320,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // ... partner role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_partner#Fourthe.G.-forthcontact.agent");
+                    "hs_office_partner#10004:Fourthe.G.-forthcontact.agent");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_partner#FirstGmbH-firstcontact.agent");
+                    "hs_office_partner#10001:FirstGmbH-firstcontact.agent");
 
             // ... contact role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
@@ -316,10 +346,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_canUpdateNullRefundBankAccountToNotNullBankAccountForArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", null);
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", null, "fig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_partner#Fourthe.G.-forthcontact.admin");
+                    "hs_office_partner#10004:Fourthe.G.-forthcontact.admin");
             assertThatDebitorActuallyInDatabase(givenDebitor);
             final var givenNewBankAccount = bankAccountRepo.findByOptionalHolderLike("first").get(0);
 
@@ -346,10 +376,10 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_canUpdateRefundBankAccountToNullForArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fih");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_partner#Fourthe.G.-forthcontact.admin");
+                    "hs_office_partner#10004:Fourthe.G.-forthcontact.admin");
             assertThatDebitorActuallyInDatabase(givenDebitor);
 
             // when
@@ -375,15 +405,15 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void partnerAdmin_canNotUpdateRelatedDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eighth", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eighth", "Fourth", "eig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_partner#Fourthe.G.-forthcontact.admin");
+                    "hs_office_partner#10004:Fourthe.G.-forthcontact.admin");
             assertThatDebitorActuallyInDatabase(givenDebitor);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_partner#Fourthe.G.-forthcontact.admin");
+                context("superuser-alex@hostsharing.net", "hs_office_partner#10004:Fourthe.G.-forthcontact.admin");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 return debitorRepo.save(givenDebitor);
             });
@@ -397,7 +427,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void contactAdmin_canNotUpdateRelatedDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "ninth", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "ninth", "Fourth", "nin");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
                     "hs_office_contact#ninthcontact.admin");
@@ -448,7 +478,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_canDeleteAnyDebitor() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "tenth", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "tenth", "Fourth", "ten");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -468,7 +498,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
         public void relatedPerson_canNotDeleteTheirRelatedDebitor() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eleventh", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eleventh", "Fourth", "ele");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -494,7 +524,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = Array.from(roleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
-            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "twelfth", "Fourth");
+            final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "twelfth", "Fourth", "twe");
             assertThat(rawRoleRepo.findAll().size()).as("precondition failed: unexpected number of roles created")
                     .isEqualTo(initialRoleNames.length + 5);
             assertThat(rawGrantRepo.findAll().size()).as("precondition failed: unexpected number of grants created")
@@ -536,7 +566,8 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
     private HsOfficeDebitorEntity givenSomeTemporaryDebitor(
             final String partner,
             final String contact,
-            final String bankAccount) {
+            final String bankAccount,
+            final String defaultPrefix) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partner).get(0);
@@ -544,21 +575,16 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var givenBankAccount =
                     bankAccount != null ? bankAccountRepo.findByOptionalHolderLike(bankAccount).get(0) : null;
             final var newDebitor = HsOfficeDebitorEntity.builder()
-                    .debitorNumber(20000)
+                    .debitorNumberSuffix((byte)20)
                     .partner(givenPartner)
                     .billingContact(givenContact)
                     .refundBankAccount(givenBankAccount)
+                    .defaultPrefix(defaultPrefix)
+                    .billable(true)
                     .build();
 
             return debitorRepo.save(newDebitor);
         }).assertSuccessful().returnedValue();
-    }
-
-    @BeforeEach
-    @AfterEach
-    void cleanup() {
-        context("superuser-alex@hostsharing.net");
-        em.createQuery("DELETE FROM HsOfficeDebitorEntity d where d.debitorNumber >= 20000").executeUpdate();
     }
 
     void exactlyTheseDebitorsAreReturned(final List<HsOfficeDebitorEntity> actualResult, final String... debitorNames) {

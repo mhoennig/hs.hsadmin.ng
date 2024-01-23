@@ -12,12 +12,19 @@ components:
                 debitorNumber:
                     type: integer
                     format: int32
-                    minimum: 10000
-                    maximum: 99999
+                    minimum: 1000000
+                    maximum: 9999999
+                debitorNumberSuffix:
+                    type: integer
+                    format: int8
+                    minimum: 00
+                    maximum: 99
                 partner:
                     $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
                 billingContact:
                     $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                billable:
+                    type: boolean
                 vatId:
                    type: string
                 vatCountryCode:
@@ -25,8 +32,13 @@ components:
                    pattern: '^[A-Z][A-Z]$'
                 vatBusiness:
                    type: boolean
+                vatReverseCharge:
+                   type: boolean
                 refundBankAccount:
                     $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                defaultPrefix:
+                    type: string
+                    pattern: '^[a-z0-9]{3}$'
 
         HsOfficeDebitorPatch:
             type: object
@@ -35,6 +47,9 @@ components:
                     type: string
                     format: uuid
                     nullable: true
+                billable:
+                    type: boolean
+                    nullable: false
                 vatId:
                     type: string
                     nullable: true
@@ -44,10 +59,17 @@ components:
                     nullable: true
                 vatBusiness:
                     type: boolean
-                    nullable: true
+                    nullable: false
+                vatReverseCharge:
+                    type: boolean
+                    nullable: false
                 refundBankAccountUuid:
                     type: string
                     format: uuid
+                    nullable: true
+                defaultPrefix:
+                    type: string
+                    pattern: '^[a-z0-9]{3}$'
                     nullable: true
 
         HsOfficeDebitorInsert:
@@ -61,11 +83,13 @@ components:
                     type: string
                     format: uuid
                     nullable: false
-                debitorNumber:
+                debitorNumberSuffix:
                     type: integer
-                    format: int32
-                    minimum: 10000
-                    maximum: 99999
+                    format: int8
+                    minimum: 00
+                    maximum: 99
+                billable:
+                    type: boolean
                 vatId:
                     type: string
                 vatCountryCode:
@@ -73,9 +97,17 @@ components:
                     pattern: '^[A-Z][A-Z]$'
                 vatBusiness:
                     type: boolean
+                vatReverseCharge:
+                    type: boolean
                 refundBankAccountUuid:
                     type: string
                     format: uuid
+                defaultPrefix:
+                    type: string
+                    pattern: '^[a-z]{3}$'
+
             required:
               - partnerUuid
               - billingContactUuid
+              - defaultPrefix
+              - billable

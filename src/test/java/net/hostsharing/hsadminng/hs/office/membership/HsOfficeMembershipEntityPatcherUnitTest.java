@@ -36,6 +36,9 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-04-15");
     private static final LocalDate PATCHED_VALID_TO = LocalDate.parse("2022-12-31");
 
+    private static final Boolean GIVEN_MEMBERSHIP_FEE_BILLABLE = true;
+    private static final Boolean PATCHED_MEMBERSHIP_FEE_BILLABLE = false;
+
     @Mock
     private EntityManager em;
 
@@ -56,6 +59,7 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
         entity.setMainDebitor(TEST_DEBITOR);
         entity.setPartner(TEST_PARTNER);
         entity.setValidity(Range.closedInfinite(GIVEN_VALID_FROM));
+        entity.setMembershipFeeBillable(GIVEN_MEMBERSHIP_FEE_BILLABLE);
         return entity;
     }
 
@@ -90,7 +94,12 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsOfficeReasonForTerminationResource.CANCELLATION,
                         HsOfficeMembershipEntity::setReasonForTermination,
                         HsOfficeReasonForTermination.CANCELLATION)
-                        .notNullable()
+                        .notNullable(),
+                new JsonNullableProperty<>(
+                        "membershipFeeBillable",
+                        HsOfficeMembershipPatchResource::setMembershipFeeBillable,
+                        PATCHED_MEMBERSHIP_FEE_BILLABLE,
+                        HsOfficeMembershipEntity::setMembershipFeeBillable)
         );
     }
 
@@ -98,11 +107,5 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
         final var newDebitor = new HsOfficeDebitorEntity();
         newDebitor.setUuid(uuid);
         return newDebitor;
-    }
-
-    private HsOfficeMembershipEntity newMembership(final UUID uuid) {
-        final var newMembership = new HsOfficeMembershipEntity();
-        newMembership.setUuid(uuid);
-        return newMembership;
     }
 }
