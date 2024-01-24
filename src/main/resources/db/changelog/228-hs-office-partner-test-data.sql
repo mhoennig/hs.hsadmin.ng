@@ -9,7 +9,7 @@
     Creates a single partner test record.
  */
 create or replace procedure createHsOfficePartnerTestData(
-        debitorNumberPrefix numeric(5),
+        partnerNumber numeric(5),
         personTradeOrFamilyName varchar,
         contactLabel varchar )
     language plpgsql as $$
@@ -49,8 +49,8 @@ begin
     end if;
 
     insert
-        into hs_office_partner (uuid, debitorNumberPrefix, personuuid, contactuuid, detailsUuid)
-        values (uuid_generate_v4(), debitorNumberPrefix, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
+        into hs_office_partner (uuid, partnerNumber, personuuid, contactuuid, detailsUuid)
+        values (uuid_generate_v4(), partnerNumber, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
 end; $$;
 --//
 

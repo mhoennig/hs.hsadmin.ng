@@ -30,8 +30,10 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @DisplayName("Membership")
 public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
 
+    public static final String MEMBER_NUMBER_TAG = "M-";
+
     private static Stringify<HsOfficeMembershipEntity> stringify = stringify(HsOfficeMembershipEntity.class)
-            .withProp(HsOfficeMembershipEntity::getMemberNumber)
+            .withProp(e -> MEMBER_NUMBER_TAG + e.getMemberNumber())
             .withProp(e -> e.getPartner().toShortString())
             .withProp(e -> e.getMainDebitor().toShortString())
             .withProp(e -> e.getValidity().asString())
@@ -52,8 +54,8 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
     @JoinColumn(name = "maindebitoruuid")
     private HsOfficeDebitorEntity mainDebitor;
 
-    @Column(name = "membernumber")
-    private int memberNumber; // TODO: migrate to suffix, like debitorNumberSuffix
+    @Column(name = "membernumbersuffix", length = 2)
+    private String memberNumberSuffix;
 
     @Column(name = "validity", columnDefinition = "daterange")
     @Type(PostgreSQLRangeType.class)
@@ -82,13 +84,18 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
         return upperInclusiveFromPostgresDateRange(getValidity());
     }
 
-
     public Range<LocalDate> getValidity() {
         if (validity == null) {
             validity = Range.infinite(LocalDate.class);
         }
-        ;
         return validity;
+    }
+    public Integer getMemberNumber() {
+        if (partner == null || partner.getPartnerNumber() == null || memberNumberSuffix == null ) {
+            return null;
+        }
+
+        return getPartner().getPartnerNumber() * 100 + Integer.parseInt(memberNumberSuffix, 10);
     }
 
     @Override
@@ -98,7 +105,7 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
 
     @Override
     public String toShortString() {
-        return String.valueOf(memberNumber);
+        return "M-" + getMemberNumber();
     }
 
     @PrePersist

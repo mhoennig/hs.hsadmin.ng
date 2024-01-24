@@ -23,6 +23,7 @@ public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEnt
                     OR person.familyName like concat(cast(:name as text), '%')
                """)
     List<HsOfficePartnerEntity> findPartnerByOptionalNameLike(String name);
+    HsOfficePartnerEntity findPartnerByPartnerNumber(Integer partnerNumber);
 
     HsOfficePartnerEntity save(final HsOfficePartnerEntity entity);
 

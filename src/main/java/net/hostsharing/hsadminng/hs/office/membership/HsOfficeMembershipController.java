@@ -44,8 +44,9 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
             Integer memberNumber) {
         context.define(currentUser, assumedRoles);
 
-        final var entities =
-                membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(partnerUuid, memberNumber);
+        final var entities = ( memberNumber != null)
+                    ? List.of(membershipRepo.findMembershipByMemberNumber(memberNumber))
+                    : membershipRepo.findMembershipsByOptionalPartnerUuid(partnerUuid);
 
         final var resources = mapper.mapList(entities, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);

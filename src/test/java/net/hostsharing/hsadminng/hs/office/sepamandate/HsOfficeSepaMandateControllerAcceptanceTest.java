@@ -376,7 +376,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(1000111: LP First GmbH: fir)");
+                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(D-1000111: LP First GmbH: fir)");
                         assertThat(mandate.getBankAccount().toShortString()).isEqualTo("First GmbH");
                         assertThat(mandate.getReference()).isEqualTo("temp ref CAT Z - patched");
                         assertThat(mandate.getValidFrom()).isEqualTo("2020-06-05");
@@ -417,7 +417,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
             // finally, the sepaMandate is actually updated
             assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(1000111: LP First GmbH: fir)");
+                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(D-1000111: LP First GmbH: fir)");
                         assertThat(mandate.getBankAccount().toShortString()).isEqualTo("First GmbH");
                         assertThat(mandate.getReference()).isEqualTo("temp ref CAT Z");
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2023-01-01)");

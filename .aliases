@@ -80,3 +80,4 @@ alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 
 alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
 alias gw-test='. .aliases; ./gradlew test'
+alias gw-check='. .aliases; gw check -x pitest -x :dependencyCheckAnalyze'

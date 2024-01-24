@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import com.vladmihalcea.hibernate.type.range.Range;
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.PrePersist;
@@ -17,7 +18,7 @@ class HsOfficeMembershipEntityUnitTest {
     public static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-01-01");
 
     final HsOfficeMembershipEntity givenMembership = HsOfficeMembershipEntity.builder()
-            .memberNumber(10001)
+            .memberNumberSuffix("01")
             .partner(TEST_PARTNER)
             .mainDebitor(TEST_DEBITOR)
             .validity(Range.closedInfinite(GIVEN_VALID_FROM))
@@ -26,15 +27,47 @@ class HsOfficeMembershipEntityUnitTest {
     @Test
     void toStringContainsAllProps() {
         final var result = givenMembership.toString();
-
-        assertThat(result).isEqualTo("Membership(10001, LP Test Ltd., 1000100, [2020-01-01,))");
+        assertThat(result).isEqualTo("Membership(M-1000101, LP Test Ltd., D-1000100, [2020-01-01,))");
     }
 
     @Test
-    void toShortStringContainsMemberNumberOnly() {
+    void toShortStringContainsMemberNumberSuffixOnly() {
         final var result = givenMembership.toShortString();
+        assertThat(result).isEqualTo("M-1000101");
+    }
 
-        assertThat(result).isEqualTo("10001");
+    @Test
+    void getMemberNumberWithPartnerAndSuffix() {
+        final var result = givenMembership.getMemberNumber();
+        assertThat(result).isEqualTo(1000101);
+    }
+
+    @Test
+    void getMemberNumberWithPartnerButWithoutSuffix() {
+        givenMembership.setMemberNumberSuffix(null);
+        final var result = givenMembership.getMemberNumber();
+        assertThat(result).isEqualTo(null);
+    }
+
+    @Test
+    void getMemberNumberWithoutPartnerButWithSuffix() {
+        givenMembership.setPartner(null);
+        final var result = givenMembership.getMemberNumber();
+        assertThat(result).isEqualTo(null);
+    }
+
+    @Test
+    void getMemberNumberWithoutPartnerNumberButWithSuffix() {
+        givenMembership.setPartner(HsOfficePartnerEntity.builder().build());
+        final var result = givenMembership.getMemberNumber();
+        assertThat(result).isEqualTo(null);
+    }
+
+    @Test
+    void getValidtyIfNull() {
+        givenMembership.setValidity(null);
+        final var result = givenMembership.getValidity();
+        assertThat(result).isEqualTo(Range.infinite(LocalDate.class));
     }
 
     @Test

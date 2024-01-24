@@ -26,12 +26,14 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @DisplayName("Debitor")
 public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
 
+    public static final String DEBITOR_NUMBER_TAG = "D-";
+
     // TODO: I would rather like to generate something matching this example:
     //  debitor(1234500: Test AG, tes)
     // maybe remove withSepararator (always use ', ') and add withBusinessIdProp (with ': ' afterwards)?
     private static Stringify<HsOfficeDebitorEntity> stringify =
             stringify(HsOfficeDebitorEntity.class, "debitor")
-                    .withProp(HsOfficeDebitorEntity::getDebitorNumber)
+                    .withProp(e -> DEBITOR_NUMBER_TAG + e.getDebitorNumber())
                     .withProp(HsOfficeDebitorEntity::getPartner)
                     .withProp(HsOfficeDebitorEntity::getDefaultPrefix)
                     .withSeparator(": ")
@@ -75,18 +77,11 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     @Column(name = "defaultprefix", columnDefinition = "char(3) not null")
     private String defaultPrefix;
 
-    public String getDebitorNumberString() {
-        // TODO: refactor
-        if (partner.getDebitorNumberPrefix() == null ) {
-            if (debitorNumberSuffix == null) {
-                return null;
-            }
-            return String.format("%02d", debitorNumberSuffix);
+    private String getDebitorNumberString() {
+        if (partner == null || partner.getPartnerNumber() == null || debitorNumberSuffix == null ) {
+            return null;
         }
-        if (debitorNumberSuffix == null) {
-            return partner.getDebitorNumberPrefix() + "??";
-        }
-        return partner.getDebitorNumberPrefix() + String.format("%02d", debitorNumberSuffix);
+        return partner.getPartnerNumber() + String.format("%02d", debitorNumberSuffix);
     }
 
     public Integer getDebitorNumber() {
@@ -100,6 +95,6 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
 
     @Override
     public String toShortString() {
-        return getDebitorNumberString();
+        return DEBITOR_NUMBER_TAG + getDebitorNumberString();
     }
 }

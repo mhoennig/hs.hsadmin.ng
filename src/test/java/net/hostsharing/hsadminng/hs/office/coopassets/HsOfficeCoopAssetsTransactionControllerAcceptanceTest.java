@@ -75,8 +75,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
         void globalAdmin_canFindCoopAssetsTransactionsByMemberNumber() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             RestAssured // @formatter:off
                     .given()
@@ -93,21 +92,21 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
                                 "transactionType": "DEPOSIT",
                                 "assetValue": 320.00,
                                 "valueDate": "2010-03-15",
-                                "reference": "ref 10002-1",
+                                "reference": "ref 1000202-1",
                                 "comment": "initial deposit"
                             },
                             {
                                 "transactionType": "DISBURSAL",
                                 "assetValue": -128.00,
                                 "valueDate": "2021-09-01",
-                                "reference": "ref 10002-2",
+                                "reference": "ref 1000202-2",
                                 "comment": "partial disbursal"
                             },
                             {
                                 "transactionType": "ADJUSTMENT",
                                 "assetValue": 128.00,
                                 "valueDate": "2022-10-20",
-                                "reference": "ref 10002-3",
+                                "reference": "ref 1000202-3",
                                 "comment": "some adjustment"
                             }
                         ]
@@ -115,11 +114,10 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_canFindCoopAssetsTransactionsByMemberNumberAndDateRange() {
+        void globalAdmin_canFindCoopAssetsTransactionsByMembershipUuidAndDateRange() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             RestAssured // @formatter:off
                 .given()
@@ -137,7 +135,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
                                 "transactionType": "DISBURSAL",
                                 "assetValue": -128.00,
                                 "valueDate": "2021-09-01",
-                                "reference": "ref 10002-2",
+                                "reference": "ref 1000202-2",
                                 "comment": "partial disbursal"
                             }
                         ]
@@ -153,8 +151,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
         void globalAdmin_canAddCoopAssetsTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10001)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -199,8 +196,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
         void globalAdmin_canNotCancelMoreAssetsThanCurrentlySubscribed() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10001)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             final var location = RestAssured // @formatter:off
                 .given()

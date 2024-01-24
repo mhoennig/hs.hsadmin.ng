@@ -6,7 +6,10 @@ import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,6 +25,7 @@ import jakarta.persistence.SynchronizationType;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -59,119 +63,166 @@ public class HsOfficeMembershipControllerRestTest {
         when(emf.createEntityManager(any(SynchronizationType.class), any(Map.class))).thenReturn(em);
     }
 
-    @Test
-    void respondBadRequest_ifPartnerUuidIsMissing() throws Exception {
+    @Nested
+    class AddMembership {
+        @Test
+        void respondBadRequest_ifPartnerUuidIsMissing() throws Exception {
 
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/office/memberships")
-                        .header("current-user", "superuser-alex@hostsharing.net")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                   {
-                                       "partnerUuid": null,
-                                       "mainDebitorUuid": "%s",
-                                       "memberNumber": 20001,
-                                       "validFrom": "2022-10-13",
-                                       "membershipFeeBillable": "true"
-                                     }
-                                """.formatted(UUID.randomUUID()))
-                        .accept(MediaType.APPLICATION_JSON))
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                       {
+                                           "partnerUuid": null,
+                                           "mainDebitorUuid": "%s",
+                                           "memberNumberSuffix": "01",
+                                           "validFrom": "2022-10-13",
+                                           "membershipFeeBillable": "true"
+                                         }
+                                    """.formatted(UUID.randomUUID()))
+                            .accept(MediaType.APPLICATION_JSON))
 
-                // then
-                .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("statusCode", is(400)))
-                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is("[partnerUuid must not be null but is \"null\"]")));
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath("statusCode", is(400)))
+                    .andExpect(jsonPath("statusPhrase", is("Bad Request")))
+                    .andExpect(jsonPath("message", is("[partnerUuid must not be null but is \"null\"]")));
+        }
+
+        @Test
+        void respondBadRequest_ifDebitorUuidIsMissing() throws Exception {
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                       {
+                                           "partnerUuid": "%s",
+                                           "mainDebitorUuid": null,
+                                           "memberNumberSuffix": "01",
+                                           "validFrom": "2022-10-13",
+                                           "membershipFeeBillable": "true"
+                                         }
+                                    """.formatted(UUID.randomUUID()))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath("statusCode", is(400)))
+                    .andExpect(jsonPath("statusPhrase", is("Bad Request")))
+                    .andExpect(jsonPath("message", is("[mainDebitorUuid must not be null but is \"null\"]")));
+        }
+
+        @Test
+        void respondBadRequest_ifAnyGivenPartnerUuidCannotBeFound() throws Exception {
+
+            // given
+            final var givenPartnerUuid = UUID.randomUUID();
+            final var givenMainDebitorUuid = UUID.randomUUID();
+            when(em.find(HsOfficePartnerEntity.class, givenPartnerUuid)).thenReturn(null);
+            when(em.find(HsOfficeDebitorEntity.class, givenMainDebitorUuid)).thenReturn(mock(HsOfficeDebitorEntity.class));
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                       {
+                                           "partnerUuid": "%s",
+                                           "mainDebitorUuid": "%s",
+                                           "memberNumberSuffix": "01",
+                                           "validFrom": "2022-10-13",
+                                           "membershipFeeBillable": "true"
+                                         }
+                                    """.formatted(givenPartnerUuid, givenMainDebitorUuid))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath("statusCode", is(400)))
+                    .andExpect(jsonPath("statusPhrase", is("Bad Request")))
+                    .andExpect(jsonPath("message", is("Unable to find Partner with uuid " + givenPartnerUuid)));
+        }
+
+        @Test
+        void respondBadRequest_ifAnyGivenDebitorUuidCannotBeFound() throws Exception {
+
+            // given
+            final var givenPartnerUuid = UUID.randomUUID();
+            final var givenMainDebitorUuid = UUID.randomUUID();
+            when(em.find(HsOfficePartnerEntity.class, givenPartnerUuid)).thenReturn(mock(HsOfficePartnerEntity.class));
+            when(em.find(HsOfficeDebitorEntity.class, givenMainDebitorUuid)).thenReturn(null);
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                       {
+                                           "partnerUuid": "%s",
+                                           "mainDebitorUuid": "%s",
+                                           "memberNumberSuffix": "01",
+                                           "validFrom": "2022-10-13",
+                                           "membershipFeeBillable": "true"
+                                         }
+                                    """.formatted(givenPartnerUuid, givenMainDebitorUuid))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath("statusCode", is(400)))
+                    .andExpect(jsonPath("statusPhrase", is("Bad Request")))
+                    .andExpect(jsonPath("message", is("Unable to find Debitor with uuid " + givenMainDebitorUuid)));
+        }
+
+        @ParameterizedTest
+        @EnumSource(InvalidMemberSuffixVariants.class)
+        void respondBadRequest_ifMemberNumberSuffixIsInvalid(final InvalidMemberSuffixVariants testCase) throws Exception {
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .post("/api/hs/office/memberships")
+                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                       {
+                                           "partnerUuid": "%s",
+                                           "mainDebitorUuid": "%s",
+                                           %s
+                                           "validFrom": "2022-10-13",
+                                           "membershipFeeBillable": "true"
+                                         }
+                                    """.formatted(UUID.randomUUID(), UUID.randomUUID(), testCase.memberNumberSuffixEntry))
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is4xxClientError())
+                    .andExpect(jsonPath("statusCode", is(400)))
+                    .andExpect(jsonPath("statusPhrase", is("Bad Request")))
+                    .andExpect(jsonPath("message", containsString(testCase.expectedErrorMessage)));
+        }
+
+        public enum InvalidMemberSuffixVariants {
+            MISSING("", "[memberNumberSuffix must not be null but is \"null\"]"),
+            TOO_SMALL("\"memberNumberSuffix\": \"9\",", "memberNumberSuffix size must be between 2 and 2 but is \"9\""),
+            TOO_LARGE("\"memberNumberSuffix\": \"100\",", "memberNumberSuffix size must be between 2 and 2 but is \"100\""),
+            NOT_NUMERIC("\"memberNumberSuffix\": \"AA\",", "memberNumberSuffix must match \"[0-9]+\" but is \"AA\""),
+            EMPTY("\"memberNumberSuffix\": \"\",", "memberNumberSuffix size must be between 2 and 2 but is \"\"");
+
+            private final String memberNumberSuffixEntry;
+            private final String expectedErrorMessage;
+
+            InvalidMemberSuffixVariants(final String memberNumberSuffixEntry, final String expectedErrorMessage) {
+                this.memberNumberSuffixEntry = memberNumberSuffixEntry;
+                this.expectedErrorMessage = expectedErrorMessage;
+            }
+        }
     }
 
-    @Test
-    void respondBadRequest_ifDebitorUuidIsMissing() throws Exception {
-
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/office/memberships")
-                        .header("current-user", "superuser-alex@hostsharing.net")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                   {
-                                       "partnerUuid": "%s",
-                                       "mainDebitorUuid": null,
-                                       "memberNumber": 20001,
-                                       "validFrom": "2022-10-13",
-                                       "membershipFeeBillable": "true"
-                                     }
-                                """.formatted(UUID.randomUUID()))
-                        .accept(MediaType.APPLICATION_JSON))
-
-                // then
-                .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("statusCode", is(400)))
-                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is("[mainDebitorUuid must not be null but is \"null\"]")));
-    }
-
-    @Test
-    void respondBadRequest_ifAnyGivenPartnerUuidCannotBeFound() throws Exception {
-
-        // given
-        final var givenPartnerUuid = UUID.randomUUID();
-        final var givenMainDebitorUuid = UUID.randomUUID();
-        when(em.find(HsOfficePartnerEntity.class, givenPartnerUuid)).thenReturn(null);
-        when(em.find(HsOfficeDebitorEntity.class, givenMainDebitorUuid)).thenReturn(mock(HsOfficeDebitorEntity.class));
-
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/office/memberships")
-                        .header("current-user", "superuser-alex@hostsharing.net")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                   {
-                                       "partnerUuid": "%s",
-                                       "mainDebitorUuid": "%s",
-                                       "memberNumber": 20001,
-                                       "validFrom": "2022-10-13",
-                                       "membershipFeeBillable": "true"
-                                     }
-                                """.formatted(givenPartnerUuid, givenMainDebitorUuid))
-                        .accept(MediaType.APPLICATION_JSON))
-
-                // then
-                .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("statusCode", is(400)))
-                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is("Unable to find Partner with uuid " + givenPartnerUuid)));
-    }
-
-    @Test
-    void respondBadRequest_ifAnyGivenDebitorUuidCannotBeFound() throws Exception {
-
-        // given
-        final var givenPartnerUuid = UUID.randomUUID();
-        final var givenMainDebitorUuid = UUID.randomUUID();
-        when(em.find(HsOfficePartnerEntity.class, givenPartnerUuid)).thenReturn(mock(HsOfficePartnerEntity.class));
-        when(em.find(HsOfficeDebitorEntity.class, givenMainDebitorUuid)).thenReturn(null);
-
-        // when
-        mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/hs/office/memberships")
-                        .header("current-user", "superuser-alex@hostsharing.net")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                   {
-                                       "partnerUuid": "%s",
-                                       "mainDebitorUuid": "%s",
-                                       "memberNumber": 20001,
-                                       "validFrom": "2022-10-13",
-                                       "membershipFeeBillable": "true"
-                                     }
-                                """.formatted(givenPartnerUuid, givenMainDebitorUuid))
-                        .accept(MediaType.APPLICATION_JSON))
-
-                // then
-                .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("statusCode", is(400)))
-                .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is("Unable to find Debitor with uuid " + givenMainDebitorUuid)));
-    }
 }

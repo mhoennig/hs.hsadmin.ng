@@ -165,8 +165,7 @@ execute procedure hsOfficePartnerRbacRolesTrigger();
 --changeset hs-office-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacIdentityView('hs_office_partner', $idName$
-    -- TODO: simplify by using just debitorNumberPrefix for the essential part
-    debitorNumberPrefix || ':' ||
+    partnerNumber || ':' ||
     (select idName from hs_office_person_iv p where p.uuid = target.personuuid)
     || '-' ||
     (select idName from hs_office_contact_iv c where c.uuid = target.contactuuid)
@@ -180,7 +179,6 @@ call generateRbacIdentityView('hs_office_partner', $idName$
 call generateRbacRestrictedView('hs_office_partner',
     '(select idName from hs_office_person_iv p where p.uuid = target.personUuid)',
     $updates$
-        debitorNumberPrefix = new.debitorNumberPrefix,
         personUuid = new.personUuid,
         contactUuid = new.contactUuid
     $updates$);

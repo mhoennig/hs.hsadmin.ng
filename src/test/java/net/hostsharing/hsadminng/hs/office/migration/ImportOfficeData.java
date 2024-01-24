@@ -176,15 +176,15 @@ public class ImportOfficeData extends ContextBasedTest {
         assertThat(toFormattedString(contacts)).isEqualTo("{}");
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
-                    17=debitor(1001700: null null, null: mih),
-                    20=debitor(1002000: null null, null: xyz),
-                    22=debitor(1102200: null null, null: xxx)}
+                    17=debitor(D-1001700: null null, null: mih),
+                    20=debitor(D-1002000: null null, null: xyz),
+                    22=debitor(D-1102200: null null, null: xxx)}
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(10017, null null, null, 1001700, [2000-12-06,), NONE),
-                    20=Membership(10020, null null, null, 1002000, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(11022, null null, null, 1102200, [2021-04-01,), NONE)
+                    17=Membership(M-1001700, null null, null, D-1001700, [2000-12-06,), NONE),
+                    20=Membership(M-1002000, null null, null, D-1002000, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(M-1102200, null null, null, D-1102200, [2021-04-01,), NONE)
                 }
                 """);
     }
@@ -235,16 +235,16 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
-                    17=debitor(1001700: NP Mellies, Michael: mih), 
-                    20=debitor(1002000: LP JM GmbH: xyz), 
-                    22=debitor(1102200: ?? Test PS: xxx)
+                    17=debitor(D-1001700: NP Mellies, Michael: mih), 
+                    20=debitor(D-1002000: LP JM GmbH: xyz), 
+                    22=debitor(D-1102200: ?? Test PS: xxx)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(10017, NP Mellies, Michael, 1001700, [2000-12-06,), NONE),
-                    20=Membership(10020, LP JM GmbH, 1002000, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(11022, ?? Test PS, 1102200, [2021-04-01,), NONE)
+                    17=Membership(M-1001700, NP Mellies, Michael, D-1001700, [2000-12-06,), NONE),
+                    20=Membership(M-1002000, LP JM GmbH, D-1002000, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(M-1102200, ?? Test PS, D-1102200, [2021-04-01,), NONE)
                 }
                 """);
         assertThat(toFormattedString(relationships)).isEqualToIgnoringWhitespace("""
@@ -312,10 +312,10 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
-                    33443=CoopShareTransaction(10017, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
-                    33451=CoopShareTransaction(10020, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
-                    33701=CoopShareTransaction(10017, 2005-01-10, SUBSCRIPTION, 40, increase),
-                    33810=CoopShareTransaction(10020, 2016-12-31, CANCELLATION, 22, membership ended)
+                    33443=CoopShareTransaction(M-1001700, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
+                    33451=CoopShareTransaction(M-1002000, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
+                    33701=CoopShareTransaction(M-1001700, 2005-01-10, SUBSCRIPTION, 40, increase),
+                    33810=CoopShareTransaction(M-1002000, 2016-12-31, CANCELLATION, 22, membership ended)
                 }
                 """);
     }
@@ -549,7 +549,7 @@ public class ImportOfficeData extends ContextBasedTest {
                     final var person = HsOfficePersonEntity.builder().build();
 
                     final var partner = HsOfficePartnerEntity.builder()
-                            .debitorNumberPrefix(rec.getInteger("member_id"))
+                            .partnerNumber(rec.getInteger("member_id"))
                             .details(HsOfficePartnerDetailsEntity.builder().build())
                             .contact(null) // is set during contacts import depending on assigned roles
                             .person(person)
@@ -571,9 +571,10 @@ public class ImportOfficeData extends ContextBasedTest {
                     partners.put(rec.getInteger("bp_id"), partner);
 
                     if (isNotBlank(rec.getString("member_since"))) {
+                        assertThat(rec.getInteger("member_id")).isEqualTo(partner.getPartnerNumber());
                         final var membership = HsOfficeMembershipEntity.builder()
                                 .partner(partner)
-                                .memberNumber(rec.getInteger("member_id"))
+                                .memberNumberSuffix("00")
                                 .validity(toPostgresDateRange(
                                         rec.getLocalDate("member_since"),
                                         rec.getLocalDate("member_until")))
@@ -610,7 +611,7 @@ public class ImportOfficeData extends ContextBasedTest {
                                             : HsOfficeCoopSharesTransactionType.ADJUSTMENT
                             )
                             .shareCount(rec.getInteger("quantity"))
-                            .comment(rec.getString("comment"))
+                            .comment( rec.getString("comment"))
                             .build();
 
                     coopShares.put(rec.getInteger("member_share_id"), shareTransaction);

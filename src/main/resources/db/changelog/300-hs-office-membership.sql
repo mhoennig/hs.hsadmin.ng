@@ -13,10 +13,13 @@ create table if not exists hs_office_membership
     uuid                    uuid unique references RbacObject (uuid) initially deferred,
     partnerUuid             uuid not null references hs_office_partner(uuid),
     mainDebitorUuid         uuid not null references hs_office_debitor(uuid),
-    memberNumber            numeric(5) not null unique,
+    memberNumberSuffix      char(2) not null check (
+        memberNumberSuffix::text ~ '^[0-9][0-9]$'),
     validity                daterange not null,
     reasonForTermination    HsOfficeReasonForTermination not null default 'NONE',
-    membershipFeeBillable   boolean not null default true
+    membershipFeeBillable   boolean not null default true,
+
+    UNIQUE(partnerUuid, memberNumberSuffix)
 );
 --//
 

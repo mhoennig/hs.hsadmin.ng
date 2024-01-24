@@ -92,7 +92,9 @@ execute procedure hsOfficeMembershipRbacRolesTrigger();
 --changeset hs-office-membership-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacIdentityView('hs_office_membership', idNameExpression => $idName$
-    target.memberNumber ||
+    '#' ||
+        (select partnerNumber from hs_office_partner p where p.uuid = target.partnerUuid) ||
+        memberNumberSuffix ||
     ':' || (select split_part(idName, ':', 2) from hs_office_partner_iv p where p.uuid = target.partnerUuid)
     $idName$);
 --//
@@ -102,7 +104,7 @@ call generateRbacIdentityView('hs_office_membership', idNameExpression => $idNam
 --changeset hs-office-membership-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('hs_office_membership',
-    orderby => 'target.memberNumber',
+    orderby => 'target.memberNumberSuffix',
     columnUpdates => $updates$
         validity = new.validity,
         reasonForTermination = new.reasonForTermination,

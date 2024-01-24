@@ -1,6 +1,7 @@
 get:
     summary: Returns a list of (optionally filtered) memberships.
-    description: Returns the list of (optionally filtered) memberships which are visible to the current user or any of it's assumed roles.
+    description: Returns the list of memberships which are visible to the current user or any of it's assumed roles.
+        The list can optionally be filtered by either the `partnerUuid` or the `memberNumber` - not both at the same time.
     tags:
         - hs-office-memberships
     operationId: listMemberships
@@ -13,13 +14,13 @@ get:
           schema:
               type: string
               format: uuid
-          description: UUID of the business partner.
+          description: UUID of the business partner, exclusive to `memberNumber`.
         - name: memberNumber
           in: query
           required: false
           schema:
               type: integer
-          description: Member number.
+          description: Member number, exclusive to `partnerUuid`.
     responses:
         "200":
             description: OK

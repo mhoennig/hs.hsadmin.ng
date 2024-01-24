@@ -125,7 +125,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "debitorNumberPrefix": "12345",
+                                   "partnerNumber": "12345",
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "details": {
@@ -167,7 +167,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "debitorNumberPrefix": "12345",
+                                   "partnerNumber": "12345",
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "details": {}
@@ -195,7 +195,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "debitorNumberPrefix": "12345",
+                                   "partnerNumber": "12345",
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "details": {}
@@ -297,7 +297,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "debitorNumberPrefix": "12345",
+                                   "debitorNumerPrefix": "12345",
                                    "contactUuid": "%s",
                                    "personUuid": "%s",
                                    "details": {

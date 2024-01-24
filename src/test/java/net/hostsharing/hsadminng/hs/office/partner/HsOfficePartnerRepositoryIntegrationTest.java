@@ -105,7 +105,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
                 final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
                 final var newPartner = toCleanup(HsOfficePartnerEntity.builder()
-                        .debitorNumberPrefix(22222)
+                        .partnerNumber(22222)
                         .person(givenPerson)
                         .contact(givenContact)
                         .details(HsOfficePartnerDetailsEntity.builder().build())
@@ -208,6 +208,25 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
 
             // then
             exactlyThesePartnersAreReturned(result, "partner(IF Third OHG: third contact)");
+        }
+    }
+
+    @Nested
+    class FindByPartnerNumber {
+
+        @Test
+        public void globalAdmin_withoutAssumedRole_canViewAllPartners() {
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            // when
+            final var result = partnerRepo.findPartnerByPartnerNumber(10001);
+
+            // then
+            assertThat(result)
+                    .isNotNull()
+                    .extracting(Object::toString)
+                    .isEqualTo("partner(LP First GmbH: first contact)");
         }
     }
 
@@ -396,13 +415,13 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
     }
 
     private HsOfficePartnerEntity givenSomeTemporaryPartnerBessler(
-            final Integer debitorNumberPrefix, final String person, final String contact) {
+            final Integer partnerNumber, final String person, final String contact) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenPerson = personRepo.findPersonByOptionalNameLike(person).get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
             final var newPartner = HsOfficePartnerEntity.builder()
-                    .debitorNumberPrefix(debitorNumberPrefix)
+                    .partnerNumber(partnerNumber)
                     .person(givenPerson)
                     .contact(givenContact)
                     .details(HsOfficePartnerDetailsEntity.builder().build())

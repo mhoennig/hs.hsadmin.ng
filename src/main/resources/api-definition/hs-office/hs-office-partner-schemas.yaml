@@ -9,7 +9,7 @@ components:
                 uuid:
                     type: string
                     format: uuid
-                debitorNumberPrefix:
+                partnerNumber:
                     type: integer
                     format: int8
                     minimum: 10000
@@ -91,7 +91,7 @@ components:
         HsOfficePartnerInsert:
             type: object
             properties:
-                debitorNumberPrefix:
+                partnerNumber:
                     type: integer
                     format: int8
                     minimum: 10000
@@ -105,7 +105,7 @@ components:
                 details:
                     $ref: '#/components/schemas/HsOfficePartnerDetailsInsert'
             required:
-                - debitorNumberPrefix
+                - partnerNumber
                 - personUuid
                 - contactUuid
                 - details

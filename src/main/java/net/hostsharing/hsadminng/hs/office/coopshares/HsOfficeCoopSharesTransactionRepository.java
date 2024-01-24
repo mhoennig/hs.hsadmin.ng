@@ -17,7 +17,7 @@ public interface HsOfficeCoopSharesTransactionRepository extends Repository<HsOf
                 WHERE ( CAST(:membershipUuid AS org.hibernate.type.UUIDCharType) IS NULL OR st.membership.uuid = :membershipUuid)
                     AND ( CAST(:fromValueDate AS java.time.LocalDate) IS NULL OR (st.valueDate >= :fromValueDate))
                     AND ( CAST(:toValueDate AS java.time.LocalDate)IS NULL OR (st.valueDate <= :toValueDate))
-                ORDER BY st.membership.memberNumber, st.valueDate
+                ORDER BY st.membership.memberNumberSuffix, st.valueDate
                """)
     List<HsOfficeCoopSharesTransactionEntity> findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
             UUID membershipUuid, LocalDate fromValueDate, LocalDate toValueDate);

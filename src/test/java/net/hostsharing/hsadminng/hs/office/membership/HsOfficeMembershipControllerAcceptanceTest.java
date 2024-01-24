@@ -11,7 +11,6 @@ import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +36,8 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 class HsOfficeMembershipControllerAcceptanceTest {
 
+    private static String TEMP_MEMBER_NUMBER_SUFFIX = "90";
+
     @LocalServerPort
     private Integer port;
 
@@ -61,8 +62,6 @@ class HsOfficeMembershipControllerAcceptanceTest {
     @PersistenceContext
     EntityManager em;
 
-    private static int tempMemberNumber = 20010;
-
     @Nested
     @Accepts({ "Membership:F(Find)" })
     class ListMemberships {
@@ -84,7 +83,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                           {
                               "partner": { "person": { "tradeName": "First GmbH" } },
                               "mainDebitor": { "debitorNumber": 1000111 },
-                              "memberNumber": 10001,
+                              "memberNumber": 1000101,
+                              "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": null,
                               "reasonForTermination": "NONE"
@@ -92,7 +92,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                           {
                               "partner": { "person": { "tradeName": "Second e.K." } },
                               "mainDebitor": { "debitorNumber": 1000212 },
-                              "memberNumber": 10002,
+                              "memberNumber": 1000202,
+                              "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
                               "validTo": null,
                               "reasonForTermination": "NONE"
@@ -100,7 +101,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                           {
                               "partner": { "person": { "tradeName": "Third OHG" } },
                               "mainDebitor": { "debitorNumber": 1000313 },
-                              "memberNumber": 10003,
+                              "memberNumber": 1000303,
+                              "memberNumberSuffix": "03",
                               "validFrom": "2022-10-01",
                               "validTo": null,
                               "reasonForTermination": "NONE"
@@ -108,6 +110,67 @@ class HsOfficeMembershipControllerAcceptanceTest {
                       ]
                     """));
                 // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canViewMembershipsByPartnerUuid() throws JSONException {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var partner = partnerRepo.findPartnerByPartnerNumber(10001);
+
+            RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                    .when()
+                    .queryParam("partnerUuid", partner.getUuid() )
+                    .get("http://localhost/api/hs/office/memberships")
+                    .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                      [
+                          {
+                              "partner": { "person": { "tradeName": "First GmbH" } },
+                              "mainDebitor": { "debitorNumber": 1000111 },
+                              "memberNumber": 1000101,
+                              "memberNumberSuffix": "01",
+                              "validFrom": "2022-10-01",
+                              "validTo": null,
+                              "reasonForTermination": "NONE"
+                          }
+                      ]
+                    """));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canViewMembershipsByMemberNumber() throws JSONException {
+
+            RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                    .when()
+                    .queryParam("memberNumber", 1000202 )
+                    .get("http://localhost/api/hs/office/memberships")
+                    .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                      [
+                          {
+                              "partner": { "person": { "tradeName": "Second e.K." } },
+                              "mainDebitor": { "debitorNumber": 1000212 },
+                              "memberNumber": 1000202,
+                              "memberNumberSuffix": "02",
+                              "validFrom": "2022-10-01",
+                              "validTo": null,
+                              "reasonForTermination": "NONE"
+                          }
+                      ]
+                    """));
+            // @formatter:on
         }
     }
 
@@ -121,6 +184,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
+            final var givenMemberSuffix = TEMP_MEMBER_NUMBER_SUFFIX;
+            final var expectedMemberNumber = Integer.parseInt(givenPartner.getPartnerNumber() + TEMP_MEMBER_NUMBER_SUFFIX);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -130,11 +195,11 @@ class HsOfficeMembershipControllerAcceptanceTest {
                                {
                                    "partnerUuid": "%s",
                                    "mainDebitorUuid": "%s",
-                                   "memberNumber": 20001,
+                                   "memberNumberSuffix": "%s",
                                    "validFrom": "2022-10-13",
                                    "membershipFeeBillable": "true"
                                  }
-                            """.formatted(givenPartner.getUuid(), givenDebitor.getUuid()))
+                            """.formatted(givenPartner.getUuid(), givenDebitor.getUuid(), givenMemberSuffix))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/memberships")
@@ -145,7 +210,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                         .body("mainDebitor.debitorNumber", is(givenDebitor.getDebitorNumber()))
                         .body("mainDebitor.debitorNumberSuffix", is((int) givenDebitor.getDebitorNumberSuffix()))
                         .body("partner.person.tradeName", is("Third OHG"))
-                        .body("memberNumber", is(20001))
+                        .body("memberNumber", is(expectedMemberNumber))
+                        .body("memberNumberSuffix", is(givenMemberSuffix))
                         .body("validFrom", is("2022-10-13"))
                         .body("validTo", equalTo(null))
                         .header("Location", startsWith("http://localhost"))
@@ -166,11 +232,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
         @Test
         void globalAdmin_canGetArbitraryMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembershipUuid = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(
-                            null,
-                            10001)
-                    .get(0)
-                    .getUuid();
+            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -185,7 +247,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     {
                          "partner": { "person": { "tradeName": "First GmbH" } },
                          "mainDebitor": { "debitorNumber": 1000111 },
-                         "memberNumber": 10001,
+                         "memberNumber": 1000101,
+                         "memberNumberSuffix": "01",
                          "validFrom": "2022-10-01",
                          "validTo": null,
                          "reasonForTermination": "NONE"
@@ -197,11 +260,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
         @Accepts({ "Membership:X(Access Control)" })
         void normalUser_canNotGetUnrelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembershipUuid = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(
-                            null,
-                            10001)
-                    .get(0)
-                    .getUuid();
+            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -217,11 +276,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
         @Accepts({ "Membership:X(Access Control)" })
         void debitorAgentUser_canGetRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembershipUuid = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(
-                            null,
-                            10003)
-                    .get(0)
-                    .getUuid();
+            final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -240,7 +295,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                              "debitorNumber": 1000313,
                              "billingContact": { "label": "third contact" }
                          },
-                         "memberNumber": 10003,
+                         "memberNumber": 1000303,
+                         "memberNumberSuffix": "03",
                          "validFrom": "2022-10-01",
                          "validTo": null,
                          "reasonForTermination": "NONE"
@@ -279,7 +335,8 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
                     .body("mainDebitor.debitorNumber", is(givenMembership.getMainDebitor().getDebitorNumber()))
                     .body("mainDebitor.debitorNumberSuffix", is((int) givenMembership.getMainDebitor().getDebitorNumberSuffix()))
-                    .body("memberNumber", is(givenMembership.getMemberNumber()))
+                    .body("mainDebitor.debitorNumberSuffix", is((int) givenMembership.getMainDebitor().getDebitorNumberSuffix()))
+                    .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2023-12-31"))
                     .body("reasonForTermination", is("CANCELLATION"));
@@ -290,7 +347,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .matches(mandate -> {
                         assertThat(mandate.getPartner().toShortString()).isEqualTo("LP First GmbH");
                         assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
-                        assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
+                        assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-01)");
                         assertThat(mandate.getReasonForTermination()).isEqualTo(HsOfficeReasonForTermination.CANCELLATION);
                         return true;
@@ -322,7 +379,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .body("uuid", isUuidValid())
                     .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
                     .body("mainDebitor.debitorNumber", is(1000313))
-                    .body("memberNumber", is(givenMembership.getMemberNumber()))
+                    .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", nullValue())
                     .body("reasonForTermination", is("NONE"));
@@ -333,7 +390,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .matches(mandate -> {
                         assertThat(mandate.getPartner().toShortString()).isEqualTo("LP First GmbH");
                         assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
-                        assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
+                        assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");
                         assertThat(mandate.getReasonForTermination()).isEqualTo(NONE);
                         return true;
@@ -444,7 +501,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
                     .uuid(UUID.randomUUID())
                     .partner(givenPartner)
                     .mainDebitor(givenDebitor)
-                    .memberNumber(++tempMemberNumber)
+                    .memberNumberSuffix(TEMP_MEMBER_NUMBER_SUFFIX)
                     .validity(Range.closedInfinite(LocalDate.parse("2022-11-01")))
                     .reasonForTermination(NONE)
                     .membershipFeeBillable(true)
@@ -454,13 +511,15 @@ class HsOfficeMembershipControllerAcceptanceTest {
         }).assertSuccessful().returnedValue();
     }
 
-    @BeforeEach
     @AfterEach
     void cleanup() {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
-            final var query = em.createQuery("DELETE FROM HsOfficeMembershipEntity m WHERE m.memberNumber >= 20000");
+            final var query = em.createQuery(
+                    "DELETE FROM HsOfficeMembershipEntity m WHERE m.memberNumberSuffix >= '%s'"
+                            .formatted(TEMP_MEMBER_NUMBER_SUFFIX)
+            );
             query.executeUpdate();
-        });
+        }).assertSuccessful();
     }
 }

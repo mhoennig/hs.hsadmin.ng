@@ -46,15 +46,28 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, HasUu
     @Enumerated(EnumType.STRING)
     private HsOfficeCoopSharesTransactionType transactionType;
 
+    /**
+     * The signed value which directly affects the booking balance.
+     *
+     * <p>This means, that a SUBSCRIPTION is always positive, a CANCELLATION is always negative,
+     * but an ADJUSTMENT can bei either positive or negative.
+     * See {@link HsOfficeCoopSharesTransactionType} for</p> more information.
+     */
     @Column(name = "valuedate")
     private LocalDate valueDate;
 
     @Column(name = "sharecount")
     private int shareCount;
 
+    /**
+     * The Booking reference.
+     */
     @Column(name = "reference")
-    private String reference; // TODO: what is this for?
+    private String reference;
 
+    /**
+     * An optional arbitrary comment.
+     */
     @Column(name = "comment")
     private String comment;
 
@@ -69,6 +82,6 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, HasUu
 
     @Override
     public String toShortString() {
-        return "%s%+d".formatted(getMemberNumber(), shareCount);
+        return "M-%s%+d".formatted(getMemberNumber(), shareCount);
     }
 }

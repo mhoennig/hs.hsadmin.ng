@@ -36,8 +36,8 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
     @GeneratedValue
     private UUID uuid;
 
-    @Column(name = "debitornumberprefix", columnDefinition = "numeric(5) not null")
-    private Integer debitorNumberPrefix;
+    @Column(name = "partnernumber", columnDefinition = "numeric(5) not null")
+    private Integer partnerNumber;
 
     @ManyToOne
     @JoinColumn(name = "personuuid", nullable = false)

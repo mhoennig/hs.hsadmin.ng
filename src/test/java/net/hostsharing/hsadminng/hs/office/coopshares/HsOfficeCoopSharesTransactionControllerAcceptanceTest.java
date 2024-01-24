@@ -75,7 +75,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
         void globalAdmin_canFindCoopSharesTransactionsByMemberNumber() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002).get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             RestAssured // @formatter:off
                 .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid()).then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
@@ -84,21 +84,21 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
                             "transactionType": "SUBSCRIPTION",
                             "shareCount": 4,
                             "valueDate": "2010-03-15",
-                            "reference": "ref 10002-1",
+                            "reference": "ref 1000202-1",
                             "comment": "initial subscription"
                         },
                         {
                             "transactionType": "CANCELLATION",
                             "shareCount": -2,
                             "valueDate": "2021-09-01",
-                            "reference": "ref 10002-2",
+                            "reference": "ref 1000202-2",
                             "comment": "cancelling some"
                         },
                         {
                             "transactionType": "ADJUSTMENT",
                             "shareCount": 2,
                             "valueDate": "2022-10-20",
-                            "reference": "ref 10002-3",
+                            "reference": "ref 1000202-3",
                             "comment": "some adjustment"
                         }
                     ]
@@ -106,19 +106,20 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_canFindCoopSharesTransactionsByMemberNumberAndDateRange() {
+        void globalAdmin_canFindCoopSharesTransactionsByMembershipUuidAndDateRange() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002).get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid() + "&fromValueDate=2020-01-01&toValueDate=2021-12-31").then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when()
+                    .get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid() + "&fromValueDate=2020-01-01&toValueDate=2021-12-31").then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
                     [
                         {
                             "transactionType": "CANCELLATION",
                             "shareCount": -2,
                             "valueDate": "2021-09-01",
-                            "reference": "ref 10002-2",
+                            "reference": "ref 1000202-2",
                             "comment": "cancelling some"
                         }
                     ]
@@ -134,7 +135,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
         void globalAdmin_canAddCoopSharesTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10001).get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             final var location = RestAssured // @formatter:off
                 .given().header("current-user", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
@@ -165,7 +166,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
         void globalAdmin_canNotCancelMoreSharesThanCurrentlySubscribed() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10001).get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             final var location = RestAssured // @formatter:off
                 .given().header("current-user", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""

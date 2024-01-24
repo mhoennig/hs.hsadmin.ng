@@ -1,12 +1,43 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 public enum HsOfficeCoopAssetsTransactionType {
-    ADJUSTMENT, // correction of wrong bookings
-    DEPOSIT,    // payment received from member after signing shares, >0
-    DISBURSAL,  // payment send to member after cancellation of shares, <0
-    TRANSFER,   // transferring shares to another member, <0
-    ADOPTION,   // receiving shares from another member, >0
-    CLEARING,   // settlement with members dept, <0
-    LOSS,       // assignment of balance sheet loss in case of cancellation of shares, <0
-    LIMITATION  // limitation period was reached after impossible disbursal, <0
+    /**
+     * correction of wrong bookings, value can be positive or negative
+     */
+    ADJUSTMENT,
+
+    /**
+     * payment received from member after signing shares, value >0
+     */
+    DEPOSIT,
+
+    /**
+     * payment send to member after cancellation of shares, value <0
+     */
+    DISBURSAL,
+
+    /**
+     * transferring shares to another member, value <0
+     */
+    TRANSFER,
+
+    /**
+     * receiving shares from another member, value >0
+     */
+    ADOPTION,
+
+    /**
+     * settlement with members dept, value <0
+     */
+    CLEARING,
+
+    /**
+     * assignment of balance sheet loss in case of cancellation of shares, value <0
+     */
+    LOSS,
+
+    /**
+     * limitation period was reached after impossible disbursal, value <0
+     */
+    LIMITATION
 }

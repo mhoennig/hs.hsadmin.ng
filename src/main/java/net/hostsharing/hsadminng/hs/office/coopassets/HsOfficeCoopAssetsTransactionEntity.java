@@ -53,12 +53,25 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUu
     @Column(name = "valuedate")
     private LocalDate valueDate;
 
+    /**
+     * The signed value which directly affects the booking balance.
+     *
+     * <p>This means, that a DEPOSIT is always positive, a DISBURSAL is always negative,
+     * but an ADJUSTMENT can bei either positive or negative.
+     * See {@link HsOfficeCoopAssetsTransactionType} for</p> more information.
+     */
     @Column(name = "assetvalue")
     private BigDecimal assetValue;
 
+    /**
+     *  The booking reference.
+     */
     @Column(name = "reference")
-    private String reference; // TODO: what is this for?
+    private String reference;
 
+    /**
+     * An optional arbitrary comment.
+     */
     @Column(name = "comment")
     private String comment;
 

@@ -62,8 +62,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // given
             context("superuser-alex@hostsharing.net");
             final var count = coopAssetsTransactionRepo.count();
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10001)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             // when
             final var result = attempt(em, () -> {
@@ -96,9 +95,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
             // when
             attempt(em, () -> {
-                final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(
-                        null,
-                        10001).get(0);
+                final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
                 final var newCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
                         .membership(givenMembership)
                         .transactionType(HsOfficeCoopAssetsTransactionType.DEPOSIT)
@@ -117,7 +114,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm view on coopassetstransaction#temprefB to role membership#10001:....tenant by system and assume }",
+                            "{ grant perm view on coopassetstransaction#temprefB to role membership#1000101:....tenant by system and assume }",
                             null));
         }
 
@@ -144,25 +141,24 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(10001, 2010-03-15, DEPOSIT, 320.00, ref 10001-1, initial deposit)",
-                    "CoopAssetsTransaction(10001, 2021-09-01, DISBURSAL, -128.00, ref 10001-2, partial disbursal)",
-                    "CoopAssetsTransaction(10001, 2022-10-20, ADJUSTMENT, 128.00, ref 10001-3, some adjustment)",
+                    "CoopAssetsTransaction(1000101, 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
+                    "CoopAssetsTransaction(1000101, 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
+                    "CoopAssetsTransaction(1000101, 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)",
 
-                    "CoopAssetsTransaction(10002, 2010-03-15, DEPOSIT, 320.00, ref 10002-1, initial deposit)",
-                    "CoopAssetsTransaction(10002, 2021-09-01, DISBURSAL, -128.00, ref 10002-2, partial disbursal)",
-                    "CoopAssetsTransaction(10002, 2022-10-20, ADJUSTMENT, 128.00, ref 10002-3, some adjustment)",
+                    "CoopAssetsTransaction(1000202, 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
+                    "CoopAssetsTransaction(1000202, 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
+                    "CoopAssetsTransaction(1000202, 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)",
 
-                    "CoopAssetsTransaction(10003, 2010-03-15, DEPOSIT, 320.00, ref 10003-1, initial deposit)",
-                    "CoopAssetsTransaction(10003, 2021-09-01, DISBURSAL, -128.00, ref 10003-2, partial disbursal)",
-                    "CoopAssetsTransaction(10003, 2022-10-20, ADJUSTMENT, 128.00, ref 10003-3, some adjustment)");
+                    "CoopAssetsTransaction(1000303, 2010-03-15, DEPOSIT, 320.00, ref 1000303-1, initial deposit)",
+                    "CoopAssetsTransaction(1000303, 2021-09-01, DISBURSAL, -128.00, ref 1000303-2, partial disbursal)",
+                    "CoopAssetsTransaction(1000303, 2022-10-20, ADJUSTMENT, 128.00, ref 1000303-3, some adjustment)");
         }
 
         @Test
         public void globalAdmin_canViewCoopAssetsTransactions_filteredByMembershipUuid() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             // when
             final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
@@ -173,17 +169,16 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(10002, 2010-03-15, DEPOSIT, 320.00, ref 10002-1, initial deposit)",
-                    "CoopAssetsTransaction(10002, 2021-09-01, DISBURSAL, -128.00, ref 10002-2, partial disbursal)",
-                    "CoopAssetsTransaction(10002, 2022-10-20, ADJUSTMENT, 128.00, ref 10002-3, some adjustment)");
+                    "CoopAssetsTransaction(1000202, 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
+                    "CoopAssetsTransaction(1000202, 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
+                    "CoopAssetsTransaction(1000202, 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)");
         }
 
         @Test
         public void globalAdmin_canViewCoopAssetsTransactions_filteredByMembershipUuidAndValueDateRange() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002)
-                    .get(0);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             // when
             final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
@@ -194,7 +189,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(10002, 2021-09-01, DISBURSAL, -128.00, ref 10002-2, partial disbursal)");
+                    "CoopAssetsTransaction(1000202, 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)");
         }
 
         @Test
@@ -211,9 +206,9 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then:
             exactlyTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(10001, 2010-03-15, DEPOSIT, 320.00, ref 10001-1, initial deposit)",
-                    "CoopAssetsTransaction(10001, 2021-09-01, DISBURSAL, -128.00, ref 10001-2, partial disbursal)",
-                    "CoopAssetsTransaction(10001, 2022-10-20, ADJUSTMENT, 128.00, ref 10001-3, some adjustment)");
+                    "CoopAssetsTransaction(1000101, 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
+                    "CoopAssetsTransaction(1000101, 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
+                    "CoopAssetsTransaction(1000101, 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)");
         }
     }
 
@@ -232,8 +227,8 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating coopAssetsTransaction test-data 10001, hs_office_coopassetstransaction, INSERT]",
-                "[creating coopAssetsTransaction test-data 10002, hs_office_coopassetstransaction, INSERT]");
+                "[creating coopAssetsTransaction test-data 1000101, hs_office_coopassetstransaction, INSERT]",
+                "[creating coopAssetsTransaction test-data 1000202, hs_office_coopassetstransaction, INSERT]");
     }
 
     @BeforeEach

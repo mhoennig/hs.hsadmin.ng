@@ -12,7 +12,7 @@ public class TestHsOfficePartner {
 
     static public HsOfficePartnerEntity hsOfficePartnerWithLegalPerson(final String tradeName) {
         return HsOfficePartnerEntity.builder()
-                .debitorNumberPrefix(10001)
+                .partnerNumber(10001)
                 .person(HsOfficePersonEntity.builder()
                         .personType(LEGAL_PERSON)
                         .tradeName(tradeName)

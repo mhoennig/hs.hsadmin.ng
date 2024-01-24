@@ -173,7 +173,7 @@ execute procedure hsOfficeDebitorRbacRolesTrigger();
 -- ----------------------------------------------------------------------------
 call generateRbacIdentityView('hs_office_debitor', $idName$
     '#' ||
-        (select debitornumberprefix from hs_office_partner p where p.uuid = target.partnerUuid) ||
+        (select partnerNumber from hs_office_partner p where p.uuid = target.partnerUuid) ||
         to_char(debitorNumberSuffix, 'fm00') ||
     ':' || (select split_part(idName, ':', 2) from hs_office_partner_iv pi where pi.uuid = target.partnerUuid)
     $idName$);

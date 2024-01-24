@@ -211,9 +211,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseDebitorsAreReturned(
                     result,
-                    "debitor(1000111: LP First GmbH: fir)",
-                    "debitor(1000212: LP Second e.K.: sec)",
-                    "debitor(1000313: IF Third OHG: thi)");
+                    "debitor(D-1000111: LP First GmbH: fir)",
+                    "debitor(D-1000212: LP Second e.K.: sec)",
+                    "debitor(D-1000313: IF Third OHG: thi)");
         }
 
         @ParameterizedTest
@@ -231,8 +231,8 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
 
             // then:
             exactlyTheseDebitorsAreReturned(result,
-                    "debitor(1000111: LP First GmbH: fir)",
-                    "debitor(1000120: LP First GmbH: fif)");
+                    "debitor(D-1000111: LP First GmbH: fir)",
+                    "debitor(D-1000120: LP First GmbH: fif)");
         }
 
         @Test
@@ -260,7 +260,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = debitorRepo.findDebitorByDebitorNumber(1000313);
 
             // then
-            exactlyTheseDebitorsAreReturned(result, "debitor(1000313: IF Third OHG: thi)");
+            exactlyTheseDebitorsAreReturned(result, "debitor(D-1000313: IF Third OHG: thi)");
         }
     }
 
@@ -276,7 +276,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTest {
             final var result = debitorRepo.findDebitorByOptionalNameLike("third contact");
 
             // then
-            exactlyTheseDebitorsAreReturned(result, "debitor(1000313: IF Third OHG: thi)");
+            exactlyTheseDebitorsAreReturned(result, "debitor(D-1000313: IF Third OHG: thi)");
         }
     }
 

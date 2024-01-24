@@ -13,8 +13,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,9 +27,6 @@ class RbacUserControllerAcceptanceTest {
 
     @LocalServerPort
     private Integer port;
-
-    @PersistenceContext
-    EntityManager em;
 
     @Autowired
     JpaAttempt jpaAttempt;
