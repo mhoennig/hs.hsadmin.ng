@@ -288,7 +288,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LEGAL First GmbH");
+                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LP First GmbH");
                         assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
                         assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-01)");
@@ -331,7 +331,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LEGAL First GmbH");
+                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LP First GmbH");
                         assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
                         assertThat(mandate.getMemberNumber()).isEqualTo(givenMembership.getMemberNumber());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");

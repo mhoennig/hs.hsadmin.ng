@@ -159,9 +159,9 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='LEGAL First GmbH', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='first contact')",
-                    "rel(relAnchor='SOLE_REPRESENTATION Third OHG', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='third contact')",
-                    "rel(relAnchor='LEGAL Second e.K.', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='second contact')");
+                    "rel(relAnchor='LP First GmbH', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='first contact')",
+                    "rel(relAnchor='IF Third OHG', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='third contact')",
+                    "rel(relAnchor='LP Second e.K.', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='second contact')");
         }
 
         @Test
@@ -176,7 +176,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='LEGAL First GmbH', relType='REPRESENTATIVE', relHolder='NATURAL Smith, Peter', contact='first contact')");
+                    "rel(relAnchor='LP First GmbH', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='first contact')");
         }
     }
 

@@ -6,10 +6,12 @@ components:
         HsOfficePersonType:
             type: string
             enum:
-                - NATURAL               # a human
-                - LEGAL                 # e.g. Corp., Inc., AG, GmbH, eG
-                - SOLE_REPRESENTATION   # e.g. OHG, GbR
-                - JOINT_REPRESENTATION  # e.g. community of heirs
+                - UNKNOWN_PERSON
+                - NATURAL_PERSON
+                - LEGAL_PERSON
+                - INCORPORATED_FIRM
+                - UNINCORPORATED_FIRM
+                - PUBLIC_INSTITUTION
 
         HsOfficePerson:
             type: object

@@ -59,14 +59,14 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficePersonTestData('LEGAL', 'First GmbH');
-        call createHsOfficePersonTestData('NATURAL', null, 'Smith', 'Peter');
-        call createHsOfficePersonTestData('LEGAL', 'Second e.K.', 'Sandra', 'Miller');
-        call createHsOfficePersonTestData('SOLE_REPRESENTATION', 'Third OHG');
-        call createHsOfficePersonTestData('SOLE_REPRESENTATION', 'Fourth e.G.');
-        call createHsOfficePersonTestData('JOINT_REPRESENTATION', 'Erben Bessler', 'Mel', 'Bessler');
-        call createHsOfficePersonTestData('NATURAL', null, 'Bessler', 'Anita');
-        call createHsOfficePersonTestData('NATURAL', null, 'Winkler', 'Paul');
+        call createHsOfficePersonTestData('LP', 'First GmbH');
+        call createHsOfficePersonTestData('NP', null, 'Smith', 'Peter');
+        call createHsOfficePersonTestData('LP', 'Second e.K.', 'Sandra', 'Miller');
+        call createHsOfficePersonTestData('IF', 'Third OHG');
+        call createHsOfficePersonTestData('IF', 'Fourth e.G.');
+        call createHsOfficePersonTestData('UF', 'Erben Bessler', 'Mel', 'Bessler');
+        call createHsOfficePersonTestData('NP', null, 'Bessler', 'Anita');
+        call createHsOfficePersonTestData('NP', null, 'Winkler', 'Paul');
     end;
 $$;
 --//

@@ -184,9 +184,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(10001, LEGAL First GmbH, 1000111, [2022-10-01,), NONE)",
-                    "Membership(10002, LEGAL Second e.K., 1000212, [2022-10-01,), NONE)",
-                    "Membership(10003, SOLE_REPRESENTATION Third OHG, 1000313, [2022-10-01,), NONE)");
+                    "Membership(10001, LP First GmbH, 1000111, [2022-10-01,), NONE)",
+                    "Membership(10002, LP Second e.K., 1000212, [2022-10-01,), NONE)",
+                    "Membership(10003, IF Third OHG, 1000313, [2022-10-01,), NONE)");
         }
 
         @Test
@@ -201,7 +201,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
                     null);
 
             // then
-            exactlyTheseMembershipsAreReturned(result, "Membership(10001, LEGAL First GmbH, 1000111, [2022-10-01,), NONE)");
+            exactlyTheseMembershipsAreReturned(result, "Membership(10001, LP First GmbH, 1000111, [2022-10-01,), NONE)");
         }
 
         @Test
@@ -213,7 +213,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTest {
             final var result = membershipRepo.findMembershipsByOptionalPartnerUuidAndOptionalMemberNumber(null, 10002);
 
             // then
-            exactlyTheseMembershipsAreReturned(result, "Membership(10002, LEGAL Second e.K., 1000212, [2022-10-01,), NONE)");
+            exactlyTheseMembershipsAreReturned(result, "Membership(10002, LP Second e.K., 1000212, [2022-10-01,), NONE)");
         }
     }
 

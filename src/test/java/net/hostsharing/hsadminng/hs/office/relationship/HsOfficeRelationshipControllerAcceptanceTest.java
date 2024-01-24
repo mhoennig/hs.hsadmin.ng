@@ -83,11 +83,11 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     [
                          {
                              "relAnchor": {
-                                 "personType": "SOLE_REPRESENTATION",
+                                 "personType": "INCORPORATED_FIRM",
                                  "tradeName": "Third OHG"
                              },
                              "relHolder": {
-                                 "personType": "NATURAL",
+                                 "personType": "NATURAL_PERSON",
                                  "givenName": "Peter",
                                  "familyName": "Smith"
                              },
@@ -96,13 +96,13 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                          },
                          {
                              "relAnchor": {
-                                 "personType": "LEGAL",
+                                 "personType": "LEGAL_PERSON",
                                  "tradeName": "Second e.K.",
                                  "givenName": "Miller",
                                  "familyName": "Sandra"
                              },
                              "relHolder": {
-                                 "personType": "NATURAL",
+                                 "personType": "NATURAL_PERSON",
                                  "givenName": "Peter",
                                  "familyName": "Smith"
                              },
@@ -111,11 +111,11 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                          },
                          {
                              "relAnchor": {
-                                 "personType": "LEGAL",
+                                 "personType": "LEGAL_PERSON",
                                  "tradeName": "First GmbH"
                              },
                              "relHolder": {
-                                 "personType": "NATURAL",
+                                 "personType": "NATURAL_PERSON",
                                  "tradeName": null,
                                  "givenName": "Peter",
                                  "familyName": "Smith"

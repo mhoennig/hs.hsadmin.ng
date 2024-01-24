@@ -208,9 +208,9 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
-                    17=partner(NATURAL Mellies, Michael: Herr Michael Mellies ),
-                    20=partner(LEGAL JM GmbH: Herr Philip Meyer-Contract , JM GmbH),
-                    22=partner(LEGAL Test PS: Petra Schmidt , Test PS)
+                    17=partner(NP Mellies, Michael: Herr Michael Mellies ),
+                    20=partner(LP JM GmbH: Herr Philip Meyer-Contract , JM GmbH),
+                    22=partner(?? Test PS: Petra Schmidt , Test PS)
                 }
                 """);
         assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
@@ -225,39 +225,39 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
                 {
-                    1101=person(personType='NATURAL', tradeName='', familyName='Mellies', givenName='Michael'),
-                    1200=person(personType='LEGAL', tradeName='JM e.K.', familyName='', givenName=''),
-                    1201=person(personType='LEGAL', tradeName='JM GmbH', familyName='Meyer-Billing', givenName='Jenny'),
-                    1202=person(personType='LEGAL', tradeName='JM GmbH', familyName='Meyer-Operation', givenName='Andrew'),
-                    1203=person(personType='LEGAL', tradeName='JM GmbH', familyName='Meyer-Contract', givenName='Philip'),
-                    1301=person(personType='LEGAL', tradeName='Test PS', familyName='Schmidt', givenName='Petra')
+                    1101=person(personType='NP', tradeName='', familyName='Mellies', givenName='Michael'),
+                    1200=person(personType='LP', tradeName='JM e.K.', familyName='', givenName=''),
+                    1201=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Billing', givenName='Jenny'),
+                    1202=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Operation', givenName='Andrew'),
+                    1203=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Contract', givenName='Philip'),
+                    1301=person(personType='??', tradeName='Test PS', familyName='Schmidt', givenName='Petra')
                 }
                 """);
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
-                    17=debitor(1001700: NATURAL Mellies, Michael: mih), 
-                    20=debitor(1002000: LEGAL JM GmbH: xyz), 
-                    22=debitor(1102200: LEGAL Test PS: xxx)
+                    17=debitor(1001700: NP Mellies, Michael: mih), 
+                    20=debitor(1002000: LP JM GmbH: xyz), 
+                    22=debitor(1102200: ?? Test PS: xxx)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(10017, NATURAL Mellies, Michael, 1001700, [2000-12-06,), NONE),
-                    20=Membership(10020, LEGAL JM GmbH, 1002000, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(11022, LEGAL Test PS, 1102200, [2021-04-01,), NONE)
+                    17=Membership(10017, NP Mellies, Michael, 1001700, [2000-12-06,), NONE),
+                    20=Membership(10020, LP JM GmbH, 1002000, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(11022, ?? Test PS, 1102200, [2021-04-01,), NONE)
                 }
                 """);
         assertThat(toFormattedString(relationships)).isEqualToIgnoringWhitespace("""
                 {
-                    2000000=rel(relAnchor='NATURAL Mellies, Michael', relType='OPERATIONS', relHolder='NATURAL Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000001=rel(relAnchor='LEGAL JM GmbH', relType='EX_PARTNER', relHolder='LEGAL JM e.K.', contact='JM e.K.'),
-                    2000002=rel(relAnchor='LEGAL JM GmbH', relType='OPERATIONS', relHolder='LEGAL JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000003=rel(relAnchor='LEGAL JM GmbH', relType='VIP_CONTACT', relHolder='LEGAL JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000004=rel(relAnchor='LEGAL JM GmbH', relType='REPRESENTATIVE', relHolder='LEGAL JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000005=rel(relAnchor='LEGAL Test PS', relType='OPERATIONS', relHolder='LEGAL Test PS', contact='Petra Schmidt , Test PS'),
-                    2000006=rel(relAnchor='LEGAL Test PS', relType='REPRESENTATIVE', relHolder='LEGAL Test PS', contact='Petra Schmidt , Test PS'),
-                    2000007=rel(relAnchor='NATURAL Mellies, Michael', relType='REPRESENTATIVE', relHolder='NATURAL Mellies, Michael', contact='Herr Michael Mellies ')
-                }
+                    2000000=rel(relAnchor='NP Mellies, Michael', relType='OPERATIONS', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000001=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
+                    2000002=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000003=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000004=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000005=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000006=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000007=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies ')
+                 }
                 """);
     }
 
@@ -793,17 +793,22 @@ public class ImportOfficeData extends ContextBasedTest {
 
     private static void determinePersonType(final HsOfficePersonEntity person, final String roles) {
         if (person.getTradeName().isBlank()) {
-            person.setPersonType(HsOfficePersonType.NATURAL);
-        } else if (roles.contains("partner")) {
-            person.setPersonType(HsOfficePersonType.LEGAL);
-        } else if (roles.contains("contractual") &&
+            person.setPersonType(HsOfficePersonType.NATURAL_PERSON);
+        } else
+            // contractual && !partner with a firm and a natural person name
+            // should actually be split up into two persons
+            // but the legacy database consists such records
+            if (roles.contains("contractual") && !roles.contains("partner") &&
                 !person.getFamilyName().isBlank() && !person.getGivenName().isBlank()) {
-            person.setPersonType(HsOfficePersonType.NATURAL);
+            person.setPersonType(HsOfficePersonType.NATURAL_PERSON);
         } else if ( endsWithWord(person.getTradeName(), "e.K.", "e.G.", "eG", "GmbH", "AG")  ) {
-            person.setPersonType(HsOfficePersonType.LEGAL);
+            person.setPersonType(HsOfficePersonType.LEGAL_PERSON);
+        } else if ( endsWithWord(person.getTradeName(), "OHG")  ) {
+                person.setPersonType(HsOfficePersonType.INCORPORATED_FIRM);
+            } else if ( endsWithWord(person.getTradeName(), "GbR")  ) {
+                person.setPersonType(HsOfficePersonType.INCORPORATED_FIRM);
         } else {
-            // TODO: detect the other person types as soon as we've switche to the new person types
-            person.setPersonType(HsOfficePersonType.UNKNOWN);
+            person.setPersonType(HsOfficePersonType.UNKNOWN_PERSON_TYPE);
         }
     }
 
@@ -1029,10 +1034,7 @@ class OrderedDependedTestsExtension implements TestWatcher, BeforeEachCallback {
     }
 
     @Override
-    public void beforeEach(final ExtensionContext extensionContext) {
-        if (!previousTestsPassed) {
-            System.err.println("ignoring because previous fest has failed");
-        }
+    public void beforeEach(final ExtensionContext extensionContext) throws Exception {
         assumeThat(previousTestsPassed).isTrue();
     }
 }

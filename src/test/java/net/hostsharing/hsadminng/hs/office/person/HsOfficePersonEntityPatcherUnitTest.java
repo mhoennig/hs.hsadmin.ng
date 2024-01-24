@@ -22,7 +22,7 @@ class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsOfficePersonEntity newInitialEntity() {
         final var entity = new HsOfficePersonEntity();
         entity.setUuid(INITIAL_PERSON_UUID);
-        entity.setPersonType(HsOfficePersonType.LEGAL);
+        entity.setPersonType(HsOfficePersonType.LEGAL_PERSON);
         entity.setTradeName("initial@example.org");
         entity.setFamilyName("initial postal address");
         entity.setGivenName("+01 100 123456789");
@@ -45,9 +45,9 @@ class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
                 new SimpleProperty<>(
                         "personType",
                         HsOfficePersonPatchResource::setPersonType,
-                        HsOfficePersonTypeResource.SOLE_REPRESENTATION,
+                        HsOfficePersonTypeResource.INCORPORATED_FIRM,
                         HsOfficePersonEntity::setPersonType,
-                        HsOfficePersonType.SOLE_REPRESENTATION)
+                        HsOfficePersonType.INCORPORATED_FIRM)
                         .notNullable(),
                 new JsonNullableProperty<>(
                         "tradeName",

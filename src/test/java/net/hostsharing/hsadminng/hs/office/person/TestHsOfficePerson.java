@@ -7,7 +7,7 @@ public class TestHsOfficePerson {
 
     static public HsOfficePersonEntity hsOfficePerson(final String tradeName) {
         return HsOfficePersonEntity.builder()
-                .personType(HsOfficePersonType.NATURAL)
+                .personType(HsOfficePersonType.NATURAL_PERSON)
                 .tradeName(tradeName)
                 .build();
     }

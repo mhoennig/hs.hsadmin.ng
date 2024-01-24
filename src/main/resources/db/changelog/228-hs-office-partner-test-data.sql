@@ -19,7 +19,6 @@ declare
     relatedPerson       hs_office_person;
     relatedContact      hs_office_contact;
     relatedDetailsUuid  uuid;
-    birthday            date;
 begin
     idName := cleanIdentifier( personTradeOrFamilyName|| '-' || contactLabel);
     currentTask := 'creating partner test-data ' || idName;
@@ -33,18 +32,14 @@ begin
                where c.label = contactLabel
                into relatedContact;
 
-    if relatedPerson.persontype = 'NATURAL' then
-        birthday := '1987-10-31'::date;
-    end if;
-
     raise notice 'creating test partner: %', idName;
     raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
     raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
 
-    if relatedPerson.persontype = 'NATURAL' then
+    if relatedPerson.persontype = 'NP' then
         insert
-            into hs_office_partner_details (uuid, birthName, birthday)
-            values (uuid_generate_v4(), 'Meyer', '1987-10-31')
+            into hs_office_partner_details (uuid, birthName, birthday, birthPlace)
+            values (uuid_generate_v4(), 'Meyer', '1987-10-31', 'Hamburg')
             returning uuid into relatedDetailsUuid;
     else
         insert

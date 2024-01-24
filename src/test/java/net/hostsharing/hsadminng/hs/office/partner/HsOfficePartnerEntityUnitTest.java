@@ -13,7 +13,7 @@ class HsOfficePartnerEntityUnitTest {
     void toStringContainsPersonAndContact() {
         final var given = HsOfficePartnerEntity.builder()
                 .person(HsOfficePersonEntity.builder()
-                        .personType(HsOfficePersonType.LEGAL)
+                        .personType(HsOfficePersonType.LEGAL_PERSON)
                         .tradeName("some trade name")
                         .build())
                 .contact(HsOfficeContactEntity.builder().label("some label").build())
@@ -21,14 +21,14 @@ class HsOfficePartnerEntityUnitTest {
 
         final var result = given.toString();
 
-        assertThat(result).isEqualTo("partner(LEGAL some trade name: some label)");
+        assertThat(result).isEqualTo("partner(LP some trade name: some label)");
     }
 
     @Test
     void toShortStringContainsPersonAndContact() {
         final var given = HsOfficePartnerEntity.builder()
                 .person(HsOfficePersonEntity.builder()
-                        .personType(HsOfficePersonType.LEGAL)
+                        .personType(HsOfficePersonType.LEGAL_PERSON)
                         .tradeName("some trade name")
                         .build())
                 .contact(HsOfficeContactEntity.builder().label("some label").build())
@@ -36,6 +36,6 @@ class HsOfficePartnerEntityUnitTest {
 
         final var result = given.toShortString();
 
-        assertThat(result).isEqualTo("LEGAL some trade name");
+        assertThat(result).isEqualTo("LP some trade name");
     }
 }

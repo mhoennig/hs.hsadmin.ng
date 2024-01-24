@@ -35,7 +35,6 @@ public class HsOfficePersonEntity implements HasUuid, Stringifyable {
     private UUID uuid;
 
     @Column(name = "persontype")
-    @Enumerated(EnumType.STRING)
     private HsOfficePersonType personType;
 
     @Column(name = "tradename")

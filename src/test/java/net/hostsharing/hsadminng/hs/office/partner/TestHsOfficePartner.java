@@ -4,7 +4,7 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 
 
-import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL;
+import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.LEGAL_PERSON;
 
 public class TestHsOfficePartner {
 
@@ -14,7 +14,7 @@ public class TestHsOfficePartner {
         return HsOfficePartnerEntity.builder()
                 .debitorNumberPrefix(10001)
                 .person(HsOfficePersonEntity.builder()
-                        .personType(LEGAL)
+                        .personType(LEGAL_PERSON)
                         .tradeName(tradeName)
                         .build())
                 .contact(HsOfficeContactEntity.builder()

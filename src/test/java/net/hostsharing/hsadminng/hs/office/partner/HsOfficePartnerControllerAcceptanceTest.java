@@ -97,7 +97,7 @@ class HsOfficePartnerControllerAcceptanceTest {
                             "details": { "registrationOffice": "Hamburg" }
                         },
                         {
-                            "person": { "personType": "SOLE_REPRESENTATION" },
+                            "person": { "personType": "INCORPORATED_FIRM" },
                             "contact": { "label": "forth contact" },
                             "details": { "registrationOffice": "Hamburg" }
                         }

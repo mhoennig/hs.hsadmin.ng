@@ -69,49 +69,49 @@ class HsOfficePersonControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                         [
                              {
-                                  "personType": "LEGAL",
+                                  "personType": "LEGAL_PERSON",
                                   "tradeName": "First GmbH",
                                   "givenName": null,
                                   "familyName": null
                               },
                               {
-                                  "personType": "LEGAL",
+                                  "personType": "LEGAL_PERSON",
                                   "tradeName": "Second e.K.",
                                   "givenName": "Miller",
                                   "familyName": "Sandra"
                               },
                               {
-                                  "personType": "SOLE_REPRESENTATION",
+                                  "personType": "INCORPORATED_FIRM",
                                   "tradeName": "Third OHG",
                                   "givenName": null,
                                   "familyName": null
                               },
                               {
-                                  "personType": "SOLE_REPRESENTATION",
+                                  "personType": "INCORPORATED_FIRM",
                                   "tradeName": "Fourth e.G.",
                                   "givenName": null,
                                   "familyName": null
                               },
                               {
-                                  "personType": "NATURAL",
+                                  "personType": "NATURAL_PERSON",
                                   "tradeName": null,
                                   "givenName": "Anita",
                                   "familyName": "Bessler"
                               },
                               {
-                                  "personType": "JOINT_REPRESENTATION",
+                                  "personType": "UNINCORPORATED_FIRM",
                                   "tradeName": "Erben Bessler",
                                   "givenName": "Bessler",
                                   "familyName": "Mel"
                               },
                               {
-                                  "personType": "NATURAL",
+                                  "personType": "NATURAL_PERSON",
                                   "tradeName": null,
                                   "givenName": "Peter",
                                   "familyName": "Smith"
                               },
                               {
-                                  "personType": "NATURAL",
+                                  "personType": "NATURAL_PERSON",
                                   "tradeName": null,
                                   "givenName": "Paul",
                                   "familyName": "Winkler"
@@ -136,7 +136,7 @@ class HsOfficePersonControllerAcceptanceTest {
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "personType": "NATURAL",
+                                   "personType": "NATURAL_PERSON",
                                    "familyName": "Tester",
                                    "givenName": "Temp Testi"
                                  }
@@ -148,7 +148,7 @@ class HsOfficePersonControllerAcceptanceTest {
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("personType", is("NATURAL"))
+                        .body("personType", is("NATURAL_PERSON"))
                         .body("familyName", is("Tester"))
                         .body("givenName", is("Temp Testi"))
                         .header("Location", startsWith("http://localhost"))
@@ -224,7 +224,7 @@ class HsOfficePersonControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "personType": "JOINT_REPRESENTATION",
+                        "personType": "UNINCORPORATED_FIRM",
                         "tradeName": "Erben Bessler",
                         "givenName": "Bessler",
                         "familyName": "Mel"
@@ -249,7 +249,7 @@ class HsOfficePersonControllerAcceptanceTest {
                     .contentType(ContentType.JSON)
                     .body("""
                        {
-                           "personType": "JOINT_REPRESENTATION",
+                           "personType": "UNINCORPORATED_FIRM",
                            "tradeName": "Temp Trade Name - patched",
                            "familyName": "Temp Family Name - patched",
                            "givenName": "Temp Given Name - patched"
@@ -262,7 +262,7 @@ class HsOfficePersonControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("personType", is("JOINT_REPRESENTATION"))
+                    .body("personType", is("UNINCORPORATED_FIRM"))
                     .body("tradeName", is("Temp Trade Name - patched"))
                     .body("familyName", is("Temp Family Name - patched"))
                     .body("givenName", is("Temp Given Name - patched"));
@@ -272,7 +272,7 @@ class HsOfficePersonControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             assertThat(personRepo.findByUuid(givenPerson.getUuid())).isPresent().get()
                     .matches(person -> {
-                        assertThat(person.getPersonType()).isEqualTo(HsOfficePersonType.JOINT_REPRESENTATION);
+                        assertThat(person.getPersonType()).isEqualTo(HsOfficePersonType.UNINCORPORATED_FIRM);
                         assertThat(person.getTradeName()).isEqualTo("Temp Trade Name - patched");
                         assertThat(person.getFamilyName()).isEqualTo("Temp Family Name - patched");
                         assertThat(person.getGivenName()).isEqualTo("Temp Given Name - patched");
@@ -302,7 +302,7 @@ class HsOfficePersonControllerAcceptanceTest {
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("personType", is(givenPerson.getPersonType().toString()))
+                    .body("personType", is(givenPerson.getPersonType().name()))
                     .body("tradeName", is(givenPerson.getTradeName()))
                     .body("familyName", is("Temp Family Name - patched"))
                     .body("givenName", is("Temp Given Name - patched"));
@@ -389,7 +389,7 @@ class HsOfficePersonControllerAcceptanceTest {
             context.define(creatingUser);
             final var newPerson = HsOfficePersonEntity.builder()
                     .uuid(UUID.randomUUID())
-                    .personType(HsOfficePersonType.LEGAL)
+                    .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("Temp " + Context.getCallerMethodNameFromStackFrame(2))
                     .familyName(RandomStringUtils.randomAlphabetic(10) + "@example.org")
                     .givenName("Temp Given Name " + RandomStringUtils.randomAlphabetic(10))

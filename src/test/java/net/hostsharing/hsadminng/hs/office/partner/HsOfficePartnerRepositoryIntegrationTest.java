@@ -177,9 +177,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allThesePartnersAreReturned(
                     result,
-                    "partner(SOLE_REPRESENTATION Third OHG: third contact)",
-                    "partner(LEGAL Second e.K.: second contact)",
-                    "partner(LEGAL First GmbH: first contact)");
+                    "partner(IF Third OHG: third contact)",
+                    "partner(LP Second e.K.: second contact)",
+                    "partner(LP First GmbH: first contact)");
         }
 
         @Test
@@ -191,7 +191,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike(null);
 
             // then:
-            exactlyThesePartnersAreReturned(result, "partner(LEGAL First GmbH: first contact)");
+            exactlyThesePartnersAreReturned(result, "partner(LP First GmbH: first contact)");
         }
     }
 
@@ -207,7 +207,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTest {
             final var result = partnerRepo.findPartnerByOptionalNameLike("third contact");
 
             // then
-            exactlyThesePartnersAreReturned(result, "partner(SOLE_REPRESENTATION Third OHG: third contact)");
+            exactlyThesePartnersAreReturned(result, "partner(IF Third OHG: third contact)");
         }
     }
 

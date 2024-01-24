@@ -770,8 +770,8 @@ do $$
 
         if '${HSADMINNG_POSTGRES_RESTRICTED_USERNAME}'='restricted' then
             create role restricted;
+            grant all privileges on all tables in schema public to restricted;
         end if;
-        -- grant all privileges on all tables in schema public to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
     end $$
 --//
 

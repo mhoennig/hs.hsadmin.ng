@@ -144,10 +144,10 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allThesePersonsAreReturned(
                     result,
-                    "NATURAL Smith, Peter",
-                    "LEGAL Second e.K.",
-                    "SOLE_REPRESENTATION Third OHG",
-                    "JOINT_REPRESENTATION Erben Bessler");
+                    "NP Smith, Peter",
+                    "LP Second e.K.",
+                    "IF Third OHG",
+                    "UF Erben Bessler");
         }
 
         @Test

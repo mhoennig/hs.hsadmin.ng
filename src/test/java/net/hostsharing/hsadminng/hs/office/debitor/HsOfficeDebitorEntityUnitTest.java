@@ -17,7 +17,7 @@ class HsOfficeDebitorEntityUnitTest {
                 .debitorNumberSuffix((byte)67)
                 .partner(HsOfficePartnerEntity.builder()
                         .person(HsOfficePersonEntity.builder()
-                                .personType(HsOfficePersonType.LEGAL)
+                                .personType(HsOfficePersonType.LEGAL_PERSON)
                                 .tradeName("some trade name")
                                 .build())
                         .details(HsOfficePartnerDetailsEntity.builder().birthName("some birth name").build())
@@ -29,7 +29,7 @@ class HsOfficeDebitorEntityUnitTest {
 
         final var result = given.toString();
 
-        assertThat(result).isEqualTo("debitor(1234567: LEGAL some trade name: som)");
+        assertThat(result).isEqualTo("debitor(1234567: LP some trade name: som)");
     }
 
     @Test

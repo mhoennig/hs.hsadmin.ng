@@ -83,7 +83,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                          {
                              "debitorNumber": 1000111,
                              "debitorNumberSuffix": 11,
-                             "partner": { "person": { "personType": "LEGAL" } },
+                             "partner": { "person": { "personType": "LEGAL_PERSON" } },
                              "billingContact": { "label": "first contact" },
                              "vatId": null,
                              "vatCountryCode": null,
