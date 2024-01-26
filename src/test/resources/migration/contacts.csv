@@ -6,8 +6,8 @@ contact_id;	bp_id;	salut;	first_name;	last_name;	title;	firma;	co;	street;			zip
 # eine juristische Person mit drei separaten Ansprechpartnern, vip-contact und ex-partner
 1200;		20;;	;		;		;	JM e.K.;;	Wiesenweg 15;		12335;	Berlin; DE;		+49 30 6666666;		+49 30 5555555;		;		+49 30 6666666; jm-ex-partner@example.org; ex-partner
 1201;		20;	Frau;	Jenny;		Meyer-Billing;		Dr.;	JM GmbH;;	Waldweg 5;		11001;	Berlin; DE;		+49 30 7777777;		+49 30 1111111;		;		+49 30 2222222; jm-billing@example.org; billing
-1202;		20;	Herr;	Andrew;		Meyer-Operation;		;	JM GmbH;;	Waldweg 5;		11001;	Berlin; DE;		+49 30 6666666;		+49 30 3333333;		;		+49 30 4444444; am-operation@example.org; operation,vip-contact
-1203;		20;	Herr;	Philip;		Meyer-Contract;		;	JM GmbH;;	Waldweg 5;		11001;	Berlin; DE;		+49 30 6666666;		+49 30 5555555;		;		+49 30 6666666; pm-partner@example.org; partner,contractual
+1202;		20;	Herr;	Andrew;		Meyer-Operation;		;	JM GmbH;;	Waldweg 5;		11001;	Berlin; DE;		+49 30 6666666;		+49 30 3333333;		;		+49 30 4444444; am-operation@example.org; operation,vip-contact,subscriber:operations-announce
+1203;		20;	Herr;	Philip;		Meyer-Contract;		;	JM GmbH;;	Waldweg 5;		11001;	Berlin; DE;		+49 30 6666666;		+49 30 5555555;		;		+49 30 6666666; pm-partner@example.org; partner,contractual,subscriber:members-announce,subscriber:customers-announce
 
 # eine juristische Person mit nur einem Ansprechpartner und explizitem contractual
 1301;		22;	;	Petra;		Schmidt;	;	Test PS;;	;			;	;	;		;			;			;		;		ps@example.com; partner,billing,contractual,operation

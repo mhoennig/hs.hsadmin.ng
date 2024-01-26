@@ -10,7 +10,8 @@ CREATE TYPE HsOfficeRelationshipType AS ENUM (
     'REPRESENTATIVE',
     'VIP_CONTACT',
     'ACCOUNTING',
-    'OPERATIONS');
+    'OPERATIONS',
+    'SUBSCRIBER');
 
 CREATE CAST (character varying as HsOfficeRelationshipType) WITH INOUT AS IMPLICIT;
 
@@ -20,7 +21,8 @@ create table if not exists hs_office_relationship
     relAnchorUuid       uuid not null references hs_office_person(uuid),
     relHolderUuid       uuid not null references hs_office_person(uuid),
     contactUuid         uuid references hs_office_contact(uuid),
-    relType             HsOfficeRelationshipType not null
+    relType             HsOfficeRelationshipType not null,
+    relMark             varchar(24)
 );
 --//
 

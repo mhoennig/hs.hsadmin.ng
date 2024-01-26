@@ -20,6 +20,18 @@ class HsOfficeRelationshipEntityUnitTest {
             .build();
 
     @Test
+    void toStringReturnsAllProperties() {
+        final var given = HsOfficeRelationshipEntity.builder()
+                .relType(HsOfficeRelationshipType.SUBSCRIBER)
+                .relMark("members-announce")
+                .relAnchor(anchor)
+                .relHolder(holder)
+                .build();
+
+        assertThat(given.toString()).isEqualTo("rel(relAnchor='LP some trade name', relType='SUBSCRIBER', relMark='members-announce', relHolder='NP Meier, Mellie')");
+    }
+
+    @Test
     void toShortString() {
         final var given = HsOfficeRelationshipEntity.builder()
                 .relType(HsOfficeRelationshipType.REPRESENTATIVE)

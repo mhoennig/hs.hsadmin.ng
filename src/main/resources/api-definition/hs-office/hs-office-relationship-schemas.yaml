@@ -12,6 +12,7 @@ components:
                 - VIP_CONTACT
                 - ACCOUNTING,
                 - OPERATIONS
+                - SUBSCRIBER
 
         HsOfficeRelationship:
             type: object
@@ -25,6 +26,9 @@ components:
                     $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
                 relType:
                     type: string
+                relMark:
+                    type: string
+                    nullable: true
                 contact:
                     $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
 
@@ -48,6 +52,8 @@ components:
                 relType:
                     type: string
                     nullable: true
+                relMark:
+                    type: string
                 contactUuid:
                     type: string
                     format: uuid

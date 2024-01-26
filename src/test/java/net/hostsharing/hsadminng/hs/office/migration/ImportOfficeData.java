@@ -22,6 +22,7 @@ import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEnti
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
 import net.hostsharing.test.JpaAttempt;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -112,6 +113,17 @@ import static org.assertj.core.api.Fail.fail;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
 public class ImportOfficeData extends ContextBasedTest {
+
+    private static final String[] SUBSCRIBER_ROLES = new String[] {
+            "subscriber:operations-discussion",
+            "subscriber:operations-announce",
+            "subscriber:members-announce",
+            "subscriber:members-discussion",
+            "subscriber:customers-announce"
+    };
+    private static final String[] KNOWN_ROLES = ArrayUtils.addAll(
+            new String[]{"partner", "vip-contact", "ex-partner", "billing", "contractual", "operation"},
+            SUBSCRIBER_ROLES);
 
     static int relationshipId = 2000000;
 
@@ -253,11 +265,14 @@ public class ImportOfficeData extends ContextBasedTest {
                     2000001=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
                     2000002=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
                     2000003=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000004=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000005=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000006=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000007=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies ')
-                 }
+                    2000004=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000005=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000006=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000007=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000008=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000009=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000010=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies ')
+                }
                 """);
     }
 
@@ -312,10 +327,10 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
-                    33443=CoopShareTransaction(M-1001700, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
-                    33451=CoopShareTransaction(M-1002000, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
-                    33701=CoopShareTransaction(M-1001700, 2005-01-10, SUBSCRIPTION, 40, increase),
-                    33810=CoopShareTransaction(M-1002000, 2016-12-31, CANCELLATION, 22, membership ended)
+                    33443=CoopShareTransaction(1001700, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
+                    33451=CoopShareTransaction(1002000, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
+                    33701=CoopShareTransaction(1001700, 2005-01-10, SUBSCRIPTION, 40, increase),
+                    33810=CoopShareTransaction(1002000, 2016-12-31, CANCELLATION, 22, membership ended)
                 }
                 """);
     }
@@ -339,14 +354,14 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
                 {
-                    30000=CoopAssetsTransaction(10017, 2000-12-06, DEPOSIT, 1280.00, for subscription A),
-                    31000=CoopAssetsTransaction(10020, 2000-12-06, DEPOSIT, 128.00, for subscription B),
-                    32000=CoopAssetsTransaction(10017, 2005-01-10, DEPOSIT, 2560.00, for subscription C),
-                    33001=CoopAssetsTransaction(10017, 2005-01-10, TRANSFER, -512.00, for transfer to 10),
-                    33002=CoopAssetsTransaction(10020, 2005-01-10, ADOPTION, 512.00, for transfer from 7),
-                    34001=CoopAssetsTransaction(10020, 2016-12-31, CLEARING, -8.00, for cancellation D),
-                    34002=CoopAssetsTransaction(10020, 2016-12-31, DISBURSAL, -100.00, for cancellation D),
-                    34003=CoopAssetsTransaction(10020, 2016-12-31, LOSS, -20.00, for cancellation D)
+                    30000=CoopAssetsTransaction(1001700, 2000-12-06, DEPOSIT, 1280.00, for subscription A),
+                    31000=CoopAssetsTransaction(1002000, 2000-12-06, DEPOSIT, 128.00, for subscription B),
+                    32000=CoopAssetsTransaction(1001700, 2005-01-10, DEPOSIT, 2560.00, for subscription C),
+                    33001=CoopAssetsTransaction(1001700, 2005-01-10, TRANSFER, -512.00, for transfer to 10),
+                    33002=CoopAssetsTransaction(1002000, 2005-01-10, ADOPTION, 512.00, for transfer from 7),
+                    34001=CoopAssetsTransaction(1002000, 2016-12-31, CLEARING, -8.00, for cancellation D),
+                    34002=CoopAssetsTransaction(1002000, 2016-12-31, DISBURSAL, -100.00, for cancellation D),
+                    34003=CoopAssetsTransaction(1002000, 2016-12-31, LOSS, -20.00, for cancellation D)
                 }
                 """);
     }
@@ -743,7 +758,14 @@ public class ImportOfficeData extends ContextBasedTest {
                     if (containsRole(rec, "vip-contact")) {
                         addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.VIP_CONTACT);
                     }
-                    verifyContainsOnly(rec.getString("roles"), "partner", "vip-contact", "ex-partner", "billing", "contractual", "operation");
+                    for (String subscriberRole: SUBSCRIBER_ROLES) {
+                        if (containsRole(rec, subscriberRole)) {
+                            addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.SUBSCRIBER)
+                                    .setRelMark(subscriberRole.split(":")[1])
+                            ;
+                        }
+                    }
+                    verifyContainsOnlyKnownRoles(rec.getString("roles"));
                 });
 
         optionallyAddMissingContractualRelationships();
@@ -767,7 +789,7 @@ public class ImportOfficeData extends ContextBasedTest {
         return containsRole(rec, "partner");
     }
 
-    private static void addRelationship(
+    private static HsOfficeRelationshipEntity addRelationship(
             final HsOfficePersonEntity partnerPerson,
             final HsOfficePersonEntity contactPerson,
             final HsOfficeContactEntity contact,
@@ -779,6 +801,7 @@ public class ImportOfficeData extends ContextBasedTest {
                 .relType(representative)
                 .build();
         relationships.put(relationshipId++, rel);
+        return rel;
     }
 
     private HsOfficePersonEntity initPerson(final HsOfficePersonEntity person, final Record contactRecord) {
@@ -823,9 +846,9 @@ public class ImportOfficeData extends ContextBasedTest {
         return false;
     }
 
-    private void verifyContainsOnly(final String roles, final String... allowedRoles) {
+    private void verifyContainsOnlyKnownRoles(final String roles) {
+        final var allowedRolesSet = stream(KNOWN_ROLES).collect(Collectors.toSet());
         final var givenRolesSet = stream(roles.replace(" ", "").split(",")).collect(Collectors.toSet());
-        final var allowedRolesSet = stream(allowedRoles).collect(Collectors.toSet());
         final var unexpectedRolesSet = new HashSet<>(givenRolesSet);
         unexpectedRolesSet.removeAll(allowedRolesSet);
         assertThat(unexpectedRolesSet).isEmpty();

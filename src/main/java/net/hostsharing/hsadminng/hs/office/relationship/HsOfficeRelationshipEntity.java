@@ -26,6 +26,7 @@ public class HsOfficeRelationshipEntity implements HasUuid, Stringifyable {
     private static Stringify<HsOfficeRelationshipEntity> toString = stringify(HsOfficeRelationshipEntity.class, "rel")
             .withProp(Fields.relAnchor, HsOfficeRelationshipEntity::getRelAnchor)
             .withProp(Fields.relType, HsOfficeRelationshipEntity::getRelType)
+            .withProp(Fields.relMark, HsOfficeRelationshipEntity::getRelMark)
             .withProp(Fields.relHolder, HsOfficeRelationshipEntity::getRelHolder)
             .withProp(Fields.contact, HsOfficeRelationshipEntity::getContact);
 
@@ -53,6 +54,9 @@ public class HsOfficeRelationshipEntity implements HasUuid, Stringifyable {
     @Column(name = "reltype")
     @Enumerated(EnumType.STRING)
     private HsOfficeRelationshipType relType;
+
+    @Column(name = "relmark")
+    private String relMark;
 
     @Override
     public String toString() {

@@ -12,7 +12,8 @@ create or replace procedure createHsOfficeRelationshipTestData(
         anchorPersonTradeName varchar,
         holderPersonFamilyName varchar,
         relationshipType HsOfficeRelationshipType,
-        contactLabel varchar)
+        contactLabel varchar,
+        mark varchar default null)
     language plpgsql as $$
 declare
     currentTask     varchar;
@@ -36,8 +37,8 @@ begin
     raise notice '- using holder person (%): %', holderPerson.uuid, holderPerson;
     raise notice '- using contact (%): %', contact.uuid, contact;
     insert
-        into hs_office_relationship (uuid, relanchoruuid, relholderuuid, reltype, contactUuid)
-        values (uuid_generate_v4(), anchorPerson.uuid, holderPerson.uuid, relationshipType, contact.uuid);
+        into hs_office_relationship (uuid, relanchoruuid, relholderuuid, reltype, relmark, contactUuid)
+        values (uuid_generate_v4(), anchorPerson.uuid, holderPerson.uuid, relationshipType, mark, contact.uuid);
 end; $$;
 --//
 
@@ -76,6 +77,8 @@ do language plpgsql $$
         call createHsOfficeRelationshipTestData('Second e.K.', 'Smith', 'REPRESENTATIVE', 'second contact');
 
         call createHsOfficeRelationshipTestData('Third OHG', 'Smith', 'REPRESENTATIVE', 'third contact');
+
+        call createHsOfficeRelationshipTestData('Third OHG', 'Smith', 'SUBSCRIBER', 'third contact', 'members-announce');
     end;
 $$;
 --//

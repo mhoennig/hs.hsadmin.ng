@@ -79,5 +79,5 @@ alias pg-sql-restore='gunzip --stdout | docker exec -i hsadmin-ng-postgres psql 
 alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 
 alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
-alias gw-test='. .aliases; ./gradlew test'
-alias gw-check='. .aliases; gw check -x pitest -x :dependencyCheckAnalyze'
+alias gw-test='. .aliases; ./gradlew test importOfficeData'
+alias gw-check='. .aliases; gw test importOfficeData check -x pitest -x :dependencyCheckAnalyze'
