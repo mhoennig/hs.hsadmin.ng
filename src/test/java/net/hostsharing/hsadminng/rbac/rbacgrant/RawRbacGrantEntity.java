@@ -10,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "rbacgrants_ev")
@@ -61,7 +60,8 @@ public class RawRbacGrantEntity {
 
 
     @NotNull
-    public static List<String> grantDisplaysOf(final List<RawRbacGrantEntity> roles) {
-        return roles.stream().map(RawRbacGrantEntity::toDisplay).collect(Collectors.toList());
+    public static List<String> distinctGrantDisplaysOf(final List<RawRbacGrantEntity> roles) {
+        // TODO: remove .distinct() once partner.person + partner.contact are removed
+        return roles.stream().map(RawRbacGrantEntity::toDisplay).sorted().distinct().toList();
     }
 }

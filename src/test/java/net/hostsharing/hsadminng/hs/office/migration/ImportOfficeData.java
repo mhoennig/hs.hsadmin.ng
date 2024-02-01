@@ -21,6 +21,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
+import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +51,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.lang.Boolean.parseBoolean;
 import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
@@ -136,17 +138,17 @@ public class ImportOfficeData extends ContextBasedTest {
     @Value("${hsadminng.superuser}")
     private String rbacSuperuser;
 
-    private static NavigableMap<Integer, HsOfficeContactEntity> contacts = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficePersonEntity> persons = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficePartnerEntity> partners = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficeDebitorEntity> debitors = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficeMembershipEntity> memberships = new TreeMap<>();
+    private static Map<Integer, HsOfficeContactEntity> contacts = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficePersonEntity> persons = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficePartnerEntity> partners = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeDebitorEntity> debitors = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeMembershipEntity> memberships = new WriteOnceMap<>();
 
-    private static NavigableMap<Integer, HsOfficeRelationshipEntity> relationships = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficeSepaMandateEntity> sepaMandates = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficeBankAccountEntity> bankAccounts = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficeCoopSharesTransactionEntity> coopShares = new TreeMap<>();
-    private static NavigableMap<Integer, HsOfficeCoopAssetsTransactionEntity> coopAssets = new TreeMap<>();
+    private static Map<Integer, HsOfficeRelationshipEntity> relationships = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeSepaMandateEntity> sepaMandates = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeBankAccountEntity> bankAccounts = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeCoopSharesTransactionEntity> coopShares = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeCoopAssetsTransactionEntity> coopAssets = new WriteOnceMap<>();
 
     @PersistenceContext
     EntityManager em;
@@ -175,14 +177,15 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(1011)
     void verifyBusinessPartners() {
-        assumeThat(postgresAdminUser).isEqualTo("admin");
+        assumeThatWeAreImportingControlledTestData();
 
         // no contacts yet => mostly null values
         assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
                     17=partner(null null, null),
                     20=partner(null null, null),
-                    22=partner(null null, null)
+                    22=partner(null null, null),
+                    99=partner(null null, null)
                 }
                 """);
         assertThat(toFormattedString(contacts)).isEqualTo("{}");
@@ -190,7 +193,9 @@ public class ImportOfficeData extends ContextBasedTest {
                 {
                     17=debitor(D-1001700: null null, null: mih),
                     20=debitor(D-1002000: null null, null: xyz),
-                    22=debitor(D-1102200: null null, null: xxx)}
+                    22=debitor(D-1102200: null null, null: xxx),
+                    99=debitor(D-1999900: null null, null: zzz)
+                }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
@@ -216,13 +221,14 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(1021)
     void verifyContacts() {
-        assumeThat(postgresAdminUser).isEqualTo("admin");
+        assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
                     17=partner(NP Mellies, Michael: Herr Michael Mellies ),
                     20=partner(LP JM GmbH: Herr Philip Meyer-Contract , JM GmbH),
-                    22=partner(?? Test PS: Petra Schmidt , Test PS)
+                    22=partner(?? Test PS: Petra Schmidt , Test PS),
+                    99=partner(null null, null)
                 }
                 """);
         assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
@@ -232,24 +238,30 @@ public class ImportOfficeData extends ContextBasedTest {
                     1201=contact(label='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='jm-billing@example.org'),
                     1202=contact(label='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='am-operation@example.org'),
                     1203=contact(label='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='pm-partner@example.org'),
-                    1301=contact(label='Petra Schmidt , Test PS', emailAddresses='ps@example.com')
+                    1204=contact(label='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='tm-vip@example.org'),
+                    1301=contact(label='Petra Schmidt , Test PS', emailAddresses='ps@example.com'),
+                    1401=contact(label='Frau Frauke Fanninga ', emailAddresses='ff@example.org')
                 }
                 """);
         assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
                 {
+                    1=person(personType='LP', tradeName='Hostsharing eG'),
                     1101=person(personType='NP', tradeName='', familyName='Mellies', givenName='Michael'),
                     1200=person(personType='LP', tradeName='JM e.K.', familyName='', givenName=''),
                     1201=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Billing', givenName='Jenny'),
                     1202=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Operation', givenName='Andrew'),
                     1203=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Contract', givenName='Philip'),
-                    1301=person(personType='??', tradeName='Test PS', familyName='Schmidt', givenName='Petra')
+                    1204=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-VIP', givenName='Tammy'),
+                    1301=person(personType='??', tradeName='Test PS', familyName='Schmidt', givenName='Petra'),
+                    1401=person(personType='NP', tradeName='', familyName='Fanninga', givenName='Frauke')
                 }
                 """);
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
                     17=debitor(D-1001700: NP Mellies, Michael: mih), 
                     20=debitor(D-1002000: LP JM GmbH: xyz), 
-                    22=debitor(D-1102200: ?? Test PS: xxx)
+                    22=debitor(D-1102200: ?? Test PS: xxx),
+                    99=debitor(D-1999900: null null, null: zzz)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
@@ -261,17 +273,24 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(relationships)).isEqualToIgnoringWhitespace("""
                 {
-                    2000000=rel(relAnchor='NP Mellies, Michael', relType='OPERATIONS', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000001=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
-                    2000002=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000003=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000004=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000005=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000006=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000007=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000008=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000009=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000010=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies ')
+                    2000000=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000001=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000002=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000003=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='null null, null'),
+                    2000004=rel(relAnchor='NP Mellies, Michael', relType='OPERATIONS', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000005=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
+                    2000006=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000007=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000008=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000009=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000010=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000011=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000012=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
+                    2000013=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000014=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000015=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga '),
+                    2000016=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000017=rel(relAnchor='null null, null', relType='REPRESENTATIVE', relHolder='null null, null')
                 }
                 """);
     }
@@ -291,7 +310,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(1031)
     void verifySepaMandates() {
-        assumeThat(postgresAdminUser).isEqualTo("admin");
+        assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(bankAccounts)).isEqualToIgnoringWhitespace("""
             {
@@ -323,14 +342,14 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(1041)
     void verifyCoopShares() {
-        assumeThat(postgresAdminUser).isEqualTo("admin");
+        assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
-                    33443=CoopShareTransaction(1001700, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
-                    33451=CoopShareTransaction(1002000, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
-                    33701=CoopShareTransaction(1001700, 2005-01-10, SUBSCRIPTION, 40, increase),
-                    33810=CoopShareTransaction(1002000, 2016-12-31, CANCELLATION, 22, membership ended)
+                    33443=CoopShareTransaction(M-1001700, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
+                    33451=CoopShareTransaction(M-1002000, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
+                    33701=CoopShareTransaction(M-1001700, 2005-01-10, SUBSCRIPTION, 40, increase),
+                    33810=CoopShareTransaction(M-1002000, 2016-12-31, CANCELLATION, 22, membership ended)
                 }
                 """);
     }
@@ -350,7 +369,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(1051)
     void verifyCoopAssets() {
-        assumeThat(postgresAdminUser).isEqualTo("admin");
+        assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
                 {
@@ -368,6 +387,73 @@ public class ImportOfficeData extends ContextBasedTest {
 
     @Test
     @Order(2000)
+    void verifyAllPartnersHavePersons() {
+        partners.forEach((id, p) -> {
+            if ( id != 99 ) {
+                assertThat(p.getContact()).describedAs("partner " + id + " without contact").isNotNull();
+                assertThat(p.getContact().getLabel()).describedAs("partner " + id + " without valid contact").isNotNull();
+                assertThat(p.getPerson()).describedAs("partner " + id + " without person").isNotNull();
+                assertThat(p.getPerson().getPersonType()).describedAs("partner " + id + " without valid person").isNotNull();
+            }
+        });
+    }
+
+    @Test
+    @Order(2001)
+    void removeEmptyRelationships() {
+        assumeThatWeAreImportingControlledTestData();
+
+        // avoid a error when persisting the deliberetely invalid partner entry #99
+        final var idsToRemove = new HashSet<Integer>();
+        relationships.forEach( (id, r) -> {
+            // such a record
+            if (r.getContact() == null || r.getContact().getLabel() == null ||
+               r.getRelHolder() == null | r.getRelHolder().getPersonType() == null ) {
+                idsToRemove.add(id);
+            }
+        });
+        assertThat(idsToRemove.size()).isEqualTo(2); // only from partner #99 (partner+contractual roles)
+        idsToRemove.forEach(id -> relationships.remove(id));
+    }
+
+    @Test
+    @Order(2002)
+    void removeEmptyPartners() {
+        assumeThatWeAreImportingControlledTestData();
+
+        // avoid a error when persisting the deliberetely invalid partner entry #99
+        final var idsToRemove = new HashSet<Integer>();
+        partners.forEach( (id, r) -> {
+            // such a record
+            if (r.getContact() == null || r.getContact().getLabel() == null ||
+                    r.getPerson() == null | r.getPerson().getPersonType() == null ) {
+                idsToRemove.add(id);
+            }
+        });
+        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99
+        idsToRemove.forEach(id -> partners.remove(id));
+    }
+
+    @Test
+    @Order(2003)
+    void removeEmptyDebitors() {
+        assumeThatWeAreImportingControlledTestData();
+
+        // avoid a error when persisting the deliberetely invalid partner entry #99
+        final var idsToRemove = new HashSet<Integer>();
+        debitors.forEach( (id, r) -> {
+            // such a record
+            if (r.getBillingContact() == null || r.getBillingContact().getLabel() == null ||
+                    r.getPartner().getPerson() == null | r.getPartner().getPerson().getPersonType() == null ) {
+                idsToRemove.add(id);
+            }
+        });
+        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99
+        idsToRemove.forEach(id -> debitors.remove(id));
+    }
+
+    @Test
+    @Order(3000)
     @Commit
     void persistEntities() {
 
@@ -390,6 +476,11 @@ public class ImportOfficeData extends ContextBasedTest {
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
+            relationships.forEach(this::persist);
+        }).assertSuccessful();
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
             partners.forEach(this::persist);
             updateLegacyIds(partners, "hs_office_partner_legacy_id", "bp_id");
         }).assertSuccessful();
@@ -402,26 +493,17 @@ public class ImportOfficeData extends ContextBasedTest {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             memberships.forEach(this::persist);
-
-        }).assertSuccessful();
-
-        jpaAttempt.transacted(() -> {
-            context(rbacSuperuser);
-            relationships.forEach(this::persist);
-
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             bankAccounts.forEach(this::persist);
-
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             sepaMandates.forEach(this::persist);
             updateLegacyIds(sepaMandates, "hs_office_sepamandate_legacy_id", "sepa_mandate_id");
-
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -441,21 +523,25 @@ public class ImportOfficeData extends ContextBasedTest {
 
     private void persist(final Integer id, final HasUuid entity) {
         try {
-            System.out.println("persisting #" + entity.hashCode() + ": " + entity.toString());
+            //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
             em.persist(entity);
-            em.flush();
-            System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
-        } catch (Exception x) {
-            System.out.println("failed to persist: " + entity.toString());
-            throw x;
+            // uncomment for debugging purposes
+            // em.flush();
+            // System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
+        } catch (Exception exc) {
+            System.err.println("failed to persist #" + entity.hashCode() + ": " + entity);
+            System.err.println(exc);
         }
 
+    }
+
+    private static void assumeThatWeAreImportingControlledTestData() {
+        assumeThat(partners.size()).isLessThan(100);
     }
 
     private void deleteTestDataFromHsOfficeTables() {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            em.createNativeQuery("delete from hs_office_relationship where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopassetstransaction where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopassetstransaction_legacy_id where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopsharestransaction where true").executeUpdate();
@@ -467,6 +553,7 @@ public class ImportOfficeData extends ContextBasedTest {
             em.createNativeQuery("delete from hs_office_bankaccount where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_partner where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_partner_details where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_relationship where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_contact where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_person where true").executeUpdate();
         }).assertSuccessful();
@@ -557,15 +644,30 @@ public class ImportOfficeData extends ContextBasedTest {
 
         final var columns = new Columns(header);
 
+        final var mandant = HsOfficePersonEntity.builder()
+                .personType(HsOfficePersonType.LEGAL_PERSON)
+                .tradeName("Hostsharing eG")
+                .build();
+        persons.put(1, mandant);
+
         records.stream()
                 .map(this::trimAll)
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
                     final var person = HsOfficePersonEntity.builder().build();
 
+                    final var partnerRelationship = HsOfficeRelationshipEntity.builder()
+                            .relHolder(person)
+                            .relType(HsOfficeRelationshipType.PARTNER)
+                            .relAnchor(mandant)
+                            .contact(null) // is set during contacts import depending on assigned roles
+                            .build();
+                    relationships.put(relationshipId++, partnerRelationship);
+
                     final var partner = HsOfficePartnerEntity.builder()
                             .partnerNumber(rec.getInteger("member_id"))
                             .details(HsOfficePartnerDetailsEntity.builder().build())
+                            .partnerRole(partnerRelationship)
                             .contact(null) // is set during contacts import depending on assigned roles
                             .person(person)
                             .build();
@@ -576,14 +678,12 @@ public class ImportOfficeData extends ContextBasedTest {
                             .debitorNumberSuffix((byte) 0)
                             .defaultPrefix(rec.getString("member_code").replace("hsh00-", ""))
                             .partner(partner)
-                            .billable(rec.isEmpty("free"))
+                            .billable(rec.isEmpty("free") || rec.getString("free").equals("f"))
                             .vatReverseCharge(rec.getBoolean("exempt_vat"))
                             .vatBusiness("GROSS".equals(rec.getString("indicator_vat"))) // TODO: remove
                             .vatId(rec.getString("uid_vat"))
                             .build();
                     debitors.put(rec.getInteger("bp_id"), debitor);
-
-                    partners.put(rec.getInteger("bp_id"), partner);
 
                     if (isNotBlank(rec.getString("member_since"))) {
                         assertThat(rec.getInteger("member_id")).isEqualTo(partner.getPartnerNumber());
@@ -715,16 +815,17 @@ public class ImportOfficeData extends ContextBasedTest {
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
                     final var contactId = rec.getInteger("contact_id");
+                    final var bpId = rec.getInteger("bp_id");
 
                     if (rec.getString("roles").isBlank()) {
                         fail("empty roles assignment not allowed for contact_id: " + contactId);
                     }
 
-                    final var partner = partners.get(rec.getInteger("bp_id"));
-                    final var debitor = debitors.get(rec.getInteger("bp_id"));
+                    final var partner = partners.get(bpId);
+                    final var debitor = debitors.get(bpId);
 
                     final var partnerPerson = partner.getPerson();
-                    if (containsRole(rec)) {
+                    if (containsPartnerRole(rec)) {
                         initPerson(partner.getPerson(), rec);
                     }
 
@@ -738,9 +839,10 @@ public class ImportOfficeData extends ContextBasedTest {
                     final var contact = HsOfficeContactEntity.builder().build();
                     initContact(contact, rec);
 
-                    if (containsRole(rec, "partner")) {
+                    if (containsPartnerRole(rec)) {
                         assertThat(partner.getContact()).isNull();
                         partner.setContact(contact);
+                        partner.getPartnerRole().setContact(contact);
                     }
                     if (containsRole(rec, "billing")) {
                         assertThat(debitor.getBillingContact()).isNull();
@@ -772,20 +874,24 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     private static void optionallyAddMissingContractualRelationships() {
+        final var contractualMissing = new HashSet<Integer>();
         partners.forEach( (id, partner) -> {
             final var partnerPerson = partner.getPerson();
-            if (relationships.values().stream().filter(rel -> rel.getRelHolder() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE).findFirst().isEmpty()) {
+            if (relationships.values().stream()
+                    .filter(rel -> rel.getRelHolder() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE)
+                    .findFirst().isEmpty()) {
                 addRelationship(partnerPerson, partnerPerson, partner.getContact(), HsOfficeRelationshipType.REPRESENTATIVE);
+                contractualMissing.add(partner.getPartnerNumber());
             }
         });
+        // assertThat(contractualMissing).isEmpty(); uncomment if we don't want allow missing contractual contact
     }
-
     private static boolean containsRole(final Record rec, final String role) {
         final var roles = rec.getString("roles");
         return ("," + roles + ",").contains("," + role + ",");
     }
 
-    private static boolean containsRole(final Record rec) {
+    private static boolean containsPartnerRole(final Record rec) {
         return containsRole(rec, "partner");
     }
 
@@ -825,7 +931,7 @@ public class ImportOfficeData extends ContextBasedTest {
             if (roles.contains("contractual") && !roles.contains("partner") &&
                 !person.getFamilyName().isBlank() && !person.getGivenName().isBlank()) {
             person.setPersonType(HsOfficePersonType.NATURAL_PERSON);
-        } else if ( endsWithWord(person.getTradeName(), "e.K.", "e.G.", "eG", "GmbH", "AG")  ) {
+        } else if ( endsWithWord(person.getTradeName(), "e.K.", "e.G.", "eG", "GmbH", "AG", "KG")  ) {
             person.setPersonType(HsOfficePersonType.LEGAL_PERSON);
         } else if ( endsWithWord(person.getTradeName(), "OHG")  ) {
                 person.setPersonType(HsOfficePersonType.INCORPORATED_FIRM);
@@ -1024,7 +1130,8 @@ class Record {
 
     boolean getBoolean(final String columnName) {
         final String value = getString(columnName);
-        return isNotBlank(value) && Boolean.parseBoolean(value.trim());
+        return isNotBlank(value) &&
+                ( parseBoolean(value.trim()) || value.trim().startsWith("t"));
     }
 
     Integer getInteger(final String columnName) {
@@ -1058,7 +1165,16 @@ class OrderedDependedTestsExtension implements TestWatcher, BeforeEachCallback {
     }
 
     @Override
-    public void beforeEach(final ExtensionContext extensionContext) throws Exception {
+    public void beforeEach(final ExtensionContext extensionContext) {
         assumeThat(previousTestsPassed).isTrue();
+    }
+}
+
+class WriteOnceMap<K, V> extends TreeMap<K, V> {
+
+    @Override
+    public V put(final K k, final V v) {
+        assertThat(containsKey(k)).describedAs("overwriting " + get(k) + " index " + k + " with " + v).isFalse();
+        return super.put(k, v);
     }
 }

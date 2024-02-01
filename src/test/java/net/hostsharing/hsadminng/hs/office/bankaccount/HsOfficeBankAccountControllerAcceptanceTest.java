@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -29,7 +30,7 @@ import static org.hamcrest.Matchers.startsWith;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeBankAccountControllerAcceptanceTest {
+class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
     private Integer port;
@@ -51,7 +52,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
     class ListBankAccounts {
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canViewAllBankAaccounts_ifNoCriteriaGiven() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canViewAllBankAccounts_ifNoCriteriaGiven() throws JSONException {
 
             RestAssured // @formatter:off
                 .given()
@@ -75,7 +76,7 @@ class HsOfficeBankAccountControllerAcceptanceTest {
                                   "bic": "BYLADEM1001"
                               },
                               {
-                                  "holder": "Fourth e.G.",
+                                  "holder": "Fourth eG",
                                   "iban": "DE02200505501015871393",
                                   "bic": "HASPDEHH"
                               },

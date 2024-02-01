@@ -53,7 +53,7 @@ To be able to build and run the Java Spring Boot application, you need the follo
 - Docker 20.x (on MacOS you also need *Docker Desktop* or similar) or Podman
 - optionally: PostgreSQL Server 15.5-bookworm 
   (see instructions below to install and run in Docker)
-- The matching Java JDK at will be automatically installed by Gradle toolchain support.
+- The matching Java JDK at will be automatically installed by Gradle toolchain support to `~/.gradle/jdks/`.
 - You also might need an IDE (e.g. *IntelliJ IDEA* or *Eclipse* or *VS Code* with *[STS](https://spring.io/tools)* and a GUI Frontend for *PostgreSQL* like *Postbird*.
 
 If you have at least Docker and the Java JDK installed in appropriate versions and in your `PATH`, then you can start like this:

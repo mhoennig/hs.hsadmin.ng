@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
@@ -29,7 +30,7 @@ import static org.hamcrest.Matchers.startsWith;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {HsadminNgApplication.class, JpaAttempt.class})
 @Transactional
-class HsOfficeCoopSharesTransactionControllerAcceptanceTest {
+class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     Context context;

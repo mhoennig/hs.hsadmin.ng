@@ -7,6 +7,7 @@ components:
             type: string
             enum:
                 - UNKNOWN
+                - PARTNER
                 - EX_PARTNER
                 - REPRESENTATIVE,
                 - VIP_CONTACT
@@ -61,3 +62,4 @@ components:
               - relAnchorUuid
               - relHolderUuid
               - relType
+              - relContactUuid

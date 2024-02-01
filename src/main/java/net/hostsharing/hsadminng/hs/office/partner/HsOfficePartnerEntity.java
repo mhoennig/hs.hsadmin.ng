@@ -3,8 +3,9 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
+import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.NotFound;
@@ -40,9 +41,15 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
     private Integer partnerNumber;
 
     @ManyToOne
+    @JoinColumn(name = "partnerroleuuid", nullable = false)
+    private HsOfficeRelationshipEntity partnerRole;
+
+    // TODO: remove, is replaced by partnerRole
+    @ManyToOne
     @JoinColumn(name = "personuuid", nullable = false)
     private HsOfficePersonEntity person;
 
+    // TODO: remove, is replaced by partnerRole
     @ManyToOne
     @JoinColumn(name = "contactuuid", nullable = false)
     private HsOfficeContactEntity contact;

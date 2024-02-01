@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
@@ -34,9 +35,9 @@ import static org.hamcrest.Matchers.*;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeMembershipControllerAcceptanceTest {
+class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
-    private static String TEMP_MEMBER_NUMBER_SUFFIX = "90";
+    private static final String TEMP_MEMBER_NUMBER_SUFFIX = "90";
 
     @LocalServerPort
     private Integer port;
@@ -113,7 +114,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_canViewMembershipsByPartnerUuid() throws JSONException {
+        void globalAdmin_canViewMembershipsByPartnerUuid() {
 
             context.define("superuser-alex@hostsharing.net");
             final var partner = partnerRepo.findPartnerByPartnerNumber(10001);
@@ -145,7 +146,7 @@ class HsOfficeMembershipControllerAcceptanceTest {
         }
 
         @Test
-        void globalAdmin_canViewMembershipsByMemberNumber() throws JSONException {
+        void globalAdmin_canViewMembershipsByMemberNumber() {
 
             RestAssured // @formatter:off
                     .given()

@@ -308,6 +308,8 @@ tasks.register('importOfficeData', Test) {
 
     group 'verification'
     description 'run the import jobs as tests'
+
+    mustRunAfter spotlessJava
 }
 
 

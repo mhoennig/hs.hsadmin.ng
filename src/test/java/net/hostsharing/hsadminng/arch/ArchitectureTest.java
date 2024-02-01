@@ -30,6 +30,7 @@ public class ArchitectureTest {
                     "..test.pac",
                     "..context",
                     "..generated..",
+                    "..persistence..",
                     "..hs.office.bankaccount",
                     "..hs.office.contact",
                     "..hs.office.coopassets",
@@ -164,6 +165,7 @@ public class ArchitectureTest {
             .that().resideInAPackage("..hs.office.relationship..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage("..hs.office.relationship..",
+                    "..hs.office.partner..",
                     "..hs.office.migration..");
 
     @ArchTest

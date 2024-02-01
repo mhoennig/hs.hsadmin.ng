@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
@@ -23,14 +23,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeCoopSharesTransactionRepository coopSharesTransactionRepo;
@@ -86,8 +86,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         public void createsAndGrantsRoles() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll()).stream()
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
@@ -107,8 +107,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
 
             // then
             final var all = rawRoleRepo.findAll();
-            assertThat(roleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
+            assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
@@ -140,17 +140,17 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(1000101, 2010-03-15, SUBSCRIPTION, 4, ref 1000101-1, initial subscription)",
-                    "CoopShareTransaction(1000101, 2021-09-01, CANCELLATION, -2, ref 1000101-2, cancelling some)",
-                    "CoopShareTransaction(1000101, 2022-10-20, ADJUSTMENT, 2, ref 1000101-3, some adjustment)",
+                    "CoopShareTransaction(M-1000101, 2010-03-15, SUBSCRIPTION, 4, ref 1000101-1, initial subscription)",
+                    "CoopShareTransaction(M-1000101, 2021-09-01, CANCELLATION, -2, ref 1000101-2, cancelling some)",
+                    "CoopShareTransaction(M-1000101, 2022-10-20, ADJUSTMENT, 2, ref 1000101-3, some adjustment)",
 
-                    "CoopShareTransaction(1000202, 2010-03-15, SUBSCRIPTION, 4, ref 1000202-1, initial subscription)",
-                    "CoopShareTransaction(1000202, 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)",
-                    "CoopShareTransaction(1000202, 2022-10-20, ADJUSTMENT, 2, ref 1000202-3, some adjustment)",
+                    "CoopShareTransaction(M-1000202, 2010-03-15, SUBSCRIPTION, 4, ref 1000202-1, initial subscription)",
+                    "CoopShareTransaction(M-1000202, 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)",
+                    "CoopShareTransaction(M-1000202, 2022-10-20, ADJUSTMENT, 2, ref 1000202-3, some adjustment)",
 
-                    "CoopShareTransaction(1000303, 2010-03-15, SUBSCRIPTION, 4, ref 1000303-1, initial subscription)",
-                    "CoopShareTransaction(1000303, 2021-09-01, CANCELLATION, -2, ref 1000303-2, cancelling some)",
-                    "CoopShareTransaction(1000303, 2022-10-20, ADJUSTMENT, 2, ref 1000303-3, some adjustment)");
+                    "CoopShareTransaction(M-1000303, 2010-03-15, SUBSCRIPTION, 4, ref 1000303-1, initial subscription)",
+                    "CoopShareTransaction(M-1000303, 2021-09-01, CANCELLATION, -2, ref 1000303-2, cancelling some)",
+                    "CoopShareTransaction(M-1000303, 2022-10-20, ADJUSTMENT, 2, ref 1000303-3, some adjustment)");
         }
 
         @Test
@@ -168,9 +168,9 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(1000202, 2010-03-15, SUBSCRIPTION, 4, ref 1000202-1, initial subscription)",
-                    "CoopShareTransaction(1000202, 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)",
-                    "CoopShareTransaction(1000202, 2022-10-20, ADJUSTMENT, 2, ref 1000202-3, some adjustment)");
+                    "CoopShareTransaction(M-1000202, 2010-03-15, SUBSCRIPTION, 4, ref 1000202-1, initial subscription)",
+                    "CoopShareTransaction(M-1000202, 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)",
+                    "CoopShareTransaction(M-1000202, 2022-10-20, ADJUSTMENT, 2, ref 1000202-3, some adjustment)");
         }
 
         @Test
@@ -188,7 +188,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(1000202, 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)");
+                    "CoopShareTransaction(M-1000202, 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)");
         }
 
         @Test
@@ -205,9 +205,9 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // then:
             exactlyTheseCoopSharesTransactionsAreReturned(
                     result,
-                    "CoopShareTransaction(1000101, 2010-03-15, SUBSCRIPTION, 4, ref 1000101-1, initial subscription)",
-                    "CoopShareTransaction(1000101, 2021-09-01, CANCELLATION, -2, ref 1000101-2, cancelling some)",
-                    "CoopShareTransaction(1000101, 2022-10-20, ADJUSTMENT, 2, ref 1000101-3, some adjustment)");
+                    "CoopShareTransaction(M-1000101, 2010-03-15, SUBSCRIPTION, 4, ref 1000101-1, initial subscription)",
+                    "CoopShareTransaction(M-1000101, 2021-09-01, CANCELLATION, -2, ref 1000101-2, cancelling some)",
+                    "CoopShareTransaction(M-1000101, 2022-10-20, ADJUSTMENT, 2, ref 1000101-3, some adjustment)");
         }
     }
 
@@ -215,9 +215,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_coopsharestransaction';
                     """);
 

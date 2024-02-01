@@ -54,6 +54,19 @@ create index on tx_journal (targetTable, targetUuid);
 --//
 
 -- ============================================================================
+--changeset audit-TX-JOURNAL-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    A view combining tx_journal with tx_context.
+ */
+create view tx_journal_v as
+select txc.*, txj.targettable, txj.targetop, txj.targetuuid, txj.targetdelta
+    from tx_journal txj
+    left join tx_context txc using (contextid)
+    order by txc.txtimestamp;
+--//
+
+-- ============================================================================
 --changeset audit-TX-JOURNAL-TRIGGER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*

@@ -1,13 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +22,14 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.office.person.TestHsOfficePerson.hsOfficePerson;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficePersonRepository personRepo;
@@ -61,8 +60,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
 
-            final var result = attempt(em, () -> personRepo.save(
-                    hsOfficePerson("a new person")));
+            final var result = attempt(em, () -> toCleanup(personRepo.save(
+                    hsOfficePerson("a new person"))));
 
             // then
             result.assertSuccessful();
@@ -78,8 +77,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             final var count = personRepo.count();
 
             // when
-            final var result = attempt(em, () -> personRepo.save(
-                    hsOfficePerson("another new person")));
+            final var result = attempt(em, () -> toCleanup(personRepo.save(
+                    hsOfficePerson("another new person"))));
 
             // then
             result.assertSuccessful();
@@ -93,16 +92,16 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             // given
             context("selfregistered-user-drew@hostsharing.org");
             final var count = personRepo.count();
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            attempt(em, () -> personRepo.save(
-                    hsOfficePerson("another new person"))
+            attempt(em, () -> toCleanup(personRepo.save(
+                    hsOfficePerson("another new person")))
             ).assumeSuccessful();
 
             // then
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(
                     Array.from(
                             initialRoleNames,
                             "hs_office_person#anothernewperson.owner",
@@ -110,7 +109,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
                             "hs_office_person#anothernewperson.tenant",
                             "hs_office_person#anothernewperson.guest"
                     ));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(
                     Array.from(
                             initialGrantNames,
                             "{ grant role hs_office_person#anothernewperson.owner to role global#global.admin by system and assume }",
@@ -240,8 +239,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingAPersonAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("selfregistered-user-drew@hostsharing.org", null);
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
             final var givenPerson = givenSomeTemporaryPerson("selfregistered-user-drew@hostsharing.org");
 
             // when
@@ -253,8 +252,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isEqualTo(1);
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(initialRoleNames));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(initialGrantNames));
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(initialRoleNames));
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(initialGrantNames));
         }
     }
 
@@ -262,9 +261,8 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_person';
                     """);
 
@@ -274,17 +272,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
                 "[creating person test-data First GmbH, hs_office_person, INSERT]",
-                "[creating person test-data Second e.K., Sandra, Miller, hs_office_person, INSERT]");
-    }
-
-    @AfterEach
-    void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        final var result = personRepo.findPersonByOptionalNameLike("some temporary person");
-        result.forEach(tempPerson -> {
-            System.out.println("DELETING temporary person: " + tempPerson.toShortString());
-            personRepo.deleteByUuid(tempPerson.getUuid());
-        });
+                "[creating person test-data Second e.K., Smith, Peter, hs_office_person, INSERT]");
     }
 
     private HsOfficePersonEntity givenSomeTemporaryPerson(
@@ -292,7 +280,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTest {
             Supplier<HsOfficePersonEntity> entitySupplier) {
         return jpaAttempt.transacted(() -> {
             context(createdByUser);
-            return personRepo.save(entitySupplier.get());
+            return toCleanup(personRepo.save(entitySupplier.get()));
         }).assumeSuccessful().returnedValue();
     }
 

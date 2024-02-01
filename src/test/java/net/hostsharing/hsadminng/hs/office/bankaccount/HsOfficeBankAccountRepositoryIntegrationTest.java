@@ -1,14 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +22,14 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.office.bankaccount.TestHsOfficeBankAccount.hsOfficeBankAccount;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import({ Context.class, JpaAttempt.class })
-class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeBankAccountRepository bankAccountRepo;
@@ -61,8 +59,8 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             final var count = bankAccountRepo.count();
 
             // when
-            final var result = attempt(em, () -> bankAccountRepo.save(
-                    hsOfficeBankAccount("some temp acc A", "DE37500105177419788228", "")));
+            final var result = attempt(em, () -> toCleanup(bankAccountRepo.save(
+                    hsOfficeBankAccount("some temp acc A", "DE37500105177419788228", ""))));
 
             // then
             result.assertSuccessful();
@@ -78,8 +76,8 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             final var count = bankAccountRepo.count();
 
             // when
-            final var result = attempt(em, () -> bankAccountRepo.save(
-                    hsOfficeBankAccount("some temp acc B", "DE49500105174516484892", "INGDDEFFXXX")));
+            final var result = attempt(em, () -> toCleanup(bankAccountRepo.save(
+                    hsOfficeBankAccount("some temp acc B", "DE49500105174516484892", "INGDDEFFXXX"))));
 
             // then
             result.assertSuccessful();
@@ -92,24 +90,24 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("selfregistered-user-drew@hostsharing.org");
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            attempt(em, () -> bankAccountRepo.save(
-                    hsOfficeBankAccount("some temp acc C", "DE25500105176934832579", "INGDDEFFXXX"))
+            attempt(em, () -> toCleanup(bankAccountRepo.save(
+                    hsOfficeBankAccount("some temp acc C", "DE25500105176934832579", "INGDDEFFXXX")))
             ).assertSuccessful();
 
             // then
             final var roles = rawRoleRepo.findAll();
-            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
                     "hs_office_bankaccount#sometempaccC.owner",
                     "hs_office_bankaccount#sometempaccC.admin",
                     "hs_office_bankaccount#sometempaccC.tenant",
                     "hs_office_bankaccount#sometempaccC.guest"
             ));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
                     "{ grant perm delete on hs_office_bankaccount#sometempaccC to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
                     "{ grant role hs_office_bankaccount#sometempaccC.owner     to role global#global.admin                              by system and assume }",
@@ -147,7 +145,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
                     result,
                     "Anita Bessler",
                     "First GmbH",
-                    "Fourth e.G.",
+                    "Fourth eG",
                     "Mel Bessler",
                     "Paul Winkler",
                     "Peter Smith",
@@ -174,7 +172,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             context("superuser-alex@hostsharing.net", null);
 
             // when
-            final var result = bankAccountRepo.findByIbanOrderByIban("DE02120300000000202051");
+            final var result = bankAccountRepo.findByIbanOrderByIbanAsc("DE02120300000000202051");
 
             // then
             exactlyTheseBankAccountsAreReturned(result, "First GmbH");
@@ -187,7 +185,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
 
             // when:
             context("selfregistered-user-drew@hostsharing.org");
-            final var result = bankAccountRepo.findByIbanOrderByIban(givenBankAccount.getIban());
+            final var result = bankAccountRepo.findByIbanOrderByIbanAsc(givenBankAccount.getIban());
 
             // then:
             exactlyTheseBankAccountsAreReturned(result, givenBankAccount.getHolder());
@@ -240,12 +238,12 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingABankAccountAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("selfregistered-user-drew@hostsharing.org", null);
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
             final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
-            assertThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll()).size()).as("unexpected number of roles created")
                     .isEqualTo(initialRoleNames.size() + 4);
-            assertThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()).size()).as("unexpected number of grants created")
                     .isEqualTo(initialGrantNames.size() + 7);
 
             // when
@@ -257,10 +255,10 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isEqualTo(1);
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames
             ));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialGrantNames
             ));
         }
@@ -271,7 +269,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
             Supplier<HsOfficeBankAccountEntity> entitySupplier) {
         return jpaAttempt.transacted(() -> {
             context(createdByUser);
-            return bankAccountRepo.save(entitySupplier.get());
+            return toCleanup(bankAccountRepo.save(entitySupplier.get()));
         }).assertSuccessful().returnedValue();
     }
 
@@ -279,9 +277,8 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_bankaccount';
                     """);
 
@@ -292,17 +289,6 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTest {
         assertThat(customerLogEntries).map(Arrays::toString).contains(
                 "[creating bankaccount test-data First GmbH, hs_office_bankaccount, INSERT]",
                 "[creating bankaccount test-data Second e.K., hs_office_bankaccount, INSERT]");
-    }
-
-    @BeforeEach
-    @AfterEach
-    void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        final var result = bankAccountRepo.findByOptionalHolderLike("some temp acc");
-        result.forEach(tempPerson -> {
-            System.out.println("DELETING temporary bankaccount: " + tempPerson.getHolder());
-            bankAccountRepo.deleteByUuid(tempPerson.getUuid());
-        });
     }
 
     private HsOfficeBankAccountEntity givenSomeTemporaryBankAccount(final String createdByUser) {

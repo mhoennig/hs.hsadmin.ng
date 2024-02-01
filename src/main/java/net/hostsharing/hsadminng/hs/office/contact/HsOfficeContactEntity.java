@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.contact;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
+import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
@@ -36,7 +36,7 @@ public class HsOfficeContactEntity implements Stringifyable, HasUuid {
     private String label;
 
     @Column(name = "postaladdress")
-    private String postalAddress;
+    private String postalAddress; // TODO: check if we really want multiple, if so: JSON-Array or Postgres-Array?
 
     @Column(name = "emailaddresses", columnDefinition = "json")
     private String emailAddresses; // TODO: check if we can really add multiple. format: ["eins@...", "zwei@..."]

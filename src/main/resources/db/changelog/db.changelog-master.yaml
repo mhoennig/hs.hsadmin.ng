@@ -66,21 +66,21 @@ databaseChangeLog:
     - include:
         file: db/changelog/218-hs-office-person-test-data.sql
     - include:
-        file: db/changelog/220-hs-office-partner.sql
+        file: db/changelog/220-hs-office-relationship.sql
     - include:
-        file: db/changelog/223-hs-office-partner-rbac.sql
+        file: db/changelog/223-hs-office-relationship-rbac.sql
     - include:
-        file: db/changelog/224-hs-office-partner-details-rbac.sql
+        file: db/changelog/228-hs-office-relationship-test-data.sql
     - include:
-        file: db/changelog/226-hs-office-partner-migration.sql
+        file: db/changelog/230-hs-office-partner.sql
     - include:
-        file: db/changelog/228-hs-office-partner-test-data.sql
+        file: db/changelog/233-hs-office-partner-rbac.sql
     - include:
-        file: db/changelog/230-hs-office-relationship.sql
+        file: db/changelog/234-hs-office-partner-details-rbac.sql
     - include:
-        file: db/changelog/233-hs-office-relationship-rbac.sql
+        file: db/changelog/236-hs-office-partner-migration.sql
     - include:
-        file: db/changelog/238-hs-office-relationship-test-data.sql
+        file: db/changelog/238-hs-office-partner-test-data.sql
     - include:
         file: db/changelog/240-hs-office-bankaccount.sql
     - include:

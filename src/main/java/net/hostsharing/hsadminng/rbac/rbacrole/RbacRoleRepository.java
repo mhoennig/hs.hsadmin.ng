@@ -8,9 +8,12 @@ import java.util.UUID;
 public interface RbacRoleRepository extends Repository<RbacRoleEntity, UUID> {
 
     /**
-     * Returns all instances of the type.
-     *
-     * @return all entities
+     * @return the number of persistent RbacRoleEntity instances, mostly for testing purposes.
+     */
+    long count(); // TODO: move to test sources
+
+    /**
+     * @return all persistent RbacRoleEntity instances, assigned to the current subject (user or assumed roles)
      */
     List<RbacRoleEntity> findAll();
 

@@ -1,0 +1,286 @@
+package net.hostsharing.hsadminng.hs.office.test;
+
+import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantEntity;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
+import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import net.hostsharing.test.JpaAttempt;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
+
+import jakarta.persistence.*;
+import java.util.*;
+
+import static java.lang.System.out;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.SetUtils.difference;
+import static org.assertj.core.api.Assertions.assertThat;
+
+// TODO: cleanup the whole class
+public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
+
+    private static final boolean DETAILED_BUT_SLOW_CHECK = true;
+    @PersistenceContext
+    protected EntityManager em;
+
+    @Autowired
+    RbacGrantRepository rbacGrantRepo;
+
+    @Autowired
+    RbacRoleRepository rbacRoleRepo;
+
+    @Autowired
+    RbacObjectRepository rbacObjectRepo;
+
+    @Autowired
+    JpaAttempt jpaAttempt;
+
+    private TreeMap<UUID, Class<? extends HasUuid>> entitiesToCleanup = new TreeMap<>();
+
+    private static Long latestIntialTestDataSerialId;
+    private static boolean countersInitialized = false;
+    private static boolean initialTestDataValidated = false;
+    private static Long initialRbacObjectCount = null;
+    private static Long initialRbacRoleCount = null;
+    private static Long initialRbacGrantCount = null;
+    private Set<String> initialRbacObjects;
+    private Set<String> initialRbacRoles;
+    private Set<String> initialRbacGrants;
+
+    public UUID toCleanup(final Class<? extends HasUuid> entityClass, final UUID uuidToCleanup) {
+        out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup);
+        entitiesToCleanup.put(uuidToCleanup, entityClass);
+        return uuidToCleanup;
+    }
+
+    public <E extends HasUuid> E toCleanup(final E entity) {
+        out.println("toCleanup(" + entity.getClass() + ", " + entity.getUuid());
+        if ( entity.getUuid() == null ) {
+            throw new IllegalArgumentException("only persisted entities with valid uuid allowed");
+        }
+        entitiesToCleanup.put(entity.getUuid(), entity.getClass());
+        return entity;
+    }
+
+    protected void cleanupAllNew(final Class<? extends HasUuid> entityClass) {
+        if (initialRbacObjects == null) {
+            out.println("skipping cleanupAllNew: " + entityClass.getSimpleName());
+            return; // TODO: seems @AfterEach is called without any @BeforeEach
+        }
+
+        out.println("executing cleanupAllNew: " + entityClass.getSimpleName());
+
+        final var tableName = entityClass.getAnnotation(Table.class).name();
+        final var rvTableName = tableName.endsWith("_rv")
+                ? tableName.substring(0, tableName.length() - "_rv".length())
+                : tableName;
+
+        allRbacObjects().stream()
+                .filter(o -> o.startsWith(rvTableName + ":"))
+                .filter(o -> !initialRbacObjects.contains(o))
+                .forEach(o -> {
+                    final UUID uuid = UUID.fromString(o.split(":")[1]);
+
+                    final var exception = jpaAttempt.transacted(() -> {
+                        context.define("superuser-alex@hostsharing.net", null);
+                        em.remove(em.getReference(entityClass, uuid));
+                        out.println("DELETING new " + entityClass.getSimpleName() + "#" + uuid + " SUCCEEDED");
+                    }).caughtException();
+
+                    if (exception != null) {
+                        out.println("DELETING new " + entityClass.getSimpleName() + "#" + uuid + " FAILED: " + exception);
+                    }
+                });
+    }
+
+    @BeforeEach
+        //@Transactional -- TODO: check why this does not work but jpaAttempt.transacted does work
+    void retrieveInitialTestData(final TestInfo testInfo) {
+        out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".retrieveInitialTestData");
+
+        if (latestIntialTestDataSerialId == null ) {
+            latestIntialTestDataSerialId = rbacObjectRepo.findLatestSerialId();
+        }
+
+        if (initialRbacObjects != null){
+            assertNoNewRbackObjectsRolesAndGrantsLeaked();
+        }
+
+        initialTestDataValidated = false;
+
+        jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            if (initialRbacObjects == null) {
+
+                initialRbacObjects = allRbacObjects();
+                initialRbacRoles = allRbacRoles();
+                initialRbacGrants = allRbacGrants();
+
+                initialRbacObjectCount = rbacObjectRepo.count();
+                initialRbacRoleCount = rbacRoleRepo.count();
+                initialRbacGrantCount = rbacGrantRepo.count();
+
+                countersInitialized = true;
+                initialTestDataValidated = true;
+            } else {
+                initialRbacObjectCount = assumeSameInitialCount(initialRbacObjectCount, rbacObjectRepo.count(), "business objects");
+                initialRbacRoleCount = assumeSameInitialCount(initialRbacRoleCount, rbacRoleRepo.count(), "rbac roles");
+                initialRbacGrantCount = assumeSameInitialCount(initialRbacGrantCount, rbacGrantRepo.count(), "rbac grants");
+                initialTestDataValidated = true;
+            }
+        }).reThrowException();
+
+        assertThat(countersInitialized).as("error while retrieving initial test data").isTrue();
+        assertThat(initialTestDataValidated).as("check previous test for leaked test data").isTrue();
+
+        out.println("TOTAL OBJECT COUNT (before): " + initialRbacObjectCount);
+    }
+
+    private Long assumeSameInitialCount(final Long countBefore, final long currentCount, final String name) {
+        assertThat(currentCount)
+                .as("not all " + name + " got cleaned up by the previous tests")
+                .isEqualTo(countBefore);
+        return currentCount;
+    }
+
+    @AfterEach
+    void cleanupAndCheckCleanup(final TestInfo testInfo) {
+        out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".cleanupAndCheckCleanup");
+        cleanupTemporaryTestData();
+        deleteLeakedRbacObjects();
+        long rbacObjectCount = assertNoNewRbackObjectsRolesAndGrantsLeaked();
+
+        out.println("TOTAL OBJECT COUNT (after): " + rbacObjectCount);
+    }
+
+    private void cleanupTemporaryTestData() {
+        entitiesToCleanup.forEach((uuid, entityClass) -> {
+            final var caughtException = jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net", null);
+                em.remove(em.getReference(entityClass, uuid));
+                out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " successful");
+            }).caughtException();
+            if (caughtException != null) {
+                out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " failed: " + caughtException);
+            }
+        });
+    }
+
+    private long assertNoNewRbackObjectsRolesAndGrantsLeaked() {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            assertEqual(initialRbacObjects, allRbacObjects());
+            if (DETAILED_BUT_SLOW_CHECK) {
+                assertEqual(initialRbacRoles, allRbacRoles());
+                assertEqual(initialRbacGrants, allRbacGrants());
+            }
+
+            // The detailed check works with sets, thus it cannot determine duplicates.
+            // Therefore, we always compare the counts as well.
+            long rbacObjectCount = 0;
+            assertThat(rbacObjectCount = rbacObjectRepo.count()).as("not all business objects got cleaned up (by current test)")
+                    .isEqualTo(initialRbacObjectCount);
+            assertThat(rbacRoleRepo.count()).as("not all rbac roles got cleaned up (by current test)")
+                    .isEqualTo(initialRbacRoleCount);
+            assertThat(rbacGrantRepo.count()).as("not all rbac grants got cleaned up (by current test)")
+                    .isEqualTo(initialRbacGrantCount);
+            return rbacObjectCount;
+        }).assertSuccessful().returnedValue();
+    }
+
+    private void deleteLeakedRbacObjects() {
+        jpaAttempt.transacted(() -> rbacObjectRepo.findAll()).returnedValue().stream()
+                .filter(o -> o.serialId > latestIntialTestDataSerialId)
+                .sorted(comparing(o -> o.serialId))
+                .forEach(o -> {
+                    final var exception = jpaAttempt.transacted(() -> {
+                        context.define("superuser-alex@hostsharing.net", null);
+
+                        em.createNativeQuery("DELETE FROM " + o.objectTable + " WHERE uuid=:uuid")
+                                .setParameter("uuid", o.uuid)
+                                .executeUpdate();
+
+                        out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " SUCCEEDED");
+                    }).caughtException();
+
+                    if (exception != null) {
+                        out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " FAILED " + exception);
+                    }
+                });
+    }
+
+    private void assertEqual(final Set<String> before, final Set<String> after) {
+        assertThat(before).isNotNull();
+        assertThat(after).isNotNull();
+        assertThat(difference(before, after)).as("missing entities (deleted initial test data)").isEmpty();
+        assertThat(difference(after, before)).as("spurious entities (test data not cleaned up by this test)").isEmpty();
+    }
+
+    @NotNull
+    private Set<String> allRbacGrants() {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            return rbacGrantRepo.findAll().stream()
+                    .map(RbacGrantEntity::toDisplay)
+                    .collect(toSet());
+        }).assertSuccessful().returnedValue();
+    }
+
+    @NotNull
+    private Set<String> allRbacRoles() {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            return rbacRoleRepo.findAll().stream()
+                    .map(RbacRoleEntity::getRoleName)
+                    .collect(toSet());
+        }).assertSuccessful().returnedValue();
+    }
+
+    @NotNull
+    private Set<String> allRbacObjects() {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net", null);
+            return rbacObjectRepo.findAll().stream()
+                    .map(RbacObjectEntity::toString)
+                    .collect(toSet());
+        }).assertSuccessful().returnedValue();
+    }
+}
+
+interface RbacObjectRepository extends Repository<RbacObjectEntity, UUID> {
+
+    long count();
+
+    List<RbacObjectEntity> findAll();
+
+    @Query("SELECT max(r.serialId) FROM RbacObjectEntity r")
+    Long findLatestSerialId();
+}
+
+@Entity
+@Table(name = "rbacobject")
+class RbacObjectEntity {
+
+    @Id
+    @GeneratedValue
+    UUID uuid;
+
+    @Column(name = "serialid")
+    long serialId;
+
+    @Column(name = "objecttable")
+    String objectTable;
+
+    @Override
+    public String toString() {
+        return objectTable + ":" + uuid + ":" + serialId;
+    }
+}

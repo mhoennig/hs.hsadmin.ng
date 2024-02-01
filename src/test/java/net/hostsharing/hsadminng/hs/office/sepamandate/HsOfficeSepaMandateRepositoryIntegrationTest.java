@@ -2,15 +2,13 @@ package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import com.vladmihalcea.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +16,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -27,14 +24,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import({ Context.class, JpaAttempt.class })
-class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeSepaMandateRepository sepaMandateRepo;
@@ -81,7 +78,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
-                return sepaMandateRepo.save(newSepaMandate);
+                return toCleanup(sepaMandateRepo.save(newSepaMandate));
             });
 
             // then
@@ -95,8 +92,8 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll()).stream()
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("-firstcontact", "-..."))
                     .map(s -> s.replace("PaulWinkler", "Paul..."))
                     .map(s -> s.replace("hs_office_", ""))
@@ -114,19 +111,19 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
-                return sepaMandateRepo.save(newSepaMandate);
+                return toCleanup(sepaMandateRepo.save(newSepaMandate));
             });
 
             // then
             final var all = rawRoleRepo.findAll();
-            assertThat(roleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
                     "hs_office_sepamandate#temprefB.owner",
                     "hs_office_sepamandate#temprefB.admin",
                     "hs_office_sepamandate#temprefB.agent",
                     "hs_office_sepamandate#temprefB.tenant",
                     "hs_office_sepamandate#temprefB.guest"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("-firstcontact", "-..."))
                     .map(s -> s.replace("PaulWinkler", "Paul..."))
                     .map(s -> s.replace("hs_office_", ""))
@@ -251,7 +248,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                 givenSepaMandate.setAgreement(LocalDate.parse("2019-05-13"));
                 givenSepaMandate.setValidity(Range.closedOpen(
                         LocalDate.parse("2019-05-17"), LocalDate.parse("2023-01-01")));
-                return sepaMandateRepo.save(givenSepaMandate);
+                return toCleanup(sepaMandateRepo.save(givenSepaMandate));
             });
 
             // then
@@ -279,7 +276,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                 context("superuser-alex@hostsharing.net", "hs_office_bankaccount#AnitaBessler.admin");
                 givenSepaMandate.setValidity(Range.closedOpen(
                         givenSepaMandate.getValidity().lower(), newValidityEnd));
-                return sepaMandateRepo.save(givenSepaMandate);
+                return toCleanup(sepaMandateRepo.save(givenSepaMandate));
             });
 
             // then
@@ -320,7 +317,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_withoutAssumedRole_canDeleteAnySepaMandate() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Fourth e.G.");
+            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Fourth eG");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -364,12 +361,12 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingASepaMandateAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var initialRoleNames = Array.from(roleNamesOf(rawRoleRepo.findAll()));
-            final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
+            final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
+            final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Mel Bessler");
-            assertThat(rawRoleRepo.findAll().size()).as("precondition failed: unexpected number of roles created")
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll()).size()).as("precondition failed: unexpected number of roles created")
                     .isEqualTo(initialRoleNames.length + 5);
-            assertThat(rawGrantRepo.findAll().size()).as("precondition failed: unexpected number of grants created")
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()).size()).as("precondition failed: unexpected number of grants created")
                     .isEqualTo(initialGrantNames.length + 14);
 
             // when
@@ -381,8 +378,8 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isEqualTo(1);
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
     }
 
@@ -390,9 +387,8 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_sepamandate';
                     """);
 
@@ -403,14 +399,6 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
         assertThat(customerLogEntries).map(Arrays::toString).contains(
                 "[creating SEPA-mandate test-data FirstGmbH, hs_office_sepamandate, INSERT]",
                 "[creating SEPA-mandate test-data Seconde.K., hs_office_sepamandate, INSERT]");
-    }
-
-    @BeforeEach
-    @AfterEach
-    @Transactional
-    void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        em.createQuery("DELETE FROM HsOfficeSepaMandateEntity WHERE reference like 'temp ref%'").executeUpdate();
     }
 
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandateBessler(final String bankAccountHolder) {
@@ -427,7 +415,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTest {
                             LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                     .build();
 
-            return sepaMandateRepo.save(newSepaMandate);
+            return toCleanup(sepaMandateRepo.save(newSepaMandate));
         }).assertSuccessful().returnedValue();
     }
 

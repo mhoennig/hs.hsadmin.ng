@@ -22,7 +22,7 @@ class HsOfficeCoopSharesTransactionEntityUnitTest {
     void toStringContainsAlmostAllPropertiesAccount() {
         final var result = givenCoopSharesTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopShareTransaction(1000101, 2020-01-01, SUBSCRIPTION, 4, some-ref)");
+        assertThat(result).isEqualTo("CoopShareTransaction(M-1000101, 2020-01-01, SUBSCRIPTION, 4, some-ref)");
     }
 
     @Test
@@ -43,6 +43,6 @@ class HsOfficeCoopSharesTransactionEntityUnitTest {
     void toShortStringEmptyTransactionDoesNotThrowException() {
         final var result = givenEmptyCoopSharesTransaction.toShortString();
 
-        assertThat(result).isEqualTo("M-null+0");
+        assertThat(result).isEqualTo("null+0");
     }
 }

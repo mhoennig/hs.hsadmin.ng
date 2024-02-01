@@ -4,9 +4,9 @@ import com.vladmihalcea.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
@@ -34,16 +34,10 @@ import static org.hamcrest.Matchers.*;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeSepaMandateControllerAcceptanceTest {
+class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
     private Integer port;
-
-    @Autowired
-    Context context;
-
-    @Autowired
-    Context contextMock;
 
     @Autowired
     HsOfficeSepaMandateRepository sepaMandateRepo;
@@ -123,7 +117,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
-            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIban("DE02200505501015871393").get(0);
+            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -165,7 +159,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
-            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIban("DE02200505501015871393").get(0);
+            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -190,7 +184,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
-            final var givenBankAccountUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            final var givenBankAccountUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -211,7 +205,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .post("http://localhost/api/hs/office/sepamandates")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find BankAccount with uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("Unable to find BankAccount with uuid 00000000-0000-0000-0000-000000000000"));
             // @formatter:on
         }
 
@@ -219,8 +213,8 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
         void globalAdmin_canNotAddSepaMandate_ifPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitorUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIban("DE02200505501015871393").get(0);
+            final var givenDebitorUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc("DE02200505501015871393").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -241,7 +235,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest {
                     .post("http://localhost/api/hs/office/sepamandates")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find Debitor with uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("Unable to find Debitor with uuid 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }

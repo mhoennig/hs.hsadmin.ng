@@ -46,7 +46,7 @@ create or replace procedure createTestPersonTestData(
 begin
     for t in startCount..endCount
         loop
-            call createHsOfficePersonTestData('LEGAL', intToVarChar(t, 4));
+            call createHsOfficePersonTestData('LP', intToVarChar(t, 4));
             commit;
         end loop;
 end; $$;
@@ -59,11 +59,15 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call createHsOfficePersonTestData('LP', 'Hostsharing eG');
         call createHsOfficePersonTestData('LP', 'First GmbH');
+        call createHsOfficePersonTestData('NP', null, 'Firby', 'Susan');
         call createHsOfficePersonTestData('NP', null, 'Smith', 'Peter');
-        call createHsOfficePersonTestData('LP', 'Second e.K.', 'Sandra', 'Miller');
+        call createHsOfficePersonTestData('NP', null, 'Tucker', 'Jack');
+        call createHsOfficePersonTestData('NP', null, 'Fouler', 'Ellie');
+        call createHsOfficePersonTestData('LP', 'Second e.K.', 'Smith', 'Peter');
         call createHsOfficePersonTestData('IF', 'Third OHG');
-        call createHsOfficePersonTestData('IF', 'Fourth e.G.');
+        call createHsOfficePersonTestData('IF', 'Fourth eG');
         call createHsOfficePersonTestData('UF', 'Erben Bessler', 'Mel', 'Bessler');
         call createHsOfficePersonTestData('NP', null, 'Bessler', 'Anita');
         call createHsOfficePersonTestData('NP', null, 'Winkler', 'Paul');

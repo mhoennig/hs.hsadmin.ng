@@ -61,7 +61,7 @@ do language plpgsql $$
         call createHsOfficeContactTestData('first contact');
         call createHsOfficeContactTestData('second contact');
         call createHsOfficeContactTestData('third contact');
-        call createHsOfficeContactTestData('forth contact');
+        call createHsOfficeContactTestData('fourth contact');
         call createHsOfficeContactTestData('fifth contact');
         call createHsOfficeContactTestData('sixth contact');
         call createHsOfficeContactTestData('seventh contact');

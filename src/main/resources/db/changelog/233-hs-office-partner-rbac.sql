@@ -27,12 +27,17 @@ create or replace function hsOfficePartnerRbacRolesTrigger()
     language plpgsql
     strict as $$
 declare
+    oldPartnerRole        hs_office_relationship;
+    newPartnerRole        hs_office_relationship;
+
     oldPerson             hs_office_person;
     newPerson             hs_office_person;
+
     oldContact            hs_office_contact;
     newContact            hs_office_contact;
 begin
 
+    select * from hs_office_relationship as r where r.uuid = NEW.partnerroleuuid into newPartnerRole;
     select * from hs_office_person as p where p.uuid = NEW.personUuid into newPerson;
     select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
 
@@ -52,6 +57,7 @@ begin
                 incomingSuperRoles => array[
                     hsOfficePartnerOwner(NEW)],
                 outgoingSubRoles => array[
+                    hsOfficeRelationshipTenant(newPartnerRole),
                     hsOfficePersonTenant(newPerson),
                     hsOfficeContactTenant(newContact)]
             );
@@ -60,6 +66,7 @@ begin
                 hsOfficePartnerAgent(NEW),
                 incomingSuperRoles => array[
                     hsOfficePartnerAdmin(NEW),
+                    hsOfficeRelationshipAdmin(newPartnerRole),
                     hsOfficePersonAdmin(newPerson),
                     hsOfficeContactAdmin(newContact)]
             );
@@ -69,6 +76,7 @@ begin
                 incomingSuperRoles => array[
                     hsOfficePartnerAgent(NEW)],
                 outgoingSubRoles => array[
+                    hsOfficeRelationshipTenant(newPartnerRole),
                     hsOfficePersonGuest(newPerson),
                     hsOfficeContactGuest(newContact)]
             );
@@ -108,6 +116,19 @@ begin
 
 
     elsif TG_OP = 'UPDATE' then
+
+        if OLD.partnerRoleUuid <> NEW.partnerRoleUuid then
+            select * from hs_office_relationship as r where r.uuid = OLD.partnerRoleUuid into oldPartnerRole;
+
+            call revokeRoleFromRole(hsOfficeRelationshipTenant(oldPartnerRole), hsOfficePartnerAdmin(OLD));
+            call grantRoleToRole(hsOfficeRelationshipTenant(newPartnerRole), hsOfficePartnerAdmin(NEW));
+
+            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficeRelationshipAdmin(oldPartnerRole));
+            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficeRelationshipAdmin(newPartnerRole));
+
+            call revokeRoleFromRole(hsOfficeRelationshipGuest(oldPartnerRole), hsOfficePartnerTenant(OLD));
+            call grantRoleToRole(hsOfficeRelationshipGuest(newPartnerRole), hsOfficePartnerTenant(NEW));
+        end if;
 
         if OLD.personUuid <> NEW.personUuid then
             select * from hs_office_person as p where p.uuid = OLD.personUuid into oldPerson;
@@ -179,6 +200,7 @@ call generateRbacIdentityView('hs_office_partner', $idName$
 call generateRbacRestrictedView('hs_office_partner',
     '(select idName from hs_office_person_iv p where p.uuid = target.personUuid)',
     $updates$
+        partnerRoleUuid = new.partnerRoleUuid,
         personUuid = new.personUuid,
         contactUuid = new.contactUuid
     $updates$);
@@ -189,7 +211,7 @@ call generateRbacRestrictedView('hs_office_partner',
 --changeset hs-office-partner-rbac-NEW-PARTNER:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Creates a global permission for new-partner and assigns it to the hostsharing admins role.
+    Creates a global permission for new-partner and assigns it to the Hostsharing admins role.
  */
 do language plpgsql $$
     declare

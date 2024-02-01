@@ -6,6 +6,7 @@
 
 CREATE TYPE HsOfficeRelationshipType AS ENUM (
     'UNKNOWN',
+    'PARTNER',
     'EX_PARTNER',
     'REPRESENTATIVE',
     'VIP_CONTACT',

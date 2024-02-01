@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.migration;
+package net.hostsharing.hsadminng.persistence;
 
 import java.util.UUID;
 

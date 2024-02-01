@@ -9,30 +9,49 @@
     Creates a single partner test record.
  */
 create or replace procedure createHsOfficePartnerTestData(
+        mandantTradeName varchar,
         partnerNumber numeric(5),
-        personTradeOrFamilyName varchar,
+        partnerPersonName varchar,
         contactLabel varchar )
     language plpgsql as $$
 declare
     currentTask         varchar;
     idName              varchar;
+    mandantPerson       hs_office_person;
+    partnerRole         hs_office_relationship;
     relatedPerson       hs_office_person;
     relatedContact      hs_office_contact;
     relatedDetailsUuid  uuid;
 begin
-    idName := cleanIdentifier( personTradeOrFamilyName|| '-' || contactLabel);
+    idName := cleanIdentifier( partnerPersonName|| '-' || contactLabel);
     currentTask := 'creating partner test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select p.* from hs_office_person p
-               where p.tradeName = personTradeOrFamilyName or p.familyName = personTradeOrFamilyName
+               where p.tradeName = mandantTradeName
+               into mandantPerson;
+    if mandantPerson is null then
+        raise exception 'mandant "%" not found', mandantTradeName;
+    end if;
+
+    select p.* from hs_office_person p
+               where p.tradeName = partnerPersonName or p.familyName = partnerPersonName
                into relatedPerson;
     select c.* from hs_office_contact c
                where c.label = contactLabel
                into relatedContact;
 
+    select r.* from hs_office_relationship r
+            where r.reltype = 'PARTNER'
+                and r.relanchoruuid = mandantPerson.uuid and r.relholderuuid = relatedPerson.uuid
+            into partnerRole;
+    if partnerRole is null then
+        raise exception 'partnerRole "%"-"%" not found', mandantPerson.tradename, partnerPersonName;
+    end if;
+
     raise notice 'creating test partner: %', idName;
+    raise notice '- using partnerRole (%): %', partnerRole.uuid, partnerRole;
     raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
     raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
 
@@ -44,13 +63,13 @@ begin
     else
         insert
             into hs_office_partner_details (uuid, registrationOffice, registrationNumber)
-            values (uuid_generate_v4(), 'Hamburg', '12345')
+            values (uuid_generate_v4(), 'Hamburg', 'RegNo123456789')
             returning uuid into relatedDetailsUuid;
     end if;
 
     insert
-        into hs_office_partner (uuid, partnerNumber, personuuid, contactuuid, detailsUuid)
-        values (uuid_generate_v4(), partnerNumber, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
+        into hs_office_partner (uuid, partnerNumber, partnerRoleUuid, personuuid, contactuuid, detailsUuid)
+        values (uuid_generate_v4(), partnerNumber, partnerRole.uuid, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
 end; $$;
 --//
 
@@ -62,11 +81,11 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficePartnerTestData(10001, 'First GmbH', 'first contact');
-        call createHsOfficePartnerTestData(10002, 'Second e.K.', 'second contact');
-        call createHsOfficePartnerTestData(10003, 'Third OHG', 'third contact');
-        call createHsOfficePartnerTestData(10004, 'Fourth e.G.', 'forth contact');
-        call createHsOfficePartnerTestData(10010, 'Smith', 'fifth contact');
+        call createHsOfficePartnerTestData('Hostsharing eG', 10001, 'First GmbH', 'first contact');
+        call createHsOfficePartnerTestData('Hostsharing eG', 10002, 'Second e.K.', 'second contact');
+        call createHsOfficePartnerTestData('Hostsharing eG', 10003, 'Third OHG', 'third contact');
+        call createHsOfficePartnerTestData('Hostsharing eG', 10004, 'Fourth eG', 'fourth contact');
+        call createHsOfficePartnerTestData('Hostsharing eG', 10010, 'Smith', 'fifth contact');
     end;
 $$;
 --//

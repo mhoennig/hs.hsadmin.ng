@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.relationship;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
+import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;

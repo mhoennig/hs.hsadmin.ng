@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.office.relationship;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
@@ -10,7 +11,6 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelati
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
@@ -33,8 +31,9 @@ import static org.hamcrest.Matchers.startsWith;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeRelationshipControllerAcceptanceTest {
+class HsOfficeRelationshipControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
+    public static final UUID GIVEN_NON_EXISTING_HOLDER_PERSON_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
     @LocalServerPort
     private Integer port;
 
@@ -56,8 +55,6 @@ class HsOfficeRelationshipControllerAcceptanceTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    Set<UUID> tempRelationshipUuids = new HashSet<>();
-
     @Nested
     @Accepts({ "Relationship:F(Find)" })
     class ListRelationships {
@@ -67,7 +64,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
 
             // given
             context.define("superuser-alex@hostsharing.net");
-            final var givenPerson = personRepo.findPersonByOptionalNameLike("Smith").get(0);
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
 
             RestAssured // @formatter:off
                 .given()
@@ -75,55 +72,47 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relationships?personUuid=%s&relationshipType=%s"
-                            .formatted(givenPerson.getUuid(), HsOfficeRelationshipTypeResource.REPRESENTATIVE))
+                            .formatted(givenPerson.getUuid(), HsOfficeRelationshipTypeResource.PARTNER))
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     [
-                         {
-                             "relAnchor": {
-                                 "personType": "INCORPORATED_FIRM",
-                                 "tradeName": "Third OHG"
-                             },
-                             "relHolder": {
-                                 "personType": "NATURAL_PERSON",
-                                 "givenName": "Peter",
-                                 "familyName": "Smith"
-                             },
-                             "relType": "REPRESENTATIVE",
-                             "contact": { "label": "third contact" }
-                         },
-                         {
-                             "relAnchor": {
-                                 "personType": "LEGAL_PERSON",
-                                 "tradeName": "Second e.K.",
-                                 "givenName": "Miller",
-                                 "familyName": "Sandra"
-                             },
-                             "relHolder": {
-                                 "personType": "NATURAL_PERSON",
-                                 "givenName": "Peter",
-                                 "familyName": "Smith"
-                             },
-                             "relType": "REPRESENTATIVE",
-                             "contact": { "label": "second contact" }
-                         },
-                         {
-                             "relAnchor": {
-                                 "personType": "LEGAL_PERSON",
-                                 "tradeName": "First GmbH"
-                             },
-                             "relHolder": {
-                                 "personType": "NATURAL_PERSON",
-                                 "tradeName": null,
-                                 "givenName": "Peter",
-                                 "familyName": "Smith"
-                             },
-                             "relType": "REPRESENTATIVE",
-                             "contact": { "label": "first contact" }
-                         }
-                     ]
+                        {
+                            "relAnchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
+                            "relHolder": { "personType": "LEGAL_PERSON", "tradeName": "First GmbH" },
+                            "relType": "PARTNER",
+                            "relMark": null,
+                            "contact": { "label": "first contact" }
+                        },
+                        {
+                            "relAnchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
+                            "relHolder": { "personType": "INCORPORATED_FIRM", "tradeName": "Fourth eG" },
+                            "relType": "PARTNER",
+                            "contact": { "label": "fourth contact" }
+                        },
+                        {
+                            "relAnchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
+                            "relHolder": { "personType": "LEGAL_PERSON", "tradeName": "Second e.K.", "givenName": "Peter", "familyName": "Smith" },
+                            "relType": "PARTNER",
+                            "relMark": null,
+                            "contact": { "label": "second contact" }
+                        },
+                        {
+                            "relAnchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
+                            "relHolder": { "personType": "NATURAL_PERSON", "givenName": "Peter", "familyName": "Smith" },
+                            "relType": "PARTNER",
+                            "relMark": null,
+                            "contact": { "label": "sixth contact" }
+                        },
+                        {
+                            "relAnchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
+                            "relHolder": { "personType": "INCORPORATED_FIRM", "tradeName": "Third OHG" },
+                            "relType": "PARTNER",
+                            "relMark": null,
+                            "contact": { "label": "third contact" }
+                        }
+                    ]
                     """));
                 // @formatter:on
         }
@@ -139,7 +128,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("second").get(0);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -167,12 +156,12 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                         .body("relType", is("ACCOUNTING"))
                         .body("relAnchor.tradeName", is("Third OHG"))
                         .body("relHolder.givenName", is("Paul"))
-                        .body("contact.label", is("forth contact"))
+                        .body("contact.label", is("second contact"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new relationship can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(UUID.fromString(
+            final var newUserUuid = toCleanup(HsOfficeRelationshipEntity.class, UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1)));
             assertThat(newUserUuid).isNotNull();
         }
@@ -181,9 +170,9 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         void globalAdmin_canNotAddRelationship_ifAnchorPersonDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenAnchorPersonUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            final var givenAnchorPersonUuid = GIVEN_NON_EXISTING_HOLDER_PERSON_UUID;
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Smith").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -206,7 +195,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .post("http://localhost/api/hs/office/relationships")
                 .then().log().all().assertThat()
                     .statusCode(404)
-                    .body("message", is("cannot find relAnchorUuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("cannot find relAnchorUuid " + GIVEN_NON_EXISTING_HOLDER_PERSON_UUID));
             // @formatter:on
         }
 
@@ -215,8 +204,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
-            final var givenHolderPersonUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -232,14 +220,14 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                             """.formatted(
                             HsOfficeRelationshipTypeResource.ACCOUNTING,
                             givenAnchorPerson.getUuid(),
-                            givenHolderPersonUuid,
+                            GIVEN_NON_EXISTING_HOLDER_PERSON_UUID,
                             givenContact.getUuid()))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/relationships")
                 .then().log().all().assertThat()
                     .statusCode(404)
-                    .body("message", is("cannot find relHolderUuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("cannot find relHolderUuid " + GIVEN_NON_EXISTING_HOLDER_PERSON_UUID));
             // @formatter:on
         }
 
@@ -249,7 +237,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
-            final var givenContactUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            final var givenContactUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -272,7 +260,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .post("http://localhost/api/hs/office/relationships")
                 .then().log().all().assertThat()
                     .statusCode(404)
-                    .body("message", is("cannot find contactUuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("cannot find contactUuid 00000000-0000-0000-0000-000000000000"));
             // @formatter:on
         }
     }
@@ -284,7 +272,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryRelationship() {
             context.define("superuser-alex@hostsharing.net");
-            final UUID givenRelationshipUuid = findRelationship("First", "Smith").getUuid();
+            final UUID givenRelationshipUuid = findRelationship("First", "Firby").getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -298,7 +286,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                         "relAnchor": { "tradeName": "First GmbH" },
-                        "relHolder": { "familyName": "Smith" },
+                        "relHolder": { "familyName": "Firby" },
                         "contact": { "label": "first contact" }
                     }
                     """)); // @formatter:on
@@ -308,7 +296,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         @Accepts({ "Relationship:X(Access Control)" })
         void normalUser_canNotGetUnrelatedRelationship() {
             context.define("superuser-alex@hostsharing.net");
-            final UUID givenRelationshipUuid = findRelationship("First", "Smith").getUuid();
+            final UUID givenRelationshipUuid = findRelationship("First", "Firby").getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -324,7 +312,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
         @Accepts({ "Relationship:X(Access Control)" })
         void contactAdminUser_canGetRelatedRelationship() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenRelationship = findRelationship("First", "Smith");
+            final var givenRelationship = findRelationship("First", "Firby");
             assertThat(givenRelationship.getContact().getLabel()).isEqualTo("first contact");
 
             RestAssured // @formatter:off
@@ -339,7 +327,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .body("", lenientlyEquals("""
                     {
                         "relAnchor": { "tradeName": "First GmbH" },
-                        "relHolder": { "familyName": "Smith" },
+                        "relHolder": { "familyName": "Firby" },
                         "contact": { "label": "first contact" }
                     }
                     """)); // @formatter:on
@@ -369,7 +357,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelationship = givenSomeTemporaryRelationshipBessler();
             assertThat(givenRelationship.getContact().getLabel()).isEqualTo("seventh contact");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -390,7 +378,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .body("relType", is("REPRESENTATIVE"))
                     .body("relAnchor.tradeName", is("Erben Bessler"))
                     .body("relHolder.familyName", is("Winkler"))
-                    .body("contact.label", is("forth contact"));
+                    .body("contact.label", is("fourth contact"));
                 // @formatter:on
 
             // finally, the relationship is actually updated
@@ -399,7 +387,7 @@ class HsOfficeRelationshipControllerAcceptanceTest {
                     .matches(rel -> {
                         assertThat(rel.getRelAnchor().getTradeName()).contains("Bessler");
                         assertThat(rel.getRelHolder().getFamilyName()).contains("Winkler");
-                        assertThat(rel.getContact().getLabel()).isEqualTo("forth contact");
+                        assertThat(rel.getContact().getLabel()).isEqualTo("fourth contact");
                         assertThat(rel.getRelType()).isEqualTo(HsOfficeRelationshipType.REPRESENTATIVE);
                         return true;
                     });
@@ -476,34 +464,16 @@ class HsOfficeRelationshipControllerAcceptanceTest {
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Winkler").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("seventh contact").get(0);
             final var newRelationship = HsOfficeRelationshipEntity.builder()
-                    .uuid(UUID.randomUUID())
                     .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                     .relAnchor(givenAnchorPerson)
                     .relHolder(givenHolderPerson)
                     .contact(givenContact)
                     .build();
 
-            toCleanup(newRelationship.getUuid());
+            assertThat(toCleanup(relationshipRepo.save(newRelationship))).isEqualTo(newRelationship);
 
-            return relationshipRepo.save(newRelationship);
+            return newRelationship;
         }).assertSuccessful().returnedValue();
-    }
-
-    private UUID toCleanup(final UUID tempRelationshipUuid) {
-        tempRelationshipUuids.add(tempRelationshipUuid);
-        return tempRelationshipUuid;
-    }
-
-    @AfterEach
-    void cleanup() {
-        tempRelationshipUuids.forEach(uuid -> {
-            jpaAttempt.transacted(() -> {
-                context.define("superuser-alex@hostsharing.net", null);
-                System.out.println("DELETING temporary relationship: " + uuid);
-                final var count = relationshipRepo.deleteByUuid(uuid);
-                System.out.println("DELETED temporary relationship: " + uuid + (count > 0 ? " successful" : " failed"));
-            });
-        });
     }
 
 }

@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
@@ -24,14 +24,14 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;
@@ -87,8 +87,8 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
         public void createsAndGrantsRoles() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll()).stream()
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
@@ -108,8 +108,8 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
             // then
             final var all = rawRoleRepo.findAll();
-            assertThat(roleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll()))
+            assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
@@ -216,9 +216,8 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_coopassetstransaction';
                     """);
 

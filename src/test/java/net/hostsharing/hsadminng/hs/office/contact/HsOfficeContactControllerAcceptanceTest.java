@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -32,7 +33,7 @@ import static org.hamcrest.Matchers.startsWith;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeContactControllerAcceptanceTest {
+class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
     private Integer port;
@@ -73,7 +74,7 @@ class HsOfficeContactControllerAcceptanceTest {
                             { "label": "first contact" },
                             { "label": "second contact" },
                             { "label": "third contact" },
-                            { "label": "forth contact" },
+                            { "label": "fourth contact" },
                             { "label": "fifth contact" },
                             { "label": "sixth contact" },
                             { "label": "seventh contact" },

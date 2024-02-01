@@ -1,14 +1,13 @@
 package net.hostsharing.hsadminng.hs.office.relationship;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,18 +20,16 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeRelationshipRepository relationshipRepo;
@@ -58,8 +55,6 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
     @MockBean
     HttpServletRequest request;
 
-    Set<HsOfficeRelationshipEntity> tempRelationships = new HashSet<>();
-
     @Nested
     class CreateRelationship {
 
@@ -70,17 +65,17 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             final var count = relationshipRepo.count();
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Anita").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
 
             // when
             final var result = attempt(em, () -> {
-                final var newRelationship = toCleanup(HsOfficeRelationshipEntity.builder()
+                final var newRelationship = HsOfficeRelationshipEntity.builder()
                         .relAnchor(givenAnchorPerson)
                         .relHolder(givenHolderPerson)
                         .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                         .contact(givenContact)
-                        .build());
-                return relationshipRepo.save(newRelationship);
+                        .build();
+                return toCleanup(relationshipRepo.save(newRelationship));
             });
 
             // then
@@ -94,30 +89,30 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
             attempt(em, () -> {
                 final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").get(0);
                 final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Anita").get(0);
-                final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
-                final var newRelationship = toCleanup(HsOfficeRelationshipEntity.builder()
+                final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
+                final var newRelationship = HsOfficeRelationshipEntity.builder()
                         .relAnchor(givenAnchorPerson)
                         .relHolder(givenHolderPerson)
                         .relType(HsOfficeRelationshipType.REPRESENTATIVE)
                         .contact(givenContact)
-                        .build());
-                return relationshipRepo.save(newRelationship);
+                        .build();
+                return toCleanup(relationshipRepo.save(newRelationship));
             });
 
             // then
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
                     "hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin",
                     "hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner",
                     "hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant"));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
 
                     "{ grant perm * on hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner by system and assume }",
@@ -128,11 +123,11 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                     "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner by system and assume }",
 
                     "{ grant perm view on hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
-                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_contact#forthcontact.admin by system and assume }",
+                    "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_contact#fourthcontact.admin by system and assume }",
                     "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_person#BesslerAnita.admin by system and assume }",
 
                     "{ grant role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin by system and assume }",
-                    "{ grant role hs_office_contact#forthcontact.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
+                    "{ grant role hs_office_contact#fourthcontact.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
                     "{ grant role hs_office_person#BesslerAnita.tenant to role hs_office_relationship#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
                     null)
             );
@@ -151,7 +146,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
         public void globalAdmin_withoutAssumedRole_canViewAllRelationshipsOfArbitraryPerson() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var person = personRepo.findPersonByOptionalNameLike("Smith").stream().findFirst().orElseThrow();
+            final var person = personRepo.findPersonByOptionalNameLike("Second e.K.").stream().findFirst().orElseThrow();
 
             // when
             final var result = relationshipRepo.findRelationshipRelatedToPersonUuid(person.getUuid());
@@ -159,8 +154,7 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             allTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='LP First GmbH', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='first contact')",
-                    "rel(relAnchor='IF Third OHG', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='third contact')",
+                    "rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='LP Second e.K.', contact='second contact')",
                     "rel(relAnchor='LP Second e.K.', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='second contact')");
         }
 
@@ -176,7 +170,8 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then:
             exactlyTheseRelationshipsAreReturned(
                     result,
-                    "rel(relAnchor='LP First GmbH', relType='REPRESENTATIVE', relHolder='NP Smith, Peter', contact='first contact')");
+                    "rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='LP First GmbH', contact='first contact')",
+                    "rel(relAnchor='LP First GmbH', relType='REPRESENTATIVE', relHolder='NP Firby, Susan', contact='first contact')");
         }
     }
 
@@ -343,13 +338,13 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingARelationshipAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var initialRoleNames = Array.from(roleNamesOf(rawRoleRepo.findAll()));
-            final var initialGrantNames = Array.from(grantDisplaysOf(rawGrantRepo.findAll()));
+            final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
+            final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenRelationship = givenSomeTemporaryRelationshipBessler(
                     "Anita", "twelfth");
-            assertThat(rawRoleRepo.findAll().size()).as("unexpected number of roles created")
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll()).size()).as("unexpected number of roles created")
                     .isEqualTo(initialRoleNames.length + 3);
-            assertThat(rawGrantRepo.findAll().size()).as("unexpected number of grants created")
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()).size()).as("unexpected number of grants created")
                     .isEqualTo(initialGrantNames.length + 13);
 
             // when
@@ -361,8 +356,8 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isEqualTo(1);
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
     }
 
@@ -370,9 +365,8 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_relationship';
                     """);
 
@@ -381,8 +375,8 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating relationship test-data FirstGmbH-Smith, hs_office_relationship, INSERT]",
-                "[creating relationship test-data Seconde.K.-Smith, hs_office_relationship, INSERT]");
+                "[creating relationship test-data HostsharingeG-FirstGmbH, hs_office_relationship, INSERT]",
+                "[creating relationship test-data FirstGmbH-Firby, hs_office_relationship, INSERT]");
     }
 
     private HsOfficeRelationshipEntity givenSomeTemporaryRelationshipBessler(final String holderPerson, final String contact) {
@@ -398,24 +392,8 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTest {
                     .contact(givenContact)
                     .build();
 
-            toCleanup(newRelationship);
-
-            return relationshipRepo.save(newRelationship);
+            return toCleanup(relationshipRepo.save(newRelationship));
         }).assertSuccessful().returnedValue();
-    }
-
-    private HsOfficeRelationshipEntity toCleanup(final HsOfficeRelationshipEntity tempRelationship) {
-        tempRelationships.add(tempRelationship);
-        return tempRelationship;
-    }
-
-    @AfterEach
-    void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        tempRelationships.forEach(tempRelationship -> {
-            System.out.println("DELETING temporary relationship: " + tempRelationship);
-            relationshipRepo.deleteByUuid(tempRelationship.getUuid());
-        });
     }
 
     void exactlyTheseRelationshipsAreReturned(

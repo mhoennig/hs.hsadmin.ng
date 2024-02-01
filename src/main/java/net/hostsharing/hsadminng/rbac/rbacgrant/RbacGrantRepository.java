@@ -15,6 +15,8 @@ public interface RbacGrantRepository extends Repository<RbacGrantEntity, RbacGra
             """)
     RbacGrantEntity findById(RbacGrantId rbacGrantId);
 
+    long count();
+
     List<RbacGrantEntity> findAll();
 
     RbacGrantEntity save(final RbacGrantEntity grant);

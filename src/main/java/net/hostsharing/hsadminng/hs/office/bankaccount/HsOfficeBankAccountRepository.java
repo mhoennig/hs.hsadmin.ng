@@ -13,13 +13,15 @@ public interface HsOfficeBankAccountRepository extends Repository<HsOfficeBankAc
 
     @Query("""
             SELECT c FROM HsOfficeBankAccountEntity c
-                WHERE :holder is null
-                    OR lower(c.holder) like lower(concat(:holder, '%'))
+                WHERE lower(c.holder) like lower(concat(:holder, '%'))
                 ORDER BY c.holder
                """)
-    List<HsOfficeBankAccountEntity> findByOptionalHolderLike(String holder);
+    List<HsOfficeBankAccountEntity> findByOptionalHolderLikeImpl(String holder);
+    default List<HsOfficeBankAccountEntity> findByOptionalHolderLike(String holder) {
+        return findByOptionalHolderLikeImpl(holder == null ? "" : holder);
+    }
 
-    List<HsOfficeBankAccountEntity> findByIbanOrderByIban(String iban);
+    List<HsOfficeBankAccountEntity> findByIbanOrderByIbanAsc(String iban);
 
     <S extends HsOfficeBankAccountEntity> S save(S entity);
 

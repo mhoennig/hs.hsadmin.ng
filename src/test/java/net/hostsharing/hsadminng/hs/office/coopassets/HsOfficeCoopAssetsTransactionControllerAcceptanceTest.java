@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
@@ -32,7 +33,7 @@ import static org.hamcrest.Matchers.startsWith;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeCoopAssetsTransactionControllerAcceptanceTest {
+class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
     Integer port;

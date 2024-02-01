@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.json.JSONException;
@@ -33,7 +34,7 @@ import static org.hamcrest.Matchers.*;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
-class HsOfficeDebitorControllerAcceptanceTest {
+class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     private static final int LOWEST_TEMP_DEBITOR_SUFFIX = 90;
     private static byte nextDebitorSuffix = LOWEST_TEMP_DEBITOR_SUFFIX;
@@ -152,7 +153,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
 
             final var location = RestAssured // @formatter:off
@@ -199,7 +200,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -243,7 +244,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContactUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+            final var givenContactUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -268,7 +269,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find Contact with uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("Unable to find Contact with uuid 00000000-0000-0000-0000-000000000000"));
             // @formatter:on
         }
 
@@ -276,8 +277,8 @@ class HsOfficeDebitorControllerAcceptanceTest {
         void globalAdmin_canNotAddDebitor_ifPartnerDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenPartnerUuid = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenPartnerUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -301,7 +302,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find Partner with uuid 3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+                    .body("message", is("Unable to find Partner with uuid 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }
@@ -382,7 +383,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -419,7 +420,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
                         assertThat(partner.getPartner().getPerson().getTradeName()).isEqualTo(givenDebitor.getPartner()
                                 .getPerson()
                                 .getTradeName());
-                        assertThat(partner.getBillingContact().getLabel()).isEqualTo("forth contact");
+                        assertThat(partner.getBillingContact().getLabel()).isEqualTo("fourth contact");
                         assertThat(partner.getVatId()).isEqualTo("VAT222222");
                         assertThat(partner.getVatCountryCode()).isEqualTo("AA");
                         assertThat(partner.isVatBusiness()).isEqualTo(true);
@@ -500,11 +501,11 @@ class HsOfficeDebitorControllerAcceptanceTest {
         void contactAdminUser_canNotDeleteRelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("forth contact");
+            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "contact-admin@forthcontact.example.com")
+                    .header("current-user", "contact-admin@fourthcontact.example.com")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
@@ -520,7 +521,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
         void normalUser_canNotDeleteUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("forth contact");
+            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -540,7 +541,7 @@ class HsOfficeDebitorControllerAcceptanceTest {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("forth contact").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(++nextDebitorSuffix)
                     .billable(true)

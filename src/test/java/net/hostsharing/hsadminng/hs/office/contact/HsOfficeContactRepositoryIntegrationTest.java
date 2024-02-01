@@ -1,14 +1,12 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.test.Array;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,14 +22,14 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.hsOfficeContact;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.grantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.roleNamesOf;
+import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
+class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
     HsOfficeContactRepository contactRepo;
@@ -62,8 +60,8 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
 
-            final var result = attempt(em, () -> contactRepo.save(
-                    hsOfficeContact("a new contact", "contact-admin@www.example.com")));
+            final var result = attempt(em, () -> toCleanup(contactRepo.save(
+                    hsOfficeContact("a new contact", "contact-admin@www.example.com"))));
 
             // then
             result.assertSuccessful();
@@ -79,8 +77,8 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
             final var count = contactRepo.count();
 
             // when
-            final var result = attempt(em, () -> contactRepo.save(
-                    hsOfficeContact("another new contact", "another-new-contact@example.com")));
+            final var result = attempt(em, () -> toCleanup(contactRepo.save(
+                    hsOfficeContact("another new contact", "another-new-contact@example.com"))));
 
             // then
             result.assertSuccessful();
@@ -93,24 +91,24 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         public void createsAndGrantsRoles() {
             // given
             context("selfregistered-user-drew@hostsharing.org");
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            attempt(em, () -> contactRepo.save(
-                    hsOfficeContact("another new contact", "another-new-contact@example.com"))
+            attempt(em, () -> toCleanup(contactRepo.save(
+                    hsOfficeContact("another new contact", "another-new-contact@example.com")))
             ).assumeSuccessful();
 
             // then
             final var roles = rawRoleRepo.findAll();
-            assertThat(roleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
                     "hs_office_contact#anothernewcontact.owner",
                     "hs_office_contact#anothernewcontact.admin",
                     "hs_office_contact#anothernewcontact.tenant",
                     "hs_office_contact#anothernewcontact.guest"
             ));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialGrantNames,
                     "{ grant role hs_office_contact#anothernewcontact.owner to role global#global.admin by system and assume }",
                     "{ grant perm edit on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.admin by system and assume }",
@@ -233,8 +231,8 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
         public void deletingAContactAlsoDeletesRelatedRolesAndGrants() {
             // given
             context("selfregistered-user-drew@hostsharing.org", null);
-            final var initialRoleNames = roleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = grantDisplaysOf(rawGrantRepo.findAll());
+            final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
             final var givenContact = givenSomeTemporaryContact("selfregistered-user-drew@hostsharing.org");
 
             // when
@@ -246,10 +244,10 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertSuccessful();
             assertThat(result.returnedValue()).isEqualTo(1);
-            assertThat(roleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames
             ));
-            assertThat(grantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialGrantNames
             ));
         }
@@ -259,9 +257,8 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select c.currenttask, j.targettable, j.targetop
-                    from tx_journal j
-                    join tx_context c on j.contextId = c.contextId
+                select currentTask, targetTable, targetOp
+                    from tx_journal_v
                     where targettable = 'hs_office_contact';
                     """);
 
@@ -279,19 +276,8 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTest {
             Supplier<HsOfficeContactEntity> entitySupplier) {
         return jpaAttempt.transacted(() -> {
             context(createdByUser);
-            return contactRepo.save(entitySupplier.get());
+            return toCleanup(contactRepo.save(entitySupplier.get()));
         }).assumeSuccessful().returnedValue();
-    }
-
-    @BeforeEach
-    @AfterEach
-    void cleanup() {
-        context("superuser-alex@hostsharing.net", null);
-        final var result = contactRepo.findContactByOptionalLabelLike("some temporary contact");
-        result.forEach(tempPerson -> {
-            System.out.println("DELETING temporary contact: " + tempPerson.getLabel());
-            contactRepo.deleteByUuid(tempPerson.getUuid());
-        });
     }
 
     private HsOfficeContactEntity givenSomeTemporaryContact(final String createdByUser) {

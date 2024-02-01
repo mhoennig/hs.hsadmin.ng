@@ -4,7 +4,7 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
+import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;

@@ -120,6 +120,7 @@ $$;
 create table RbacObject
 (
     uuid        uuid primary key default uuid_generate_v4(),
+    serialId    serial, -- TODO: we might want to remove this once test data deletion works properly
     objectTable varchar(64) not null,
     unique (objectTable, uuid)
 );

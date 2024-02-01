@@ -8,7 +8,6 @@ import org.springframework.data.annotation.Immutable;
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "rbacrole_ev")
@@ -40,8 +39,9 @@ public class RawRbacRoleEntity {
     private String roleName;
 
     @NotNull
-    public static List<String> roleNamesOf(@NotNull final List<RawRbacRoleEntity> roles) {
-        return roles.stream().map(RawRbacRoleEntity::getRoleName).collect(Collectors.toList());
+    public static List<String> distinctRoleNamesOf(@NotNull final List<RawRbacRoleEntity> roles) {
+        // TODO: remove .distinct() once partner.person + partner.contract are removed
+        return roles.stream().map(RawRbacRoleEntity::getRoleName).sorted().distinct().toList();
     }
 
 }

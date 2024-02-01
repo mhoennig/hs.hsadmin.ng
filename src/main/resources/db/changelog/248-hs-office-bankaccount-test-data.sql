@@ -41,7 +41,7 @@ do language plpgsql $$
         call createHsOfficeBankAccountTestData('Peter Smith', 'DE02500105170137075030', 'INGDDEFF');
         call createHsOfficeBankAccountTestData('Second e.K.', 'DE02100500000054540402', 'BELADEBE');
         call createHsOfficeBankAccountTestData('Third OHG', 'DE02300209000106531065', 'CMCIDEDD');
-        call createHsOfficeBankAccountTestData('Fourth e.G.', 'DE02200505501015871393', 'HASPDEHH');
+        call createHsOfficeBankAccountTestData('Fourth eG', 'DE02200505501015871393', 'HASPDEHH');
         call createHsOfficeBankAccountTestData('Mel Bessler', 'DE02100100100006820101', 'PBNKDEFF');
         call createHsOfficeBankAccountTestData('Anita Bessler', 'DE02300606010002474689', 'DAAEDEDD');
         call createHsOfficeBankAccountTestData('Paul Winkler', 'DE02600501010002034304', 'SOLADEST600');

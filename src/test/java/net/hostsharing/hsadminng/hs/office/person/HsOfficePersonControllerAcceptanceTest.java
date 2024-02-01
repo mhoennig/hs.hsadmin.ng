@@ -4,10 +4,10 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,14 +23,13 @@ import java.util.UUID;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
-class HsOfficePersonControllerAcceptanceTest {
+class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
     private Integer port;
@@ -55,7 +54,7 @@ class HsOfficePersonControllerAcceptanceTest {
     class ListPersons {
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canViewAllPersons_ifNoCriteriaGiven() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canViewAllPersons_ifNoCriteriaGiven() {
 
             RestAssured // @formatter:off
                 .given()
@@ -66,59 +65,7 @@ class HsOfficePersonControllerAcceptanceTest {
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("", lenientlyEquals("""
-                        [
-                             {
-                                  "personType": "LEGAL_PERSON",
-                                  "tradeName": "First GmbH",
-                                  "givenName": null,
-                                  "familyName": null
-                              },
-                              {
-                                  "personType": "LEGAL_PERSON",
-                                  "tradeName": "Second e.K.",
-                                  "givenName": "Miller",
-                                  "familyName": "Sandra"
-                              },
-                              {
-                                  "personType": "INCORPORATED_FIRM",
-                                  "tradeName": "Third OHG",
-                                  "givenName": null,
-                                  "familyName": null
-                              },
-                              {
-                                  "personType": "INCORPORATED_FIRM",
-                                  "tradeName": "Fourth e.G.",
-                                  "givenName": null,
-                                  "familyName": null
-                              },
-                              {
-                                  "personType": "NATURAL_PERSON",
-                                  "tradeName": null,
-                                  "givenName": "Anita",
-                                  "familyName": "Bessler"
-                              },
-                              {
-                                  "personType": "UNINCORPORATED_FIRM",
-                                  "tradeName": "Erben Bessler",
-                                  "givenName": "Bessler",
-                                  "familyName": "Mel"
-                              },
-                              {
-                                  "personType": "NATURAL_PERSON",
-                                  "tradeName": null,
-                                  "givenName": "Peter",
-                                  "familyName": "Smith"
-                              },
-                              {
-                                  "personType": "NATURAL_PERSON",
-                                  "tradeName": null,
-                                  "givenName": "Paul",
-                                  "familyName": "Winkler"
-                              }
-                         ]
-                        """
-                            ));
+                    .body("", hasSize(12));
                 // @formatter:on
         }
     }

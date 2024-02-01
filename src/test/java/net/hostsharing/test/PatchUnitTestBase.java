@@ -1,6 +1,6 @@
 package net.hostsharing.test;
 
-import net.hostsharing.hsadminng.hs.office.migration.HasUuid;
+import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
