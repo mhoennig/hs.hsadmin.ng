@@ -516,7 +516,7 @@ public class ImportOfficeData extends ContextBasedTest {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             coopAssets.forEach(this::persist);
-            updateLegacyIds(coopShares, "hs_office_coopassetstransaction_legacy_id", "member_asset_id");
+            updateLegacyIds(coopAssets, "hs_office_coopassetstransaction_legacy_id", "member_asset_id");
         }).assertSuccessful();
 
     }
@@ -596,6 +596,7 @@ public class ImportOfficeData extends ContextBasedTest {
             Map<Integer, E> entities,
             final String legacyIdTable,
             final String legacyIdColumn) {
+        em.flush();
         entities.forEach((id, entity) -> em.createNativeQuery("""
                             UPDATE ${legacyIdTable}
                                 SET ${legacyIdColumn} = :legacyId
@@ -878,13 +879,13 @@ public class ImportOfficeData extends ContextBasedTest {
         partners.forEach( (id, partner) -> {
             final var partnerPerson = partner.getPerson();
             if (relationships.values().stream()
-                    .filter(rel -> rel.getRelHolder() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE)
+                    .filter(rel -> rel.getRelAnchor() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE)
                     .findFirst().isEmpty()) {
-                addRelationship(partnerPerson, partnerPerson, partner.getContact(), HsOfficeRelationshipType.REPRESENTATIVE);
+                //addRelationship(partnerPerson, partnerPerson, partner.getContact(), HsOfficeRelationshipType.REPRESENTATIVE);
                 contractualMissing.add(partner.getPartnerNumber());
             }
         });
-        // assertThat(contractualMissing).isEmpty(); uncomment if we don't want allow missing contractual contact
+        assertThat(contractualMissing).isEmpty(); // comment out if we do want to allow missing contractual contact
     }
     private static boolean containsRole(final Record rec, final String role) {
         final var roles = rec.getString("roles");
