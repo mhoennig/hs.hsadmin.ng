@@ -438,8 +438,23 @@ create or replace function findPermissionId(forObjectUuid uuid, forOp RbacOp)
 select uuid
     from RbacPermission p
     where p.objectUuid = forObjectUuid
-      and p.op in ('*', forOp)
+      and p.op = forOp
 $$;
+
+create or replace function findEffectivePermissionId(forObjectUuid uuid, forOp RbacOp)
+    returns uuid
+    returns null on null input
+    stable -- leakproof
+    language plpgsql as $$
+declare
+    permissionId uuid;
+begin
+    permissionId := findPermissionId(forObjectUuid, forOp);
+    if permissionId is null and forOp <> '*' then
+        permissionId := findPermissionId(forObjectUuid, '*');
+    end if;
+    return permissionId;
+end $$;
 
 --//
 

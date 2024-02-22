@@ -20,7 +20,7 @@ CREATE POLICY customer_policy ON customer
     TO restricted
     USING (
         -- id=1000
-        isPermissionGrantedToSubject(findPermissionId('test_customer', id, 'view'), currentUserUuid())
+        isPermissionGrantedToSubject(findEffectivePermissionId('test_customer', id, 'view'), currentUserUuid())
     );
 
 SET SESSION AUTHORIZATION restricted;
@@ -35,7 +35,7 @@ SELECT * FROM customer;
 CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
-    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findPermissionId('test_customer', id, 'view'), currentUserUuid());
+    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findEffectivePermissionId('test_customer', id, 'view'), currentUserUuid());
 SELECT * from cust_view LIMIT 10;
 
 select queryAllPermissionsOfSubjectId(findRbacUser('superuser-alex@hostsharing.net'));
