@@ -467,12 +467,13 @@ end $$;
 create table RbacGrants
 (
     uuid                uuid primary key default uuid_generate_v4(),
+    grantedByTriggerOf  uuid references RbacObject (uuid) on delete cascade initially deferred ,
     grantedByRoleUuid   uuid references RbacRole (uuid),
     ascendantUuid       uuid references RbacReference (uuid),
     descendantUuid      uuid references RbacReference (uuid),
     assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
-    unique (ascendantUuid, descendantUuid)
-);
+    unique (ascendantUuid, descendantUuid),
+    constraint rbacGrant_createdBy check ( grantedByRoleUuid is null or grantedByTriggerOf is null) );
 create index on RbacGrants (ascendantUuid);
 create index on RbacGrants (descendantUuid);
 
@@ -576,8 +577,8 @@ begin
             perform assertReferenceType('permissionId (descendant)', permissionIds[i], 'RbacPermission');
 
             insert
-                into RbacGrants (ascendantUuid, descendantUuid, assumed)
-                values (roleUuid, permissionIds[i], true)
+                into RbacGrants (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
+                values (currentTriggerObjectUuid(), roleUuid, permissionIds[i], true)
             on conflict do nothing; -- allow granting multiple times
         end loop;
 end;
@@ -594,8 +595,8 @@ begin
     end if;
 
     insert
-        into RbacGrants (ascendantuuid, descendantUuid, assumed)
-        values (superRoleId, subRoleId, doAssume)
+        into RbacGrants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        values (currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 
@@ -617,8 +618,8 @@ begin
     end if;
 
     insert
-        into RbacGrants (ascendantuuid, descendantUuid, assumed)
-        values (superRoleId, subRoleId, doAssume)
+        into RbacGrants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        values (currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 
@@ -640,8 +641,8 @@ begin
     end if;
 
     insert
-        into RbacGrants (ascendantuuid, descendantUuid, assumed)
-        values (superRoleId, subRoleId, doAssume)
+        into RbacGrants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        values (currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 

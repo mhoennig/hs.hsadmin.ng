@@ -26,6 +26,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/055-rbac-views.sql
     - include:
+        file: db/changelog/056-rbac-trigger-context.sql
+    - include:
         file: db/changelog/057-rbac-role-builder.sql
     - include:
         file: db/changelog/058-rbac-generators.sql

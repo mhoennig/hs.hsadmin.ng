@@ -1,7 +1,7 @@
 contact_id;	bp_id;	salut;	first_name;	last_name;	title;	firma;	co;	street;			zipcode;city;	country;	phone_private;		phone_office;		phone_mobile;	fax;		email; roles
 
 # eine natürliche Person, implizites contractual
-1101;		17;	Herr;	Michael;	Mellies;		;	;	;	Kleine Freiheit 50;	26524;	Hage;	DE;		;			+49 4931 123456;	+49 1522 123456;;		mih@example.org; partner,billing,operation
+1101;		17;	Herr;	Michael;	Mellies;		;	;	;	Kleine Freiheit 50;	26524;	Hage;	DE;		;			+49 4931 123456;	+49 1522 123456;;		mih@example.org; partner,contractual,billing,operation
 
 # eine juristische Person mit drei separaten Ansprechpartnern, vip-contact und ex-partner
 1200;		20;;	;		;		;	JM e.K.;;	Wiesenweg 15;		12335;	Berlin; DE;		+49 30 6666666;		+49 30 5555555;		;		+49 30 6666666; jm-ex-partner@example.org; ex-partner

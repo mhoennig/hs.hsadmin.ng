@@ -26,12 +26,12 @@ create or replace function createRbacRolesForTestPackage()
     strict as $$
 declare
     parentCustomer       test_customer;
-    packageOwnerRoleUuid uuid;
-    packageAdminRoleUuid uuid;
 begin
     if TG_OP <> 'INSERT' then
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
+
+    call enterTriggerForObjectUuid(NEW.uuid);
 
     select * from test_customer as c where c.uuid = NEW.customerUuid into parentCustomer;
 
@@ -57,6 +57,7 @@ begin
             outgoingSubRoles => array[testCustomerTenant(parentCustomer)]
         );
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

@@ -29,6 +29,7 @@ create or replace function hsOfficeCoopAssetsTransactionRbacRolesTrigger()
 declare
     newHsOfficeMembership      hs_office_membership;
 begin
+    call enterTriggerForObjectUuid(NEW.uuid);
 
     select * from hs_office_membership as p where p.uuid = NEW.membershipUuid into newHsOfficeMembership;
 
@@ -49,6 +50,7 @@ begin
         raise exception 'invalid usage of TRIGGER';
     end if;
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

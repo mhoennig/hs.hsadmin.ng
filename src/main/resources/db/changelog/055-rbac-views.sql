@@ -56,6 +56,7 @@ drop view if exists rbacgrants_ev;
 create or replace view rbacgrants_ev as
     -- @formatter:off
     select x.grantUuid as uuid,
+           x.grantedByTriggerOf as grantedByTriggerOf,
            go.objectTable || '#' || findIdNameByObjectUuid(go.objectTable, go.uuid) || '.' || r.roletype as grantedByRoleIdName,
            x.ascendingIdName as ascendantIdName,
            x.descendingIdName as descendantIdName,
@@ -65,6 +66,7 @@ create or replace view rbacgrants_ev as
            x.assumed
         from (
              select g.uuid as grantUuid,
+                    g.grantedbytriggerof as grantedbytriggerof,
                     g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
 
                     coalesce(

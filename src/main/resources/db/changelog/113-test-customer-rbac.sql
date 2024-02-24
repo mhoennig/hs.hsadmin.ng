@@ -34,6 +34,8 @@ begin
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
+    call enterTriggerForObjectUuid(NEW.uuid);
+
     -- the owner role with full access for Hostsharing administrators
     testCustomerOwnerUuid = createRoleWithGrants(
         testCustomerOwner(NEW),
@@ -59,6 +61,7 @@ begin
         permissions =>  array['view']
         );
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

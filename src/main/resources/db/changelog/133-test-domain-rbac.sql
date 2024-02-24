@@ -53,6 +53,8 @@ begin
         raise exception 'invalid usage of TRIGGER AFTER INSERT';
     end if;
 
+    call enterTriggerForObjectUuid(NEW.uuid);
+
     select * from test_package where uuid = NEW.packageUuid into parentPackage;
 
     -- an owner role is created and assigned to the package's admin group
@@ -72,6 +74,7 @@ begin
 
     -- a tenent role is only created on demand
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

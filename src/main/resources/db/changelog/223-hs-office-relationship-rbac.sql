@@ -33,6 +33,7 @@ declare
     oldContact                  hs_office_contact;
     newContact                  hs_office_contact;
 begin
+    call enterTriggerForObjectUuid(NEW.uuid);
 
     hsOfficeRelationshipTenant := hsOfficeRelationshipTenant(NEW);
 
@@ -96,6 +97,7 @@ begin
         raise exception 'invalid usage of TRIGGER';
     end if;
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

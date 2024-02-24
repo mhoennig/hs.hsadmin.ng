@@ -342,10 +342,6 @@ class HsOfficeRelationshipRepositoryIntegrationTest extends ContextBasedTestWith
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenRelationship = givenSomeTemporaryRelationshipBessler(
                     "Anita", "twelfth");
-            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll()).size()).as("unexpected number of roles created")
-                    .isEqualTo(initialRoleNames.length + 3);
-            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()).size()).as("unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.length + 13);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

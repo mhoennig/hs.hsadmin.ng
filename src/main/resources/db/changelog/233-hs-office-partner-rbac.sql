@@ -36,6 +36,7 @@ declare
     oldContact            hs_office_contact;
     newContact            hs_office_contact;
 begin
+    call enterTriggerForObjectUuid(NEW.uuid);
 
     select * from hs_office_relationship as r where r.uuid = NEW.partnerroleuuid into newPartnerRole;
     select * from hs_office_person as p where p.uuid = NEW.personUuid into newPerson;
@@ -159,6 +160,7 @@ begin
         raise exception 'invalid usage of TRIGGER';
     end if;
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

@@ -30,6 +30,7 @@ declare
     newHsOfficeDebitor      hs_office_debitor;
     newHsOfficeBankAccount  hs_office_bankAccount;
 begin
+    call enterTriggerForObjectUuid(NEW.uuid);
 
     select * from hs_office_debitor as p where p.uuid = NEW.debitorUuid into newHsOfficeDebitor;
     select * from hs_office_bankAccount as c where c.uuid = NEW.bankAccountUuid into newHsOfficeBankAccount;
@@ -75,6 +76,7 @@ begin
         raise exception 'invalid usage of TRIGGER';
     end if;
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 

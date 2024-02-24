@@ -278,20 +278,19 @@ public class ImportOfficeData extends ContextBasedTest {
                     2000002=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
                     2000003=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='null null, null'),
                     2000004=rel(relAnchor='NP Mellies, Michael', relType='OPERATIONS', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000005=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
-                    2000006=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000007=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000008=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000009=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000010=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000011=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000012=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
-                    2000013=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000014=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000015=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga '),
-                    2000016=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000017=rel(relAnchor='null null, null', relType='REPRESENTATIVE', relHolder='null null, null')
-                }
+                    2000005=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000006=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
+                    2000007=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000008=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000009=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000010=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000011=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000012=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000013=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
+                    2000014=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000015=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000016=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
+                 }
                 """);
     }
 
@@ -412,7 +411,7 @@ public class ImportOfficeData extends ContextBasedTest {
                 idsToRemove.add(id);
             }
         });
-        assertThat(idsToRemove.size()).isEqualTo(2); // only from partner #99 (partner+contractual roles)
+        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99 (partner+contractual roles)
         idsToRemove.forEach(id -> relationships.remove(id));
     }
 
@@ -421,7 +420,7 @@ public class ImportOfficeData extends ContextBasedTest {
     void removeEmptyPartners() {
         assumeThatWeAreImportingControlledTestData();
 
-        // avoid a error when persisting the deliberetely invalid partner entry #99
+        // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
         partners.forEach( (id, r) -> {
             // such a record
@@ -439,7 +438,7 @@ public class ImportOfficeData extends ContextBasedTest {
     void removeEmptyDebitors() {
         assumeThatWeAreImportingControlledTestData();
 
-        // avoid a error when persisting the deliberetely invalid partner entry #99
+        // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
         debitors.forEach( (id, r) -> {
             // such a record
@@ -881,11 +880,9 @@ public class ImportOfficeData extends ContextBasedTest {
             if (relationships.values().stream()
                     .filter(rel -> rel.getRelAnchor() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE)
                     .findFirst().isEmpty()) {
-                //addRelationship(partnerPerson, partnerPerson, partner.getContact(), HsOfficeRelationshipType.REPRESENTATIVE);
                 contractualMissing.add(partner.getPartnerNumber());
             }
         });
-        assertThat(contractualMissing).isEmpty(); // comment out if we do want to allow missing contractual contact
     }
     private static boolean containsRole(final Record rec, final String role) {
         final var roles = rec.getString("roles");

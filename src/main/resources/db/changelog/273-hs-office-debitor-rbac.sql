@@ -36,6 +36,7 @@ declare
     newBankAccount        hs_office_bankaccount;
     oldBankAccount        hs_office_bankaccount;
 begin
+    call enterTriggerForObjectUuid(NEW.uuid);
 
     hsOfficeDebitorTenant := hsOfficeDebitorTenant(NEW);
 
@@ -145,6 +146,7 @@ begin
         raise exception 'invalid usage of TRIGGER';
     end if;
 
+    call leaveTriggerForObjectUuid(NEW.uuid);
     return NEW;
 end; $$;
 
