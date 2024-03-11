@@ -171,29 +171,29 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                             "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role person#EBess.admin by system and assume }",
                             "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.owner to role person#HostsharingeG.admin by system and assume }",
                             "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role person#HostsharingeG.admin by system and assume }",
-                            "{ grant perm edit on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
+                            "{ grant perm UPDATE on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
                             "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant perm * on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
+                            "{ grant perm DELETE on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
                             "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.admin to role relationship#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
-                            "{ grant perm view on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant perm SELECT on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
                             "{ grant role contact#4th.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
                             "{ grant role person#EBess.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
                             "{ grant role person#HostsharingeG.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
 
                             // owner
-                            "{ grant perm * on partner#20032:EBess-4th              to role partner#20032:EBess-4th.owner     by system and assume }",
-                            "{ grant perm * on partner_details#20032:EBess-4th-details    to role partner#20032:EBess-4th.owner     by system and assume }",
+                            "{ grant perm DELETE on partner#20032:EBess-4th              to role partner#20032:EBess-4th.owner     by system and assume }",
+                            "{ grant perm DELETE on partner_details#20032:EBess-4th-details    to role partner#20032:EBess-4th.owner     by system and assume }",
                             "{ grant role partner#20032:EBess-4th.owner             to role global#global.admin         by system and assume }",
 
                             // admin
-                            "{ grant perm edit on partner#20032:EBess-4th           to role partner#20032:EBess-4th.admin     by system and assume }",
-                            "{ grant perm edit on partner_details#20032:EBess-4th-details to role partner#20032:EBess-4th.admin     by system and assume }",
+                            "{ grant perm UPDATE on partner#20032:EBess-4th           to role partner#20032:EBess-4th.admin     by system and assume }",
+                            "{ grant perm UPDATE on partner_details#20032:EBess-4th-details to role partner#20032:EBess-4th.admin     by system and assume }",
                             "{ grant role partner#20032:EBess-4th.admin             to role partner#20032:EBess-4th.owner     by system and assume }",
                             "{ grant role person#EBess.tenant                       to role partner#20032:EBess-4th.admin     by system and assume }",
                             "{ grant role contact#4th.tenant                        to role partner#20032:EBess-4th.admin     by system and assume }",
 
                             // agent
-                            "{ grant perm view on partner_details#20032:EBess-4th-details to role partner#20032:EBess-4th.agent     by system and assume }",
+                            "{ grant perm SELECT on partner_details#20032:EBess-4th-details to role partner#20032:EBess-4th.agent     by system and assume }",
                             "{ grant role partner#20032:EBess-4th.agent             to role partner#20032:EBess-4th.admin     by system and assume }",
                             "{ grant role partner#20032:EBess-4th.agent             to role person#EBess.admin          by system and assume }",
                             "{ grant role partner#20032:EBess-4th.agent             to role contact#4th.admin           by system and assume }",
@@ -204,7 +204,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                             "{ grant role contact#4th.guest                         to role partner#20032:EBess-4th.tenant    by system and assume }",
 
                             // guest
-                            "{ grant perm view on partner#20032:EBess-4th           to role partner#20032:EBess-4th.guest     by system and assume }",
+                            "{ grant perm SELECT on partner#20032:EBess-4th           to role partner#20032:EBess-4th.guest     by system and assume }",
                             "{ grant role partner#20032:EBess-4th.guest             to role partner#20032:EBess-4th.tenant    by system and assume }",
 
                             null)));
@@ -473,7 +473,6 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                     .contact(givenContact)
                     .build();
             relationshipRepo.save(partnerRole);
-            em.flush(); // TODO: why is that necessary?
 
             final var newPartner = HsOfficePartnerEntity.builder()
                     .partnerNumber(partnerNumber)

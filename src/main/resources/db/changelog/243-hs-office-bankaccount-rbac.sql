@@ -33,7 +33,7 @@ begin
 
     perform createRoleWithGrants(
             hsOfficeBankAccountOwner(NEW),
-            permissions => array['delete'],
+            permissions => array['DELETE'],
             incomingSuperRoles => array[globalAdmin()],
             userUuids => array[currentUserUuid()],
             grantedByRole => globalAdmin()
@@ -51,7 +51,7 @@ begin
 
     perform createRoleWithGrants(
             hsOfficeBankAccountGuest(NEW),
-            permissions => array['view'],
+            permissions => array['SELECT'],
             incomingSuperRoles => array[hsOfficeBankAccountTenant(NEW)]
         );
 
@@ -74,7 +74,7 @@ execute procedure createRbacRolesForHsOfficeBankAccount();
 --changeset hs-office-bankaccount-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityView('hs_office_bankaccount', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_bankaccount', $idName$
     target.holder
     $idName$);
 --//

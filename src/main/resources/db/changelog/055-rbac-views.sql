@@ -337,11 +337,9 @@ grant all privileges on RbacOwnGrantedPermissions_rv to ${HSADMINNG_POSTGRES_RES
 /*
     Returns all permissions granted to the given user,
     which are also visible to the current user or assumed roles.
-
-
- */
-create or replace function grantedPermissions(targetUserUuid uuid)
-    returns table(roleUuid uuid, roleName text, permissionUuid uuid, op RbacOp, objectTable varchar, objectIdName varchar, objectUuid uuid)
+*/
+create or replace function grantedPermissionsRaw(targetUserUuid uuid)
+    returns table(roleUuid uuid, roleName text, permissionUuid uuid, op RbacOp, opTableName varchar(60), objectTable varchar(60), objectIdName varchar, objectUuid uuid)
     returns null on null input
     language plpgsql as $$
 declare
@@ -357,11 +355,13 @@ begin
     return query select
         xp.roleUuid,
         (xp.roleObjectTable || '#' || xp.roleObjectIdName || '.' || xp.roleType) as roleName,
-        xp.permissionUuid, xp.op, xp.permissionObjectTable, xp.permissionObjectIdName, xp.permissionObjectUuid
+        xp.permissionUuid, xp.op, xp.opTableName,
+        xp.permissionObjectTable, xp.permissionObjectIdName, xp.permissionObjectUuid
         from (select
                   r.uuid as roleUuid, r.roletype, ro.objectTable as roleObjectTable,
                   findIdNameByObjectUuid(ro.objectTable, ro.uuid) as roleObjectIdName,
-                  p.uuid as permissionUuid, p.op, po.objecttable as permissionObjectTable,
+                  p.uuid as permissionUuid, p.op, p.opTableName,
+                  po.objecttable as permissionObjectTable,
                   findIdNameByObjectUuid(po.objectTable, po.uuid) as permissionObjectIdName,
                   po.uuid as permissionObjectUuid
               from queryPermissionsGrantedToSubjectId( targetUserUuid) as p
@@ -373,4 +373,15 @@ begin
              ) xp;
     -- @formatter:on
 end; $$;
+
+create or replace function grantedPermissions(targetUserUuid uuid)
+    returns table(roleUuid uuid, roleName text, permissionUuid uuid, op RbacOp, opTableName varchar(60), objectTable varchar(60), objectIdName varchar, objectUuid uuid)
+    returns null on null input
+    language sql as $$
+    select * from grantedPermissionsRaw(targetUserUuid)
+    union all
+    select roleUuid, roleName, permissionUuid, 'SELECT'::RbacOp, opTableName, objectTable, objectIdName, objectUuid
+        from grantedPermissionsRaw(targetUserUuid)
+        where op <> 'SELECT'::RbacOp;
+$$;
 --//

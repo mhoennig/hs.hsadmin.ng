@@ -109,7 +109,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant perm delete on hs_office_bankaccount#sometempaccC to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
+                    "{ grant perm DELETE on hs_office_bankaccount#sometempaccC to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
                     "{ grant role hs_office_bankaccount#sometempaccC.owner     to role global#global.admin                              by system and assume }",
                     "{ grant role hs_office_bankaccount#sometempaccC.owner     to user selfregistered-user-drew@hostsharing.org         by global#global.admin and assume }",
 
@@ -117,7 +117,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
                     "{ grant role hs_office_bankaccount#sometempaccC.tenant    to role hs_office_bankaccount#sometempaccC.admin         by system and assume }",
 
-                    "{ grant perm view on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.guest         by system and assume }",
+                    "{ grant perm SELECT on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.guest         by system and assume }",
                     "{ grant role hs_office_bankaccount#sometempaccC.guest     to role hs_office_bankaccount#sometempaccC.tenant        by system and assume }",
                     null
             ));

@@ -23,22 +23,27 @@ end; $$;
     Defines the transaction context.
  */
 create or replace procedure defineContext(
-    currentTask varchar,
-    currentRequest varchar = null,
-    currentUser varchar = null,
-    assumedRoles varchar = null
+    currentTask varchar(96),
+    currentRequest text = null,
+    currentUser varchar(63) = null,
+    assumedRoles varchar(256) = null
 )
     language plpgsql as $$
 begin
+    currentTask := coalesce(currentTask, '');
+    assert length(currentTask) <= 96, FORMAT('currentTask must not be longer than 96 characters: "%s"', currentTask);
+    assert length(currentTask) > 8, FORMAT('currentTask must be at least 8 characters long: "%s""', currentTask);
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     currentRequest := coalesce(currentRequest, '');
     execute format('set local hsadminng.currentRequest to %L', currentRequest);
 
     currentUser := coalesce(currentUser, '');
+    assert length(currentUser) <= 63, FORMAT('currentUser must not be longer than 63 characters: "%s"', currentUser);
     execute format('set local hsadminng.currentUser to %L', currentUser);
 
     assumedRoles := coalesce(assumedRoles, '');
+    assert length(assumedRoles) <= 256, FORMAT('assumedRoles must not be longer than 256 characters: "%s"', assumedRoles);
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
 
     call contextDefined(currentTask, currentRequest, currentUser, assumedRoles);

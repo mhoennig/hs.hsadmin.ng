@@ -145,8 +145,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Debitor:C(Create)" })
-    class CreateDebitor {
+    class AddDebitor {
 
         @Test
         void globalAdmin_withoutAssumedRole_canAddDebitorWithBankAccount() {

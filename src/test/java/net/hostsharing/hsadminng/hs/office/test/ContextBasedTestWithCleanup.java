@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantEntity;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.test.JpaAttempt;
@@ -43,7 +44,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    private TreeMap<UUID, Class<? extends HasUuid>> entitiesToCleanup = new TreeMap<>();
+    private TreeMap<UUID, Class<? extends RbacObject>> entitiesToCleanup = new TreeMap<>();
 
     private static Long latestIntialTestDataSerialId;
     private static boolean countersInitialized = false;
@@ -61,7 +62,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return uuidToCleanup;
     }
 
-    public <E extends HasUuid> E toCleanup(final E entity) {
+    public <E extends RbacObject> E toCleanup(final E entity) {
         out.println("toCleanup(" + entity.getClass() + ", " + entity.getUuid());
         if ( entity.getUuid() == null ) {
             throw new IllegalArgumentException("only persisted entities with valid uuid allowed");

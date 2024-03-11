@@ -4,14 +4,14 @@
 flowchart TB
 
 subgraph global
-    style hsOfficeBankAccount fill: #e9f7ef
+    style global fill: lightgray
 
     role:global.admin[global.admin]
 end
 
 subgraph hsOfficeBankAccount
     direction TB
-    style hsOfficeBankAccount fill: #e9f7ef
+    style hsOfficeBankAccount fill: lightgreen
    
     user:hsOfficeBankAccount.creator([bankAccount.creator])       
 

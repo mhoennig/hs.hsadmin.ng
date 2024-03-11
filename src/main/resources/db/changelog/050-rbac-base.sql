@@ -86,29 +86,6 @@ create or replace function findRbacUserId(userName varchar)
     language sql as $$
 select uuid from RbacUser where name = userName
 $$;
-
-create type RbacWhenNotExists as enum ('fail', 'create');
-
-create or replace function getRbacUserId(userName varchar, whenNotExists RbacWhenNotExists)
-    returns uuid
-    returns null on null input
-    language plpgsql as $$
-declare
-    userUuid uuid;
-begin
-    userUuid = findRbacUserId(userName);
-    if (userUuid is null) then
-        if (whenNotExists = 'fail') then
-            raise exception 'RbacUser with name="%" not found', userName;
-        end if;
-        if (whenNotExists = 'create') then
-            userUuid = createRbacUser(userName);
-        end if;
-    end if;
-    return userUuid;
-end;
-$$;
-
 --//
 
 -- ============================================================================
@@ -203,15 +180,33 @@ create type RbacRoleDescriptor as
 (
     objectTable varchar(63), -- for human readability and easier debugging
     objectUuid  uuid,
-    roleType    RbacRoleType
+    roleType    RbacRoleType,
+    assumed     boolean
 );
 
-create or replace function roleDescriptor(objectTable varchar(63), objectUuid uuid, roleType RbacRoleType)
+create or replace function assumed()
+    returns boolean
+    stable -- leakproof
+    language sql as $$
+        select true;
+$$;
+
+create or replace function unassumed()
+    returns boolean
+    stable -- leakproof
+    language sql as $$
+select false;
+$$;
+
+
+create or replace function roleDescriptor(
+        objectTable varchar(63), objectUuid uuid, roleType RbacRoleType,
+        assumed boolean = true) -- just for DSL readability, belongs actually to the grant
     returns RbacRoleDescriptor
     returns null on null input
     stable -- leakproof
     language sql as $$
-select objectTable, objectUuid, roleType::RbacRoleType;
+        select objectTable, objectUuid, roleType::RbacRoleType, assumed;
 $$;
 
 create or replace function createRole(roleDescriptor RbacRoleDescriptor)
@@ -275,21 +270,17 @@ create or replace function findRoleId(roleDescriptor RbacRoleDescriptor)
 select uuid from RbacRole where objectUuid = roleDescriptor.objectUuid and roleType = roleDescriptor.roleType;
 $$;
 
-create or replace function getRoleId(roleDescriptor RbacRoleDescriptor, whenNotExists RbacWhenNotExists)
+create or replace function getRoleId(roleDescriptor RbacRoleDescriptor)
     returns uuid
-    returns null on null input
     language plpgsql as $$
 declare
     roleUuid uuid;
 begin
-    roleUuid = findRoleId(roleDescriptor);
+    assert roleDescriptor is not null, 'roleDescriptor must not be null';
+
+    roleUuid := findRoleId(roleDescriptor);
     if (roleUuid is null) then
-        if (whenNotExists = 'fail') then
-            raise exception 'RbacRole "%#%.%" not found', roleDescriptor.objectTable, roleDescriptor.objectUuid, roleDescriptor.roleType;
-        end if;
-        if (whenNotExists = 'create') then
-            roleUuid = createRole(roleDescriptor);
-        end if;
+        raise exception 'RbacRole "%#%.%" not found', roleDescriptor.objectTable, roleDescriptor.objectUuid, roleDescriptor.roleType;
     end if;
     return roleUuid;
 end;
@@ -365,38 +356,63 @@ create trigger deleteRbacRolesOfRbacObject_Trigger
 /*
 
  */
-create domain RbacOp as varchar(67)
+create domain RbacOp as varchar(67) -- TODO: shorten to 8, once the deprecated values are gone
     check (
-                VALUE = '*'
-            or VALUE = 'delete'
-            or VALUE = 'edit'
-            or VALUE = 'view'
-            or VALUE = 'assume'
+               VALUE = 'DELETE'
+            or VALUE = 'UPDATE'
+            or VALUE = 'SELECT'
+            or VALUE = 'INSERT'
+            or VALUE = 'ASSUME'
+            -- TODO: all values below are deprecated, use insert with table
             or VALUE ~ '^add-[a-z]+$'
             or VALUE ~ '^new-[a-z-]+$'
         );
 
 create table RbacPermission
 (
-    uuid       uuid primary key references RbacReference (uuid) on delete cascade,
-    objectUuid uuid   not null references RbacObject,
-    op         RbacOp not null,
+    uuid        uuid primary key references RbacReference (uuid) on delete cascade,
+    objectUuid  uuid not null references RbacObject,
+    op          RbacOp not null,
+    opTableName varchar(60),
     unique (objectUuid, op)
 );
 
 call create_journal('RbacPermission');
 
-create or replace function permissionExists(forObjectUuid uuid, forOp RbacOp)
-    returns bool
-    language sql as $$
-select exists(
-           select op
-               from RbacPermission p
-               where p.objectUuid = forObjectUuid
-                 and p.op in ('*', forOp)
-           );
-$$;
+create or replace function createPermission(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+    returns uuid
+    language plpgsql as $$
+declare
+    permissionUuid uuid;
+begin
+    if (forObjectUuid is null) then
+        raise exception 'forObjectUuid must not be null';
+    end if;
+    if (forOp = 'INSERT' and forOpTableName is null) then
+        raise exception 'INSERT permissions needs forOpTableName';
+    end if;
+    if (forOp <> 'INSERT' and forOpTableName is not null) then
+        raise exception 'forOpTableName must only be specified for ops: [INSERT]'; -- currently no other
+    end if;
 
+    permissionUuid = (select uuid from RbacPermission where objectUuid = forObjectUuid and op = forOp and opTableName = forOpTableName);
+    if (permissionUuid is null) then
+        insert into RbacReference ("type")
+            values ('RbacPermission')
+            returning uuid into permissionUuid;
+        begin
+            insert into RbacPermission (uuid, objectUuid, op, opTableName)
+                values (permissionUuid, forObjectUuid, forOp, forOpTableName);
+        exception
+            when others then
+                raise exception 'insert into RbacPermission (uuid, objectUuid, op, opTableName)
+                values (%, %, %, %);', permissionUuid, forObjectUuid, forOp, forOpTableName;
+        end;
+    end if;
+    return permissionUuid;
+end; $$;
+
+-- TODO: deprecated, remove and amend all usages to createPermission
 create or replace function createPermissions(forObjectUuid uuid, permitOps RbacOp[])
     returns uuid[]
     language plpgsql as $$
@@ -406,9 +422,6 @@ declare
 begin
     if (forObjectUuid is null) then
         raise exception 'forObjectUuid must not be null';
-    end if;
-    if (array_length(permitOps, 1) > 1 and '*' = any (permitOps)) then
-        raise exception '"*" operation must not be assigned along with other operations: %', permitOps;
     end if;
 
     for i in array_lower(permitOps, 1)..array_upper(permitOps, 1)
@@ -430,7 +443,19 @@ begin
 end;
 $$;
 
-create or replace function findPermissionId(forObjectUuid uuid, forOp RbacOp)
+create or replace function findEffectivePermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+    returns uuid
+    returns null on null input
+    stable -- leakproof
+    language sql as $$
+select uuid
+    from RbacPermission p
+    where p.objectUuid = forObjectUuid
+      and (forOp = 'SELECT' or p.op = forOp) -- all other RbacOp include 'SELECT'
+      and p.opTableName = forOpTableName
+$$;
+
+create or replace function findPermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
     returns uuid
     returns null on null input
     stable -- leakproof
@@ -439,23 +464,8 @@ select uuid
     from RbacPermission p
     where p.objectUuid = forObjectUuid
       and p.op = forOp
+      and p.opTableName = forOpTableName
 $$;
-
-create or replace function findEffectivePermissionId(forObjectUuid uuid, forOp RbacOp)
-    returns uuid
-    returns null on null input
-    stable -- leakproof
-    language plpgsql as $$
-declare
-    permissionId uuid;
-begin
-    permissionId := findPermissionId(forObjectUuid, forOp);
-    if permissionId is null and forOp <> '*' then
-        permissionId := findPermissionId(forObjectUuid, '*');
-    end if;
-    return permissionId;
-end $$;
-
 --//
 
 -- ============================================================================
@@ -552,6 +562,18 @@ select exists(
            );
 $$;
 
+create or replace function hasInsertPermission(objectUuid uuid, forOp RbacOp, tableName text )
+    returns BOOL
+    stable -- leakproof
+    language plpgsql as $$
+declare
+    permissionUuid uuid;
+begin
+    permissionUuid = findPermissionId(objectUuid, forOp, tableName);
+    return permissionUuid is not null;
+end;
+$$;
+
 create or replace function hasGlobalRoleGranted(userUuid uuid)
     returns bool
     stable -- leakproof
@@ -566,6 +588,27 @@ select exists(
            );
 $$;
 
+create or replace procedure grantPermissionToRole(roleUuid uuid, permissionUuid uuid)
+    language plpgsql as $$
+begin
+    perform assertReferenceType('roleId (ascendant)', roleUuid, 'RbacRole');
+    perform assertReferenceType('permissionId (descendant)', permissionUuid, 'RbacPermission');
+
+    insert
+        into RbacGrants (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
+        values (currentTriggerObjectUuid(), roleUuid, permissionUuid, true)
+    on conflict do nothing; -- allow granting multiple times
+end;
+$$;
+
+create or replace procedure grantPermissionToRole(roleDesc RbacRoleDescriptor, permissionUuid uuid)
+    language plpgsql as $$
+begin
+    call grantPermissionToRole(findRoleId(roleDesc), permissionUuid);
+end;
+$$;
+
+-- TODO: deprecated, remove and use grantPermissionToRole(...)
 create or replace procedure grantPermissionsToRole(roleUuid uuid, permissionIds uuid[])
     language plpgsql as $$
 begin
@@ -697,7 +740,7 @@ begin
                            select descendantUuid
                                from grants) as granted
                               join RbacPermission perm
-                                   on granted.descendantUuid = perm.uuid and perm.op in ('*', requiredOp)
+                                   on granted.descendantUuid = perm.uuid and (requiredOp = 'SELECT' or perm.op = requiredOp)
                               join RbacObject obj on obj.uuid = perm.objectUuid and obj.objectTable = forObjectTable
                      limit maxObjects + 1;
 
@@ -789,6 +832,5 @@ do $$
             create role restricted;
             grant all privileges on all tables in schema public to restricted;
         end if;
-    end $$
+    end $$;
 --//
-

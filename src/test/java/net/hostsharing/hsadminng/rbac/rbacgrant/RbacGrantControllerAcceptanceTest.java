@@ -73,14 +73,16 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                hasEntry("grantedByRoleIdName", "global#global.admin"),
+                                // TODO: should there be a grantedByRole or just a grantedByTrigger?
+                                hasEntry("grantedByRoleIdName", "test_customer#xxx.owner"),
                                 hasEntry("grantedRoleIdName", "test_customer#xxx.admin"),
                                 hasEntry("granteeUserName", "customer-admin@xxx.example.com")
                             )
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "global#global.admin"),
+                                    // TODO: should there be a grantedByRole or just a grantedByTrigger?
+                                    hasEntry("grantedByRoleIdName", "test_customer#yyy.owner"),
                                     hasEntry("grantedRoleIdName", "test_customer#yyy.admin"),
                                     hasEntry("granteeUserName", "customer-admin@yyy.example.com")
                             )
@@ -296,7 +298,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             result.assertThat()
                     .statusCode(403)
                     .body("message", containsString("Access to granted role"))
-                    .body("message", containsString("forbidden for {test_package#xxx00.admin}"));
+                    .body("message", containsString("forbidden for test_package#xxx00.admin"));
             assertThat(findAllGrantsOf(givenCurrentUserAsPackageAdmin))
                     .extracting(RbacGrantEntity::getGranteeUserName)
                     .doesNotContain(givenNewUser.getName());

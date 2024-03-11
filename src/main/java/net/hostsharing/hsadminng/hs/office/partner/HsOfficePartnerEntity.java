@@ -6,15 +6,24 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
 import jakarta.persistence.*;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -67,5 +76,38 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
     @Override
     public String toShortString() {
         return Optional.ofNullable(person).map(HsOfficePersonEntity::toShortString).orElse("<person=null>");
+    }
+
+    public static RbacView rbac() {
+        return rbacViewFor("partner", HsOfficePartnerEntity.class)
+                .withIdentityView(SQL.query("""
+                        SELECT partner.partnerNumber
+                            || ':' || (SELECT idName FROM hs_office_person_iv p WHERE p.uuid = partner.personUuid)
+                            || '-' || (SELECT idName FROM hs_office_contact_iv c WHERE c.uuid = partner.contactUuid)
+                            FROM hs_office_partner AS partner
+                        """))
+                .withUpdatableColumns(
+                        "partnerRoleUuid",
+                        "personUuid",
+                        "contactUuid")
+                .createPermission(custom("new-partner")).grantedTo("global", ADMIN)
+
+                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationshipEntity.class,
+                        fetchedBySql("SELECT * FROM hs_office_relationship AS r WHERE r.uuid = ${ref}.partnerRoleUuid"),
+                        dependsOnColumn("partnerRelUuid"))
+                .createPermission(DELETE).grantedTo("partnerRel", ADMIN)
+                .createPermission(UPDATE).grantedTo("partnerRel", AGENT)
+                .createPermission(SELECT).grantedTo("partnerRel", TENANT)
+
+                .importSubEntityAlias("partnerDetails", HsOfficePartnerDetailsEntity.class,
+                        fetchedBySql("SELECT * FROM hs_office_partner_details AS d WHERE d.uuid = ${ref}.detailsUuid"),
+                        dependsOnColumn("detailsUuid"))
+                .createPermission("partnerDetails", DELETE).grantedTo("partnerRel", ADMIN)
+                .createPermission("partnerDetails", UPDATE).grantedTo("partnerRel", AGENT)
+                .createPermission("partnerDetails", SELECT).grantedTo("partnerRel", AGENT);
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("233-hs-office-partner-rbac-generated");
     }
 }

@@ -4,10 +4,20 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.test.cust.TestCustomerEntity;
 
 import jakarta.persistence.*;
+import java.io.IOException;
 import java.util.UUID;
+
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 
 @Entity
 @Table(name = "test_package_rv")
@@ -15,7 +25,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestPackageEntity {
+public class TestPackageEntity implements HasUuid {
 
     @Id
     @GeneratedValue
@@ -31,4 +41,34 @@ public class TestPackageEntity {
     private String name;
 
     private String description;
+
+
+    public static RbacView rbac() {
+        return rbacViewFor("package", TestPackageEntity.class)
+                .withIdentityView(SQL.projection("name"))
+                .withUpdatableColumns("version", "customerUuid", "description")
+
+                .importEntityAlias("customer", TestCustomerEntity.class,
+                        dependsOnColumn("customerUuid"),
+                        fetchedBySql("""
+                                SELECT * FROM test_customer c
+                                    WHERE c.uuid= ${ref}.customerUuid
+                                """))
+                .toRole("customer", ADMIN).grantPermission("package", INSERT)
+
+                .createRole(OWNER, (with) -> {
+                    with.incomingSuperRole("customer", ADMIN);
+                    with.permission(DELETE);
+                    with.permission(UPDATE);
+                })
+                .createSubRole(ADMIN)
+                .createSubRole(TENANT, (with) -> {
+                    with.outgoingSubRole("customer", TENANT);
+                    with.permission(SELECT);
+                });
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("123-test-package-rbac");
+    }
 }

@@ -28,6 +28,8 @@ declare
     currentTask   varchar;
     custRowId     uuid;
     custAdminName varchar;
+    custAdminUuid uuid;
+    newCust       test_customer;
 begin
     currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
@@ -35,10 +37,19 @@ begin
 
     custRowId = uuid_generate_v4();
     custAdminName = 'customer-admin@' || custPrefix || '.example.com';
+    custAdminUuid = createRbacUser(custAdminName);
 
     insert
         into test_customer (reference, prefix, adminUserName)
         values (custReference, custPrefix, custAdminName);
+
+    select * into newCust
+             from test_customer where reference=custReference;
+    call grantRoleToUser(
+            getRoleId(testCustomerOwner(newCust)),
+            getRoleId(testCustomerAdmin(newCust)),
+            custAdminUuid,
+            true);
 end; $$;
 --//
 

@@ -8,8 +8,8 @@ public interface RbacUserPermission {
     String getRoleName();
     UUID getPermissionUuid();
     String getOp();
+    String getOpTableName();
     String getObjectTable();
     String getObjectIdName();
     UUID getObjectUuid();
-
 }

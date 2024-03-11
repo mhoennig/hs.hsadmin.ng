@@ -26,7 +26,7 @@ begin
 
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
             custAdminRole = 'test_customer#' || cust.prefix || '.admin';
-            call defineContext(currentTask, null, custAdminUser, custAdminRole);
+            call defineContext(currentTask, null, 'superuser-fran@hostsharing.net', custAdminRole);
             raise notice 'task: % by % as %', currentTask, custAdminUser, custAdminRole;
 
             insert
@@ -35,7 +35,7 @@ begin
                 returning * into pac;
 
             call grantRoleToUser(
-                    getRoleId(testCustomerAdmin(cust), 'fail'),
+                    getRoleId(testCustomerAdmin(cust)),
                     findRoleId(testPackageAdmin(pac)),
                     createRbacUser('pac-admin-' || pacName || '@' || cust.prefix || '.example.com'),
                     true);

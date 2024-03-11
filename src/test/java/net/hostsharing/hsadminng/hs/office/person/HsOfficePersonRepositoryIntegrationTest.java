@@ -113,11 +113,11 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     Array.from(
                             initialGrantNames,
                             "{ grant role hs_office_person#anothernewperson.owner to role global#global.admin by system and assume }",
-                            "{ grant perm edit on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.admin by system and assume }",
+                            "{ grant perm UPDATE on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.admin by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.tenant to role hs_office_person#anothernewperson.admin by system and assume }",
-                            "{ grant perm * on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.owner by system and assume }",
+                            "{ grant perm DELETE on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.owner by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.admin to role hs_office_person#anothernewperson.owner by system and assume }",
-                            "{ grant perm view on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.guest by system and assume }",
+                            "{ grant perm SELECT on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.guest by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.guest to role hs_office_person#anothernewperson.tenant by system and assume }",
                             "{ grant role hs_office_person#anothernewperson.owner to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
                     ));

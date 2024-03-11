@@ -288,19 +288,15 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_customer#yyy.tenant"),
-                                    hasEntry("op", "view"))
-                    ))
-                    .body("", hasItem(
-                            allOf(
-                                    hasEntry("roleName", "test_package#yyy00.admin"),
-                                    hasEntry("op", "add-domain"))
+                                    hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
-                                    hasEntry("op", "*"))
+                                    hasEntry("op", "DELETE"))
                     ))
-                    .body("size()", is(7));
+                    // actual content tested in integration test, so this is enough for here:
+                    .body("size()", greaterThanOrEqualTo(6));
             // @formatter:on
         }
 
@@ -313,7 +309,7 @@ class RbacUserControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_package#yyy00.admin")
+                    .header("assumed-roles", "test_customer#yyy.admin")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid() + "/permissions")
@@ -323,19 +319,15 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_customer#yyy.tenant"),
-                                    hasEntry("op", "view"))
-                    ))
-                    .body("", hasItem(
-                            allOf(
-                                    hasEntry("roleName", "test_package#yyy00.admin"),
-                                    hasEntry("op", "add-domain"))
+                                    hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
-                                    hasEntry("op", "*"))
+                                    hasEntry("op", "DELETE"))
                     ))
-                    .body("size()", is(7));
+                    // actual content tested in integration test, so this is enough for here:
+                    .body("size()", greaterThanOrEqualTo(6));
             // @formatter:on
         }
 
@@ -357,19 +349,15 @@ class RbacUserControllerAcceptanceTest {
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_customer#yyy.tenant"),
-                                    hasEntry("op", "view"))
-                    ))
-                    .body("", hasItem(
-                            allOf(
-                                    hasEntry("roleName", "test_package#yyy00.admin"),
-                                    hasEntry("op", "add-domain"))
+                                    hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
                                     hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
-                                    hasEntry("op", "*"))
+                                    hasEntry("op", "DELETE"))
                     ))
-                    .body("size()", is(7));
+                    // actual content tested in integration test, so this is enough for here:
+                    .body("size()", greaterThanOrEqualTo(6));
             // @formatter:on
         }
 

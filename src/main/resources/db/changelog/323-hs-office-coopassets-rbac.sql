@@ -42,8 +42,8 @@ begin
 
         -- coopassetstransactions cannot be edited nor deleted, just created+viewed
         call grantPermissionsToRole(
-                getRoleId(hsOfficeMembershipTenant(newHsOfficeMembership), 'fail'),
-                createPermissions(NEW.uuid, array ['view'])
+                getRoleId(hsOfficeMembershipTenant(newHsOfficeMembership)),
+                createPermissions(NEW.uuid, array ['SELECT'])
             );
 
     else
@@ -68,8 +68,7 @@ execute procedure hsOfficeCoopAssetsTransactionRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-coopAssetsTransaction-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_coopAssetsTransaction',
-    idNameExpression => 'target.reference');
+call generateRbacIdentityViewFromProjection('hs_office_coopAssetsTransaction', 'target.reference');
 --//
 
 

@@ -148,7 +148,7 @@ class TestCustomerControllerAcceptanceTest {
             // finally, the new customer can be viewed by its own admin
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.define("customer-admin@uuu.example.com");
+            context.define("superuser-fran@hostsharing.net", "test_customer#uuu.admin");
             assertThat(testCustomerRepository.findByUuid(newUserUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("uuu"));
         }
@@ -175,7 +175,7 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("add-customer not permitted for test_customer#xxx.admin"));
+                    .body("message", containsString("insert into test_customer not allowed for current subjects {test_customer#xxx.admin}"));
             // @formatter:on
 
             // finally, the new customer was not created
@@ -204,7 +204,7 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("add-customer not permitted for customer-admin@yyy.example.com"));
+                    .body("message", containsString("insert into test_customer not allowed for current subjects {customer-admin@yyy.example.com}"));
                 // @formatter:on
 
             // finally, the new customer was not created

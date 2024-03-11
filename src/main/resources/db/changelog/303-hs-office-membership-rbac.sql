@@ -41,13 +41,13 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeMembershipOwner(NEW),
-                permissions => array['*'],
+                permissions => array['DELETE'],
                 incomingSuperRoles => array[globalAdmin()]
             );
 
         perform createRoleWithGrants(
                 hsOfficeMembershipAdmin(NEW),
-                permissions => array['edit'],
+                permissions => array['UPDATE'],
                 incomingSuperRoles => array[hsOfficeMembershipOwner(NEW)]
             );
 
@@ -65,7 +65,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeMembershipGuest(NEW),
-                permissions => array['view'],
+                permissions => array['SELECT'],
                 incomingSuperRoles => array[hsOfficeMembershipTenant(NEW), hsOfficePartnerTenant(newHsOfficePartner), hsOfficeDebitorTenant(newHsOfficeDebitor)]
             );
 
@@ -93,7 +93,7 @@ execute procedure hsOfficeMembershipRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-membership-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_membership', idNameExpression => $idName$
+call generateRbacIdentityViewFromProjection('hs_office_membership', $idName$
     '#' ||
         (select partnerNumber from hs_office_partner p where p.uuid = target.partnerUuid) ||
         memberNumberSuffix ||

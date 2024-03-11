@@ -111,11 +111,11 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialGrantNames,
                     "{ grant role hs_office_contact#anothernewcontact.owner to role global#global.admin by system and assume }",
-                    "{ grant perm edit on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.admin by system and assume }",
+                    "{ grant perm UPDATE on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.admin by system and assume }",
                     "{ grant role hs_office_contact#anothernewcontact.tenant to role hs_office_contact#anothernewcontact.admin by system and assume }",
-                    "{ grant perm * on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.owner by system and assume }",
+                    "{ grant perm DELETE on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.owner by system and assume }",
                     "{ grant role hs_office_contact#anothernewcontact.admin to role hs_office_contact#anothernewcontact.owner by system and assume }",
-                    "{ grant perm view on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.guest by system and assume }",
+                    "{ grant perm SELECT on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.guest by system and assume }",
                     "{ grant role hs_office_contact#anothernewcontact.guest to role hs_office_contact#anothernewcontact.tenant by system and assume }",
                     "{ grant role hs_office_contact#anothernewcontact.owner to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
             ));

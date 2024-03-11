@@ -23,6 +23,19 @@ grant select on global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 
 
 -- ============================================================================
+--changeset rbac-global-IS-GLOBAL-ADMIN:1 endDelimiter:--//
+-- ------------------------------------------------------------------
+
+create or replace function isGlobalAdmin()
+    returns boolean
+    language plpgsql as $$
+begin
+    return isGranted(currentSubjectsUuids(), findRoleId(globalAdmin()));
+end; $$;
+--//
+
+
+-- ============================================================================
 --changeset rbac-global-HAS-GLOBAL-PERMISSION:1 endDelimiter:--//
 -- ------------------------------------------------------------------
 
@@ -96,12 +109,12 @@ commit;
 /*
     A global administrator role.
  */
-create or replace function globalAdmin()
+create or replace function globalAdmin(assumed boolean = true)
     returns RbacRoleDescriptor
     returns null on null input
     stable -- leakproof
     language sql as $$
-select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType;
+select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType, assumed;
 $$;
 
 begin transaction;

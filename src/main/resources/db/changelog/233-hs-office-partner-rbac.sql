@@ -48,13 +48,13 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficePartnerOwner(NEW),
-                permissions => array['*'],
+                permissions => array['DELETE'],
                 incomingSuperRoles => array[globalAdmin()]
             );
 
         perform createRoleWithGrants(
                 hsOfficePartnerAdmin(NEW),
-                permissions => array['edit'],
+                permissions => array['UPDATE'],
                 incomingSuperRoles => array[
                     hsOfficePartnerOwner(NEW)],
                 outgoingSubRoles => array[
@@ -84,7 +84,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficePartnerGuest(NEW),
-                permissions => array['view'],
+                permissions => array['SELECT'],
                 incomingSuperRoles => array[hsOfficePartnerTenant(NEW)]
             );
 
@@ -98,21 +98,21 @@ begin
         --Attention: Cannot be in partner-details because of insert order (partner is not in database yet)
 
         call grantPermissionsToRole(
-                getRoleId(hsOfficePartnerOwner(NEW), 'fail'),
-                createPermissions(NEW.detailsUuid, array ['*'])
+                getRoleId(hsOfficePartnerOwner(NEW)),
+                createPermissions(NEW.detailsUuid, array ['DELETE'])
             );
 
         call grantPermissionsToRole(
-                getRoleId(hsOfficePartnerAdmin(NEW), 'fail'),
-                createPermissions(NEW.detailsUuid, array ['edit'])
+                getRoleId(hsOfficePartnerAdmin(NEW)),
+                createPermissions(NEW.detailsUuid, array ['UPDATE'])
             );
 
         call grantPermissionsToRole(
             -- Yes, here hsOfficePartnerAGENT is used, not hsOfficePartnerTENANT.
             -- Do NOT grant view permission on partner-details to hsOfficePartnerTENANT!
             -- Otherwise package-admins etc. would be able to read the data.
-                getRoleId(hsOfficePartnerAgent(NEW), 'fail'),
-                createPermissions(NEW.detailsUuid, array ['view'])
+                getRoleId(hsOfficePartnerAgent(NEW)),
+                createPermissions(NEW.detailsUuid, array ['SELECT'])
             );
 
 
@@ -187,7 +187,7 @@ execute procedure hsOfficePartnerRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_partner', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_partner', $idName$
     partnerNumber || ':' ||
     (select idName from hs_office_person_iv p where p.uuid = target.personuuid)
     || '-' ||

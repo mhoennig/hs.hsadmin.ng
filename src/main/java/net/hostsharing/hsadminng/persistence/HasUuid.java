@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.persistence;
 
-import java.util.UUID;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 
-public interface HasUuid {
-    UUID getUuid();
+// TODO: remove this interface, I just wanted to avoid to many changes in that PR
+public interface HasUuid extends RbacObject {
 }

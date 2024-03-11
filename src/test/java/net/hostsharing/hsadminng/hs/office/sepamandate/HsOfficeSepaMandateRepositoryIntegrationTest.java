@@ -131,11 +131,11 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                             initialGrantNames,
 
                             // owner
-                            "{ grant perm * on sepamandate#temprefB            to role sepamandate#temprefB.owner           by system and assume }",
+                            "{ grant perm DELETE on sepamandate#temprefB            to role sepamandate#temprefB.owner           by system and assume }",
                             "{ grant role sepamandate#temprefB.owner           to role global#global.admin                 by system and assume }",
 
                             // admin
-                            "{ grant perm edit on sepamandate#temprefB         to role sepamandate#temprefB.admin           by system and assume }",
+                            "{ grant perm UPDATE on sepamandate#temprefB         to role sepamandate#temprefB.admin           by system and assume }",
                             "{ grant role sepamandate#temprefB.admin           to role sepamandate#temprefB.owner           by system and assume }",
                             "{ grant role bankaccount#Paul....tenant           to role sepamandate#temprefB.admin           by system and assume }",
 
@@ -151,7 +151,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
                             "{ grant role bankaccount#Paul....guest            to role sepamandate#temprefB.tenant          by system and assume }",
 
                             // guest
-                            "{ grant perm view on sepamandate#temprefB      to role sepamandate#temprefB.guest           by system and assume }",
+                            "{ grant perm SELECT on sepamandate#temprefB      to role sepamandate#temprefB.guest           by system and assume }",
                             "{ grant role sepamandate#temprefB.guest        to role sepamandate#temprefB.tenant          by system and assume }",
                             null));
         }

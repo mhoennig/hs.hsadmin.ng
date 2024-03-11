@@ -21,7 +21,7 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -520,7 +520,7 @@ public class ImportOfficeData extends ContextBasedTest {
 
     }
 
-    private void persist(final Integer id, final HasUuid entity) {
+    private void persist(final Integer id, final RbacObject entity) {
         try {
             //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
             em.persist(entity);
@@ -591,7 +591,7 @@ public class ImportOfficeData extends ContextBasedTest {
         }).assertSuccessful();
     }
 
-    private <E extends HasUuid> void updateLegacyIds(
+    private <E extends RbacObject> void updateLegacyIds(
             Map<Integer, E> entities,
             final String legacyIdTable,
             final String legacyIdColumn) {

@@ -27,9 +27,9 @@ create table tx_context
     txId            bigint             not null,
     txTimestamp     timestamp          not null,
     currentUser     varchar(63)        not null, -- not the uuid, because users can be deleted
-    assumedRoles    varchar            not null, -- not the uuids, because roles can be deleted
+    assumedRoles    varchar(256)       not null, -- not the uuids, because roles can be deleted
     currentTask     varchar(96)        not null,
-    currentRequest  varchar(512)       not null
+    currentRequest  text       not null
 );
 
 create index on tx_context using brin (txTimestamp);

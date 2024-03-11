@@ -126,11 +126,11 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                             initialGrantNames,
 
                             // owner
-                            "{ grant perm * on membership#1000117:First        to role membership#1000117:First.owner     by system and assume }",
+                            "{ grant perm DELETE on membership#1000117:First        to role membership#1000117:First.owner     by system and assume }",
                             "{ grant role membership#1000117:First.owner       to role global#global.admin             by system and assume }",
 
                             // admin
-                            "{ grant perm edit on membership#1000117:First     to role membership#1000117:First.admin     by system and assume }",
+                            "{ grant perm UPDATE on membership#1000117:First     to role membership#1000117:First.admin     by system and assume }",
                             "{ grant role membership#1000117:First.admin       to role membership#1000117:First.owner     by system and assume }",
 
                             // agent
@@ -149,7 +149,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                             "{ grant role membership#1000117:First.tenant      to role partner#10001:First.agent             by system and assume }",
 
                             // guest
-                            "{ grant perm view on membership#1000117:First     to role membership#1000117:First.guest     by system and assume }",
+                            "{ grant perm SELECT on membership#1000117:First     to role membership#1000117:First.guest     by system and assume }",
                             "{ grant role membership#1000117:First.guest       to role membership#1000117:First.tenant    by system and assume }",
                             "{ grant role membership#1000117:First.guest       to role partner#10001:First.tenant            by system and assume }",
                             "{ grant role membership#1000117:First.guest       to role debitor#1000111:First.tenant       by system and assume }",

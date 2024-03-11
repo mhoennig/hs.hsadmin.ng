@@ -118,8 +118,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             });
 
             // then
-            System.out.println("ok");
-//            result.assertExceptionWithRootCauseMessage(org.hibernate.exception.ConstraintViolationException.class);
+            result.assertExceptionWithRootCauseMessage(org.hibernate.exception.ConstraintViolationException.class);
         }
 
         @Test
@@ -167,12 +166,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             // owner
-                            "{ grant perm * on debitor#1000422:FeG      to role debitor#1000422:FeG.owner   by system and assume }",
+                            "{ grant perm DELETE on debitor#1000422:FeG      to role debitor#1000422:FeG.owner   by system and assume }",
                             "{ grant role debitor#1000422:FeG.owner     to role global#global.admin by system and assume }",
                             "{ grant role debitor#1000422:FeG.owner     to user superuser-alex      by global#global.admin and assume }",
 
                             // admin
-                            "{ grant perm edit on debitor#1000422:FeG   to role debitor#1000422:FeG.admin   by system and assume }",
+                            "{ grant perm UPDATE on debitor#1000422:FeG   to role debitor#1000422:FeG.admin   by system and assume }",
                             "{ grant role debitor#1000422:FeG.admin     to role debitor#1000422:FeG.owner   by system and assume }",
 
                             // agent
@@ -187,7 +186,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                             "{ grant role partner#10004:FeG.tenant    to role debitor#1000422:FeG.tenant  by system and assume }",
 
                             // guest
-                            "{ grant perm view on debitor#1000422:FeG   to role debitor#1000422:FeG.guest   by system and assume }",
+                            "{ grant perm SELECT on debitor#1000422:FeG   to role debitor#1000422:FeG.guest   by system and assume }",
                             "{ grant role debitor#1000422:FeG.guest     to role debitor#1000422:FeG.tenant  by system and assume }",
 
                             null));

@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 
 @RestController
@@ -23,6 +25,9 @@ public class TestCustomerController implements TestCustomersApi {
 
     @Autowired
     private TestCustomerRepository testCustomerRepository;
+
+    @PersistenceContext
+    EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,7 +53,6 @@ public class TestCustomerController implements TestCustomersApi {
         context.define(currentUser, assumedRoles);
 
         final var saved = testCustomerRepository.save(mapper.map(customer, TestCustomerEntity.class));
-
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/test/customers/{id}")

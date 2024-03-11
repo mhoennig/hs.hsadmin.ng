@@ -2,14 +2,23 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
 import jakarta.persistence.*;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -55,6 +64,45 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
         return registrationNumber != null ? registrationNumber
                 : birthName != null ? birthName
                 : birthday != null ? birthday.toString()
-                : dateOfDeath != null ? dateOfDeath.toString() : "<empty details>";
+                : dateOfDeath != null ? dateOfDeath.toString()
+                : "<empty details>";
+    }
+
+
+    public static RbacView rbac() {
+        return rbacViewFor("partnerDetails", HsOfficePartnerDetailsEntity.class)
+                .withIdentityView(SQL.query("""
+                        SELECT partner_iv.idName || '-details'
+                            FROM hs_office_partner_details AS partnerDetails
+                            JOIN hs_office_partner partner ON partner.detailsUuid = partnerDetails.uuid
+                            JOIN hs_office_partner_iv partner_iv ON partner_iv.uuid = partner.uuid
+                        """))
+                .withUpdatableColumns(
+                        "registrationOffice",
+                        "registrationNumber",
+                        "birthPlace",
+                        "birthName",
+                        "birthday",
+                        "dateOfDeath")
+                .createPermission(custom("new-partner-details")).grantedTo("global", ADMIN)
+
+                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationshipEntity.class,
+                        fetchedBySql("""
+                            SELECT partnerRel.*
+                                FROM hs_office_relationship AS partnerRel
+                                JOIN hs_office_partner AS partner
+                                    ON partner.detailsUuid = ${ref}.uuid
+                                WHERE partnerRel.uuid = partner.partnerRoleUuid
+                            """),
+                        dependsOnColumn("partnerRoleUuid"))
+
+                // The grants are defined in HsOfficePartnerEntity.rbac()
+                // because they have to be changed when its partnerRel changes,
+                // not when anything in partner details changes.
+                ;
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("234-hs-office-partner-details-rbac-generated");
     }
 }

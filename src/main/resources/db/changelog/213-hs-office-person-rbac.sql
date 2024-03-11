@@ -31,16 +31,16 @@ begin
 
     perform createRoleWithGrants(
             hsOfficePersonOwner(NEW),
-            permissions => array['*'],
+            permissions => array['DELETE'],
             incomingSuperRoles => array[globalAdmin()],
             userUuids => array[currentUserUuid()],
             grantedByRole => globalAdmin()
         );
 
-    -- TODO: who is admin? the person itself? is it allowed for the person itself or a representative to edit the data?
+    -- TODO: who is admin? the person itself? is it allowed for the person itself or a representative to update the data?
     perform createRoleWithGrants(
             hsOfficePersonAdmin(NEW),
-            permissions => array['edit'],
+            permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficePersonOwner(NEW)]
         );
 
@@ -51,7 +51,7 @@ begin
 
     perform createRoleWithGrants(
             hsOfficePersonGuest(NEW),
-            permissions => array['view'],
+            permissions => array['SELECT'],
             incomingSuperRoles => array[hsOfficePersonTenant(NEW)]
         );
 
@@ -73,7 +73,7 @@ execute procedure createRbacRolesForHsOfficePerson();
 -- ============================================================================
 --changeset hs-office-person-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_person', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_person', $idName$
     concat(target.tradeName, target.familyName, target.givenName)
     $idName$);
 --//

@@ -49,7 +49,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeDebitorOwner(NEW),
-                permissions => array['*'],
+                permissions => array['DELETE'],
                 incomingSuperRoles => array[globalAdmin()],
                 userUuids => array[currentUserUuid()],
                 grantedByRole => globalAdmin()
@@ -57,7 +57,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeDebitorAdmin(NEW),
-                permissions => array['edit'],
+                permissions => array['UPDATE'],
                 incomingSuperRoles => array[hsOfficeDebitorOwner(NEW)]
             );
 
@@ -85,7 +85,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeDebitorGuest(NEW),
-                permissions => array['view'],
+                permissions => array['SELECT'],
                 incomingSuperRoles => array[
                     hsOfficeDebitorTenant(NEW)]
             );
@@ -173,7 +173,7 @@ execute procedure hsOfficeDebitorRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-debitor-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_debitor', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_debitor', $idName$
     '#' ||
         (select partnerNumber from hs_office_partner p where p.uuid = target.partnerUuid) ||
         to_char(debitorNumberSuffix, 'fm00') ||

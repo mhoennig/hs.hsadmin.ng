@@ -6,16 +6,26 @@ import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
+import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -84,4 +94,35 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
         return reference;
     }
 
+    public static RbacView rbac() {
+        return rbacViewFor("sepaMandate", HsOfficeSepaMandateEntity.class)
+                .withIdentityView(projection("concat(tradeName, familyName, givenName)"))
+                .withUpdatableColumns("reference", "agreement", "validity")
+
+                .importEntityAlias("debitorRel", HsOfficeRelationshipEntity.class, dependsOnColumn("debitorRelUuid"))
+                .importEntityAlias("bankAccount", HsOfficeBankAccountEntity.class, dependsOnColumn("bankAccountUuid"))
+
+                .createRole(OWNER, (with) -> {
+                    with.owningUser(CREATOR);
+                    with.incomingSuperRole(GLOBAL, ADMIN);
+                    with.permission(DELETE);
+                })
+                .createSubRole(ADMIN, (with) -> {
+                    with.permission(UPDATE);
+                })
+                .createSubRole(AGENT, (with) -> {
+                    with.outgoingSubRole("bankAccount", REFERRER);
+                    with.outgoingSubRole("debitorRel", AGENT);
+                })
+                .createSubRole(REFERRER, (with) -> {
+                    with.incomingSuperRole("bankAccount", ADMIN);
+                    with.incomingSuperRole("debitorRel", AGENT);
+                    with.outgoingSubRole("debitorRel", TENANT);
+                    with.permission(SELECT);
+                });
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("253-hs-office-sepamandate-rbac-generated");
+    }
 }

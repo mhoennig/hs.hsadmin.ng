@@ -13,24 +13,6 @@ begin
     return createPermissions(forObjectUuid, permitOps);
 end; $$;
 
-create or replace function toRoleUuids(roleDescriptors RbacRoleDescriptor[])
-    returns uuid[]
-    language plpgsql
-    strict as $$
-declare
-    superRoleDescriptor RbacRoleDescriptor;
-    superRoleUuids      uuid[] := array []::uuid[];
-begin
-    foreach superRoleDescriptor in array roleDescriptors
-        loop
-            if superRoleDescriptor is not null then
-                superRoleUuids := superRoleUuids || getRoleId(superRoleDescriptor, 'fail');
-            end if;
-        end loop;
-
-    return superRoleUuids;
-end; $$;
-
 
 -- =================================================================
 -- CREATE ROLE
@@ -50,32 +32,37 @@ create or replace function createRoleWithGrants(
     language plpgsql as $$
 declare
     roleUuid      uuid;
-    superRoleUuid uuid;
+    subRoleDesc   RbacRoleDescriptor;
+    superRoleDesc RbacRoleDescriptor;
     subRoleUuid   uuid;
+    superRoleUuid uuid;
     userUuid      uuid;
     grantedByRoleUuid uuid;
 begin
     roleUuid := createRole(roleDescriptor);
 
-    if cardinality(permissions)  >0 then
+    if cardinality(permissions) > 0 then
         call grantPermissionsToRole(roleUuid, toPermissionUuids(roleDescriptor.objectuuid, permissions));
     end if;
 
-    foreach superRoleUuid in array toRoleUuids(incomingSuperRoles)
+    foreach superRoleDesc in array array_remove(incomingSuperRoles, null)
         loop
-            call grantRoleToRole(roleUuid, superRoleUuid);
+            superRoleUuid := getRoleId(superRoleDesc);
+            call grantRoleToRole(roleUuid, superRoleUuid, superRoleDesc.assumed);
         end loop;
 
-    foreach subRoleUuid in array toRoleUuids(outgoingSubRoles)
+    foreach subRoleDesc in array array_remove(outgoingSubRoles, null)
         loop
-            call grantRoleToRole(subRoleUuid, roleUuid);
+            subRoleUuid := getRoleId(subRoleDesc);
+            call grantRoleToRole(subRoleUuid, roleUuid, subRoleDesc.assumed);
         end loop;
 
     if cardinality(userUuids) > 0 then
         if grantedByRole is null then
-            raise exception 'to directly assign users to roles, grantingRole has to be given';
+            grantedByRoleUuid := roleUuid;
+        else
+            grantedByRoleUuid := getRoleId(grantedByRole);
         end if;
-        grantedByRoleUuid := getRoleId(grantedByRole, 'fail');
         foreach userUuid in array userUuids
             loop
                 call grantRoleToUserUnchecked(grantedByRoleUuid, roleUuid, userUuid);

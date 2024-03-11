@@ -113,7 +113,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm view on coopsharestransaction#temprefB to role membership#1000101:....tenant by system and assume }",
+                            "{ grant perm SELECT on coopsharestransaction#temprefB to role membership#1000101:....tenant by system and assume }",
                             null));
         }
 

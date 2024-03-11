@@ -4,13 +4,21 @@ import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 
 import jakarta.persistence.*;
+import java.io.IOException;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -27,7 +35,6 @@ public class HsOfficeContactEntity implements Stringifyable, HasUuid {
     private static Stringify<HsOfficeContactEntity> toString = stringify(HsOfficeContactEntity.class, "contact")
             .withProp(Fields.label, HsOfficeContactEntity::getLabel)
             .withProp(Fields.emailAddresses, HsOfficeContactEntity::getEmailAddresses);
-
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -52,5 +59,26 @@ public class HsOfficeContactEntity implements Stringifyable, HasUuid {
     @Override
     public String toShortString() {
         return label;
+    }
+
+    public static RbacView rbac() {
+        return rbacViewFor("contact", HsOfficeContactEntity.class)
+                .withIdentityView(SQL.projection("label"))
+                .withUpdatableColumns("label", "postalAddress", "emailAddresses", "phoneNumbers")
+                .createRole(OWNER, (with) -> {
+                    with.owningUser(CREATOR);
+                    with.incomingSuperRole(GLOBAL, ADMIN);
+                    with.permission(DELETE);
+                })
+                .createSubRole(ADMIN, (with) -> {
+                    with.permission(UPDATE);
+                })
+                .createSubRole(REFERRER, (with) -> {
+                    with.permission(SELECT);
+                });
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("203-hs-office-contact-rbac-generated");
     }
 }

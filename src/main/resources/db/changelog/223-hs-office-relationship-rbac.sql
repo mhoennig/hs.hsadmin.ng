@@ -45,7 +45,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeRelationshipOwner(NEW),
-                permissions => array['*'],
+                permissions => array['DELETE'],
                 incomingSuperRoles => array[
                     globalAdmin(),
                     hsOfficePersonAdmin(newRelAnchor)]
@@ -53,14 +53,14 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeRelationshipAdmin(NEW),
-                permissions => array['edit'],
+                permissions => array['UPDATE'],
                 incomingSuperRoles => array[hsOfficeRelationshipOwner(NEW)]
             );
 
         -- the tenant role for those related users who can view the data
         perform createRoleWithGrants(
                 hsOfficeRelationshipTenant,
-                permissions => array['view'],
+                permissions => array['SELECT'],
                 incomingSuperRoles => array[
                     hsOfficeRelationshipAdmin(NEW),
                     hsOfficePersonAdmin(newRelAnchor),
@@ -124,7 +124,7 @@ execute procedure hsOfficeRelationshipRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-relationship-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_relationship', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_relationship', $idName$
     (select idName from hs_office_person_iv p where p.uuid = target.relAnchorUuid)
     || '-with-' || target.relType || '-' ||
     (select idName from hs_office_person_iv p where p.uuid = target.relHolderUuid)

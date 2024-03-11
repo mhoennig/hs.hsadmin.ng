@@ -1,4 +1,5 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator at 2024-03-11T11:29:11.645391647.
 
 -- ============================================================================
 --changeset test-domain-rbac-OBJECT:1 endDelimiter:--//
@@ -11,107 +12,214 @@ call generateRelatedRbacObject('test_domain');
 --changeset test-domain-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRoleDescriptors('testDomain', 'test_domain');
-
-create or replace function createTestDomainTenantRoleIfNotExists(domain test_domain)
-    returns uuid
-    returns null on null input
-    language plpgsql as $$
-declare
-    domainTenantRoleDesc RbacRoleDescriptor;
-    domainTenantRoleUuid uuid;
-begin
-    domainTenantRoleDesc = testdomainTenant(domain);
-    domainTenantRoleUuid = findRoleId(domainTenantRoleDesc);
-    if domainTenantRoleUuid is not null then
-        return domainTenantRoleUuid;
-    end if;
-
-    return createRoleWithGrants(
-        domainTenantRoleDesc,
-        permissions => array['view'],
-        incomingSuperRoles => array[testdomainAdmin(domain)]
-        );
-end; $$;
 --//
 
 
 -- ============================================================================
---changeset test-domain-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset test-domain-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
+
 /*
-    Creates the roles and their assignments for a new domain for the AFTER INSERT TRIGGER.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace function createRbacRulesForTestDomain()
+create or replace procedure buildRbacSystemForTestDomain(
+    NEW test_domain
+)
+    language plpgsql as $$
+
+declare
+    newPackage test_package;
+
+begin
+    call enterTriggerForObjectUuid(NEW.uuid);
+    SELECT * FROM test_package p
+        WHERE p.uuid= NEW.packageUuid
+     into newPackage;
+
+    perform createRoleWithGrants(
+        testDomainOwner(NEW),
+            permissions => array['DELETE', 'UPDATE'],
+            incomingSuperRoles => array[testPackageAdmin(newPackage)],
+            outgoingSubRoles => array[testPackageTenant(newPackage)]
+    );
+
+    perform createRoleWithGrants(
+        testDomainAdmin(NEW),
+            permissions => array['SELECT'],
+            incomingSuperRoles => array[testDomainOwner(NEW)],
+            outgoingSubRoles => array[testPackageTenant(newPackage)]
+    );
+
+    call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to create the role+grant structure for a new test_domain row.
+ */
+
+create or replace function insertTriggerForTestDomain_tf()
     returns trigger
     language plpgsql
     strict as $$
-declare
-    parentPackage       test_package;
 begin
-    if TG_OP <> 'INSERT' then
-        raise exception 'invalid usage of TRIGGER AFTER INSERT';
-    end if;
-
-    call enterTriggerForObjectUuid(NEW.uuid);
-
-    select * from test_package where uuid = NEW.packageUuid into parentPackage;
-
-    -- an owner role is created and assigned to the package's admin group
-    perform createRoleWithGrants(
-        testDomainOwner(NEW),
-        permissions => array['*'],
-        incomingSuperRoles => array[testPackageAdmin(parentPackage)]
-        );
-
-    -- and a domain admin role is created and assigned to the domain owner as well
-    perform createRoleWithGrants(
-        testDomainAdmin(NEW),
-        permissions => array['edit'],
-        incomingSuperRoles => array[testDomainOwner(NEW)],
-        outgoingSubRoles => array[testPackageTenant(parentPackage)]
-        );
-
-    -- a tenent role is only created on demand
-
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call buildRbacSystemForTestDomain(NEW);
     return NEW;
 end; $$;
 
-
-/*
-    An AFTER INSERT TRIGGER which creates the role structure for a new domain.
- */
-drop trigger if exists createRbacRulesForTestDomain_Trigger on test_domain;
-create trigger createRbacRulesForTestDomain_Trigger
-    after insert
-    on test_domain
+create trigger insertTriggerForTestDomain_tg
+    after insert on test_domain
     for each row
-execute procedure createRbacRulesForTestDomain();
+execute procedure insertTriggerForTestDomain_tf();
+
 --//
 
+-- ============================================================================
+--changeset test-domain-rbac-update-trigger:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
+/*
+    Called from the AFTER UPDATE TRIGGER to re-wire the grants.
+ */
+
+create or replace procedure updateRbacRulesForTestDomain(
+    OLD test_domain,
+    NEW test_domain
+)
+    language plpgsql as $$
+
+declare
+    oldPackage test_package;
+    newPackage test_package;
+
+begin
+    call enterTriggerForObjectUuid(NEW.uuid);
+
+    SELECT * FROM test_package p
+        WHERE p.uuid= OLD.packageUuid
+     into oldPackage;
+    SELECT * FROM test_package p
+        WHERE p.uuid= NEW.packageUuid
+     into newPackage;
+
+    if NEW.packageUuid <> OLD.packageUuid then
+
+        call revokePermissionFromRole(findPermissionId(OLD.uuid, 'INSERT'), testPackageAdmin(oldPackage));
+
+        call revokeRoleFromRole(testDomainOwner(OLD), testPackageAdmin(oldPackage));
+        call grantRoleToRole(testDomainOwner(NEW), testPackageAdmin(newPackage));
+
+        call revokeRoleFromRole(testPackageTenant(oldPackage), testDomainOwner(OLD));
+        call grantRoleToRole(testPackageTenant(newPackage), testDomainOwner(NEW));
+
+        call revokeRoleFromRole(testPackageTenant(oldPackage), testDomainAdmin(OLD));
+        call grantRoleToRole(testPackageTenant(newPackage), testDomainAdmin(NEW));
+
+    end if;
+
+    call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to re-wire the grant structure for a new test_domain row.
+ */
+
+create or replace function updateTriggerForTestDomain_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call updateRbacRulesForTestDomain(OLD, NEW);
+    return NEW;
+end; $$;
+
+create trigger updateTriggerForTestDomain_tg
+    after update on test_domain
+    for each row
+execute procedure updateTriggerForTestDomain_tf();
+
+--//
+
+-- ============================================================================
+--changeset test-domain-rbac-INSERT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates INSERT INTO test_domain permissions for the related test_package rows.
+ */
+do language plpgsql $$
+    declare
+        row test_package;
+        permissionUuid uuid;
+        roleUuid uuid;
+    begin
+        call defineContext('create INSERT INTO test_domain permissions for the related test_package rows');
+
+        FOR row IN SELECT * FROM test_package
+            LOOP
+                roleUuid := findRoleId(testPackageAdmin(row));
+                permissionUuid := createPermission(row.uuid, 'INSERT', 'test_domain');
+                call grantPermissionToRole(roleUuid, permissionUuid);
+            END LOOP;
+    END;
+$$;
+
+/**
+    Adds test_domain INSERT permission to specified role of new test_package rows.
+*/
+create or replace function test_domain_test_package_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            testPackageAdmin(NEW),
+            createPermission(NEW.uuid, 'INSERT', 'test_domain'));
+    return NEW;
+end; $$;
+
+create trigger test_domain_test_package_insert_tg
+    after insert on test_package
+    for each row
+execute procedure test_domain_test_package_insert_tf();
+
+/**
+    Checks if the user or assumed roles are allowed to insert a row to test_domain.
+*/
+create or replace function test_domain_insert_permission_missing_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    raise exception '[403] insert into test_domain not allowed for current subjects % (%)',
+        currentSubjects(), currentSubjectsUuids();
+end; $$;
+
+create trigger test_domain_insert_permission_check_tg
+    before insert on test_domain
+    for each row
+    when ( not hasInsertPermission(NEW.packageUuid, 'INSERT', 'test_domain') )
+        execute procedure test_domain_insert_permission_missing_tf();
+
+--//
 -- ============================================================================
 --changeset test-domain-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('test_domain', $idName$
-    target.name
+
+call generateRbacIdentityViewFromProjection('test_domain', $idName$
+    name
     $idName$);
+
 --//
-
-
 -- ============================================================================
 --changeset test-domain-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
-/*
-    Creates a view to the customer main table which maps the identifying name
-    (in this case, the prefix) to the objectUuid.
- */
-drop view if exists test_domain_rv;
-create or replace view test_domain_rv as
-select target.*
-    from test_domain as target
-    where target.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('view', 'domain', currentSubjectsUuids()));
-grant all privileges on test_domain_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+call generateRbacRestrictedView('test_domain',
+    'name',
+    $updates$
+        version = new.version,
+        packageUuid = new.packageUuid,
+        description = new.description
+    $updates$);
 --//
+
+

@@ -84,7 +84,7 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             exactlyTheseRbacGrantsAreReturned(
                     result,
-                    "{ grant role test_customer#xxx.admin to user customer-admin@xxx.example.com by role global#global.admin and assume }",
+                    "{ grant role test_customer#xxx.admin to user customer-admin@xxx.example.com by role test_customer#xxx.owner and assume }",
                     "{ grant role test_package#xxx00.admin to user pac-admin-xxx00@xxx.example.com by role test_customer#xxx.admin and assume }",
                     "{ grant role test_package#xxx01.admin to user pac-admin-xxx01@xxx.example.com by role test_customer#xxx.admin and assume }",
                     "{ grant role test_package#xxx02.admin to user pac-admin-xxx02@xxx.example.com by role test_customer#xxx.admin and assume }");
@@ -162,8 +162,8 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
             // then
             attempt.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "ERROR: [403] Access to granted role " + given.packageOwnerRoleUuid
-                            + " forbidden for {test_package#xxx00.admin}");
+                    "ERROR: [403] Access to granted role test_package#xxx00.owner",
+                    "forbidden for test_package#xxx00.admin");
             jpaAttempt.transacted(() -> {
                 // finally, we use the new user to make sure, no roles were granted
                 context(given.arbitraryUser.getName(), null);

@@ -7,13 +7,10 @@ call generateRelatedRbacObject('hs_office_partner_details');
 --//
 
 
-
-
-
 -- ============================================================================
 --changeset hs-office-partner-details-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_partner_details', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_partner_details', $idName$
     (select idName || '-details' from hs_office_partner_iv partner_iv
         join hs_office_partner partner on (partner_iv.uuid = partner.uuid)
         where partner.detailsUuid = target.uuid)
@@ -38,7 +35,7 @@ call generateRbacRestrictedView('hs_office_partner_details',
 
 
 -- ============================================================================
---changeset hs-office-partner-details-rbac-NEW-CONTACT:1 endDelimiter:--//
+--changeset hs-office-partner-details-rbac-NEW-PARTNER-DETAILS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates a global permission for new-partner-details and assigns it to the hostsharing admins role.

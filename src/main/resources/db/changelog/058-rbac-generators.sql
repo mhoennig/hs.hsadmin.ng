@@ -13,8 +13,7 @@ declare
 begin
     createInsertTriggerSQL = format($sql$
         create trigger createRbacObjectFor_%s_Trigger
-            before insert
-            on %s
+            before insert on %s
             for each row
                 execute procedure insertRelatedRbacObject();
         $sql$, targetTable, targetTable);
@@ -36,50 +35,50 @@ end; $$;
 --changeset rbac-generators-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRbacRoleDescriptors(prefix text, targetTable text)
+create procedure generateRbacRoleDescriptors(prefix text, targetTable text)
     language plpgsql as $$
 declare
     sql text;
 begin
     sql = format($sql$
-        create or replace function %1$sOwner(entity %2$s)
+        create or replace function %1$sOwner(entity %2$s, assumed boolean = true)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'owner');
+            return roleDescriptor('%2$s', entity.uuid, 'owner', assumed);
         end; $f$;
 
-        create or replace function %1$sAdmin(entity %2$s)
+        create or replace function %1$sAdmin(entity %2$s, assumed boolean = true)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'admin');
+            return roleDescriptor('%2$s', entity.uuid, 'admin', assumed);
         end; $f$;
 
-        create or replace function %1$sAgent(entity %2$s)
+        create or replace function %1$sAgent(entity %2$s, assumed boolean = true)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'agent');
+            return roleDescriptor('%2$s', entity.uuid, 'agent', assumed);
         end; $f$;
 
-        create or replace function %1$sTenant(entity %2$s)
+        create or replace function %1$sTenant(entity %2$s, assumed boolean = true)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'tenant');
+            return roleDescriptor('%2$s', entity.uuid, 'tenant', assumed);
         end; $f$;
 
-        create or replace function %1$sGuest(entity %2$s)
+        create or replace function %1$sGuest(entity %2$s, assumed boolean = true)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'guest');
+            return roleDescriptor('%2$s', entity.uuid, 'guest', assumed);
         end; $f$;
 
         $sql$, prefix, targetTable);
@@ -92,7 +91,7 @@ end; $$;
 --changeset rbac-generators-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRbacIdentityView(targetTable text, idNameExpression text)
+create or replace procedure generateRbacIdentityViewFromQuery(targetTable text, sqlQuery text)
     language plpgsql as $$
 declare
     sql text;
@@ -101,11 +100,9 @@ begin
 
     -- create a view to the target main table which maps an idName to the objectUuid
     sql = format($sql$
-            create or replace view %1$s_iv as
-            select target.uuid, cleanIdentifier(%2$s) as idName
-                from %1$s as target;
+            create or replace view %1$s_iv as %2$s;
             grant all privileges on %1$s_iv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
-        $sql$, targetTable, idNameExpression);
+        $sql$, targetTable, sqlQuery);
     execute sql;
 
     -- creates a function which maps an idName to the objectUuid
@@ -130,6 +127,20 @@ begin
     $sql$, targetTable);
     execute sql;
 end; $$;
+
+create or replace procedure generateRbacIdentityViewFromProjection(targetTable text, sqlProjection text)
+    language plpgsql as $$
+declare
+    sqlQuery text;
+begin
+    targettable := lower(targettable);
+
+    sqlQuery = format($sql$
+            select target.uuid, cleanIdentifier(%2$s) as idName
+                from %1$s as target;
+        $sql$, targetTable, sqlProjection);
+    call generateRbacIdentityViewFromQuery(targetTable, sqlQuery);
+end; $$;
 --//
 
 
@@ -145,13 +156,13 @@ begin
     targetTable := lower(targetTable);
 
     /*
-        Creates a restricted view based on the 'view' permission of the current subject.
+        Creates a restricted view based on the 'SELECT' permission of the current subject.
     */
     sql := format($sql$
         set session session authorization default;
         create view %1$s_rv as
             with accessibleObjects as (
-                select queryAccessibleObjectUuidsOfSubjectIds('view', '%1$s', currentSubjectsUuids())
+                select queryAccessibleObjectUuidsOfSubjectIds('SELECT', '%1$s', currentSubjectsUuids())
             )
             select target.*
                 from %1$s as target
@@ -200,7 +211,7 @@ begin
             returns trigger
             language plpgsql as $f$
         begin
-            if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('delete', '%1$s', currentSubjectsUuids())) then
+            if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('DELETE', '%1$s', currentSubjectsUuids())) then
                 delete from %1$s p where p.uuid = old.uuid;
                 return old;
             end if;
@@ -223,7 +234,7 @@ begin
 
     /**
         Instead of update trigger function for the restricted view
-        based on the 'edit' permission of the current subject.
+        based on the 'UPDATE' permission of the current subject.
      */
     if columnUpdates is not null then
         sql := format($sql$
@@ -231,7 +242,7 @@ begin
                 returns trigger
                 language plpgsql as $f$
             begin
-                if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('edit', '%1$s', currentSubjectsUuids())) then
+                if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('UPDATE', '%1$s', currentSubjectsUuids())) then
                     update %1$s
                         set %2$s
                         where uuid = old.uuid;

@@ -33,7 +33,7 @@ begin
 
     perform createRoleWithGrants(
             hsOfficeContactOwner(NEW),
-            permissions => array['*'],
+            permissions => array['DELETE'],
             incomingSuperRoles => array[globalAdmin()],
             userUuids => array[currentUserUuid()],
             grantedByRole => globalAdmin()
@@ -41,7 +41,7 @@ begin
 
     perform createRoleWithGrants(
             hsOfficeContactAdmin(NEW),
-            permissions => array['edit'],
+            permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficeContactOwner(NEW)]
         );
 
@@ -52,7 +52,7 @@ begin
 
     perform createRoleWithGrants(
             hsOfficeContactGuest(NEW),
-            permissions => array['view'],
+            permissions => array['SELECT'],
             incomingSuperRoles => array[hsOfficeContactTenant(NEW)]
         );
 
@@ -75,7 +75,7 @@ execute procedure createRbacRolesForHsOfficeContact();
 --changeset hs-office-contact-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityView('hs_office_contact', $idName$
+call generateRbacIdentityViewFromProjection('hs_office_contact', $idName$
     target.label
     $idName$);
 --//

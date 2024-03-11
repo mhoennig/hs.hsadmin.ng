@@ -28,6 +28,7 @@ public class ArchitectureTest {
                     "..test",
                     "..test.cust",
                     "..test.pac",
+                    "..test.dom",
                     "..context",
                     "..generated..",
                     "..persistence..",
@@ -49,6 +50,8 @@ public class ArchitectureTest {
                     "..rbac.rbacuser",
                     "..rbac.rbacgrant",
                     "..rbac.rbacrole",
+                    "..rbac.rbacobject",
+                    "..rbac.rbacdef",
                     "..stringify"
                     // ATTENTION: Don't simply add packages here, also add arch rules for the new package!
             );
@@ -116,7 +119,10 @@ public class ArchitectureTest {
     public static final ArchRule hsAdminPackagesRule = classes()
             .that().resideInAPackage("..hs.office.(*)..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.(*)..");
+            .resideInAnyPackage(
+                    "..hs.office.(*)..",
+                    "..rbac.rbacgrant" // TODO: just because of RbacGrantsDiagramServiceIntegrationTest
+            );
 
     @ArchTest
     @SuppressWarnings("unused")

@@ -41,13 +41,13 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeSepaMandateOwner(NEW),
-                permissions => array['*'],
+                permissions => array['DELETE'],
                 incomingSuperRoles => array[globalAdmin()]
             );
 
         perform createRoleWithGrants(
                 hsOfficeSepaMandateAdmin(NEW),
-                permissions => array['edit'],
+                permissions => array['UPDATE'],
                 incomingSuperRoles => array[hsOfficeSepaMandateOwner(NEW)],
                 outgoingSubRoles => array[hsOfficeBankAccountTenant(newHsOfficeBankAccount)]
             );
@@ -66,7 +66,7 @@ begin
 
         perform createRoleWithGrants(
                 hsOfficeSepaMandateGuest(NEW),
-                permissions => array['view'],
+                permissions => array['SELECT'],
                 incomingSuperRoles => array[hsOfficeSepaMandateTenant(NEW)]
             );
 
@@ -94,7 +94,7 @@ execute procedure hsOfficeSepaMandateRbacRolesTrigger();
 -- ============================================================================
 --changeset hs-office-sepamandate-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityView('hs_office_sepamandate', idNameExpression => 'target.reference');
+call generateRbacIdentityViewFromProjection('hs_office_sepamandate', 'target.reference');
 --//
 
 

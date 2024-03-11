@@ -1,13 +1,13 @@
 package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import lombok.*;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Immutable;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +20,7 @@ import java.util.UUID;
 @Immutable
 @NoArgsConstructor
 @AllArgsConstructor
-public class RawRbacGrantEntity {
+public class RawRbacGrantEntity implements Comparable {
 
     @Id
     private UUID uuid;
@@ -63,5 +63,10 @@ public class RawRbacGrantEntity {
     public static List<String> distinctGrantDisplaysOf(final List<RawRbacGrantEntity> roles) {
         // TODO: remove .distinct() once partner.person + partner.contact are removed
         return roles.stream().map(RawRbacGrantEntity::toDisplay).sorted().distinct().toList();
+    }
+
+    @Override
+    public int compareTo(final Object o) {
+        return uuid.compareTo(((RawRbacGrantEntity)o).uuid);
     }
 }

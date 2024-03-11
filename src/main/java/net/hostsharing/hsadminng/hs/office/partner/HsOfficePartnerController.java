@@ -8,12 +8,12 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartne
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerRoleInsertResource;
-import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipRepository;
 import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
 import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -158,7 +158,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         return entity;
     }
 
-    private <E extends HasUuid> E ref(final Class<E> entityClass, final UUID uuid) {
+    private <E extends RbacObject> E ref(final Class<E> entityClass, final UUID uuid) {
         try {
             return em.getReference(entityClass, uuid);
         } catch (final Throwable exc) {
