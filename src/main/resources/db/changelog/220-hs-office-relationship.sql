@@ -9,8 +9,8 @@ CREATE TYPE HsOfficeRelationshipType AS ENUM (
     'PARTNER',
     'EX_PARTNER',
     'REPRESENTATIVE',
+    'DEBITOR',
     'VIP_CONTACT',
-    'ACCOUNTING',
     'OPERATIONS',
     'SUBSCRIBER');
 

@@ -175,7 +175,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1011)
+    @Order(1019)
     void verifyBusinessPartners() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -220,6 +220,23 @@ public class ImportOfficeData extends ContextBasedTest {
 
     @Test
     @Order(1021)
+    void buildDebitorRelationships() {
+        debitors.forEach( (id, debitor) -> {
+            final var debitorRel = HsOfficeRelationshipEntity.builder()
+                    .relType(HsOfficeRelationshipType.DEBITOR)
+                    .relAnchor(debitor.getPartner().getPartnerRole().getRelHolder())
+                    .relHolder(debitor.getPartner().getPartnerRole().getRelHolder()) //  just 1 debitor/partner in legacy hsadmin
+                    .contact(debitor.getBillingContact())
+                    .build();
+            if (debitorRel.getRelAnchor() != null && debitorRel.getRelHolder() != null &&
+                    debitorRel.getContact() != null ) {
+                relationships.put(relationshipId++, debitorRel);
+            }
+        });
+    }
+
+    @Test
+    @Order(1029)
     void verifyContacts() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -289,8 +306,11 @@ public class ImportOfficeData extends ContextBasedTest {
                     2000013=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
                     2000014=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
                     2000015=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000016=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
-                 }
+                    2000016=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga '),
+                    2000017=rel(relAnchor='NP Mellies, Michael', relType='DEBITOR', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000018=rel(relAnchor='LP JM GmbH', relType='DEBITOR', relHolder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
+                    2000019=rel(relAnchor='?? Test PS', relType='DEBITOR', relHolder='?? Test PS', contact='Petra Schmidt , Test PS')
+                }
                 """);
     }
 
@@ -307,7 +327,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1031)
+    @Order(1039)
     void verifySepaMandates() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -339,7 +359,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1041)
+    @Order(1049)
     void verifyCoopShares() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -366,7 +386,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1051)
+    @Order(1059)
     void verifyCoopAssets() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -398,7 +418,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(2001)
+    @Order(2009)
     void removeEmptyRelationships() {
         assumeThatWeAreImportingControlledTestData();
 

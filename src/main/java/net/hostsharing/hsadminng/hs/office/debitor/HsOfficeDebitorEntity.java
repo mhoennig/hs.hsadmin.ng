@@ -116,7 +116,7 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                                                 JOIN hs_office_relationship partnerRel
                                                     ON partnerRel.uuid = partner.partnerRoleUUid AND partnerRel.relType = 'PARTNER'
                                                 JOIN hs_office_relationship debitorRel
-                                                    ON debitorRel.relAnchorUuid = partnerRel.relHolderUuid AND partnerRel.relType = 'ACCOUNTING'
+                                                    ON debitorRel.relAnchorUuid = partnerRel.relHolderUuid AND partnerRel.relType = 'DEBITOR'
                                                 WHERE debitorRel.uuid = debitor.debitorRelUuid)
                                              || to_char(debitorNumberSuffix, 'fm00')
                                 from hs_office_debitor as debitor
@@ -137,7 +137,7 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                         fetchedBySql("""
                                 SELECT *
                                     FROM hs_office_relationship AS r
-                                    WHERE r.relType = 'ACCOUNTING' AND r.relHolderUuid = ${REF}.debitorRelUuid
+                                    WHERE r.relType = 'DEBITOR' AND r.relHolderUuid = ${REF}.debitorRelUuid
                                 """),
                         dependsOnColumn("debitorRelUuid"))
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)
@@ -148,7 +148,7 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                         dependsOnColumn("refundBankAccountUuid"), fetchedBySql("""
                                 SELECT *
                                     FROM hs_office_relationship AS r
-                                    WHERE r.relType = 'ACCOUNTING' AND r.relHolderUuid = ${REF}.debitorRelUuid
+                                    WHERE r.relType = 'DEBITOR' AND r.relHolderUuid = ${REF}.debitorRelUuid
                                 """)
                 )
                 .toRole("refundBankAccount", ADMIN).grantRole("debitorRel", AGENT)

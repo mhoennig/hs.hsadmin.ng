@@ -6,7 +6,7 @@ public enum HsOfficeRelationshipType {
     EX_PARTNER,
     REPRESENTATIVE,
     VIP_CONTACT,
-    ACCOUNTING,
+    DEBITOR,
     OPERATIONS,
     SUBSCRIBER
 }
