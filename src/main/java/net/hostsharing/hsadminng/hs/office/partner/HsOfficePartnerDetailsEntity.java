@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -86,15 +86,15 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
                         "dateOfDeath")
                 .createPermission(custom("new-partner-details")).grantedTo("global", ADMIN)
 
-                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationshipEntity.class,
+                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
                         fetchedBySql("""
                             SELECT partnerRel.*
-                                FROM hs_office_relationship AS partnerRel
+                                FROM hs_office_relation AS partnerRel
                                 JOIN hs_office_partner AS partner
                                     ON partner.detailsUuid = ${ref}.uuid
-                                WHERE partnerRel.uuid = partner.partnerRoleUuid
+                                WHERE partnerRel.uuid = partner.partnerRelUuid
                             """),
-                        dependsOnColumn("partnerRoleUuid"))
+                        dependsOnColumn("partnerRelUuid"))
 
                 // The grants are defined in HsOfficePartnerEntity.rbac()
                 // because they have to be changed when its partnerRel changes,

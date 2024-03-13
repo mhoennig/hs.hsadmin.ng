@@ -3,37 +3,37 @@ components:
 
     schemas:
 
-        HsOfficeRelationshipType:
+        HsOfficeRelationType:
             type: string
             enum:
                 - UNKNOWN
                 - PARTNER
                 - EX_PARTNER
-                - REPRESENTATIVE,
+                - DEBITOR
+                - REPRESENTATIVE
                 - VIP_CONTACT
-                - ACCOUNTING,
                 - OPERATIONS
                 - SUBSCRIBER
 
-        HsOfficeRelationship:
+        HsOfficeRelation:
             type: object
             properties:
                 uuid:
                     type: string
                     format: uuid
-                relAnchor:
+                anchor:
                     $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
-                relHolder:
+                holder:
                     $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
-                relType:
+                type:
                     type: string
-                relMark:
+                mark:
                     type: string
                     nullable: true
                 contact:
                     $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
 
-        HsOfficeRelationshipPatch:
+        HsOfficeRelationPatch:
             type: object
             properties:
                 contactUuid:
@@ -41,25 +41,25 @@ components:
                     format: uuid
                     nullable: true
 
-        HsOfficeRelationshipInsert:
+        HsOfficeRelationInsert:
             type: object
             properties:
-                relAnchorUuid:
+                anchorUuid:
                     type: string
                     format: uuid
-                relHolderUuid:
+                holderUuid:
                     type: string
                     format: uuid
-                relType:
+                type:
                     type: string
                     nullable: true
-                relMark:
+                mark:
                     type: string
                 contactUuid:
                     type: string
                     format: uuid
             required:
-              - relAnchorUuid
-              - relHolderUuid
-              - relType
+              - anchorUuid
+              - holderUuid
+              - type
               - relContactUuid

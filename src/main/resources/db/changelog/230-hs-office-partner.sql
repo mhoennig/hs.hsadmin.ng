@@ -33,9 +33,9 @@ create table hs_office_partner
 (
     uuid                uuid unique references RbacObject (uuid) initially deferred,
     partnerNumber       numeric(5) unique not null,
-    partnerRoleUuid     uuid not null references hs_office_relationship(uuid), -- TODO: delete in after delete trigger
-    personUuid          uuid not null references hs_office_person(uuid), -- TODO: remove, replaced by partnerRoleUuid
-    contactUuid         uuid not null references hs_office_contact(uuid), -- TODO: remove, replaced by partnerRoleUuid
+    partnerRelUuid     uuid not null references hs_office_relation(uuid), -- TODO: delete in after delete trigger
+    personUuid          uuid not null references hs_office_person(uuid), -- TODO: remove, replaced by partnerRelUuid
+    contactUuid         uuid not null references hs_office_contact(uuid), -- TODO: remove, replaced by partnerRelUuid
     detailsUuid         uuid not null references hs_office_partner_details(uuid) -- deleted in after delete trigger
 );
 --//

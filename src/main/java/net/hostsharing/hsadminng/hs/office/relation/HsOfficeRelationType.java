@@ -1,6 +1,6 @@
-package net.hostsharing.hsadminng.hs.office.relationship;
+package net.hostsharing.hsadminng.hs.office.relation;
 
-public enum HsOfficeRelationshipType {
+public enum HsOfficeRelationType {
     UNKNOWN,
     PARTNER,
     EX_PARTNER,

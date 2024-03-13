@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.relationship;
+package net.hostsharing.hsadminng.hs.office.relation;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
@@ -24,49 +24,49 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_relationship_rv")
+@Table(name = "hs_office_relation_rv")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
-public class HsOfficeRelationshipEntity implements HasUuid, Stringifyable {
+public class HsOfficeRelationEntity implements HasUuid, Stringifyable {
 
-    private static Stringify<HsOfficeRelationshipEntity> toString = stringify(HsOfficeRelationshipEntity.class, "rel")
-            .withProp(Fields.relAnchor, HsOfficeRelationshipEntity::getRelAnchor)
-            .withProp(Fields.relType, HsOfficeRelationshipEntity::getRelType)
-            .withProp(Fields.relMark, HsOfficeRelationshipEntity::getRelMark)
-            .withProp(Fields.relHolder, HsOfficeRelationshipEntity::getRelHolder)
-            .withProp(Fields.contact, HsOfficeRelationshipEntity::getContact);
+    private static Stringify<HsOfficeRelationEntity> toString = stringify(HsOfficeRelationEntity.class, "rel")
+            .withProp(Fields.anchor, HsOfficeRelationEntity::getAnchor)
+            .withProp(Fields.type, HsOfficeRelationEntity::getType)
+            .withProp(Fields.mark, HsOfficeRelationEntity::getMark)
+            .withProp(Fields.holder, HsOfficeRelationEntity::getHolder)
+            .withProp(Fields.contact, HsOfficeRelationEntity::getContact);
 
-    private static Stringify<HsOfficeRelationshipEntity> toShortString = stringify(HsOfficeRelationshipEntity.class, "rel")
-            .withProp(Fields.relAnchor, HsOfficeRelationshipEntity::getRelAnchor)
-            .withProp(Fields.relType, HsOfficeRelationshipEntity::getRelType)
-            .withProp(Fields.relHolder, HsOfficeRelationshipEntity::getRelHolder);
+    private static Stringify<HsOfficeRelationEntity> toShortString = stringify(HsOfficeRelationEntity.class, "rel")
+            .withProp(Fields.anchor, HsOfficeRelationEntity::getAnchor)
+            .withProp(Fields.type, HsOfficeRelationEntity::getType)
+            .withProp(Fields.holder, HsOfficeRelationEntity::getHolder);
 
     @Id
     @GeneratedValue
     private UUID uuid;
 
     @ManyToOne
-    @JoinColumn(name = "relanchoruuid")
-    private HsOfficePersonEntity relAnchor;
+    @JoinColumn(name = "anchoruuid")
+    private HsOfficePersonEntity anchor;
 
     @ManyToOne
-    @JoinColumn(name = "relholderuuid")
-    private HsOfficePersonEntity relHolder;
+    @JoinColumn(name = "holderuuid")
+    private HsOfficePersonEntity holder;
 
     @ManyToOne
     @JoinColumn(name = "contactuuid")
     private HsOfficeContactEntity contact;
 
-    @Column(name = "reltype")
+    @Column(name = "type")
     @Enumerated(EnumType.STRING)
-    private HsOfficeRelationshipType relType;
+    private HsOfficeRelationType type;
 
-    @Column(name = "relmark")
-    private String relMark;
+    @Column(name = "mark")
+    private String mark;
 
     @Override
     public String toString() {
@@ -79,22 +79,22 @@ public class HsOfficeRelationshipEntity implements HasUuid, Stringifyable {
     }
 
     public static RbacView rbac() {
-        return rbacViewFor("relationship", HsOfficeRelationshipEntity.class)
+        return rbacViewFor("relation", HsOfficeRelationEntity.class)
                 .withIdentityView(SQL.projection("""
-                             (select idName from hs_office_person_iv p where p.uuid = relAnchorUuid)
-                             || '-with-' || target.relType || '-'
-                             || (select idName from hs_office_person_iv p where p.uuid = relHolderUuid)
+                             (select idName from hs_office_person_iv p where p.uuid = anchorUuid)
+                             || '-with-' || target.type || '-'
+                             || (select idName from hs_office_person_iv p where p.uuid = holderUuid)
                         """))
                 .withRestrictedViewOrderBy(SQL.expression(
-                        "(select idName from hs_office_person_iv p where p.uuid = target.relHolderUuid)"))
+                        "(select idName from hs_office_person_iv p where p.uuid = target.holderUuid)"))
                 .withUpdatableColumns("contactUuid")
                 .importEntityAlias("anchorPerson", HsOfficePersonEntity.class,
-                        dependsOnColumn("relAnchorUuid"),
-                        fetchedBySql("select * from hs_office_person as p where p.uuid = ${REF}.relAnchorUuid")
+                        dependsOnColumn("anchorUuid"),
+                        fetchedBySql("select * from hs_office_person as p where p.uuid = ${REF}.anchorUuid")
                 )
                 .importEntityAlias("holderPerson", HsOfficePersonEntity.class,
-                        dependsOnColumn("relHolderUuid"),
-                        fetchedBySql("select * from hs_office_person as p where p.uuid = ${REF}.relHolderUuid")
+                        dependsOnColumn("holderUuid"),
+                        fetchedBySql("select * from hs_office_person as p where p.uuid = ${REF}.holderUuid")
                 )
                 .importEntityAlias("contact", HsOfficeContactEntity.class,
                         dependsOnColumn("contactUuid"),
@@ -123,6 +123,6 @@ public class HsOfficeRelationshipEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("223-hs-office-relationship-rbac-generated");
+        rbac().generateWithBaseFileName("223-hs-office-relation-rbac-generated");
     }
 }

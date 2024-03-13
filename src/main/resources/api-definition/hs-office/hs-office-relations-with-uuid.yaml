@@ -1,25 +1,25 @@
 get:
     tags:
-        - hs-office-relationships
-    description: 'Fetch a single person relationship by its uuid, if visible for the current subject.'
-    operationId: getRelationshipByUuid
+        - hs-office-relations
+    description: 'Fetch a single person relation by its uuid, if visible for the current subject.'
+    operationId: getRelationByUuid
     parameters:
         - $ref: './auth.yaml#/components/parameters/currentUser'
         - $ref: './auth.yaml#/components/parameters/assumedRoles'
-        - name: relationshipUUID
+        - name: relationUUID
           in: path
           required: true
           schema:
               type: string
               format: uuid
-          description: UUID of the relationship to fetch.
+          description: UUID of the relation to fetch.
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationship'
+                        $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
 
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
@@ -28,13 +28,13 @@ get:
 
 patch:
     tags:
-        - hs-office-relationships
-    description: 'Updates a single person relationship by its uuid, if permitted for the current subject.'
-    operationId: patchRelationship
+        - hs-office-relations
+    description: 'Updates a single person relation by its uuid, if permitted for the current subject.'
+    operationId: patchRelation
     parameters:
         -   $ref: './auth.yaml#/components/parameters/currentUser'
         -   $ref: './auth.yaml#/components/parameters/assumedRoles'
-        -   name: relationshipUUID
+        -   name: relationUUID
             in: path
             required: true
             schema:
@@ -44,14 +44,14 @@ patch:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationshipPatch'
+                    $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationship'
+                        $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":
@@ -59,19 +59,19 @@ patch:
 
 delete:
     tags:
-        - hs-office-relationships
-    description: 'Delete a single person relationship by its uuid, if permitted for the current subject.'
-    operationId: deleteRelationshipByUuid
+        - hs-office-relations
+    description: 'Delete a single person relation by its uuid, if permitted for the current subject.'
+    operationId: deleteRelationByUuid
     parameters:
         - $ref: './auth.yaml#/components/parameters/currentUser'
         - $ref: './auth.yaml#/components/parameters/assumedRoles'
-        - name: relationshipUUID
+        - name: relationUUID
           in: path
           required: true
           schema:
               type: string
               format: uuid
-          description: UUID of the relationship to delete.
+          description: UUID of the relation to delete.
     responses:
         "204":
             description: No Content

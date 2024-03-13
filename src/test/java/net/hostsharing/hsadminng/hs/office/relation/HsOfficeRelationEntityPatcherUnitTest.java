@@ -1,7 +1,7 @@
-package net.hostsharing.hsadminng.hs.office.relationship;
+package net.hostsharing.hsadminng.hs.office.relation;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationshipPatchResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,12 +21,12 @@ import static org.mockito.Mockito.lenient;
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-class HsOfficeRelationshipEntityPatcherUnitTest extends PatchUnitTestBase<
-        HsOfficeRelationshipPatchResource,
-        HsOfficeRelationshipEntity
+class HsOfficeRelationEntityPatcherUnitTest extends PatchUnitTestBase<
+        HsOfficeRelationPatchResource,
+        HsOfficeRelationEntity
         > {
 
-    static final UUID INITIAL_RELATIONSHIP_UUID = UUID.randomUUID();
+    static final UUID INITIAL_RELATION_UUID = UUID.randomUUID();
     static final UUID PATCHED_CONTACT_UUID = UUID.randomUUID();
 
     @Mock
@@ -49,24 +49,24 @@ class HsOfficeRelationshipEntityPatcherUnitTest extends PatchUnitTestBase<
             .build();
 
     @Override
-    protected HsOfficeRelationshipEntity newInitialEntity() {
-        final var entity = new HsOfficeRelationshipEntity();
-        entity.setUuid(INITIAL_RELATIONSHIP_UUID);
-        entity.setRelType(HsOfficeRelationshipType.REPRESENTATIVE);
-        entity.setRelAnchor(givenInitialAnchorPerson);
-        entity.setRelHolder(givenInitialHolderPerson);
+    protected HsOfficeRelationEntity newInitialEntity() {
+        final var entity = new HsOfficeRelationEntity();
+        entity.setUuid(INITIAL_RELATION_UUID);
+        entity.setType(HsOfficeRelationType.REPRESENTATIVE);
+        entity.setAnchor(givenInitialAnchorPerson);
+        entity.setHolder(givenInitialHolderPerson);
         entity.setContact(givenInitialContact);
         return entity;
     }
 
     @Override
-    protected HsOfficeRelationshipPatchResource newPatchResource() {
-        return new HsOfficeRelationshipPatchResource();
+    protected HsOfficeRelationPatchResource newPatchResource() {
+        return new HsOfficeRelationPatchResource();
     }
 
     @Override
-    protected HsOfficeRelationshipEntityPatcher createPatcher(final HsOfficeRelationshipEntity relationship) {
-        return new HsOfficeRelationshipEntityPatcher(em, relationship);
+    protected HsOfficeRelationEntityPatcher createPatcher(final HsOfficeRelationEntity relation) {
+        return new HsOfficeRelationEntityPatcher(em, relation);
     }
 
     @Override
@@ -74,9 +74,9 @@ class HsOfficeRelationshipEntityPatcherUnitTest extends PatchUnitTestBase<
         return Stream.of(
                 new JsonNullableProperty<>(
                         "contact",
-                        HsOfficeRelationshipPatchResource::setContactUuid,
+                        HsOfficeRelationPatchResource::setContactUuid,
                         PATCHED_CONTACT_UUID,
-                        HsOfficeRelationshipEntity::setContact,
+                        HsOfficeRelationEntity::setContact,
                         newContact(PATCHED_CONTACT_UUID))
                         .notNullable()
         );

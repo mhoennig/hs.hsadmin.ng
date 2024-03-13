@@ -96,8 +96,8 @@ components:
                     format: int8
                     minimum: 10000
                     maximum: 99999
-                partnerRole:
-                    $ref: '#/components/schemas/HsOfficePartnerRoleInsert'
+                partnerRel:
+                    $ref: '#/components/schemas/HsOfficePartnerRelInsert'
                 personUuid:
                     type: string
                     format: uuid
@@ -112,22 +112,22 @@ components:
                 - contactUuid
                 - details
 
-        HsOfficePartnerRoleInsert:
+        HsOfficePartnerRelInsert:
             type: object
             nullable: false
             properties:
-                relAnchorUuid:
+                anchorUuid:
                     type: string
                     format: uuid
-                relHolderUuid:
+                holderUuid:
                     type: string
                     format: uuid
                 contactUuid:
                     type: string
                     format: uuid
             required:
-                - relAnchorUuid
-                - relHolderUuid
+                - anchorUuid
+                - holderUuid
                 - relContactUuid
 
         HsOfficePartnerDetailsInsert:

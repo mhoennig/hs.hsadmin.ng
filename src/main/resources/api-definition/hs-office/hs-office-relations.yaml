@@ -1,9 +1,9 @@
 get:
-    summary: Returns a list of (optionally filtered) person relationships for a given person.
-    description: Returns the list of (optionally filtered) person relationships of a given person and which are visible to the current user or any of it's assumed roles.
+    summary: Returns a list of (optionally filtered) person relations for a given person.
+    description: Returns the list of (optionally filtered) person relations of a given person and which are visible to the current user or any of it's assumed roles.
     tags:
-        - hs-office-relationships
-    operationId: listRelationships
+        - hs-office-relations
+    operationId: listRelations
     parameters:
         - $ref: './auth.yaml#/components/parameters/currentUser'
         - $ref: './auth.yaml#/components/parameters/assumedRoles'
@@ -13,13 +13,13 @@ get:
           schema:
               type: string
               format: uuid
-          description: Prefix of name properties from relHolder or contact to filter the results.
-        - name: relationshipType
+          description: Prefix of name properties from holder or contact to filter the results.
+        - name: relationType
           in: query
           required: false
           schema:
-              $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationshipType'
-          description: Prefix of name properties from relHolder or contact to filter the results.
+              $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelationType'
+          description: Prefix of name properties from holder or contact to filter the results.
     responses:
         "200":
             description: OK
@@ -28,17 +28,17 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationship'
+                            $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: './error-responses.yaml#/components/responses/Forbidden'
 
 post:
-    summary: Adds a new person relationship.
+    summary: Adds a new person relation.
     tags:
-        - hs-office-relationships
-    operationId: addRelationship
+        - hs-office-relations
+    operationId: addRelation
     parameters:
         - $ref: './auth.yaml#/components/parameters/currentUser'
         - $ref: './auth.yaml#/components/parameters/assumedRoles'
@@ -46,7 +46,7 @@ post:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationshipInsert'
+                    $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
         required: true
     responses:
         "201":
@@ -54,7 +54,7 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relationship-schemas.yaml#/components/schemas/HsOfficeRelationship'
+                        $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":

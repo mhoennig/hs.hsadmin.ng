@@ -6,7 +6,7 @@ import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -99,7 +99,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
                 .withIdentityView(projection("concat(tradeName, familyName, givenName)"))
                 .withUpdatableColumns("reference", "agreement", "validity")
 
-                .importEntityAlias("debitorRel", HsOfficeRelationshipEntity.class, dependsOnColumn("debitorRelUuid"))
+                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class, dependsOnColumn("debitorRelUuid"))
                 .importEntityAlias("bankAccount", HsOfficeBankAccountEntity.class, dependsOnColumn("bankAccountUuid"))
 
                 .createRole(OWNER, (with) -> {

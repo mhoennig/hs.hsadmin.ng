@@ -7,9 +7,9 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipRepository;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
@@ -41,7 +41,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    HsOfficeRelationshipRepository relationshipRepository;
+    HsOfficeRelationRepository relationRepository;
 
     @Autowired
     HsOfficePersonRepository personRepo;
@@ -102,9 +102,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .body("""
                             {
                                 "partnerNumber": "20002",
-                                "partnerRole": {
-                                     "relAnchorUuid": "%s",
-                                     "relHolderUuid": "%s",
+                                "partnerRel": {
+                                     "anchorUuid": "%s",
+                                     "holderUuid": "%s",
                                      "contactUuid": "%s"
                                 },
                                 "personUuid": "%s",
@@ -155,9 +155,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                             {
                                 "partnerNumber": "20003",
-                                "partnerRole": {
-                                     "relAnchorUuid": "%s",
-                                     "relHolderUuid": "%s",
+                                "partnerRel": {
+                                     "anchorUuid": "%s",
+                                     "holderUuid": "%s",
                                      "contactUuid": "%s"
                                 },
                                 "personUuid": "%s",
@@ -193,9 +193,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                             {
                                 "partnerNumber": "20004",
-                                "partnerRole": {
-                                    "relAnchorUuid": "%s",
-                                    "relHolderUuid": "%s",
+                                "partnerRel": {
+                                    "anchorUuid": "%s",
+                                    "holderUuid": "%s",
                                     "contactUuid": "%s"
                                 },
                                 "personUuid": "%s",
@@ -413,7 +413,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // then the given partner is gone
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isEmpty();
-            assertThat(relationshipRepository.findByUuid(givenPartner.getPartnerRole().getUuid())).isEmpty();
+            assertThat(relationRepository.findByUuid(givenPartner.getPartnerRel().getUuid())).isEmpty();
         }
 
         @Test
@@ -465,15 +465,15 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var givenPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
 
-            final var partnerRole = new HsOfficeRelationshipEntity();
-            partnerRole.setRelType(HsOfficeRelationshipType.PARTNER);
-            partnerRole.setRelAnchor(givenMandantPerson);
-            partnerRole.setRelHolder(givenPerson);
-            partnerRole.setContact(givenContact);
-            em.persist(partnerRole);
+            final var partnerRel = new HsOfficeRelationEntity();
+            partnerRel.setType(HsOfficeRelationType.PARTNER);
+            partnerRel.setAnchor(givenMandantPerson);
+            partnerRel.setHolder(givenPerson);
+            partnerRel.setContact(givenContact);
+            em.persist(partnerRel);
 
             final var newPartner = HsOfficePartnerEntity.builder()
-                    .partnerRole(partnerRole)
+                    .partnerRel(partnerRel)
                     .partnerNumber(partnerNumber)
                     .person(givenPerson)
                     .contact(givenContact)
@@ -492,6 +492,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         cleanupAllNew(HsOfficePartnerEntity.class);
 
         // TODO: should not be necessary anymore, once it's deleted via after delete trigger
-        cleanupAllNew(HsOfficeRelationshipEntity.class);
+        cleanupAllNew(HsOfficeRelationEntity.class);
     }
 }

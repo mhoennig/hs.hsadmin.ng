@@ -41,7 +41,7 @@ public class ArchitectureTest {
                     "..hs.office.migration",
                     "..hs.office.partner",
                     "..hs.office.person",
-                    "..hs.office.relationship",
+                    "..hs.office.relation",
                     "..hs.office.sepamandate",
                     "..errors",
                     "..mapper",
@@ -148,7 +148,7 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficeContactPackageRule = classes()
             .that().resideInAPackage("..hs.office.contact..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.contact..", "..hs.office.relationship..",
+            .resideInAnyPackage("..hs.office.contact..", "..hs.office.relation..",
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
@@ -159,7 +159,7 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficePersonPackageRule = classes()
             .that().resideInAPackage("..hs.office.person..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.person..", "..hs.office.relationship..",
+            .resideInAnyPackage("..hs.office.person..", "..hs.office.relation..",
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
@@ -167,10 +167,10 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule hsOfficeRelationshipPackageRule = classes()
-            .that().resideInAPackage("..hs.office.relationship..")
+    public static final ArchRule hsOfficeRelationPackageRule = classes()
+            .that().resideInAPackage("..hs.office.relation..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.relationship..",
+            .resideInAnyPackage("..hs.office.relation..",
                     "..hs.office.partner..",
                     "..hs.office.migration..");
 

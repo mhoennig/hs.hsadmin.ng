@@ -27,8 +27,8 @@ create or replace function hsOfficePartnerRbacRolesTrigger()
     language plpgsql
     strict as $$
 declare
-    oldPartnerRole        hs_office_relationship;
-    newPartnerRole        hs_office_relationship;
+    oldPartnerRel        hs_office_relation;
+    newPartnerRel        hs_office_relation;
 
     oldPerson             hs_office_person;
     newPerson             hs_office_person;
@@ -38,7 +38,7 @@ declare
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    select * from hs_office_relationship as r where r.uuid = NEW.partnerroleuuid into newPartnerRole;
+    select * from hs_office_relation as r where r.uuid = NEW.partnerReluuid into newPartnerRel;
     select * from hs_office_person as p where p.uuid = NEW.personUuid into newPerson;
     select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
 
@@ -58,7 +58,7 @@ begin
                 incomingSuperRoles => array[
                     hsOfficePartnerOwner(NEW)],
                 outgoingSubRoles => array[
-                    hsOfficeRelationshipTenant(newPartnerRole),
+                    hsOfficeRelationTenant(newPartnerRel),
                     hsOfficePersonTenant(newPerson),
                     hsOfficeContactTenant(newContact)]
             );
@@ -67,7 +67,7 @@ begin
                 hsOfficePartnerAgent(NEW),
                 incomingSuperRoles => array[
                     hsOfficePartnerAdmin(NEW),
-                    hsOfficeRelationshipAdmin(newPartnerRole),
+                    hsOfficeRelationAdmin(newPartnerRel),
                     hsOfficePersonAdmin(newPerson),
                     hsOfficeContactAdmin(newContact)]
             );
@@ -77,7 +77,7 @@ begin
                 incomingSuperRoles => array[
                     hsOfficePartnerAgent(NEW)],
                 outgoingSubRoles => array[
-                    hsOfficeRelationshipTenant(newPartnerRole),
+                    hsOfficeRelationTenant(newPartnerRel),
                     hsOfficePersonGuest(newPerson),
                     hsOfficeContactGuest(newContact)]
             );
@@ -118,17 +118,17 @@ begin
 
     elsif TG_OP = 'UPDATE' then
 
-        if OLD.partnerRoleUuid <> NEW.partnerRoleUuid then
-            select * from hs_office_relationship as r where r.uuid = OLD.partnerRoleUuid into oldPartnerRole;
+        if OLD.partnerRelUuid <> NEW.partnerRelUuid then
+            select * from hs_office_relation as r where r.uuid = OLD.partnerRelUuid into oldPartnerRel;
 
-            call revokeRoleFromRole(hsOfficeRelationshipTenant(oldPartnerRole), hsOfficePartnerAdmin(OLD));
-            call grantRoleToRole(hsOfficeRelationshipTenant(newPartnerRole), hsOfficePartnerAdmin(NEW));
+            call revokeRoleFromRole(hsOfficeRelationTenant(oldPartnerRel), hsOfficePartnerAdmin(OLD));
+            call grantRoleToRole(hsOfficeRelationTenant(newPartnerRel), hsOfficePartnerAdmin(NEW));
 
-            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficeRelationshipAdmin(oldPartnerRole));
-            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficeRelationshipAdmin(newPartnerRole));
+            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficeRelationAdmin(oldPartnerRel));
+            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficeRelationAdmin(newPartnerRel));
 
-            call revokeRoleFromRole(hsOfficeRelationshipGuest(oldPartnerRole), hsOfficePartnerTenant(OLD));
-            call grantRoleToRole(hsOfficeRelationshipGuest(newPartnerRole), hsOfficePartnerTenant(NEW));
+            call revokeRoleFromRole(hsOfficeRelationGuest(oldPartnerRel), hsOfficePartnerTenant(OLD));
+            call grantRoleToRole(hsOfficeRelationGuest(newPartnerRel), hsOfficePartnerTenant(NEW));
         end if;
 
         if OLD.personUuid <> NEW.personUuid then
@@ -202,7 +202,7 @@ call generateRbacIdentityViewFromProjection('hs_office_partner', $idName$
 call generateRbacRestrictedView('hs_office_partner',
     '(select idName from hs_office_person_iv p where p.uuid = target.personUuid)',
     $updates$
-        partnerRoleUuid = new.partnerRoleUuid,
+        partnerRelUuid = new.partnerRelUuid,
         personUuid = new.personUuid,
         contactUuid = new.contactUuid
     $updates$);

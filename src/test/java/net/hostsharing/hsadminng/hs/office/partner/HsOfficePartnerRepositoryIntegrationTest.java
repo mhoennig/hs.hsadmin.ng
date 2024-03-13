@@ -3,9 +3,9 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipRepository;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
@@ -43,7 +43,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    HsOfficeRelationshipRepository relationshipRepo;
+    HsOfficeRelationRepository relationRepo;
 
     @Autowired
     HsOfficePersonRepository personRepo;
@@ -80,19 +80,19 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike("First GmbH").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("first contact").get(0);
 
-            final var partnerRole = HsOfficeRelationshipEntity.builder()
-                    .relHolder(givenPartnerPerson)
-                    .relType(HsOfficeRelationshipType.PARTNER)
-                    .relAnchor(givenMandantorPerson)
+            final var partnerRel = HsOfficeRelationEntity.builder()
+                    .holder(givenPartnerPerson)
+                    .type(HsOfficeRelationType.PARTNER)
+                    .anchor(givenMandantorPerson)
                     .contact(givenContact)
                     .build();
-            relationshipRepo.save(partnerRole);
+            relationRepo.save(partnerRel);
 
             // when
             final var result = attempt(em, () -> {
                 final var newPartner = HsOfficePartnerEntity.builder()
                         .partnerNumber(20031)
-                        .partnerRole(partnerRole)
+                        .partnerRel(partnerRel)
                         .person(givenPartnerPerson)
                         .contact(givenContact)
                         .details(HsOfficePartnerDetailsEntity.builder()
@@ -125,17 +125,17 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                 final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
                 final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
 
-                final var newRelationship = HsOfficeRelationshipEntity.builder()
-                        .relHolder(givenPartnerPerson)
-                        .relType(HsOfficeRelationshipType.PARTNER)
-                        .relAnchor(givenMandantPerson)
+                final var newRelation = HsOfficeRelationEntity.builder()
+                        .holder(givenPartnerPerson)
+                        .type(HsOfficeRelationType.PARTNER)
+                        .anchor(givenMandantPerson)
                         .contact(givenContact)
                         .build();
-                relationshipRepo.save(newRelationship);
+                relationRepo.save(newRelation);
 
                 final var newPartner = HsOfficePartnerEntity.builder()
                         .partnerNumber(20032)
-                        .partnerRole(newRelationship)
+                        .partnerRel(newRelation)
                         .person(givenPartnerPerson)
                         .contact(givenContact)
                         .details(HsOfficePartnerDetailsEntity.builder().build())
@@ -146,9 +146,9 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relationship#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.admin",
-                    "hs_office_relationship#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.owner",
-                    "hs_office_relationship#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.tenant",
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.admin",
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.owner",
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.tenant",
                     "hs_office_partner#20032:ErbenBesslerMelBessler-fourthcontact.admin",
                     "hs_office_partner#20032:ErbenBesslerMelBessler-fourthcontact.agent",
                     "hs_office_partner#20032:ErbenBesslerMelBessler-fourthcontact.owner",
@@ -160,25 +160,25 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(distinct(fromFormatted(
                             initialGrantNames,
-                            // relationship - TODO: check and cleanup
+                            // relation - TODO: check and cleanup
                             "{ grant role person#HostsharingeG.tenant to role person#EBess.admin by system and assume }",
                             "{ grant role person#EBess.tenant to role person#HostsharingeG.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role partner#20032:EBess-4th.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role partner#20032:EBess-4th.tenant by system and assume }",
-                            "{ grant role partner#20032:EBess-4th.agent to role relationship#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.owner to role global#global.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role contact#4th.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role person#EBess.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.owner to role person#HostsharingeG.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role person#HostsharingeG.admin by system and assume }",
-                            "{ grant perm UPDATE on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant perm DELETE on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
-                            "{ grant role relationship#HostsharingeG-with-PARTNER-EBess.admin to role relationship#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
-                            "{ grant perm SELECT on relationship#HostsharingeG-with-PARTNER-EBess to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
-                            "{ grant role contact#4th.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
-                            "{ grant role person#EBess.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
-                            "{ grant role person#HostsharingeG.tenant to role relationship#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role partner#20032:EBess-4th.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role partner#20032:EBess-4th.tenant by system and assume }",
+                            "{ grant role partner#20032:EBess-4th.agent to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.owner to role global#global.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role contact#4th.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role person#EBess.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.owner to role person#HostsharingeG.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role person#HostsharingeG.admin by system and assume }",
+                            "{ grant perm UPDATE on relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
+                            "{ grant perm DELETE on relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.admin to role relation#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
+                            "{ grant perm SELECT on relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant role contact#4th.tenant to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant role person#EBess.tenant to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant role person#HostsharingeG.tenant to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
 
                             // owner
                             "{ grant perm DELETE on partner#20032:EBess-4th              to role partner#20032:EBess-4th.owner     by system and assume }",
@@ -426,15 +426,15 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                // TODO: should deleting a partner automatically delete the PARTNER relationship? (same for debitor)
+                // TODO: should deleting a partner automatically delete the PARTNER relation? (same for debitor)
                 // TODO: why did the test cleanup check does not notice this, if missing?
                 return partnerRepo.deleteByUuid(givenPartner.getUuid()) +
-                        relationshipRepo.deleteByUuid(givenPartner.getPartnerRole().getUuid());
+                        relationRepo.deleteByUuid(givenPartner.getPartnerRel().getUuid());
             });
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isEqualTo(2); // partner+relationship
+            assertThat(result.returnedValue()).isEqualTo(2); // partner+relation
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
@@ -466,17 +466,17 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike(person).get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
 
-            final var partnerRole = HsOfficeRelationshipEntity.builder()
-                    .relHolder(givenPartnerPerson)
-                    .relType(HsOfficeRelationshipType.PARTNER)
-                    .relAnchor(givenMandantorPerson)
+            final var partnerRel = HsOfficeRelationEntity.builder()
+                    .holder(givenPartnerPerson)
+                    .type(HsOfficeRelationType.PARTNER)
+                    .anchor(givenMandantorPerson)
                     .contact(givenContact)
                     .build();
-            relationshipRepo.save(partnerRole);
+            relationRepo.save(partnerRel);
 
             final var newPartner = HsOfficePartnerEntity.builder()
                     .partnerNumber(partnerNumber)
-                    .partnerRole(partnerRole)
+                    .partnerRel(partnerRel)
                     .person(givenPartnerPerson)
                     .contact(givenContact)
                     .details(HsOfficePartnerDetailsEntity.builder().build())
@@ -502,7 +502,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     void cleanup() {
         cleanupAllNew(HsOfficePartnerDetailsEntity.class); // TODO: should not be necessary
         cleanupAllNew(HsOfficePartnerEntity.class);
-        cleanupAllNew(HsOfficeRelationshipEntity.class);
+        cleanupAllNew(HsOfficeRelationEntity.class);
     }
 
     private String[] distinct(final String[] strings) {

@@ -1,4 +1,4 @@
-### hs_office_relationship RBAC
+### hs_office_relation RBAC
 
 ```mermaid
 
@@ -28,17 +28,17 @@ subgraph hsOfficePerson
     --> role:hsOfficePerson.guest[person.guest]    
 end
 
-subgraph hsOfficeRelationship
+subgraph hsOfficeRelation
 
-    role:hsOfficePerson#relAnchor.admin[person#anchor.admin]
+    role:hsOfficePerson#anchor.admin[person#anchor.admin]
     --- role:hsOfficePerson.admin
        
-   role:hsOfficeRelationship.owner[relationship.owner]
+   role:hsOfficeRelation.owner[relation.owner]
    %% permissions
-       role:hsOfficeRelationship.owner --> perm:hsOfficeRelationship.*{{relationship.*}}
+       role:hsOfficeRelation.owner --> perm:hsOfficeRelation.*{{relation.*}}
    %% incoming
-       role:global.admin ---> role:hsOfficeRelationship.owner
-       role:hsOfficePersonAdmin#relAnchor.admin
+       role:global.admin ---> role:hsOfficeRelation.owner
+       role:hsOfficePersonAdmin#anchor.admin
 end
 ```
 

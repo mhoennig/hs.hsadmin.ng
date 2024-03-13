@@ -18,8 +18,8 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.test.JpaAttempt;
@@ -127,7 +127,7 @@ public class ImportOfficeData extends ContextBasedTest {
             new String[]{"partner", "vip-contact", "ex-partner", "billing", "contractual", "operation"},
             SUBSCRIBER_ROLES);
 
-    static int relationshipId = 2000000;
+    static int relationId = 2000000;
 
     @Value("${spring.datasource.url}")
     private String jdbcUrl;
@@ -144,7 +144,7 @@ public class ImportOfficeData extends ContextBasedTest {
     private static Map<Integer, HsOfficeDebitorEntity> debitors = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeMembershipEntity> memberships = new WriteOnceMap<>();
 
-    private static Map<Integer, HsOfficeRelationshipEntity> relationships = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeRelationEntity> relations = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeSepaMandateEntity> sepaMandates = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeBankAccountEntity> bankAccounts = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeCoopSharesTransactionEntity> coopShares = new WriteOnceMap<>();
@@ -220,17 +220,17 @@ public class ImportOfficeData extends ContextBasedTest {
 
     @Test
     @Order(1021)
-    void buildDebitorRelationships() {
+    void buildDebitorRelations() {
         debitors.forEach( (id, debitor) -> {
-            final var debitorRel = HsOfficeRelationshipEntity.builder()
-                    .relType(HsOfficeRelationshipType.DEBITOR)
-                    .relAnchor(debitor.getPartner().getPartnerRole().getRelHolder())
-                    .relHolder(debitor.getPartner().getPartnerRole().getRelHolder()) //  just 1 debitor/partner in legacy hsadmin
+            final var debitorRel = HsOfficeRelationEntity.builder()
+                    .type(HsOfficeRelationType.DEBITOR)
+                    .anchor(debitor.getPartner().getPartnerRel().getHolder())
+                    .holder(debitor.getPartner().getPartnerRel().getHolder()) //  just 1 debitor/partner in legacy hsadmin
                     .contact(debitor.getBillingContact())
                     .build();
-            if (debitorRel.getRelAnchor() != null && debitorRel.getRelHolder() != null &&
+            if (debitorRel.getAnchor() != null && debitorRel.getHolder() != null &&
                     debitorRel.getContact() != null ) {
-                relationships.put(relationshipId++, debitorRel);
+                relations.put(relationId++, debitorRel);
             }
         });
     }
@@ -288,28 +288,28 @@ public class ImportOfficeData extends ContextBasedTest {
                     22=Membership(M-1102200, ?? Test PS, D-1102200, [2021-04-01,), NONE)
                 }
                 """);
-        assertThat(toFormattedString(relationships)).isEqualToIgnoringWhitespace("""
+        assertThat(toFormattedString(relations)).isEqualToIgnoringWhitespace("""
                 {
-                    2000000=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000001=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000002=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000003=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='null null, null'),
-                    2000004=rel(relAnchor='NP Mellies, Michael', relType='OPERATIONS', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000005=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000006=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
-                    2000007=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000008=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000009=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000010=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000011=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000012=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000013=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
-                    2000014=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000015=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000016=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga '),
-                    2000017=rel(relAnchor='NP Mellies, Michael', relType='DEBITOR', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000018=rel(relAnchor='LP JM GmbH', relType='DEBITOR', relHolder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
-                    2000019=rel(relAnchor='?? Test PS', relType='DEBITOR', relHolder='?? Test PS', contact='Petra Schmidt , Test PS')
+                    2000000=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000001=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000002=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000003=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='null null, null'),
+                    2000004=rel(anchor='NP Mellies, Michael', type='OPERATIONS', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000005=rel(anchor='NP Mellies, Michael', type='REPRESENTATIVE', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000006=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
+                    2000007=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000008=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000009=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000010=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000011=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000012=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000013=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
+                    2000014=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000015=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000016=rel(anchor='NP Mellies, Michael', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga '),
+                    2000017=rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000018=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
+                    2000019=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS')
                 }
                 """);
     }
@@ -419,20 +419,20 @@ public class ImportOfficeData extends ContextBasedTest {
 
     @Test
     @Order(2009)
-    void removeEmptyRelationships() {
+    void removeEmptyRelations() {
         assumeThatWeAreImportingControlledTestData();
 
         // avoid a error when persisting the deliberetely invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
-        relationships.forEach( (id, r) -> {
+        relations.forEach( (id, r) -> {
             // such a record
             if (r.getContact() == null || r.getContact().getLabel() == null ||
-               r.getRelHolder() == null | r.getRelHolder().getPersonType() == null ) {
+               r.getHolder() == null | r.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
             }
         });
         assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99 (partner+contractual roles)
-        idsToRemove.forEach(id -> relationships.remove(id));
+        idsToRemove.forEach(id -> relations.remove(id));
     }
 
     @Test
@@ -495,7 +495,7 @@ public class ImportOfficeData extends ContextBasedTest {
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            relationships.forEach(this::persist);
+            relations.forEach(this::persist);
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -572,7 +572,7 @@ public class ImportOfficeData extends ContextBasedTest {
             em.createNativeQuery("delete from hs_office_bankaccount where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_partner where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_partner_details where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_relationship where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_relation where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_contact where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_person where true").executeUpdate();
         }).assertSuccessful();
@@ -676,18 +676,18 @@ public class ImportOfficeData extends ContextBasedTest {
                 .forEach(rec -> {
                     final var person = HsOfficePersonEntity.builder().build();
 
-                    final var partnerRelationship = HsOfficeRelationshipEntity.builder()
-                            .relHolder(person)
-                            .relType(HsOfficeRelationshipType.PARTNER)
-                            .relAnchor(mandant)
+                    final var partnerRelation = HsOfficeRelationEntity.builder()
+                            .holder(person)
+                            .type(HsOfficeRelationType.PARTNER)
+                            .anchor(mandant)
                             .contact(null) // is set during contacts import depending on assigned roles
                             .build();
-                    relationships.put(relationshipId++, partnerRelationship);
+                    relations.put(relationId++, partnerRelation);
 
                     final var partner = HsOfficePartnerEntity.builder()
                             .partnerNumber(rec.getInteger("member_id"))
                             .details(HsOfficePartnerDetailsEntity.builder().build())
-                            .partnerRole(partnerRelationship)
+                            .partnerRel(partnerRelation)
                             .contact(null) // is set during contacts import depending on assigned roles
                             .person(person)
                             .build();
@@ -845,7 +845,7 @@ public class ImportOfficeData extends ContextBasedTest {
                     final var debitor = debitors.get(bpId);
 
                     final var partnerPerson = partner.getPerson();
-                    if (containsPartnerRole(rec)) {
+                    if (containsPartnerRel(rec)) {
                         initPerson(partner.getPerson(), rec);
                     }
 
@@ -859,46 +859,46 @@ public class ImportOfficeData extends ContextBasedTest {
                     final var contact = HsOfficeContactEntity.builder().build();
                     initContact(contact, rec);
 
-                    if (containsPartnerRole(rec)) {
+                    if (containsPartnerRel(rec)) {
                         assertThat(partner.getContact()).isNull();
                         partner.setContact(contact);
-                        partner.getPartnerRole().setContact(contact);
+                        partner.getPartnerRel().setContact(contact);
                     }
                     if (containsRole(rec, "billing")) {
                         assertThat(debitor.getBillingContact()).isNull();
                         debitor.setBillingContact(contact);
                     }
                     if (containsRole(rec, "operation")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.OPERATIONS);
+                        addRelation(partnerPerson, contactPerson, contact, HsOfficeRelationType.OPERATIONS);
                     }
                     if (containsRole(rec, "contractual")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.REPRESENTATIVE);
+                        addRelation(partnerPerson, contactPerson, contact, HsOfficeRelationType.REPRESENTATIVE);
                     }
                     if (containsRole(rec, "ex-partner")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.EX_PARTNER);
+                        addRelation(partnerPerson, contactPerson, contact, HsOfficeRelationType.EX_PARTNER);
                     }
                     if (containsRole(rec, "vip-contact")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.VIP_CONTACT);
+                        addRelation(partnerPerson, contactPerson, contact, HsOfficeRelationType.VIP_CONTACT);
                     }
                     for (String subscriberRole: SUBSCRIBER_ROLES) {
                         if (containsRole(rec, subscriberRole)) {
-                            addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.SUBSCRIBER)
-                                    .setRelMark(subscriberRole.split(":")[1])
+                            addRelation(partnerPerson, contactPerson, contact, HsOfficeRelationType.SUBSCRIBER)
+                                    .setMark(subscriberRole.split(":")[1])
                             ;
                         }
                     }
                     verifyContainsOnlyKnownRoles(rec.getString("roles"));
                 });
 
-        optionallyAddMissingContractualRelationships();
+        optionallyAddMissingContractualRelations();
     }
 
-    private static void optionallyAddMissingContractualRelationships() {
+    private static void optionallyAddMissingContractualRelations() {
         final var contractualMissing = new HashSet<Integer>();
         partners.forEach( (id, partner) -> {
             final var partnerPerson = partner.getPerson();
-            if (relationships.values().stream()
-                    .filter(rel -> rel.getRelAnchor() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE)
+            if (relations.values().stream()
+                    .filter(rel -> rel.getAnchor() == partnerPerson && rel.getType() == HsOfficeRelationType.REPRESENTATIVE)
                     .findFirst().isEmpty()) {
                 contractualMissing.add(partner.getPartnerNumber());
             }
@@ -909,22 +909,22 @@ public class ImportOfficeData extends ContextBasedTest {
         return ("," + roles + ",").contains("," + role + ",");
     }
 
-    private static boolean containsPartnerRole(final Record rec) {
+    private static boolean containsPartnerRel(final Record rec) {
         return containsRole(rec, "partner");
     }
 
-    private static HsOfficeRelationshipEntity addRelationship(
+    private static HsOfficeRelationEntity addRelation(
             final HsOfficePersonEntity partnerPerson,
             final HsOfficePersonEntity contactPerson,
             final HsOfficeContactEntity contact,
-            final HsOfficeRelationshipType representative) {
-        final var rel = HsOfficeRelationshipEntity.builder()
-                .relAnchor(partnerPerson)
-                .relHolder(contactPerson)
+            final HsOfficeRelationType representative) {
+        final var rel = HsOfficeRelationEntity.builder()
+                .anchor(partnerPerson)
+                .holder(contactPerson)
                 .contact(contact)
-                .relType(representative)
+                .type(representative)
                 .build();
-        relationships.put(relationshipId++, rel);
+        relations.put(relationId++, rel);
         return rel;
     }
 

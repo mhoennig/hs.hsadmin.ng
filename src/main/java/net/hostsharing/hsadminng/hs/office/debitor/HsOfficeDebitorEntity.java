@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -113,10 +113,10 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                             SELECT debitor.uuid,
                                         'D-' || (SELECT partner.partnerNumber
                                                 FROM hs_office_partner partner
-                                                JOIN hs_office_relationship partnerRel
-                                                    ON partnerRel.uuid = partner.partnerRoleUUid AND partnerRel.relType = 'PARTNER'
-                                                JOIN hs_office_relationship debitorRel
-                                                    ON debitorRel.relAnchorUuid = partnerRel.relHolderUuid AND partnerRel.relType = 'DEBITOR'
+                                                JOIN hs_office_relation partnerRel
+                                                    ON partnerRel.uuid = partner.partnerRelUUid AND partnerRel.type = 'PARTNER'
+                                                JOIN hs_office_relation debitorRel
+                                                    ON debitorRel.anchorUuid = partnerRel.holderUuid AND partnerRel.type = 'DEBITOR'
                                                 WHERE debitorRel.uuid = debitor.debitorRelUuid)
                                              || to_char(debitorNumberSuffix, 'fm00')
                                 from hs_office_debitor as debitor
@@ -133,11 +133,11 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                         "defaultPrefix" /* TODO: do we want that updatable? */)
                 .createPermission(custom("new-debitor")).grantedTo("global", ADMIN)
 
-                .importRootEntityAliasProxy("debitorRel", HsOfficeRelationshipEntity.class,
+                .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class,
                         fetchedBySql("""
                                 SELECT *
-                                    FROM hs_office_relationship AS r
-                                    WHERE r.relType = 'DEBITOR' AND r.relHolderUuid = ${REF}.debitorRelUuid
+                                    FROM hs_office_relation AS r
+                                    WHERE r.type = 'DEBITOR' AND r.holderUuid = ${REF}.debitorRelUuid
                                 """),
                         dependsOnColumn("debitorRelUuid"))
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)
@@ -147,18 +147,18 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                 .importEntityAlias("refundBankAccount", HsOfficeBankAccountEntity.class,
                         dependsOnColumn("refundBankAccountUuid"), fetchedBySql("""
                                 SELECT *
-                                    FROM hs_office_relationship AS r
-                                    WHERE r.relType = 'DEBITOR' AND r.relHolderUuid = ${REF}.debitorRelUuid
+                                    FROM hs_office_relation AS r
+                                    WHERE r.type = 'DEBITOR' AND r.holderUuid = ${REF}.debitorRelUuid
                                 """)
                 )
                 .toRole("refundBankAccount", ADMIN).grantRole("debitorRel", AGENT)
                 .toRole("debitorRel", AGENT).grantRole("refundBankAccount", REFERRER)
 
-                .importEntityAlias("partnerRel", HsOfficeRelationshipEntity.class,
+                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
                         dependsOnColumn("partnerRelUuid"), fetchedBySql("""
                                 SELECT *
-                                     FROM hs_office_relationship AS partnerRel
-                                     WHERE ${debitorRel}.relAnchorUuid = partnerRel.relHolderUuid
+                                     FROM hs_office_relation AS partnerRel
+                                     WHERE ${debitorRel}.anchorUuid = partnerRel.holderUuid
                                  """)
                 )
                 .toRole("partnerRel", ADMIN).grantRole("debitorRel", ADMIN)

@@ -18,7 +18,7 @@ declare
     currentTask         varchar;
     idName              varchar;
     mandantPerson       hs_office_person;
-    partnerRole         hs_office_relationship;
+    partnerRel          hs_office_relation;
     relatedPerson       hs_office_person;
     relatedContact      hs_office_contact;
     relatedDetailsUuid  uuid;
@@ -42,16 +42,16 @@ begin
                where c.label = contactLabel
                into relatedContact;
 
-    select r.* from hs_office_relationship r
-            where r.reltype = 'PARTNER'
-                and r.relanchoruuid = mandantPerson.uuid and r.relholderuuid = relatedPerson.uuid
-            into partnerRole;
-    if partnerRole is null then
-        raise exception 'partnerRole "%"-"%" not found', mandantPerson.tradename, partnerPersonName;
+    select r.* from hs_office_relation r
+            where r.type = 'PARTNER'
+                and r.anchoruuid = mandantPerson.uuid and r.holderuuid = relatedPerson.uuid
+            into partnerRel;
+    if partnerRel is null then
+        raise exception 'partnerRel "%"-"%" not found', mandantPerson.tradename, partnerPersonName;
     end if;
 
     raise notice 'creating test partner: %', idName;
-    raise notice '- using partnerRole (%): %', partnerRole.uuid, partnerRole;
+    raise notice '- using partnerRel (%): %', partnerRel.uuid, partnerRel;
     raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
     raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
 
@@ -68,8 +68,8 @@ begin
     end if;
 
     insert
-        into hs_office_partner (uuid, partnerNumber, partnerRoleUuid, personuuid, contactuuid, detailsUuid)
-        values (uuid_generate_v4(), partnerNumber, partnerRole.uuid, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
+        into hs_office_partner (uuid, partnerNumber, partnerRelUuid, personuuid, contactuuid, detailsUuid)
+        values (uuid_generate_v4(), partnerNumber, partnerRel.uuid, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
 end; $$;
 --//
 

@@ -11,7 +11,7 @@ import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
@@ -804,7 +804,7 @@ public class RbacView {
                 HsOfficePartnerDetailsEntity.class,
                 HsOfficeBankAccountEntity.class,
                 HsOfficeDebitorEntity.class,
-                HsOfficeRelationshipEntity.class,
+                HsOfficeRelationEntity.class,
                 HsOfficeCoopAssetsTransactionEntity.class,
                 HsOfficeContactEntity.class,
                 HsOfficeSepaMandateEntity.class,

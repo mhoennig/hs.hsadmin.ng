@@ -2,15 +2,15 @@
 
 
 -- ============================================================================
---changeset hs-office-relationship-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset hs-office-relation-TEST-DATA-GENERATOR:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates a single relationship test record.
+    Creates a single relation test record.
  */
-create or replace procedure createHsOfficeRelationshipTestData(
+create or replace procedure createHsOfficeRelationTestData(
         holderPersonName varchar,
-        relationshipType HsOfficeRelationshipType,
+        relationType HsOfficeRelationType,
         anchorPersonTradeName varchar,
         contactLabel varchar,
         mark varchar default null)
@@ -24,7 +24,7 @@ declare
 
 begin
     idName := cleanIdentifier( anchorPersonTradeName || '-' || holderPersonName);
-    currentTask := 'creating relationship test-data ' || idName;
+    currentTask := 'creating relation test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
@@ -45,20 +45,20 @@ begin
         raise exception 'contact "%" not found', contactLabel;
     end if;
 
-    raise notice 'creating test relationship: %', idName;
+    raise notice 'creating test relation: %', idName;
     raise notice '- using anchor person (%): %', anchorPerson.uuid, anchorPerson;
     raise notice '- using holder person (%): %', holderPerson.uuid, holderPerson;
     raise notice '- using contact (%): %', contact.uuid, contact;
     insert
-        into hs_office_relationship (uuid, relanchoruuid, relholderuuid, reltype, relmark, contactUuid)
-        values (uuid_generate_v4(), anchorPerson.uuid, holderPerson.uuid, relationshipType, mark, contact.uuid);
+        into hs_office_relation (uuid, anchoruuid, holderuuid, type, mark, contactUuid)
+        values (uuid_generate_v4(), anchorPerson.uuid, holderPerson.uuid, relationType, mark, contact.uuid);
 end; $$;
 --//
 
 /*
-    Creates a range of test relationship for mass data generation.
+    Creates a range of test relation for mass data generation.
  */
-create or replace procedure createHsOfficeRelationshipTestData(
+create or replace procedure createHsOfficeRelationTestData(
     startCount integer,  -- count of auto generated rows before the run
     endCount integer     -- count of auto generated rows after the run
 )
@@ -72,7 +72,7 @@ begin
             select p.* from hs_office_person p where tradeName = intToVarChar(t, 4) into person;
             select c.* from hs_office_contact c where c.label = intToVarChar(t, 4) || '#' || t into contact;
 
-            call createHsOfficeRelationshipTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
+            call createHsOfficeRelationTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
             commit;
         end loop;
 end; $$;
@@ -80,25 +80,25 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-relationship-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset hs-office-relation-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call createHsOfficeRelationshipTestData('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
-        call createHsOfficeRelationshipTestData('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
+        call createHsOfficeRelationTestData('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
+        call createHsOfficeRelationTestData('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
 
-        call createHsOfficeRelationshipTestData('Second e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
-        call createHsOfficeRelationshipTestData('Smith', 'REPRESENTATIVE', 'Second e.K.', 'second contact');
+        call createHsOfficeRelationTestData('Second e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
+        call createHsOfficeRelationTestData('Smith', 'REPRESENTATIVE', 'Second e.K.', 'second contact');
 
-        call createHsOfficeRelationshipTestData('Third OHG', 'PARTNER', 'Hostsharing eG', 'third contact');
-        call createHsOfficeRelationshipTestData('Tucker', 'REPRESENTATIVE', 'Third OHG', 'third contact');
+        call createHsOfficeRelationTestData('Third OHG', 'PARTNER', 'Hostsharing eG', 'third contact');
+        call createHsOfficeRelationTestData('Tucker', 'REPRESENTATIVE', 'Third OHG', 'third contact');
 
-        call createHsOfficeRelationshipTestData('Fourth eG', 'PARTNER', 'Hostsharing eG', 'fourth contact');
-        call createHsOfficeRelationshipTestData('Fouler', 'REPRESENTATIVE', 'Third OHG', 'third contact');
+        call createHsOfficeRelationTestData('Fourth eG', 'PARTNER', 'Hostsharing eG', 'fourth contact');
+        call createHsOfficeRelationTestData('Fouler', 'REPRESENTATIVE', 'Third OHG', 'third contact');
 
-        call createHsOfficeRelationshipTestData('Smith', 'PARTNER', 'Hostsharing eG', 'sixth contact');
-        call createHsOfficeRelationshipTestData('Smith', 'SUBSCRIBER', 'Third OHG', 'third contact', 'members-announce');
+        call createHsOfficeRelationTestData('Smith', 'PARTNER', 'Hostsharing eG', 'sixth contact');
+        call createHsOfficeRelationTestData('Smith', 'SUBSCRIBER', 'Third OHG', 'third contact', 'members-announce');
     end;
 $$;
 --//

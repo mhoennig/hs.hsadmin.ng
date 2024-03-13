@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -50,15 +50,15 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
     private Integer partnerNumber;
 
     @ManyToOne
-    @JoinColumn(name = "partnerroleuuid", nullable = false)
-    private HsOfficeRelationshipEntity partnerRole;
+    @JoinColumn(name = "partnerreluuid", nullable = false)
+    private HsOfficeRelationEntity partnerRel;
 
-    // TODO: remove, is replaced by partnerRole
+    // TODO: remove, is replaced by partnerRel
     @ManyToOne
     @JoinColumn(name = "personuuid", nullable = false)
     private HsOfficePersonEntity person;
 
-    // TODO: remove, is replaced by partnerRole
+    // TODO: remove, is replaced by partnerRel
     @ManyToOne
     @JoinColumn(name = "contactuuid", nullable = false)
     private HsOfficeContactEntity contact;
@@ -87,13 +87,13 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
                             FROM hs_office_partner AS partner
                         """))
                 .withUpdatableColumns(
-                        "partnerRoleUuid",
+                        "partnerRelUuid",
                         "personUuid",
                         "contactUuid")
                 .createPermission(custom("new-partner")).grantedTo("global", ADMIN)
 
-                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationshipEntity.class,
-                        fetchedBySql("SELECT * FROM hs_office_relationship AS r WHERE r.uuid = ${ref}.partnerRoleUuid"),
+                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
+                        fetchedBySql("SELECT * FROM hs_office_relation AS r WHERE r.uuid = ${ref}.partnerRelUuid"),
                         dependsOnColumn("partnerRelUuid"))
                 .createPermission(DELETE).grantedTo("partnerRel", ADMIN)
                 .createPermission(UPDATE).grantedTo("partnerRel", AGENT)
