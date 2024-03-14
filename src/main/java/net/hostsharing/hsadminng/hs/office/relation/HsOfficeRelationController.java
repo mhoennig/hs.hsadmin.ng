@@ -70,6 +70,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
         final var entityToSave = new HsOfficeRelationEntity();
         entityToSave.setType(HsOfficeRelationType.valueOf(body.getType()));
+        entityToSave.setMark(body.getMark());
         entityToSave.setAnchor(holderRepo.findByUuid(body.getAnchorUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find anchorUuid " + body.getAnchorUuid())
         ));

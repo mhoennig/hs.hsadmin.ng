@@ -72,7 +72,8 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                 final var newRelation = HsOfficeRelationEntity.builder()
                         .anchor(givenAnchorPerson)
                         .holder(givenHolderPerson)
-                        .type(HsOfficeRelationType.REPRESENTATIVE)
+                        .type(HsOfficeRelationType.SUBSCRIBER)
+                        .mark("operations-announce")
                         .contact(givenContact)
                         .build();
                 return toCleanup(relationRepo.save(newRelation));
@@ -83,6 +84,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeRelationEntity::getUuid).isNotNull();
             assertThatRelationIsPersisted(result.returnedValue());
             assertThat(relationRepo.count()).isEqualTo(count + 1);
+            final var stored = relationRepo.findByUuid(result.returnedValue().getUuid());
+            assertThat(stored).isNotEmpty().map(HsOfficeRelationEntity::toString).get()
+                    .isEqualTo("rel(anchor='NP Bessler, Anita', type='SUBSCRIBER', mark='operations-announce', holder='NP Bessler, Anita', contact='fourth contact')");
         }
 
         @Test

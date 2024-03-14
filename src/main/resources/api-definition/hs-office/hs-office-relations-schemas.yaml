@@ -55,6 +55,7 @@ components:
                     nullable: true
                 mark:
                     type: string
+                    nullable: true
                 contactUuid:
                     type: string
                     format: uuid
@@ -62,4 +63,4 @@ components:
               - anchorUuid
               - holderUuid
               - type
-              - relContactUuid
+              - contactUuid

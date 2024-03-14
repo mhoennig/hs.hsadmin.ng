@@ -137,12 +137,14 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         .body("""
                                {
                                    "type": "%s",
+                                   "mark": "%s",
                                    "anchorUuid": "%s",
                                    "holderUuid": "%s",
                                    "contactUuid": "%s"
                                  }
                             """.formatted(
-                                HsOfficeRelationTypeResource.DEBITOR,
+                                HsOfficeRelationTypeResource.SUBSCRIBER,
+                                "operations-discuss",
                                 givenAnchorPerson.getUuid(),
                                 givenHolderPerson.getUuid(),
                                 givenContact.getUuid()))
@@ -153,7 +155,8 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("type", is("DEBITOR"))
+                        .body("type", is("SUBSCRIBER"))
+                        .body("mark", is("operations-discuss"))
                         .body("anchor.tradeName", is("Third OHG"))
                         .body("holder.givenName", is("Paul"))
                         .body("contact.label", is("second contact"))
