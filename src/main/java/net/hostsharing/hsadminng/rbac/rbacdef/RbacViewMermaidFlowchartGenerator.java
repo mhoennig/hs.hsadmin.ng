@@ -4,7 +4,6 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.*;
-import java.time.LocalDateTime;
 
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition.GrantType.*;
@@ -149,14 +148,13 @@ public class RbacViewMermaidFlowchartGenerator {
                 """
                         ### rbac %{entityAlias}
                         
-                        This code generated was by RbacViewMermaidFlowchartGenerator at  %{timestamp}.
+                        This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
                                         
                         ```mermaid
                         %{flowchart}
                         ```
                         """
                         .replace("%{entityAlias}", rbacDef.getRootEntityAlias().aliasName())
-                        .replace("%{timestamp}", LocalDateTime.now().toString())
                         .replace("%{flowchart}", flowchart.toString()),
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         System.out.println("Markdown-File: " + path.toAbsolutePath());

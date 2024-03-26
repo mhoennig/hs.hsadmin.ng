@@ -164,7 +164,7 @@ end; $$;
 
  */
 
-create type RbacRoleType as enum ('owner', 'admin', 'agent', 'tenant', 'guest');
+create type RbacRoleType as enum ('owner', 'admin', 'agent', 'tenant', 'guest', 'referrer');
 
 create table RbacRole
 (
@@ -373,9 +373,11 @@ create table RbacPermission
     uuid        uuid primary key references RbacReference (uuid) on delete cascade,
     objectUuid  uuid not null references RbacObject,
     op          RbacOp not null,
-    opTableName varchar(60),
-    unique (objectUuid, op)
+    opTableName varchar(60)
 );
+
+ALTER TABLE RbacPermission
+    ADD CONSTRAINT RbacPermission_uc UNIQUE NULLS NOT DISTINCT (objectUuid, op, opTableName);
 
 call create_journal('RbacPermission');
 
@@ -395,7 +397,10 @@ begin
         raise exception 'forOpTableName must only be specified for ops: [INSERT]'; -- currently no other
     end if;
 
-    permissionUuid = (select uuid from RbacPermission where objectUuid = forObjectUuid and op = forOp and opTableName = forOpTableName);
+    permissionUuid := (
+        select uuid from RbacPermission
+         where objectUuid = forObjectUuid
+           and op = forOp and opTableName is not distinct from forOpTableName);
     if (permissionUuid is null) then
         insert into RbacReference ("type")
             values ('RbacPermission')
@@ -466,7 +471,43 @@ select uuid
       and p.op = forOp
       and p.opTableName = forOpTableName
 $$;
+
+create or replace function getPermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+    returns uuid
+    stable -- leakproof
+    language plpgsql as $$
+declare
+    permissionUuid uuid;
+begin
+    select uuid into permissionUuid
+        from RbacPermission p
+        where p.objectUuid = forObjectUuid
+          and p.op = forOp
+          and forOpTableName is null or p.opTableName = forOpTableName;
+    assert permissionUuid is not null,
+        format('permission %s %s for object UUID %s cannot be found', forOp, forOpTableName, forObjectUuid);
+    return permissionUuid;
+end; $$;
 --//
+
+
+-- ============================================================================
+--changeset rbac-base-duplicate-role-grant-exception:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace procedure raiseDuplicateRoleGrantException(subRoleId uuid, superRoleId uuid)
+    language plpgsql as $$
+declare
+    subRoleIdName text;
+    superRoleIdName text;
+begin
+    select roleIdName from rbacRole_ev where uuid=subRoleId into subRoleIdName;
+    select roleIdName from rbacRole_ev where uuid=superRoleId into superRoleIdName;
+    raise exception '[400] Duplicate role grant detected: role % (%) already granted to % (%)', subRoleId, subRoleIdName, superRoleId, superRoleIdName;
+end;
+$$;
+--//
+
 
 -- ============================================================================
 --changeset rbac-base-GRANTS:1 endDelimiter:--//
@@ -588,7 +629,7 @@ select exists(
            );
 $$;
 
-create or replace procedure grantPermissionToRole(roleUuid uuid, permissionUuid uuid)
+create or replace procedure grantPermissionToRole(permissionUuid uuid, roleUuid uuid)
     language plpgsql as $$
 begin
     perform assertReferenceType('roleId (ascendant)', roleUuid, 'RbacRole');
@@ -601,10 +642,10 @@ begin
 end;
 $$;
 
-create or replace procedure grantPermissionToRole(roleDesc RbacRoleDescriptor, permissionUuid uuid)
+create or replace procedure grantPermissionToRole(permissionUuid uuid, roleDesc RbacRoleDescriptor)
     language plpgsql as $$
 begin
-    call grantPermissionToRole(findRoleId(roleDesc), permissionUuid);
+    call grantPermissionToRole(permissionUuid, findRoleId(roleDesc));
 end;
 $$;
 
@@ -634,7 +675,7 @@ begin
     perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
 
     if isGranted(subRoleId, superRoleId) then
-        raise exception '[400] Cyclic role grant detected between % and %', subRoleId, superRoleId;
+        call raiseDuplicateRoleGrantException(subRoleId, superRoleId);
     end if;
 
     insert
@@ -650,6 +691,11 @@ declare
     superRoleId uuid;
     subRoleId uuid;
 begin
+    -- TODO: maybe separate method grantRoleToRoleIfNotNull(...) for NULLABLE references
+    if superRole.objectUuid is null or subRole.objectuuid is null then
+        return;
+    end if;
+
     superRoleId := findRoleId(superRole);
     subRoleId := findRoleId(subRole);
 
@@ -657,7 +703,7 @@ begin
     perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
 
     if isGranted(subRoleId, superRoleId) then
-        raise exception '[400] Cyclic role grant detected between % and %', subRoleId, superRoleId;
+        call raiseDuplicateRoleGrantException(subRoleId, superRoleId);
     end if;
 
     insert
@@ -672,6 +718,7 @@ declare
     superRoleId uuid;
     subRoleId uuid;
 begin
+    if ( superRoleId is null ) then return; end if;
     superRoleId := findRoleId(superRole);
     if ( subRoleId is null ) then return; end if;
     subRoleId := findRoleId(subRole);
@@ -680,7 +727,7 @@ begin
     perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
 
     if isGranted(subRoleId, superRoleId) then
-        raise exception '[400] Cyclic role grant detected between % and %', subRoleId, superRoleId;
+        call raiseDuplicateRoleGrantException(subRoleId, superRoleId);
     end if;
 
     insert
@@ -704,8 +751,36 @@ begin
     if (isGranted(superRoleId, subRoleId)) then
         delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
     else
-        raise exception 'cannot revoke role % (%) from % (% because it is not granted',
+        raise exception 'cannot revoke role % (%) from % (%) because it is not granted',
             subRole, subRoleId, superRole, superRoleId;
+    end if;
+end; $$;
+
+create or replace procedure revokePermissionFromRole(permissionId UUID, superRole RbacRoleDescriptor)
+    language plpgsql as $$
+declare
+    superRoleId uuid;
+    permissionOp text;
+    objectTable text;
+    objectUuid uuid;
+begin
+    superRoleId := findRoleId(superRole);
+
+    perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
+    perform assertReferenceType('permission (descendant)', permissionId, 'RbacPermission');
+
+    if (isGranted(superRoleId, permissionId)) then
+        delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = permissionId;
+    else
+        select p.op, o.objectTable, o.uuid
+            from rbacGrants g
+                     join rbacPermission p on p.uuid=g.descendantUuid
+                     join rbacobject o on o.uuid=p.objectUuid
+            where g.uuid=permissionId
+            into permissionOp, objectTable, objectUuid;
+
+        raise exception 'cannot revoke permission % (% on %#% (%) from % (%)) because it is not granted',
+            permissionId, permissionOp, objectTable, objectUuid, permissionId, superRole, superRoleId;
     end if;
 end; $$;
 

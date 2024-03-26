@@ -1,6 +1,6 @@
 ### rbac domain
 
-This code generated was by RbacViewMermaidFlowchartGenerator at  2024-03-11T11:29:11.644658132.
+This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
 
 ```mermaid
 %%{init:{'flowchart':{'htmlLabels':false}}}%%

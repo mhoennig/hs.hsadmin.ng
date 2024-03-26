@@ -31,13 +31,13 @@ create or replace function createRoleWithGrants(
     called on null input
     language plpgsql as $$
 declare
-    roleUuid      uuid;
-    subRoleDesc   RbacRoleDescriptor;
-    superRoleDesc RbacRoleDescriptor;
-    subRoleUuid   uuid;
-    superRoleUuid uuid;
-    userUuid      uuid;
-    grantedByRoleUuid uuid;
+    roleUuid                uuid;
+    subRoleDesc             RbacRoleDescriptor;
+    superRoleDesc           RbacRoleDescriptor;
+    subRoleUuid             uuid;
+    superRoleUuid           uuid;
+    userUuid                uuid;
+    userGrantsByRoleUuid    uuid;
 begin
     roleUuid := createRole(roleDescriptor);
 
@@ -58,14 +58,15 @@ begin
         end loop;
 
     if cardinality(userUuids) > 0 then
+        -- direct grants to users need a grantedByRole which can revoke the grant
         if grantedByRole is null then
-            grantedByRoleUuid := roleUuid;
+            userGrantsByRoleUuid := roleUuid; -- TODO: or do we want to require an explicit userGrantsByRoleUuid?
         else
-            grantedByRoleUuid := getRoleId(grantedByRole);
+            userGrantsByRoleUuid := getRoleId(grantedByRole);
         end if;
         foreach userUuid in array userUuids
             loop
-                call grantRoleToUserUnchecked(grantedByRoleUuid, roleUuid, userUuid);
+                call grantRoleToUserUnchecked(userGrantsByRoleUuid, roleUuid, userUuid);
             end loop;
     end if;
 

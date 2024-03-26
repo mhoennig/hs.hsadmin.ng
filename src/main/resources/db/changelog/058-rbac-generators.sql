@@ -73,12 +73,21 @@ begin
             return roleDescriptor('%2$s', entity.uuid, 'tenant', assumed);
         end; $f$;
 
+        -- TODO: remove guest role
         create or replace function %1$sGuest(entity %2$s, assumed boolean = true)
             returns RbacRoleDescriptor
             language plpgsql
             strict as $f$
         begin
             return roleDescriptor('%2$s', entity.uuid, 'guest', assumed);
+        end; $f$;
+
+        create or replace function %1$sReferrer(entity %2$s)
+            returns RbacRoleDescriptor
+            language plpgsql
+            strict as $f$
+        begin
+            return roleDescriptor('%2$s', entity.uuid, 'referrer');
         end; $f$;
 
         $sql$, prefix, targetTable);
@@ -148,12 +157,16 @@ end; $$;
 --changeset rbac-generators-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text = null)
+create or replace procedure generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text = null, columnNames text = '*')
     language plpgsql as $$
 declare
     sql text;
+    newColumns text;
 begin
     targetTable := lower(targetTable);
+    if columnNames = '*' then
+        columnNames := columnsNames(targetTable);
+    end if;
 
     /*
         Creates a restricted view based on the 'SELECT' permission of the current subject.
@@ -175,20 +188,21 @@ begin
     /**
         Instead of insert trigger function for the restricted view.
      */
+    newColumns := 'new.' || replace(columnNames, ',', ', new.');
     sql := format($sql$
-        create or replace function %1$sInsert()
-            returns trigger
-            language plpgsql as $f$
-        declare
-            newTargetRow %1$s;
-        begin
-            insert
-                into %1$s
-                values (new.*)
-                returning * into newTargetRow;
-            return newTargetRow;
-        end; $f$;
-        $sql$, targetTable);
+    create or replace function %1$sInsert()
+        returns trigger
+        language plpgsql as $f$
+    declare
+        newTargetRow %1$s;
+    begin
+        insert
+            into %1$s (%2$s)
+            values (%3$s)
+            returning * into newTargetRow;
+        return newTargetRow;
+    end; $f$;
+    $sql$, targetTable, columnNames, newColumns);
     execute sql;
 
     /*

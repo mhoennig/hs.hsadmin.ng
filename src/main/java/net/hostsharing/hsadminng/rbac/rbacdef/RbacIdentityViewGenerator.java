@@ -26,18 +26,20 @@ public class RbacIdentityViewGenerator {
         plPgSql.writeLn(
             switch (rbacDef.getIdentityViewSqlQuery().part) {
             case SQL_PROJECTION -> """
-                    call generateRbacIdentityViewFromProjection('${rawTableName}', $idName$
-                        ${identityViewSqlPart}
+                    call generateRbacIdentityViewFromProjection('${rawTableName}', 
+                        $idName$
+                    ${identityViewSqlPart}
                         $idName$);
                     """;
             case SQL_QUERY -> """
-                    call generateRbacIdentityViewFromProjection('${rawTableName}', $idName$
-                        ${identityViewSqlPart}
+                    call generateRbacIdentityViewFromQuery('${rawTableName}', 
+                        $idName$
+                    ${identityViewSqlPart}
                         $idName$);
                 """;
             default -> throw new IllegalStateException("illegal SQL part given");
             },
-            with("identityViewSqlPart", rbacDef.getIdentityViewSqlQuery().sql),
+            with("identityViewSqlPart", StringWriter.indented(2, rbacDef.getIdentityViewSqlQuery().sql)),
             with("rawTableName", rawTableName));
 
         plPgSql.writeLn("--//");

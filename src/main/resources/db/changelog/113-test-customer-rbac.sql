@@ -1,5 +1,6 @@
 --liquibase formatted sql
--- This code generated was by RbacViewPostgresGenerator at 2024-03-11T11:29:11.584886824.
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset test-customer-rbac-OBJECT:1 endDelimiter:--//
@@ -36,8 +37,8 @@ begin
     perform createRoleWithGrants(
         testCustomerOwner(NEW),
             permissions => array['DELETE'],
-            userUuids => array[currentUserUuid()],
-            incomingSuperRoles => array[globalAdmin(unassumed())]
+            incomingSuperRoles => array[globalAdmin(unassumed())],
+            userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
@@ -72,15 +73,56 @@ create trigger insertTriggerForTestCustomer_tg
     after insert on test_customer
     for each row
 execute procedure insertTriggerForTestCustomer_tf();
-
 --//
+
 
 -- ============================================================================
 --changeset test-customer-rbac-INSERT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+/*
+    Creates INSERT INTO test_customer permissions for the related global rows.
+ */
+do language plpgsql $$
+    declare
+        row global;
+        permissionUuid uuid;
+        roleUuid uuid;
+    begin
+        call defineContext('create INSERT INTO test_customer permissions for the related global rows');
+
+        FOR row IN SELECT * FROM global
+            LOOP
+                roleUuid := findRoleId(globalAdmin());
+                permissionUuid := createPermission(row.uuid, 'INSERT', 'test_customer');
+                call grantPermissionToRole(permissionUuid, roleUuid);
+            END LOOP;
+    END;
+$$;
+
 /**
-    Checks if the user or assumed roles are allowed to insert a row to test_customer.
+    Adds test_customer INSERT permission to specified role of new global rows.
+*/
+create or replace function test_customer_global_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'test_customer'),
+            globalAdmin());
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_test_customer_global_insert_tg
+    after insert on global
+    for each row
+execute procedure test_customer_global_insert_tf();
+
+/**
+    Checks if the user or assumed roles are allowed to insert a row to test_customer,
+    where only global-admin has that permission.
 */
 create or replace function test_customer_insert_permission_missing_tf()
     returns trigger
@@ -93,31 +135,31 @@ end; $$;
 create trigger test_customer_insert_permission_check_tg
     before insert on test_customer
     for each row
-    -- As there is no explicit INSERT grant specified for this table,
-    -- only global admins are allowed to insert any rows.
     when ( not isGlobalAdmin() )
         execute procedure test_customer_insert_permission_missing_tf();
-
 --//
+
 -- ============================================================================
 --changeset test-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('test_customer', $idName$
-    prefix
+call generateRbacIdentityViewFromProjection('test_customer',
+    $idName$
+        prefix
     $idName$);
-
 --//
+
 -- ============================================================================
 --changeset test-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('test_customer',
-    'reference',
+    $orderBy$
+        reference
+    $orderBy$,
     $updates$
         reference = new.reference,
         prefix = new.prefix,
         adminUserName = new.adminUserName
     $updates$);
 --//
-
 

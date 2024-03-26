@@ -1,6 +1,6 @@
 ### rbac customer
 
-This code generated was by RbacViewMermaidFlowchartGenerator at  2024-03-11T11:29:11.571772062.
+This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
 
 ```mermaid
 %%{init:{'flowchart':{'htmlLabels':false}}}%%
@@ -21,6 +21,7 @@ subgraph customer["`**customer**`"]
     subgraph customer:permissions[ ]
         style customer:permissions fill:#dd4901,stroke:white
 
+        perm:customer:INSERT{{customer:INSERT}}
         perm:customer:DELETE{{customer:DELETE}}
         perm:customer:UPDATE{{customer:UPDATE}}
         perm:customer:SELECT{{customer:SELECT}}
@@ -36,6 +37,7 @@ role:customer:owner ==> role:customer:admin
 role:customer:admin ==> role:customer:tenant
 
 %% granting permissions to roles
+role:global:admin ==> perm:customer:INSERT
 role:customer:owner ==> perm:customer:DELETE
 role:customer:admin ==> perm:customer:UPDATE
 role:customer:tenant ==> perm:customer:SELECT

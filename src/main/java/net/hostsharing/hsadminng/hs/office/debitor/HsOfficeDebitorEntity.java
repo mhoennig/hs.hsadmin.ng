@@ -19,9 +19,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -131,36 +132,26 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                         "vatBusiness",
                         "vatReverseCharge",
                         "defaultPrefix" /* TODO: do we want that updatable? */)
-                .createPermission(custom("new-debitor")).grantedTo("global", ADMIN)
+                .createPermission(INSERT).grantedTo("global", ADMIN)
 
                 .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class,
-                        fetchedBySql("""
-                                SELECT *
-                                    FROM hs_office_relation AS r
-                                    WHERE r.type = 'DEBITOR' AND r.holderUuid = ${REF}.debitorRelUuid
-                                """),
+                        directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("debitorRelUuid"))
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)
                 .createPermission(UPDATE).grantedTo("debitorRel", ADMIN)
                 .createPermission(SELECT).grantedTo("debitorRel", TENANT)
 
                 .importEntityAlias("refundBankAccount", HsOfficeBankAccountEntity.class,
-                        dependsOnColumn("refundBankAccountUuid"), fetchedBySql("""
-                                SELECT *
-                                    FROM hs_office_relation AS r
-                                    WHERE r.type = 'DEBITOR' AND r.holderUuid = ${REF}.debitorRelUuid
-                                """)
-                )
+                        dependsOnColumn("refundBankAccountUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
                 .toRole("refundBankAccount", ADMIN).grantRole("debitorRel", AGENT)
                 .toRole("debitorRel", AGENT).grantRole("refundBankAccount", REFERRER)
 
                 .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
-                        dependsOnColumn("partnerRelUuid"), fetchedBySql("""
-                                SELECT *
-                                     FROM hs_office_relation AS partnerRel
-                                     WHERE ${debitorRel}.anchorUuid = partnerRel.holderUuid
-                                 """)
-                )
+                        dependsOnColumn("partnerRelUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
                 .toRole("partnerRel", ADMIN).grantRole("debitorRel", ADMIN)
                 .toRole("partnerRel", AGENT).grantRole("debitorRel", AGENT)
                 .toRole("debitorRel", AGENT).grantRole("partnerRel", TENANT)

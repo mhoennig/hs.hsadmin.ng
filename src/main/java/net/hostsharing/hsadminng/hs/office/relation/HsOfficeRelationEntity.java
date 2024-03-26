@@ -16,10 +16,11 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -90,16 +91,16 @@ public class HsOfficeRelationEntity implements HasUuid, Stringifyable {
                 .withUpdatableColumns("contactUuid")
                 .importEntityAlias("anchorPerson", HsOfficePersonEntity.class,
                         dependsOnColumn("anchorUuid"),
-                        fetchedBySql("select * from hs_office_person as p where p.uuid = ${REF}.anchorUuid")
-                )
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
                 .importEntityAlias("holderPerson", HsOfficePersonEntity.class,
                         dependsOnColumn("holderUuid"),
-                        fetchedBySql("select * from hs_office_person as p where p.uuid = ${REF}.holderUuid")
-                )
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
                 .importEntityAlias("contact", HsOfficeContactEntity.class,
                         dependsOnColumn("contactUuid"),
-                        fetchedBySql("select * from hs_office_contact as c where c.uuid = ${REF}.contactUuid")
-                )
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);
                     with.incomingSuperRole(GLOBAL, ADMIN);

@@ -5,7 +5,6 @@ import lombok.SneakyThrows;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.PostgresTriggerReference.NEW;
 import static net.hostsharing.hsadminng.rbac.rbacdef.StringWriter.with;
@@ -21,10 +20,9 @@ public class RbacViewPostgresGenerator {
         liqibaseTagPrefix = rbacDef.getRootEntityAlias().getRawTableName().replace("_", "-");
         plPgSql.writeLn("""
                 --liquibase formatted sql
-                -- This code generated was by ${generator} at ${timestamp}.
+                -- This code generated was by ${generator}, do not amend manually.
                 """,
                 with("generator", getClass().getSimpleName()),
-                with("timestamp", LocalDateTime.now().toString()),
                 with("ref", NEW.name()));
 
         new RbacObjectGenerator(rbacDef, liqibaseTagPrefix).generateTo(plPgSql);
@@ -37,8 +35,11 @@ public class RbacViewPostgresGenerator {
 
     @Override
     public String toString() {
-    return plPgSql.toString();
-}
+        return plPgSql.toString()
+                .replace("\n\n\n", "\n\n")
+                .replace("-- ====", "\n-- ====")
+                .replace("\n\n--//", "\n--//");
+    }
 
     @SneakyThrows
     public void generateToChangeLog(final Path outputPath) {

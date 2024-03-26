@@ -32,8 +32,10 @@ import java.util.stream.Stream;
 import static java.lang.reflect.Modifier.isStatic;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.autoFetched;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.Part.AUTO_FETCH;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 
 @Getter
@@ -65,6 +67,21 @@ public class RbacView {
     private EntityAlias rootEntityAliasProxy;
     private RbacRoleDefinition previousRoleDef;
 
+    /** Crates an RBAC definition template for the given entity class and defining the given alias.
+     *
+     * @param alias
+     *  an alias name for this entity/table, which can be used in further grants
+     *
+     * @param entityClass
+     *  the Java class for which this RBAC definition is to be defined
+     *  (the class to which the calling method belongs)
+     *
+     * @return
+     *  the newly created RBAC definition template
+     *
+     * @param <E>
+     *     a JPA entity class extending RbacObject
+     */
     public static <E extends RbacObject> RbacView rbacViewFor(final String alias, final Class<E> entityClass) {
         return new RbacView(alias, entityClass);
     }
@@ -76,22 +93,71 @@ public class RbacView {
         entityAliases.put("global", new EntityAlias("global"));
     }
 
+    /**
+     * Specifies, which columns of the restricted view are updatable at all.
+     *
+     * @param columnNames
+     *  A list of the updatable columns.
+     *
+     * @return
+     *  the `this` instance itself to allow chained calls.
+     */
     public RbacView withUpdatableColumns(final String... columnNames) {
         Collections.addAll(updatableColumns, columnNames);
         verifyVersionColumnExists();
         return this;
     }
 
+    /** Specifies the SQL query which creates the identity view for this entity.
+     *
+     * <p>An identity view is a view which maps an objectUuid to an idName.
+     * The idName should be a human-readable representation of the row, but as short as possible.
+     * The idName must only consist of letters (A-Z, a-z), digits (0-9), dash (-), dot (.) and unserscore '_'.
+     * It's used to create the object-specific-role-names like test_customer#abc.admin - here 'abc' is the idName.
+     * The idName not necessarily unique in a table, but it should be avoided.
+     * </p>
+     *
+     * @param sqlExpression
+     *  Either specify an SQL projection (the part between SELECT and FROM), e.g. `SQL.projection("columnName")
+     *  or the whole SELECT query returning the uuid and idName columns,
+     *  e.g. `SQL.query("SELECT ... AS uuid, ... AS idName FROM ... JOIN ...").
+     *  Only add really important columns, just enough to create a short human-readable representation.
+     *
+     * @return
+     *  the `this` instance itself to allow chained calls.
+     */
     public RbacView withIdentityView(final SQL sqlExpression) {
         this.identityViewSqlQuery = sqlExpression;
         return this;
     }
 
+    /**
+     * Specifies a ORDER BY clause for the generated restricted view.
+     *
+     * <p>A restricted view is generated, no matter if the order was specified or not.</p>
+     *
+     * @param orderBySqlExpression
+     *  That's the part behind `ORDER BY`, e.g. `SQL.expression("prefix").
+     *
+     * @return
+     *  the `this` instance itself to allow chained calls.
+     */
     public RbacView withRestrictedViewOrderBy(final SQL orderBySqlExpression) {
         this.orderBySqlExpression = orderBySqlExpression;
         return this;
     }
 
+    /**
+     * Specifies that the given role (OWNER, ADMIN, ...) is to be created for new/updated roles in this table.
+     *
+     * @param role
+     *  OWNER, ADMIN, AGENT etc.
+     * @param with
+     *  a lambda which receives the created role to create grants and permissions to and from the newly created role,
+     *  e.g. the owning user, incoming superroles, outgoing subroles
+     * @return
+     *  the `this` instance itself to allow chained calls.
+     */
     public RbacView createRole(final Role role, final Consumer<RbacRoleDefinition> with) {
         final RbacRoleDefinition newRoleDef = findRbacRole(rootEntityAlias, role).toCreate();
         with.accept(newRoleDef);
@@ -99,6 +165,15 @@ public class RbacView {
         return this;
     }
 
+    /**
+     * Specifies that the given role (OWNER, ADMIN, ...) is to be created for new/updated roles in this table,
+     * which is becomes sub-role of the previously created role.
+     *
+     * @param role
+     *  OWNER, ADMIN, AGENT etc.
+     * @return
+     *  the `this` instance itself to allow chained calls.
+     */
     public RbacView createSubRole(final Role role) {
         final RbacRoleDefinition newRoleDef = findRbacRole(rootEntityAlias, role).toCreate();
         findOrCreateGrantDef(newRoleDef, previousRoleDef).toCreate();
@@ -106,6 +181,19 @@ public class RbacView {
         return this;
     }
 
+
+    /**
+     * Specifies that the given role (OWNER, ADMIN, ...) is to be created for new/updated roles in this table,
+     * which is becomes sub-role of the previously created role.
+     *
+     * @param role
+     *  OWNER, ADMIN, AGENT etc.
+     * @param with
+     *  a lambda which receives the created role to create grants and permissions to and from the newly created role,
+     *  e.g. the owning user, incoming superroles, outgoing subroles
+     * @return
+     *  the `this` instance itself to allow chained calls.
+     */
     public RbacView createSubRole(final Role role, final Consumer<RbacRoleDefinition> with) {
         final RbacRoleDefinition newRoleDef = findRbacRole(rootEntityAlias, role).toCreate();
         findOrCreateGrantDef(newRoleDef, previousRoleDef).toCreate();
@@ -114,10 +202,38 @@ public class RbacView {
         return this;
     }
 
+    /**
+     * Specifies that the given permission is to be created for each new row in the target table.
+     *
+     * <p>Grants to permissions created by this method have to be specified separately,
+     * often it's easier to read to use createRole/createSubRole and use with.permission(...).</p>
+     *
+     * @param permission
+     *  e.g. INSERT, SELECT, UPDATE, DELETE
+     *
+     * @return
+     *  the newly created permission definition
+     */
     public RbacPermissionDefinition createPermission(final Permission permission) {
         return createPermission(rootEntityAlias, permission);
     }
 
+    /**
+     * Specifies that the given permission is to be created for each new row in the target table,
+     * but for another table, e.g. a table with details data with different access rights.
+     *
+     * <p>Grants to permissions created by this method have to be specified separately,
+     * often it's easier to read to use createRole/createSubRole and use with.permission(...).</p>
+     *
+     * @param entityAliasName
+     *  A previously defined entity alias name.
+     *
+     * @param permission
+     *  e.g. INSERT, SELECT, UPDATE, DELETE
+     *
+     * @return
+     *  the newly created permission definition
+     */
     public RbacPermissionDefinition createPermission(final String entityAliasName, final Permission permission) {
         return createPermission(findEntityAlias(entityAliasName), permission);
     }
@@ -133,6 +249,32 @@ public class RbacView {
         return this;
     }
 
+    /**
+     * Imports the RBAC template from the given entity class and defines an alias name for it.
+     * This method is especially for proxy-entities, if the root entity does not have its own
+     * roles, a proxy-entity can be specified and its roles can be used instead.
+     *
+     * @param aliasName
+     *  An alias name for the entity class. The same entity class can be imported multiple times,
+     *  if multiple references to its table exist, then distinct alias names habe to be defined.
+     *
+     * @param entityClass
+     *  A JPA entity class extending RbacObject which also implements an `rbac` method returning
+     *  its RBAC specification.
+     *
+     * @param fetchSql
+     *  An SQL SELECT statement which fetches the referenced row. Use `${REF}` to speficiy the
+     *  newly created or updated row (will be replaced by NEW/OLD from the trigger method).
+     *
+     * @param dependsOnColum
+     *  The column, usually containing an uuid, on which this other table depends.
+     *
+     * @return
+     *  the newly created permission definition
+     *
+     * @param <EC>
+     *     a JPA entity class extending RbacObject
+     */
     public <EC extends RbacObject> RbacView importRootEntityAliasProxy(
             final String aliasName,
             final Class<? extends HasUuid> entityClass,
@@ -141,35 +283,75 @@ public class RbacView {
         if (rootEntityAliasProxy != null) {
             throw new IllegalStateException("there is already an entityAliasProxy: " + rootEntityAliasProxy);
         }
-        rootEntityAliasProxy = importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false);
+        rootEntityAliasProxy = importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false, NOT_NULL);
         return this;
     }
 
+    /**
+     * Imports the RBAC template from the given entity class and defines an alias name for it.
+     * This method is especially to declare sub-entities, e.g. details to a main object.
+     *
+     * @see {@link}
+     *
+     * @return
+     *  the newly created permission definition
+     *
+     * @param <EC>
+     *     a JPA entity class extending RbacObject
+     */
     public RbacView importSubEntityAlias(
             final String aliasName, final Class<? extends HasUuid> entityClass,
             final SQL fetchSql, final Column dependsOnColum) {
-        importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, true);
+        importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, true, NOT_NULL);
         return this;
     }
 
+    /**
+     * Imports the RBAC template from the given entity class and defines an anlias name for it.
+     *
+     * @param aliasName
+     *  An alias name for the entity class. The same entity class can be imported multiple times,
+     *  if multiple references to its table exist, then distinct alias names habe to be defined.
+     *
+     * @param entityClass
+     *  A JPA entity class extending RbacObject which also implements an `rbac` method returning
+     *  its RBAC specification.
+     *
+     * @param fetchSql
+     *  An SQL SELECT statement which fetches the referenced row. Use `${REF}` to speficiy the
+     *  newly created or updated row (will be replaced by NEW/OLD from the trigger method).
+     *
+     * @param dependsOnColum
+     *  The column, usually containing an uuid, on which this other table depends.
+     *
+     * @param nullable
+     *  Specifies whether the dependsOnColum is nullable or not.
+     *
+     * @return
+     *  the newly created permission definition
+     *
+     * @param <EC>
+     *     a JPA entity class extending RbacObject
+     */
     public RbacView importEntityAlias(
             final String aliasName, final Class<? extends HasUuid> entityClass,
-            final Column dependsOnColum, final SQL fetchSql) {
-        importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false);
+            final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
+        importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false, nullable);
         return this;
     }
 
+    // TODO: remove once it's not used in HsOffice...Entity anymore
     public RbacView importEntityAlias(
             final String aliasName, final Class<? extends HasUuid> entityClass,
             final Column dependsOnColum) {
-        importEntityAliasImpl(aliasName, entityClass, autoFetched(), dependsOnColum, false);
+        importEntityAliasImpl(aliasName, entityClass, directlyFetchedByDependsOnColumn(), dependsOnColum, false, null);
         return this;
     }
 
     private EntityAlias importEntityAliasImpl(
             final String aliasName, final Class<? extends HasUuid> entityClass,
-            final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity) {
-        final var entityAlias = new EntityAlias(aliasName, entityClass, fetchSql, dependsOnColum, asSubEntity);
+            final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity, final Nullable nullable) {
+        final var entityAlias = new EntityAlias(aliasName, entityClass, fetchSql, dependsOnColum, asSubEntity, nullable);
         entityAliases.put(aliasName, entityAlias);
         try {
             importAsAlias(aliasName, rbacDefinition(entityClass), asSubEntity);
@@ -224,6 +406,16 @@ public class RbacView {
         }
     }
 
+    /**
+     * Starts declaring a grant to a given role.
+     *
+     * @param entityAlias
+     *  A previously speciried entity alias name.
+     * @param role
+     *  OWNER, ADMIN, AGENT, ...
+     * @return
+     *  a grant builder
+     */
     public RbacGrantBuilder toRole(final String entityAlias, final Role role) {
         return new RbacGrantBuilder(entityAlias, role);
     }
@@ -281,13 +473,17 @@ public class RbacView {
             return RbacView.this;
         }
 
-        public RbacView grantPermission(final String entityAliasName, final Permission perm) {
-            final var entityAlias = findEntityAlias(entityAliasName);
-            final var forTable = entityAlias.getRawTableName();
-            findOrCreateGrantDef(findRbacPerm(entityAlias, perm, forTable), superRoleDef).toCreate();
+        public RbacView grantPermission(final Permission perm) {
+            final var forTable = rootEntityAlias.getRawTableName();
+            findOrCreateGrantDef(findRbacPerm(rootEntityAlias, perm, forTable), superRoleDef).toCreate();
             return RbacView.this;
         }
 
+    }
+
+    public enum Nullable {
+        NOT_NULL, // DEFAULT
+        NULLABLE
     }
 
     @Getter
@@ -418,6 +614,16 @@ public class RbacView {
             permDefs.add(this);
         }
 
+        /**
+         * Grants the permission under definition to the given role.
+         *
+         * @param entityAlias
+         *  A previously declared entity alias name.
+         * @param role
+         *  OWNER, ADMIN, ...
+         * @return
+         *  The RbacView specification to which this permission definition belongs.
+         */
         public RbacView grantedTo(final String entityAlias, final Role role) {
             findOrCreateGrantDef(this, findRbacRole(entityAlias, role)).toCreate();
             return RbacView.this;
@@ -448,19 +654,61 @@ public class RbacView {
             return this;
         }
 
+        /**
+         * Specifies which user becomes the owner of newly created objects.
+         * @param userRole
+         *  GLOBAL_ADMIN, CREATOR, ...
+         * @return
+         *  The grant definition for further chained calls.
+         */
         public RbacGrantDefinition owningUser(final RbacUserReference.UserRole userRole) {
             return grantRoleToUser(this, findUserRef(userRole));
         }
 
+        /**
+         * Specifies which permission is to be created for newly created objects.
+         * @param permission
+         *  INSERT, SELECT, ...
+         * @return
+         *  The grant definition for further chained calls.
+         */
         public RbacGrantDefinition permission(final Permission permission) {
             return grantPermissionToRole(createPermission(entityAlias, permission), this);
         }
 
+        /**
+         * Specifies in incoming super role which gets granted the role under definition.
+         *
+         * <p>Incoming means an incoming grant arrow in our grant-diagrams.
+         * Super-role means that it's the role to which another role is granted.
+         * Both means actually the same, just in different aspects.</p>
+         *
+         * @param entityAlias
+         *  A previously declared entity alias name.
+         * @param role
+         *  OWNER, ADMIN, ...
+         * @return
+         *  The grant definition for further chained calls.
+         */
         public RbacGrantDefinition incomingSuperRole(final String entityAlias, final Role role) {
             final var incomingSuperRole = findRbacRole(entityAlias, role);
             return grantSubRoleToSuperRole(this, incomingSuperRole);
         }
 
+        /**
+         * Specifies in outgoing sub role which gets granted the role under definition.
+         *
+         * <p>Outgoing means an outgoing grant arrow in our grant-diagrams.
+         * Sub-role means which is granted to another role.
+         * Both means actually the same, just in different aspects.</p>
+         *
+         * @param entityAlias
+         *  A previously declared entity alias name.
+         * @param role
+         *  OWNER, ADMIN, ...
+         * @return
+         *  The grant definition for further chained calls.
+         */
         public RbacGrantDefinition outgoingSubRole(final String entityAlias, final Role role) {
             final var outgoingSubRole = findRbacRole(entityAlias, role);
             return grantSubRoleToSuperRole(outgoingSubRole, this);
@@ -560,14 +808,14 @@ public class RbacView {
                 .orElseGet(() -> new RbacGrantDefinition(subRoleDefinition, superRoleDefinition));
     }
 
-    record EntityAlias(String aliasName, Class<? extends RbacObject> entityClass, SQL fetchSql, Column dependsOnColum, boolean isSubEntity) {
+    record EntityAlias(String aliasName, Class<? extends RbacObject> entityClass, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
 
         public EntityAlias(final String aliasName) {
-            this(aliasName, null, null, null, false);
+            this(aliasName, null, null, null, false, null);
         }
 
         public EntityAlias(final String aliasName, final Class<? extends RbacObject> entityClass) {
-            this(aliasName, entityClass, null, null, false);
+            this(aliasName, entityClass, null, null, false, null);
         }
 
         boolean isGlobal() {
@@ -592,8 +840,8 @@ public class RbacView {
             };
         }
 
-        public boolean hasFetchSql() {
-            return fetchSql != null;
+        boolean isFetchedByDirectForeignKey() {
+            return fetchSql != null && fetchSql.part == AUTO_FETCH;
         }
 
         private String withoutEntitySuffix(final String simpleEntityName) {
@@ -626,39 +874,35 @@ public class RbacView {
         return tableName.substring(0, tableName.length() - "_rv".length());
     }
 
-    public record Role(String roleName) {
+    public enum Role {
 
-        public static final Role OWNER = new Role("owner");
-        public static final Role ADMIN = new Role("admin");
-        public static final Role AGENT = new Role("agent");
-        public static final Role TENANT = new Role("tenant");
-        public static final Role REFERRER = new Role("referrer");
+        OWNER,
+        ADMIN,
+        AGENT,
+        TENANT,
+        REFERRER,
+
+        GUEST;
 
         @Override
         public String toString() {
-            return ":" + roleName;
+            return ":" + roleName();
         }
 
-        @Override
-        public boolean equals(final Object obj) {
-            return ((obj instanceof Role) && ((Role) obj).roleName.equals(this.roleName));
+        String roleName() {
+            return name().toLowerCase();
         }
     }
 
-    public record Permission(String permission) {
-
-        public static final Permission INSERT = new Permission("INSERT");
-        public static final Permission DELETE = new Permission("DELETE");
-        public static final Permission UPDATE = new Permission("UPDATE");
-        public static final Permission SELECT = new Permission("SELECT");
-
-        public static Permission custom(final String permission) {
-            return new Permission(permission);
-        }
+    public enum Permission {
+        INSERT,
+        DELETE,
+        UPDATE,
+        SELECT;
 
         @Override
         public String toString() {
-            return ":" + permission;
+            return ":" + name();
         }
     }
 
@@ -666,14 +910,25 @@ public class RbacView {
 
         /**
          * DSL method to specify an SQL SELECT expression which fetches the related entity,
-         * using the reference `${ref}` of the root entity.
-         * `${ref}` is going to be replaced by either `NEW` or `OLD` of the trigger function.
-         * `into ...` will be added with a variable name prefixed with either `new` or `old`.
+         * using the reference `${ref}` of the root entity and `${columns}` for the projection.
+         *
+         * <p>The query <strong>must define</strong> the entity alias name of the fetched table
+         * as its alias for, so it can be used in the generated projection (the columns between
+         * `SELECT` and `FROM`.</p>
+         *
+         * <p>`${ref}` is going to be replaced by either `NEW` or `OLD` of the trigger function.
+         * `into ...` will be added with a variable name prefixed with either `new` or `old`.</p>
+         *
+         * <p>`${columns}` is going to be replaced by the columns which are needed for the query,
+         * e.g. `*` or `uuid`.</p>
          *
          * @param sql an SQL SELECT expression (not ending with ';)
          * @return the wrapped SQL expression
          */
         public static SQL fetchedBySql(final String sql) {
+            if ( !sql.startsWith("SELECT ${columns}") ) {
+                throw new IllegalArgumentException("SQL SELECT expression must start with 'SELECT ${columns}', but is: " + sql);
+            }
             validateExpression(sql);
             return new SQL(sql, Part.SQL_QUERY);
         }
@@ -685,8 +940,8 @@ public class RbacView {
          *
          * @return the wrapped SQL definition object
          */
-        public static SQL autoFetched() {
-            return new SQL(null, Part.AUTO_FETCH);
+        public static SQL directlyFetchedByDependsOnColumn() {
+            return new SQL(null, AUTO_FETCH);
         }
 
         /**
@@ -794,6 +1049,26 @@ public class RbacView {
         }
     }
 
+    private static void generateRbacView(final Class<? extends HasUuid> c) {
+        final Method mainMethod = stream(c.getMethods()).filter(
+                        m -> isStatic(m.getModifiers()) && m.getName().equals("main")
+                )
+                .findFirst()
+                .orElse(null);
+        if (mainMethod != null) {
+            try {
+                mainMethod.invoke(null, new Object[] { null });
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            System.err.println("WARNING: no main method in: " + c.getName() + " => no RBAC rules generated");
+        }
+    }
+
+    /**
+     * This main method generates the RbacViews (PostgreSQL+diagram) for all given entity classes.
+     */
     public static void main(String[] args) {
         Stream.of(
                 TestCustomerEntity.class,
@@ -810,21 +1085,6 @@ public class RbacView {
                 HsOfficeSepaMandateEntity.class,
                 HsOfficeCoopSharesTransactionEntity.class,
                 HsOfficeMembershipEntity.class
-        ).forEach(c -> {
-            final Method mainMethod = stream(c.getMethods()).filter(
-                            m -> isStatic(m.getModifiers()) && m.getName().equals("main")
-                    )
-                    .findFirst()
-                    .orElse(null);
-            if (mainMethod != null) {
-                try {
-                    mainMethod.invoke(null, new Object[] { null });
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                System.err.println("no main method in: " + c.getName());
-            }
-        });
+        ).forEach(RbacView::generateRbacView);
     }
 }

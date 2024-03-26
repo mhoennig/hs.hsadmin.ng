@@ -21,6 +21,8 @@ import static net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService.
 @Service
 public class RbacGrantsDiagramService {
 
+    private static final int GRANT_LIMIT = 500;
+
     public static void writeToFile(final String title, final String graph, final String fileName) {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
@@ -42,7 +44,11 @@ public class RbacGrantsDiagramService {
         PERMISSIONS,
         NOT_ASSUMED,
         TEST_ENTITIES,
-        NON_TEST_ENTITIES
+        NON_TEST_ENTITIES;
+
+        public static final EnumSet<Include> ALL = EnumSet.allOf(Include.class);
+        public static final EnumSet<Include> ALL_TEST_ENTITY_RELATED = EnumSet.of(USERS, DETAILS, NOT_ASSUMED, TEST_ENTITIES, PERMISSIONS);
+        public static final EnumSet<Include> ALL_NON_TEST_ENTITY_RELATED = EnumSet.of(USERS, DETAILS, NOT_ASSUMED, NON_TEST_ENTITIES, PERMISSIONS);
     }
 
     @Autowired
@@ -55,7 +61,7 @@ public class RbacGrantsDiagramService {
     private EntityManager em;
 
     public String allGrantsToCurrentUser(final EnumSet<Include> includes) {
-        final var graph = new HashSet<RawRbacGrantEntity>();
+        final var graph = new LimitedHashSet<RawRbacGrantEntity>();
         for ( UUID subjectUuid: context.currentSubjectsUuids() ) {
             traverseGrantsTo(graph, subjectUuid, includes);
             }
@@ -88,7 +94,7 @@ public class RbacGrantsDiagramService {
                 .setParameter("targetObject", targetObject)
                 .setParameter("op", op)
                 .getSingleResult();
-        final var graph = new HashSet<RawRbacGrantEntity>();
+        final var graph = new LimitedHashSet<RawRbacGrantEntity>();
         traverseGrantsFrom(graph, refUuid, includes);
         return toMermaidFlowchart(graph, includes);
     }
@@ -116,7 +122,7 @@ public class RbacGrantsDiagramService {
                     )
                     .collect(groupingBy(RbacGrantsDiagramService::renderEntityIdName))
                     .entrySet().stream()
-                    .map(entity -> "subgraph " + quoted(entity.getKey()) + renderSubgraph(entity.getKey()) + "\n\n    "
+                    .map(entity -> "subgraph " + cleanId(entity.getKey()) + renderSubgraph(entity.getKey()) + "\n\n    "
                             + entity.getValue().stream()
                             .map(n -> renderNode(n.idName(), n.uuid()).replace("\n", "\n    "))
                             .sorted()
@@ -127,14 +133,15 @@ public class RbacGrantsDiagramService {
                 : "";
 
         final var grants = graph.stream()
-                .map(g -> quoted(g.getAscendantIdName())
+                .map(g -> cleanId(g.getAscendantIdName())
                         + " -->" + (g.isAssumed() ? " " : "|XX| ")
-                        + quoted(g.getDescendantIdName()))
+                        + cleanId(g.getDescendantIdName()))
                 .sorted()
                 .collect(joining("\n"));
 
         final var avoidCroppedNodeLabels = "%%{init:{'flowchart':{'htmlLabels':false}}}%%\n\n";
         return (includes.contains(DETAILS) ? avoidCroppedNodeLabels : "")
+                + (graph.size() >= GRANT_LIMIT ? "%% too many grants, graph is cropped\n" : "")
                 + "flowchart TB\n\n"
                 + entities
                 + grants;
@@ -151,7 +158,7 @@ public class RbacGrantsDiagramService {
         //            }
         //            return "[" + table + "\n" + entity + "]";
         //        }
-        return "[" + entityId + "]";
+        return "[" + cleanId(entityId) + "]";
     }
 
     private static String renderEntityIdName(final Node node) {
@@ -170,7 +177,7 @@ public class RbacGrantsDiagramService {
     }
 
     private String renderNode(final String idName, final UUID uuid) {
-        return quoted(idName) + renderNodeContent(idName, uuid);
+        return cleanId(idName) + renderNodeContent(idName, uuid);
     }
 
     private String renderNodeContent(final String idName, final UUID uuid) {
@@ -196,9 +203,24 @@ public class RbacGrantsDiagramService {
     }
 
     @NotNull
-    private static String quoted(final String idName) {
-        return idName.replace(" ", ":").replaceAll("@.*", "");
+    private static String cleanId(final String idName) {
+        return idName.replace(" ", ":").replaceAll("@.*", "")
+                .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "");
     }
+
+
+    class LimitedHashSet<T> extends HashSet<T> {
+
+        @Override
+        public boolean add(final T t) {
+            if (size() < GRANT_LIMIT ) {
+                return super.add(t);
+            } else {
+                return false;
+            }
+        }
+    }
+
 }
 
 record Node(String idName, UUID uuid) {

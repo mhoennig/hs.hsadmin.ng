@@ -41,8 +41,7 @@ public class TestCustomerEntity implements HasUuid {
                 .withIdentityView(SQL.projection("prefix"))
                 .withRestrictedViewOrderBy(SQL.expression("reference"))
                 .withUpdatableColumns("reference", "prefix", "adminUserName")
-                // TODO: do we want explicit specification of parent-independent insert permissions?
-                // .toRole("global", ADMIN).grantPermission("customer", INSERT)
+                .toRole("global", ADMIN).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR).unassumed();

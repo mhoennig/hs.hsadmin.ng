@@ -84,11 +84,11 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
                         "birthName",
                         "birthday",
                         "dateOfDeath")
-                .createPermission(custom("new-partner-details")).grantedTo("global", ADMIN)
+                .createPermission(INSERT).grantedTo("global", ADMIN)
 
                 .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
                         fetchedBySql("""
-                            SELECT partnerRel.*
+                            SELECT ${columns}
                                 FROM hs_office_relation AS partnerRel
                                 JOIN hs_office_partner AS partner
                                     ON partner.detailsUuid = ${ref}.uuid

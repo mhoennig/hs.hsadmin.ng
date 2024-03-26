@@ -1,5 +1,6 @@
 --liquibase formatted sql
--- This code generated was by RbacViewPostgresGenerator at 2024-03-11T11:29:11.625353859.
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset test-package-rbac-OBJECT:1 endDelimiter:--//
@@ -33,9 +34,10 @@ declare
 
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
-    SELECT * FROM test_customer c
-        WHERE c.uuid= NEW.customerUuid
-     into newCustomer;
+
+    SELECT * FROM test_customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
+    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
+
 
     perform createRoleWithGrants(
         testPackageOwner(NEW),
@@ -75,8 +77,8 @@ create trigger insertTriggerForTestPackage_tg
     after insert on test_package
     for each row
 execute procedure insertTriggerForTestPackage_tf();
-
 --//
+
 
 -- ============================================================================
 --changeset test-package-rbac-update-trigger:1 endDelimiter:--//
@@ -99,16 +101,14 @@ declare
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM test_customer c
-        WHERE c.uuid= OLD.customerUuid
-     into oldCustomer;
-    SELECT * FROM test_customer c
-        WHERE c.uuid= NEW.customerUuid
-     into newCustomer;
+    SELECT * FROM test_customer WHERE uuid = OLD.customerUuid    INTO oldCustomer;
+    assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s', OLD.customerUuid);
+
+    SELECT * FROM test_customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
+    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
+
 
     if NEW.customerUuid <> OLD.customerUuid then
-
-        call revokePermissionFromRole(findPermissionId(OLD.uuid, 'INSERT'), testCustomerAdmin(oldCustomer));
 
         call revokeRoleFromRole(testPackageOwner(OLD), testCustomerAdmin(oldCustomer));
         call grantRoleToRole(testPackageOwner(NEW), testCustomerAdmin(newCustomer));
@@ -138,8 +138,8 @@ create trigger updateTriggerForTestPackage_tg
     after update on test_package
     for each row
 execute procedure updateTriggerForTestPackage_tf();
-
 --//
+
 
 -- ============================================================================
 --changeset test-package-rbac-INSERT:1 endDelimiter:--//
@@ -160,7 +160,7 @@ do language plpgsql $$
             LOOP
                 roleUuid := findRoleId(testCustomerAdmin(row));
                 permissionUuid := createPermission(row.uuid, 'INSERT', 'test_package');
-                call grantPermissionToRole(roleUuid, permissionUuid);
+                call grantPermissionToRole(permissionUuid, roleUuid);
             END LOOP;
     END;
 $$;
@@ -174,18 +174,22 @@ create or replace function test_package_test_customer_insert_tf()
     strict as $$
 begin
     call grantPermissionToRole(
-            testCustomerAdmin(NEW),
-            createPermission(NEW.uuid, 'INSERT', 'test_package'));
+            createPermission(NEW.uuid, 'INSERT', 'test_package'),
+            testCustomerAdmin(NEW));
     return NEW;
 end; $$;
 
-create trigger test_package_test_customer_insert_tg
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_test_package_test_customer_insert_tg
     after insert on test_customer
     for each row
 execute procedure test_package_test_customer_insert_tf();
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to test_package.
+    Checks if the user or assumed roles are allowed to insert a row to test_package,
+    where the check is performed by a direct role.
+
+    A direct role is a role depending on a foreign key directly available in the NEW row.
 */
 create or replace function test_package_insert_permission_missing_tf()
     returns trigger
@@ -200,27 +204,29 @@ create trigger test_package_insert_permission_check_tg
     for each row
     when ( not hasInsertPermission(NEW.customerUuid, 'INSERT', 'test_package') )
         execute procedure test_package_insert_permission_missing_tf();
-
 --//
+
 -- ============================================================================
 --changeset test-package-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('test_package', $idName$
-    name
+call generateRbacIdentityViewFromProjection('test_package',
+    $idName$
+        name
     $idName$);
-
 --//
+
 -- ============================================================================
 --changeset test-package-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('test_package',
-    'name',
+    $orderBy$
+        name
+    $orderBy$,
     $updates$
         version = new.version,
         customerUuid = new.customerUuid,
         description = new.description
     $updates$);
 --//
-
 

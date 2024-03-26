@@ -14,9 +14,10 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 
 @Entity
@@ -49,11 +50,9 @@ public class TestDomainEntity implements HasUuid {
 
                 .importEntityAlias("package", TestPackageEntity.class,
                         dependsOnColumn("packageUuid"),
-                        fetchedBySql("""
-                                SELECT * FROM test_package p
-                                    WHERE p.uuid= ${ref}.packageUuid
-                                """))
-                .toRole("package", ADMIN).grantPermission("domain", INSERT)
+                        directlyFetchedByDependsOnColumn(),
+                        NOT_NULL)
+                .toRole("package", ADMIN).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
                     with.incomingSuperRole("package", ADMIN);

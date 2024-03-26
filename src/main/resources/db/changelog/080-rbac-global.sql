@@ -118,9 +118,32 @@ select 'global', (select uuid from RbacObject where objectTable = 'global'), 'ad
 $$;
 
 begin transaction;
-call defineContext('creating global admin role', null, null, null);
-select createRole(globalAdmin());
+    call defineContext('creating global admin role', null, null, null);
+    select createRole(globalAdmin());
 commit;
+--//
+
+
+-- ============================================================================
+--changeset rbac-global-GUEST-ROLE:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    A global guest role.
+ */
+create or replace function globalGuest(assumed boolean = true)
+    returns RbacRoleDescriptor
+    returns null on null input
+    stable -- leakproof
+    language sql as $$
+select 'global', (select uuid from RbacObject where objectTable = 'global'), 'guest'::RbacRoleType, assumed;
+$$;
+
+begin transaction;
+    call defineContext('creating global guest role', null, null, null);
+    select createRole(globalGuest());
+commit;
+--//
+
 
 -- ============================================================================
 --changeset rbac-global-ADMIN-USERS:1 context:dev,tc endDelimiter:--//

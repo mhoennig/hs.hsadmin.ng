@@ -38,10 +38,24 @@ public class StringWriter {
         --indentLevel;
     }
 
+    void indent(int levels) {
+        indentLevel += levels;
+    }
+
+    void unindent(int levels) {
+        indentLevel -= levels;
+    }
+
     void indented(final Runnable indented) {
         indent();
         indented.run();
         unindent();
+    }
+
+    void indented(int levels, final Runnable indented) {
+        indent(levels);
+        indented.run();
+        unindent(levels);
     }
 
     boolean chopTail(final String tail) {
@@ -68,7 +82,7 @@ public class StringWriter {
         return string.toString();
     }
 
-    public static String indented(final String text, final int indentLevel) {
+    public static String indented(final int indentLevel, final String text) {
         final var indentation = StringUtils.repeat("    ", indentLevel);
         final var indented = stream(text.split("\n"))
                 .map(line -> line.trim().isBlank() ? "" : indentation + line)
@@ -80,7 +94,7 @@ public class StringWriter {
         if ( indentLevel == 0) {
             return text;
         }
-        return indented(text, indentLevel);
+        return indented(indentLevel, text);
     }
 
     record VarDef(String name, String value){}
@@ -95,17 +109,13 @@ public class StringWriter {
         }
 
         String apply(final String textToAppend) {
-                try {
-                    text = textToAppend;
-                    stream(varDefs).forEach(varDef -> {
-                        final var pattern = Pattern.compile("\\$\\{" + varDef.name() + "}", Pattern.CASE_INSENSITIVE);
-                        final var matcher = pattern.matcher(text);
-                        text = matcher.replaceAll(varDef.value());
-                    });
-                    return text;
-                } catch (Exception exc) {
-                    throw exc;
-                }
-            }
+            text = textToAppend;
+            stream(varDefs).forEach(varDef -> {
+                final var pattern = Pattern.compile("\\$\\{" + varDef.name() + "}", Pattern.CASE_INSENSITIVE);
+                final var matcher = pattern.matcher(text);
+                text = matcher.replaceAll(varDef.value());
+            });
+            return text;
         }
+    }
 }

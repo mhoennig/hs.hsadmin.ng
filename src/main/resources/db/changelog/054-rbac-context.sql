@@ -56,14 +56,17 @@ begin
             roleTypeToAssume = split_part(roleNameParts, '#', 3);
 
             objectUuidToAssume = findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
+            if objectUuidToAssume is null then
+                raise exception '[401] object % cannot be found in table %', objectNameToAssume, objectTableToAssume;
+            end if;
 
-            select uuid as roleuuidToAssume
+            select uuid
                 from RbacRole r
                 where r.objectUuid = objectUuidToAssume
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
             if roleUuidToAssume is null then
-                raise exception '[403] role % not accessible for user %', roleName, currentSubjects();
+                raise exception '[403] role % does not exist or is not accessible for user %', roleName, currentUser();
             end if;
             if not isGranted(currentUserUuid, roleUuidToAssume) then
                 raise exception '[403] user % has no permission to assume role %', currentUser(), roleName;

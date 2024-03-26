@@ -22,7 +22,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnCo
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -90,17 +90,17 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
                         "partnerRelUuid",
                         "personUuid",
                         "contactUuid")
-                .createPermission(custom("new-partner")).grantedTo("global", ADMIN)
+                .createPermission(INSERT).grantedTo("global", ADMIN)
 
                 .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
-                        fetchedBySql("SELECT * FROM hs_office_relation AS r WHERE r.uuid = ${ref}.partnerRelUuid"),
+                        directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("partnerRelUuid"))
                 .createPermission(DELETE).grantedTo("partnerRel", ADMIN)
                 .createPermission(UPDATE).grantedTo("partnerRel", AGENT)
                 .createPermission(SELECT).grantedTo("partnerRel", TENANT)
 
                 .importSubEntityAlias("partnerDetails", HsOfficePartnerDetailsEntity.class,
-                        fetchedBySql("SELECT * FROM hs_office_partner_details AS d WHERE d.uuid = ${ref}.detailsUuid"),
+                        directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("detailsUuid"))
                 .createPermission("partnerDetails", DELETE).grantedTo("partnerRel", ADMIN)
                 .createPermission("partnerDetails", UPDATE).grantedTo("partnerRel", AGENT)

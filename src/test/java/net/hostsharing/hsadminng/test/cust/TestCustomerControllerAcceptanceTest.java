@@ -204,7 +204,7 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("insert into test_customer not allowed for current subjects {customer-admin@yyy.example.com}"));
+                    .body("message", containsString("ERROR: [403] insert into test_customer not allowed for current subjects {customer-admin@yyy.example.com}"));
                 // @formatter:on
 
             // finally, the new customer was not created

@@ -462,7 +462,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_partner#FirstGmbH-firstcontact.agent")
+                    .header("assumed-roles", "hs_office_partner#10001:FirstGmbH-firstcontact.admin")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())

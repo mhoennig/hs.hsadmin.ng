@@ -94,4 +94,17 @@ public class RbacGrantController implements RbacGrantsApi {
 
         return ResponseEntity.noContent().build();
     }
+
+// TODO: implement an endpoint to create a Mermaid flowchart with all grants of a given user
+//    @GetMapping(
+//            path = "/api/rbac/users/{userUuid}/grants",
+//            produces = {"text/vnd.mermaid"})
+//    @Transactional(readOnly = true)
+//    public ResponseEntity<String> allGrantsOfUserAsMermaid(
+//            @RequestHeader(name = "current-user") String currentUser,
+//            @RequestHeader(name = "assumed-roles", required = false) String assumedRoles) {
+//        final var graph = RbacGrantsDiagramService.allGrantsToUser(currentUser);
+//        return ResponseEntity.ok(graph);
+//    }
+
 }

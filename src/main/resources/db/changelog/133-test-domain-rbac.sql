@@ -1,5 +1,6 @@
 --liquibase formatted sql
--- This code generated was by RbacViewPostgresGenerator at 2024-03-11T11:29:11.645391647.
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset test-domain-rbac-OBJECT:1 endDelimiter:--//
@@ -33,9 +34,10 @@ declare
 
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
-    SELECT * FROM test_package p
-        WHERE p.uuid= NEW.packageUuid
-     into newPackage;
+
+    SELECT * FROM test_package WHERE uuid = NEW.packageUuid    INTO newPackage;
+    assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s', NEW.packageUuid);
+
 
     perform createRoleWithGrants(
         testDomainOwner(NEW),
@@ -71,8 +73,8 @@ create trigger insertTriggerForTestDomain_tg
     after insert on test_domain
     for each row
 execute procedure insertTriggerForTestDomain_tf();
-
 --//
+
 
 -- ============================================================================
 --changeset test-domain-rbac-update-trigger:1 endDelimiter:--//
@@ -95,16 +97,14 @@ declare
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM test_package p
-        WHERE p.uuid= OLD.packageUuid
-     into oldPackage;
-    SELECT * FROM test_package p
-        WHERE p.uuid= NEW.packageUuid
-     into newPackage;
+    SELECT * FROM test_package WHERE uuid = OLD.packageUuid    INTO oldPackage;
+    assert oldPackage.uuid is not null, format('oldPackage must not be null for OLD.packageUuid = %s', OLD.packageUuid);
+
+    SELECT * FROM test_package WHERE uuid = NEW.packageUuid    INTO newPackage;
+    assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s', NEW.packageUuid);
+
 
     if NEW.packageUuid <> OLD.packageUuid then
-
-        call revokePermissionFromRole(findPermissionId(OLD.uuid, 'INSERT'), testPackageAdmin(oldPackage));
 
         call revokeRoleFromRole(testDomainOwner(OLD), testPackageAdmin(oldPackage));
         call grantRoleToRole(testDomainOwner(NEW), testPackageAdmin(newPackage));
@@ -137,8 +137,8 @@ create trigger updateTriggerForTestDomain_tg
     after update on test_domain
     for each row
 execute procedure updateTriggerForTestDomain_tf();
-
 --//
+
 
 -- ============================================================================
 --changeset test-domain-rbac-INSERT:1 endDelimiter:--//
@@ -159,7 +159,7 @@ do language plpgsql $$
             LOOP
                 roleUuid := findRoleId(testPackageAdmin(row));
                 permissionUuid := createPermission(row.uuid, 'INSERT', 'test_domain');
-                call grantPermissionToRole(roleUuid, permissionUuid);
+                call grantPermissionToRole(permissionUuid, roleUuid);
             END LOOP;
     END;
 $$;
@@ -173,18 +173,22 @@ create or replace function test_domain_test_package_insert_tf()
     strict as $$
 begin
     call grantPermissionToRole(
-            testPackageAdmin(NEW),
-            createPermission(NEW.uuid, 'INSERT', 'test_domain'));
+            createPermission(NEW.uuid, 'INSERT', 'test_domain'),
+            testPackageAdmin(NEW));
     return NEW;
 end; $$;
 
-create trigger test_domain_test_package_insert_tg
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_test_domain_test_package_insert_tg
     after insert on test_package
     for each row
 execute procedure test_domain_test_package_insert_tf();
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to test_domain.
+    Checks if the user or assumed roles are allowed to insert a row to test_domain,
+    where the check is performed by a direct role.
+
+    A direct role is a role depending on a foreign key directly available in the NEW row.
 */
 create or replace function test_domain_insert_permission_missing_tf()
     returns trigger
@@ -199,27 +203,29 @@ create trigger test_domain_insert_permission_check_tg
     for each row
     when ( not hasInsertPermission(NEW.packageUuid, 'INSERT', 'test_domain') )
         execute procedure test_domain_insert_permission_missing_tf();
-
 --//
+
 -- ============================================================================
 --changeset test-domain-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('test_domain', $idName$
-    name
+call generateRbacIdentityViewFromProjection('test_domain',
+    $idName$
+        name
     $idName$);
-
 --//
+
 -- ============================================================================
 --changeset test-domain-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('test_domain',
-    'name',
+    $orderBy$
+        name
+    $orderBy$,
     $updates$
         version = new.version,
         packageUuid = new.packageUuid,
         description = new.description
     $updates$);
 --//
-
 
