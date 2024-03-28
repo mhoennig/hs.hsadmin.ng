@@ -9,7 +9,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.util.Arrays;
 
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
 import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,14 +19,13 @@ class HsOfficeMembershipEntityUnitTest {
     final HsOfficeMembershipEntity givenMembership = HsOfficeMembershipEntity.builder()
             .memberNumberSuffix("01")
             .partner(TEST_PARTNER)
-            .mainDebitor(TEST_DEBITOR)
             .validity(Range.closedInfinite(GIVEN_VALID_FROM))
             .build();
 
     @Test
     void toStringContainsAllProps() {
         final var result = givenMembership.toString();
-        assertThat(result).isEqualTo("Membership(M-1000101, LP Test Ltd., D-1000100, [2020-01-01,))");
+        assertThat(result).isEqualTo("Membership(M-1000101, P-10001, [2020-01-01,))");
     }
 
     @Test

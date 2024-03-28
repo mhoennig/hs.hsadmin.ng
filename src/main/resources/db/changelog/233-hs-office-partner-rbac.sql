@@ -1,4 +1,6 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset hs-office-partner-rbac-OBJECT:1 endDelimiter:--//
@@ -15,242 +17,222 @@ call generateRbacRoleDescriptors('hsOfficePartner', 'hs_office_partner');
 
 
 -- ============================================================================
---changeset hs-office-partner-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-partner-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates and updates the roles and their assignments for partner entities.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace function hsOfficePartnerRbacRolesTrigger()
-    returns trigger
-    language plpgsql
-    strict as $$
+create or replace procedure buildRbacSystemForHsOfficePartner(
+    NEW hs_office_partner
+)
+    language plpgsql as $$
+
 declare
-    oldPartnerRel        hs_office_relation;
-    newPartnerRel        hs_office_relation;
+    newPartnerRel hs_office_relation;
+    newPartnerDetails hs_office_partner_details;
 
-    oldPerson             hs_office_person;
-    newPerson             hs_office_person;
-
-    oldContact            hs_office_contact;
-    newContact            hs_office_contact;
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    select * from hs_office_relation as r where r.uuid = NEW.partnerReluuid into newPartnerRel;
-    select * from hs_office_person as p where p.uuid = NEW.personUuid into newPerson;
-    select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
+    SELECT * FROM hs_office_relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s', NEW.partnerRelUuid);
 
-    if TG_OP = 'INSERT' then
+    SELECT * FROM hs_office_partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
+    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
 
-        -- === ATTENTION: code generated from related Mermaid flowchart: ===
-
-        perform createRoleWithGrants(
-                hsOfficePartnerOwner(NEW),
-                permissions => array['DELETE'],
-                incomingSuperRoles => array[globalAdmin()]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficePartnerAdmin(NEW),
-                permissions => array['UPDATE'],
-                incomingSuperRoles => array[
-                    hsOfficePartnerOwner(NEW)],
-                outgoingSubRoles => array[
-                    hsOfficeRelationTenant(newPartnerRel),
-                    hsOfficePersonTenant(newPerson),
-                    hsOfficeContactTenant(newContact)]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficePartnerAgent(NEW),
-                incomingSuperRoles => array[
-                    hsOfficePartnerAdmin(NEW),
-                    hsOfficeRelationAdmin(newPartnerRel),
-                    hsOfficePersonAdmin(newPerson),
-                    hsOfficeContactAdmin(newContact)]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficePartnerTenant(NEW),
-                incomingSuperRoles => array[
-                    hsOfficePartnerAgent(NEW)],
-                outgoingSubRoles => array[
-                    hsOfficeRelationTenant(newPartnerRel),
-                    hsOfficePersonGuest(newPerson),
-                    hsOfficeContactGuest(newContact)]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficePartnerGuest(NEW),
-                permissions => array['SELECT'],
-                incomingSuperRoles => array[hsOfficePartnerTenant(NEW)]
-            );
-
-        -- === END of code generated from Mermaid flowchart. ===
-
-        -- Each partner-details entity belong exactly to one partner entity
-        -- and it makes little sense just to delegate partner-details roles.
-        -- Therefore, we did not model partner-details roles,
-        -- but instead just assign extra permissions to existing partner-roles.
-
-        --Attention: Cannot be in partner-details because of insert order (partner is not in database yet)
-
-        call grantPermissionsToRole(
-                getRoleId(hsOfficePartnerOwner(NEW)),
-                createPermissions(NEW.detailsUuid, array ['DELETE'])
-            );
-
-        call grantPermissionsToRole(
-                getRoleId(hsOfficePartnerAdmin(NEW)),
-                createPermissions(NEW.detailsUuid, array ['UPDATE'])
-            );
-
-        call grantPermissionsToRole(
-            -- Yes, here hsOfficePartnerAGENT is used, not hsOfficePartnerTENANT.
-            -- Do NOT grant view permission on partner-details to hsOfficePartnerTENANT!
-            -- Otherwise package-admins etc. would be able to read the data.
-                getRoleId(hsOfficePartnerAgent(NEW)),
-                createPermissions(NEW.detailsUuid, array ['SELECT'])
-            );
-
-
-    elsif TG_OP = 'UPDATE' then
-
-        if OLD.partnerRelUuid <> NEW.partnerRelUuid then
-            select * from hs_office_relation as r where r.uuid = OLD.partnerRelUuid into oldPartnerRel;
-
-            call revokeRoleFromRole(hsOfficeRelationTenant(oldPartnerRel), hsOfficePartnerAdmin(OLD));
-            call grantRoleToRole(hsOfficeRelationTenant(newPartnerRel), hsOfficePartnerAdmin(NEW));
-
-            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficeRelationAdmin(oldPartnerRel));
-            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficeRelationAdmin(newPartnerRel));
-
-            call revokeRoleFromRole(hsOfficeRelationGuest(oldPartnerRel), hsOfficePartnerTenant(OLD));
-            call grantRoleToRole(hsOfficeRelationGuest(newPartnerRel), hsOfficePartnerTenant(NEW));
-        end if;
-
-        if OLD.personUuid <> NEW.personUuid then
-            select * from hs_office_person as p where p.uuid = OLD.personUuid into oldPerson;
-
-            call revokeRoleFromRole(hsOfficePersonTenant(oldPerson), hsOfficePartnerAdmin(OLD));
-            call grantRoleToRole(hsOfficePersonTenant(newPerson), hsOfficePartnerAdmin(NEW));
-
-            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficePersonAdmin(oldPerson));
-            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficePersonAdmin(newPerson));
-
-            call revokeRoleFromRole(hsOfficePersonGuest(oldPerson), hsOfficePartnerTenant(OLD));
-            call grantRoleToRole(hsOfficePersonGuest(newPerson), hsOfficePartnerTenant(NEW));
-        end if;
-
-        if OLD.contactUuid <> NEW.contactUuid then
-            select * from hs_office_contact as c where c.uuid = OLD.contactUuid into oldContact;
-
-            call revokeRoleFromRole(hsOfficeContactTenant(oldContact), hsOfficePartnerAdmin(OLD));
-            call grantRoleToRole(hsOfficeContactTenant(newContact), hsOfficePartnerAdmin(NEW));
-
-            call revokeRoleFromRole(hsOfficePartnerAgent(OLD), hsOfficeContactAdmin(oldContact));
-            call grantRoleToRole(hsOfficePartnerAgent(NEW), hsOfficeContactAdmin(newContact));
-
-            call revokeRoleFromRole(hsOfficeContactGuest(oldContact), hsOfficePartnerTenant(OLD));
-            call grantRoleToRole(hsOfficeContactGuest(newContact), hsOfficePartnerTenant(NEW));
-        end if;
-    else
-        raise exception 'invalid usage of TRIGGER';
-    end if;
+    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTenant(newPartnerRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
+    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
+    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAgent(newPartnerRel));
+    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
 
     call leaveTriggerForObjectUuid(NEW.uuid);
-    return NEW;
 end; $$;
 
 /*
-    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_partner row.
  */
-create trigger createRbacRolesForHsOfficePartner_Trigger
-    after insert
-    on hs_office_partner
-    for each row
-execute procedure hsOfficePartnerRbacRolesTrigger();
 
-/*
-    An AFTER UPDATE TRIGGER which updates the role structure of a customer.
- */
-create trigger updateRbacRolesForHsOfficePartner_Trigger
-    after update
-    on hs_office_partner
+create or replace function insertTriggerForHsOfficePartner_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call buildRbacSystemForHsOfficePartner(NEW);
+    return NEW;
+end; $$;
+
+create trigger insertTriggerForHsOfficePartner_tg
+    after insert on hs_office_partner
     for each row
-execute procedure hsOfficePartnerRbacRolesTrigger();
+execute procedure insertTriggerForHsOfficePartner_tf();
 --//
 
 
 -- ============================================================================
---changeset hs-office-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-office-partner-rbac-update-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityViewFromProjection('hs_office_partner', $idName$
-    partnerNumber || ':' ||
-    (select idName from hs_office_person_iv p where p.uuid = target.personuuid)
-    || '-' ||
-    (select idName from hs_office_contact_iv c where c.uuid = target.contactuuid)
-    $idName$);
+
+/*
+    Called from the AFTER UPDATE TRIGGER to re-wire the grants.
+ */
+
+create or replace procedure updateRbacRulesForHsOfficePartner(
+    OLD hs_office_partner,
+    NEW hs_office_partner
+)
+    language plpgsql as $$
+
+declare
+    oldPartnerRel hs_office_relation;
+    newPartnerRel hs_office_relation;
+    oldPartnerDetails hs_office_partner_details;
+    newPartnerDetails hs_office_partner_details;
+
+begin
+    call enterTriggerForObjectUuid(NEW.uuid);
+
+    SELECT * FROM hs_office_relation WHERE uuid = OLD.partnerRelUuid    INTO oldPartnerRel;
+    assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.partnerRelUuid = %s', OLD.partnerRelUuid);
+
+    SELECT * FROM hs_office_relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s', NEW.partnerRelUuid);
+
+    SELECT * FROM hs_office_partner_details WHERE uuid = OLD.detailsUuid    INTO oldPartnerDetails;
+    assert oldPartnerDetails.uuid is not null, format('oldPartnerDetails must not be null for OLD.detailsUuid = %s', OLD.detailsUuid);
+
+    SELECT * FROM hs_office_partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
+    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
+
+
+    if NEW.partnerRelUuid <> OLD.partnerRelUuid then
+
+        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'DELETE'), hsOfficeRelationAdmin(oldPartnerRel));
+        call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
+
+        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'UPDATE'), hsOfficeRelationAgent(oldPartnerRel));
+        call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
+
+        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'SELECT'), hsOfficeRelationTenant(oldPartnerRel));
+        call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTenant(newPartnerRel));
+
+        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'DELETE'), hsOfficeRelationAdmin(oldPartnerRel));
+        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
+
+        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAgent(oldPartnerRel));
+        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
+
+        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAgent(oldPartnerRel));
+        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAgent(newPartnerRel));
+
+    end if;
+
+    call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to re-wire the grant structure for a new hs_office_partner row.
+ */
+
+create or replace function updateTriggerForHsOfficePartner_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call updateRbacRulesForHsOfficePartner(OLD, NEW);
+    return NEW;
+end; $$;
+
+create trigger updateTriggerForHsOfficePartner_tg
+    after update on hs_office_partner
+    for each row
+execute procedure updateTriggerForHsOfficePartner_tf();
 --//
 
+
+-- ============================================================================
+--changeset hs-office-partner-rbac-INSERT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates INSERT INTO hs_office_partner permissions for the related global rows.
+ */
+do language plpgsql $$
+    declare
+        row global;
+    begin
+        call defineContext('create INSERT INTO hs_office_partner permissions for the related global rows');
+
+        FOR row IN SELECT * FROM global
+            LOOP
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'hs_office_partner'),
+                    globalAdmin());
+            END LOOP;
+    END;
+$$;
+
+/**
+    Adds hs_office_partner INSERT permission to specified role of new global rows.
+*/
+create or replace function hs_office_partner_global_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_office_partner'),
+            globalAdmin());
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_hs_office_partner_global_insert_tg
+    after insert on global
+    for each row
+execute procedure hs_office_partner_global_insert_tf();
+
+/**
+    Checks if the user or assumed roles are allowed to insert a row to hs_office_partner,
+    where only global-admin has that permission.
+*/
+create or replace function hs_office_partner_insert_permission_missing_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    raise exception '[403] insert into hs_office_partner not allowed for current subjects % (%)',
+        currentSubjects(), currentSubjectsUuids();
+end; $$;
+
+create trigger hs_office_partner_insert_permission_check_tg
+    before insert on hs_office_partner
+    for each row
+    when ( not isGlobalAdmin() )
+        execute procedure hs_office_partner_insert_permission_missing_tf();
+--//
+
+-- ============================================================================
+--changeset hs-office-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call generateRbacIdentityViewFromProjection('hs_office_partner',
+    $idName$
+        'P-' || partnerNumber
+    $idName$);
+--//
 
 -- ============================================================================
 --changeset hs-office-partner-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('hs_office_partner',
-    '(select idName from hs_office_person_iv p where p.uuid = target.personUuid)',
+    $orderBy$
+        'P-' || partnerNumber
+    $orderBy$,
     $updates$
-        partnerRelUuid = new.partnerRelUuid,
-        personUuid = new.personUuid,
-        contactUuid = new.contactUuid
+        partnerRelUuid = new.partnerRelUuid
     $updates$);
---//
-
-
--- ============================================================================
---changeset hs-office-partner-rbac-NEW-PARTNER:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Creates a global permission for new-partner and assigns it to the Hostsharing admins role.
- */
-do language plpgsql $$
-    declare
-        addCustomerPermissions uuid[];
-        globalObjectUuid       uuid;
-        globalAdminRoleUuid    uuid ;
-    begin
-        call defineContext('granting global new-partner permission to global admin role', null, null, null);
-
-        globalAdminRoleUuid := findRoleId(globalAdmin());
-        globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-partner']);
-        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
-    end;
-$$;
-
-/**
-    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
- */
-create or replace function addHsOfficePartnerNotAllowedForCurrentSubjects()
-    returns trigger
-    language PLPGSQL
-as $$
-begin
-    raise exception '[403] new-partner not permitted for %',
-        array_to_string(currentSubjects(), ';', 'null');
-end; $$;
-
-/**
-    Checks if the user or assumed roles are allowed to create a new customer.
- */
-create trigger hs_office_partner_insert_trigger
-    before insert
-    on hs_office_partner
-    for each row
-    -- TODO.spec: who is allowed to create new partners
-    when ( not hasAssumedRole() )
-execute procedure addHsOfficePartnerNotAllowedForCurrentSubjects();
 --//
 

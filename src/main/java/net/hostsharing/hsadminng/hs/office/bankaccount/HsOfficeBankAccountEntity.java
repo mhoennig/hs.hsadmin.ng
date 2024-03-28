@@ -33,8 +33,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsOfficeBankAccountEntity implements HasUuid, Stringifyable {
 
     private static Stringify<HsOfficeBankAccountEntity> toString = stringify(HsOfficeBankAccountEntity.class, "bankAccount")
+            .withIdProp(HsOfficeBankAccountEntity::getIban)
             .withProp(Fields.holder, HsOfficeBankAccountEntity::getHolder)
-            .withProp(Fields.iban, HsOfficeBankAccountEntity::getIban)
             .withProp(Fields.bic, HsOfficeBankAccountEntity::getBic);
 
     @Id
@@ -59,8 +59,11 @@ public class HsOfficeBankAccountEntity implements HasUuid, Stringifyable {
 
     public static RbacView rbac() {
         return rbacViewFor("bankAccount", HsOfficeBankAccountEntity.class)
-                .withIdentityView(SQL.projection("iban || ':' || holder"))
+                .withIdentityView(SQL.projection("iban"))
                 .withUpdatableColumns("holder", "iban", "bic")
+
+                .toRole("global", GUEST).grantPermission(INSERT)
+
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);
                     with.incomingSuperRole(GLOBAL, ADMIN);
@@ -75,6 +78,6 @@ public class HsOfficeBankAccountEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("243-hs-office-bankaccount-rbac-generated");
+        rbac().generateWithBaseFileName("243-hs-office-bankaccount-rbac");
     }
 }

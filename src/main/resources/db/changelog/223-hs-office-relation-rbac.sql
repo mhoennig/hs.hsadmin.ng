@@ -1,4 +1,6 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset hs-office-relation-rbac-OBJECT:1 endDelimiter:--//
@@ -15,178 +17,255 @@ call generateRbacRoleDescriptors('hsOfficeRelation', 'hs_office_relation');
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-relation-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates and updates the roles and their assignments for relation entities.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace function hsOfficeRelationRbacRolesTrigger()
-    returns trigger
-    language plpgsql
-    strict as $$
+create or replace procedure buildRbacSystemForHsOfficeRelation(
+    NEW hs_office_relation
+)
+    language plpgsql as $$
+
 declare
-    hsOfficeRelationTenant  RbacRoleDescriptor;
-    newAnchor                hs_office_person;
-    newHolder                hs_office_person;
-    oldContact                  hs_office_contact;
-    newContact                  hs_office_contact;
+    newHolderPerson hs_office_person;
+    newAnchorPerson hs_office_person;
+    newContact hs_office_contact;
+
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    hsOfficeRelationTenant := hsOfficeRelationTenant(NEW);
+    SELECT * FROM hs_office_person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
+    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s', NEW.holderUuid);
 
-    select * from hs_office_person as p where p.uuid = NEW.anchorUuid into newAnchor;
-    select * from hs_office_person as p where p.uuid = NEW.holderUuid into newHolder;
-    select * from hs_office_contact as c where c.uuid = NEW.contactUuid into newContact;
+    SELECT * FROM hs_office_person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
+    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s', NEW.anchorUuid);
 
-    if TG_OP = 'INSERT' then
+    SELECT * FROM hs_office_contact WHERE uuid = NEW.contactUuid    INTO newContact;
+    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s', NEW.contactUuid);
 
-        perform createRoleWithGrants(
-                hsOfficeRelationOwner(NEW),
-                permissions => array['DELETE'],
-                incomingSuperRoles => array[
-                    globalAdmin(),
-                    hsOfficePersonAdmin(newAnchor)]
-            );
 
-        perform createRoleWithGrants(
-                hsOfficeRelationAdmin(NEW),
-                permissions => array['UPDATE'],
-                incomingSuperRoles => array[hsOfficeRelationOwner(NEW)]
-            );
+    perform createRoleWithGrants(
+        hsOfficeRelationOwner(NEW),
+            permissions => array['DELETE'],
+            incomingSuperRoles => array[globalAdmin()],
+            userUuids => array[currentUserUuid()]
+    );
 
-        -- the tenant role for those related users who can view the data
-        perform createRoleWithGrants(
-                hsOfficeRelationTenant,
-                permissions => array['SELECT'],
-                incomingSuperRoles => array[
-                    hsOfficeRelationAdmin(NEW),
-                    hsOfficePersonAdmin(newAnchor),
-                    hsOfficePersonAdmin(newHolder),
-                    hsOfficeContactAdmin(newContact)],
-                outgoingSubRoles => array[
-                    hsOfficePersonTenant(newAnchor),
-                    hsOfficePersonTenant(newHolder),
-                    hsOfficeContactTenant(newContact)]
-            );
+    perform createRoleWithGrants(
+        hsOfficeRelationAdmin(NEW),
+            permissions => array['UPDATE'],
+            incomingSuperRoles => array[
+            	hsOfficePersonAdmin(newAnchorPerson),
+            	hsOfficeRelationOwner(NEW)]
+    );
 
-        -- anchor and holder admin roles need each others tenant role
-        -- to be able to see the joined relation
-        -- TODO: this can probably be avoided through agent+guest roles
-        call grantRoleToRole(hsOfficePersonTenant(newAnchor), hsOfficePersonAdmin(newHolder));
-        call grantRoleToRole(hsOfficePersonTenant(newHolder), hsOfficePersonAdmin(newAnchor));
-        call grantRoleToRoleIfNotNull(hsOfficePersonTenant(newHolder), hsOfficeContactAdmin(newContact));
+    perform createRoleWithGrants(
+        hsOfficeRelationAgent(NEW),
+            incomingSuperRoles => array[
+            	hsOfficePersonAdmin(newHolderPerson),
+            	hsOfficeRelationAdmin(NEW)]
+    );
 
-    elsif TG_OP = 'UPDATE' then
-
-        if OLD.contactUuid <> NEW.contactUuid then
-            -- nothing but the contact can be updated,
-            -- in other cases, a new relation needs to be created and the old updated
-
-            select * from hs_office_contact as c where c.uuid = OLD.contactUuid into oldContact;
-
-            call revokeRoleFromRole( hsOfficeRelationTenant, hsOfficeContactAdmin(oldContact) );
-            call grantRoleToRole( hsOfficeRelationTenant, hsOfficeContactAdmin(newContact) );
-
-            call revokeRoleFromRole( hsOfficeContactTenant(oldContact), hsOfficeRelationTenant );
-            call grantRoleToRole( hsOfficeContactTenant(newContact), hsOfficeRelationTenant );
-        end if;
-    else
-        raise exception 'invalid usage of TRIGGER';
-    end if;
+    perform createRoleWithGrants(
+        hsOfficeRelationTenant(NEW),
+            permissions => array['SELECT'],
+            incomingSuperRoles => array[
+            	hsOfficeContactAdmin(newContact),
+            	hsOfficePersonAdmin(newHolderPerson),
+            	hsOfficeRelationAgent(NEW)],
+            outgoingSubRoles => array[
+            	hsOfficeContactReferrer(newContact),
+            	hsOfficePersonReferrer(newAnchorPerson),
+            	hsOfficePersonReferrer(newHolderPerson)]
+    );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
-    return NEW;
 end; $$;
 
 /*
-    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_relation row.
  */
-create trigger createRbacRolesForHsOfficeRelation_Trigger
-    after insert
-    on hs_office_relation
-    for each row
-execute procedure hsOfficeRelationRbacRolesTrigger();
 
-/*
-    An AFTER UPDATE TRIGGER which updates the role structure of a customer.
- */
-create trigger updateRbacRolesForHsOfficeRelation_Trigger
-    after update
-    on hs_office_relation
+create or replace function insertTriggerForHsOfficeRelation_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call buildRbacSystemForHsOfficeRelation(NEW);
+    return NEW;
+end; $$;
+
+create trigger insertTriggerForHsOfficeRelation_tg
+    after insert on hs_office_relation
     for each row
-execute procedure hsOfficeRelationRbacRolesTrigger();
+execute procedure insertTriggerForHsOfficeRelation_tf();
 --//
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-office-relation-rbac-update-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityViewFromProjection('hs_office_relation', $idName$
-    (select idName from hs_office_person_iv p where p.uuid = target.anchorUuid)
-    || '-with-' || target.type || '-' ||
-    (select idName from hs_office_person_iv p where p.uuid = target.holderUuid)
-    $idName$);
+
+/*
+    Called from the AFTER UPDATE TRIGGER to re-wire the grants.
+ */
+
+create or replace procedure updateRbacRulesForHsOfficeRelation(
+    OLD hs_office_relation,
+    NEW hs_office_relation
+)
+    language plpgsql as $$
+
+declare
+    oldHolderPerson hs_office_person;
+    newHolderPerson hs_office_person;
+    oldAnchorPerson hs_office_person;
+    newAnchorPerson hs_office_person;
+    oldContact hs_office_contact;
+    newContact hs_office_contact;
+
+begin
+    call enterTriggerForObjectUuid(NEW.uuid);
+
+    SELECT * FROM hs_office_person WHERE uuid = OLD.holderUuid    INTO oldHolderPerson;
+    assert oldHolderPerson.uuid is not null, format('oldHolderPerson must not be null for OLD.holderUuid = %s', OLD.holderUuid);
+
+    SELECT * FROM hs_office_person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
+    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s', NEW.holderUuid);
+
+    SELECT * FROM hs_office_person WHERE uuid = OLD.anchorUuid    INTO oldAnchorPerson;
+    assert oldAnchorPerson.uuid is not null, format('oldAnchorPerson must not be null for OLD.anchorUuid = %s', OLD.anchorUuid);
+
+    SELECT * FROM hs_office_person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
+    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s', NEW.anchorUuid);
+
+    SELECT * FROM hs_office_contact WHERE uuid = OLD.contactUuid    INTO oldContact;
+    assert oldContact.uuid is not null, format('oldContact must not be null for OLD.contactUuid = %s', OLD.contactUuid);
+
+    SELECT * FROM hs_office_contact WHERE uuid = NEW.contactUuid    INTO newContact;
+    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s', NEW.contactUuid);
+
+
+    if NEW.contactUuid <> OLD.contactUuid then
+
+        call revokeRoleFromRole(hsOfficeRelationTenant(OLD), hsOfficeContactAdmin(oldContact));
+        call grantRoleToRole(hsOfficeRelationTenant(NEW), hsOfficeContactAdmin(newContact));
+
+        call revokeRoleFromRole(hsOfficeContactReferrer(oldContact), hsOfficeRelationTenant(OLD));
+        call grantRoleToRole(hsOfficeContactReferrer(newContact), hsOfficeRelationTenant(NEW));
+
+    end if;
+
+    call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to re-wire the grant structure for a new hs_office_relation row.
+ */
+
+create or replace function updateTriggerForHsOfficeRelation_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call updateRbacRulesForHsOfficeRelation(OLD, NEW);
+    return NEW;
+end; $$;
+
+create trigger updateTriggerForHsOfficeRelation_tg
+    after update on hs_office_relation
+    for each row
+execute procedure updateTriggerForHsOfficeRelation_tf();
 --//
 
+
+-- ============================================================================
+--changeset hs-office-relation-rbac-INSERT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates INSERT INTO hs_office_relation permissions for the related hs_office_person rows.
+ */
+do language plpgsql $$
+    declare
+        row hs_office_person;
+    begin
+        call defineContext('create INSERT INTO hs_office_relation permissions for the related hs_office_person rows');
+
+        FOR row IN SELECT * FROM hs_office_person
+            LOOP
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
+                    hsOfficePersonAdmin(row));
+            END LOOP;
+    END;
+$$;
+
+/**
+    Adds hs_office_relation INSERT permission to specified role of new hs_office_person rows.
+*/
+create or replace function hs_office_relation_hs_office_person_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_office_relation'),
+            hsOfficePersonAdmin(NEW));
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_hs_office_relation_hs_office_person_insert_tg
+    after insert on hs_office_person
+    for each row
+execute procedure hs_office_relation_hs_office_person_insert_tf();
+
+/**
+    Checks if the user or assumed roles are allowed to insert a row to hs_office_relation,
+    where the check is performed by a direct role.
+
+    A direct role is a role depending on a foreign key directly available in the NEW row.
+*/
+create or replace function hs_office_relation_insert_permission_missing_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    raise exception '[403] insert into hs_office_relation not allowed for current subjects % (%)',
+        currentSubjects(), currentSubjectsUuids();
+end; $$;
+
+create trigger hs_office_relation_insert_permission_check_tg
+    before insert on hs_office_relation
+    for each row
+    when ( not hasInsertPermission(NEW.anchorUuid, 'INSERT', 'hs_office_relation') )
+        execute procedure hs_office_relation_insert_permission_missing_tf();
+--//
+
+-- ============================================================================
+--changeset hs-office-relation-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call generateRbacIdentityViewFromProjection('hs_office_relation',
+    $idName$
+             (select idName from hs_office_person_iv p where p.uuid = anchorUuid)
+             || '-with-' || target.type || '-'
+             || (select idName from hs_office_person_iv p where p.uuid = holderUuid)
+    $idName$);
+--//
 
 -- ============================================================================
 --changeset hs-office-relation-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('hs_office_relation',
-    '(select idName from hs_office_person_iv p where p.uuid = target.holderUuid)',
+    $orderBy$
+        (select idName from hs_office_person_iv p where p.uuid = target.holderUuid)
+    $orderBy$,
     $updates$
         contactUuid = new.contactUuid
     $updates$);
---//
-
--- TODO: exception if one tries to amend any other column
-
-
--- ============================================================================
---changeset hs-office-relation-rbac-NEW-RELATHIONSHIP:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Creates a global permission for new-relation and assigns it to the hostsharing admins role.
- */
-do language plpgsql $$
-    declare
-        addCustomerPermissions uuid[];
-        globalObjectUuid       uuid;
-        globalAdminRoleUuid    uuid ;
-    begin
-        call defineContext('granting global new-relation permission to global admin role', null, null, null);
-
-        globalAdminRoleUuid := findRoleId(globalAdmin());
-        globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-relation']);
-        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
-    end;
-$$;
-
-/**
-    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
- */
-create or replace function addHsOfficeRelationNotAllowedForCurrentSubjects()
-    returns trigger
-    language PLPGSQL
-as $$
-begin
-    raise exception '[403] new-relation not permitted for %',
-        array_to_string(currentSubjects(), ';', 'null');
-end; $$;
-
-/**
-    Checks if the user or assumed roles are allowed to create a new customer.
- */
-create trigger hs_office_relation_insert_trigger
-    before insert
-    on hs_office_relation
-    for each row
-    -- TODO.spec: who is allowed to create new relations
-    when ( not hasAssumedRole() )
-execute procedure addHsOfficeRelationNotAllowedForCurrentSubjects();
 --//
 

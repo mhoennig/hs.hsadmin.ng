@@ -114,7 +114,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm SELECT on coopassetstransaction#temprefB to role membership#1000101:....tenant by system and assume }",
+                            "{ grant perm SELECT on coopassetstransaction#temprefB to role membership#M-1000101.referrer by system and assume }",
                             null));
         }
 
@@ -141,17 +141,17 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(1000101, 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
-                    "CoopAssetsTransaction(1000101, 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
-                    "CoopAssetsTransaction(1000101, 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)",
+                    "CoopAssetsTransaction(M-1000101: 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
+                    "CoopAssetsTransaction(M-1000101: 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
+                    "CoopAssetsTransaction(M-1000101: 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)",
 
-                    "CoopAssetsTransaction(1000202, 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
-                    "CoopAssetsTransaction(1000202, 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
-                    "CoopAssetsTransaction(1000202, 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)",
+                    "CoopAssetsTransaction(M-1000202: 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
+                    "CoopAssetsTransaction(M-1000202: 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
+                    "CoopAssetsTransaction(M-1000202: 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)",
 
-                    "CoopAssetsTransaction(1000303, 2010-03-15, DEPOSIT, 320.00, ref 1000303-1, initial deposit)",
-                    "CoopAssetsTransaction(1000303, 2021-09-01, DISBURSAL, -128.00, ref 1000303-2, partial disbursal)",
-                    "CoopAssetsTransaction(1000303, 2022-10-20, ADJUSTMENT, 128.00, ref 1000303-3, some adjustment)");
+                    "CoopAssetsTransaction(M-1000303: 2010-03-15, DEPOSIT, 320.00, ref 1000303-1, initial deposit)",
+                    "CoopAssetsTransaction(M-1000303: 2021-09-01, DISBURSAL, -128.00, ref 1000303-2, partial disbursal)",
+                    "CoopAssetsTransaction(M-1000303: 2022-10-20, ADJUSTMENT, 128.00, ref 1000303-3, some adjustment)");
         }
 
         @Test
@@ -169,9 +169,9 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(1000202, 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
-                    "CoopAssetsTransaction(1000202, 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
-                    "CoopAssetsTransaction(1000202, 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)");
+                    "CoopAssetsTransaction(M-1000202: 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
+                    "CoopAssetsTransaction(M-1000202: 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
+                    "CoopAssetsTransaction(M-1000202: 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)");
         }
 
         @Test
@@ -189,13 +189,13 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then
             allTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(1000202, 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)");
+                    "CoopAssetsTransaction(M-1000202: 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)");
         }
 
         @Test
-        public void normalUser_canViewOnlyRelatedCoopAssetsTransactions() {
+        public void partnerPersonAdmin_canViewRelatedCoopAssetsTransactions() {
             // given:
-            context("superuser-alex@hostsharing.net", "hs_office_partner#10001:FirstGmbH-firstcontact.admin");
+            context("superuser-alex@hostsharing.net", "hs_office_person#FirstGmbH.admin");
 
             // when:
             final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
@@ -206,9 +206,9 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             // then:
             exactlyTheseCoopAssetsTransactionsAreReturned(
                     result,
-                    "CoopAssetsTransaction(1000101, 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
-                    "CoopAssetsTransaction(1000101, 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
-                    "CoopAssetsTransaction(1000101, 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)");
+                    "CoopAssetsTransaction(M-1000101: 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
+                    "CoopAssetsTransaction(M-1000101: 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
+                    "CoopAssetsTransaction(M-1000101: 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)");
         }
     }
 

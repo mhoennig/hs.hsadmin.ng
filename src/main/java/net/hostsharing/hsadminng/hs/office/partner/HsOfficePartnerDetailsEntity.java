@@ -2,7 +2,6 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -14,10 +13,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -40,7 +37,6 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
             .withProp(HsOfficePartnerDetailsEntity::getBirthday)
             .withProp(HsOfficePartnerDetailsEntity::getBirthName)
             .withProp(HsOfficePartnerDetailsEntity::getDateOfDeath)
-            .withSeparator(", ")
             .quotedValues(false);
 
     @Id
@@ -72,11 +68,12 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
     public static RbacView rbac() {
         return rbacViewFor("partnerDetails", HsOfficePartnerDetailsEntity.class)
                 .withIdentityView(SQL.query("""
-                        SELECT partner_iv.idName || '-details'
+                        SELECT partnerDetails.uuid as uuid, partner_iv.idName || '-details' as idName
                             FROM hs_office_partner_details AS partnerDetails
                             JOIN hs_office_partner partner ON partner.detailsUuid = partnerDetails.uuid
                             JOIN hs_office_partner_iv partner_iv ON partner_iv.uuid = partner.uuid
                         """))
+                .withRestrictedViewOrderBy(SQL.expression("uuid"))
                 .withUpdatableColumns(
                         "registrationOffice",
                         "registrationNumber",
@@ -84,17 +81,7 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
                         "birthName",
                         "birthday",
                         "dateOfDeath")
-                .createPermission(INSERT).grantedTo("global", ADMIN)
-
-                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
-                        fetchedBySql("""
-                            SELECT ${columns}
-                                FROM hs_office_relation AS partnerRel
-                                JOIN hs_office_partner AS partner
-                                    ON partner.detailsUuid = ${ref}.uuid
-                                WHERE partnerRel.uuid = partner.partnerRelUuid
-                            """),
-                        dependsOnColumn("partnerRelUuid"))
+                .toRole("global", ADMIN).grantPermission(INSERT)
 
                 // The grants are defined in HsOfficePartnerEntity.rbac()
                 // because they have to be changed when its partnerRel changes,
@@ -103,6 +90,6 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("234-hs-office-partner-details-rbac-generated");
+        rbac().generateWithBaseFileName("234-hs-office-partner-details-rbac");
     }
 }

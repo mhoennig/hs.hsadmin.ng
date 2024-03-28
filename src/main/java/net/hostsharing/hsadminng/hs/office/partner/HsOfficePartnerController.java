@@ -110,9 +110,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
             return ResponseEntity.notFound().build();
         }
 
-        if (partnerRepo.deleteByUuid(partnerUuid) != 1  ||
-                // TODO: move to after delete trigger in partner
-                relationRepo.deleteByUuid(partnerToDelete.get().getPartnerRel().getUuid()) != 1 ) {
+        if (partnerRepo.deleteByUuid(partnerUuid) != 1) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -142,8 +140,6 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         final var entityToSave = new HsOfficePartnerEntity();
         entityToSave.setPartnerNumber(body.getPartnerNumber());
         entityToSave.setPartnerRel(persistPartnerRel(body.getPartnerRel()));
-        entityToSave.setContact(ref(HsOfficeContactEntity.class, body.getContactUuid()));
-        entityToSave.setPerson(ref(HsOfficePersonEntity.class, body.getPersonUuid()));
         entityToSave.setDetails(mapper.map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
         return entityToSave;
     }

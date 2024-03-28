@@ -191,31 +191,5 @@ class HsOfficePartnerControllerRestTest {
                     // then
                     .andExpect(status().isForbidden());
         }
-
-        @Test
-        void respondBadRequest_ifRelationCannotBeDeleted() throws Exception {
-            // given
-            final UUID givenPartnerUuid = UUID.randomUUID();
-            when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(partnerMock));
-            when(partnerRepo.deleteByUuid(givenPartnerUuid)).thenReturn(1);
-            when(relationRepo.deleteByUuid(any())).thenReturn(0);
-
-            final UUID givenRelationUuid = UUID.randomUUID();
-            when(partnerMock.getPartnerRel()).thenReturn(HsOfficeRelationEntity.builder()
-                    .uuid(givenRelationUuid)
-                    .build());
-            when(relationRepo.deleteByUuid(givenRelationUuid)).thenReturn(0);
-
-            // when
-            mockMvc.perform(MockMvcRequestBuilders
-                            .delete("/api/hs/office/partners/" + givenPartnerUuid)
-                            .header("current-user", "superuser-alex@hostsharing.net")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .accept(MediaType.APPLICATION_JSON))
-
-                    // then
-                    .andExpect(status().isForbidden());
-        }
-
     }
 }

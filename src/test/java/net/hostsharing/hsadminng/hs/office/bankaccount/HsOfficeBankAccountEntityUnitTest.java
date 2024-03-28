@@ -19,7 +19,7 @@ class HsOfficeBankAccountEntityUnitTest {
                 .iban("DE02370502990000684712")
                 .bic("COKSDE33")
                 .build();
-        assertThat("" + givenBankAccount).isEqualTo("bankAccount(holder='given holder', iban='DE02370502990000684712', bic='COKSDE33')");
+        assertThat(givenBankAccount.toString()).isEqualTo("bankAccount(DE02370502990000684712: holder='given holder', bic='COKSDE33')");
     }
 
     @Test

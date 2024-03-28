@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -30,8 +31,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final UUID INITIAL_CONTACT_UUID = UUID.randomUUID();
     private static final UUID INITIAL_PERSON_UUID = UUID.randomUUID();
     private static final UUID INITIAL_DETAILS_UUID = UUID.randomUUID();
-    private static final UUID PATCHED_CONTACT_UUID = UUID.randomUUID();
-    private static final UUID PATCHED_PERSON_UUID = UUID.randomUUID();
+    private static final UUID PATCHED_PARTNER_ROLE_UUID = UUID.randomUUID();
 
     private final HsOfficePersonEntity givenInitialPerson = HsOfficePersonEntity.builder()
             .uuid(INITIAL_PERSON_UUID)
@@ -48,19 +48,21 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsOfficePersonEntity.class), any())).thenAnswer(invocation ->
-                HsOfficePersonEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeRelationEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeRelationEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
     protected HsOfficePartnerEntity newInitialEntity() {
-        final var entity = new HsOfficePartnerEntity();
-        entity.setUuid(INITIAL_PARTNER_UUID);
-        entity.setPerson(givenInitialPerson);
-        entity.setContact(givenInitialContact);
-        entity.setDetails(givenInitialDetails);
+        final var entity = HsOfficePartnerEntity.builder()
+                .uuid(INITIAL_PARTNER_UUID)
+                .partnerNumber(12345)
+                .partnerRel(HsOfficeRelationEntity.builder()
+                        .holder(givenInitialPerson)
+                        .contact(givenInitialContact)
+                        .build())
+                .details(givenInitialDetails)
+                .build();
         return entity;
     }
 
@@ -78,31 +80,19 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     protected Stream<Property> propertyTestDescriptors() {
         return Stream.of(
                 new JsonNullableProperty<>(
-                        "contact",
-                        HsOfficePartnerPatchResource::setContactUuid,
-                        PATCHED_CONTACT_UUID,
-                        HsOfficePartnerEntity::setContact,
-                        newContact(PATCHED_CONTACT_UUID))
-                        .notNullable(),
-                new JsonNullableProperty<>(
-                        "person",
-                        HsOfficePartnerPatchResource::setPersonUuid,
-                        PATCHED_PERSON_UUID,
-                        HsOfficePartnerEntity::setPerson,
-                        newPerson(PATCHED_PERSON_UUID))
+                        "partnerRel",
+                        HsOfficePartnerPatchResource::setPartnerRelUuid,
+                        PATCHED_PARTNER_ROLE_UUID,
+                        HsOfficePartnerEntity::setPartnerRel,
+                        newPartnerRel(PATCHED_PARTNER_ROLE_UUID))
                         .notNullable()
         );
     }
 
-    private static HsOfficeContactEntity newContact(final UUID uuid) {
-        final var newContact = new HsOfficeContactEntity();
-        newContact.setUuid(uuid);
-        return newContact;
-    }
-
-    private HsOfficePersonEntity newPerson(final UUID uuid) {
-        final var newPerson = new HsOfficePersonEntity();
-        newPerson.setUuid(uuid);
-        return newPerson;
+    private static HsOfficeRelationEntity newPartnerRel(final UUID uuid) {
+        final var newPartnerRel = HsOfficeRelationEntity.builder()
+                    .uuid(uuid)
+                    .build();
+        return newPartnerRel;
     }
 }

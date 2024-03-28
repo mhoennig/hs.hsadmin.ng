@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.hsadminng.persistence.HasUuid;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantEntity;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
@@ -17,6 +18,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 import jakarta.persistence.*;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static java.lang.System.out;
@@ -55,6 +57,14 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     private Set<String> initialRbacObjects;
     private Set<String> initialRbacRoles;
     private Set<String> initialRbacGrants;
+
+    private TestInfo testInfo;
+
+    public <T extends RbacObject> T refresh(final T entity) {
+        final var merged = em.merge(entity);
+        em.refresh(merged);
+        return merged;
+    }
 
     public UUID toCleanup(final Class<? extends HasUuid> entityClass, final UUID uuidToCleanup) {
         out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup);
@@ -150,6 +160,11 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
                 .as("not all " + name + " got cleaned up by the previous tests")
                 .isEqualTo(countBefore);
         return currentCount;
+    }
+
+    @BeforeEach
+    void keepTestInfo(final TestInfo testInfo) {
+        this.testInfo = testInfo;
     }
 
     @AfterEach
@@ -253,6 +268,29 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
                     .map(RbacObjectEntity::toString)
                     .collect(toSet());
         }).assertSuccessful().returnedValue();
+    }
+
+    /**
+     * Generates a diagram of the RBAC-Grants to the current subjects (user or assumed roles).
+     */
+    protected void generateRbacDiagramForCurrentSubjects(final EnumSet<RbacGrantsDiagramService.Include> include) {
+        final var title = testInfo.getTestMethod().map(Method::getName).orElseThrow();
+        RbacGrantsDiagramService.writeToFile(
+                title,
+                diagramService.allGrantsToCurrentUser(include),
+                "doc/" + title + ".md"
+        );
+    }
+
+    /**
+     * Generates a diagram of the RBAC-Grants for the given object and permission.
+     */
+    protected void generateRbacDiagramForObjectPermission(final UUID targetObject, final String rbacOp, final String name) {
+        RbacGrantsDiagramService.writeToFile(
+                name,
+                diagramService.allGrantsFrom(targetObject, rbacOp, RbacGrantsDiagramService.Include.ALL),
+                "doc/temp/" + name + ".md"
+        );
     }
 }
 

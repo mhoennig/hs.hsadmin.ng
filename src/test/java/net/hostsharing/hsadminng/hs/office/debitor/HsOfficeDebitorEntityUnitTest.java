@@ -1,61 +1,52 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeDebitorEntityUnitTest {
 
+    private HsOfficeRelationEntity givenDebitorRel = HsOfficeRelationEntity.builder()
+            .anchor(HsOfficePersonEntity.builder()
+                    .personType(HsOfficePersonType.LEGAL_PERSON)
+                    .tradeName("some partner trade name")
+                    .build())
+            .holder(HsOfficePersonEntity.builder()
+                    .personType(HsOfficePersonType.LEGAL_PERSON)
+                    .tradeName("some billing trade name")
+                    .build())
+            .contact(HsOfficeContactEntity.builder().label("some label").build())
+            .build();
+
     @Test
     void toStringContainsPartnerAndContact() {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorNumberSuffix((byte)67)
-                .partner(HsOfficePartnerEntity.builder()
-                        .person(HsOfficePersonEntity.builder()
-                                .personType(HsOfficePersonType.LEGAL_PERSON)
-                                .tradeName("some trade name")
-                                .build())
-                        .details(HsOfficePartnerDetailsEntity.builder().birthName("some birth name").build())
-                        .partnerNumber(12345)
-                        .build())
-                .billingContact(HsOfficeContactEntity.builder().label("some label").build())
+                .debitorRel(givenDebitorRel)
                 .defaultPrefix("som")
-                .build();
-
-        final var result = given.toString();
-
-        assertThat(result).isEqualTo("debitor(D-1234567: LP some trade name: som)");
-    }
-
-    @Test
-    void toStringWithoutPersonContainsDebitorNumber() {
-        final var given = HsOfficeDebitorEntity.builder()
-                                .debitorNumberSuffix((byte)67)
                 .partner(HsOfficePartnerEntity.builder()
-                        .person(null)
-                        .details(HsOfficePartnerDetailsEntity.builder().birthName("some birth name").build())
                         .partnerNumber(12345)
                         .build())
-                .billingContact(HsOfficeContactEntity.builder().label("some label").build())
                 .build();
 
         final var result = given.toString();
 
-        assertThat(result).isEqualTo("debitor(D-1234567: <person=null>)");
+        assertThat(result).isEqualTo("debitor(D-1234567: rel(anchor='LP some partner trade name', holder='LP some billing trade name'), som)");
     }
 
     @Test
     void toShortStringContainsDebitorNumber() {
         final var given = HsOfficeDebitorEntity.builder()
+                .debitorRel(givenDebitorRel)
+                .debitorNumberSuffix((byte)67)
                 .partner(HsOfficePartnerEntity.builder()
                         .partnerNumber(12345)
                         .build())
-                .debitorNumberSuffix((byte)67)
                 .build();
 
         final var result = given.toShortString();
@@ -66,10 +57,11 @@ class HsOfficeDebitorEntityUnitTest {
     @Test
     void getDebitorNumberWithPartnerNumberAndDebitorNumberSuffix() {
         final var given = HsOfficeDebitorEntity.builder()
+                .debitorRel(givenDebitorRel)
+                .debitorNumberSuffix((byte)67)
                 .partner(HsOfficePartnerEntity.builder()
                         .partnerNumber(12345)
                         .build())
-                .debitorNumberSuffix((byte)67)
                 .build();
 
         final var result = given.getDebitorNumber();
@@ -80,8 +72,9 @@ class HsOfficeDebitorEntityUnitTest {
     @Test
     void getDebitorNumberWithoutPartnerReturnsNull() {
         final var given = HsOfficeDebitorEntity.builder()
-                .partner(null)
+                .debitorRel(givenDebitorRel)
                 .debitorNumberSuffix((byte)67)
+                .partner(null)
                 .build();
 
         final var result = given.getDebitorNumber();
@@ -92,10 +85,9 @@ class HsOfficeDebitorEntityUnitTest {
     @Test
     void getDebitorNumberWithoutPartnerNumberReturnsNull() {
         final var given = HsOfficeDebitorEntity.builder()
-                .partner(HsOfficePartnerEntity.builder()
-                        .partnerNumber(null)
-                        .build())
+                .debitorRel(givenDebitorRel)
                 .debitorNumberSuffix((byte)67)
+                .partner(HsOfficePartnerEntity.builder().build())
                 .build();
 
         final var result = given.getDebitorNumber();
@@ -106,10 +98,11 @@ class HsOfficeDebitorEntityUnitTest {
     @Test
     void getDebitorNumberWithoutDebitorNumberSuffixReturnsNull() {
         final var given = HsOfficeDebitorEntity.builder()
+                .debitorRel(givenDebitorRel)
+                .debitorNumberSuffix(null)
                 .partner(HsOfficePartnerEntity.builder()
                         .partnerNumber(12345)
                         .build())
-                .debitorNumberSuffix(null)
                 .build();
 
         final var result = given.getDebitorNumber();

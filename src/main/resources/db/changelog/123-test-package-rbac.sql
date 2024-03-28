@@ -151,16 +151,14 @@ execute procedure updateTriggerForTestPackage_tf();
 do language plpgsql $$
     declare
         row test_customer;
-        permissionUuid uuid;
-        roleUuid uuid;
     begin
         call defineContext('create INSERT INTO test_package permissions for the related test_customer rows');
 
         FOR row IN SELECT * FROM test_customer
             LOOP
-                roleUuid := findRoleId(testCustomerAdmin(row));
-                permissionUuid := createPermission(row.uuid, 'INSERT', 'test_package');
-                call grantPermissionToRole(permissionUuid, roleUuid);
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'test_package'),
+                    testCustomerAdmin(row));
             END LOOP;
     END;
 $$;

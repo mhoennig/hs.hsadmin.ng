@@ -22,6 +22,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.NATURAL_PERSON;
+import static net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType.UNINCORPORATED_FIRM;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.test.JpaAttempt.attempt;
@@ -63,9 +65,14 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // given
             context("superuser-alex@hostsharing.net");
             final var count = relationRepo.count();
-            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").get(0);
-            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Anita").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
+            final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                    .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                    .findFirst().orElseThrow();
+            final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").stream()
+                    .findFirst().orElseThrow();
 
             // when
             final var result = attempt(em, () -> {
@@ -86,7 +93,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             assertThat(relationRepo.count()).isEqualTo(count + 1);
             final var stored = relationRepo.findByUuid(result.returnedValue().getUuid());
             assertThat(stored).isNotEmpty().map(HsOfficeRelationEntity::toString).get()
-                    .isEqualTo("rel(anchor='NP Bessler, Anita', type='SUBSCRIBER', mark='operations-announce', holder='NP Bessler, Anita', contact='fourth contact')");
+                    .isEqualTo("rel(anchor='UF Erben Bessler', type='SUBSCRIBER', mark='operations-announce', holder='NP Winkler, Paul', contact='fourth contact')");
         }
 
         @Test
@@ -98,9 +105,14 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             attempt(em, () -> {
-                final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").get(0);
-                final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Anita").get(0);
-                final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
+                final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Bessler").stream()
+                        .filter(p -> p.getPersonType() == UNINCORPORATED_FIRM)
+                        .findFirst().orElseThrow();
+                final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Bert").stream()
+                        .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                        .findFirst().orElseThrow();
+                final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").stream()
+                        .findFirst().orElseThrow();
                 final var newRelation = HsOfficeRelationEntity.builder()
                         .anchor(givenAnchorPerson)
                         .holder(givenHolderPerson)
@@ -113,26 +125,36 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin",
-                    "hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner",
-                    "hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant"));
+                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.owner",
+                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.admin",
+                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.agent",
+                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
+                    // TODO: this grant should only be created for DEBITOR-Relationships, thus the RBAC DSL needs to support conditional grants
+                    "{ grant perm INSERT into hs_office_sepamandate with hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.admin by system and assume }",
 
-                    "{ grant perm DELETE on hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner by system and assume }",
-                    "{ grant role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner to role global#global.admin by system and assume }",
-                    "{ grant role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner to role hs_office_person#BesslerAnita.admin by system and assume }",
+                    "{ grant perm DELETE on hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.owner by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.owner to role global#global.admin by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.owner to user superuser-alex@hostsharing.net by hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.owner and assume }",
 
-                    "{ grant perm UPDATE on hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin by system and assume }",
-                    "{ grant role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.owner by system and assume }",
+                    "{ grant perm UPDATE on hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.admin by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.admin to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.owner by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.admin to role hs_office_person#ErbenBesslerMelBessler.admin by system and assume }",
 
-                    "{ grant perm SELECT on hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
-                    "{ grant role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_contact#fourthcontact.admin by system and assume }",
-                    "{ grant role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_person#BesslerAnita.admin by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.agent to role hs_office_person#BesslerBert.admin by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.agent to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.admin by system and assume }",
 
-                    "{ grant role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.admin by system and assume }",
-                    "{ grant role hs_office_contact#fourthcontact.tenant to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
-                    "{ grant role hs_office_person#BesslerAnita.tenant to role hs_office_relation#BesslerAnita-with-REPRESENTATIVE-BesslerAnita.tenant by system and assume }",
+                    "{ grant perm SELECT on hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.agent by system and assume }",
+                    "{ grant role hs_office_person#BesslerBert.referrer to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant by system and assume }",
+                    "{ grant role hs_office_person#ErbenBesslerMelBessler.referrer to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant by system and assume }",
+                    "{ grant role hs_office_contact#fourthcontact.referrer to role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant by system and assume }",
+
+                    // REPRESENTATIVE holder person -> (represented) anchor person
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant to role hs_office_contact#fourthcontact.admin by system and assume }",
+                    "{ grant role hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert.tenant to role hs_office_person#BesslerBert.admin by system and assume }",
+
                     null)
             );
         }
@@ -150,7 +172,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         public void globalAdmin_withoutAssumedRole_canViewAllRelationsOfArbitraryPerson() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var person = personRepo.findPersonByOptionalNameLike("Second e.K.").stream().findFirst().orElseThrow();
+            final var person = personRepo.findPersonByOptionalNameLike("Smith").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
 
             // when
             final var result = relationRepo.findRelationRelatedToPersonUuid(person.getUuid());
@@ -158,15 +182,18 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then
             allTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='LP Second e.K.', contact='second contact')",
-                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')");
+                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
+                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')");
         }
 
         @Test
         public void normalUser_canViewRelationsOfOwnedPersons() {
             // given:
-            context("person-FirstGmbH@example.com");
-            final var person = personRepo.findPersonByOptionalNameLike("First").stream().findFirst().orElseThrow();
+            context("person-SmithPeter@example.com");
+            final var person = personRepo.findPersonByOptionalNameLike("Smith").stream()
+                    .filter(p -> p.getPersonType() == NATURAL_PERSON)
+                    .findFirst().orElseThrow();
 
             // when:
             final var result = relationRepo.findRelationRelatedToPersonUuid(person.getUuid());
@@ -174,8 +201,10 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then:
             exactlyTheseRelationsAreReturned(
                     result,
-                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='LP First GmbH', contact='first contact')",
-                    "rel(anchor='LP First GmbH', type='REPRESENTATIVE', holder='NP Firby, Susan', contact='first contact')");
+                    "rel(anchor='LP Second e.K.', type='REPRESENTATIVE', holder='NP Smith, Peter', contact='second contact')",
+                    "rel(anchor='IF Third OHG', type='SUBSCRIBER', mark='members-announce', holder='NP Smith, Peter', contact='third contact')",
+                    "rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Smith, Peter', contact='sixth contact')",
+                    "rel(anchor='NP Smith, Peter', type='DEBITOR', holder='NP Smith, Peter', contact='third contact')");
         }
     }
 
@@ -187,13 +216,13 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // given
             context("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler(
-                    "Anita", "fifth contact");
+                    "Bert", "fifth contact");
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
                     "hs_office_person#ErbenBesslerMelBessler.admin");
             assertThatRelationActuallyInDatabase(givenRelation);
             context("superuser-alex@hostsharing.net");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("sixth contact").get(0);
+            final var givenContact = contactRepo.findContactByOptionalLabelLike("sixth contact").stream().findFirst().orElseThrow();
 
             // when
             final var result = jpaAttempt.transacted(() -> {

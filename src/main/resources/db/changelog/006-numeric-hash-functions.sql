@@ -3,7 +3,7 @@
 
 -- ============================================================================
 -- NUMERIC-HASH-FUNCTIONS
---changeset hash:1 endDelimiter:--//
+--changeset numeric-hash-functions:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create function bigIntHash(text) returns bigint as $$

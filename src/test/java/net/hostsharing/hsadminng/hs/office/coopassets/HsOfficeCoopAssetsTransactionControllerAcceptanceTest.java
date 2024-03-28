@@ -276,7 +276,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
         @Test
         @Accepts({ "CoopAssetTransaction:X(Access Control)" })
-        void contactAdminUser_canGetRelatedCoopAssetTransaction() {
+        void partnerPersonUser_canGetRelatedCoopAssetTransaction() {
             context.define("superuser-alex@hostsharing.net");
             final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
                     null,
@@ -285,7 +285,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "contact-admin@firstcontact.example.com")
+                    .header("current-user", "person-FirstGmbH@example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)

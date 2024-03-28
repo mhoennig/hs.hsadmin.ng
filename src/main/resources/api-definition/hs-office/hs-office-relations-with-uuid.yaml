@@ -19,7 +19,7 @@ get:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
+                        $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
 
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
@@ -44,14 +44,14 @@ patch:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
+                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
+                        $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":

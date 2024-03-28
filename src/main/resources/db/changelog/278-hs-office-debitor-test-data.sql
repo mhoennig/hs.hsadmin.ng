@@ -9,36 +9,41 @@
     Creates a single debitor test record.
  */
 create or replace procedure createHsOfficeDebitorTestData(
-        debitorNumberSuffix numeric(5),
-        partnerTradeName varchar,
-        billingContactLabel varchar,
-        defaultPrefix varchar
+        withDebitorNumberSuffix numeric(5),
+        forPartnerPersonName varchar,
+        forBillingContactLabel varchar,
+        withDefaultPrefix varchar
     )
     language plpgsql as $$
 declare
     currentTask             varchar;
     idName                  varchar;
-    relatedPartner          hs_office_partner;
-    relatedContact          hs_office_contact;
+    relatedDebitorRelUuid   uuid;
     relatedBankAccountUuid  uuid;
 begin
-    idName := cleanIdentifier( partnerTradeName|| '-' || billingContactLabel);
+    idName := cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactLabel);
     currentTask := 'creating debitor test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    select partner.* from hs_office_partner partner
-               join hs_office_person person on person.uuid = partner.personUuid
-               where person.tradeName = partnerTradeName into relatedPartner;
-    select c.* from hs_office_contact c where c.label = billingContactLabel into relatedContact;
-    select b.uuid from hs_office_bankaccount b where b.holder = partnerTradeName into relatedBankAccountUuid;
+    select debitorRel.uuid
+            into relatedDebitorRelUuid
+            from hs_office_relation debitorRel
+            join hs_office_person person on person.uuid = debitorRel.holderUuid
+                and (person.tradeName = forPartnerPersonName or person.familyName = forPartnerPersonName)
+            where debitorRel.type = 'DEBITOR';
 
-    raise notice 'creating test debitor: % (#%)', idName, debitorNumberSuffix;
-    raise notice '- using partner (%): %', relatedPartner.uuid, relatedPartner;
-    raise notice '- using billingContact (%): %', relatedContact.uuid, relatedContact;
+    select b.uuid
+            into relatedBankAccountUuid
+            from hs_office_bankaccount b
+            where b.holder = forPartnerPersonName;
+
+    raise notice 'creating test debitor: % (#%)', idName, withDebitorNumberSuffix;
+    -- raise exception 'creating test debitor: (uuid=%, debitorRelUuid=%, debitornumbersuffix=%, billable=%, vatbusiness=%, vatreversecharge=%, refundbankaccountuuid=%, defaultprefix=%)',
+    --    uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            relatedBankAccountUuid, withDefaultPrefix;
     insert
-        into hs_office_debitor (uuid, partneruuid, debitornumbersuffix, billable, billingcontactuuid, vatbusiness, vatreversecharge, refundbankaccountuuid, defaultprefix)
-            values (uuid_generate_v4(), relatedPartner.uuid, debitorNumberSuffix, true, relatedContact.uuid, true, false, relatedBankAccountUuid, defaultPrefix);
+        into hs_office_debitor (uuid,   debitorRelUuid,        debitornumbersuffix,     billable, vatbusiness, vatreversecharge, refundbankaccountuuid,  defaultprefix)
+            values (uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            relatedBankAccountUuid, withDefaultPrefix);
 end; $$;
 --//
 

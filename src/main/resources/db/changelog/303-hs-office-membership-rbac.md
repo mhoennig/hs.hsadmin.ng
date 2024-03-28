@@ -1,75 +1,159 @@
-### hs_office_membership RBAC
+### rbac membership
+
+This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
 
 ```mermaid
+%%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
-subgraph global
-    style global fill:#eee
-    
-    role:global.admin[global.admin]    
-end
-
-subgraph hsOfficeDebitor
+subgraph partnerRel["`**partnerRel**`"]
     direction TB
-    style hsOfficeDebitor fill:#eee
-    
-    role:hsOfficeDebitor.owner[debitor.owner]    
-    --> role:hsOfficeDebitor.admin[debitor.admin]    
-    --> role:hsOfficeDebitor.tenant[debitor.tenant]    
-    --> role:hsOfficeDebitor.guest[debitor.guest]    
+    style partnerRel fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.contact["`**partnerRel.contact**`"]
+        direction TB
+        style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+        subgraph partnerRel.contact:roles[ ]
+            style partnerRel.contact:roles fill:#99bcdb,stroke:white
+
+            role:partnerRel.contact:owner[[partnerRel.contact:owner]]
+            role:partnerRel.contact:admin[[partnerRel.contact:admin]]
+            role:partnerRel.contact:referrer[[partnerRel.contact:referrer]]
+        end
+    end
+
+    subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
+        direction TB
+        style partnerRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+        subgraph partnerRel.anchorPerson:roles[ ]
+            style partnerRel.anchorPerson:roles fill:#99bcdb,stroke:white
+
+            role:partnerRel.anchorPerson:owner[[partnerRel.anchorPerson:owner]]
+            role:partnerRel.anchorPerson:admin[[partnerRel.anchorPerson:admin]]
+            role:partnerRel.anchorPerson:referrer[[partnerRel.anchorPerson:referrer]]
+        end
+    end
+
+    subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
+        direction TB
+        style partnerRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+        subgraph partnerRel.holderPerson:roles[ ]
+            style partnerRel.holderPerson:roles fill:#99bcdb,stroke:white
+
+            role:partnerRel.holderPerson:owner[[partnerRel.holderPerson:owner]]
+            role:partnerRel.holderPerson:admin[[partnerRel.holderPerson:admin]]
+            role:partnerRel.holderPerson:referrer[[partnerRel.holderPerson:referrer]]
+        end
+    end
+
+    subgraph partnerRel:roles[ ]
+        style partnerRel:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel:owner[[partnerRel:owner]]
+        role:partnerRel:admin[[partnerRel:admin]]
+        role:partnerRel:agent[[partnerRel:agent]]
+        role:partnerRel:tenant[[partnerRel:tenant]]
+    end
 end
 
-subgraph hsOfficePartner
+subgraph partnerRel.contact["`**partnerRel.contact**`"]
     direction TB
-    style hsOfficePartner fill:#eee
-    
-    role:hsOfficePartner.owner[partner.admin]    
-    --> role:hsOfficePartner.admin[partner.admin]    
-    --> role:hsOfficePartner.agent[partner.agent]    
-    --> role:hsOfficePartner.tenant[partner.tenant]    
-    --> role:hsOfficePartner.guest[partner.guest]    
+    style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.contact:roles[ ]
+        style partnerRel.contact:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel.contact:owner[[partnerRel.contact:owner]]
+        role:partnerRel.contact:admin[[partnerRel.contact:admin]]
+        role:partnerRel.contact:referrer[[partnerRel.contact:referrer]]
+    end
 end
 
-subgraph hsOfficeMembership
-                    
-   role:hsOfficeMembership.owner[membership.owner]
-   %% permissions
-       role:hsOfficeMembership.owner --> perm:hsOfficeMembership.*{{membership.*}}
-   %% incoming
-       role:global.admin ---> role:hsOfficeMembership.owner
-  
-   role:hsOfficeMembership.admin[membership.admin]
-   %% permissions
-       role:hsOfficeMembership.admin --> perm:hsOfficeMembership.edit{{membership.edit}}
-   %% incoming
-       role:hsOfficeMembership.owner ---> role:hsOfficeMembership.admin
-  
-   role:hsOfficeMembership.agent[membership.agent]
-   %% incoming
-       role:hsOfficeMembership.admin ---> role:hsOfficeMembership.agent
-       role:hsOfficePartner.admin --> role:hsOfficeMembership.agent
-       role:hsOfficeDebitor.admin --> role:hsOfficeMembership.agent
-   %% outgoing
-       role:hsOfficeMembership.agent --> role:hsOfficePartner.tenant
-       role:hsOfficeMembership.agent --> role:hsOfficeDebitor.tenant
-  
-   role:hsOfficeMembership.tenant[membership.tenant]
-   %% incoming
-       role:hsOfficeMembership.agent --> role:hsOfficeMembership.tenant
-       role:hsOfficePartner.agent --> role:hsOfficeMembership.tenant
-       role:hsOfficeDebitor.agent --> role:hsOfficeMembership.tenant
-   %% outgoing   
-       role:hsOfficeMembership.tenant --> role:hsOfficePartner.guest
-       role:hsOfficeMembership.tenant --> role:hsOfficeDebitor.guest
+subgraph membership["`**membership**`"]
+    direction TB
+    style membership fill:#dd4901,stroke:#274d6e,stroke-width:8px
 
-   role:hsOfficeMembership.guest[membership.guest]
-   %% permissions
-       role:hsOfficeMembership.guest -->  perm:hsOfficeMembership.view{{membership.view}}
-   %% incoming
-       role:hsOfficeMembership.tenant --> role:hsOfficeMembership.guest
-       role:hsOfficePartner.tenant --> role:hsOfficeMembership.guest
-       role:hsOfficeDebitor.tenant --> role:hsOfficeMembership.guest
+    subgraph membership:roles[ ]
+        style membership:roles fill:#dd4901,stroke:white
+
+        role:membership:owner[[membership:owner]]
+        role:membership:admin[[membership:admin]]
+        role:membership:referrer[[membership:referrer]]
+    end
+
+    subgraph membership:permissions[ ]
+        style membership:permissions fill:#dd4901,stroke:white
+
+        perm:membership:INSERT{{membership:INSERT}}
+        perm:membership:DELETE{{membership:DELETE}}
+        perm:membership:UPDATE{{membership:UPDATE}}
+        perm:membership:SELECT{{membership:SELECT}}
+    end
 end
 
+subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
+    direction TB
+    style partnerRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.anchorPerson:roles[ ]
+        style partnerRel.anchorPerson:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel.anchorPerson:owner[[partnerRel.anchorPerson:owner]]
+        role:partnerRel.anchorPerson:admin[[partnerRel.anchorPerson:admin]]
+        role:partnerRel.anchorPerson:referrer[[partnerRel.anchorPerson:referrer]]
+    end
+end
+
+subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
+    direction TB
+    style partnerRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.holderPerson:roles[ ]
+        style partnerRel.holderPerson:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel.holderPerson:owner[[partnerRel.holderPerson:owner]]
+        role:partnerRel.holderPerson:admin[[partnerRel.holderPerson:admin]]
+        role:partnerRel.holderPerson:referrer[[partnerRel.holderPerson:referrer]]
+    end
+end
+
+%% granting roles to users
+user:creator ==> role:membership:owner
+
+%% granting roles to roles
+role:global:admin -.-> role:partnerRel.anchorPerson:owner
+role:partnerRel.anchorPerson:owner -.-> role:partnerRel.anchorPerson:admin
+role:partnerRel.anchorPerson:admin -.-> role:partnerRel.anchorPerson:referrer
+role:global:admin -.-> role:partnerRel.holderPerson:owner
+role:partnerRel.holderPerson:owner -.-> role:partnerRel.holderPerson:admin
+role:partnerRel.holderPerson:admin -.-> role:partnerRel.holderPerson:referrer
+role:global:admin -.-> role:partnerRel.contact:owner
+role:partnerRel.contact:owner -.-> role:partnerRel.contact:admin
+role:partnerRel.contact:admin -.-> role:partnerRel.contact:referrer
+role:global:admin -.-> role:partnerRel:owner
+role:partnerRel:owner -.-> role:partnerRel:admin
+role:partnerRel.anchorPerson:admin -.-> role:partnerRel:admin
+role:partnerRel:admin -.-> role:partnerRel:agent
+role:partnerRel.holderPerson:admin -.-> role:partnerRel:agent
+role:partnerRel:agent -.-> role:partnerRel:tenant
+role:partnerRel.holderPerson:admin -.-> role:partnerRel:tenant
+role:partnerRel.contact:admin -.-> role:partnerRel:tenant
+role:partnerRel:tenant -.-> role:partnerRel.anchorPerson:referrer
+role:partnerRel:tenant -.-> role:partnerRel.holderPerson:referrer
+role:partnerRel:tenant -.-> role:partnerRel.contact:referrer
+role:partnerRel:admin ==> role:membership:owner
+role:membership:owner ==> role:membership:admin
+role:partnerRel:agent ==> role:membership:admin
+role:membership:admin ==> role:membership:referrer
+role:membership:referrer ==> role:partnerRel:tenant
+
+%% granting permissions to roles
+role:global:admin ==> perm:membership:INSERT
+role:membership:owner ==> perm:membership:DELETE
+role:membership:admin ==> perm:membership:UPDATE
+role:membership:referrer ==> perm:membership:SELECT
 
 ```

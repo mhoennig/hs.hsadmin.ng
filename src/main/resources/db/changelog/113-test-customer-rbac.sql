@@ -86,16 +86,14 @@ execute procedure insertTriggerForTestCustomer_tf();
 do language plpgsql $$
     declare
         row global;
-        permissionUuid uuid;
-        roleUuid uuid;
     begin
         call defineContext('create INSERT INTO test_customer permissions for the related global rows');
 
         FOR row IN SELECT * FROM global
             LOOP
-                roleUuid := findRoleId(globalAdmin());
-                permissionUuid := createPermission(row.uuid, 'INSERT', 'test_customer');
-                call grantPermissionToRole(permissionUuid, roleUuid);
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'test_customer'),
+                    globalAdmin());
             END LOOP;
     END;
 $$;

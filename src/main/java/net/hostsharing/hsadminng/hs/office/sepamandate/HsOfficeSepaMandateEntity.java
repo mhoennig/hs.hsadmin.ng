@@ -21,6 +21,7 @@ import java.util.UUID;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
@@ -43,7 +44,6 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
             .withProp(HsOfficeSepaMandateEntity::getReference)
             .withProp(HsOfficeSepaMandateEntity::getAgreement)
             .withProp(e -> e.getValidity().asString())
-            .withSeparator(", ")
             .quotedValues(false);
 
     @Id
@@ -96,11 +96,27 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
 
     public static RbacView rbac() {
         return rbacViewFor("sepaMandate", HsOfficeSepaMandateEntity.class)
-                .withIdentityView(projection("concat(tradeName, familyName, givenName)"))
+                .withIdentityView(query("""
+                        select sm.uuid as uuid, ba.iban || '-' || sm.validity as idName
+                            from hs_office_sepamandate sm
+                            join hs_office_bankaccount ba on ba.uuid = sm.bankAccountUuid
+                        """))
+                .withRestrictedViewOrderBy(expression("validity"))
                 .withUpdatableColumns("reference", "agreement", "validity")
 
-                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class, dependsOnColumn("debitorRelUuid"))
-                .importEntityAlias("bankAccount", HsOfficeBankAccountEntity.class, dependsOnColumn("bankAccountUuid"))
+                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class,
+                        dependsOnColumn("debitorUuid"),
+                        fetchedBySql("""
+                                SELECT ${columns}
+                                    FROM hs_office_relation debitorRel
+                                    JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+                                    WHERE debitor.uuid = ${REF}.debitorUuid
+                                """),
+                        NOT_NULL)
+                .importEntityAlias("bankAccount", HsOfficeBankAccountEntity.class,
+                        dependsOnColumn("bankAccountUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NOT_NULL)
 
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);
@@ -119,10 +135,12 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
                     with.incomingSuperRole("debitorRel", AGENT);
                     with.outgoingSubRole("debitorRel", TENANT);
                     with.permission(SELECT);
-                });
+                })
+
+                .toRole("debitorRel", ADMIN).grantPermission(INSERT);
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("253-hs-office-sepamandate-rbac-generated");
+        rbac().generateWithBaseFileName("253-hs-office-sepamandate-rbac");
     }
 }

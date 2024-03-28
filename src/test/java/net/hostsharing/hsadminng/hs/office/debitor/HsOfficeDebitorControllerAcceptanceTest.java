@@ -7,6 +7,9 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
+import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
 import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
 import net.hostsharing.test.JpaAttempt;
@@ -24,6 +27,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +62,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficeBankAccountRepository bankAccountRepo;
 
     @Autowired
+    HsOfficePersonRepository personRepo;
+
+    @Autowired
+    HsOfficeRelationRepository relRepo;
+
+    @Autowired
     JpaAttempt jpaAttempt;
 
     @PersistenceContext
@@ -81,37 +91,135 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     [
-                         {
-                             "debitorNumber": 1000111,
-                             "debitorNumberSuffix": 11,
-                             "partner": { "person": { "personType": "LEGAL_PERSON" } },
-                             "billingContact": { "label": "first contact" },
-                             "vatId": null,
-                             "vatCountryCode": null,
-                             "vatBusiness": true,
-                             "refundBankAccount": { "holder": "First GmbH" }
-                         },
-                         {
-                             "debitorNumber": 1000212,
-                             "debitorNumberSuffix": 12,
-                             "partner": { "person": { "tradeName": "Second e.K." } },
-                             "billingContact": { "label": "second contact" },
-                             "vatId": null,
-                             "vatCountryCode": null,
-                             "vatBusiness": true,
-                             "refundBankAccount": { "holder": "Second e.K." }
-                         },
-                         {
-                             "debitorNumber": 1000313,
-                             "debitorNumberSuffix": 13,
-                             "partner": { "person": { "tradeName": "Third OHG" } },
-                             "billingContact": { "label": "third contact" },
-                             "vatId": null,
-                             "vatCountryCode": null,
-                             "vatBusiness": true,
-                             "refundBankAccount": { "holder": "Third OHG" }
-                         }
-                     ]
+                      {
+                        "debitorRel": {
+                          "anchor": {
+                            "personType": "LEGAL_PERSON",
+                            "tradeName": "First GmbH",
+                            "givenName": null,
+                            "familyName": null
+                          },
+                          "holder": {
+                            "personType": "LEGAL_PERSON",
+                            "tradeName": "First GmbH",
+                            "givenName": null,
+                            "familyName": null
+                          },
+                          "type": "DEBITOR",
+                          "mark": null,
+                          "contact": {
+                            "label": "first contact",
+                            "emailAddresses": "contact-admin@firstcontact.example.com",
+                            "phoneNumbers": "+49 123 1234567"
+                          }
+                        },
+                        "debitorNumber": 1000111,
+                        "debitorNumberSuffix": 11,
+                        "partner": {
+                          "partnerNumber": 10001,
+                          "partnerRel": {
+                            "anchor": {
+                              "personType": "LEGAL_PERSON",
+                              "tradeName": "Hostsharing eG",
+                              "givenName": null,
+                              "familyName": null
+                            },
+                            "holder": {
+                              "personType": "LEGAL_PERSON",
+                              "tradeName": "First GmbH",
+                              "givenName": null,
+                              "familyName": null
+                            },
+                            "type": "PARTNER",
+                            "mark": null,
+                            "contact": {
+                              "label": "first contact",
+                              "emailAddresses": "contact-admin@firstcontact.example.com",
+                              "phoneNumbers": "+49 123 1234567"
+                            }
+                          },
+                          "details": {
+                            "registrationOffice": "Hamburg",
+                            "registrationNumber": "RegNo123456789",
+                            "birthName": null,
+                            "birthPlace": null,
+                            "birthday": null,
+                            "dateOfDeath": null
+                          }
+                        },
+                        "billable": true,
+                        "vatId": null,
+                        "vatCountryCode": null,
+                        "vatBusiness": true,
+                        "vatReverseCharge": false,
+                        "refundBankAccount": {
+                          "holder": "First GmbH",
+                          "iban": "DE02120300000000202051",
+                          "bic": "BYLADEM1001"
+                        },
+                        "defaultPrefix": "fir"
+                      },
+                      {
+                        "debitorRel": {
+                          "anchor": {"tradeName": "Second e.K."},
+                          "holder": {"tradeName": "Second e.K."},
+                          "type": "DEBITOR",
+                          "contact": {"emailAddresses": "contact-admin@secondcontact.example.com"}
+                        },
+                        "debitorNumber": 1000212,
+                        "debitorNumberSuffix": 12,
+                        "partner": {
+                          "partnerNumber": 10002,
+                          "partnerRel": {
+                            "anchor": {"tradeName": "Hostsharing eG"},
+                            "holder": {"tradeName": "Second e.K."},
+                            "type": "PARTNER",
+                            "contact": {"emailAddresses": "contact-admin@secondcontact.example.com"}
+                          },
+                          "details": {
+                            "registrationOffice": "Hamburg",
+                            "registrationNumber": "RegNo123456789"
+                          }
+                        },
+                        "billable": true,
+                        "vatId": null,
+                        "vatCountryCode": null,
+                        "vatBusiness": true,
+                        "vatReverseCharge": false,
+                        "refundBankAccount": {"iban": "DE02100500000054540402"},
+                        "defaultPrefix": "sec"
+                      },
+                      {
+                        "debitorRel": {
+                          "anchor": {"tradeName": "Third OHG"},
+                          "holder": {"tradeName": "Third OHG"},
+                          "type": "DEBITOR",
+                          "contact": {"emailAddresses": "contact-admin@thirdcontact.example.com"}
+                        },
+                        "debitorNumber": 1000313,
+                        "debitorNumberSuffix": 13,
+                        "partner": {
+                          "partnerNumber": 10003,
+                          "partnerRel": {
+                            "anchor": {"tradeName": "Hostsharing eG"},
+                            "holder": {"tradeName": "Third OHG"},
+                            "type": "PARTNER",
+                            "contact": {"emailAddresses": "contact-admin@thirdcontact.example.com"}
+                          },
+                          "details": {
+                            "registrationOffice": "Hamburg",
+                            "registrationNumber": "RegNo123456789"
+                          }
+                        },
+                        "billable": true,
+                        "vatId": null,
+                        "vatCountryCode": null,
+                        "vatBusiness": true,
+                        "vatReverseCharge": false,
+                        "refundBankAccount": {"iban": "DE02300209000106531065"},
+                        "defaultPrefix": "thi"
+                      }
+                    ]
                     """));
                 // @formatter:on
         }
@@ -132,8 +240,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                      [
                          {
                              "debitorNumber": 1000212,
-                             "partner": { "person": { "tradeName": "Second e.K." } },
-                             "billingContact": { "label": "second contact" },
+                             "partner": { "partnerNumber": 10002 },
+                             "debitorRel": {
+                                "contact": { "label": "second contact" }
+                             },
                              "vatId": null,
                              "vatCountryCode": null,
                              "vatBusiness": true
@@ -154,6 +264,17 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
+            final var givenBillingPerson = personRepo.findPersonByOptionalNameLike("Fourth").get(0);
+
+            final var givenDebitorRelUUid = jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net");
+                return relRepo.save(HsOfficeRelationEntity.builder()
+                        .type(DEBITOR)
+                        .anchor(givenPartner.getPartnerRel().getHolder())
+                        .holder(givenBillingPerson)
+                        .contact(givenContact)
+                        .build()).getUuid();
+            }).assertSuccessful().returnedValue();
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -161,8 +282,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "partnerUuid": "%s",
-                                   "billingContactUuid": "%s",
+                                   "debitorRelUuid": "%s",
                                    "debitorNumberSuffix": "%s",
                                    "billable": "true",
                                    "vatId": "VAT123456",
@@ -172,7 +292,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                    "refundBankAccountUuid": "%s",
                                    "defaultPrefix": "for"
                                  }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorSuffix, givenBankAccount.getUuid()))
+                            """.formatted( givenDebitorRelUUid, ++nextDebitorSuffix, givenBankAccount.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/debitors")
@@ -182,8 +302,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .body("uuid", isUuidValid())
                         .body("vatId", is("VAT123456"))
                         .body("defaultPrefix", is("for"))
-                        .body("billingContact.label", is(givenContact.getLabel()))
-                        .body("partner.person.tradeName", is(givenPartner.getPerson().getTradeName()))
+                        .body("debitorRel.contact.label", is(givenContact.getLabel()))
+                        .body("debitorRel.holder.tradeName", is(givenBillingPerson.getTradeName()))
                         .body("refundBankAccount.holder", is(givenBankAccount.getHolder()))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
@@ -206,15 +326,23 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
-                               {
-                                   "partnerUuid": "%s",
-                                   "billingContactUuid": "%s",
-                                   "debitorNumberSuffix": "%s",
-                                   "defaultPrefix": "for",
-                                   "billable": "true",
-                                   "vatReverseCharge": "false"
-                                 }
-                            """.formatted( givenPartner.getUuid(), givenContact.getUuid(), ++nextDebitorSuffix))
+                            {
+                               "debitorRel": {
+                                    "type": "DEBITOR",
+                                    "anchorUuid": "%s",
+                                    "holderUuid": "%s",
+                                    "contactUuid": "%s"
+                                },
+                                "debitorNumberSuffix": "%s",
+                                "defaultPrefix": "for",
+                                "billable": "true",
+                                "vatReverseCharge": "false"
+                            }
+                            """.formatted(
+                                givenPartner.getPartnerRel().getHolder().getUuid(),
+                                givenPartner.getPartnerRel().getHolder().getUuid(),
+                                givenContact.getUuid(),
+                                ++nextDebitorSuffix))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -222,8 +350,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(201)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("billingContact.label", is(givenContact.getLabel()))
-                    .body("partner.person.tradeName", is(givenPartner.getPerson().getTradeName()))
+                    .body("debitorRel.contact.label", is(givenContact.getLabel()))
+                    .body("partner.partnerRel.holder.tradeName", is(givenPartner.getPartnerRel().getHolder().getTradeName()))
                     .body("vatId", equalTo(null))
                     .body("vatCountryCode", equalTo(null))
                     .body("vatBusiness", equalTo(false))
@@ -250,19 +378,22 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
-                               {
-                                   "partnerUuid": "%s",
-                                   "billingContactUuid": "%s",
-                                   "debitorNumberSuffix": "%s",
-                                   "billable": "true",
-                                   "vatId": "VAT123456",
-                                   "vatCountryCode": "DE",
-                                   "vatBusiness": true,
-                                   "vatReverseCharge": "false",
-                                   "defaultPrefix": "thi"
-                                 }
-                            """
-                            .formatted( givenPartner.getUuid(), givenContactUuid, ++nextDebitorSuffix))
+                            {
+                               "debitorRel": {
+                                    "type": "DEBITOR",
+                                    "anchorUuid": "%s",
+                                    "holderUuid": "%s",
+                                    "contactUuid": "%s"
+                                },
+                                "debitorNumberSuffix": "%s",
+                                "defaultPrefix": "for",
+                                "billable": "true",
+                                "vatReverseCharge": "false"
+                            }
+                            """.formatted(
+                                givenPartner.getPartnerRel().getAnchor().getUuid(),
+                                givenPartner.getPartnerRel().getAnchor().getUuid(),
+                                givenContactUuid, ++nextDebitorSuffix))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
@@ -273,10 +404,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void globalAdmin_canNotAddDebitor_ifPartnerDoesNotExist() {
+        void globalAdmin_canNotAddDebitor_ifDebitorRelDoesNotExist() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenPartnerUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            final var givenDebitorRelUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
             final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
@@ -284,24 +415,20 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
-                               {
-                                   "partnerUuid": "%s",
-                                   "billingContactUuid": "%s",
-                                   "debitorNumberSuffix": "%s",
-                                   "billable": "true",
-                                   "vatId": "VAT123456",
-                                   "vatCountryCode": "DE",
-                                   "vatBusiness": true,
-                                   "vatReverseCharge": "false",
-                                   "defaultPrefix": "for"
-                                 }
-                            """.formatted( givenPartnerUuid, givenContact.getUuid(), ++nextDebitorSuffix))
+                            {
+                                "debitorRelUuid": "%s",
+                                "debitorNumberSuffix": "%s",
+                                "defaultPrefix": "for",
+                                "billable": "true",
+                                "vatReverseCharge": "false"
+                            }
+                            """.formatted(givenDebitorRelUuid, ++nextDebitorSuffix))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find Partner with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("Unable to find HsOfficeRelationEntity with uuid 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }
@@ -321,14 +448,53 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/debitors/" + givenDebitorUuid)
-                .then().log().body().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "partner": { person: { "tradeName": "First GmbH" } },
-                        "billingContact": { "label": "first contact" }
-                    }
+                         "debitorRel": {
+                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "First GmbH"},
+                             "holder": { "personType": "LEGAL_PERSON", "tradeName": "First GmbH"},
+                             "type": "DEBITOR",
+                             "contact": {
+                                 "label": "first contact",
+                                 "postalAddress": "\\nVorname Nachname\\nStraße Hnr\\nPLZ Stadt\\n",
+                                 "emailAddresses": "contact-admin@firstcontact.example.com",
+                                 "phoneNumbers": "+49 123 1234567"
+                             }
+                         },
+                         "debitorNumber": 1000111,
+                         "debitorNumberSuffix": 11,
+                         "partner": {
+                             "partnerNumber": 10001,
+                             "partnerRel": {
+                                 "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG"},
+                                 "holder": { "personType": "LEGAL_PERSON", "tradeName": "First GmbH"},
+                                 "type": "PARTNER",
+                                 "mark": null,
+                                 "contact": {
+                                     "label": "first contact",
+                                     "postalAddress": "\\nVorname Nachname\\nStraße Hnr\\nPLZ Stadt\\n",
+                                     "emailAddresses": "contact-admin@firstcontact.example.com",
+                                     "phoneNumbers": "+49 123 1234567"
+                                 }
+                             },
+                             "details": {
+                                 "registrationOffice": "Hamburg",
+                                 "registrationNumber": "RegNo123456789"
+                             }
+                         },
+                         "billable": true,
+                         "vatBusiness": true,
+                         "vatReverseCharge": false,
+                         "refundBankAccount": {
+                             "holder": "First GmbH",
+                             "iban": "DE02120300000000202051",
+                             "bic": "BYLADEM1001"
+                         },
+                         "defaultPrefix": "fir"
+                     }
                     """)); // @formatter:on
         }
 
@@ -350,7 +516,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
         @Test
         @Accepts({ "Debitor:X(Access Control)" })
-        void contactAdminUser_canGetRelatedDebitor() {
+        void contactAdminUser_canGetRelatedDebitorExceptRefundBankAccount() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorUuid = debitorRepo.findDebitorByOptionalNameLike("first contact").get(0).getUuid();
 
@@ -365,9 +531,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "partner": { person: { "tradeName": "First GmbH" } },
-                        "billingContact": { "label": "first contact" },
-                        "refundBankAccount": { "holder": "First GmbH" }
+                        "debitorNumber": 1000111,
+                        "partner": { "partnerNumber": 10001 },
+                        "debitorRel": { "contact": { "label": "first contact" } },
+                        "refundBankAccount": null
                     }
                     """)); // @formatter:on
         }
@@ -378,7 +545,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     class PatchDebitor {
 
         @Test
-        void globalAdmin_withoutAssumedRole_canPatchAllPropertiesOfArbitraryDebitor() {
+        void globalAdmin_withoutAssumedRole_canPatchArbitraryDebitor() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
@@ -400,77 +567,90 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
-                .then().assertThat()
+                .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType(ContentType.JSON)
-                    .body("uuid", isUuidValid())
-                    .body("vatId", is("VAT222222"))
-                    .body("vatCountryCode", is("AA"))
-                    .body("vatBusiness", is(true))
-                    .body("defaultPrefix", is("for"))
-                    .body("billingContact.label", is(givenContact.getLabel()))
-                    .body("partner.person.tradeName", is(givenDebitor.getPartner().getPerson().getTradeName()));
+                    .body("", lenientlyEquals("""
+                            {
+                                "debitorRel": {
+                                    "anchor": { "tradeName": "Fourth eG" },
+                                    "holder": { "tradeName": "Fourth eG" },
+                                    "type": "DEBITOR",
+                                    "mark": null,
+                                    "contact": { "label": "fourth contact" }
+                                },
+                                "debitorNumber": 10004${debitorNumberSuffix},
+                                "debitorNumberSuffix": ${debitorNumberSuffix},
+                                "partner": {
+                                    "partnerNumber": 10004,
+                                    "partnerRel": {
+                                        "anchor": { "tradeName": "Hostsharing eG" },
+                                        "holder": { "tradeName": "Fourth eG" },
+                                        "type": "PARTNER",
+                                        "mark": null,
+                                        "contact": { "label": "fourth contact" }
+                                    },
+                                    "details": {
+                                        "registrationOffice": "Hamburg",
+                                        "registrationNumber": "RegNo123456789",
+                                        "birthName": null,
+                                        "birthPlace": null,
+                                        "birthday": null,
+                                        "dateOfDeath": null
+                                    }
+                                },
+                                "billable": true,
+                                "vatId": "VAT222222",
+                                "vatCountryCode": "AA",
+                                "vatBusiness": true,
+                                "vatReverseCharge": false,
+                                "defaultPrefix": "for"
+                            }
+                            """
+                            .replace("${debitorNumberSuffix}", givenDebitor.getDebitorNumberSuffix().toString()))
+                    );
                 // @formatter:on
 
             // finally, the debitor is actually updated
             context.define("superuser-alex@hostsharing.net");
             assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent().get()
-                    .matches(partner -> {
-                        assertThat(partner.getPartner().getPerson().getTradeName()).isEqualTo(givenDebitor.getPartner()
-                                .getPerson()
-                                .getTradeName());
-                        assertThat(partner.getBillingContact().getLabel()).isEqualTo("fourth contact");
-                        assertThat(partner.getVatId()).isEqualTo("VAT222222");
-                        assertThat(partner.getVatCountryCode()).isEqualTo("AA");
-                        assertThat(partner.isVatBusiness()).isEqualTo(true);
+                    .matches(debitor -> {
+                        assertThat(debitor.getDebitorRel().getHolder().getTradeName())
+                                .isEqualTo(givenDebitor.getDebitorRel().getHolder().getTradeName());
+                        assertThat(debitor.getDebitorRel().getContact().getLabel()).isEqualTo("fourth contact");
+                        assertThat(debitor.getVatId()).isEqualTo("VAT222222");
+                        assertThat(debitor.getVatCountryCode()).isEqualTo("AA");
+                        assertThat(debitor.isVatBusiness()).isEqualTo(true);
                         return true;
                     });
         }
 
         @Test
-        void globalAdmin_withoutAssumedRole_canPatchPartialPropertiesOfArbitraryDebitor() {
+        void theContactOwner_canNotPatchARelatedDebitor() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            final var newBillingContact = contactRepo.findContactByOptionalLabelLike("sixth").get(0);
 
-            final var location = RestAssured // @formatter:off
-                .given()
+            // @formatter:on
+            RestAssured // @formatter:off
+                    .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("assumed-roles", "hs_office_contact#fourthcontact.admin")
                     .contentType(ContentType.JSON)
                     .body("""
-                               {
-                                   "billingContactUuid": "%s",
-                                   "vatId": "VAT999999"
-                                 }
-                            """.formatted(newBillingContact.getUuid()))
+                           {
+                               "vatId": "VAT999999"
+                             }
+                        """)
                     .port(port)
-                .when()
+                    .when()
                     .patch("http://localhost/api/hs/office/debitors/" + givenDebitor.getUuid())
-                .then().assertThat()
-                    .statusCode(200)
-                    .contentType(ContentType.JSON)
-                    .body("uuid", isUuidValid())
-                    .body("billingContact.label", is("sixth contact"))
-                    .body("vatId", is("VAT999999"))
-                    .body("vatCountryCode", is(givenDebitor.getVatCountryCode()))
-                    .body("vatBusiness", is(givenDebitor.isVatBusiness()));
-            // @formatter:on
+                    .then().log().all().assertThat()
+                    .statusCode(403)
+                    .body("message", containsString("ERROR: [403] Subject"))
+                    .body("message", containsString("is not allowed to update hs_office_debitor uuid "));
 
-            // finally, the debitor is actually updated
-            assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent().get()
-                    .matches(partner -> {
-                        assertThat(partner.getPartner().getPerson().getTradeName()).isEqualTo(givenDebitor.getPartner()
-                                .getPerson()
-                                .getTradeName());
-                        assertThat(partner.getBillingContact().getLabel()).isEqualTo("sixth contact");
-                        assertThat(partner.getVatId()).isEqualTo("VAT999999");
-                        assertThat(partner.getVatCountryCode()).isEqualTo(givenDebitor.getVatCountryCode());
-                        assertThat(partner.isVatBusiness()).isEqualTo(givenDebitor.isVatBusiness());
-                        return true;
-                    });
         }
-
     }
 
     @Nested
@@ -500,7 +680,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void contactAdminUser_canNotDeleteRelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("fourth contact");
+            assertThat(givenDebitor.getDebitorRel().getContact().getLabel()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -520,7 +700,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void normalUser_canNotDeleteUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getBillingContact().getLabel()).isEqualTo("fourth contact");
+            assertThat(givenDebitor.getDebitorRel().getContact().getLabel()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -544,8 +724,14 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(++nextDebitorSuffix)
                     .billable(true)
-                    .partner(givenPartner)
-                    .billingContact(givenContact)
+                    .debitorRel(
+                            HsOfficeRelationEntity.builder()
+                                    .type(DEBITOR)
+                                    .anchor(givenPartner.getPartnerRel().getHolder())
+                                    .holder(givenPartner.getPartnerRel().getHolder())
+                                    .contact(givenContact)
+                                    .build()
+                    )
                     .defaultPrefix("abc")
                     .vatReverseCharge(false)
                     .build();

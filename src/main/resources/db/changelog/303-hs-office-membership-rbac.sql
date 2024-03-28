@@ -1,4 +1,6 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset hs-office-membership-rbac-OBJECT:1 endDelimiter:--//
@@ -15,148 +17,162 @@ call generateRbacRoleDescriptors('hsOfficeMembership', 'hs_office_membership');
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-membership-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates and updates the roles and their assignments for membership entities.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace function hsOfficeMembershipRbacRolesTrigger()
-    returns trigger
-    language plpgsql
-    strict as $$
+create or replace procedure buildRbacSystemForHsOfficeMembership(
+    NEW hs_office_membership
+)
+    language plpgsql as $$
+
 declare
-    newHsOfficePartner  hs_office_partner;
-    newHsOfficeDebitor  hs_office_debitor;
+    newPartnerRel hs_office_relation;
+
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    select * from hs_office_partner as p where p.uuid = NEW.partnerUuid into newHsOfficePartner;
-    select * from hs_office_debitor as c where c.uuid = NEW.mainDebitorUuid into newHsOfficeDebitor;
+    SELECT partnerRel.*
+        FROM hs_office_partner AS partner
+        JOIN hs_office_relation AS partnerRel ON partnerRel.uuid = partner.partnerRelUuid
+        WHERE partner.uuid = NEW.partnerUuid
+        INTO newPartnerRel;
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerUuid = %s', NEW.partnerUuid);
 
-    if TG_OP = 'INSERT' then
 
-        -- === ATTENTION: code generated from related Mermaid flowchart: ===
+    perform createRoleWithGrants(
+        hsOfficeMembershipOwner(NEW),
+            permissions => array['DELETE'],
+            incomingSuperRoles => array[hsOfficeRelationAdmin(newPartnerRel)],
+            userUuids => array[currentUserUuid()]
+    );
 
-        perform createRoleWithGrants(
-                hsOfficeMembershipOwner(NEW),
-                permissions => array['DELETE'],
-                incomingSuperRoles => array[globalAdmin()]
-            );
+    perform createRoleWithGrants(
+        hsOfficeMembershipAdmin(NEW),
+            permissions => array['UPDATE'],
+            incomingSuperRoles => array[
+            	hsOfficeMembershipOwner(NEW),
+            	hsOfficeRelationAgent(newPartnerRel)]
+    );
 
-        perform createRoleWithGrants(
-                hsOfficeMembershipAdmin(NEW),
-                permissions => array['UPDATE'],
-                incomingSuperRoles => array[hsOfficeMembershipOwner(NEW)]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficeMembershipAgent(NEW),
-                incomingSuperRoles => array[hsOfficeMembershipAdmin(NEW), hsOfficePartnerAdmin(newHsOfficePartner), hsOfficeDebitorAdmin(newHsOfficeDebitor)],
-                outgoingSubRoles => array[hsOfficePartnerTenant(newHsOfficePartner), hsOfficeDebitorTenant(newHsOfficeDebitor)]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficeMembershipTenant(NEW),
-                incomingSuperRoles => array[hsOfficeMembershipAgent(NEW), hsOfficePartnerAgent(newHsOfficePartner), hsOfficeDebitorAgent(newHsOfficeDebitor)],
-                outgoingSubRoles => array[hsOfficePartnerGuest(newHsOfficePartner), hsOfficeDebitorGuest(newHsOfficeDebitor)]
-            );
-
-        perform createRoleWithGrants(
-                hsOfficeMembershipGuest(NEW),
-                permissions => array['SELECT'],
-                incomingSuperRoles => array[hsOfficeMembershipTenant(NEW), hsOfficePartnerTenant(newHsOfficePartner), hsOfficeDebitorTenant(newHsOfficeDebitor)]
-            );
-
-        -- === END of code generated from Mermaid flowchart. ===
-
-    else
-        raise exception 'invalid usage of TRIGGER';
-    end if;
+    perform createRoleWithGrants(
+        hsOfficeMembershipReferrer(NEW),
+            permissions => array['SELECT'],
+            incomingSuperRoles => array[hsOfficeMembershipAdmin(NEW)],
+            outgoingSubRoles => array[hsOfficeRelationTenant(newPartnerRel)]
+    );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
-    return NEW;
 end; $$;
 
 /*
-    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_membership row.
  */
-create trigger createRbacRolesForHsOfficeMembership_Trigger
-    after insert
-    on hs_office_membership
+
+create or replace function insertTriggerForHsOfficeMembership_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call buildRbacSystemForHsOfficeMembership(NEW);
+    return NEW;
+end; $$;
+
+create trigger insertTriggerForHsOfficeMembership_tg
+    after insert on hs_office_membership
     for each row
-execute procedure hsOfficeMembershipRbacRolesTrigger();
+execute procedure insertTriggerForHsOfficeMembership_tf();
 --//
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-office-membership-rbac-INSERT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityViewFromProjection('hs_office_membership', $idName$
-    '#' ||
-        (select partnerNumber from hs_office_partner p where p.uuid = target.partnerUuid) ||
-        memberNumberSuffix ||
-    ':' || (select split_part(idName, ':', 2) from hs_office_partner_iv p where p.uuid = target.partnerUuid)
-    $idName$);
+
+/*
+    Creates INSERT INTO hs_office_membership permissions for the related global rows.
+ */
+do language plpgsql $$
+    declare
+        row global;
+    begin
+        call defineContext('create INSERT INTO hs_office_membership permissions for the related global rows');
+
+        FOR row IN SELECT * FROM global
+            LOOP
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'hs_office_membership'),
+                    globalAdmin());
+            END LOOP;
+    END;
+$$;
+
+/**
+    Adds hs_office_membership INSERT permission to specified role of new global rows.
+*/
+create or replace function hs_office_membership_global_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_office_membership'),
+            globalAdmin());
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_hs_office_membership_global_insert_tg
+    after insert on global
+    for each row
+execute procedure hs_office_membership_global_insert_tf();
+
+/**
+    Checks if the user or assumed roles are allowed to insert a row to hs_office_membership,
+    where only global-admin has that permission.
+*/
+create or replace function hs_office_membership_insert_permission_missing_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    raise exception '[403] insert into hs_office_membership not allowed for current subjects % (%)',
+        currentSubjects(), currentSubjectsUuids();
+end; $$;
+
+create trigger hs_office_membership_insert_permission_check_tg
+    before insert on hs_office_membership
+    for each row
+    when ( not isGlobalAdmin() )
+        execute procedure hs_office_membership_insert_permission_missing_tf();
 --//
 
+-- ============================================================================
+--changeset hs-office-membership-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+    call generateRbacIdentityViewFromQuery('hs_office_membership',
+        $idName$
+            SELECT m.uuid AS uuid,
+                'M-' || p.partnerNumber || m.memberNumberSuffix as idName
+        FROM hs_office_membership AS m
+        JOIN hs_office_partner AS p ON p.uuid = m.partnerUuid
+        $idName$);
+--//
 
 -- ============================================================================
 --changeset hs-office-membership-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('hs_office_membership',
-    orderby => 'target.memberNumberSuffix',
-    columnUpdates => $updates$
+    $orderBy$
+        validity
+    $orderBy$,
+    $updates$
         validity = new.validity,
-        reasonForTermination = new.reasonForTermination,
-        membershipFeeBillable = new.membershipFeeBillable
+        membershipFeeBillable = new.membershipFeeBillable,
+        reasonForTermination = new.reasonForTermination
     $updates$);
---//
-
-
--- ============================================================================
---changeset hs-office-membership-rbac-NEW-Membership:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Creates a global permission for new-membership and assigns it to the hostsharing admins role.
- */
-do language plpgsql $$
-    declare
-        addCustomerPermissions uuid[];
-        globalObjectUuid       uuid;
-        globalAdminRoleUuid    uuid ;
-    begin
-        call defineContext('granting global new-membership permission to global admin role', null, null, null);
-
-        globalAdminRoleUuid := findRoleId(globalAdmin());
-        globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-membership']);
-        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
-    end;
-$$;
-
-/**
-    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
- */
-create or replace function addHsOfficeMembershipNotAllowedForCurrentSubjects()
-    returns trigger
-    language PLPGSQL
-as $$
-begin
-    raise exception '[403] new-membership not permitted for %',
-        array_to_string(currentSubjects(), ';', 'null');
-end; $$;
-
-/**
-    Checks if the user or assumed roles are allowed to create a new customer.
- */
-create trigger hs_office_membership_insert_trigger
-    before insert
-    on hs_office_membership
-    for each row
-    -- TODO.spec: who is allowed to create new memberships
-    when ( not hasAssumedRole() )
-execute procedure addHsOfficeMembershipNotAllowedForCurrentSubjects();
 --//
 

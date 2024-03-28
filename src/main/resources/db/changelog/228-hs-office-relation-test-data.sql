@@ -11,7 +11,7 @@
 create or replace procedure createHsOfficeRelationTestData(
         holderPersonName varchar,
         relationType HsOfficeRelationType,
-        anchorPersonTradeName varchar,
+        anchorPersonName varchar,
         contactLabel varchar,
         mark varchar default null)
     language plpgsql as $$
@@ -23,24 +23,28 @@ declare
     contact         hs_office_contact;
 
 begin
-    idName := cleanIdentifier( anchorPersonTradeName || '-' || holderPersonName);
+    idName := cleanIdentifier( anchorPersonName || '-' || holderPersonName);
     currentTask := 'creating relation test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    select p.* from hs_office_person p where p.tradeName = anchorPersonTradeName into anchorPerson;
+    select p.*
+            into anchorPerson
+            from hs_office_person p
+            where p.tradeName = anchorPersonName or p.familyName = anchorPersonName;
     if anchorPerson is null then
-        raise exception 'anchorPerson "%" not found', anchorPersonTradeName;
+        raise exception 'anchorPerson "%" not found', anchorPersonName;
     end if;
 
-    select p.* from hs_office_person p
-               where p.tradeName = holderPersonName or p.familyName = holderPersonName
-               into holderPerson;
+    select p.*
+            into holderPerson
+            from hs_office_person p
+            where p.tradeName = holderPersonName or p.familyName = holderPersonName;
     if holderPerson is null then
         raise exception 'holderPerson "%" not found', holderPersonName;
     end if;
 
-    select c.* from hs_office_contact c where c.label = contactLabel into contact;
+    select c.* into contact from hs_office_contact c where c.label = contactLabel;
     if contact is null then
         raise exception 'contact "%" not found', contactLabel;
     end if;
@@ -87,17 +91,22 @@ do language plpgsql $$
     begin
         call createHsOfficeRelationTestData('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
         call createHsOfficeRelationTestData('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
+        call createHsOfficeRelationTestData('First GmbH', 'DEBITOR', 'First GmbH', 'first contact');
 
         call createHsOfficeRelationTestData('Second e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
         call createHsOfficeRelationTestData('Smith', 'REPRESENTATIVE', 'Second e.K.', 'second contact');
+        call createHsOfficeRelationTestData('Second e.K.', 'DEBITOR', 'Second e.K.', 'second contact');
 
         call createHsOfficeRelationTestData('Third OHG', 'PARTNER', 'Hostsharing eG', 'third contact');
         call createHsOfficeRelationTestData('Tucker', 'REPRESENTATIVE', 'Third OHG', 'third contact');
+        call createHsOfficeRelationTestData('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
 
         call createHsOfficeRelationTestData('Fourth eG', 'PARTNER', 'Hostsharing eG', 'fourth contact');
         call createHsOfficeRelationTestData('Fouler', 'REPRESENTATIVE', 'Third OHG', 'third contact');
+        call createHsOfficeRelationTestData('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
 
         call createHsOfficeRelationTestData('Smith', 'PARTNER', 'Hostsharing eG', 'sixth contact');
+        call createHsOfficeRelationTestData('Smith', 'DEBITOR', 'Smith', 'third contact');
         call createHsOfficeRelationTestData('Smith', 'SUBSCRIBER', 'Third OHG', 'third contact', 'members-announce');
     end;
 $$;

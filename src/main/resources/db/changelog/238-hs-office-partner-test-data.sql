@@ -9,18 +9,17 @@
     Creates a single partner test record.
  */
 create or replace procedure createHsOfficePartnerTestData(
-        mandantTradeName varchar,
-        partnerNumber numeric(5),
+        mandantTradeName  varchar,
+        newPartnerNumber  numeric(5),
         partnerPersonName varchar,
-        contactLabel varchar )
+        contactLabel      varchar )
     language plpgsql as $$
 declare
     currentTask         varchar;
     idName              varchar;
     mandantPerson       hs_office_person;
-    partnerRel          hs_office_relation;
+    partnerRel         hs_office_relation;
     relatedPerson       hs_office_person;
-    relatedContact      hs_office_contact;
     relatedDetailsUuid  uuid;
 begin
     idName := cleanIdentifier( partnerPersonName|| '-' || contactLabel);
@@ -38,9 +37,6 @@ begin
     select p.* from hs_office_person p
                where p.tradeName = partnerPersonName or p.familyName = partnerPersonName
                into relatedPerson;
-    select c.* from hs_office_contact c
-               where c.label = contactLabel
-               into relatedContact;
 
     select r.* from hs_office_relation r
             where r.type = 'PARTNER'
@@ -53,7 +49,6 @@ begin
     raise notice 'creating test partner: %', idName;
     raise notice '- using partnerRel (%): %', partnerRel.uuid, partnerRel;
     raise notice '- using person (%): %', relatedPerson.uuid, relatedPerson;
-    raise notice '- using contact (%): %', relatedContact.uuid, relatedContact;
 
     if relatedPerson.persontype = 'NP' then
         insert
@@ -68,8 +63,8 @@ begin
     end if;
 
     insert
-        into hs_office_partner (uuid, partnerNumber, partnerRelUuid, personuuid, contactuuid, detailsUuid)
-        values (uuid_generate_v4(), partnerNumber, partnerRel.uuid, relatedPerson.uuid, relatedContact.uuid, relatedDetailsUuid);
+        into hs_office_partner (uuid, partnerNumber, partnerRelUuid, detailsUuid)
+        values (uuid_generate_v4(), newPartnerNumber, partnerRel.uuid, relatedDetailsUuid);
 end; $$;
 --//
 

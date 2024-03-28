@@ -88,7 +88,6 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
 
@@ -109,11 +108,10 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm SELECT on coopsharestransaction#temprefB to role membership#1000101:....tenant by system and assume }",
+                            "{ grant perm SELECT on coopsharestransaction#temprefB to role membership#M-1000101.referrer by system and assume }",
                             null));
         }
 
@@ -194,7 +192,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void normalUser_canViewOnlyRelatedCoopSharesTransactions() {
             // given:
-            context("superuser-alex@hostsharing.net", "hs_office_partner#10001:FirstGmbH-firstcontact.admin");
+            context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000101.admin");
 
             // when:
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(

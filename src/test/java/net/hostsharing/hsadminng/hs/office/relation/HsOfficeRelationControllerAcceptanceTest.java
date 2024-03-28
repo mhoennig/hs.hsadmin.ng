@@ -87,7 +87,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         },
                         {
                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
-                            "holder": { "personType": "INCORPORATED_FIRM", "tradeName": "Fourth eG" },
+                            "holder": { "personType": "LEGAL_PERSON", "tradeName": "Fourth eG" },
                             "type": "PARTNER",
                             "contact": { "label": "fourth contact" }
                         },

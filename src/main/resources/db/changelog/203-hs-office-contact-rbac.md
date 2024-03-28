@@ -24,6 +24,7 @@ subgraph contact["`**contact**`"]
         perm:contact:DELETE{{contact:DELETE}}
         perm:contact:UPDATE{{contact:UPDATE}}
         perm:contact:SELECT{{contact:SELECT}}
+        perm:contact:INSERT{{contact:INSERT}}
     end
 end
 
@@ -39,5 +40,6 @@ role:contact:admin ==> role:contact:referrer
 role:contact:owner ==> perm:contact:DELETE
 role:contact:admin ==> perm:contact:UPDATE
 role:contact:referrer ==> perm:contact:SELECT
+role:global:guest ==> perm:contact:INSERT
 
 ```

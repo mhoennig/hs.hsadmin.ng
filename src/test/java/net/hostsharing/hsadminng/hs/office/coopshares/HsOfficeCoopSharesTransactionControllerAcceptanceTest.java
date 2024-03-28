@@ -218,17 +218,27 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
 
         @Test
         @Accepts({"CoopShareTransaction:X(Access Control)"})
-        void contactAdminUser_canGetRelatedCoopShareTransaction() {
+        void partnerPersonUser_canGetRelatedCoopShareTransaction() {
             context.define("superuser-alex@hostsharing.net");
             final var givenCoopShareTransactionUuid = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "contact-admin@firstcontact.example.com").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
-                    {
-                         "transactionType": "SUBSCRIPTION",
-                         "shareCount": 4
-                     }
-                    """)); // @formatter:on
+                .given()
+                    .header("current-user", "person-FirstGmbH@example.com")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid)
+                .then()
+                    .log().body()
+                    .assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                            {
+                                 "transactionType": "SUBSCRIPTION",
+                                 "shareCount": 4
+                             }
+                            """)); // @formatter:on
         }
     }
 }

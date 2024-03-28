@@ -12,6 +12,7 @@ import org.hibernate.annotations.GenericGenerator;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
@@ -28,13 +29,12 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUuid {
 
     private static Stringify<HsOfficeCoopAssetsTransactionEntity> stringify = stringify(HsOfficeCoopAssetsTransactionEntity.class)
-            .withProp(HsOfficeCoopAssetsTransactionEntity::getMemberNumber)
+            .withIdProp(HsOfficeCoopAssetsTransactionEntity::getTaggedMemberNumber)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getValueDate)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getTransactionType)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getAssetValue)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getReference)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getComment)
-            .withSeparator(", ")
             .quotedValues(false);
 
     @Id
@@ -76,8 +76,8 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUu
     private String comment;
 
 
-    public Integer getMemberNumber() {
-        return ofNullable(membership).map(HsOfficeMembershipEntity::getMemberNumber).orElse(null);
+    public String getTaggedMemberNumber() {
+        return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-?????");
     }
 
     @Override
@@ -87,6 +87,6 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUu
 
     @Override
     public String toShortString() {
-        return "%s%+1.2f".formatted(getMemberNumber(), assetValue);
+        return "%s:%+1.2f".formatted(getTaggedMemberNumber(), Optional.ofNullable(assetValue).orElse(BigDecimal.ZERO));
     }
 }

@@ -28,7 +28,7 @@ begin
     call defineContext(currentTask, null, emailAddr);
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    raise notice 'creating test person: %', fullName;
+    raise notice 'creating test person: % by %', fullName, emailAddr;
     insert
         into hs_office_person (persontype, tradename, givenname, familyname)
         values (newPersonType, newTradeName, newGivenName, newFamilyName);
@@ -67,9 +67,10 @@ do language plpgsql $$
         call createHsOfficePersonTestData('NP', null, 'Fouler', 'Ellie');
         call createHsOfficePersonTestData('LP', 'Second e.K.', 'Smith', 'Peter');
         call createHsOfficePersonTestData('IF', 'Third OHG');
-        call createHsOfficePersonTestData('IF', 'Fourth eG');
+        call createHsOfficePersonTestData('LP', 'Fourth eG');
         call createHsOfficePersonTestData('UF', 'Erben Bessler', 'Mel', 'Bessler');
         call createHsOfficePersonTestData('NP', null, 'Bessler', 'Anita');
+        call createHsOfficePersonTestData('NP', null, 'Bessler', 'Bert');
         call createHsOfficePersonTestData('NP', null, 'Winkler', 'Paul');
     end;
 $$;

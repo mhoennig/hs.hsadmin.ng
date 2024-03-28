@@ -22,5 +22,6 @@ components:
                         - owner
                         - admin
                         - tenant
+                        - referrer
                 roleName:
                     type: string

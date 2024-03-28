@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
@@ -12,17 +11,26 @@ import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.JoinFormula;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import jakarta.persistence.*;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
+import static jakarta.persistence.CascadeType.DETACH;
+import static jakarta.persistence.CascadeType.MERGE;
+import static jakarta.persistence.CascadeType.PERSIST;
+import static jakarta.persistence.CascadeType.REFRESH;
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -30,7 +38,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Table(name = "hs_office_debitor_rv")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Debitor")
@@ -38,15 +46,11 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
 
     public static final String DEBITOR_NUMBER_TAG = "D-";
 
-    // TODO: I would rather like to generate something matching this example:
-    //  debitor(1234500: Test AG, tes)
-    // maybe remove withSepararator (always use ', ') and add withBusinessIdProp (with ': ' afterwards)?
     private static Stringify<HsOfficeDebitorEntity> stringify =
             stringify(HsOfficeDebitorEntity.class, "debitor")
-                    .withProp(e -> DEBITOR_NUMBER_TAG + e.getDebitorNumber())
-                    .withProp(HsOfficeDebitorEntity::getPartner)
+                    .withIdProp(HsOfficeDebitorEntity::toShortString)
+                    .withProp(e -> ofNullable(e.getDebitorRel()).map(HsOfficeRelationEntity::toShortString).orElse(null))
                     .withProp(HsOfficeDebitorEntity::getDefaultPrefix)
-                    .withSeparator(": ")
                     .quotedValues(false);
 
     @Id
@@ -55,15 +59,28 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     private UUID uuid;
 
     @ManyToOne
-    @JoinColumn(name = "partneruuid")
+    @JoinFormula(
+        referencedColumnName = "uuid",
+        value = """
+            (
+                SELECT DISTINCT partner.uuid
+                FROM hs_office_partner_rv partner
+                JOIN hs_office_relation_rv dRel
+                    ON dRel.uuid = debitorreluuid AND dRel.type = 'DEBITOR'
+                JOIN hs_office_relation_rv pRel
+                    ON pRel.uuid = partner.partnerRelUuid AND pRel.type = 'PARTNER'
+                WHERE pRel.holderUuid = dRel.anchorUuid
+            )
+            """)
+    @NotFound(action = NotFoundAction.IGNORE)
     private HsOfficePartnerEntity partner;
 
     @Column(name = "debitornumbersuffix", columnDefinition = "numeric(2)")
     private Byte debitorNumberSuffix; // TODO maybe rather as a formatted String?
 
-    @ManyToOne
-    @JoinColumn(name = "billingcontactuuid")
-    private HsOfficeContactEntity billingContact; // TODO: migrate to billingPerson
+    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false)
+    @JoinColumn(name = "debitorreluuid", nullable = false)
+    private HsOfficeRelationEntity debitorRel;
 
     @Column(name = "billable", nullable = false)
     private Boolean billable; // not a primitive because otherwise the default would be false
@@ -88,14 +105,16 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     private String defaultPrefix;
 
     private String getDebitorNumberString() {
-        if (partner == null || partner.getPartnerNumber() == null || debitorNumberSuffix == null) {
-            return null;
-        }
-        return partner.getPartnerNumber() + String.format("%02d", debitorNumberSuffix);
+        return ofNullable(partner)
+                .filter(partner -> debitorNumberSuffix != null)
+                .map(HsOfficePartnerEntity::getPartnerNumber)
+                .map(Object::toString)
+                .map(partnerNumber -> partnerNumber + String.format("%02d", debitorNumberSuffix))
+                .orElse(null);
     }
 
     public Integer getDebitorNumber() {
-        return Optional.ofNullable(getDebitorNumberString()).map(Integer::parseInt).orElse(null);
+        return ofNullable(getDebitorNumberString()).map(Integer::parseInt).orElse(null);
     }
 
     @Override
@@ -111,28 +130,28 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     public static RbacView rbac() {
         return rbacViewFor("debitor", HsOfficeDebitorEntity.class)
                 .withIdentityView(SQL.query("""
-                            SELECT debitor.uuid,
-                                        'D-' || (SELECT partner.partnerNumber
-                                                FROM hs_office_partner partner
-                                                JOIN hs_office_relation partnerRel
-                                                    ON partnerRel.uuid = partner.partnerRelUUid AND partnerRel.type = 'PARTNER'
-                                                JOIN hs_office_relation debitorRel
-                                                    ON debitorRel.anchorUuid = partnerRel.holderUuid AND partnerRel.type = 'DEBITOR'
-                                                WHERE debitorRel.uuid = debitor.debitorRelUuid)
-                                             || to_char(debitorNumberSuffix, 'fm00')
-                                from hs_office_debitor as debitor
+                        SELECT debitor.uuid AS uuid,
+                                    'D-' || (SELECT partner.partnerNumber
+                                            FROM hs_office_partner partner
+                                            JOIN hs_office_relation partnerRel
+                                                ON partnerRel.uuid = partner.partnerRelUUid AND partnerRel.type = 'PARTNER'
+                                            JOIN hs_office_relation debitorRel
+                                                ON debitorRel.anchorUuid = partnerRel.holderUuid AND debitorRel.type = 'DEBITOR'
+                                            WHERE debitorRel.uuid = debitor.debitorRelUuid)
+                                         || to_char(debitorNumberSuffix, 'fm00') as idName
+                        FROM hs_office_debitor AS debitor
                         """))
+                .withRestrictedViewOrderBy(SQL.projection("defaultPrefix"))
                 .withUpdatableColumns(
-                        "debitorRel",
+                        "debitorRelUuid",
                         "billable",
-                        "debitorUuid",
                         "refundBankAccountUuid",
                         "vatId",
                         "vatCountryCode",
                         "vatBusiness",
                         "vatReverseCharge",
                         "defaultPrefix" /* TODO: do we want that updatable? */)
-                .createPermission(INSERT).grantedTo("global", ADMIN)
+                .toRole("global", ADMIN).grantPermission(INSERT)
 
                 .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class,
                         directlyFetchedByDependsOnColumn(),
@@ -149,9 +168,16 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                 .toRole("debitorRel", AGENT).grantRole("refundBankAccount", REFERRER)
 
                 .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
-                        dependsOnColumn("partnerRelUuid"),
-                        directlyFetchedByDependsOnColumn(),
-                        NULLABLE)
+                        dependsOnColumn("debitorRelUuid"),
+                        fetchedBySql("""
+                                SELECT ${columns}
+                                    FROM hs_office_relation AS partnerRel
+                                    JOIN hs_office_relation AS debitorRel
+                                        ON debitorRel.type = 'DEBITOR' AND debitorRel.anchorUuid = partnerRel.holderUuid
+                                    WHERE partnerRel.type = 'PARTNER'
+                                        AND ${REF}.debitorRelUuid = debitorRel.uuid
+                                """),
+                        NOT_NULL)
                 .toRole("partnerRel", ADMIN).grantRole("debitorRel", ADMIN)
                 .toRole("partnerRel", AGENT).grantRole("debitorRel", AGENT)
                 .toRole("debitorRel", AGENT).grantRole("partnerRel", TENANT)
@@ -162,6 +188,6 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("273-hs-office-debitor-rbac-generated");
+        rbac().generateWithBaseFileName("273-hs-office-debitor-rbac");
     }
 }

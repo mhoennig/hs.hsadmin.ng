@@ -14,10 +14,8 @@ components:
                     format: int8
                     minimum: 10000
                     maximum: 99999
-                person:
-                    $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
-                contact:
-                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                partnerRel:
+                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 details:
                     $ref: '#/components/schemas/HsOfficePartnerDetails'
 
@@ -52,11 +50,7 @@ components:
         HsOfficePartnerPatch:
             type: object
             properties:
-                personUuid:
-                    type: string
-                    format: uuid
-                    nullable: true
-                contactUuid:
+                partnerRelUuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -98,18 +92,11 @@ components:
                     maximum: 99999
                 partnerRel:
                     $ref: '#/components/schemas/HsOfficePartnerRelInsert'
-                personUuid:
-                    type: string
-                    format: uuid
-                contactUuid:
-                    type: string
-                    format: uuid
                 details:
                     $ref: '#/components/schemas/HsOfficePartnerDetailsInsert'
             required:
                 - partnerNumber
-                - personUuid
-                - contactUuid
+                - partnerRel
                 - details
 
         HsOfficePartnerRelInsert:

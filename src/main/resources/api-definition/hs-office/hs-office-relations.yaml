@@ -18,7 +18,7 @@ get:
           in: query
           required: false
           schema:
-              $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelationType'
+              $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationType'
           description: Prefix of name properties from holder or contact to filter the results.
     responses:
         "200":
@@ -28,7 +28,7 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
+                            $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":
@@ -46,7 +46,7 @@ post:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
+                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
         required: true
     responses:
         "201":
@@ -54,7 +54,7 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relations-schemas.yaml#/components/schemas/HsOfficeRelation'
+                        $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
             $ref: './error-responses.yaml#/components/responses/Unauthorized'
         "403":

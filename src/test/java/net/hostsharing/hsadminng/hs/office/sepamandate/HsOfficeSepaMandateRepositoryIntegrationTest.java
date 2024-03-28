@@ -26,6 +26,7 @@ import java.util.List;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.test.Array.fromFormatted;
 import static net.hostsharing.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -94,8 +95,6 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("-firstcontact", "-..."))
-                    .map(s -> s.replace("PaulWinkler", "Paul..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
 
@@ -118,41 +117,36 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_sepamandate#temprefB.owner",
-                    "hs_office_sepamandate#temprefB.admin",
-                    "hs_office_sepamandate#temprefB.agent",
-                    "hs_office_sepamandate#temprefB.tenant",
-                    "hs_office_sepamandate#temprefB.guest"));
+                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).admin",
+                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).agent",
+                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).owner",
+                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).referrer"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("-firstcontact", "-..."))
-                    .map(s -> s.replace("PaulWinkler", "Paul..."))
                     .map(s -> s.replace("hs_office_", ""))
-                    .containsExactlyInAnyOrder(Array.fromFormatted(
+                    .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
                             // owner
-                            "{ grant perm DELETE on sepamandate#temprefB            to role sepamandate#temprefB.owner           by system and assume }",
-                            "{ grant role sepamandate#temprefB.owner           to role global#global.admin                 by system and assume }",
+                            "{ grant perm DELETE on sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01) to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).owner by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).owner to role global#global.admin by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).owner to user superuser-alex@hostsharing.net by sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).owner and assume }",
 
                             // admin
-                            "{ grant perm UPDATE on sepamandate#temprefB         to role sepamandate#temprefB.admin           by system and assume }",
-                            "{ grant role sepamandate#temprefB.admin           to role sepamandate#temprefB.owner           by system and assume }",
-                            "{ grant role bankaccount#Paul....tenant           to role sepamandate#temprefB.admin           by system and assume }",
+                            "{ grant perm UPDATE on sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01) to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).admin by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).admin to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).owner by system and assume }",
 
                             // agent
-                            "{ grant role sepamandate#temprefB.agent           to role sepamandate#temprefB.admin           by system and assume }",
-                            "{ grant role debitor#1000111:FirstGmbH-....tenant to role sepamandate#temprefB.agent           by system and assume }",
-                            "{ grant role sepamandate#temprefB.agent           to role bankaccount#Paul....admin           by system and assume }",
-                            "{ grant role sepamandate#temprefB.agent           to role debitor#1000111:FirstGmbH-....admin    by system and assume }",
+                            "{ grant role bankaccount#DE02600501010002034304.referrer to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).agent by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).agent to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).admin by system and assume }",
+                            "{ grant role relation#FirstGmbH-with-DEBITOR-FirstGmbH.agent to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).agent by system and assume }",
 
-                            // tenant
-                            "{ grant role sepamandate#temprefB.tenant          to role sepamandate#temprefB.agent           by system and assume }",
-                            "{ grant role debitor#1000111:FirstGmbH-....guest  to role sepamandate#temprefB.tenant          by system and assume }",
-                            "{ grant role bankaccount#Paul....guest            to role sepamandate#temprefB.tenant          by system and assume }",
+                            // referrer
+                            "{ grant perm SELECT on sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01) to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).referrer by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).referrer to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).agent by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).referrer to role bankaccount#DE02600501010002034304.admin by system and assume }",
+                            "{ grant role relation#FirstGmbH-with-DEBITOR-FirstGmbH.tenant to role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).referrer by system and assume }",
+                            "{ grant role sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01).referrer to role relation#FirstGmbH-with-DEBITOR-FirstGmbH.agent by system and assume }",
 
-                            // guest
-                            "{ grant perm SELECT on sepamandate#temprefB      to role sepamandate#temprefB.guest           by system and assume }",
-                            "{ grant role sepamandate#temprefB.guest        to role sepamandate#temprefB.tenant          by system and assume }",
                             null));
         }
 
@@ -176,9 +170,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             allTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02100500000054540402, refSeconde.K., 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02100500000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02120300000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
 
         @Test
@@ -192,7 +186,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then:
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02120300000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
@@ -210,9 +204,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02120300000000202051, refFirstGmbH, 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02100500000054540402, refSeconde.K., 2022-09-30, [2022-10-01,2027-01-01))",
-                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02100500000054540402, ref-10002-12, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02120300000000202051, ref-10001-11, 2022-09-30, [2022-10-01,2027-01-01))",
+                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
 
         @Test
@@ -226,7 +220,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             exactlyTheseSepaMandatesAreReturned(
                     result,
-                    "SEPA-Mandate(DE02300209000106531065, refThirdOHG, 2022-09-30, [2022-10-01,2027-01-01))");
+                    "SEPA-Mandate(DE02300209000106531065, ref-10003-13, 2022-09-30, [2022-10-01,2027-01-01))");
         }
     }
 
@@ -236,10 +230,10 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         @Test
         public void hostsharingAdmin_canUpdateArbitrarySepaMandate() {
             // given
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Peter Smith");
+            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02600501010002034304");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
-                    "hs_office_bankaccount#PeterSmith.admin");
+                    "hs_office_bankaccount#DE02600501010002034304.admin");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -264,16 +258,18 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         public void bankAccountAdmin_canViewButNotUpdateRelatedSepaMandate() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Anita Bessler");
+
+            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300606010002474689");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
-                    "hs_office_bankaccount#AnitaBessler.admin");
+                    "hs_office_bankaccount#DE02300606010002474689.admin");
             assertThatSepaMandateActuallyInDatabase(givenSepaMandate);
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_bankaccount#AnitaBessler.admin");
+                context("superuser-alex@hostsharing.net", "hs_office_bankaccount#DE02300606010002474689.admin");
+
                 givenSepaMandate.setValidity(Range.closedOpen(
                         givenSepaMandate.getValidity().lower(), newValidityEnd));
                 return toCleanup(sepaMandateRepo.save(givenSepaMandate));
@@ -317,7 +313,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         public void globalAdmin_withoutAssumedRole_canDeleteAnySepaMandate() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Fourth eG");
+            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02200505501015871393");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -337,7 +333,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         public void nonGlobalAdmin_canNotDeleteTheirRelatedSepaMandate() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Third OHG");
+            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300209000106531065");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -363,11 +359,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
-            final var givenSepaMandate = givenSomeTemporarySepaMandateBessler("Mel Bessler");
-            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll()).size()).as("precondition failed: unexpected number of roles created")
-                    .isEqualTo(initialRoleNames.length + 5);
-            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()).size()).as("precondition failed: unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.length + 14);
+            final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02600501010002034304");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -397,15 +389,16 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating SEPA-mandate test-data FirstGmbH, hs_office_sepamandate, INSERT]",
-                "[creating SEPA-mandate test-data Seconde.K., hs_office_sepamandate, INSERT]");
+                "[creating SEPA-mandate test-data 1000111, hs_office_sepamandate, INSERT]",
+                "[creating SEPA-mandate test-data 1000212, hs_office_sepamandate, INSERT]",
+                "[creating SEPA-mandate test-data 1000313, hs_office_sepamandate, INSERT]");
     }
 
-    private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandateBessler(final String bankAccountHolder) {
+    private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandate(final String iban) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
-            final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike(bankAccountHolder).get(0);
+            final var givenBankAccount = bankAccountRepo.findByIbanOrderByIbanAsc(iban).get(0);
             final var newSepaMandate = HsOfficeSepaMandateEntity.builder()
                     .debitor(givenDebitor)
                     .bankAccount(givenBankAccount)

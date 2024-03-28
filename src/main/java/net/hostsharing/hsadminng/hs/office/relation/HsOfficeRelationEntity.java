@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
@@ -92,22 +92,26 @@ public class HsOfficeRelationEntity implements HasUuid, Stringifyable {
                 .importEntityAlias("anchorPerson", HsOfficePersonEntity.class,
                         dependsOnColumn("anchorUuid"),
                         directlyFetchedByDependsOnColumn(),
-                        NULLABLE)
+                        NOT_NULL)
                 .importEntityAlias("holderPerson", HsOfficePersonEntity.class,
                         dependsOnColumn("holderUuid"),
                         directlyFetchedByDependsOnColumn(),
-                        NULLABLE)
+                        NOT_NULL)
                 .importEntityAlias("contact", HsOfficeContactEntity.class,
                         dependsOnColumn("contactUuid"),
                         directlyFetchedByDependsOnColumn(),
-                        NULLABLE)
+                        NOT_NULL)
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);
                     with.incomingSuperRole(GLOBAL, ADMIN);
+                    // TODO: if type=REPRESENTATIIVE
+                    // with.incomingSuperRole("holderPerson", ADMIN);
                     with.permission(DELETE);
                 })
                 .createSubRole(ADMIN, (with) -> {
                     with.incomingSuperRole("anchorPerson", ADMIN);
+                    // TODO: if type=REPRESENTATIIVE
+                    // with.outgoingSuperRole("anchorPerson", OWNER);
                     with.permission(UPDATE);
                 })
                 .createSubRole(AGENT, (with) -> {
@@ -120,10 +124,12 @@ public class HsOfficeRelationEntity implements HasUuid, Stringifyable {
                     with.outgoingSubRole("holderPerson", REFERRER);
                     with.outgoingSubRole("contact", REFERRER);
                     with.permission(SELECT);
-                });
+                })
+
+                .toRole("anchorPerson", ADMIN).grantPermission(INSERT);
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("223-hs-office-relation-rbac-generated");
+        rbac().generateWithBaseFileName("223-hs-office-relation-rbac");
     }
 }

@@ -1,6 +1,6 @@
 ## *hsadmin-ng*'s Role-Based-Access-Management (RBAC)
 
-The requirements of *hsadmin-ng* include table-m row- and column-level-security for read and write access to business-objects.
+The requirements of *hsadmin-ng* include table-, row- and column-level-security for read and write access to business-objects.
 More precisely, any access has to be controlled according to given rules depending on the accessing users, their roles and the accessed business-object.
 Further, roles and business-objects are hierarchical.
 

@@ -47,16 +47,14 @@ public class InsertTriggerGenerator {
                 do language plpgsql $$
                     declare
                         row ${rawSuperTableName};
-                        permissionUuid uuid;
-                        roleUuid uuid;
                     begin
                         call defineContext('create INSERT INTO ${rawSubTableName} permissions for the related ${rawSuperTableName} rows');
                     
                         FOR row IN SELECT * FROM ${rawSuperTableName}
                             LOOP
-                                roleUuid := findRoleId(${rawSuperRoleDescriptor});
-                                permissionUuid := createPermission(row.uuid, 'INSERT', '${rawSubTableName}');
-                                call grantPermissionToRole(permissionUuid, roleUuid);
+                                call grantPermissionToRole(
+                                    createPermission(row.uuid, 'INSERT', '${rawSubTableName}'),
+                                    ${rawSuperRoleDescriptor});
                             END LOOP;
                     END;
                 $$;

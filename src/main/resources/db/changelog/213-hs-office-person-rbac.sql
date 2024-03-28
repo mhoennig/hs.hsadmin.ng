@@ -1,4 +1,6 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset hs-office-person-rbac-OBJECT:1 endDelimiter:--//
@@ -15,125 +17,130 @@ call generateRbacRoleDescriptors('hsOfficePerson', 'hs_office_person');
 
 
 -- ============================================================================
---changeset hs-office-person-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-person-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
+
 /*
-    Creates the roles and their assignments for a new person for the AFTER INSERT TRIGGER.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
-create or replace function createRbacRolesForHsOfficePerson()
+
+create or replace procedure buildRbacSystemForHsOfficePerson(
+    NEW hs_office_person
+)
+    language plpgsql as $$
+
+declare
+
+begin
+    call enterTriggerForObjectUuid(NEW.uuid);
+
+    perform createRoleWithGrants(
+        hsOfficePersonOwner(NEW),
+            permissions => array['DELETE'],
+            incomingSuperRoles => array[globalAdmin()],
+            userUuids => array[currentUserUuid()]
+    );
+
+    perform createRoleWithGrants(
+        hsOfficePersonAdmin(NEW),
+            permissions => array['UPDATE'],
+            incomingSuperRoles => array[hsOfficePersonOwner(NEW)]
+    );
+
+    perform createRoleWithGrants(
+        hsOfficePersonReferrer(NEW),
+            permissions => array['SELECT'],
+            incomingSuperRoles => array[hsOfficePersonAdmin(NEW)]
+    );
+
+    call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_person row.
+ */
+
+create or replace function insertTriggerForHsOfficePerson_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    if TG_OP <> 'INSERT' then
-        raise exception 'invalid usage of TRIGGER AFTER INSERT';
-    end if;
-
-    perform createRoleWithGrants(
-            hsOfficePersonOwner(NEW),
-            permissions => array['DELETE'],
-            incomingSuperRoles => array[globalAdmin()],
-            userUuids => array[currentUserUuid()],
-            grantedByRole => globalAdmin()
-        );
-
-    -- TODO: who is admin? the person itself? is it allowed for the person itself or a representative to update the data?
-    perform createRoleWithGrants(
-            hsOfficePersonAdmin(NEW),
-            permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficePersonOwner(NEW)]
-        );
-
-    perform createRoleWithGrants(
-            hsOfficePersonTenant(NEW),
-            incomingSuperRoles => array[hsOfficePersonAdmin(NEW)]
-        );
-
-    perform createRoleWithGrants(
-            hsOfficePersonGuest(NEW),
-            permissions => array['SELECT'],
-            incomingSuperRoles => array[hsOfficePersonTenant(NEW)]
-        );
-
+    call buildRbacSystemForHsOfficePerson(NEW);
     return NEW;
 end; $$;
 
-/*
-    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
- */
-
-create trigger createRbacRolesForHsOfficePerson_Trigger
-    after insert
-    on hs_office_person
+create trigger insertTriggerForHsOfficePerson_tg
+    after insert on hs_office_person
     for each row
-execute procedure createRbacRolesForHsOfficePerson();
+execute procedure insertTriggerForHsOfficePerson_tf();
 --//
 
+
+-- ============================================================================
+--changeset hs-office-person-rbac-INSERT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates INSERT INTO hs_office_person permissions for the related global rows.
+ */
+do language plpgsql $$
+    declare
+        row global;
+    begin
+        call defineContext('create INSERT INTO hs_office_person permissions for the related global rows');
+
+        FOR row IN SELECT * FROM global
+            LOOP
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'hs_office_person'),
+                    globalGuest());
+            END LOOP;
+    END;
+$$;
+
+/**
+    Adds hs_office_person INSERT permission to specified role of new global rows.
+*/
+create or replace function hs_office_person_global_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_office_person'),
+            globalGuest());
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_hs_office_person_global_insert_tg
+    after insert on global
+    for each row
+execute procedure hs_office_person_global_insert_tf();
+--//
 
 -- ============================================================================
 --changeset hs-office-person-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityViewFromProjection('hs_office_person', $idName$
-    concat(target.tradeName, target.familyName, target.givenName)
+
+call generateRbacIdentityViewFromProjection('hs_office_person',
+    $idName$
+        concat(tradeName, familyName, givenName)
     $idName$);
 --//
-
 
 -- ============================================================================
 --changeset hs-office-person-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_person', 'concat(target.tradeName, target.familyName, target.givenName)',
+call generateRbacRestrictedView('hs_office_person',
+    $orderBy$
+        concat(tradeName, familyName, givenName)
+    $orderBy$,
     $updates$
         personType = new.personType,
         tradeName = new.tradeName,
         givenName = new.givenName,
         familyName = new.familyName
     $updates$);
---//
-
-
--- ============================================================================
---changeset hs-office-person-rbac-NEW-PERSON:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Creates a global permission for new-person and assigns it to the hostsharing admins role.
- */
-do language plpgsql $$
-    declare
-        addCustomerPermissions uuid[];
-        globalObjectUuid       uuid;
-        globalAdminRoleUuid    uuid ;
-    begin
-        call defineContext('granting global new-person permission to global admin role', null, null, null);
-
-        globalAdminRoleUuid := findRoleId(globalAdmin());
-        globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-person']);
-        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
-    end;
-$$;
-
-/**
-    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
- */
-create or replace function addHsOfficePersonNotAllowedForCurrentSubjects()
-    returns trigger
-    language PLPGSQL
-as $$
-begin
-    raise exception '[403] new-person not permitted for %',
-        array_to_string(currentSubjects(), ';', 'null');
-end; $$;
-
-/**
-    Checks if the user or assumed roles are allowed to create a new customer.
- */
-create trigger hs_office_person_insert_trigger
-    before insert
-    on hs_office_person
-    for each row
-    -- TODO.spec: who is allowed to create new persons
-    when ( not hasAssumedRole() )
-execute procedure addHsOfficePersonNotAllowedForCurrentSubjects();
 --//
 

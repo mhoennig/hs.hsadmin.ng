@@ -13,7 +13,10 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
 
     @Query("""
             SELECT debitor FROM HsOfficeDebitorEntity debitor
-                WHERE cast(debitor.partner.partnerNumber as integer) = :partnerNumber
+            JOIN HsOfficePartnerEntity partner
+                    ON partner.partnerRel.holder = debitor.debitorRel.anchor
+                        AND partner.partnerRel.type = 'PARTNER' AND debitor.debitorRel.type = 'DEBITOR'
+                WHERE cast(partner.partnerNumber as integer) = :partnerNumber
                   AND cast(debitor.debitorNumberSuffix as integer) = :debitorNumberSuffix
                """)
      List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int partnerNumber, byte debitorNumberSuffix);
@@ -24,9 +27,15 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
 
     @Query("""
             SELECT debitor FROM HsOfficeDebitorEntity debitor
-                JOIN HsOfficePartnerEntity partner ON partner.uuid = debitor.partner.uuid
-                JOIN HsOfficePersonEntity person ON person.uuid = partner.person.uuid
-                JOIN HsOfficeContactEntity contact ON contact.uuid = debitor.billingContact.uuid
+                JOIN HsOfficePartnerEntity partner
+                    ON partner.partnerRel.holder = debitor.debitorRel.anchor
+                        AND partner.partnerRel.type = 'PARTNER' AND debitor.debitorRel.type = 'DEBITOR'
+                JOIN HsOfficePersonEntity person
+                    ON person.uuid = partner.partnerRel.holder.uuid
+                        OR person.uuid = debitor.debitorRel.holder.uuid
+                JOIN HsOfficeContactEntity contact
+                    ON contact.uuid = debitor.debitorRel.contact.uuid 
+                        OR contact.uuid = partner.partnerRel.contact.uuid
                 WHERE :name is null
                     OR partner.details.birthName like concat(cast(:name as text), '%')
                     OR person.tradeName like concat(cast(:name as text), '%')

@@ -75,10 +75,11 @@ public class HsOfficeContactEntity implements Stringifyable, HasUuid {
                 })
                 .createSubRole(REFERRER, (with) -> {
                     with.permission(SELECT);
-                });
+                })
+                .toRole(GLOBAL, GUEST).grantPermission(INSERT);
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("203-hs-office-contact-rbac-generated");
+        rbac().generateWithBaseFileName("203-hs-office-contact-rbac");
     }
 }

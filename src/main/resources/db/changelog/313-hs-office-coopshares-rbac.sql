@@ -42,7 +42,7 @@ begin
 
         -- coopsharestransactions cannot be edited nor deleted, just created+viewed
         call grantPermissionsToRole(
-                getRoleId(hsOfficeMembershipTenant(newHsOfficeMembership)),
+                getRoleId(hsOfficeMembershipReferrer(newHsOfficeMembership)),
                 createPermissions(NEW.uuid, array ['SELECT'])
             );
 

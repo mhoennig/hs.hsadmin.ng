@@ -16,6 +16,7 @@ public final class Stringify<B> {
 
     private final Class<B> clazz;
     private final String name;
+    private Function<B, ?> idProp;
     private final List<Property<B>> props = new ArrayList<>();
     private String separator = ", ";
     private Boolean quotedValues = null;
@@ -42,6 +43,11 @@ public final class Stringify<B> {
         }
     }
 
+    public Stringify<B> withIdProp(final Function<B, ?> getter) {
+        idProp = getter;
+        return this;
+    }
+
     public Stringify<B> withProp(final String propName, final Function<B, ?> getter) {
         props.add(new Property<>(propName, getter));
         return this;
@@ -64,7 +70,9 @@ public final class Stringify<B> {
                 })
                 .map(propVal -> propName(propVal, "=") + optionallyQuoted(propVal))
                 .collect(Collectors.joining(separator));
-        return name + "(" + propValues + ")";
+        return idProp != null
+            ? name + "(" + idProp.apply(object) + ": " + propValues + ")"
+            : name + "(" + propValues + ")";
     }
 
     public Stringify<B> withSeparator(final String separator) {

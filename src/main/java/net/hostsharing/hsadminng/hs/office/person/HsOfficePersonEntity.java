@@ -69,6 +69,8 @@ public class HsOfficePersonEntity implements HasUuid, Stringifyable {
         return rbacViewFor("person", HsOfficePersonEntity.class)
                 .withIdentityView(SQL.projection("concat(tradeName, familyName, givenName)"))
                 .withUpdatableColumns("personType", "tradeName", "givenName", "familyName")
+                .toRole("global", GUEST).grantPermission(INSERT)
+
                 .createRole(OWNER, (with) -> {
                     with.permission(DELETE);
                     with.owningUser(CREATOR);
@@ -84,6 +86,6 @@ public class HsOfficePersonEntity implements HasUuid, Stringifyable {
 
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("213-hs-office-person-rbac-generated");
+        rbac().generateWithBaseFileName("213-hs-office-person-rbac");
     }
 }

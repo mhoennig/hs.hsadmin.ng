@@ -31,7 +31,6 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, HasUu
             .withProp(HsOfficeCoopSharesTransactionEntity::getShareCount)
             .withProp(HsOfficeCoopSharesTransactionEntity::getReference)
             .withProp(HsOfficeCoopSharesTransactionEntity::getComment)
-            .withSeparator(", ")
             .quotedValues(false);
 
     @Id

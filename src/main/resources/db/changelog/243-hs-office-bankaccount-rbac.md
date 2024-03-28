@@ -1,40 +1,45 @@
-### hs_office_bankaccount RBAC Roles
+### rbac bankAccount
+
+This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
 
 ```mermaid
+%%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
-subgraph global
-    style global fill: lightgray
-
-    role:global.admin[global.admin]
-end
-
-subgraph hsOfficeBankAccount
+subgraph bankAccount["`**bankAccount**`"]
     direction TB
-    style hsOfficeBankAccount fill: lightgreen
-   
-    user:hsOfficeBankAccount.creator([bankAccount.creator])       
+    style bankAccount fill:#dd4901,stroke:#274d6e,stroke-width:8px
 
-    role:hsOfficeBankAccount.owner[[bankAccount.owner]]
-    %% permissions
-        role:hsOfficeBankAccount.owner --> perm:hsOfficeBankAccount.*{{hsOfficeBankAccount.delete}}
-    %% incoming
-        role:global.admin --> role:hsOfficeBankAccount.owner
-        user:hsOfficeBankAccount.creator ---> role:hsOfficeBankAccount.owner
-       
-    role:hsOfficeBankAccount.admin[[bankAccount.admin]]
-    %% incoming
-        role:hsOfficeBankAccount.owner ---> role:hsOfficeBankAccount.admin        
-   
-    role:hsOfficeBankAccount.tenant[[bankAccount.tenant]]
-    %% incoming
-        role:hsOfficeBankAccount.admin ---> role:hsOfficeBankAccount.tenant
-   
-    role:hsOfficeBankAccount.guest[[bankAccount.guest]]
-    %% permissions
-        role:hsOfficeBankAccount.guest --> perm:hsOfficeBankAccount.view{{hsOfficeBankAccount.view}}
-    %% incoming
-        role:hsOfficeBankAccount.tenant ---> role:hsOfficeBankAccount.guest
+    subgraph bankAccount:roles[ ]
+        style bankAccount:roles fill:#dd4901,stroke:white
+
+        role:bankAccount:owner[[bankAccount:owner]]
+        role:bankAccount:admin[[bankAccount:admin]]
+        role:bankAccount:referrer[[bankAccount:referrer]]
+    end
+
+    subgraph bankAccount:permissions[ ]
+        style bankAccount:permissions fill:#dd4901,stroke:white
+
+        perm:bankAccount:INSERT{{bankAccount:INSERT}}
+        perm:bankAccount:DELETE{{bankAccount:DELETE}}
+        perm:bankAccount:UPDATE{{bankAccount:UPDATE}}
+        perm:bankAccount:SELECT{{bankAccount:SELECT}}
+    end
 end
-```
 
+%% granting roles to users
+user:creator ==> role:bankAccount:owner
+
+%% granting roles to roles
+role:global:admin ==> role:bankAccount:owner
+role:bankAccount:owner ==> role:bankAccount:admin
+role:bankAccount:admin ==> role:bankAccount:referrer
+
+%% granting permissions to roles
+role:global:guest ==> perm:bankAccount:INSERT
+role:bankAccount:owner ==> perm:bankAccount:DELETE
+role:bankAccount:admin ==> perm:bankAccount:UPDATE
+role:bankAccount:referrer ==> perm:bankAccount:SELECT
+
+```

@@ -22,7 +22,6 @@ create table if not exists hs_office_person
     givenName      varchar(48),
     familyName     varchar(48)
 );
---//
 
 
 -- ============================================================================

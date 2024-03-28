@@ -63,6 +63,7 @@ create or replace view rbacgrants_ev as
            x.grantedByRoleUuid,
            x.ascendantUuid as ascendantUuid,
            x.descendantUuid as descendantUuid,
+           x.op as permOp, x.optablename as permOpTableName,
            x.assumed
         from (
              select g.uuid as grantUuid,
@@ -74,13 +75,17 @@ create or replace view rbacgrants_ev as
                         'role ' || aro.objectTable || '#' || findIdNameByObjectUuid(aro.objectTable, aro.uuid) || '.' || ar.roletype
                         ) as ascendingIdName,
                     aro.objectTable, aro.uuid,
-
-                    coalesce(
-                        'role ' || dro.objectTable || '#' || findIdNameByObjectUuid(dro.objectTable, dro.uuid) || '.' || dr.roletype,
-                        'perm ' || dp.op || ' on ' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid)
+                    ( case
+                            when dro is not null
+                                then ('role ' || dro.objectTable || '#' || findIdNameByObjectUuid(dro.objectTable, dro.uuid) || '.' || dr.roletype)
+                            when dp.op = 'INSERT'
+                                then 'perm ' || dp.op || ' into ' || dp.opTableName || ' with ' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid)
+                            else 'perm ' || dp.op || ' on ' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid)
+                        end
                     ) as descendingIdName,
-                    dro.objectTable, dro.uuid
-                from rbacgrants as g
+                    dro.objectTable, dro.uuid,
+                    dp.op, dp.optablename
+                 from rbacgrants as g
 
                 left outer join rbacrole as ar on ar.uuid = g.ascendantUuid
                     left outer join rbacobject as aro on aro.uuid = ar.objectuuid

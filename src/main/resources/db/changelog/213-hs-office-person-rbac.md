@@ -21,6 +21,7 @@ subgraph person["`**person**`"]
     subgraph person:permissions[ ]
         style person:permissions fill:#dd4901,stroke:white
 
+        perm:person:INSERT{{person:INSERT}}
         perm:person:DELETE{{person:DELETE}}
         perm:person:UPDATE{{person:UPDATE}}
         perm:person:SELECT{{person:SELECT}}
@@ -36,6 +37,7 @@ role:person:owner ==> role:person:admin
 role:person:admin ==> role:person:referrer
 
 %% granting permissions to roles
+role:global:guest ==> perm:person:INSERT
 role:person:owner ==> perm:person:DELETE
 role:person:admin ==> perm:person:UPDATE
 role:person:referrer ==> perm:person:SELECT

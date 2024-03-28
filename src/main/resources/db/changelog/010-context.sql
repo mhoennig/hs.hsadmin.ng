@@ -26,7 +26,7 @@ create or replace procedure defineContext(
     currentTask varchar(96),
     currentRequest text = null,
     currentUser varchar(63) = null,
-    assumedRoles varchar(256) = null
+    assumedRoles varchar(1023) = null
 )
     language plpgsql as $$
 begin
@@ -43,7 +43,7 @@ begin
     execute format('set local hsadminng.currentUser to %L', currentUser);
 
     assumedRoles := coalesce(assumedRoles, '');
-    assert length(assumedRoles) <= 256, FORMAT('assumedRoles must not be longer than 256 characters: "%s"', assumedRoles);
+    assert length(assumedRoles) <= 1023, FORMAT('assumedRoles must not be longer than 1023 characters: "%s"', assumedRoles);
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
 
     call contextDefined(currentTask, currentRequest, currentUser, assumedRoles);
@@ -87,11 +87,11 @@ end; $$;
     Raises exception if not set.
  */
 create or replace function currentRequest()
-    returns varchar(512)
+    returns text
     stable -- leakproof
     language plpgsql as $$
 declare
-    currentRequest varchar(512);
+    currentRequest text;
 begin
     begin
         currentRequest := current_setting('hsadminng.currentRequest');
@@ -135,22 +135,11 @@ end; $$;
     or empty array, if not set.
  */
 create or replace function assumedRoles()
-    returns varchar(63)[]
+    returns varchar(1023)[]
     stable -- leakproof
     language plpgsql as $$
-declare
-    currentSubject varchar(63);
 begin
-    begin
-        currentSubject := current_setting('hsadminng.assumedRoles');
-    exception
-        when others then
-            return array []::varchar[];
-    end;
-    if (currentSubject = '') then
-        return array []::varchar[];
-    end if;
-    return string_to_array(currentSubject, ';');
+    return string_to_array(current_setting('hsadminng.assumedRoles', true), ';');
 end; $$;
 
 create or replace function cleanIdentifier(rawIdentifier varchar)
@@ -219,17 +208,17 @@ begin
 end ; $$;
 
 create or replace function currentSubjects()
-    returns varchar(63)[]
+    returns varchar(1023)[]
     stable -- leakproof
     language plpgsql as $$
 declare
-    assumedRoles varchar(63)[];
+    assumedRoles varchar(1023)[];
 begin
     assumedRoles := assumedRoles();
     if array_length(assumedRoles, 1) > 0 then
-        return assumedRoles();
+        return assumedRoles;
     else
-        return array [currentUser()]::varchar(63)[];
+        return array [currentUser()]::varchar(1023)[];
     end if;
 end; $$;
 

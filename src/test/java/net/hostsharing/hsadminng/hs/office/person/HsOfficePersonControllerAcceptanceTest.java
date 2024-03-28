@@ -65,7 +65,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("", hasSize(12));
+                    .body("", hasSize(13));
                 // @formatter:on
         }
     }

@@ -1,4 +1,6 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
 --changeset hs-office-bankaccount-rbac-OBJECT:1 endDelimiter:--//
@@ -15,125 +17,129 @@ call generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office_bankaccount')
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-bankaccount-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates the roles and their assignments for a new bankaccount for the AFTER INSERT TRIGGER.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace function createRbacRolesForHsOfficeBankAccount()
+create or replace procedure buildRbacSystemForHsOfficeBankAccount(
+    NEW hs_office_bankaccount
+)
+    language plpgsql as $$
+
+declare
+
+begin
+    call enterTriggerForObjectUuid(NEW.uuid);
+
+    perform createRoleWithGrants(
+        hsOfficeBankAccountOwner(NEW),
+            permissions => array['DELETE'],
+            incomingSuperRoles => array[globalAdmin()],
+            userUuids => array[currentUserUuid()]
+    );
+
+    perform createRoleWithGrants(
+        hsOfficeBankAccountAdmin(NEW),
+            permissions => array['UPDATE'],
+            incomingSuperRoles => array[hsOfficeBankAccountOwner(NEW)]
+    );
+
+    perform createRoleWithGrants(
+        hsOfficeBankAccountReferrer(NEW),
+            permissions => array['SELECT'],
+            incomingSuperRoles => array[hsOfficeBankAccountAdmin(NEW)]
+    );
+
+    call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_bankaccount row.
+ */
+
+create or replace function insertTriggerForHsOfficeBankAccount_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    if TG_OP <> 'INSERT' then
-        raise exception 'invalid usage of TRIGGER AFTER INSERT';
-    end if;
-
-    perform createRoleWithGrants(
-            hsOfficeBankAccountOwner(NEW),
-            permissions => array['DELETE'],
-            incomingSuperRoles => array[globalAdmin()],
-            userUuids => array[currentUserUuid()],
-            grantedByRole => globalAdmin()
-        );
-
-    perform createRoleWithGrants(
-            hsOfficeBankAccountAdmin(NEW),
-            incomingSuperRoles => array[hsOfficeBankAccountOwner(NEW)]
-        );
-
-    perform createRoleWithGrants(
-            hsOfficeBankAccountTenant(NEW),
-            incomingSuperRoles => array[hsOfficeBankAccountAdmin(NEW)]
-        );
-
-    perform createRoleWithGrants(
-            hsOfficeBankAccountGuest(NEW),
-            permissions => array['SELECT'],
-            incomingSuperRoles => array[hsOfficeBankAccountTenant(NEW)]
-        );
-
+    call buildRbacSystemForHsOfficeBankAccount(NEW);
     return NEW;
 end; $$;
 
-/*
-    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
- */
-
-create trigger createRbacRolesForHsOfficeBankAccount_Trigger
-    after insert
-    on hs_office_bankaccount
+create trigger insertTriggerForHsOfficeBankAccount_tg
+    after insert on hs_office_bankaccount
     for each row
-execute procedure createRbacRolesForHsOfficeBankAccount();
+execute procedure insertTriggerForHsOfficeBankAccount_tf();
 --//
 
+
+-- ============================================================================
+--changeset hs-office-bankaccount-rbac-INSERT:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Creates INSERT INTO hs_office_bankaccount permissions for the related global rows.
+ */
+do language plpgsql $$
+    declare
+        row global;
+    begin
+        call defineContext('create INSERT INTO hs_office_bankaccount permissions for the related global rows');
+
+        FOR row IN SELECT * FROM global
+            LOOP
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'hs_office_bankaccount'),
+                    globalGuest());
+            END LOOP;
+    END;
+$$;
+
+/**
+    Adds hs_office_bankaccount INSERT permission to specified role of new global rows.
+*/
+create or replace function hs_office_bankaccount_global_insert_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_office_bankaccount'),
+            globalGuest());
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_hs_office_bankaccount_global_insert_tg
+    after insert on global
+    for each row
+execute procedure hs_office_bankaccount_global_insert_tf();
+--//
 
 -- ============================================================================
 --changeset hs-office-bankaccount-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_office_bankaccount', $idName$
-    target.holder
+call generateRbacIdentityViewFromProjection('hs_office_bankaccount',
+    $idName$
+        iban
     $idName$);
 --//
-
 
 -- ============================================================================
 --changeset hs-office-bankaccount-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_bankaccount', 'target.holder',
+call generateRbacRestrictedView('hs_office_bankaccount',
+    $orderBy$
+        iban
+    $orderBy$,
     $updates$
         holder = new.holder,
         iban = new.iban,
         bic = new.bic
     $updates$);
---/
-
-
--- ============================================================================
---changeset hs-office-bankaccount-rbac-NEW-BANKACCOUNT:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-/*
-    Creates a global permission for new-bankaccount and assigns it to the hostsharing admins role.
- */
-do language plpgsql $$
-    declare
-        addCustomerPermissions  uuid[];
-        globalObjectUuid        uuid;
-        globalAdminRoleUuid         uuid ;
-    begin
-        call defineContext('granting global new-bankaccount permission to global admin role', null, null, null);
-
-        globalAdminRoleUuid := findRoleId(globalAdmin());
-        globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-bankaccount']);
-        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
-    end;
-$$;
-
-/**
-    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
- */
-create or replace function addHsOfficeBankAccountNotAllowedForCurrentSubjects()
-    returns trigger
-    language PLPGSQL
-as $$
-begin
-    raise exception '[403] new-bankaccount not permitted for %',
-        array_to_string(currentSubjects(), ';', 'null');
-end; $$;
-
-/**
-    Checks if the user or assumed roles are allowed to create a new customer.
- */
-create trigger hs_office_bankaccount_insert_trigger
-    before insert
-    on hs_office_bankaccount
-    for each row
-    -- TODO.spec: who is allowed to create new bankaccounts
-    when ( not hasAssumedRole() )
-execute procedure addHsOfficeBankAccountNotAllowedForCurrentSubjects();
 --//
 
