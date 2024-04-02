@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
@@ -23,6 +24,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.IOException;
 import java.io.IOException;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -50,7 +52,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("CoopAssetsTransaction")
-public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUuid {
+public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsOfficeCoopAssetsTransactionEntity> stringify = stringify(HsOfficeCoopAssetsTransactionEntity.class)
             .withIdProp(HsOfficeCoopAssetsTransactionEntity::getTaggedMemberNumber)

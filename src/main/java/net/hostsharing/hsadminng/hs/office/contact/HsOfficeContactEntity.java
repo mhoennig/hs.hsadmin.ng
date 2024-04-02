@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.contact;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -30,7 +30,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("Contact")
-public class HsOfficeContactEntity implements Stringifyable, HasUuid {
+public class HsOfficeContactEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsOfficeContactEntity> toString = stringify(HsOfficeContactEntity.class, "contact")
             .withProp(Fields.label, HsOfficeContactEntity::getLabel)
@@ -43,13 +43,13 @@ public class HsOfficeContactEntity implements Stringifyable, HasUuid {
     private String label;
 
     @Column(name = "postaladdress")
-    private String postalAddress; // TODO: check if we really want multiple, if so: JSON-Array or Postgres-Array?
+    private String postalAddress; // TODO.spec: check if we really want multiple, if so: JSON-Array or Postgres-Array?
 
     @Column(name = "emailaddresses", columnDefinition = "json")
-    private String emailAddresses; // TODO: check if we can really add multiple. format: ["eins@...", "zwei@..."]
+    private String emailAddresses; // TODO.spec: check if we can really add multiple. format: ["eins@...", "zwei@..."]
 
     @Column(name = "phonenumbers", columnDefinition = "json")
-    private String phoneNumbers; // TODO: check if we can really add multiple. format: { "office": "+49 40 12345-10", "fax": "+49 40 12345-05" }
+    private String phoneNumbers; // TODO.spec: check if we can really add multiple. format: { "office": "+49 40 12345-10", "fax": "+49 40 12345-05" }
 
     @Override
     public String toString() {

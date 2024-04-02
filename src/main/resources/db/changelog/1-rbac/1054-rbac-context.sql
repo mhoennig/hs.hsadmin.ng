@@ -85,10 +85,10 @@ end; $$;
     This function will be overwritten by later changesets.
  */
 create or replace procedure contextDefined(
-    currentTask varchar,
-    currentRequest varchar,
-    currentUser varchar,
-    assumedRoles varchar
+    currentTask varchar(127),
+    currentRequest text,
+    currentUser varchar(63),
+    assumedRoles varchar(1023)
 )
     language plpgsql as $$
 declare

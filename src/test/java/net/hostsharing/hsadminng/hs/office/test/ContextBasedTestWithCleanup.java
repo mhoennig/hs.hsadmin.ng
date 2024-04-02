@@ -1,11 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.test;
 
 import net.hostsharing.hsadminng.context.ContextBasedTest;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantEntity;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.test.JpaAttempt;
@@ -66,7 +65,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return merged;
     }
 
-    public UUID toCleanup(final Class<? extends HasUuid> entityClass, final UUID uuidToCleanup) {
+    public UUID toCleanup(final Class<? extends RbacObject> entityClass, final UUID uuidToCleanup) {
         out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup);
         entitiesToCleanup.put(uuidToCleanup, entityClass);
         return uuidToCleanup;
@@ -81,7 +80,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return entity;
     }
 
-    protected void cleanupAllNew(final Class<? extends HasUuid> entityClass) {
+    protected void cleanupAllNew(final Class<? extends RbacObject> entityClass) {
         if (initialRbacObjects == null) {
             out.println("skipping cleanupAllNew: " + entityClass.getSimpleName());
             return; // TODO: seems @AfterEach is called without any @BeforeEach

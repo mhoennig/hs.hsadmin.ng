@@ -1,18 +1,5 @@
 --liquibase formatted sql
 
--- ============================================================================
--- PERMISSIONS
---changeset rbac-role-builder-to-uuids:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-create or replace function toPermissionUuids(forObjectUuid uuid, permitOps RbacOp[])
-    returns uuid[]
-    language plpgsql
-    strict as $$
-begin
-    return createPermissions(forObjectUuid, permitOps);
-end; $$;
-
 
 -- =================================================================
 -- CREATE ROLE
@@ -32,6 +19,8 @@ create or replace function createRoleWithGrants(
     language plpgsql as $$
 declare
     roleUuid                uuid;
+    permission              RbacOp;
+    permissionUuid          uuid;
     subRoleDesc             RbacRoleDescriptor;
     superRoleDesc           RbacRoleDescriptor;
     subRoleUuid             uuid;
@@ -41,9 +30,11 @@ declare
 begin
     roleUuid := createRole(roleDescriptor);
 
-    if cardinality(permissions) > 0 then
-        call grantPermissionsToRole(roleUuid, toPermissionUuids(roleDescriptor.objectuuid, permissions));
-    end if;
+    foreach permission in array permissions
+        loop
+            permissionUuid := createPermission(roleDescriptor.objectuuid, permission);
+            call grantPermissionToRole(permissionUuid, roleUuid);
+        end loop;
 
     foreach superRoleDesc in array array_remove(incomingSuperRoles, null)
         loop
@@ -60,7 +51,7 @@ begin
     if cardinality(userUuids) > 0 then
         -- direct grants to users need a grantedByRole which can revoke the grant
         if grantedByRole is null then
-            userGrantsByRoleUuid := roleUuid; -- TODO: or do we want to require an explicit userGrantsByRoleUuid?
+            userGrantsByRoleUuid := roleUuid; -- TODO.spec: or do we want to require an explicit userGrantsByRoleUuid?
         else
             userGrantsByRoleUuid := getRoleId(grantedByRole);
         end if;

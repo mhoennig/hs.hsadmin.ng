@@ -4,7 +4,6 @@
 /build/www/**
 /src/test/javascript/coverage/
 /worktrees/
-TODO-progress.png
 
 ######################
 # Node

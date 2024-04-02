@@ -11,7 +11,7 @@ public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEnt
 
     Optional<HsOfficePartnerEntity> findByUuid(UUID id);
 
-    List<HsOfficePartnerEntity> findAll(); // TODO: move to a repo in test sources
+    List<HsOfficePartnerEntity> findAll(); // TODO.impl: move to a repo in test sources
 
     @Query("""
             SELECT partner FROM HsOfficePartnerEntity partner

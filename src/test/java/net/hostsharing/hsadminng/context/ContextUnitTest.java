@@ -27,12 +27,12 @@ import static org.mockito.Mockito.verify;
 class ContextUnitTest {
 
     private static final String DEFINE_CONTEXT_QUERY_STRING = """
-            call defineContext(
-                cast(:currentTask as varchar),
-                cast(:currentRequest as varchar),
-                cast(:currentUser as varchar),
-                cast(:assumedRoles as varchar));
-            """;
+           call defineContext(
+               cast(:currentTask as varchar(127)),
+               cast(:currentRequest as text),
+               cast(:currentUser as varchar(63)),
+               cast(:assumedRoles as varchar(1023)));
+           """;
 
     @Nested
     class WithoutHttpRequest {
@@ -71,7 +71,7 @@ class ContextUnitTest {
             context.define("current-user");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
-            verify(nativeQuery).setParameter("currentRequest", "");
+            verify(nativeQuery).setParameter("currentRequest", null);
         }
     }
 
@@ -142,8 +142,8 @@ class ContextUnitTest {
         }
 
         @Test
-        void shortensCurrentTaskTo96Chars() throws IOException {
-            givenRequest("GET", "http://localhost:9999/api/endpoint/" + "0123456789".repeat(10),
+        void shortensCurrentTaskToMaxLength() throws IOException {
+            givenRequest("GET", "http://localhost:9999/api/endpoint/" + "0123456789".repeat(13),
                     Map.ofEntries(
                             Map.entry("current-user", "given-user"),
                             Map.entry("content-type", "application/json"),
@@ -153,26 +153,7 @@ class ContextUnitTest {
             context.define("current-user");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
-            verify(nativeQuery).setParameter(eq("currentTask"), argThat((String t) -> t.length() == 96));
-        }
-
-        @Test
-        void shortensCurrentRequestTo512Chars() throws IOException {
-            givenRequest("GET", "http://localhost:9999/api/endpoint",
-                    Map.ofEntries(
-                            Map.entry("current-user", "given-user"),
-                            Map.entry("content-type", "application/json"),
-                            Map.entry("user-agent", "given-user-agent")),
-                    """
-                               {
-                                   "dummy": "%s"
-                               }
-                            """.formatted("0123456789".repeat(60)));
-
-            context.define("current-user");
-
-            verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
-            verify(nativeQuery).setParameter(eq("currentRequest"), argThat((String t) -> t.length() == 512));
+            verify(nativeQuery).setParameter(eq("currentTask"), argThat((String t) -> t.length() == 127));
         }
 
         private void givenRequest(final String method, final String url, final Map<String, String> headers, final String body)

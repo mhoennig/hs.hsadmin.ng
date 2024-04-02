@@ -380,12 +380,6 @@ You can explore the prototype as follows:
 `src/`
     The actual source-code, see [Source Code Package Structure](#source-code-package-structure) for details.
 
-`TODO.md`
-    Requirements of initial project. Do not touch!
-
-`TODO-progress.png`
-    Generated diagram image of the project progress.
-
 `tools/`
     Some shell-scripts to useful tasks.
 
@@ -765,5 +759,4 @@ The output will list the generated files.
 ## Further Documentation
 
 - the `doc` directory contains architecture concepts and a glossary
-- TODO.md tracks requirements and progress for the contract of the initial project,
-  please do not amend anything in this document
+- the `ideas` directory contains unstructured ideas for future development or documentation

@@ -121,7 +121,7 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.office.(*)..",
-                    "..rbac.rbacgrant" // TODO: just because of RbacGrantsDiagramServiceIntegrationTest
+                    "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
             );
 
     @ArchTest

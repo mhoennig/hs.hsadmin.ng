@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -43,7 +43,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Debitor")
-public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
+public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
 
     public static final String DEBITOR_NUMBER_TAG = "D-";
     public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
@@ -153,7 +153,7 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                         "vatCountryCode",
                         "vatBusiness",
                         "vatReverseCharge",
-                        "defaultPrefix" /* TODO: do we want that updatable? */)
+                        "defaultPrefix" /* TODO.spec: do we want that updatable? */)
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
                 .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class,

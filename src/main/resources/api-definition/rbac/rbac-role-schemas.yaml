@@ -23,7 +23,7 @@ components:
                         - ADMIN
                         - AGENT
                         - TENANT
-                        - GUEST
                         - REFERRER
+                        - GUEST
                 roleName:
                     type: string

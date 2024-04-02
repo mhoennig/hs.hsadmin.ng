@@ -8,7 +8,7 @@ import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -45,7 +45,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Partner")
-public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
+public class HsOfficePartnerEntity implements Stringifyable, RbacObject {
 
     public static final String PARTNER_NUMBER_TAG = "P-";
 

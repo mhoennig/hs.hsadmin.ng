@@ -130,7 +130,6 @@ public class JpaAttempt {
                 final Class<? extends RuntimeException> expectedExceptionClass,
                 final String... expectedRootCauseMessages) {
             assertThat(wasSuccessful()).as("wasSuccessful").isFalse();
-            // TODO: also check the expected exception class itself
             final String firstRootCauseMessageLine = firstRootCauseMessageLineOf(caughtException(expectedExceptionClass));
             for (String expectedRootCauseMessage : expectedRootCauseMessages) {
                 assertThat(firstRootCauseMessageLine).contains(expectedRootCauseMessage);

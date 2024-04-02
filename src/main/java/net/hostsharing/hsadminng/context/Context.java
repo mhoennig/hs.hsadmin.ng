@@ -55,16 +55,15 @@ public class Context {
             final String currentRequest,
             final String currentUser,
             final String assumedRoles) {
-        final var query = em.createNativeQuery(
-                """
-                        call defineContext(
-                            cast(:currentTask as varchar), 
-                            cast(:currentRequest as varchar), 
-                            cast(:currentUser as varchar), 
-                            cast(:assumedRoles as varchar));
-                        """);
-        query.setParameter("currentTask", shortenToMaxLength(currentTask, 96));
-        query.setParameter("currentRequest", shortenToMaxLength(currentRequest, 512)); // TODO.spec: length?
+        final var query = em.createNativeQuery("""
+                call defineContext(
+                    cast(:currentTask as varchar(127)),
+                    cast(:currentRequest as text),
+                    cast(:currentUser as varchar(63)),
+                    cast(:assumedRoles as varchar(1023)));
+                """);
+        query.setParameter("currentTask", shortenToMaxLength(currentTask, 127));
+        query.setParameter("currentRequest", currentRequest);
         query.setParameter("currentUser", currentUser);
         query.setParameter("assumedRoles", assumedRoles != null ? assumedRoles : "");
         query.executeUpdate();

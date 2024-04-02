@@ -4,7 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -32,7 +32,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
-public class HsOfficeRelationEntity implements HasUuid, Stringifyable {
+public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
 
     private static Stringify<HsOfficeRelationEntity> toString = stringify(HsOfficeRelationEntity.class, "rel")
             .withProp(Fields.anchor, HsOfficeRelationEntity::getAnchor)

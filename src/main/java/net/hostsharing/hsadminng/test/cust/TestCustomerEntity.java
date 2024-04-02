@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 
@@ -24,7 +24,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestCustomerEntity implements HasUuid {
+public class TestCustomerEntity implements RbacObject {
 
     @Id
     @GeneratedValue

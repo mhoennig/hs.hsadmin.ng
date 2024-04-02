@@ -13,7 +13,7 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.test.cust.TestCustomerEntity;
 import net.hostsharing.hsadminng.test.dom.TestDomainEntity;
@@ -277,7 +277,7 @@ public class RbacView {
      */
     public <EC extends RbacObject> RbacView importRootEntityAliasProxy(
             final String aliasName,
-            final Class<? extends HasUuid> entityClass,
+            final Class<? extends RbacObject> entityClass,
             final SQL fetchSql,
             final Column dependsOnColum) {
         if (rootEntityAliasProxy != null) {
@@ -300,7 +300,7 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importSubEntityAlias(
-            final String aliasName, final Class<? extends HasUuid> entityClass,
+            final String aliasName, final Class<? extends RbacObject> entityClass,
             final SQL fetchSql, final Column dependsOnColum) {
         importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, true, NOT_NULL);
         return this;
@@ -334,7 +334,7 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importEntityAlias(
-            final String aliasName, final Class<? extends HasUuid> entityClass,
+            final String aliasName, final Class<? extends RbacObject> entityClass,
             final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
         importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false, nullable);
         return this;
@@ -342,14 +342,14 @@ public class RbacView {
 
     // TODO: remove once it's not used in HsOffice...Entity anymore
     public RbacView importEntityAlias(
-            final String aliasName, final Class<? extends HasUuid> entityClass,
+            final String aliasName, final Class<? extends RbacObject> entityClass,
             final Column dependsOnColum) {
         importEntityAliasImpl(aliasName, entityClass, directlyFetchedByDependsOnColumn(), dependsOnColum, false, null);
         return this;
     }
 
     private EntityAlias importEntityAliasImpl(
-            final String aliasName, final Class<? extends HasUuid> entityClass,
+            final String aliasName, final Class<? extends RbacObject> entityClass,
             final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity, final Nullable nullable) {
         final var entityAlias = new EntityAlias(aliasName, entityClass, fetchSql, dependsOnColum, asSubEntity, nullable);
         entityAliases.put(aliasName, entityAlias);
@@ -1046,7 +1046,7 @@ public class RbacView {
         }
     }
 
-    private static void generateRbacView(final Class<? extends HasUuid> c) {
+    private static void generateRbacView(final Class<? extends RbacObject> c) {
         final Method mainMethod = stream(c.getMethods()).filter(
                         m -> isStatic(m.getModifiers()) && m.getName().equals("main")
                 )

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -26,7 +26,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("PartnerDetails")
-public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
+public class HsOfficePartnerDetailsEntity implements RbacObject, Stringifyable {
 
     private static Stringify<HsOfficePartnerDetailsEntity> stringify = stringify(
             HsOfficePartnerDetailsEntity.class,
