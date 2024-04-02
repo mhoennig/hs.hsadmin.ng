@@ -89,7 +89,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // when
             final var result = attempt(em, () -> {
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .debitorNumberSuffix((byte)21)
+                        .debitorNumberSuffix("21")
                         .debitorRel(HsOfficeRelationEntity.builder()
                                 .type(HsOfficeRelationType.DEBITOR)
                                 .anchor(givenPartnerPerson)
@@ -121,7 +121,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // when
             final var result = attempt(em, () -> {
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .debitorNumberSuffix((byte)21)
+                        .debitorNumberSuffix("21")
                         .debitorRel(HsOfficeRelationEntity.builder()
                                 .type(HsOfficeRelationType.DEBITOR)
                                 .anchor(givenPartnerPerson)
@@ -156,7 +156,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                 final var givenDebitorPerson = one(personRepo.findPersonByOptionalNameLike("Fourth eG"));
                 final var givenContact = one(contactRepo.findContactByOptionalLabelLike("fourth contact"));
                 final var newDebitor = HsOfficeDebitorEntity.builder()
-                        .debitorNumberSuffix((byte)22)
+                        .debitorNumberSuffix("22")
                         .debitorRel(HsOfficeRelationEntity.builder()
                                 .type(HsOfficeRelationType.DEBITOR)
                                 .anchor(givenPartnerPerson)
@@ -613,7 +613,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenBankAccount =
                     bankAccountHolder != null ? one(bankAccountRepo.findByOptionalHolderLike(bankAccountHolder)) : null;
             final var newDebitor = HsOfficeDebitorEntity.builder()
-                    .debitorNumberSuffix((byte)20)
+                    .debitorNumberSuffix("20")
                     .debitorRel(HsOfficeRelationEntity.builder()
                             .type(HsOfficeRelationType.DEBITOR)
                             .anchor(givenPartnerPerson)

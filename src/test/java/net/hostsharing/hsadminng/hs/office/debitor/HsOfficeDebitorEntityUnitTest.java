@@ -26,7 +26,7 @@ class HsOfficeDebitorEntityUnitTest {
     @Test
     void toStringContainsPartnerAndContact() {
         final var given = HsOfficeDebitorEntity.builder()
-                .debitorNumberSuffix((byte)67)
+                .debitorNumberSuffix("67")
                 .debitorRel(givenDebitorRel)
                 .defaultPrefix("som")
                 .partner(HsOfficePartnerEntity.builder()
@@ -43,7 +43,7 @@ class HsOfficeDebitorEntityUnitTest {
     void toShortStringContainsDebitorNumber() {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
-                .debitorNumberSuffix((byte)67)
+                .debitorNumberSuffix("67")
                 .partner(HsOfficePartnerEntity.builder()
                         .partnerNumber(12345)
                         .build())
@@ -58,7 +58,7 @@ class HsOfficeDebitorEntityUnitTest {
     void getDebitorNumberWithPartnerNumberAndDebitorNumberSuffix() {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
-                .debitorNumberSuffix((byte)67)
+                .debitorNumberSuffix("67")
                 .partner(HsOfficePartnerEntity.builder()
                         .partnerNumber(12345)
                         .build())
@@ -73,7 +73,7 @@ class HsOfficeDebitorEntityUnitTest {
     void getDebitorNumberWithoutPartnerReturnsNull() {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
-                .debitorNumberSuffix((byte)67)
+                .debitorNumberSuffix("67")
                 .partner(null)
                 .build();
 
@@ -86,7 +86,7 @@ class HsOfficeDebitorEntityUnitTest {
     void getDebitorNumberWithoutPartnerNumberReturnsNull() {
         final var given = HsOfficeDebitorEntity.builder()
                 .debitorRel(givenDebitorRel)
-                .debitorNumberSuffix((byte)67)
+                .debitorNumberSuffix("67")
                 .partner(HsOfficePartnerEntity.builder().build())
                 .build();
 

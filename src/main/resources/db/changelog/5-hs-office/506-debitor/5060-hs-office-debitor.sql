@@ -7,7 +7,7 @@
 create table hs_office_debitor
 (
     uuid                    uuid unique references RbacObject (uuid) initially deferred,
-    debitorNumberSuffix     numeric(2) not null,
+    debitorNumberSuffix     char(2) not null check (debitorNumberSuffix::text ~ '^[0-9][0-9]$'),
     debitorRelUuid          uuid not null references hs_office_relation(uuid),
     billable                boolean not null default true,
     vatId                   varchar(24), -- TODO.spec: here or in person?

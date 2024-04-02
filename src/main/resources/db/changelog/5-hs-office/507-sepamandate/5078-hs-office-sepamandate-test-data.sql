@@ -10,7 +10,7 @@
  */
 create or replace procedure createHsOfficeSepaMandateTestData(
         forPartnerNumber numeric(5),
-        forDebitorSuffix numeric(2),
+        forDebitorSuffix char(2),
         forIban varchar,
         withReference varchar)
     language plpgsql as $$
@@ -48,9 +48,9 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createHsOfficeSepaMandateTestData(10001, 11, 'DE02120300000000202051', 'ref-10001-11');
-        call createHsOfficeSepaMandateTestData(10002, 12, 'DE02100500000054540402', 'ref-10002-12');
-        call createHsOfficeSepaMandateTestData(10003, 13, 'DE02300209000106531065', 'ref-10003-13');
+        call createHsOfficeSepaMandateTestData(10001, '11', 'DE02120300000000202051', 'ref-10001-11');
+        call createHsOfficeSepaMandateTestData(10002, '12', 'DE02100500000054540402', 'ref-10002-12');
+        call createHsOfficeSepaMandateTestData(10003, '13', 'DE02300209000106531065', 'ref-10003-13');
     end;
 $$;
 --//

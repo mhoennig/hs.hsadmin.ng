@@ -14,6 +14,7 @@ import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -44,6 +45,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
 
     public static final String MEMBER_NUMBER_TAG = "M-";
+    public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
 
     private static Stringify<HsOfficeMembershipEntity> stringify = stringify(HsOfficeMembershipEntity.class)
             .withProp(e -> MEMBER_NUMBER_TAG + e.getMemberNumber())
@@ -61,6 +63,7 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
     private HsOfficePartnerEntity partner;
 
     @Column(name = "membernumbersuffix", length = 2)
+    @Pattern(regexp = TWO_DECIMAL_DIGITS)
     private String memberNumberSuffix;
 
     @Column(name = "validity", columnDefinition = "daterange")

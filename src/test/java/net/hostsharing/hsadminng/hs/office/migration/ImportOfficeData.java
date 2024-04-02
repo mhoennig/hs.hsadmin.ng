@@ -724,7 +724,7 @@ public class ImportOfficeData extends ContextBasedTest {
                     relations.put(relationId++, debitorRel);
 
                     final var debitor = HsOfficeDebitorEntity.builder()
-                            .debitorNumberSuffix((byte) 0)
+                            .debitorNumberSuffix("00")
                             .partner(partner)
                             .debitorRel(debitorRel)
                             .defaultPrefix(rec.getString("member_code").replace("hsh00-", ""))

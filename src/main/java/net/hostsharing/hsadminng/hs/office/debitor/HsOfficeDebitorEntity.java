@@ -16,6 +16,7 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -45,6 +46,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
 
     public static final String DEBITOR_NUMBER_TAG = "D-";
+    public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
 
     private static Stringify<HsOfficeDebitorEntity> stringify =
             stringify(HsOfficeDebitorEntity.class, "debitor")
@@ -75,8 +77,9 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     @NotFound(action = NotFoundAction.IGNORE)
     private HsOfficePartnerEntity partner;
 
-    @Column(name = "debitornumbersuffix", columnDefinition = "numeric(2)")
-    private Byte debitorNumberSuffix; // TODO maybe rather as a formatted String?
+    @Column(name = "debitornumbersuffix", length = 2)
+    @Pattern(regexp = TWO_DECIMAL_DIGITS)
+    private String debitorNumberSuffix;
 
     @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false)
     @JoinColumn(name = "debitorreluuid", nullable = false)
@@ -109,7 +112,7 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                 .filter(partner -> debitorNumberSuffix != null)
                 .map(HsOfficePartnerEntity::getPartnerNumber)
                 .map(Object::toString)
-                .map(partnerNumber -> partnerNumber + String.format("%02d", debitorNumberSuffix))
+                .map(partnerNumber -> partnerNumber + debitorNumberSuffix)
                 .orElse(null);
     }
 
@@ -138,7 +141,7 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
                                             JOIN hs_office_relation debitorRel
                                                 ON debitorRel.anchorUuid = partnerRel.holderUuid AND debitorRel.type = 'DEBITOR'
                                             WHERE debitorRel.uuid = debitor.debitorRelUuid)
-                                         || to_char(debitorNumberSuffix, 'fm00') as idName
+                                         || debitorNumberSuffix as idName
                         FROM hs_office_debitor AS debitor
                         """))
                 .withRestrictedViewOrderBy(SQL.projection("defaultPrefix"))

@@ -201,7 +201,7 @@ create trigger hs_office_debitor_insert_permission_check_tg
                             JOIN hs_office_relation debitorRel
                                 ON debitorRel.anchorUuid = partnerRel.holderUuid AND debitorRel.type = 'DEBITOR'
                             WHERE debitorRel.uuid = debitor.debitorRelUuid)
-                         || to_char(debitorNumberSuffix, 'fm00') as idName
+                         || debitorNumberSuffix as idName
         FROM hs_office_debitor AS debitor
         $idName$);
 --//

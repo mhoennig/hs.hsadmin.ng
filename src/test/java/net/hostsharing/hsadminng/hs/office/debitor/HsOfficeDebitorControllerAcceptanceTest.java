@@ -722,7 +722,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
             final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
-                    .debitorNumberSuffix(++nextDebitorSuffix)
+                    .debitorNumberSuffix(nextDebitorSuffix())
                     .billable(true)
                     .debitorRel(
                             HsOfficeRelationEntity.builder()
@@ -750,5 +750,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .executeUpdate();
             System.out.printf("deleted %d entities%n", count);
         });
+    }
+
+    private String nextDebitorSuffix() {
+        return String.format("%02d", nextDebitorSuffix++);
     }
 }

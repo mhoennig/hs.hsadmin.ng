@@ -10,7 +10,7 @@ import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TE
 @UtilityClass
 public class TestHsOfficeDebitor {
 
-    public byte DEFAULT_DEBITOR_SUFFIX = 0;
+    public String DEFAULT_DEBITOR_SUFFIX = "00";
 
     public static final HsOfficeDebitorEntity TEST_DEBITOR = HsOfficeDebitorEntity.builder()
             .debitorNumberSuffix(DEFAULT_DEBITOR_SUFFIX)
