@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -53,7 +52,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     public ResponseEntity<HsOfficeMembershipResource> addMembership(
             final String currentUser,
             final String assumedRoles,
-            @Valid final HsOfficeMembershipInsertResource body) {
+            final HsOfficeMembershipInsertResource body) {
 
         context.define(currentUser, assumedRoles);
 

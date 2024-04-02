@@ -694,7 +694,7 @@ Users can view only the roles to which are granted to them.
 
 Grant can be `empowered`, this means that the grantee user can grant the granted role to other users
 and revoke grants to that role.
-(TODO: access control part not yet implemented)
+(TODO: access control part not yet implemented, currently all accessible roles can be granted to other users)
 
 Grants can be `managed`, which means they are created and deleted by system-defined rules.
 If a grant is not managed, it was created by an empowered user and can be deleted by empowered users.

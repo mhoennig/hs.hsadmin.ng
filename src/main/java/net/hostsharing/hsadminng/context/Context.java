@@ -15,11 +15,9 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
-import static net.hostsharing.hsadminng.mapper.PostgresArray.fromPostgresArray;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 
 @Service
@@ -82,14 +80,11 @@ public class Context {
     }
 
     public String[] getAssumedRoles() {
-        final byte[] result = (byte[]) em.createNativeQuery("select assumedRoles() as roles", String[].class).getSingleResult();
-        return fromPostgresArray(result, String.class, Function.identity());
+        return (String[]) em.createNativeQuery("select assumedRoles() as roles", String[].class).getSingleResult();
     }
 
     public UUID[] currentSubjectsUuids() {
-        final byte[] result = (byte[]) em.createNativeQuery("select currentSubjectsUuids() as uuids", UUID[].class)
-                .getSingleResult();
-        return fromPostgresArray(result, UUID.class, UUID::fromString);
+        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids() as uuids", UUID[].class).getSingleResult();
     }
 
     public static String getCallerMethodNameFromStackFrame(final int skipFrames) {

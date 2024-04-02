@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -59,7 +58,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> addCoopAssetsTransaction(
             final String currentUser,
             final String assumedRoles,
-            @Valid final HsOfficeCoopAssetsTransactionInsertResource requestBody) {
+            final HsOfficeCoopAssetsTransactionInsertResource requestBody) {
 
         context.define(currentUser, assumedRoles);
         validate(requestBody);

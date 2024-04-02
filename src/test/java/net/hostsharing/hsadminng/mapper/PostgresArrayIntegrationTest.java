@@ -7,7 +7,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import jakarta.persistence.EntityManager;
 
 import java.util.UUID;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,9 +29,7 @@ class PostgresArrayIntegrationTest {
                 return emptyArray;
             end; $$;
             """).executeUpdate();
-        final byte[] pgArray = (byte[]) em.createNativeQuery("SELECT returnEmptyArray()", String[].class).getSingleResult();
-
-        final String[] result = PostgresArray.fromPostgresArray(pgArray, String.class, Function.identity());
+        final String[] result = (String[]) em.createNativeQuery("SELECT returnEmptyArray()", String[].class).getSingleResult();
 
         assertThat(result).isEmpty();
     }
@@ -53,9 +50,7 @@ class PostgresArrayIntegrationTest {
                 return array[text1, text2, text3, null, text4];
             end; $$;
             """).executeUpdate();
-        final byte[] pgArray = (byte[]) em.createNativeQuery("SELECT returnStringArray()", String[].class).getSingleResult();
-
-        final String[] result = PostgresArray.fromPostgresArray(pgArray, String.class, Function.identity());
+        final String[] result = (String[]) em.createNativeQuery("SELECT returnStringArray()", String[].class).getSingleResult();
 
         assertThat(result).containsExactly("one", "two, three", "four; five", null, "say \"Hello\" to me");
     }
@@ -75,9 +70,7 @@ class PostgresArrayIntegrationTest {
                 return ARRAY[uuid1, uuid2, null, uuid3];
             end; $$;
             """).executeUpdate();
-        final byte[] pgArray = (byte[]) em.createNativeQuery("SELECT returnUuidArray()", UUID[].class).getSingleResult();
-
-        final UUID[] result = PostgresArray.fromPostgresArray(pgArray, UUID.class, UUID::fromString);
+        final UUID[] result = (UUID[]) em.createNativeQuery("SELECT returnUuidArray()", UUID[].class).getSingleResult();
 
         assertThat(result).containsExactly(
                 UUID.fromString("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
