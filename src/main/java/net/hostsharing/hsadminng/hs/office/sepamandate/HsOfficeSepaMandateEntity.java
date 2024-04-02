@@ -141,6 +141,6 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, HasUuid {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("253-hs-office-sepamandate-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac");
     }
 }

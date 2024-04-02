@@ -68,6 +68,6 @@ public class TestPackageEntity implements HasUuid {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("123-test-package-rbac");
+        rbac().generateWithBaseFileName("2-test/202-test-package/2023-test-package-rbac");
     }
 }

@@ -130,6 +130,6 @@ public class HsOfficeRelationEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("223-hs-office-relation-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/503-relation/5033-hs-office-relation-rbac");
     }
 }

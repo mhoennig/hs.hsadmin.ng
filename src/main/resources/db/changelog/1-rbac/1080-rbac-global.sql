@@ -139,7 +139,7 @@ select 'global', (select uuid from RbacObject where objectTable = 'global'), 'GU
 $$;
 
 begin transaction;
-    call defineContext('creating role:global#globa:guest', null, null, null);
+    call defineContext('creating role:global#global:guest', null, null, null);
     select createRole(globalGuest());
 commit;
 --//

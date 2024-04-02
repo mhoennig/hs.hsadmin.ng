@@ -67,6 +67,6 @@ public class TestDomainEntity implements HasUuid {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("133-test-domain-rbac");
+        rbac().generateWithBaseFileName("2-test/203-test-domain/2033-test-domain-rbac");
     }
 }

@@ -86,6 +86,6 @@ public class HsOfficePersonEntity implements HasUuid, Stringifyable {
 
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("213-hs-office-person-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/502-person/5023-hs-office-person-rbac");
     }
 }

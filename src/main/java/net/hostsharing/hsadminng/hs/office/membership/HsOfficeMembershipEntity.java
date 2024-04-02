@@ -28,6 +28,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
@@ -158,6 +159,6 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("303-hs-office-membership-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/510-membership/5103-hs-office-membership-rbac");
     }
 }

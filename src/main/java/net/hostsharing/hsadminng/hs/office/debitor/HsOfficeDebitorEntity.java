@@ -188,6 +188,6 @@ public class HsOfficeDebitorEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("273-hs-office-debitor-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/506-debitor/5063-hs-office-debitor-rbac");
     }
 }

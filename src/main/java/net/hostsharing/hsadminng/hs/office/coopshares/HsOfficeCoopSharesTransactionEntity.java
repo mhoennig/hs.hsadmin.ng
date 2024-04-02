@@ -23,6 +23,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.IOException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -123,6 +124,6 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, HasUu
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("313-hs-office-coopshares-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac");
     }
 }

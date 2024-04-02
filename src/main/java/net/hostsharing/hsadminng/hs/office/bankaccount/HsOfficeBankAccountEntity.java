@@ -78,6 +78,6 @@ public class HsOfficeBankAccountEntity implements HasUuid, Stringifyable {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("243-hs-office-bankaccount-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac");
     }
 }

@@ -57,6 +57,6 @@ public class TestCustomerEntity implements HasUuid {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("113-test-customer-rbac");
+        rbac().generateWithBaseFileName("2-test/201-test-customer/2013-test-customer-rbac");
     }
 }

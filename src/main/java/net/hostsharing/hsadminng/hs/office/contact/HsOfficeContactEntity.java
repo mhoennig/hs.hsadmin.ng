@@ -80,6 +80,6 @@ public class HsOfficeContactEntity implements Stringifyable, HasUuid {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("203-hs-office-contact-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/501-contact/5013-hs-office-contact-rbac");
     }
 }

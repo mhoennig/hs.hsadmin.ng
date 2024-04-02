@@ -113,6 +113,6 @@ public class HsOfficePartnerEntity implements Stringifyable, HasUuid {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("233-hs-office-partner-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/504-partner/5043-hs-office-partner-rbac");
     }
 }

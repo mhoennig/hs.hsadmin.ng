@@ -24,6 +24,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.IOException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -128,6 +129,6 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUu
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("323-hs-office-coopassets-rbac");
+        rbac().generateWithBaseFileName("5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac");
     }
 }
