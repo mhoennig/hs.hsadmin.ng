@@ -113,29 +113,31 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                     initialRoleNames,
                     "hs_office_membership#M-1000117.admin",
                     "hs_office_membership#M-1000117.owner",
-                    "hs_office_membership#M-1000117.referrer"));
+                    "hs_office_membership#M-1000117.agent"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("GmbH-firstcontact", ""))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
 
+                            // insert
+                            "{ grant perm INSERT into coopassetstransaction with membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
+                            "{ grant perm INSERT into coopsharestransaction with membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
+
                             // owner
-                            "{ grant perm DELETE on membership#M-1000117 to role membership#M-1000117.owner by system and assume }",
+                            "{ grant perm DELETE on membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
+                            "{ grant role membership#M-1000117.owner to user superuser-alex@hostsharing.net by membership#M-1000117.owner and assume }",
 
                             // admin
                             "{ grant perm UPDATE on membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
                             "{ grant role membership#M-1000117.admin to role membership#M-1000117.owner by system and assume }",
-                            "{ grant role membership#M-1000117.owner to role relation#HostsharingeG-with-PARTNER-FirstGmbH.admin by system and assume }",
-                            "{ grant role membership#M-1000117.owner to user superuser-alex@hostsharing.net by membership#M-1000117.owner and assume }",
+                            "{ grant role membership#M-1000117.admin to role relation#HostsharingeG-with-PARTNER-FirstGmbH.admin by system and assume }",
 
                             // agent
-                            "{ grant role membership#M-1000117.admin to role relation#HostsharingeG-with-PARTNER-FirstGmbH.agent by system and assume }",
-
-                            // referrer
-                            "{ grant perm SELECT on membership#M-1000117 to role membership#M-1000117.referrer by system and assume }",
-                            "{ grant role membership#M-1000117.referrer to role membership#M-1000117.admin by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-FirstGmbH.tenant to role membership#M-1000117.referrer by system and assume }",
+                            "{ grant perm SELECT on membership#M-1000117 to role membership#M-1000117.agent by system and assume }",
+                            "{ grant role membership#M-1000117.agent to role membership#M-1000117.admin by system and assume }",
+                            "{ grant role membership#M-1000117.agent to role relation#HostsharingeG-with-PARTNER-FirstGmbH.agent by system and assume }",
+                            "{ grant role relation#HostsharingeG-with-PARTNER-FirstGmbH.tenant to role membership#M-1000117.agent by system and assume }",
 
                             null));
         }
@@ -223,20 +225,20 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         }
 
         @Test
-        public void membershipReferrer_canViewButNotUpdateRelatedMembership() {
+        public void membershipAgent_canViewButNotUpdateRelatedMembership() {
             // given
             context("superuser-alex@hostsharing.net");
             final var givenMembership = givenSomeTemporaryMembership("First", "13");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             assertThatMembershipIsVisibleForRole(
                     givenMembership,
-                    "hs_office_membership#M-1000113.referrer");
+                    "hs_office_membership#M-1000113.agent");
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 // TODO: we should test with debitor- and partner-admin as well
-                context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000113.referrer");
+                context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000113.agent");
                 givenMembership.setValidity(
                         Range.closedOpen(givenMembership.getValidity().lower(), newValidityEnd));
                 return membershipRepo.save(givenMembership);

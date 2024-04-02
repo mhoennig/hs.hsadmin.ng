@@ -335,10 +335,10 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        void partnerRelAgent_canPatchValidityOfRelatedMembership() {
+        void partnerRelAdmin_canPatchValidityOfRelatedMembership() {
 
             // given
-            final var givenPartnerAgent = "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH.agent";
+            final var givenPartnerAgent = "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH.admin";
             context.define("superuser-alex@hostsharing.net", givenPartnerAgent);
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 

@@ -89,7 +89,6 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
 
@@ -110,11 +109,11 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("FirstGmbH-firstcontact", "..."))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm SELECT on coopassetstransaction#temprefB to role membership#M-1000101.referrer by system and assume }",
+                            "{ grant perm SELECT on coopassetstransaction#temprefB to role membership#M-1000101.agent by system and assume }",
+                            "{ grant perm UPDATE on coopassetstransaction#temprefB to role membership#M-1000101.admin by system and assume }",
                             null));
         }
 

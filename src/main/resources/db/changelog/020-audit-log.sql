@@ -28,7 +28,7 @@ create table tx_context
     txTimestamp     timestamp          not null,
     currentUser     varchar(63)        not null, -- not the uuid, because users can be deleted
     assumedRoles    varchar(1023)      not null, -- not the uuids, because roles can be deleted
-    currentTask     varchar(96)        not null,
+    currentTask     varchar(127)       not null,
     currentRequest  text               not null
 );
 

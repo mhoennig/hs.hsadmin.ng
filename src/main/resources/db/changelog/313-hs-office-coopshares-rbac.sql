@@ -1,125 +1,151 @@
 --liquibase formatted sql
+-- This code generated was by RbacViewPostgresGenerator, do not amend manually.
+
 
 -- ============================================================================
---changeset hs-office-coopSharesTransaction-rbac-OBJECT:1 endDelimiter:--//
+--changeset hs-office-coopsharestransaction-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_coopSharesTransaction');
+call generateRelatedRbacObject('hs_office_coopsharestransaction');
 --//
 
 
 -- ============================================================================
---changeset hs-office-coopSharesTransaction-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset hs-office-coopsharestransaction-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeCoopSharesTransaction', 'hs_office_coopSharesTransaction');
+call generateRbacRoleDescriptors('hsOfficeCoopSharesTransaction', 'hs_office_coopsharestransaction');
 --//
 
 
 -- ============================================================================
---changeset hs-office-coopSharesTransaction-rbac-ROLES-CREATION:1 endDelimiter:--//
+--changeset hs-office-coopsharestransaction-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates and updates the permissions for coopSharesTransaction entities.
+    Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace function hsOfficeCoopSharesTransactionRbacRolesTrigger()
-    returns trigger
-    language plpgsql
-    strict as $$
+create or replace procedure buildRbacSystemForHsOfficeCoopSharesTransaction(
+    NEW hs_office_coopsharestransaction
+)
+    language plpgsql as $$
+
 declare
-    newHsOfficeMembership      hs_office_membership;
+    newMembership hs_office_membership;
+
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    select * from hs_office_membership as p where p.uuid = NEW.membershipUuid into newHsOfficeMembership;
+    SELECT * FROM hs_office_membership WHERE uuid = NEW.membershipUuid    INTO newMembership;
+    assert newMembership.uuid is not null, format('newMembership must not be null for NEW.membershipUuid = %s', NEW.membershipUuid);
 
-    if TG_OP = 'INSERT' then
-
-        -- Each coopSharesTransaction entity belong exactly to one membership entity
-        -- and it makes little sense just to delegate coopSharesTransaction roles.
-        -- Therefore, we do not create coopSharesTransaction roles at all,
-        -- but instead just assign extra permissions to existing membership-roles.
-
-        -- coopsharestransactions cannot be edited nor deleted, just created+viewed
-        call grantPermissionsToRole(
-                getRoleId(hsOfficeMembershipReferrer(newHsOfficeMembership)),
-                createPermissions(NEW.uuid, array ['SELECT'])
-            );
-
-    else
-        raise exception 'invalid usage of TRIGGER';
-    end if;
+    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeMembershipAgent(newMembership));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeMembershipAdmin(newMembership));
 
     call leaveTriggerForObjectUuid(NEW.uuid);
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_coopsharestransaction row.
+ */
+
+create or replace function insertTriggerForHsOfficeCoopSharesTransaction_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call buildRbacSystemForHsOfficeCoopSharesTransaction(NEW);
     return NEW;
 end; $$;
 
-/*
-    An AFTER INSERT TRIGGER which creates the role structure for a new customer.
- */
-create trigger createRbacRolesForHsOfficeCoopSharesTransaction_Trigger
-    after insert
-    on hs_office_coopSharesTransaction
+create trigger insertTriggerForHsOfficeCoopSharesTransaction_tg
+    after insert on hs_office_coopsharestransaction
     for each row
-execute procedure hsOfficeCoopSharesTransactionRbacRolesTrigger();
+execute procedure insertTriggerForHsOfficeCoopSharesTransaction_tf();
 --//
 
 
 -- ============================================================================
---changeset hs-office-coopSharesTransaction-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-office-coopsharestransaction-rbac-INSERT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacIdentityViewFromProjection('hs_office_coopSharesTransaction', 'target.reference');
---//
 
-
--- ============================================================================
---changeset hs-office-coopSharesTransaction-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_coopSharesTransaction', orderby => 'target.reference');
---//
-
-
--- ============================================================================
---changeset hs-office-coopSharesTransaction-rbac-NEW-CoopSharesTransaction:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
 /*
-    Creates a global permission for new-coopSharesTransaction and assigns it to the hostsharing admins role.
+    Creates INSERT INTO hs_office_coopsharestransaction permissions for the related hs_office_membership rows.
  */
 do language plpgsql $$
     declare
-        addCustomerPermissions uuid[];
-        globalObjectUuid       uuid;
-        globalAdminRoleUuid    uuid ;
+        row hs_office_membership;
     begin
-        call defineContext('granting global new-coopSharesTransaction permission to global admin role', null, null, null);
+        call defineContext('create INSERT INTO hs_office_coopsharestransaction permissions for the related hs_office_membership rows');
 
-        globalAdminRoleUuid := findRoleId(globalAdmin());
-        globalObjectUuid := (select uuid from global);
-        addCustomerPermissions := createPermissions(globalObjectUuid, array ['new-coopsharestransaction']);
-        call grantPermissionsToRole(globalAdminRoleUuid, addCustomerPermissions);
-    end;
+        FOR row IN SELECT * FROM hs_office_membership
+            LOOP
+                call grantPermissionToRole(
+                    createPermission(row.uuid, 'INSERT', 'hs_office_coopsharestransaction'),
+                    hsOfficeMembershipAdmin(row));
+            END LOOP;
+    END;
 $$;
 
 /**
-    Used by the trigger to prevent the add-customer to current user respectively assumed roles.
- */
-create or replace function addHsOfficeCoopSharesTransactionNotAllowedForCurrentSubjects()
+    Adds hs_office_coopsharestransaction INSERT permission to specified role of new hs_office_membership rows.
+*/
+create or replace function hs_office_coopsharestransaction_hs_office_membership_insert_tf()
     returns trigger
-    language PLPGSQL
-as $$
+    language plpgsql
+    strict as $$
 begin
-    raise exception '[403] new-coopsharestransaction not permitted for %',
-        array_to_string(currentSubjects(), ';', 'null');
+    call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_office_coopsharestransaction'),
+            hsOfficeMembershipAdmin(NEW));
+    return NEW;
 end; $$;
 
-/**
-    Checks if the user or assumed roles are allowed to create a new customer.
- */
-create trigger hs_office_coopSharesTransaction_insert_trigger
-    before insert
-    on hs_office_coopSharesTransaction
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_hs_office_coopsharestransaction_hs_office_membership_insert_tg
+    after insert on hs_office_membership
     for each row
-    when ( not hasAssumedRole() )
-execute procedure addHsOfficeCoopSharesTransactionNotAllowedForCurrentSubjects();
+execute procedure hs_office_coopsharestransaction_hs_office_membership_insert_tf();
+
+/**
+    Checks if the user or assumed roles are allowed to insert a row to hs_office_coopsharestransaction,
+    where the check is performed by a direct role.
+
+    A direct role is a role depending on a foreign key directly available in the NEW row.
+*/
+create or replace function hs_office_coopsharestransaction_insert_permission_missing_tf()
+    returns trigger
+    language plpgsql as $$
+begin
+    raise exception '[403] insert into hs_office_coopsharestransaction not allowed for current subjects % (%)',
+        currentSubjects(), currentSubjectsUuids();
+end; $$;
+
+create trigger hs_office_coopsharestransaction_insert_permission_check_tg
+    before insert on hs_office_coopsharestransaction
+    for each row
+    when ( not hasInsertPermission(NEW.membershipUuid, 'INSERT', 'hs_office_coopsharestransaction') )
+        execute procedure hs_office_coopsharestransaction_insert_permission_missing_tf();
+--//
+
+-- ============================================================================
+--changeset hs-office-coopsharestransaction-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+call generateRbacIdentityViewFromProjection('hs_office_coopsharestransaction',
+    $idName$
+        reference
+    $idName$);
+--//
+
+-- ============================================================================
+--changeset hs-office-coopsharestransaction-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+call generateRbacRestrictedView('hs_office_coopsharestransaction',
+    $orderBy$
+        reference
+    $orderBy$,
+    $updates$
+        comment = new.comment
+    $updates$);
 --//
 

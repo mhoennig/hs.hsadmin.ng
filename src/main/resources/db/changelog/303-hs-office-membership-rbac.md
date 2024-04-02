@@ -81,7 +81,7 @@ subgraph membership["`**membership**`"]
 
         role:membership:owner[[membership:owner]]
         role:membership:admin[[membership:admin]]
-        role:membership:referrer[[membership:referrer]]
+        role:membership:agent[[membership:agent]]
     end
 
     subgraph membership:permissions[ ]
@@ -144,16 +144,16 @@ role:partnerRel.contact:admin -.-> role:partnerRel:tenant
 role:partnerRel:tenant -.-> role:partnerRel.anchorPerson:referrer
 role:partnerRel:tenant -.-> role:partnerRel.holderPerson:referrer
 role:partnerRel:tenant -.-> role:partnerRel.contact:referrer
-role:partnerRel:admin ==> role:membership:owner
 role:membership:owner ==> role:membership:admin
-role:partnerRel:agent ==> role:membership:admin
-role:membership:admin ==> role:membership:referrer
-role:membership:referrer ==> role:partnerRel:tenant
+role:partnerRel:admin ==> role:membership:admin
+role:membership:admin ==> role:membership:agent
+role:partnerRel:agent ==> role:membership:agent
+role:membership:agent ==> role:partnerRel:tenant
 
 %% granting permissions to roles
 role:global:admin ==> perm:membership:INSERT
-role:membership:owner ==> perm:membership:DELETE
+role:membership:admin ==> perm:membership:DELETE
 role:membership:admin ==> perm:membership:UPDATE
-role:membership:referrer ==> perm:membership:SELECT
+role:membership:agent ==> perm:membership:SELECT
 
 ```

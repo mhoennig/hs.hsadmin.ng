@@ -45,23 +45,23 @@ begin
 
     perform createRoleWithGrants(
         hsOfficeMembershipOwner(NEW),
-            permissions => array['DELETE'],
-            incomingSuperRoles => array[hsOfficeRelationAdmin(newPartnerRel)],
             userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
         hsOfficeMembershipAdmin(NEW),
-            permissions => array['UPDATE'],
+            permissions => array['DELETE', 'UPDATE'],
             incomingSuperRoles => array[
             	hsOfficeMembershipOwner(NEW),
-            	hsOfficeRelationAgent(newPartnerRel)]
+            	hsOfficeRelationAdmin(newPartnerRel)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeMembershipReferrer(NEW),
+        hsOfficeMembershipAgent(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsOfficeMembershipAdmin(NEW)],
+            incomingSuperRoles => array[
+            	hsOfficeMembershipAdmin(NEW),
+            	hsOfficeRelationAgent(newPartnerRel)],
             outgoingSubRoles => array[hsOfficeRelationTenant(newPartnerRel)]
     );
 

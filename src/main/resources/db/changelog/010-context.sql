@@ -23,7 +23,7 @@ end; $$;
     Defines the transaction context.
  */
 create or replace procedure defineContext(
-    currentTask varchar(96),
+    currentTask varchar(127),
     currentRequest text = null,
     currentUser varchar(63) = null,
     assumedRoles varchar(1023) = null
@@ -31,8 +31,8 @@ create or replace procedure defineContext(
     language plpgsql as $$
 begin
     currentTask := coalesce(currentTask, '');
-    assert length(currentTask) <= 96, FORMAT('currentTask must not be longer than 96 characters: "%s"', currentTask);
-    assert length(currentTask) > 8, FORMAT('currentTask must be at least 8 characters long: "%s""', currentTask);
+    assert length(currentTask) <= 127, FORMAT('currentTask must not be longer than 127 characters: "%s"', currentTask);
+    assert length(currentTask) >= 12, FORMAT('currentTask must be at least 12 characters long: "%s""', currentTask);
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     currentRequest := coalesce(currentRequest, '');
@@ -59,11 +59,11 @@ end; $$;
     Raises exception if not set.
  */
 create or replace function currentTask()
-    returns varchar(96)
+    returns varchar(127)
     stable -- leakproof
     language plpgsql as $$
 declare
-    currentTask varchar(96);
+    currentTask varchar(127);
 begin
     begin
         currentTask := current_setting('hsadminng.currentTask');

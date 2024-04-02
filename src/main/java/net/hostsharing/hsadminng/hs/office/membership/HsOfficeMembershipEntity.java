@@ -25,7 +25,6 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.REFERRER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
@@ -142,14 +141,14 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
 
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);
-                    with.incomingSuperRole("partnerRel", ADMIN);
-                    with.permission(DELETE);
                 })
                 .createSubRole(ADMIN, (with) -> {
-                    with.incomingSuperRole("partnerRel", AGENT);
+                    with.incomingSuperRole("partnerRel", ADMIN);
+                    with.permission(DELETE);
                     with.permission(UPDATE);
                 })
-                .createSubRole(REFERRER, (with) -> {
+                .createSubRole(AGENT, (with) -> {
+                    with.incomingSuperRole("partnerRel", AGENT);
                     with.outgoingSubRole("partnerRel", TENANT);
                     with.permission(SELECT);
                 });

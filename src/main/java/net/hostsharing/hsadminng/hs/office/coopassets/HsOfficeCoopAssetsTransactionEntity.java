@@ -1,21 +1,44 @@
 
 package net.hostsharing.hsadminng.hs.office.coopassets;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -88,5 +111,23 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, HasUu
     @Override
     public String toShortString() {
         return "%s:%+1.2f".formatted(getTaggedMemberNumber(), Optional.ofNullable(assetValue).orElse(BigDecimal.ZERO));
+    }
+
+    public static RbacView rbac() {
+        return rbacViewFor("coopAssetsTransaction", HsOfficeCoopAssetsTransactionEntity.class)
+                .withIdentityView(RbacView.SQL.projection("reference"))
+                .withUpdatableColumns("comment")
+                .importEntityAlias("membership", HsOfficeMembershipEntity.class,
+                        dependsOnColumn("membershipUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NOT_NULL)
+
+                .toRole("membership", ADMIN).grantPermission(INSERT)
+                .toRole("membership", ADMIN).grantPermission(UPDATE)
+                .toRole("membership", AGENT).grantPermission(SELECT);
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("323-hs-office-coopassets-rbac");
     }
 }
