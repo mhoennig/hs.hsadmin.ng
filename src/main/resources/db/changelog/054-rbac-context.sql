@@ -50,7 +50,7 @@ begin
 
     foreach roleName in array string_to_array(assumedRoles, ';')
         loop
-            roleNameParts = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), '.'));
+            roleNameParts = overlay(roleName placing '#' from length(roleName) + 1 - strpos(reverse(roleName), ':'));
             objectTableToAssume = split_part(roleNameParts, '#', 1);
             objectNameToAssume = split_part(roleNameParts, '#', 2);
             roleTypeToAssume = split_part(roleNameParts, '#', 3);

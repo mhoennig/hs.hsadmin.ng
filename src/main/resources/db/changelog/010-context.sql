@@ -149,8 +149,7 @@ create or replace function cleanIdentifier(rawIdentifier varchar)
 declare
     cleanIdentifier varchar;
 begin
-    -- TODO: remove the ':' from the list of allowed characters as soon as it's not used anymore
-    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._:]+', '', 'g');
+    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._]+', '', 'g');
     return cleanIdentifier;
 end; $$;
 

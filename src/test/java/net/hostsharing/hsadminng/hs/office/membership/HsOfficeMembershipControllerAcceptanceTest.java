@@ -269,7 +269,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-ThirdOHG.agent")
+                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-ThirdOHG:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -338,15 +338,15 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         void partnerRelAdmin_canPatchValidityOfRelatedMembership() {
 
             // given
-            final var givenPartnerAgent = "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH.admin";
-            context.define("superuser-alex@hostsharing.net", givenPartnerAgent);
+            final var givenPartnerAdmin = "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN";
+            context.define("superuser-alex@hostsharing.net", givenPartnerAdmin);
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             // when
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", givenPartnerAgent)
+                    .header("assumed-roles", givenPartnerAdmin)
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -401,7 +401,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH.agent")
+                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())

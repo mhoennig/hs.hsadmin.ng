@@ -13,9 +13,9 @@ subgraph person["`**person**`"]
     subgraph person:roles[ ]
         style person:roles fill:#dd4901,stroke:white
 
-        role:person:owner[[person:owner]]
-        role:person:admin[[person:admin]]
-        role:person:referrer[[person:referrer]]
+        role:person:OWNER[[person:OWNER]]
+        role:person:ADMIN[[person:ADMIN]]
+        role:person:REFERRER[[person:REFERRER]]
     end
 
     subgraph person:permissions[ ]
@@ -29,17 +29,17 @@ subgraph person["`**person**`"]
 end
 
 %% granting roles to users
-user:creator ==> role:person:owner
+user:creator ==> role:person:OWNER
 
 %% granting roles to roles
-role:global:admin ==> role:person:owner
-role:person:owner ==> role:person:admin
-role:person:admin ==> role:person:referrer
+role:global:ADMIN ==> role:person:OWNER
+role:person:OWNER ==> role:person:ADMIN
+role:person:ADMIN ==> role:person:REFERRER
 
 %% granting permissions to roles
-role:global:guest ==> perm:person:INSERT
-role:person:owner ==> perm:person:DELETE
-role:person:admin ==> perm:person:UPDATE
-role:person:referrer ==> perm:person:SELECT
+role:global:GUEST ==> perm:person:INSERT
+role:person:OWNER ==> perm:person:DELETE
+role:person:ADMIN ==> perm:person:UPDATE
+role:person:REFERRER ==> perm:person:SELECT
 
 ```

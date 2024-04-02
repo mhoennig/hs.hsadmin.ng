@@ -16,11 +16,11 @@ Beim Debitor ist das nämlich selbst mit Generator die Hölle, zumal eben auch Q
 
 Mit anderen Worten, um als Repräsentant eines Geschäftspartners auf den Bank-Account der Sepa-Mandate sehen zu dürfen, wird derzeut folgende Grant-Kette durchlaufen (bzw. eben noch nicht, weil es noch nicht funktioniert):
 
-User -> Partner-Holder-Person:Admin -> Partner-Relation:Agent -> Debitor-Relation:Agent -> Sepa-Mandat:Admin -> BankAccount:Admin -> BankAccount:SELECT
+User -> Partner-Holder-Person:ADMIN -> Partner-Relation:AGENT -> Debitor-Relation:AGENT -> Sepa-Mandat:ADMIN -> BankAccount:ADMIN -> BankAccount:SELECT
 
 Daraus würde:
 
-User -> Partner-Relation:Agent -> Debitor-Relation:Agent -> Sepa-Mandat:Admin -> Sepa-Mandat:SELECT*
+User -> Partner-Relation:AGENT -> Debitor-Relation:AGENT -> Sepa-Mandat:ADMIN -> Sepa-Mandat:SELECT*
 
 (*mit JOIN auf RawBankAccount, also implizitem Leserecht)
 

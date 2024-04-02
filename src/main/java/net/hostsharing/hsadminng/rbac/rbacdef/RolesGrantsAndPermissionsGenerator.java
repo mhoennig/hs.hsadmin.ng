@@ -333,7 +333,7 @@ class RolesGrantsAndPermissionsGenerator {
             return "globalAdmin()";
         }
         final String entityRefVar = entityRefVar(rootRefVar, roleDef.getEntityAlias());
-        return roleDef.getEntityAlias().simpleName() + capitalize(roleDef.getRole().roleName())
+        return roleDef.getEntityAlias().simpleName() + capitalize(roleDef.getRole().name())
                 + "(" + entityRefVar + ")";
     }
 
@@ -359,7 +359,7 @@ class RolesGrantsAndPermissionsGenerator {
         plPgSql.indented(() -> {
             plPgSql.writeLn("${simpleVarName)${roleSuffix}(NEW),"
                     .replace("${simpleVarName)", simpleEntityVarName)
-                    .replace("${roleSuffix}", capitalize(role.roleName())));
+                    .replace("${roleSuffix}", capitalize(role.name())));
 
             generatePermissionsForRole(plPgSql, role);
 
@@ -562,7 +562,7 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private static String toRoleRef(final RbacView.RbacRoleDefinition roleDef) {
-        return uncapitalize(roleDef.getEntityAlias().simpleName()) + capitalize(roleDef.getRole().roleName());
+        return uncapitalize(roleDef.getEntityAlias().simpleName()) + capitalize(roleDef.getRole().name());
     }
 
     private static String toTriggerReference(

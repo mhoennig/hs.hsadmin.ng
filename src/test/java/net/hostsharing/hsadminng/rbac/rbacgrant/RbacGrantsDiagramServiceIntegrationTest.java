@@ -54,43 +54,43 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
 
     @Test
     void allGrantsToCurrentUser() {
-        context("superuser-alex@hostsharing.net", "test_domain#xxx00-aaaa.owner");
+        context("superuser-alex@hostsharing.net", "test_domain#xxx00-aaaa:OWNER");
         final var graph = grantsMermaidService.allGrantsToCurrentUser(EnumSet.of(Include.TEST_ENTITIES));
 
         assertThat(graph).isEqualTo("""
                 flowchart TB
                        
-                role:test_domain#xxx00-aaaa.admin --> role:test_package#xxx00.tenant
-                role:test_domain#xxx00-aaaa.owner --> role:test_domain#xxx00-aaaa.admin
-                role:test_domain#xxx00-aaaa.owner --> role:test_package#xxx00.tenant
-                role:test_package#xxx00.tenant --> role:test_customer#xxx.tenant
+                role:test_domain#xxx00-aaaa:ADMIN --> role:test_package#xxx00:TENANT
+                role:test_domain#xxx00-aaaa:OWNER --> role:test_domain#xxx00-aaaa:ADMIN
+                role:test_domain#xxx00-aaaa:OWNER --> role:test_package#xxx00:TENANT
+                role:test_package#xxx00:TENANT --> role:test_customer#xxx:TENANT
                 """.trim());
     }
 
     @Test
     void allGrantsToCurrentUserIncludingPermissions() {
-        context("superuser-alex@hostsharing.net", "test_domain#xxx00-aaaa.owner");
+        context("superuser-alex@hostsharing.net", "test_domain#xxx00-aaaa:OWNER");
         final var graph = grantsMermaidService.allGrantsToCurrentUser(EnumSet.of(Include.TEST_ENTITIES, Include.PERMISSIONS));
 
         assertThat(graph).isEqualTo("""
                 flowchart TB
                       
-                role:test_customer#xxx.tenant --> perm:SELECT:on:test_customer#xxx
-                role:test_domain#xxx00-aaaa.admin --> perm:SELECT:on:test_domain#xxx00-aaaa
-                role:test_domain#xxx00-aaaa.admin --> role:test_package#xxx00.tenant
-                role:test_domain#xxx00-aaaa.owner --> perm:DELETE:on:test_domain#xxx00-aaaa
-                role:test_domain#xxx00-aaaa.owner --> perm:UPDATE:on:test_domain#xxx00-aaaa
-                role:test_domain#xxx00-aaaa.owner --> role:test_domain#xxx00-aaaa.admin
-                role:test_domain#xxx00-aaaa.owner --> role:test_package#xxx00.tenant
-                role:test_package#xxx00.tenant --> perm:SELECT:on:test_package#xxx00
-                role:test_package#xxx00.tenant --> role:test_customer#xxx.tenant
+                role:test_customer#xxx:TENANT --> perm:test_customer#xxx:SELECT
+                role:test_domain#xxx00-aaaa:ADMIN --> perm:test_domain#xxx00-aaaa:SELECT
+                role:test_domain#xxx00-aaaa:ADMIN --> role:test_package#xxx00:TENANT
+                role:test_domain#xxx00-aaaa:OWNER --> perm:test_domain#xxx00-aaaa:DELETE
+                role:test_domain#xxx00-aaaa:OWNER --> perm:test_domain#xxx00-aaaa:UPDATE
+                role:test_domain#xxx00-aaaa:OWNER --> role:test_domain#xxx00-aaaa:ADMIN
+                role:test_domain#xxx00-aaaa:OWNER --> role:test_package#xxx00:TENANT
+                role:test_package#xxx00:TENANT --> perm:test_package#xxx00:SELECT
+                role:test_package#xxx00:TENANT --> role:test_customer#xxx:TENANT
                 """.trim());
     }
 
     @Test
     @Disabled // enable to generate from a real database
     void print() throws IOException {
-        //context("superuser-alex@hostsharing.net", "hs_office_person#FirbySusan.admin");
+        //context("superuser-alex@hostsharing.net", "hs_office_person#FirbySusan:ADMIN");
         context("superuser-alex@hostsharing.net");
 
         //final var graph = grantsMermaidService.allGrantsToCurrentUser(EnumSet.of(Include.NON_TEST_ENTITIES, Include.PERMISSIONS));

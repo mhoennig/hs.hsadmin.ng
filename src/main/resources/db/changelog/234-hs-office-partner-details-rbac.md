@@ -18,6 +18,6 @@ subgraph partnerDetails["`**partnerDetails**`"]
 end
 
 %% granting permissions to roles
-role:global:admin ==> perm:partnerDetails:INSERT
+role:global:ADMIN ==> perm:partnerDetails:INSERT
 
 ```

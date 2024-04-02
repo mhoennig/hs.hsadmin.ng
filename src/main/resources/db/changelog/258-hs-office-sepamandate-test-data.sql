@@ -20,7 +20,7 @@ declare
     relatedBankAccount  hs_office_bankAccount;
 begin
     currentTask := 'creating SEPA-mandate test-data ' || forPartnerNumber::text || forDebitorSuffix::text;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
+    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select debitor.* into relatedDebitor

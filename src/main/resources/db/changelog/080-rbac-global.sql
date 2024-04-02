@@ -114,11 +114,11 @@ create or replace function globalAdmin(assumed boolean = true)
     returns null on null input
     stable -- leakproof
     language sql as $$
-select 'global', (select uuid from RbacObject where objectTable = 'global'), 'admin'::RbacRoleType, assumed;
+select 'global', (select uuid from RbacObject where objectTable = 'global'), 'ADMIN'::RbacRoleType, assumed;
 $$;
 
 begin transaction;
-    call defineContext('creating global admin role', null, null, null);
+    call defineContext('creating role:global#global:ADMIN', null, null, null);
     select createRole(globalAdmin());
 commit;
 --//
@@ -135,11 +135,11 @@ create or replace function globalGuest(assumed boolean = true)
     returns null on null input
     stable -- leakproof
     language sql as $$
-select 'global', (select uuid from RbacObject where objectTable = 'global'), 'guest'::RbacRoleType, assumed;
+select 'global', (select uuid from RbacObject where objectTable = 'global'), 'GUEST'::RbacRoleType, assumed;
 $$;
 
 begin transaction;
-    call defineContext('creating global guest role', null, null, null);
+    call defineContext('creating role:global#globa:guest', null, null, null);
     select createRole(globalGuest());
 commit;
 --//

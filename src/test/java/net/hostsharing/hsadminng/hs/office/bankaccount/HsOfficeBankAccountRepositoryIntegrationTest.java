@@ -102,21 +102,21 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_bankaccount#DE25500105176934832579.owner",
-                    "hs_office_bankaccount#DE25500105176934832579.admin",
-                    "hs_office_bankaccount#DE25500105176934832579.referrer"
+                    "hs_office_bankaccount#DE25500105176934832579:OWNER",
+                    "hs_office_bankaccount#DE25500105176934832579:ADMIN",
+                    "hs_office_bankaccount#DE25500105176934832579:REFERRER"
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant perm DELETE on hs_office_bankaccount#DE25500105176934832579 to role hs_office_bankaccount#DE25500105176934832579.owner     by system and assume }",
-                    "{ grant role hs_office_bankaccount#DE25500105176934832579.owner     to role global#global.admin                                    by system and assume }",
-                    "{ grant role hs_office_bankaccount#DE25500105176934832579.owner     to user selfregistered-user-drew@hostsharing.org               by hs_office_bankaccount#DE25500105176934832579.owner and assume }",
+                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:DELETE   to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to role:global#global:ADMIN                                    by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to user:selfregistered-user-drew@hostsharing.org               by hs_office_bankaccount#DE25500105176934832579:OWNER and assume }",
 
-                    "{ grant role hs_office_bankaccount#DE25500105176934832579.admin     to role hs_office_bankaccount#DE25500105176934832579.owner     by system and assume }",
-                    "{ grant perm UPDATE on hs_office_bankaccount#DE25500105176934832579 to role hs_office_bankaccount#DE25500105176934832579.admin     by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:ADMIN    to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
+                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:UPDATE   to role:hs_office_bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
 
-                    "{ grant perm SELECT on hs_office_bankaccount#DE25500105176934832579 to role hs_office_bankaccount#DE25500105176934832579.referrer  by system and assume }",
-                    "{ grant role hs_office_bankaccount#DE25500105176934832579.referrer  to role hs_office_bankaccount#DE25500105176934832579.admin     by system and assume }",
+                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:SELECT   to role:hs_office_bankaccount#DE25500105176934832579:REFERRER  by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:REFERRER to role:hs_office_bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
                     null
             ));
         }

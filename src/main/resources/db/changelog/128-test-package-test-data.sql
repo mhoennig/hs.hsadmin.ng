@@ -25,7 +25,7 @@ begin
                           cust.uuid;
 
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
-            custAdminRole = 'test_customer#' || cust.prefix || '.admin';
+            custAdminRole = 'test_customer#' || cust.prefix || ':ADMIN';
             call defineContext(currentTask, null, 'superuser-fran@hostsharing.net', custAdminRole);
             raise notice 'task: % by % as %', currentTask, custAdminUser, custAdminRole;
 

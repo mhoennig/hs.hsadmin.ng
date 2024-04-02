@@ -103,20 +103,20 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_contact#anothernewcontact.owner",
-                    "hs_office_contact#anothernewcontact.admin",
-                    "hs_office_contact#anothernewcontact.referrer"
+                    "hs_office_contact#anothernewcontact:OWNER",
+                    "hs_office_contact#anothernewcontact:ADMIN",
+                    "hs_office_contact#anothernewcontact:REFERRER"
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant role hs_office_contact#anothernewcontact.owner     to role global#global.admin                          by system and assume }",
-                    "{ grant perm UPDATE on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.admin    by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.owner     to user selfregistered-user-drew@hostsharing.org     by hs_office_contact#anothernewcontact.owner and assume }",
-                    "{ grant perm DELETE on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.owner    by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.admin     to role hs_office_contact#anothernewcontact.owner    by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:OWNER     to role:global#global:ADMIN                          by system and assume }",
+                    "{ grant perm:hs_office_contact#anothernewcontact:UPDATE    to role:hs_office_contact#anothernewcontact:ADMIN    by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:OWNER     to user:selfregistered-user-drew@hostsharing.org     by hs_office_contact#anothernewcontact:OWNER and assume }",
+                    "{ grant perm:hs_office_contact#anothernewcontact:DELETE     to role:hs_office_contact#anothernewcontact:OWNER    by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:ADMIN     to role:hs_office_contact#anothernewcontact:OWNER    by system and assume }",
 
-                    "{ grant perm SELECT on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.referrer by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.referrer  to role hs_office_contact#anothernewcontact.admin    by system and assume }"
+                    "{ grant perm:hs_office_contact#anothernewcontact:SELECT    to role:hs_office_contact#anothernewcontact:REFERRER by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:REFERRER  to role:hs_office_contact#anothernewcontact:ADMIN    by system and assume }"
             ));
         }
 

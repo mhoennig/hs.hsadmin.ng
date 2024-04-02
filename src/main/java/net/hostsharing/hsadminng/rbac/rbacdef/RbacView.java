@@ -113,7 +113,7 @@ public class RbacView {
      * <p>An identity view is a view which maps an objectUuid to an idName.
      * The idName should be a human-readable representation of the row, but as short as possible.
      * The idName must only consist of letters (A-Z, a-z), digits (0-9), dash (-), dot (.) and unserscore '_'.
-     * It's used to create the object-specific-role-names like test_customer#abc.admin - here 'abc' is the idName.
+     * It's used to create the object-specific-role-names like test_customer#abc:ADMIN - here 'abc' is the idName.
      * The idName not necessarily unique in a table, but it should be avoided.
      * </p>
      *
@@ -882,15 +882,12 @@ public class RbacView {
         TENANT,
         REFERRER,
 
+        @Deprecated
         GUEST;
 
         @Override
         public String toString() {
-            return ":" + roleName();
-        }
-
-        String roleName() {
-            return name().toLowerCase();
+            return ":" + name();
         }
     }
 

@@ -51,15 +51,15 @@ begin
 
     SELECT * FROM hs_office_bankaccount WHERE uuid = NEW.refundBankAccountUuid    INTO newRefundBankAccount;
 
-    call grantRoleToRole(hsOfficeBankAccountReferrer(newRefundBankAccount), hsOfficeRelationAgent(newDebitorRel));
-    call grantRoleToRole(hsOfficeRelationAdmin(newDebitorRel), hsOfficeRelationAdmin(newPartnerRel));
-    call grantRoleToRole(hsOfficeRelationAgent(newDebitorRel), hsOfficeBankAccountAdmin(newRefundBankAccount));
-    call grantRoleToRole(hsOfficeRelationAgent(newDebitorRel), hsOfficeRelationAgent(newPartnerRel));
-    call grantRoleToRole(hsOfficeRelationTenant(newPartnerRel), hsOfficeRelationAgent(newDebitorRel));
+    call grantRoleToRole(hsOfficeBankAccountREFERRER(newRefundBankAccount), hsOfficeRelationAGENT(newDebitorRel));
+    call grantRoleToRole(hsOfficeRelationADMIN(newDebitorRel), hsOfficeRelationADMIN(newPartnerRel));
+    call grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeBankAccountADMIN(newRefundBankAccount));
+    call grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeRelationAGENT(newPartnerRel));
+    call grantRoleToRole(hsOfficeRelationTENANT(newPartnerRel), hsOfficeRelationAGENT(newDebitorRel));
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOwner(newDebitorRel));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTenant(newDebitorRel));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAdmin(newDebitorRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newDebitorRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newDebitorRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationADMIN(newDebitorRel));
 
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -143,7 +143,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_debitor'),
-                    globalAdmin());
+                    globalADMIN());
             END LOOP;
     END;
 $$;
@@ -158,7 +158,7 @@ create or replace function hs_office_debitor_global_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_debitor'),
-            globalAdmin());
+            globalADMIN());
     return NEW;
 end; $$;
 

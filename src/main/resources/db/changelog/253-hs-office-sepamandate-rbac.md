@@ -13,9 +13,9 @@ subgraph bankAccount["`**bankAccount**`"]
     subgraph bankAccount:roles[ ]
         style bankAccount:roles fill:#99bcdb,stroke:white
 
-        role:bankAccount:owner[[bankAccount:owner]]
-        role:bankAccount:admin[[bankAccount:admin]]
-        role:bankAccount:referrer[[bankAccount:referrer]]
+        role:bankAccount:OWNER[[bankAccount:OWNER]]
+        role:bankAccount:ADMIN[[bankAccount:ADMIN]]
+        role:bankAccount:REFERRER[[bankAccount:REFERRER]]
     end
 end
 
@@ -26,9 +26,9 @@ subgraph debitorRel.contact["`**debitorRel.contact**`"]
     subgraph debitorRel.contact:roles[ ]
         style debitorRel.contact:roles fill:#99bcdb,stroke:white
 
-        role:debitorRel.contact:owner[[debitorRel.contact:owner]]
-        role:debitorRel.contact:admin[[debitorRel.contact:admin]]
-        role:debitorRel.contact:referrer[[debitorRel.contact:referrer]]
+        role:debitorRel.contact:OWNER[[debitorRel.contact:OWNER]]
+        role:debitorRel.contact:ADMIN[[debitorRel.contact:ADMIN]]
+        role:debitorRel.contact:REFERRER[[debitorRel.contact:REFERRER]]
     end
 end
 
@@ -39,9 +39,9 @@ subgraph debitorRel.anchorPerson["`**debitorRel.anchorPerson**`"]
     subgraph debitorRel.anchorPerson:roles[ ]
         style debitorRel.anchorPerson:roles fill:#99bcdb,stroke:white
 
-        role:debitorRel.anchorPerson:owner[[debitorRel.anchorPerson:owner]]
-        role:debitorRel.anchorPerson:admin[[debitorRel.anchorPerson:admin]]
-        role:debitorRel.anchorPerson:referrer[[debitorRel.anchorPerson:referrer]]
+        role:debitorRel.anchorPerson:OWNER[[debitorRel.anchorPerson:OWNER]]
+        role:debitorRel.anchorPerson:ADMIN[[debitorRel.anchorPerson:ADMIN]]
+        role:debitorRel.anchorPerson:REFERRER[[debitorRel.anchorPerson:REFERRER]]
     end
 end
 
@@ -52,9 +52,9 @@ subgraph debitorRel.holderPerson["`**debitorRel.holderPerson**`"]
     subgraph debitorRel.holderPerson:roles[ ]
         style debitorRel.holderPerson:roles fill:#99bcdb,stroke:white
 
-        role:debitorRel.holderPerson:owner[[debitorRel.holderPerson:owner]]
-        role:debitorRel.holderPerson:admin[[debitorRel.holderPerson:admin]]
-        role:debitorRel.holderPerson:referrer[[debitorRel.holderPerson:referrer]]
+        role:debitorRel.holderPerson:OWNER[[debitorRel.holderPerson:OWNER]]
+        role:debitorRel.holderPerson:ADMIN[[debitorRel.holderPerson:ADMIN]]
+        role:debitorRel.holderPerson:REFERRER[[debitorRel.holderPerson:REFERRER]]
     end
 end
 
@@ -65,10 +65,10 @@ subgraph sepaMandate["`**sepaMandate**`"]
     subgraph sepaMandate:roles[ ]
         style sepaMandate:roles fill:#dd4901,stroke:white
 
-        role:sepaMandate:owner[[sepaMandate:owner]]
-        role:sepaMandate:admin[[sepaMandate:admin]]
-        role:sepaMandate:agent[[sepaMandate:agent]]
-        role:sepaMandate:referrer[[sepaMandate:referrer]]
+        role:sepaMandate:OWNER[[sepaMandate:OWNER]]
+        role:sepaMandate:ADMIN[[sepaMandate:ADMIN]]
+        role:sepaMandate:AGENT[[sepaMandate:AGENT]]
+        role:sepaMandate:REFERRER[[sepaMandate:REFERRER]]
     end
 
     subgraph sepaMandate:permissions[ ]
@@ -85,96 +85,57 @@ subgraph debitorRel["`**debitorRel**`"]
     direction TB
     style debitorRel fill:#99bcdb,stroke:#274d6e,stroke-width:8px
 
-    subgraph debitorRel.contact["`**debitorRel.contact**`"]
-        direction TB
-        style debitorRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-        subgraph debitorRel.contact:roles[ ]
-            style debitorRel.contact:roles fill:#99bcdb,stroke:white
-
-            role:debitorRel.contact:owner[[debitorRel.contact:owner]]
-            role:debitorRel.contact:admin[[debitorRel.contact:admin]]
-            role:debitorRel.contact:referrer[[debitorRel.contact:referrer]]
-        end
-    end
-
-    subgraph debitorRel.anchorPerson["`**debitorRel.anchorPerson**`"]
-        direction TB
-        style debitorRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-        subgraph debitorRel.anchorPerson:roles[ ]
-            style debitorRel.anchorPerson:roles fill:#99bcdb,stroke:white
-
-            role:debitorRel.anchorPerson:owner[[debitorRel.anchorPerson:owner]]
-            role:debitorRel.anchorPerson:admin[[debitorRel.anchorPerson:admin]]
-            role:debitorRel.anchorPerson:referrer[[debitorRel.anchorPerson:referrer]]
-        end
-    end
-
-    subgraph debitorRel.holderPerson["`**debitorRel.holderPerson**`"]
-        direction TB
-        style debitorRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-        subgraph debitorRel.holderPerson:roles[ ]
-            style debitorRel.holderPerson:roles fill:#99bcdb,stroke:white
-
-            role:debitorRel.holderPerson:owner[[debitorRel.holderPerson:owner]]
-            role:debitorRel.holderPerson:admin[[debitorRel.holderPerson:admin]]
-            role:debitorRel.holderPerson:referrer[[debitorRel.holderPerson:referrer]]
-        end
-    end
-
     subgraph debitorRel:roles[ ]
         style debitorRel:roles fill:#99bcdb,stroke:white
 
-        role:debitorRel:owner[[debitorRel:owner]]
-        role:debitorRel:admin[[debitorRel:admin]]
-        role:debitorRel:agent[[debitorRel:agent]]
-        role:debitorRel:tenant[[debitorRel:tenant]]
+        role:debitorRel:OWNER[[debitorRel:OWNER]]
+        role:debitorRel:ADMIN[[debitorRel:ADMIN]]
+        role:debitorRel:AGENT[[debitorRel:AGENT]]
+        role:debitorRel:TENANT[[debitorRel:TENANT]]
     end
 end
 
 %% granting roles to users
-user:creator ==> role:sepaMandate:owner
+user:creator ==> role:sepaMandate:OWNER
 
 %% granting roles to roles
-role:global:admin -.-> role:debitorRel.anchorPerson:owner
-role:debitorRel.anchorPerson:owner -.-> role:debitorRel.anchorPerson:admin
-role:debitorRel.anchorPerson:admin -.-> role:debitorRel.anchorPerson:referrer
-role:global:admin -.-> role:debitorRel.holderPerson:owner
-role:debitorRel.holderPerson:owner -.-> role:debitorRel.holderPerson:admin
-role:debitorRel.holderPerson:admin -.-> role:debitorRel.holderPerson:referrer
-role:global:admin -.-> role:debitorRel.contact:owner
-role:debitorRel.contact:owner -.-> role:debitorRel.contact:admin
-role:debitorRel.contact:admin -.-> role:debitorRel.contact:referrer
-role:global:admin -.-> role:debitorRel:owner
-role:debitorRel:owner -.-> role:debitorRel:admin
-role:debitorRel.anchorPerson:admin -.-> role:debitorRel:admin
-role:debitorRel:admin -.-> role:debitorRel:agent
-role:debitorRel.holderPerson:admin -.-> role:debitorRel:agent
-role:debitorRel:agent -.-> role:debitorRel:tenant
-role:debitorRel.holderPerson:admin -.-> role:debitorRel:tenant
-role:debitorRel.contact:admin -.-> role:debitorRel:tenant
-role:debitorRel:tenant -.-> role:debitorRel.anchorPerson:referrer
-role:debitorRel:tenant -.-> role:debitorRel.holderPerson:referrer
-role:debitorRel:tenant -.-> role:debitorRel.contact:referrer
-role:global:admin -.-> role:bankAccount:owner
-role:bankAccount:owner -.-> role:bankAccount:admin
-role:bankAccount:admin -.-> role:bankAccount:referrer
-role:global:admin ==> role:sepaMandate:owner
-role:sepaMandate:owner ==> role:sepaMandate:admin
-role:sepaMandate:admin ==> role:sepaMandate:agent
-role:sepaMandate:agent ==> role:bankAccount:referrer
-role:sepaMandate:agent ==> role:debitorRel:agent
-role:sepaMandate:agent ==> role:sepaMandate:referrer
-role:bankAccount:admin ==> role:sepaMandate:referrer
-role:debitorRel:agent ==> role:sepaMandate:referrer
-role:sepaMandate:referrer ==> role:debitorRel:tenant
+role:global:ADMIN -.-> role:debitorRel.anchorPerson:OWNER
+role:debitorRel.anchorPerson:OWNER -.-> role:debitorRel.anchorPerson:ADMIN
+role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel.anchorPerson:REFERRER
+role:global:ADMIN -.-> role:debitorRel.holderPerson:OWNER
+role:debitorRel.holderPerson:OWNER -.-> role:debitorRel.holderPerson:ADMIN
+role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel.holderPerson:REFERRER
+role:global:ADMIN -.-> role:debitorRel.contact:OWNER
+role:debitorRel.contact:OWNER -.-> role:debitorRel.contact:ADMIN
+role:debitorRel.contact:ADMIN -.-> role:debitorRel.contact:REFERRER
+role:global:ADMIN -.-> role:debitorRel:OWNER
+role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
+role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:ADMIN
+role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
+role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
+role:debitorRel:AGENT -.-> role:debitorRel:TENANT
+role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:TENANT
+role:debitorRel.contact:ADMIN -.-> role:debitorRel:TENANT
+role:debitorRel:TENANT -.-> role:debitorRel.anchorPerson:REFERRER
+role:debitorRel:TENANT -.-> role:debitorRel.holderPerson:REFERRER
+role:debitorRel:TENANT -.-> role:debitorRel.contact:REFERRER
+role:global:ADMIN -.-> role:bankAccount:OWNER
+role:bankAccount:OWNER -.-> role:bankAccount:ADMIN
+role:bankAccount:ADMIN -.-> role:bankAccount:REFERRER
+role:global:ADMIN ==> role:sepaMandate:OWNER
+role:sepaMandate:OWNER ==> role:sepaMandate:ADMIN
+role:sepaMandate:ADMIN ==> role:sepaMandate:AGENT
+role:sepaMandate:AGENT ==> role:bankAccount:REFERRER
+role:sepaMandate:AGENT ==> role:debitorRel:AGENT
+role:sepaMandate:AGENT ==> role:sepaMandate:REFERRER
+role:bankAccount:ADMIN ==> role:sepaMandate:REFERRER
+role:debitorRel:AGENT ==> role:sepaMandate:REFERRER
+role:sepaMandate:REFERRER ==> role:debitorRel:TENANT
 
 %% granting permissions to roles
-role:sepaMandate:owner ==> perm:sepaMandate:DELETE
-role:sepaMandate:admin ==> perm:sepaMandate:UPDATE
-role:sepaMandate:referrer ==> perm:sepaMandate:SELECT
-role:debitorRel:admin ==> perm:sepaMandate:INSERT
+role:sepaMandate:OWNER ==> perm:sepaMandate:DELETE
+role:sepaMandate:ADMIN ==> perm:sepaMandate:UPDATE
+role:sepaMandate:REFERRER ==> perm:sepaMandate:SELECT
+role:debitorRel:ADMIN ==> perm:sepaMandate:INSERT
 
 ```

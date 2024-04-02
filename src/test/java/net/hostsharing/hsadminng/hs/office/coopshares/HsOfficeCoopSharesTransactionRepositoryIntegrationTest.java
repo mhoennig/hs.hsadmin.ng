@@ -111,8 +111,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm SELECT on coopsharestransaction#temprefB to role membership#M-1000101.agent by system and assume }",
-                            "{ grant perm UPDATE on coopsharestransaction#temprefB to role membership#M-1000101.admin by system and assume }",
+                            "{ grant perm:coopsharestransaction#temprefB:SELECT to role:membership#M-1000101:AGENT by system and assume }",
+                            "{ grant perm:coopsharestransaction#temprefB:UPDATE to role:membership#M-1000101:ADMIN by system and assume }",
                             null));
         }
 
@@ -193,7 +193,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void normalUser_canViewOnlyRelatedCoopSharesTransactions() {
             // given:
-            context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000101.admin");
+            context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000101:ADMIN");
 
             // when:
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(

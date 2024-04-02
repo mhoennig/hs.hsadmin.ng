@@ -44,25 +44,25 @@ begin
 
 
     perform createRoleWithGrants(
-        hsOfficeMembershipOwner(NEW),
+        hsOfficeMembershipOWNER(NEW),
             userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
-        hsOfficeMembershipAdmin(NEW),
+        hsOfficeMembershipADMIN(NEW),
             permissions => array['DELETE', 'UPDATE'],
             incomingSuperRoles => array[
-            	hsOfficeMembershipOwner(NEW),
-            	hsOfficeRelationAdmin(newPartnerRel)]
+            	hsOfficeMembershipOWNER(NEW),
+            	hsOfficeRelationADMIN(newPartnerRel)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeMembershipAgent(NEW),
+        hsOfficeMembershipAGENT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
-            	hsOfficeMembershipAdmin(NEW),
-            	hsOfficeRelationAgent(newPartnerRel)],
-            outgoingSubRoles => array[hsOfficeRelationTenant(newPartnerRel)]
+            	hsOfficeMembershipADMIN(NEW),
+            	hsOfficeRelationAGENT(newPartnerRel)],
+            outgoingSubRoles => array[hsOfficeRelationTENANT(newPartnerRel)]
     );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
@@ -105,7 +105,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_membership'),
-                    globalAdmin());
+                    globalADMIN());
             END LOOP;
     END;
 $$;
@@ -120,7 +120,7 @@ create or replace function hs_office_membership_global_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_membership'),
-            globalAdmin());
+            globalADMIN());
     return NEW;
 end; $$;
 

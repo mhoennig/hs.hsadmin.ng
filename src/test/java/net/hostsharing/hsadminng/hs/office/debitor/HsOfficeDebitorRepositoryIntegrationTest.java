@@ -172,44 +172,44 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG.owner",
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG.admin",
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG.agent",
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG.tenant"));
+                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER",
+                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN",
+                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT",
+                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                 .map(s -> s.replace("hs_office_", ""))
                 .containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant perm INSERT into sepamandate with relation#FirstGmbH-with-DEBITOR-FourtheG to role relation#FirstGmbH-with-DEBITOR-FourtheG.admin by system and assume }",
+                    "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:INSERT>sepamandate to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
 
                     // owner
-                    "{ grant perm DELETE on debitor#D-1000122 to role relation#FirstGmbH-with-DEBITOR-FourtheG.owner by system and assume }",
-                    "{ grant perm DELETE on relation#FirstGmbH-with-DEBITOR-FourtheG to role relation#FirstGmbH-with-DEBITOR-FourtheG.owner by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.owner to role global#global.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.owner to user superuser-alex@hostsharing.net by relation#FirstGmbH-with-DEBITOR-FourtheG.owner and assume }",
+                    "{ grant perm:debitor#D-1000122:DELETE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
+                    "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:DELETE   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:global#global:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to user:superuser-alex@hostsharing.net by relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER and assume }",
 
                     // admin
-                    "{ grant perm UPDATE on debitor#D-1000122 to role relation#FirstGmbH-with-DEBITOR-FourtheG.admin by system and assume }",
-                    "{ grant perm UPDATE on relation#FirstGmbH-with-DEBITOR-FourtheG to role relation#FirstGmbH-with-DEBITOR-FourtheG.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.admin to role relation#FirstGmbH-with-DEBITOR-FourtheG.owner by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.admin to role person#FirstGmbH.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.admin to role relation#HostsharingeG-with-PARTNER-FirstGmbH.admin by system and assume }",
+                    "{ grant perm:debitor#D-1000122:UPDATE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
+                    "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:UPDATE   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN    to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN    to role:person#FirstGmbH:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN    to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN by system and assume }",
 
                     // agent
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.agent to role person#FourtheG.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.agent to role relation#FirstGmbH-with-DEBITOR-FourtheG.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.agent to role relation#HostsharingeG-with-PARTNER-FirstGmbH.agent by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT    to role:person#FourtheG:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT    to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT    to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT by system and assume }",
 
                     // tenant
-                    "{ grant perm SELECT on debitor#D-1000122 to role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant by system and assume }",
-                    "{ grant perm SELECT on relation#FirstGmbH-with-DEBITOR-FourtheG to role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant by system and assume }",
-                    "{ grant role relation#HostsharingeG-with-PARTNER-FirstGmbH.tenant to role relation#FirstGmbH-with-DEBITOR-FourtheG.agent by system and assume }",
-                    "{ grant role contact#fourthcontact.referrer to role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant by system and assume }",
-                    "{ grant role person#FirstGmbH.referrer to role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant by system and assume }",
-                    "{ grant role person#FourtheG.referrer to role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant to role contact#fourthcontact.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant to role person#FourtheG.admin by system and assume }",
-                    "{ grant role relation#FirstGmbH-with-DEBITOR-FourtheG.tenant to role relation#FirstGmbH-with-DEBITOR-FourtheG.agent by system and assume }",
+                    "{ grant perm:debitor#D-1000122:SELECT                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
+                    "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:SELECT   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
+                    "{ grant role:relation#HostsharingeG-with-PARTNER-FirstGmbH:TENANT to role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT by system and assume }",
+                    "{ grant role:contact#fourthcontact:REFERRER                    to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
+                    "{ grant role:person#FirstGmbH:REFERRER                         to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
+                    "{ grant role:person#FourtheG:REFERRER                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT   to role:contact#fourthcontact:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT   to role:person#FourtheG:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT by system and assume }",
 
                     null));
         }
@@ -243,9 +243,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @ParameterizedTest
         @Disabled // TODO: reactivate once partner.person + partner.contact  are removed
         @ValueSource(strings = {
-                "hs_office_partner#10001:FirstGmbH-firstcontact.admin",
-                "hs_office_person#FirstGmbH.admin",
-                "hs_office_contact#firstcontact.admin",
+                "hs_office_partner#10001:FirstGmbH-firstcontact:ADMIN",
+                "hs_office_person#FirstGmbH:ADMIN",
+                "hs_office_contact#firstcontact:ADMIN",
         })
         public void relatedPersonAdmin_canViewRelatedDebitors(final String assumedRole) {
             // given:
@@ -317,7 +317,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG.admin", true);
+                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
             final var givenNewPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First"));
             final var givenNewBillingPerson = one(personRepo.findPersonByOptionalNameLike("Firby"));
             final var givenNewContact = one(contactRepo.findContactByOptionalLabelLike("sixth contact"));
@@ -346,31 +346,31 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "global#global.admin", true);
+                    "global#global:ADMIN", true);
 
             // ... partner role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG.admin");
+                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FirbySusan.agent", true);
+                    "hs_office_relation#FirstGmbH-with-DEBITOR-FirbySusan:AGENT", true);
 
             // ... contact role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_contact#fifthcontact.admin");
+                    "hs_office_contact#fifthcontact:ADMIN");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_contact#sixthcontact.admin", false);
+                    "hs_office_contact#sixthcontact:ADMIN", false);
 
             // ... bank-account role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02200505501015871393.admin");
+                    "hs_office_bankaccount#DE02200505501015871393:ADMIN");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02120300000000202051.admin", true);
+                    "hs_office_bankaccount#DE02120300000000202051:ADMIN", true);
         }
 
         @Test
@@ -380,7 +380,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", null, "fig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG.admin", true);
+                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
             final var givenNewBankAccount = one(bankAccountRepo.findByOptionalHolderLike("first"));
 
@@ -395,12 +395,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "global#global.admin", true);
+                    "global#global:ADMIN", true);
 
             // ... bank-account role was assigned:
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02120300000000202051.admin", true);
+                    "hs_office_bankaccount#DE02120300000000202051:ADMIN", true);
         }
 
         @Test
@@ -410,7 +410,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fih");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG.agent", true);
+                    "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG:AGENT", true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
 
             // when
@@ -424,12 +424,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "global#global.admin", true);
+                    "global#global:ADMIN", true);
 
             // ... bank-account role was removed from previous bank-account admin:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02200505501015871393.admin");
+                    "hs_office_bankaccount#DE02200505501015871393:ADMIN");
         }
 
         @Test
@@ -439,12 +439,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eighth", "Fourth", "eig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG.agent", true);
+                    "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG:AGENT", true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG.agent");
+                context("superuser-alex@hostsharing.net", "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG:AGENT");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 return toCleanup(debitorRepo.save(givenDebitor));
             });
@@ -462,11 +462,11 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_contact#ninthcontact.admin", false);
+                    "hs_office_contact#ninthcontact:ADMIN", false);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact.admin");
+                context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact:ADMIN");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 return toCleanup(debitorRepo.save(givenDebitor));
             });
@@ -545,7 +545,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#FourtheG-with-DEBITOR-FourtheG.admin");
+                context("superuser-alex@hostsharing.net", "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
                 assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent();
 
                 debitorRepo.deleteByUuid(givenDebitor.getUuid());

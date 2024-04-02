@@ -19,7 +19,7 @@ begin
     currentTask := 'creating Membership test-data ' ||
                     'P-' || forPartnerNumber::text ||
                     'M-...' || newMemberNumberSuffix;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
+    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select partner.* from hs_office_partner partner

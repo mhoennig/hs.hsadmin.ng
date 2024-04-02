@@ -46,7 +46,7 @@ begin
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'owner', assumed);
+            return roleDescriptor('%2$s', entity.uuid, 'OWNER', assumed);
         end; $f$;
 
         create or replace function %1$sAdmin(entity %2$s, assumed boolean = true)
@@ -54,7 +54,7 @@ begin
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'admin', assumed);
+            return roleDescriptor('%2$s', entity.uuid, 'ADMIN', assumed);
         end; $f$;
 
         create or replace function %1$sAgent(entity %2$s, assumed boolean = true)
@@ -62,7 +62,7 @@ begin
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'agent', assumed);
+            return roleDescriptor('%2$s', entity.uuid, 'AGENT', assumed);
         end; $f$;
 
         create or replace function %1$sTenant(entity %2$s, assumed boolean = true)
@@ -70,7 +70,7 @@ begin
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'tenant', assumed);
+            return roleDescriptor('%2$s', entity.uuid, 'TENANT', assumed);
         end; $f$;
 
         -- TODO: remove guest role
@@ -79,7 +79,7 @@ begin
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'guest', assumed);
+            return roleDescriptor('%2$s', entity.uuid, 'GUEST', assumed);
         end; $f$;
 
         create or replace function %1$sReferrer(entity %2$s)
@@ -87,7 +87,7 @@ begin
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'referrer');
+            return roleDescriptor('%2$s', entity.uuid, 'REFERRER');
         end; $f$;
 
         $sql$, prefix, targetTable);

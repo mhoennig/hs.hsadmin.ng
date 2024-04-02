@@ -13,9 +13,9 @@ subgraph partnerRel.contact["`**partnerRel.contact**`"]
     subgraph partnerRel.contact:roles[ ]
         style partnerRel.contact:roles fill:#99bcdb,stroke:white
 
-        role:partnerRel.contact:owner[[partnerRel.contact:owner]]
-        role:partnerRel.contact:admin[[partnerRel.contact:admin]]
-        role:partnerRel.contact:referrer[[partnerRel.contact:referrer]]
+        role:partnerRel.contact:OWNER[[partnerRel.contact:OWNER]]
+        role:partnerRel.contact:ADMIN[[partnerRel.contact:ADMIN]]
+        role:partnerRel.contact:REFERRER[[partnerRel.contact:REFERRER]]
     end
 end
 
@@ -35,52 +35,14 @@ subgraph partner["`**partner**`"]
     subgraph partnerRel["`**partnerRel**`"]
         direction TB
         style partnerRel fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-        subgraph partnerRel.contact["`**partnerRel.contact**`"]
-            direction TB
-            style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-            subgraph partnerRel.contact:roles[ ]
-                style partnerRel.contact:roles fill:#99bcdb,stroke:white
-
-                role:partnerRel.contact:owner[[partnerRel.contact:owner]]
-                role:partnerRel.contact:admin[[partnerRel.contact:admin]]
-                role:partnerRel.contact:referrer[[partnerRel.contact:referrer]]
-            end
-        end
-
-        subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
-            direction TB
-            style partnerRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-            subgraph partnerRel.anchorPerson:roles[ ]
-                style partnerRel.anchorPerson:roles fill:#99bcdb,stroke:white
-
-                role:partnerRel.anchorPerson:owner[[partnerRel.anchorPerson:owner]]
-                role:partnerRel.anchorPerson:admin[[partnerRel.anchorPerson:admin]]
-                role:partnerRel.anchorPerson:referrer[[partnerRel.anchorPerson:referrer]]
-            end
-        end
-
-        subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
-            direction TB
-            style partnerRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-            subgraph partnerRel.holderPerson:roles[ ]
-                style partnerRel.holderPerson:roles fill:#99bcdb,stroke:white
-
-                role:partnerRel.holderPerson:owner[[partnerRel.holderPerson:owner]]
-                role:partnerRel.holderPerson:admin[[partnerRel.holderPerson:admin]]
-                role:partnerRel.holderPerson:referrer[[partnerRel.holderPerson:referrer]]
-            end
-        end
 
         subgraph partnerRel:roles[ ]
             style partnerRel:roles fill:#99bcdb,stroke:white
 
-            role:partnerRel:owner[[partnerRel:owner]]
-            role:partnerRel:admin[[partnerRel:admin]]
-            role:partnerRel:agent[[partnerRel:agent]]
-            role:partnerRel:tenant[[partnerRel:tenant]]
+            role:partnerRel:OWNER[[partnerRel:OWNER]]
+            role:partnerRel:ADMIN[[partnerRel:ADMIN]]
+            role:partnerRel:AGENT[[partnerRel:AGENT]]
+            role:partnerRel:TENANT[[partnerRel:TENANT]]
         end
     end
 end
@@ -105,9 +67,9 @@ subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
     subgraph partnerRel.anchorPerson:roles[ ]
         style partnerRel.anchorPerson:roles fill:#99bcdb,stroke:white
 
-        role:partnerRel.anchorPerson:owner[[partnerRel.anchorPerson:owner]]
-        role:partnerRel.anchorPerson:admin[[partnerRel.anchorPerson:admin]]
-        role:partnerRel.anchorPerson:referrer[[partnerRel.anchorPerson:referrer]]
+        role:partnerRel.anchorPerson:OWNER[[partnerRel.anchorPerson:OWNER]]
+        role:partnerRel.anchorPerson:ADMIN[[partnerRel.anchorPerson:ADMIN]]
+        role:partnerRel.anchorPerson:REFERRER[[partnerRel.anchorPerson:REFERRER]]
     end
 end
 
@@ -118,41 +80,41 @@ subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
     subgraph partnerRel.holderPerson:roles[ ]
         style partnerRel.holderPerson:roles fill:#99bcdb,stroke:white
 
-        role:partnerRel.holderPerson:owner[[partnerRel.holderPerson:owner]]
-        role:partnerRel.holderPerson:admin[[partnerRel.holderPerson:admin]]
-        role:partnerRel.holderPerson:referrer[[partnerRel.holderPerson:referrer]]
+        role:partnerRel.holderPerson:OWNER[[partnerRel.holderPerson:OWNER]]
+        role:partnerRel.holderPerson:ADMIN[[partnerRel.holderPerson:ADMIN]]
+        role:partnerRel.holderPerson:REFERRER[[partnerRel.holderPerson:REFERRER]]
     end
 end
 
 %% granting roles to roles
-role:global:admin -.-> role:partnerRel.anchorPerson:owner
-role:partnerRel.anchorPerson:owner -.-> role:partnerRel.anchorPerson:admin
-role:partnerRel.anchorPerson:admin -.-> role:partnerRel.anchorPerson:referrer
-role:global:admin -.-> role:partnerRel.holderPerson:owner
-role:partnerRel.holderPerson:owner -.-> role:partnerRel.holderPerson:admin
-role:partnerRel.holderPerson:admin -.-> role:partnerRel.holderPerson:referrer
-role:global:admin -.-> role:partnerRel.contact:owner
-role:partnerRel.contact:owner -.-> role:partnerRel.contact:admin
-role:partnerRel.contact:admin -.-> role:partnerRel.contact:referrer
-role:global:admin -.-> role:partnerRel:owner
-role:partnerRel:owner -.-> role:partnerRel:admin
-role:partnerRel.anchorPerson:admin -.-> role:partnerRel:admin
-role:partnerRel:admin -.-> role:partnerRel:agent
-role:partnerRel.holderPerson:admin -.-> role:partnerRel:agent
-role:partnerRel:agent -.-> role:partnerRel:tenant
-role:partnerRel.holderPerson:admin -.-> role:partnerRel:tenant
-role:partnerRel.contact:admin -.-> role:partnerRel:tenant
-role:partnerRel:tenant -.-> role:partnerRel.anchorPerson:referrer
-role:partnerRel:tenant -.-> role:partnerRel.holderPerson:referrer
-role:partnerRel:tenant -.-> role:partnerRel.contact:referrer
+role:global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
+role:partnerRel.anchorPerson:OWNER -.-> role:partnerRel.anchorPerson:ADMIN
+role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel.anchorPerson:REFERRER
+role:global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
+role:partnerRel.holderPerson:OWNER -.-> role:partnerRel.holderPerson:ADMIN
+role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel.holderPerson:REFERRER
+role:global:ADMIN -.-> role:partnerRel.contact:OWNER
+role:partnerRel.contact:OWNER -.-> role:partnerRel.contact:ADMIN
+role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
+role:global:ADMIN -.-> role:partnerRel:OWNER
+role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
+role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel:ADMIN
+role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
+role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:AGENT
+role:partnerRel:AGENT -.-> role:partnerRel:TENANT
+role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:TENANT
+role:partnerRel.contact:ADMIN -.-> role:partnerRel:TENANT
+role:partnerRel:TENANT -.-> role:partnerRel.anchorPerson:REFERRER
+role:partnerRel:TENANT -.-> role:partnerRel.holderPerson:REFERRER
+role:partnerRel:TENANT -.-> role:partnerRel.contact:REFERRER
 
 %% granting permissions to roles
-role:global:admin ==> perm:partner:INSERT
-role:partnerRel:admin ==> perm:partner:DELETE
-role:partnerRel:agent ==> perm:partner:UPDATE
-role:partnerRel:tenant ==> perm:partner:SELECT
-role:partnerRel:admin ==> perm:partnerDetails:DELETE
-role:partnerRel:agent ==> perm:partnerDetails:UPDATE
-role:partnerRel:agent ==> perm:partnerDetails:SELECT
+role:global:ADMIN ==> perm:partner:INSERT
+role:partnerRel:ADMIN ==> perm:partner:DELETE
+role:partnerRel:AGENT ==> perm:partner:UPDATE
+role:partnerRel:TENANT ==> perm:partner:SELECT
+role:partnerRel:ADMIN ==> perm:partnerDetails:DELETE
+role:partnerRel:AGENT ==> perm:partnerDetails:UPDATE
+role:partnerRel:AGENT ==> perm:partnerDetails:SELECT
 
 ```

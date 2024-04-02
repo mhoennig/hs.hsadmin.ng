@@ -154,6 +154,11 @@ public class JpaAttempt {
             return this;
         }
 
+        public JpaResult<T> assertNotNull() {
+            assertThat(returnedValue()).isNotNull();
+            return this;
+        }
+
         private String firstRootCauseMessageLineOf(final RuntimeException exception) {
             final var rootCause = NestedExceptionUtils.getRootCause(exception);
             return Optional.ofNullable(rootCause)

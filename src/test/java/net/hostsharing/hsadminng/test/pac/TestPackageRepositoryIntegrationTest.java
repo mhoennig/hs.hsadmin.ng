@@ -53,7 +53,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
             given:
-            context.define("superuser-alex@hostsharing.net", "global#global.admin");
+            context.define("superuser-alex@hostsharing.net", "global#global:ADMIN");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -76,7 +76,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            context.define("customer-admin@xxx.example.com", "test_package#xxx00.admin");
+            context.define("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
 
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
@@ -90,17 +90,17 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void supportsOptimisticLocking() {
             // given
-            globalAdminWithAssumedRole("test_package#xxx00.admin");
+            globalAdminWithAssumedRole("test_package#xxx00:ADMIN");
             final var pac = testPackageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00.owner");
+                globalAdminWithAssumedRole("test_package#xxx00:OWNER");
                 pac.setDescription("description set by thread 1");
                 testPackageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00.owner");
+                globalAdminWithAssumedRole("test_package#xxx00:OWNER");
                 pac.setDescription("description set by thread 2");
                 testPackageRepository.save(pac);
                 sleep(1500);

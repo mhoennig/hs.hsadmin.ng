@@ -40,17 +40,17 @@ begin
 
 
     perform createRoleWithGrants(
-        testDomainOwner(NEW),
+        testDomainOWNER(NEW),
             permissions => array['DELETE', 'UPDATE'],
-            incomingSuperRoles => array[testPackageAdmin(newPackage)],
-            outgoingSubRoles => array[testPackageTenant(newPackage)]
+            incomingSuperRoles => array[testPackageADMIN(newPackage)],
+            outgoingSubRoles => array[testPackageTENANT(newPackage)]
     );
 
     perform createRoleWithGrants(
-        testDomainAdmin(NEW),
+        testDomainADMIN(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[testDomainOwner(NEW)],
-            outgoingSubRoles => array[testPackageTenant(newPackage)]
+            incomingSuperRoles => array[testDomainOWNER(NEW)],
+            outgoingSubRoles => array[testPackageTENANT(newPackage)]
     );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
@@ -106,14 +106,14 @@ begin
 
     if NEW.packageUuid <> OLD.packageUuid then
 
-        call revokeRoleFromRole(testDomainOwner(OLD), testPackageAdmin(oldPackage));
-        call grantRoleToRole(testDomainOwner(NEW), testPackageAdmin(newPackage));
+        call revokeRoleFromRole(testDomainOWNER(OLD), testPackageADMIN(oldPackage));
+        call grantRoleToRole(testDomainOWNER(NEW), testPackageADMIN(newPackage));
 
-        call revokeRoleFromRole(testPackageTenant(oldPackage), testDomainOwner(OLD));
-        call grantRoleToRole(testPackageTenant(newPackage), testDomainOwner(NEW));
+        call revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainOWNER(OLD));
+        call grantRoleToRole(testPackageTENANT(newPackage), testDomainOWNER(NEW));
 
-        call revokeRoleFromRole(testPackageTenant(oldPackage), testDomainAdmin(OLD));
-        call grantRoleToRole(testPackageTenant(newPackage), testDomainAdmin(NEW));
+        call revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainADMIN(OLD));
+        call grantRoleToRole(testPackageTENANT(newPackage), testDomainADMIN(NEW));
 
     end if;
 
@@ -157,7 +157,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'test_domain'),
-                    testPackageAdmin(row));
+                    testPackageADMIN(row));
             END LOOP;
     END;
 $$;
@@ -172,7 +172,7 @@ create or replace function test_domain_test_package_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'test_domain'),
-            testPackageAdmin(NEW));
+            testPackageADMIN(NEW));
     return NEW;
 end; $$;
 

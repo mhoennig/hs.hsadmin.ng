@@ -21,9 +21,9 @@ class TestCustomerEntityUnitTest {
                     subgraph customer:roles[ ]
                         style customer:roles fill:#dd4901,stroke:white
                    
-                        role:customer:owner[[customer:owner]]
-                        role:customer:admin[[customer:admin]]
-                        role:customer:tenant[[customer:tenant]]
+                        role:customer:OWNER[[customer:OWNER]]
+                        role:customer:ADMIN[[customer:ADMIN]]
+                        role:customer:TENANT[[customer:TENANT]]
                     end
                    
                     subgraph customer:permissions[ ]
@@ -37,18 +37,18 @@ class TestCustomerEntityUnitTest {
                 end
                 
                 %% granting roles to users
-                user:creator ==>|XX| role:customer:owner
+                user:creator ==>|XX| role:customer:OWNER
 
                 %% granting roles to roles
-                role:global:admin ==>|XX| role:customer:owner
-                role:customer:owner ==> role:customer:admin
-                role:customer:admin ==> role:customer:tenant
+                role:global:ADMIN ==>|XX| role:customer:OWNER
+                role:customer:OWNER ==> role:customer:ADMIN
+                role:customer:ADMIN ==> role:customer:TENANT
                 
                 %% granting permissions to roles
-                role:global:admin ==> perm:customer:INSERT
-                role:customer:owner ==> perm:customer:DELETE
-                role:customer:admin ==> perm:customer:UPDATE
-                role:customer:tenant ==> perm:customer:SELECT
+                role:global:ADMIN ==> perm:customer:INSERT
+                role:customer:OWNER ==> perm:customer:DELETE
+                role:customer:ADMIN ==> perm:customer:UPDATE
+                role:customer:TENANT ==> perm:customer:SELECT
                 """);
     }
 }

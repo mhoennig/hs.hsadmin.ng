@@ -48,38 +48,38 @@ begin
 
 
     perform createRoleWithGrants(
-        hsOfficeRelationOwner(NEW),
+        hsOfficeRelationOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalAdmin()],
+            incomingSuperRoles => array[globalADMIN()],
             userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
-        hsOfficeRelationAdmin(NEW),
+        hsOfficeRelationADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[
-            	hsOfficePersonAdmin(newAnchorPerson),
-            	hsOfficeRelationOwner(NEW)]
+            	hsOfficePersonADMIN(newAnchorPerson),
+            	hsOfficeRelationOWNER(NEW)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeRelationAgent(NEW),
+        hsOfficeRelationAGENT(NEW),
             incomingSuperRoles => array[
-            	hsOfficePersonAdmin(newHolderPerson),
-            	hsOfficeRelationAdmin(NEW)]
+            	hsOfficePersonADMIN(newHolderPerson),
+            	hsOfficeRelationADMIN(NEW)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeRelationTenant(NEW),
+        hsOfficeRelationTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
-            	hsOfficeContactAdmin(newContact),
-            	hsOfficePersonAdmin(newHolderPerson),
-            	hsOfficeRelationAgent(NEW)],
+            	hsOfficeContactADMIN(newContact),
+            	hsOfficePersonADMIN(newHolderPerson),
+            	hsOfficeRelationAGENT(NEW)],
             outgoingSubRoles => array[
-            	hsOfficeContactReferrer(newContact),
-            	hsOfficePersonReferrer(newAnchorPerson),
-            	hsOfficePersonReferrer(newHolderPerson)]
+            	hsOfficeContactREFERRER(newContact),
+            	hsOfficePersonREFERRER(newAnchorPerson),
+            	hsOfficePersonREFERRER(newHolderPerson)]
     );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
@@ -151,11 +151,11 @@ begin
 
     if NEW.contactUuid <> OLD.contactUuid then
 
-        call revokeRoleFromRole(hsOfficeRelationTenant(OLD), hsOfficeContactAdmin(oldContact));
-        call grantRoleToRole(hsOfficeRelationTenant(NEW), hsOfficeContactAdmin(newContact));
+        call revokeRoleFromRole(hsOfficeRelationTENANT(OLD), hsOfficeContactADMIN(oldContact));
+        call grantRoleToRole(hsOfficeRelationTENANT(NEW), hsOfficeContactADMIN(newContact));
 
-        call revokeRoleFromRole(hsOfficeContactReferrer(oldContact), hsOfficeRelationTenant(OLD));
-        call grantRoleToRole(hsOfficeContactReferrer(newContact), hsOfficeRelationTenant(NEW));
+        call revokeRoleFromRole(hsOfficeContactREFERRER(oldContact), hsOfficeRelationTENANT(OLD));
+        call grantRoleToRole(hsOfficeContactREFERRER(newContact), hsOfficeRelationTENANT(NEW));
 
     end if;
 
@@ -199,7 +199,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
-                    hsOfficePersonAdmin(row));
+                    hsOfficePersonADMIN(row));
             END LOOP;
     END;
 $$;
@@ -214,7 +214,7 @@ create or replace function hs_office_relation_hs_office_person_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_relation'),
-            hsOfficePersonAdmin(NEW));
+            hsOfficePersonADMIN(NEW));
     return NEW;
 end; $$;
 

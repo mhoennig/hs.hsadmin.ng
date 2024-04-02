@@ -42,12 +42,12 @@ begin
     SELECT * FROM hs_office_partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
     assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTenant(newPartnerRel));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
-    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
-    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAgent(newPartnerRel));
-    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationADMIN(newPartnerRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newPartnerRel));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAGENT(newPartnerRel));
+    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationADMIN(newPartnerRel));
+    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAGENT(newPartnerRel));
+    call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAGENT(newPartnerRel));
 
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -110,23 +110,23 @@ begin
 
     if NEW.partnerRelUuid <> OLD.partnerRelUuid then
 
-        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'DELETE'), hsOfficeRelationAdmin(oldPartnerRel));
-        call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
+        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'DELETE'), hsOfficeRelationADMIN(oldPartnerRel));
+        call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationADMIN(newPartnerRel));
 
-        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'UPDATE'), hsOfficeRelationAgent(oldPartnerRel));
-        call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
+        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'UPDATE'), hsOfficeRelationAGENT(oldPartnerRel));
+        call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationAGENT(newPartnerRel));
 
-        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'SELECT'), hsOfficeRelationTenant(oldPartnerRel));
-        call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTenant(newPartnerRel));
+        call revokePermissionFromRole(getPermissionId(OLD.uuid, 'SELECT'), hsOfficeRelationTENANT(oldPartnerRel));
+        call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newPartnerRel));
 
-        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'DELETE'), hsOfficeRelationAdmin(oldPartnerRel));
-        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationAdmin(newPartnerRel));
+        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'DELETE'), hsOfficeRelationADMIN(oldPartnerRel));
+        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationADMIN(newPartnerRel));
 
-        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAgent(oldPartnerRel));
-        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAgent(newPartnerRel));
+        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAGENT(oldPartnerRel));
+        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAGENT(newPartnerRel));
 
-        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAgent(oldPartnerRel));
-        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAgent(newPartnerRel));
+        call revokePermissionFromRole(getPermissionId(oldPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAGENT(oldPartnerRel));
+        call grantPermissionToRole(createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAGENT(newPartnerRel));
 
     end if;
 
@@ -170,7 +170,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_partner'),
-                    globalAdmin());
+                    globalADMIN());
             END LOOP;
     END;
 $$;
@@ -185,7 +185,7 @@ create or replace function hs_office_partner_global_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_partner'),
-            globalAdmin());
+            globalADMIN());
     return NEW;
 end; $$;
 

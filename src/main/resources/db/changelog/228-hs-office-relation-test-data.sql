@@ -25,7 +25,7 @@ declare
 begin
     idName := cleanIdentifier( anchorPersonName || '-' || holderPersonName);
     currentTask := 'creating relation test-data ' || idName;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
+    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select p.*

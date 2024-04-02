@@ -13,9 +13,9 @@ subgraph package.customer["`**package.customer**`"]
     subgraph package.customer:roles[ ]
         style package.customer:roles fill:#99bcdb,stroke:white
 
-        role:package.customer:owner[[package.customer:owner]]
-        role:package.customer:admin[[package.customer:admin]]
-        role:package.customer:tenant[[package.customer:tenant]]
+        role:package.customer:OWNER[[package.customer:OWNER]]
+        role:package.customer:ADMIN[[package.customer:ADMIN]]
+        role:package.customer:TENANT[[package.customer:TENANT]]
     end
 end
 
@@ -23,25 +23,12 @@ subgraph package["`**package**`"]
     direction TB
     style package fill:#99bcdb,stroke:#274d6e,stroke-width:8px
 
-    subgraph package.customer["`**package.customer**`"]
-        direction TB
-        style package.customer fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-        subgraph package.customer:roles[ ]
-            style package.customer:roles fill:#99bcdb,stroke:white
-
-            role:package.customer:owner[[package.customer:owner]]
-            role:package.customer:admin[[package.customer:admin]]
-            role:package.customer:tenant[[package.customer:tenant]]
-        end
-    end
-
     subgraph package:roles[ ]
         style package:roles fill:#99bcdb,stroke:white
 
-        role:package:owner[[package:owner]]
-        role:package:admin[[package:admin]]
-        role:package:tenant[[package:tenant]]
+        role:package:OWNER[[package:OWNER]]
+        role:package:ADMIN[[package:ADMIN]]
+        role:package:TENANT[[package:TENANT]]
     end
 end
 
@@ -52,8 +39,8 @@ subgraph domain["`**domain**`"]
     subgraph domain:roles[ ]
         style domain:roles fill:#dd4901,stroke:white
 
-        role:domain:owner[[domain:owner]]
-        role:domain:admin[[domain:admin]]
+        role:domain:OWNER[[domain:OWNER]]
+        role:domain:ADMIN[[domain:ADMIN]]
     end
 
     subgraph domain:permissions[ ]
@@ -67,22 +54,22 @@ subgraph domain["`**domain**`"]
 end
 
 %% granting roles to roles
-role:global:admin -.->|XX| role:package.customer:owner
-role:package.customer:owner -.-> role:package.customer:admin
-role:package.customer:admin -.-> role:package.customer:tenant
-role:package.customer:admin -.-> role:package:owner
-role:package:owner -.-> role:package:admin
-role:package:admin -.-> role:package:tenant
-role:package:tenant -.-> role:package.customer:tenant
-role:package:admin ==> role:domain:owner
-role:domain:owner ==> role:package:tenant
-role:domain:owner ==> role:domain:admin
-role:domain:admin ==> role:package:tenant
+role:global:ADMIN -.->|XX| role:package.customer:OWNER
+role:package.customer:OWNER -.-> role:package.customer:ADMIN
+role:package.customer:ADMIN -.-> role:package.customer:TENANT
+role:package.customer:ADMIN -.-> role:package:OWNER
+role:package:OWNER -.-> role:package:ADMIN
+role:package:ADMIN -.-> role:package:TENANT
+role:package:TENANT -.-> role:package.customer:TENANT
+role:package:ADMIN ==> role:domain:OWNER
+role:domain:OWNER ==> role:package:TENANT
+role:domain:OWNER ==> role:domain:ADMIN
+role:domain:ADMIN ==> role:package:TENANT
 
 %% granting permissions to roles
-role:package:admin ==> perm:domain:INSERT
-role:domain:owner ==> perm:domain:DELETE
-role:domain:owner ==> perm:domain:UPDATE
-role:domain:admin ==> perm:domain:SELECT
+role:package:ADMIN ==> perm:domain:INSERT
+role:domain:OWNER ==> perm:domain:DELETE
+role:domain:OWNER ==> perm:domain:UPDATE
+role:domain:ADMIN ==> perm:domain:SELECT
 
 ```

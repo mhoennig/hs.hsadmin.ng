@@ -106,7 +106,7 @@ import static org.assertj.core.api.Fail.fail;
 @Tag("import")
 @DataJpaTest(properties = {
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers}",
-        "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:admin}",
+        "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
         "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
 })

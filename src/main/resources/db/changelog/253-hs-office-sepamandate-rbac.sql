@@ -48,34 +48,34 @@ begin
 
 
     perform createRoleWithGrants(
-        hsOfficeSepaMandateOwner(NEW),
+        hsOfficeSepaMandateOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalAdmin()],
+            incomingSuperRoles => array[globalADMIN()],
             userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
-        hsOfficeSepaMandateAdmin(NEW),
+        hsOfficeSepaMandateADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficeSepaMandateOwner(NEW)]
+            incomingSuperRoles => array[hsOfficeSepaMandateOWNER(NEW)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeSepaMandateAgent(NEW),
-            incomingSuperRoles => array[hsOfficeSepaMandateAdmin(NEW)],
+        hsOfficeSepaMandateAGENT(NEW),
+            incomingSuperRoles => array[hsOfficeSepaMandateADMIN(NEW)],
             outgoingSubRoles => array[
-            	hsOfficeBankAccountReferrer(newBankAccount),
-            	hsOfficeRelationAgent(newDebitorRel)]
+            	hsOfficeBankAccountREFERRER(newBankAccount),
+            	hsOfficeRelationAGENT(newDebitorRel)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeSepaMandateReferrer(NEW),
+        hsOfficeSepaMandateREFERRER(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
-            	hsOfficeBankAccountAdmin(newBankAccount),
-            	hsOfficeRelationAgent(newDebitorRel),
-            	hsOfficeSepaMandateAgent(NEW)],
-            outgoingSubRoles => array[hsOfficeRelationTenant(newDebitorRel)]
+            	hsOfficeBankAccountADMIN(newBankAccount),
+            	hsOfficeRelationAGENT(newDebitorRel),
+            	hsOfficeSepaMandateAGENT(NEW)],
+            outgoingSubRoles => array[hsOfficeRelationTENANT(newDebitorRel)]
     );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
@@ -118,7 +118,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_sepamandate'),
-                    hsOfficeRelationAdmin(row));
+                    hsOfficeRelationADMIN(row));
             END LOOP;
     END;
 $$;
@@ -133,7 +133,7 @@ create or replace function hs_office_sepamandate_hs_office_relation_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_sepamandate'),
-            hsOfficeRelationAdmin(NEW));
+            hsOfficeRelationADMIN(NEW));
     return NEW;
 end; $$;
 

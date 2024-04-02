@@ -3,10 +3,10 @@
 -- --------------------------------------------------------
 
 
-select isGranted(findRoleId('administrators'), findRoleId('test_package#aaa00.owner'));
-select isGranted(findRoleId('test_package#aaa00.owner'), findRoleId('administrators'));
--- call grantRoleToRole(findRoleId('test_package#aaa00.owner'), findRoleId('administrators'));
--- call grantRoleToRole(findRoleId('administrators'), findRoleId('test_package#aaa00.owner'));
+select isGranted(findRoleId('administrators'), findRoleId('test_package#aaa00:OWNER'));
+select isGranted(findRoleId('test_package#aaa00:OWNER'), findRoleId('administrators'));
+-- call grantRoleToRole(findRoleId('test_package#aaa00:OWNER'), findRoleId('administrators'));
+-- call grantRoleToRole(findRoleId('administrators'), findRoleId('test_package#aaa00:OWNER'));
 
 select count(*)
 FROM queryAllPermissionsOfSubjectIdForObjectUuids(findRbacUser('superuser-fran@hostsharing.net'),

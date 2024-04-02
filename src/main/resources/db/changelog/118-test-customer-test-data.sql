@@ -32,7 +32,7 @@ declare
     newCust       test_customer;
 begin
     currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
+    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     custRowId = uuid_generate_v4();

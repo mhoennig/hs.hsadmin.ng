@@ -74,7 +74,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_partner_details'),
-                    globalAdmin());
+                    globalADMIN());
             END LOOP;
     END;
 $$;
@@ -89,7 +89,7 @@ create or replace function hs_office_partner_details_global_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_partner_details'),
-            globalAdmin());
+            globalADMIN());
     return NEW;
 end; $$;
 
@@ -107,8 +107,8 @@ create or replace function hs_office_partner_details_insert_permission_missing_t
     returns trigger
     language plpgsql as $$
 begin
-    raise exception '[403] insert into hs_office_partner_details not allowed for current subjects % (%) assumed by user % (%)',
-        currentSubjects(), currentSubjectsUuids(), currentUser(), currentUserUuid();
+    raise exception '[403] insert into hs_office_partner_details not allowed for current subjects % (%)',
+        currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger hs_office_partner_details_insert_permission_check_tg
@@ -124,7 +124,7 @@ create trigger hs_office_partner_details_insert_permission_check_tg
 
     call generateRbacIdentityViewFromQuery('hs_office_partner_details',
         $idName$
-            SELECT partnerDetails.uuid as uuid, partner_iv.idName || '-details' as idName
+            SELECT partnerDetails.uuid as uuid, partner_iv.idName as idName
             FROM hs_office_partner_details AS partnerDetails
             JOIN hs_office_partner partner ON partner.detailsUuid = partnerDetails.uuid
             JOIN hs_office_partner_iv partner_iv ON partner_iv.uuid = partner.uuid

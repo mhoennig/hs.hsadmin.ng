@@ -71,14 +71,14 @@ public class RbacGrantsDiagramService {
     private void traverseGrantsTo(final Set<RawRbacGrantEntity> graph, final UUID refUuid, final EnumSet<Include> includes) {
         final var grants = rawGrantRepo.findByAscendingUuid(refUuid);
         grants.forEach(g -> {
-            if (!includes.contains(PERMISSIONS) && g.getDescendantIdName().startsWith("perm ")) {
+            if (!includes.contains(PERMISSIONS) && g.getDescendantIdName().startsWith("perm:")) {
                 return;
             }
-            if ( !g.getDescendantIdName().startsWith("role global")) {
-                if (!includes.contains(TEST_ENTITIES) && g.getDescendantIdName().contains(" test_")) {
+            if ( !g.getDescendantIdName().startsWith("role:global")) {
+                if (!includes.contains(TEST_ENTITIES) && g.getDescendantIdName().contains(":test_")) {
                     return;
                 }
-                if (!includes.contains(NON_TEST_ENTITIES) && !g.getDescendantIdName().contains(" test_")) {
+                if (!includes.contains(NON_TEST_ENTITIES) && !g.getDescendantIdName().contains(":test_")) {
                     return;
                 }
             }
@@ -102,7 +102,7 @@ public class RbacGrantsDiagramService {
     private void traverseGrantsFrom(final Set<RawRbacGrantEntity> graph, final UUID refUuid, final EnumSet<Include> option) {
         final var grants = rawGrantRepo.findByDescendantUuid(refUuid);
         grants.forEach(g -> {
-            if (!option.contains(USERS) && g.getAscendantIdName().startsWith("user ")) {
+            if (!option.contains(USERS) && g.getAscendantIdName().startsWith("user:")) {
                 return;
             }
             graph.add(g);
@@ -171,7 +171,7 @@ public class RbacGrantsDiagramService {
         }
         if (refType.equals("role")) {
             final var withoutRolePrefix = node.idName().substring("role:".length());
-            return withoutRolePrefix.substring(0, withoutRolePrefix.lastIndexOf('.'));
+            return withoutRolePrefix.substring(0, withoutRolePrefix.lastIndexOf(':'));
         }
         throw new IllegalArgumentException("unknown refType '" + refType + "' in '" + node.idName() + "'");
     }
@@ -188,23 +188,23 @@ public class RbacGrantsDiagramService {
             return "(" + displayName + "\nref:" + uuid + ")";
         }
         if (refType.equals("role")) {
-            final var roleType = idName.substring(idName.lastIndexOf('.') + 1);
+            final var roleType = idName.substring(idName.lastIndexOf(':') + 1);
             return "[" + roleType + "\nref:" + uuid + "]";
         }
         if (refType.equals("perm")) {
-            final var roleType = idName.split(" ")[1];
+            final var roleType = idName.split(":")[1];
             return "{{" + roleType + "\nref:" + uuid + "}}";
         }
         return "";
     }
 
     private static String refType(final String idName) {
-        return idName.split(" ", 2)[0];
+        return idName.split(":", 2)[0];
     }
 
     @NotNull
     private static String cleanId(final String idName) {
-        return idName.replace(" ", ":").replaceAll("@.*", "")
+        return idName.replaceAll("@.*", "")
                 .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "");
     }
 

@@ -13,9 +13,9 @@ subgraph holderPerson["`**holderPerson**`"]
     subgraph holderPerson:roles[ ]
         style holderPerson:roles fill:#99bcdb,stroke:white
 
-        role:holderPerson:owner[[holderPerson:owner]]
-        role:holderPerson:admin[[holderPerson:admin]]
-        role:holderPerson:referrer[[holderPerson:referrer]]
+        role:holderPerson:OWNER[[holderPerson:OWNER]]
+        role:holderPerson:ADMIN[[holderPerson:ADMIN]]
+        role:holderPerson:REFERRER[[holderPerson:REFERRER]]
     end
 end
 
@@ -26,9 +26,9 @@ subgraph anchorPerson["`**anchorPerson**`"]
     subgraph anchorPerson:roles[ ]
         style anchorPerson:roles fill:#99bcdb,stroke:white
 
-        role:anchorPerson:owner[[anchorPerson:owner]]
-        role:anchorPerson:admin[[anchorPerson:admin]]
-        role:anchorPerson:referrer[[anchorPerson:referrer]]
+        role:anchorPerson:OWNER[[anchorPerson:OWNER]]
+        role:anchorPerson:ADMIN[[anchorPerson:ADMIN]]
+        role:anchorPerson:REFERRER[[anchorPerson:REFERRER]]
     end
 end
 
@@ -39,9 +39,9 @@ subgraph contact["`**contact**`"]
     subgraph contact:roles[ ]
         style contact:roles fill:#99bcdb,stroke:white
 
-        role:contact:owner[[contact:owner]]
-        role:contact:admin[[contact:admin]]
-        role:contact:referrer[[contact:referrer]]
+        role:contact:OWNER[[contact:OWNER]]
+        role:contact:ADMIN[[contact:ADMIN]]
+        role:contact:REFERRER[[contact:REFERRER]]
     end
 end
 
@@ -52,10 +52,10 @@ subgraph relation["`**relation**`"]
     subgraph relation:roles[ ]
         style relation:roles fill:#dd4901,stroke:white
 
-        role:relation:owner[[relation:owner]]
-        role:relation:admin[[relation:admin]]
-        role:relation:agent[[relation:agent]]
-        role:relation:tenant[[relation:tenant]]
+        role:relation:OWNER[[relation:OWNER]]
+        role:relation:ADMIN[[relation:ADMIN]]
+        role:relation:AGENT[[relation:AGENT]]
+        role:relation:TENANT[[relation:TENANT]]
     end
 
     subgraph relation:permissions[ ]
@@ -69,34 +69,34 @@ subgraph relation["`**relation**`"]
 end
 
 %% granting roles to users
-user:creator ==> role:relation:owner
+user:creator ==> role:relation:OWNER
 
 %% granting roles to roles
-role:global:admin -.-> role:anchorPerson:owner
-role:anchorPerson:owner -.-> role:anchorPerson:admin
-role:anchorPerson:admin -.-> role:anchorPerson:referrer
-role:global:admin -.-> role:holderPerson:owner
-role:holderPerson:owner -.-> role:holderPerson:admin
-role:holderPerson:admin -.-> role:holderPerson:referrer
-role:global:admin -.-> role:contact:owner
-role:contact:owner -.-> role:contact:admin
-role:contact:admin -.-> role:contact:referrer
-role:global:admin ==> role:relation:owner
-role:relation:owner ==> role:relation:admin
-role:anchorPerson:admin ==> role:relation:admin
-role:relation:admin ==> role:relation:agent
-role:holderPerson:admin ==> role:relation:agent
-role:relation:agent ==> role:relation:tenant
-role:holderPerson:admin ==> role:relation:tenant
-role:contact:admin ==> role:relation:tenant
-role:relation:tenant ==> role:anchorPerson:referrer
-role:relation:tenant ==> role:holderPerson:referrer
-role:relation:tenant ==> role:contact:referrer
+role:global:ADMIN -.-> role:anchorPerson:OWNER
+role:anchorPerson:OWNER -.-> role:anchorPerson:ADMIN
+role:anchorPerson:ADMIN -.-> role:anchorPerson:REFERRER
+role:global:ADMIN -.-> role:holderPerson:OWNER
+role:holderPerson:OWNER -.-> role:holderPerson:ADMIN
+role:holderPerson:ADMIN -.-> role:holderPerson:REFERRER
+role:global:ADMIN -.-> role:contact:OWNER
+role:contact:OWNER -.-> role:contact:ADMIN
+role:contact:ADMIN -.-> role:contact:REFERRER
+role:global:ADMIN ==> role:relation:OWNER
+role:relation:OWNER ==> role:relation:ADMIN
+role:anchorPerson:ADMIN ==> role:relation:ADMIN
+role:relation:ADMIN ==> role:relation:AGENT
+role:holderPerson:ADMIN ==> role:relation:AGENT
+role:relation:AGENT ==> role:relation:TENANT
+role:holderPerson:ADMIN ==> role:relation:TENANT
+role:contact:ADMIN ==> role:relation:TENANT
+role:relation:TENANT ==> role:anchorPerson:REFERRER
+role:relation:TENANT ==> role:holderPerson:REFERRER
+role:relation:TENANT ==> role:contact:REFERRER
 
 %% granting permissions to roles
-role:relation:owner ==> perm:relation:DELETE
-role:relation:admin ==> perm:relation:UPDATE
-role:relation:tenant ==> perm:relation:SELECT
-role:anchorPerson:admin ==> perm:relation:INSERT
+role:relation:OWNER ==> perm:relation:DELETE
+role:relation:ADMIN ==> perm:relation:UPDATE
+role:relation:TENANT ==> perm:relation:SELECT
+role:anchorPerson:ADMIN ==> perm:relation:INSERT
 
 ```

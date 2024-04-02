@@ -13,9 +13,9 @@ subgraph contact["`**contact**`"]
     subgraph contact:roles[ ]
         style contact:roles fill:#dd4901,stroke:white
 
-        role:contact:owner[[contact:owner]]
-        role:contact:admin[[contact:admin]]
-        role:contact:referrer[[contact:referrer]]
+        role:contact:OWNER[[contact:OWNER]]
+        role:contact:ADMIN[[contact:ADMIN]]
+        role:contact:REFERRER[[contact:REFERRER]]
     end
 
     subgraph contact:permissions[ ]
@@ -29,17 +29,17 @@ subgraph contact["`**contact**`"]
 end
 
 %% granting roles to users
-user:creator ==> role:contact:owner
+user:creator ==> role:contact:OWNER
 
 %% granting roles to roles
-role:global:admin ==> role:contact:owner
-role:contact:owner ==> role:contact:admin
-role:contact:admin ==> role:contact:referrer
+role:global:ADMIN ==> role:contact:OWNER
+role:contact:OWNER ==> role:contact:ADMIN
+role:contact:ADMIN ==> role:contact:REFERRER
 
 %% granting permissions to roles
-role:contact:owner ==> perm:contact:DELETE
-role:contact:admin ==> perm:contact:UPDATE
-role:contact:referrer ==> perm:contact:SELECT
-role:global:guest ==> perm:contact:INSERT
+role:contact:OWNER ==> perm:contact:DELETE
+role:contact:ADMIN ==> perm:contact:UPDATE
+role:contact:REFERRER ==> perm:contact:SELECT
+role:global:GUEST ==> perm:contact:INSERT
 
 ```

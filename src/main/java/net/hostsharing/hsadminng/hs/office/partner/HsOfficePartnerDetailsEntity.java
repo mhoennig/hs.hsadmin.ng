@@ -68,7 +68,7 @@ public class HsOfficePartnerDetailsEntity implements HasUuid, Stringifyable {
     public static RbacView rbac() {
         return rbacViewFor("partnerDetails", HsOfficePartnerDetailsEntity.class)
                 .withIdentityView(SQL.query("""
-                        SELECT partnerDetails.uuid as uuid, partner_iv.idName || '-details' as idName
+                        SELECT partnerDetails.uuid as uuid, partner_iv.idName as idName
                             FROM hs_office_partner_details AS partnerDetails
                             JOIN hs_office_partner partner ON partner.detailsUuid = partnerDetails.uuid
                             JOIN hs_office_partner_iv partner_iv ON partner_iv.uuid = partner.uuid

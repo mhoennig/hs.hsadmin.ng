@@ -196,24 +196,24 @@ E.g. if a new package is added, the admin-role of the related customer has to be
 There can be global roles like 'administrators'.
 Most roles, though, are specific for certain business-objects and automatically generated as such:
 
-    business-object-table#business-object-name.relative-role
+    business-object-table#business-object-name.role-stereotype
 
 
 Where *business-object-table* is the name of the SQL table of the business object (e.g *customer* or 'package'),
 *business-object-name* is generated from an immutable business key(e.g. a prefix like 'xyz' or 'xyz00')
-and the *relative-role*' describes the role relative to the referenced business-object as follows:
+and the *role-stereotype* describes a role relative to a referenced business-object as follows:
 
 #### owner
 
 The owner-role is granted to the subject which created the business object.
-E.g. for a new *customer* it would be granted to 'administrators' and for a new *package* to the 'customer#...admin'. 
+E.g. for a new *customer* it would be granted to 'administrators' and for a new *package* to the 'customer#...:ADMIN'. 
 
 Whoever has the owner-role assigned can do everything with the related business-object, including deleting (or deactivating) it.
 
 In most cases, the permissions to other operations than 'DELETE' are granted through the 'admin' role.
 By this, all roles ob sub-objects, which are assigned to the 'admin' role, are also granted to the 'owner'.
 
-#### admin
+#### ADMIN
 
 The admin-role is granted to a role of those subjects who manage the business object.
 E.g. a 'package' is manged by the admin of the customer.
@@ -222,7 +222,7 @@ Whoever has the admin-role assigned, can usually update the related business-obj
 
 The admin-role also comprises lesser roles, through which the SELECT-permission is granted.
 
-#### agent
+#### AGENT
 
 The agent-role is not used in the examples of this document, because it's for more complex cases.
 It's usually granted to those roles and users who represent the related business-object, but are not allowed to update it.
@@ -231,21 +231,25 @@ Other than the tenant-role, it usually offers broader visibility of sub-business
 E.g. a package-admin is allowed to see the related debitor-business-object, 
 but not its banking data.
 
-#### tenant
+#### TENANT
 
 The tenant-role is granted to everybody who needs to be able to select the business-object and (probably some) related business-objects.
 Usually all owners, admins and tenants of sub-objects get this role granted.
 
 Some business-objects only have very limited data directly in the main business-object and store more sensitive data in special sub-objects (e.g. 'customer-details') to which tenants of sub-objects of the main-object (e.g. package admins) do not get SELECT permission.
 
-#### guest
+#### GUEST
+
+(Deprecated)
+
+#### REFERRER
 
 Like the agent-role, the guest-role too is not used in the examples of this document, because it's for more complex cases.
 
-If the guest-role exists, the SELECT-permission is granted to it, instead of to the tenant-role.
-Other than the tenant-role, the guest-roles does never grant any roles of related objects. 
+If the referrer-role exists, the SELECT-permission is granted to it, instead of to the tenant-role.
+Other than the tenant-role, the referrer-roles does never grant any roles of related objects. 
 
-Also, if the guest-role exists, the tenant-role receives the SELECT-permission through the guest-role.
+Also, if the referrer-role exists, the tenant-role receives the SELECT-permission through the referrer-role.
 
 
 ### Referenced Business Objects and Role-Depreciation
@@ -372,7 +376,7 @@ That user is also used for historicization and audit log, but which is a differe
 If the session variable `hsadminng.assumedRoles` is set to a non-empty value, its content is interpreted as a list of semicolon-separated role names.
 Example:
 
-    SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+    SET LOCAL hsadminng.assumedRoles = 'customer#aab:admin;customer#aac:admin';
 
 In this case, not the current user but the assumed roles are used as a starting point for any further queries.
 Roles which are not granted to the current user, directly or indirectly, cannot be assumed.
@@ -385,7 +389,7 @@ A full example is shown here:
     BEGIN TRANSACTION;
         SET SESSION SESSION AUTHORIZATION restricted;
         SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-        SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+        SET LOCAL hsadminng.assumedRoles = 'customer#aab:admin;customer#aac:admin';
         
         SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
           FROM emailaddress_rv ema
@@ -466,14 +470,14 @@ together {
     permCustomerXyzSELECT--> boCustXyz
 }
 
-entity "Role customer#xyz.tenant" as roleCustXyzTenant 
+entity "Role customer#xyz:TENANT" as roleCustXyzTenant 
 roleCustXyzTenant --> permCustomerXyzSELECT
 
-entity "Role customer#xyz.admin" as roleCustXyzAdmin
+entity "Role customer#xyz:ADMIN" as roleCustXyzAdmin
 roleCustXyzAdmin --> roleCustXyzTenant
 roleCustXyzAdmin --> permCustomerXyzINSERT:package
 
-entity "Role customer#xyz.owner" as roleCustXyzOwner
+entity "Role customer#xyz:OWNER" as roleCustXyzOwner
 roleCustXyzOwner ..> roleCustXyzAdmin
 roleCustXyzOwner --> permCustomerXyzDELETE
 
@@ -489,7 +493,7 @@ actorHostmaster --> roleAdmins
 ```
 
 As you can see, there something special:
-From the 'Role customer#xyz.owner' to the 'Role customer#xyz.admin' there is a dashed line, whereas all other lines are solid lines.
+From the 'Role customer#xyz:OWNER' to the 'Role customer#xyz:admin' there is a dashed line, whereas all other lines are solid lines.
 Solid lines means, that one role is granted to another and automatically assumed in all queries to the restricted views.
 The dashed line means that one role is granted to another but not automatically assumed in queries to the restricted views.
 
@@ -537,15 +541,15 @@ together {
 }
 
 package {
-    entity "Role customer#xyz.tenant" as roleCustXyzTenant
-    entity "Role customer#xyz.admin" as roleCustXyzAdmin    
-    entity "Role customer#xyz.owner" as roleCustXyzOwner
+    entity "Role customer#xyz:TENANT" as roleCustXyzTenant
+    entity "Role customer#xyz:ADMIN" as roleCustXyzAdmin    
+    entity "Role customer#xyz:OWNER" as roleCustXyzOwner
 }
 
 package {
-    entity "Role package#xyz00.owner" as rolePacXyz00Owner
-    entity "Role package#xyz00.admin" as rolePacXyz00Admin
-    entity "Role package#xyz00.tenant" as rolePacXyz00Tenant
+    entity "Role package#xyz00:OWNER" as rolePacXyz00Owner
+    entity "Role package#xyz00:ADMIN" as rolePacXyz00Admin
+    entity "Role package#xyz00:TENANT" as rolePacXyz00Tenant
 }
 
 rolePacXyz00Tenant --> permPacXyz00SELECT

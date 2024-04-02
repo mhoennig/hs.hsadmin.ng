@@ -21,9 +21,9 @@ class TestPackageEntityUnitTest {
                    subgraph package:roles[ ]
                        style package:roles fill:#dd4901,stroke:white
 
-                       role:package:owner[[package:owner]]
-                       role:package:admin[[package:admin]]
-                       role:package:tenant[[package:tenant]]
+                       role:package:OWNER[[package:OWNER]]
+                       role:package:ADMIN[[package:ADMIN]]
+                       role:package:TENANT[[package:TENANT]]
                    end
 
                    subgraph package:permissions[ ]
@@ -43,26 +43,26 @@ class TestPackageEntityUnitTest {
                    subgraph customer:roles[ ]
                        style customer:roles fill:#99bcdb,stroke:white
                
-                       role:customer:owner[[customer:owner]]
-                       role:customer:admin[[customer:admin]]
-                       role:customer:tenant[[customer:tenant]]
+                       role:customer:OWNER[[customer:OWNER]]
+                       role:customer:ADMIN[[customer:ADMIN]]
+                       role:customer:TENANT[[customer:TENANT]]
                    end
                end
 
                %% granting roles to roles
-               role:global:admin -.->|XX| role:customer:owner
-               role:customer:owner -.-> role:customer:admin
-               role:customer:admin -.-> role:customer:tenant
-               role:customer:admin ==> role:package:owner
-               role:package:owner ==> role:package:admin
-               role:package:admin ==> role:package:tenant
-               role:package:tenant ==> role:customer:tenant
+               role:global:ADMIN -.->|XX| role:customer:OWNER
+               role:customer:OWNER -.-> role:customer:ADMIN
+               role:customer:ADMIN -.-> role:customer:TENANT
+               role:customer:ADMIN ==> role:package:OWNER
+               role:package:OWNER ==> role:package:ADMIN
+               role:package:ADMIN ==> role:package:TENANT
+               role:package:TENANT ==> role:customer:TENANT
 
                %% granting permissions to roles
-               role:customer:admin ==> perm:package:INSERT
-               role:package:owner ==> perm:package:DELETE
-               role:package:owner ==> perm:package:UPDATE
-               role:package:tenant ==> perm:package:SELECT
+               role:customer:ADMIN ==> perm:package:INSERT
+               role:package:OWNER ==> perm:package:DELETE
+               role:package:OWNER ==> perm:package:UPDATE
+               role:package:TENANT ==> perm:package:SELECT
                 """);
     }
 }

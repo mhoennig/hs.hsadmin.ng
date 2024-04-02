@@ -120,7 +120,7 @@ public class InsertTriggerGenerator {
             }
         },
         () -> {
-            System.err.println("WARNING: no explicit INSERT grant for " + rbacDef.getRootEntityAlias().simpleName() + " => implicitly grant INSERT to global.admin");
+            System.err.println("WARNING: no explicit INSERT grant for " + rbacDef.getRootEntityAlias().simpleName() + " => implicitly grant INSERT to global:ADMIN");
             generateInsertPermissionTriggerAllowOnlyGlobalAdmin(plPgSql);
         });
     }
@@ -246,7 +246,7 @@ public class InsertTriggerGenerator {
     }
 
     private static String toVar(final RbacView.RbacRoleDefinition roleDef) {
-        return uncapitalize(roleDef.getEntityAlias().simpleName()) + capitalize(roleDef.getRole().roleName());
+        return uncapitalize(roleDef.getEntityAlias().simpleName()) + capitalize(roleDef.getRole().name());
     }
 
 

@@ -27,8 +27,8 @@ Objektorientiert gedacht, enthalten solche Objekte die Zusatzdaten einer Subklas
 - Für die Rollenzuordnung zwischen referenzierten Objekten gilt:
   - Für Objekte vom Typ Root werden die Rollen des zugehörigen Aggregator-Objektes verwendet. 
   - Gibt es Referenzen auf hierarchisch verbundene Objekte (z.B. Debitor.refundBankAccount) gilt folgende Faustregel:
-        ***Nach oben absteigen, nach unten halten oder aufsteigen.*** An einem fachlich übergeordneten Objekt wird also eine niedrigere Rolle (z.B. Debitor-admin -> Partner.agent), einem fachlich untergeordneten Objekt eine gleichwertige Rolle (z.B. Partner.admin -> Debitor.admin) zugewiesen oder sogar aufgestiegen (Debitor.admin -> Package.tenant).
-  - Für Referenzen zwischen Objekten, die nicht hierarchisch zueinander stehen (z.B. Debitor und Bankverbindung), wird auf beiden seiten abgestiegen (also Debitor.admin -> BankAccount.referrer und BankAccount.admin -> Debitor.tenant).
+        ***Nach oben absteigen, nach unten halten oder aufsteigen.*** An einem fachlich übergeordneten Objekt wird also eine niedrigere Rolle (z.B. Debitor.ADMIN -> Partner.AGENT), einem fachlich untergeordneten Objekt eine gleichwertige Rolle (z.B. Partner.ADMIN -> Debitor.ADMIN) zugewiesen oder sogar aufgestiegen (Debitor.ADMIN -> Package.TENANT).
+  - Für Referenzen zwischen Objekten, die nicht hierarchisch zueinander stehen (z.B. Debitor und Bankverbindung), wird auf beiden seiten abgestiegen (also Debitor.ADMIN -> BankAccount.REFERRER und BankAccount.ADMIN -> Debitor.TENANT).
 
 Anmerkung: Der Typ-Begriff *Root* bezieht sich auf die Rolle im fachlichen Datenmodell. Im Bezug auf den Teilgraphen eines fachlichen Kontexts ist dies auch eine Wurzel im Sinne der Graphentheorie. Aber in anderen fachlichen Kontexten können auch diese Objekte von anderen Teilgraphen referenziert werden und werden dann zum inneren Knoten.
 

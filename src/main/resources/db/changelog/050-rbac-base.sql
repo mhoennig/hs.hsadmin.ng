@@ -164,7 +164,7 @@ end; $$;
 
  */
 
-create type RbacRoleType as enum ('owner', 'admin', 'agent', 'tenant', 'guest', 'referrer');
+create type RbacRoleType as enum ('OWNER', 'ADMIN', 'AGENT', 'TENANT', 'GUEST', 'REFERRER');
 
 create table RbacRole
 (
@@ -249,7 +249,7 @@ declare
     roleUuid                  uuid;
 begin
     -- TODO.refact: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
-    roleParts = overlay(roleIdName placing '#' from length(roleIdName) + 1 - strpos(reverse(roleIdName), '.'));
+    roleParts = overlay(roleIdName placing '#' from length(roleIdName) + 1 - strpos(reverse(roleIdName), ':'));
     objectTableFromRoleIdName = split_part(roleParts, '#', 1);
     objectNameFromRoleIdName = split_part(roleParts, '#', 2);
     roleTypeFromRoleIdName = split_part(roleParts, '#', 3);

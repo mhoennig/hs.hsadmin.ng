@@ -40,21 +40,21 @@ begin
 
 
     perform createRoleWithGrants(
-        testPackageOwner(NEW),
+        testPackageOWNER(NEW),
             permissions => array['DELETE', 'UPDATE'],
-            incomingSuperRoles => array[testCustomerAdmin(newCustomer)]
+            incomingSuperRoles => array[testCustomerADMIN(newCustomer)]
     );
 
     perform createRoleWithGrants(
-        testPackageAdmin(NEW),
-            incomingSuperRoles => array[testPackageOwner(NEW)]
+        testPackageADMIN(NEW),
+            incomingSuperRoles => array[testPackageOWNER(NEW)]
     );
 
     perform createRoleWithGrants(
-        testPackageTenant(NEW),
+        testPackageTENANT(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[testPackageAdmin(NEW)],
-            outgoingSubRoles => array[testCustomerTenant(newCustomer)]
+            incomingSuperRoles => array[testPackageADMIN(NEW)],
+            outgoingSubRoles => array[testCustomerTENANT(newCustomer)]
     );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
@@ -110,11 +110,11 @@ begin
 
     if NEW.customerUuid <> OLD.customerUuid then
 
-        call revokeRoleFromRole(testPackageOwner(OLD), testCustomerAdmin(oldCustomer));
-        call grantRoleToRole(testPackageOwner(NEW), testCustomerAdmin(newCustomer));
+        call revokeRoleFromRole(testPackageOWNER(OLD), testCustomerADMIN(oldCustomer));
+        call grantRoleToRole(testPackageOWNER(NEW), testCustomerADMIN(newCustomer));
 
-        call revokeRoleFromRole(testCustomerTenant(oldCustomer), testPackageTenant(OLD));
-        call grantRoleToRole(testCustomerTenant(newCustomer), testPackageTenant(NEW));
+        call revokeRoleFromRole(testCustomerTENANT(oldCustomer), testPackageTENANT(OLD));
+        call grantRoleToRole(testCustomerTENANT(newCustomer), testPackageTENANT(NEW));
 
     end if;
 
@@ -158,7 +158,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'test_package'),
-                    testCustomerAdmin(row));
+                    testCustomerADMIN(row));
             END LOOP;
     END;
 $$;
@@ -173,7 +173,7 @@ create or replace function test_package_test_customer_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'test_package'),
-            testCustomerAdmin(NEW));
+            testCustomerADMIN(NEW));
     return NEW;
 end; $$;
 

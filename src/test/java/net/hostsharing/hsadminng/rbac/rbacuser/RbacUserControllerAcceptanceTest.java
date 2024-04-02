@@ -104,7 +104,7 @@ class RbacUserControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy.admin")
+                    .header("assumed-roles", "test_customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid())
@@ -210,7 +210,7 @@ class RbacUserControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy.admin")
+                    .header("assumed-roles", "test_customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users")
@@ -287,12 +287,12 @@ class RbacUserControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_customer#yyy.tenant"),
+                                    hasEntry("roleName", "test_customer#yyy:TENANT"),
                                     hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
+                                    hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER"),
                                     hasEntry("op", "DELETE"))
                     ))
                     // actual content tested in integration test, so this is enough for here:
@@ -309,7 +309,7 @@ class RbacUserControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy.admin")
+                    .header("assumed-roles", "test_customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/users/" + givenUser.getUuid() + "/permissions")
@@ -318,12 +318,12 @@ class RbacUserControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_customer#yyy.tenant"),
+                                    hasEntry("roleName", "test_customer#yyy:TENANT"),
                                     hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
+                                    hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER"),
                                     hasEntry("op", "DELETE"))
                     ))
                     // actual content tested in integration test, so this is enough for here:
@@ -348,12 +348,12 @@ class RbacUserControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_customer#yyy.tenant"),
+                                    hasEntry("roleName", "test_customer#yyy:TENANT"),
                                     hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_domain#yyy00-aaaa.owner"),
+                                    hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER"),
                                     hasEntry("op", "DELETE"))
                     ))
                     // actual content tested in integration test, so this is enough for here:

@@ -35,22 +35,22 @@ begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
     perform createRoleWithGrants(
-        hsOfficeBankAccountOwner(NEW),
+        hsOfficeBankAccountOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalAdmin()],
+            incomingSuperRoles => array[globalADMIN()],
             userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
-        hsOfficeBankAccountAdmin(NEW),
+        hsOfficeBankAccountADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficeBankAccountOwner(NEW)]
+            incomingSuperRoles => array[hsOfficeBankAccountOWNER(NEW)]
     );
 
     perform createRoleWithGrants(
-        hsOfficeBankAccountReferrer(NEW),
+        hsOfficeBankAccountREFERRER(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsOfficeBankAccountAdmin(NEW)]
+            incomingSuperRoles => array[hsOfficeBankAccountADMIN(NEW)]
     );
 
     call leaveTriggerForObjectUuid(NEW.uuid);
@@ -93,7 +93,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_bankaccount'),
-                    globalGuest());
+                    globalGUEST());
             END LOOP;
     END;
 $$;
@@ -108,7 +108,7 @@ create or replace function hs_office_bankaccount_global_insert_tf()
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_bankaccount'),
-            globalGuest());
+            globalGUEST());
     return NEW;
 end; $$;
 

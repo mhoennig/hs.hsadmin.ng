@@ -91,7 +91,6 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("GmbH-firstcontact", ""))
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
 
@@ -111,33 +110,32 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_membership#M-1000117.admin",
-                    "hs_office_membership#M-1000117.owner",
-                    "hs_office_membership#M-1000117.agent"));
+                    "hs_office_membership#M-1000117:OWNER",
+                    "hs_office_membership#M-1000117:ADMIN",
+                    "hs_office_membership#M-1000117:AGENT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("GmbH-firstcontact", ""))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-
                             // insert
-                            "{ grant perm INSERT into coopassetstransaction with membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
-                            "{ grant perm INSERT into coopsharestransaction with membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
+                            "{ grant perm:membership#M-1000117:INSERT>coopassetstransaction to role:membership#M-1000117:ADMIN by system and assume }",
+                            "{ grant perm:membership#M-1000117:INSERT>coopsharestransaction to role:membership#M-1000117:ADMIN by system and assume }",
 
                             // owner
-                            "{ grant perm DELETE on membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
-                            "{ grant role membership#M-1000117.owner to user superuser-alex@hostsharing.net by membership#M-1000117.owner and assume }",
+                            "{ grant perm:membership#M-1000117:DELETE to role:membership#M-1000117:ADMIN by system and assume }",
+                            "{ grant role:membership#M-1000117:OWNER to user:superuser-alex@hostsharing.net by membership#M-1000117:OWNER and assume }",
 
                             // admin
-                            "{ grant perm UPDATE on membership#M-1000117 to role membership#M-1000117.admin by system and assume }",
-                            "{ grant role membership#M-1000117.admin to role membership#M-1000117.owner by system and assume }",
-                            "{ grant role membership#M-1000117.admin to role relation#HostsharingeG-with-PARTNER-FirstGmbH.admin by system and assume }",
+                            "{ grant perm:membership#M-1000117:UPDATE to role:membership#M-1000117:ADMIN by system and assume }",
+                            "{ grant role:membership#M-1000117:ADMIN to role:membership#M-1000117:OWNER by system and assume }",
+                            "{ grant role:membership#M-1000117:ADMIN to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN by system and assume }",
 
                             // agent
-                            "{ grant perm SELECT on membership#M-1000117 to role membership#M-1000117.agent by system and assume }",
-                            "{ grant role membership#M-1000117.agent to role membership#M-1000117.admin by system and assume }",
-                            "{ grant role membership#M-1000117.agent to role relation#HostsharingeG-with-PARTNER-FirstGmbH.agent by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-FirstGmbH.tenant to role membership#M-1000117.agent by system and assume }",
+                            "{ grant perm:membership#M-1000117:SELECT to role:membership#M-1000117:AGENT by system and assume }",
+                            "{ grant role:membership#M-1000117:AGENT to role:membership#M-1000117:ADMIN by system and assume }",
+
+                            "{ grant role:membership#M-1000117:AGENT to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-FirstGmbH:TENANT to role:membership#M-1000117:AGENT by system and assume }",
 
                             null));
         }
@@ -232,13 +230,13 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             assertThatMembershipIsVisibleForRole(
                     givenMembership,
-                    "hs_office_membership#M-1000113.agent");
+                    "hs_office_membership#M-1000113:AGENT");
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 // TODO: we should test with debitor- and partner-admin as well
-                context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000113.agent");
+                context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000113:AGENT");
                 givenMembership.setValidity(
                         Range.closedOpen(givenMembership.getValidity().lower(), newValidityEnd));
                 return membershipRepo.save(givenMembership);
@@ -296,7 +294,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH.agent");
+                context("superuser-alex@hostsharing.net", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
                 assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent();
 
                 membershipRepo.deleteByUuid(givenMembership.getUuid());

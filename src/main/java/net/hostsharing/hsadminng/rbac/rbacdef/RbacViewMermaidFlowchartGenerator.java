@@ -48,7 +48,7 @@ public class RbacViewMermaidFlowchartGenerator {
 
         flowchart.indented( () -> {
             rbacDef.getEntityAliases().values().stream()
-                    .filter(e -> e.aliasName().startsWith(entity.aliasName() + "."))
+                    .filter(e -> e.aliasName().startsWith(entity.aliasName() + ":"))
                     .forEach(this::renderEntitySubgraph);
 
             wrapOutputInSubgraph(entity.aliasName() + ":roles", color,

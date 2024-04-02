@@ -9,7 +9,7 @@
  */
 drop view if exists rbacrole_ev;
 create or replace view rbacrole_ev as
-select (objectTable || '#' || objectIdName || '.' || roleType) as roleIdName, *
+select (objectTable || '#' || objectIdName || ':' || roleType) as roleIdName, *
        -- @formatter:off
     from (
              select r.*,
@@ -40,7 +40,7 @@ select *
                 where isGranted(currentSubjectsUuids(), r.uuid)
         ) as unordered
         -- @formatter:on
-        order by objectTable || '#' || objectIdName || '.' || roleType;
+        order by objectTable || '#' || objectIdName || ':' || roleType;
 grant all privileges on rbacrole_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
@@ -57,7 +57,7 @@ create or replace view rbacgrants_ev as
     -- @formatter:off
     select x.grantUuid as uuid,
            x.grantedByTriggerOf as grantedByTriggerOf,
-           go.objectTable || '#' || findIdNameByObjectUuid(go.objectTable, go.uuid) || '.' || r.roletype as grantedByRoleIdName,
+           go.objectTable || '#' || findIdNameByObjectUuid(go.objectTable, go.uuid) || ':' || r.roletype as grantedByRoleIdName,
            x.ascendingIdName as ascendantIdName,
            x.descendingIdName as descendantIdName,
            x.grantedByRoleUuid,
@@ -71,16 +71,16 @@ create or replace view rbacgrants_ev as
                     g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
 
                     coalesce(
-                        'user ' || au.name,
-                        'role ' || aro.objectTable || '#' || findIdNameByObjectUuid(aro.objectTable, aro.uuid) || '.' || ar.roletype
+                        'user:' || au.name,
+                        'role:' || aro.objectTable || '#' || findIdNameByObjectUuid(aro.objectTable, aro.uuid) || ':' || ar.roletype
                         ) as ascendingIdName,
                     aro.objectTable, aro.uuid,
                     ( case
                             when dro is not null
-                                then ('role ' || dro.objectTable || '#' || findIdNameByObjectUuid(dro.objectTable, dro.uuid) || '.' || dr.roletype)
+                                then ('role:' || dro.objectTable || '#' || findIdNameByObjectUuid(dro.objectTable, dro.uuid) || ':' || dr.roletype)
                             when dp.op = 'INSERT'
-                                then 'perm ' || dp.op || ' into ' || dp.opTableName || ' with ' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid)
-                            else 'perm ' || dp.op || ' on ' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid)
+                                then 'perm:' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid) || ':'  || dp.op || '>' || dp.opTableName
+                            else 'perm:' || dpo.objecttable || '#' || findIdNameByObjectUuid(dpo.objectTable, dpo.uuid) || ':' || dp.op
                         end
                     ) as descendingIdName,
                     dro.objectTable, dro.uuid,
@@ -115,8 +115,8 @@ create or replace view rbacgrants_ev as
 drop view if exists rbacgrants_rv;
 create or replace view rbacgrants_rv as
     -- @formatter:off
-select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || '.' || r.roletype as grantedByRoleIdName,
-       g.objectTable || '#' || g.objectIdName || '.' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
+select o.objectTable || '#' || findIdNameByObjectUuid(o.objectTable, o.uuid) || ':' || r.roletype as grantedByRoleIdName,
+       g.objectTable || '#' || g.objectIdName || ':' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
        g.grantedByRoleUuid, g.descendantUuid as grantedRoleUuid, g.ascendantUuid as userUuid,
        g.objectTable, g.objectUuid, g.objectIdName, g.roleType as grantedRoleType
     from (
@@ -327,7 +327,7 @@ execute function deleteRbacUser();
 drop view if exists RbacOwnGrantedPermissions_rv;
 create or replace view RbacOwnGrantedPermissions_rv as
 select r.uuid as roleuuid, p.uuid as permissionUuid,
-       (r.objecttable || '#' || r.objectidname || '.' ||  r.roletype) as roleName, p.op,
+       (r.objecttable || ':' || r.objectidname || ':' ||  r.roletype) as roleName, p.op,
        o.objecttable, r.objectidname, o.uuid as objectuuid
     from rbacrole_rv r
     join rbacgrants g on g.ascendantuuid = r.uuid
@@ -359,7 +359,7 @@ begin
 
     return query select
         xp.roleUuid,
-        (xp.roleObjectTable || '#' || xp.roleObjectIdName || '.' || xp.roleType) as roleName,
+        (xp.roleObjectTable || '#' || xp.roleObjectIdName || ':' || xp.roleType) as roleName,
         xp.permissionUuid, xp.op, xp.opTableName,
         xp.permissionObjectTable, xp.permissionObjectIdName, xp.permissionObjectUuid
         from (select

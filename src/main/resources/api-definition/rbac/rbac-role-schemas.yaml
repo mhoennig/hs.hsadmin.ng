@@ -19,9 +19,11 @@ components:
                 roleType:
                     type: string
                     enum:
-                        - owner
-                        - admin
-                        - tenant
-                        - referrer
+                        - OWNER
+                        - ADMIN
+                        - AGENT
+                        - TENANT
+                        - GUEST
+                        - REFERRER
                 roleName:
                     type: string

@@ -82,7 +82,7 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     curl \
-        -H 'current-user: superuser-alex@hostsharing.net' -H 'assumed-roles: test_customer#yyy.admin' \
+        -H 'current-user: superuser-alex@hostsharing.net' -H 'assumed-roles: test_customer#yyy:ADMIN' \
         http://localhost:8080/api/test/packages
 
     # add a new customer

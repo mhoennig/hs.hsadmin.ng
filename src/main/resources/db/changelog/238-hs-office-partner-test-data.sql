@@ -24,7 +24,7 @@ declare
 begin
     idName := cleanIdentifier( partnerPersonName|| '-' || contactLabel);
     currentTask := 'creating partner test-data ' || idName;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global.admin');
+    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select p.* from hs_office_person p

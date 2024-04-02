@@ -54,7 +54,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("superuser-alex@hostsharing.net", "test_customer#xxx.admin");
+            context("superuser-alex@hostsharing.net", "test_customer#xxx:ADMIN");
 
             // when
             final var result = attempt(em, () -> {
@@ -66,7 +66,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "ERROR: [403] insert into test_customer not allowed for current subjects {test_customer#xxx.admin}");
+                    "ERROR: [403] insert into test_customer not allowed for current subjects {test_customer#xxx:ADMIN}");
         }
 
         @Test
@@ -112,7 +112,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerOwnerRole_canViewExactlyThatCustomer() {
             given:
-            context("superuser-alex@hostsharing.net", "test_customer#yyy.owner");
+            context("superuser-alex@hostsharing.net", "test_customer#yyy:OWNER");
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -137,7 +137,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
             context("customer-admin@xxx.example.com");
 
-            context("customer-admin@xxx.example.com", "test_package#xxx00.admin");
+            context("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
 
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
 

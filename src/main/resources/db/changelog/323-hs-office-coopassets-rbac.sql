@@ -38,8 +38,8 @@ begin
     SELECT * FROM hs_office_membership WHERE uuid = NEW.membershipUuid    INTO newMembership;
     assert newMembership.uuid is not null, format('newMembership must not be null for NEW.membershipUuid = %s', NEW.membershipUuid);
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeMembershipAgent(newMembership));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeMembershipAdmin(newMembership));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeMembershipAGENT(newMembership));
+    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeMembershipADMIN(newMembership));
 
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -81,7 +81,7 @@ do language plpgsql $$
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_coopassetstransaction'),
-                    hsOfficeMembershipAdmin(row));
+                    hsOfficeMembershipADMIN(row));
             END LOOP;
     END;
 $$;
@@ -96,7 +96,7 @@ create or replace function hs_office_coopassetstransaction_hs_office_membership_
 begin
     call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_coopassetstransaction'),
-            hsOfficeMembershipAdmin(NEW));
+            hsOfficeMembershipADMIN(NEW));
     return NEW;
 end; $$;
 

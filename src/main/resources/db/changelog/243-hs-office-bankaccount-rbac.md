@@ -13,9 +13,9 @@ subgraph bankAccount["`**bankAccount**`"]
     subgraph bankAccount:roles[ ]
         style bankAccount:roles fill:#dd4901,stroke:white
 
-        role:bankAccount:owner[[bankAccount:owner]]
-        role:bankAccount:admin[[bankAccount:admin]]
-        role:bankAccount:referrer[[bankAccount:referrer]]
+        role:bankAccount:OWNER[[bankAccount:OWNER]]
+        role:bankAccount:ADMIN[[bankAccount:ADMIN]]
+        role:bankAccount:REFERRER[[bankAccount:REFERRER]]
     end
 
     subgraph bankAccount:permissions[ ]
@@ -29,17 +29,17 @@ subgraph bankAccount["`**bankAccount**`"]
 end
 
 %% granting roles to users
-user:creator ==> role:bankAccount:owner
+user:creator ==> role:bankAccount:OWNER
 
 %% granting roles to roles
-role:global:admin ==> role:bankAccount:owner
-role:bankAccount:owner ==> role:bankAccount:admin
-role:bankAccount:admin ==> role:bankAccount:referrer
+role:global:ADMIN ==> role:bankAccount:OWNER
+role:bankAccount:OWNER ==> role:bankAccount:ADMIN
+role:bankAccount:ADMIN ==> role:bankAccount:REFERRER
 
 %% granting permissions to roles
-role:global:guest ==> perm:bankAccount:INSERT
-role:bankAccount:owner ==> perm:bankAccount:DELETE
-role:bankAccount:admin ==> perm:bankAccount:UPDATE
-role:bankAccount:referrer ==> perm:bankAccount:SELECT
+role:global:GUEST ==> perm:bankAccount:INSERT
+role:bankAccount:OWNER ==> perm:bankAccount:DELETE
+role:bankAccount:ADMIN ==> perm:bankAccount:UPDATE
+role:bankAccount:REFERRER ==> perm:bankAccount:SELECT
 
 ```

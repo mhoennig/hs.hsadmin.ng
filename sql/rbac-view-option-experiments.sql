@@ -83,7 +83,7 @@ select rr.uuid, rr.type from RbacGrants g
         select uuid from queryAllPermissionsOfSubjectId(findRbacUser('alex@example.com'))
             where objectTable='test_customer');
 
-call grantRoleToUser(findRoleId('test_customer#aaa.admin'), findRbacUser('aaaaouq@example.com'));
+call grantRoleToUser(findRoleId('test_customer#aaa:ADMIN'), findRbacUser('aaaaouq@example.com'));
 
 select queryAllPermissionsOfSubjectId(findRbacUser('aaaaouq@example.com'));
 

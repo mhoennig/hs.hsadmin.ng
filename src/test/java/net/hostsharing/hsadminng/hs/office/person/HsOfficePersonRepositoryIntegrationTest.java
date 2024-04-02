@@ -102,23 +102,23 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(
                     Array.from(
                             initialRoleNames,
-                            "hs_office_person#anothernewperson.owner",
-                            "hs_office_person#anothernewperson.admin",
-                            "hs_office_person#anothernewperson.referrer"
+                            "hs_office_person#anothernewperson:OWNER",
+                            "hs_office_person#anothernewperson:ADMIN",
+                            "hs_office_person#anothernewperson:REFERRER"
                     ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(
-                    Array.from(
+                    Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm INSERT into hs_office_relation with hs_office_person#anothernewperson to role hs_office_person#anothernewperson.admin by system and assume }",
+                            "{ grant perm:hs_office_person#anothernewperson:INSERT>hs_office_relation to role:hs_office_person#anothernewperson:ADMIN by system and assume }",
 
-                            "{ grant role hs_office_person#anothernewperson.owner to user selfregistered-user-drew@hostsharing.org by hs_office_person#anothernewperson.owner and assume }",
-                            "{ grant role hs_office_person#anothernewperson.owner to role global#global.admin by system and assume }",
-                            "{ grant perm UPDATE on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.admin by system and assume }",
-                            "{ grant perm DELETE on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.owner by system and assume }",
-                            "{ grant role hs_office_person#anothernewperson.admin to role hs_office_person#anothernewperson.owner by system and assume }",
+                            "{ grant role:hs_office_person#anothernewperson:OWNER       to user:selfregistered-user-drew@hostsharing.org by hs_office_person#anothernewperson:OWNER and assume }",
+                            "{ grant role:hs_office_person#anothernewperson:OWNER       to role:global#global:ADMIN by system and assume }",
+                            "{ grant perm:hs_office_person#anothernewperson:UPDATE      to role:hs_office_person#anothernewperson:ADMIN by system and assume }",
+                            "{ grant perm:hs_office_person#anothernewperson:DELETE      to role:hs_office_person#anothernewperson:OWNER by system and assume }",
+                            "{ grant role:hs_office_person#anothernewperson:ADMIN       to role:hs_office_person#anothernewperson:OWNER by system and assume }",
 
-                            "{ grant perm SELECT on hs_office_person#anothernewperson to role hs_office_person#anothernewperson.referrer by system and assume }",
-                            "{ grant role hs_office_person#anothernewperson.referrer to role hs_office_person#anothernewperson.admin by system and assume }"
+                            "{ grant perm:hs_office_person#anothernewperson:SELECT      to role:hs_office_person#anothernewperson:REFERRER by system and assume }",
+                            "{ grant role:hs_office_person#anothernewperson:REFERRER    to role:hs_office_person#anothernewperson:ADMIN by system and assume }"
                     ));
         }
 

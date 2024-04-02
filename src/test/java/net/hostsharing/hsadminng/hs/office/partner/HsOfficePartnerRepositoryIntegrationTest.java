@@ -132,52 +132,52 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.owner",
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.admin",
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.agent",
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.tenant"));
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:OWNER",
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:ADMIN",
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:AGENT",
+                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
                     .map(s -> s.replace("fourthcontact", "4th"))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(distinct(fromFormatted(
                             initialGrantNames,
-                            "{ grant perm INSERT into sepamandate with relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
+                            "{ grant perm:relation#HostsharingeG-with-PARTNER-EBess:INSERT>sepamandate  to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
 
                             // permissions on partner
-                            "{ grant perm DELETE on partner#P-20032 to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant perm UPDATE on partner#P-20032 to role relation#HostsharingeG-with-PARTNER-EBess.agent by system and assume }",
-                            "{ grant perm SELECT on partner#P-20032 to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant perm:partner#P-20032:DELETE                            to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
+                            "{ grant perm:partner#P-20032:UPDATE                            to role:relation#HostsharingeG-with-PARTNER-EBess:AGENT by system and assume }",
+                            "{ grant perm:partner#P-20032:SELECT                            to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",
 
                             // permissions on partner-details
-                            "{ grant perm DELETE on partner_details#P-20032-details to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant perm UPDATE on partner_details#P-20032-details to role relation#HostsharingeG-with-PARTNER-EBess.agent by system and assume }",
-                            "{ grant perm SELECT on partner_details#P-20032-details to role relation#HostsharingeG-with-PARTNER-EBess.agent by system and assume }",
+                            "{ grant perm:partner_details#P-20032:DELETE                    to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
+                            "{ grant perm:partner_details#P-20032:UPDATE                    to role:relation#HostsharingeG-with-PARTNER-EBess:AGENT by system and assume }",
+                            "{ grant perm:partner_details#P-20032:SELECT                    to role:relation#HostsharingeG-with-PARTNER-EBess:AGENT by system and assume }",
 
                             // permissions on partner-relation
-                            "{ grant perm DELETE on relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
-                            "{ grant perm UPDATE on relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
-                            "{ grant perm SELECT on relation#HostsharingeG-with-PARTNER-EBess to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
+                            "{ grant perm:relation#HostsharingeG-with-PARTNER-EBess:DELETE  to role:relation#HostsharingeG-with-PARTNER-EBess:OWNER by system and assume }",
+                            "{ grant perm:relation#HostsharingeG-with-PARTNER-EBess:UPDATE  to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
+                            "{ grant perm:relation#HostsharingeG-with-PARTNER-EBess:SELECT  to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",
 
                             // relation owner
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.owner to role global#global.admin by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.owner to user superuser-alex@hostsharing.net by relation#HostsharingeG-with-PARTNER-EBess.owner and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER   to role:global#global:ADMIN by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER   to user:superuser-alex@hostsharing.net by relation#HostsharingeG-with-PARTNER-EBess:OWNER and assume }",
 
                             // relation admin
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.admin to role relation#HostsharingeG-with-PARTNER-EBess.owner by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.admin to role person#HostsharingeG.admin by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN   to role:relation#HostsharingeG-with-PARTNER-EBess:OWNER by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN   to role:person#HostsharingeG:ADMIN by system and assume }",
 
                             // relation agent
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.agent to role person#EBess.admin by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.agent to role relation#HostsharingeG-with-PARTNER-EBess.admin by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:AGENT   to role:person#EBess:ADMIN by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:AGENT   to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
 
                             // relation tenant
-                            "{ grant role contact#4th.referrer to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
-                            "{ grant role person#EBess.referrer to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
-                            "{ grant role person#HostsharingeG.referrer to role relation#HostsharingeG-with-PARTNER-EBess.tenant by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role contact#4th.admin by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role person#EBess.admin by system and assume }",
-                            "{ grant role relation#HostsharingeG-with-PARTNER-EBess.tenant to role relation#HostsharingeG-with-PARTNER-EBess.agent by system and assume }",
+                            "{ grant role:contact#4th:REFERRER                              to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",
+                            "{ grant role:person#EBess:REFERRER                             to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",
+                            "{ grant role:person#HostsharingeG:REFERRER                     to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:TENANT  to role:contact#4th:ADMIN by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:TENANT  to role:person#EBess:ADMIN by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:TENANT  to role:relation#HostsharingeG-with-PARTNER-EBess:AGENT by system and assume }",
                             null)));
         }
 
@@ -266,7 +266,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20036, "Erben Bessler", "fifth contact");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler.admin");
+                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
@@ -281,13 +281,13 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "global#global.admin");
+                    "global#global:ADMIN");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ThirdOHG.admin");
+                    "hs_office_person#ThirdOHG:ADMIN");
             assertThatPartnerIsNotVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler.admin");
+                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
         }
 
         @Test
@@ -297,13 +297,13 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler.admin");
+                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net",
-                        "hs_office_person#ErbenBesslerMelBessler.admin");
+                        "hs_office_person#ErbenBesslerMelBessler:ADMIN");
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
@@ -319,20 +319,20 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler.admin");
+                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net",
-                        "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.tenant");
+                        "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT");
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] insert into hs_office_partner_details not allowed for current subjects {hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler.tenant}");
+                    "[403] insert into hs_office_partner_details not allowed for current subjects {hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT}");
         }
 
         private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
