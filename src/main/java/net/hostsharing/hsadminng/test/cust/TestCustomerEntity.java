@@ -30,6 +30,9 @@ public class TestCustomerEntity implements RbacObject {
     @GeneratedValue
     private UUID uuid;
 
+    @Version
+    private int version;
+
     private String prefix;
     private int reference;
 

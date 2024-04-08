@@ -14,15 +14,7 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -64,6 +56,9 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID uuid;
+
+    @Version
+    private int version;
 
     @ManyToOne
     @JoinColumn(name = "membershipuuid")

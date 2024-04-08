@@ -52,6 +52,9 @@ public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
     @GeneratedValue
     private UUID uuid;
 
+    @Version
+    private int version;
+
     @ManyToOne
     @JoinColumn(name = "anchoruuid")
     private HsOfficePersonEntity anchor;

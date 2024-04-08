@@ -8,10 +8,7 @@ import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -40,6 +37,9 @@ public class HsOfficeBankAccountEntity implements RbacObject, Stringifyable {
     @Id
     @GeneratedValue
     private UUID uuid;
+
+    @Version
+    private int version;
 
     private String holder;
 

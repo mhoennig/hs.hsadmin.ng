@@ -40,7 +40,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
+                        UUID.randomUUID(), 0, "www", 90001, "customer-admin@www.example.com");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -59,7 +59,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
+                        UUID.randomUUID(), 0, "www", 90001, "customer-admin@www.example.com");
                 return testCustomerRepository.save(newCustomer);
             });
 
@@ -77,7 +77,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // when
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
-                        UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
+                        UUID.randomUUID(), 0, "www", 90001, "customer-admin@www.example.com");
                 return testCustomerRepository.save(newCustomer);
             });
 

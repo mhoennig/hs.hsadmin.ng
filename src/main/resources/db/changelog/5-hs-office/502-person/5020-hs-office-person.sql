@@ -17,6 +17,7 @@ CREATE CAST (character varying as HsOfficePersonType) WITH INOUT AS IMPLICIT;
 create table if not exists hs_office_person
 (
     uuid           uuid unique references RbacObject (uuid) initially deferred,
+    version        int not null default 0,
     personType     HsOfficePersonType not null,
     tradeName      varchar(96),
     salutation     varchar(30),

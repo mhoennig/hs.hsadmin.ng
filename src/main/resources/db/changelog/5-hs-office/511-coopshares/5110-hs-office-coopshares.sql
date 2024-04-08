@@ -11,6 +11,7 @@ CREATE CAST (character varying as HsOfficeCoopSharesTransactionType) WITH INOUT 
 create table if not exists hs_office_coopsharestransaction
 (
     uuid            uuid unique references RbacObject (uuid) initially deferred,
+    version         int not null default 0,
     membershipUuid  uuid not null references hs_office_membership(uuid),
     transactionType HsOfficeCoopSharesTransactionType not null,
     valueDate       date not null,

@@ -5,4 +5,6 @@ import java.util.UUID;
 
 public interface RbacObject {
     UUID getUuid();
+
+    int getVersion();
 }

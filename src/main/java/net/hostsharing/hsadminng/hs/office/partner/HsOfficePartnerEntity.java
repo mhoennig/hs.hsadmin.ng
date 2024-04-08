@@ -17,13 +17,7 @@ import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -65,6 +59,9 @@ public class HsOfficePartnerEntity implements Stringifyable, RbacObject {
     @Id
     @GeneratedValue
     private UUID uuid;
+
+    @Version
+    private int version;
 
     @Column(name = "partnernumber", columnDefinition = "numeric(5) not null")
     private Integer partnerNumber;

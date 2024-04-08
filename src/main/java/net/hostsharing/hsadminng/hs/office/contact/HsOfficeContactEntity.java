@@ -40,6 +40,11 @@ public class HsOfficeContactEntity implements Stringifyable, RbacObject {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID uuid;
+
+    @Version
+    private int version;
+
+    @Column(name = "label")
     private String label;
 
     @Column(name = "postaladdress")

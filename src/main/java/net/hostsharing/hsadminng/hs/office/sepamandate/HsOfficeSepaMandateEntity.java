@@ -50,6 +50,9 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, RbacObject {
     @GeneratedValue
     private UUID uuid;
 
+    @Version
+    private int version;
+
     @ManyToOne
     @JoinColumn(name = "debitoruuid")
     private HsOfficeDebitorEntity debitor;

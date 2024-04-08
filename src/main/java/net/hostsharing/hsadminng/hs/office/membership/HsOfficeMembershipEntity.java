@@ -57,6 +57,9 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
     @GeneratedValue
     private UUID uuid;
 
+    @Version
+    private int version;
+
     @ManyToOne
     @JoinColumn(name = "partneruuid")
     private HsOfficePartnerEntity partner;

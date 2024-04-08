@@ -43,6 +43,7 @@ public class HsOfficePartnerDetailsEntity implements RbacObject, Stringifyable {
     @GeneratedValue
     private UUID uuid;
 
+    private @Version int version;
     private @Column(name = "registrationoffice") String registrationOffice;
     private @Column(name = "registrationnumber") String registrationNumber;
     private @Column(name = "birthname") String birthName;

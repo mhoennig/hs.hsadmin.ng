@@ -295,7 +295,9 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
         private void assertThatRelationActuallyInDatabase(final HsOfficeRelationEntity saved) {
             final var found = relationRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().isNotSameAs(saved).usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get()
+                    .isNotSameAs(saved)
+                    .usingRecursiveComparison().ignoringFields("version").isEqualTo(saved);
         }
 
         private void assertThatRelationIsVisibleForUserWithRole(

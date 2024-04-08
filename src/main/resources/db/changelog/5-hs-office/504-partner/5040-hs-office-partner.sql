@@ -8,6 +8,7 @@
 create table hs_office_partner_details
 (
     uuid                uuid unique references RbacObject (uuid) initially deferred,
+    version             int not null default 0,
     registrationOffice  varchar(96),
     registrationNumber  varchar(96),
     birthPlace          varchar(96),
@@ -32,8 +33,9 @@ call create_journal('hs_office_partner_details');
 create table hs_office_partner
 (
     uuid                uuid unique references RbacObject (uuid) initially deferred,
+    version             int not null default 0,
     partnerNumber       numeric(5) unique not null,
-    partnerRelUuid     uuid not null references hs_office_relation(uuid), -- deleted in after delete trigger
+    partnerRelUuid      uuid not null references hs_office_relation(uuid), -- deleted in after delete trigger
     detailsUuid         uuid not null references hs_office_partner_details(uuid) -- deleted in after delete trigger
 );
 --//

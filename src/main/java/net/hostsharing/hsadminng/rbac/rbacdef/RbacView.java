@@ -426,8 +426,7 @@ public class RbacView {
     private void verifyVersionColumnExists() {
         if (stream(rootEntityAlias.entityClass.getDeclaredFields())
                 .noneMatch(f -> f.getAnnotation(Version.class) != null)) {
-            // TODO: convert this into throw Exception once RbacEntity is a base class with @Version field
-            System.err.println("@Version field required in updatable entity " + rootEntityAlias.entityClass);
+            throw new IllegalArgumentException("@Version field required in updatable entity " + rootEntityAlias.entityClass);
         }
     }
 

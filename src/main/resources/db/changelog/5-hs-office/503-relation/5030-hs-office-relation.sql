@@ -19,6 +19,7 @@ CREATE CAST (character varying as HsOfficeRelationType) WITH INOUT AS IMPLICIT;
 create table if not exists hs_office_relation
 (
     uuid             uuid unique references RbacObject (uuid) initially deferred, -- on delete cascade
+    version          int not null default 0,
     anchorUuid       uuid not null references hs_office_person(uuid),
     holderUuid       uuid not null references hs_office_person(uuid),
     contactUuid      uuid references hs_office_contact(uuid),

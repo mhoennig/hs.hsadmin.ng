@@ -44,6 +44,9 @@ public class HsOfficePersonEntity implements RbacObject, Stringifyable {
     @GeneratedValue
     private UUID uuid;
 
+    @Version
+    private int version;
+
     @Column(name = "persontype")
     private HsOfficePersonType personType;
 

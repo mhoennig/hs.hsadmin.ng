@@ -13,15 +13,7 @@ import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -60,6 +52,9 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, RbacO
     @Id
     @GeneratedValue
     private UUID uuid;
+
+    @Version
+    private int version;
 
     @ManyToOne
     @JoinColumn(name = "membershipuuid")

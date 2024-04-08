@@ -11,6 +11,7 @@ CREATE CAST (character varying as HsOfficeReasonForTermination) WITH INOUT AS IM
 create table if not exists hs_office_membership
 (
     uuid                    uuid unique references RbacObject (uuid) initially deferred,
+    version                 int not null default 0,
     partnerUuid             uuid not null references hs_office_partner(uuid),
     memberNumberSuffix      char(2) not null check (memberNumberSuffix::text ~ '^[0-9][0-9]$'),
     validity                daterange not null,

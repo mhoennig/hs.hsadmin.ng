@@ -71,6 +71,9 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     private UUID uuid;
 
+    @Version
+    private int version;
+
     @ManyToOne
     @JoinFormula(
         referencedColumnName = "uuid",

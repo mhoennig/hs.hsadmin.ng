@@ -6,7 +6,8 @@ Permissions, Rollen und Grants werden in den INSERT/UPDATE/DELETE-Triggern von G
 
 Das folgende Schema soll dabei unterstützen, die richtigen Permissions, Rollen und Grants festzulegen.
 
-An einigen Stellen ist vom *Initiator* die Rede. Als *Initiator* gilt derjenige User, der die Operation (INSERT oder UPDATE) durchführt bzw. dessen primary assumed Rol. (TODO: bisher gibt es nur assumed roles, das Konzept einer primary assumed Role müsste noch eingeführt werden, derzeit nehmen wir dafür immer den `globalAdmin()`. Bevor Kunden aber selbst Objekte anlegen können, muss das geklärt sein.)
+An einigen Stellen ist vom *Initiator* die Rede. Als *Initiator* gilt derjenige User, der die Operation (INSERT oder UPDATE) durchführt bzw. eine explizit anzugebende Rolle des Users. 
+Wird keine solche explizite Rolle angegeben, gilt die granted Rolle als diejenige, als der das Grant erfolgt. 
 
 #### Typ Root: Objekte, welche nur eine Spezialisierung bzw. Zusatzdaten für andere Objekte bereitstellen (z.B. Partner für Relations vom Typ Partner oder Partner Details für Partner)
 
