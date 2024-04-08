@@ -70,7 +70,7 @@ public class HsOfficePersonEntity implements RbacObject, Stringifyable {
     @Override
     public String toShortString() {
         return personType + " " +
-                (!StringUtils.isEmpty(tradeName) ? tradeName : (StringUtils.isEmpty(salutation) ? "" : salutation + " ") + (familyName + ", " + givenName));
+                (!StringUtils.isEmpty(tradeName) ? tradeName : (familyName + ", " + givenName));
     }
 
     public static RbacView rbac() {
