@@ -11,17 +11,19 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Column;
 import java.io.IOException;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inOtherCases;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -101,31 +103,55 @@ public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
                         dependsOnColumn("contactUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
-                .createRole(OWNER, (with) -> {
-                    with.owningUser(CREATOR);
-                    with.incomingSuperRole(GLOBAL, ADMIN);
-                    // TODO: if type=REPRESENTATIIVE
-                    // with.incomingSuperRole("holderPerson", ADMIN);
-                    with.permission(DELETE);
-                })
-                .createSubRole(ADMIN, (with) -> {
-                    with.incomingSuperRole("anchorPerson", ADMIN);
-                    // TODO: if type=REPRESENTATIIVE
-                    // with.outgoingSuperRole("anchorPerson", OWNER);
-                    with.permission(UPDATE);
-                })
-                .createSubRole(AGENT, (with) -> {
-                    with.incomingSuperRole("holderPerson", ADMIN);
-                })
-                .createSubRole(TENANT, (with) -> {
-                    with.incomingSuperRole("holderPerson", ADMIN);
-                    with.incomingSuperRole("contact", ADMIN);
-                    with.outgoingSubRole("anchorPerson", REFERRER);
-                    with.outgoingSubRole("holderPerson", REFERRER);
-                    with.outgoingSubRole("contact", REFERRER);
-                    with.permission(SELECT);
-                })
-
+                .switchOnColumn("type",
+                    inCaseOf("REPRESENTATIVE", then -> {
+                        then.createRole(OWNER, (with) -> {
+                                with.owningUser(CREATOR);
+                                with.incomingSuperRole(GLOBAL, ADMIN);
+                                with.incomingSuperRole("holderPerson", ADMIN);
+                                with.permission(DELETE);
+                            })
+                            .createSubRole(ADMIN, (with) -> {
+                                with.outgoingSubRole("anchorPerson", OWNER);
+                                with.permission(UPDATE);
+                            })
+                            .createSubRole(AGENT, (with) -> {
+                                with.incomingSuperRole("anchorPerson", ADMIN);
+                            })
+                            .createSubRole(TENANT, (with) -> {
+                                with.incomingSuperRole("contact", ADMIN);
+                                with.outgoingSubRole("anchorPerson", REFERRER);
+                                with.outgoingSubRole("holderPerson", REFERRER);
+                                with.outgoingSubRole("contact", REFERRER);
+                                with.permission(SELECT);
+                            });
+                    }),
+                    // inCaseOf("DEBITOR", then -> {}), TODO.spec: needs to be defined
+                    inOtherCases(then -> {
+                        then.createRole(OWNER, (with) -> {
+                                with.owningUser(CREATOR);
+                                with.incomingSuperRole(GLOBAL, ADMIN);
+                                with.incomingSuperRole("anchorPerson", ADMIN);
+                                with.permission(DELETE);
+                            })
+                            .createSubRole(ADMIN, (with) -> {
+                                with.permission(UPDATE);
+                            })
+                            .createSubRole(AGENT, (with) -> {
+                                // TODO.spec: we need relation:PROXY, to allow changing the relation contact.
+                                // the alternative would be to move this to the relation:ADMIN role,
+                                // but then the partner holder person could update the partner relation itself,
+                                // see partner entity.
+                                with.incomingSuperRole("holderPerson", ADMIN);
+                            })
+                            .createSubRole(TENANT, (with) -> {
+                                with.incomingSuperRole("contact", ADMIN);
+                                with.outgoingSubRole("anchorPerson", REFERRER);
+                                with.outgoingSubRole("holderPerson", REFERRER);
+                                with.outgoingSubRole("contact", REFERRER);
+                                with.permission(SELECT);
+                            });
+                    }))
                 .toRole("anchorPerson", ADMIN).grantPermission(INSERT);
     }
 

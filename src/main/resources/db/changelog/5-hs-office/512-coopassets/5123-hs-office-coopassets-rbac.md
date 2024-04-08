@@ -97,15 +97,14 @@ role:membership.partnerRel.contact:OWNER -.-> role:membership.partnerRel.contact
 role:membership.partnerRel.contact:ADMIN -.-> role:membership.partnerRel.contact:REFERRER
 role:global:ADMIN -.-> role:membership.partnerRel:OWNER
 role:membership.partnerRel:OWNER -.-> role:membership.partnerRel:ADMIN
-role:membership.partnerRel.anchorPerson:ADMIN -.-> role:membership.partnerRel:ADMIN
 role:membership.partnerRel:ADMIN -.-> role:membership.partnerRel:AGENT
-role:membership.partnerRel.holderPerson:ADMIN -.-> role:membership.partnerRel:AGENT
 role:membership.partnerRel:AGENT -.-> role:membership.partnerRel:TENANT
-role:membership.partnerRel.holderPerson:ADMIN -.-> role:membership.partnerRel:TENANT
 role:membership.partnerRel.contact:ADMIN -.-> role:membership.partnerRel:TENANT
 role:membership.partnerRel:TENANT -.-> role:membership.partnerRel.anchorPerson:REFERRER
 role:membership.partnerRel:TENANT -.-> role:membership.partnerRel.holderPerson:REFERRER
 role:membership.partnerRel:TENANT -.-> role:membership.partnerRel.contact:REFERRER
+role:membership.partnerRel.anchorPerson:ADMIN -.-> role:membership.partnerRel:OWNER
+role:membership.partnerRel.holderPerson:ADMIN -.-> role:membership.partnerRel:AGENT
 role:membership:OWNER -.-> role:membership:ADMIN
 role:membership.partnerRel:ADMIN -.-> role:membership:ADMIN
 role:membership:ADMIN -.-> role:membership:AGENT

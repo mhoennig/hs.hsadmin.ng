@@ -1,4 +1,4 @@
-### rbac relation inOtherCases
+### rbac relation inCaseOf:REPRESENTATIVE
 
 This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
 
@@ -82,15 +82,16 @@ role:global:ADMIN -.-> role:contact:OWNER
 role:contact:OWNER -.-> role:contact:ADMIN
 role:contact:ADMIN -.-> role:contact:REFERRER
 role:global:ADMIN ==> role:relation:OWNER
+role:holderPerson:ADMIN ==> role:relation:OWNER
 role:relation:OWNER ==> role:relation:ADMIN
+role:relation:ADMIN ==> role:anchorPerson:OWNER
 role:relation:ADMIN ==> role:relation:AGENT
+role:anchorPerson:ADMIN ==> role:relation:AGENT
 role:relation:AGENT ==> role:relation:TENANT
 role:contact:ADMIN ==> role:relation:TENANT
 role:relation:TENANT ==> role:anchorPerson:REFERRER
 role:relation:TENANT ==> role:holderPerson:REFERRER
 role:relation:TENANT ==> role:contact:REFERRER
-role:anchorPerson:ADMIN ==> role:relation:OWNER
-role:holderPerson:ADMIN ==> role:relation:AGENT
 
 %% granting permissions to roles
 role:relation:OWNER ==> perm:relation:DELETE

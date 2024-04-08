@@ -219,23 +219,6 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1021)
-    void buildDebitorRelations() {
-        debitors.forEach( (id, debitor) -> {
-            final var debitorRel = HsOfficeRelationEntity.builder()
-                    .type(HsOfficeRelationType.DEBITOR)
-                    .anchor(debitor.getPartner().getPartnerRel().getHolder())
-                    .holder(debitor.getPartner().getPartnerRel().getHolder()) //  just 1 debitor/partner in legacy hsadmin
-                    // FIXME .contact()
-                    .build();
-            if (debitorRel.getAnchor() != null && debitorRel.getHolder() != null &&
-                    debitorRel.getContact() != null ) {
-                relations.put(relationId++, debitorRel);
-            }
-        });
-    }
-
-    @Test
     @Order(1029)
     void verifyContacts() {
         assumeThatWeAreImportingControlledTestData();
@@ -292,29 +275,25 @@ public class ImportOfficeData extends ContextBasedTest {
                 {
                     2000000=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
                     2000001=rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000002=rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000003=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000004=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
-                    2000005=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
-                    2000006=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000007=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000008=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000009=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='null null, null'),
-                    2000010=rel(anchor='null null, null', type='DEBITOR'),
-                    2000011=rel(anchor='null null, null', type='DEBITOR'),
-                    2000012=rel(anchor='NP Mellies, Michael', type='OPERATIONS', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000013=rel(anchor='NP Mellies, Michael', type='REPRESENTATIVE', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000014=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
-                    2000015=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000016=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000017=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000018=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000019=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000020=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000021=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
-                    2000022=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000023=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-2000024=rel(anchor='NP Mellies, Michael', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
+                    2000002=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000003=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
+                    2000004=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000005=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000006=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='null null, null'),
+                    2000007=rel(anchor='null null, null', type='DEBITOR'),
+                    2000008=rel(anchor='NP Mellies, Michael', type='OPERATIONS', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000009=rel(anchor='NP Mellies, Michael', type='REPRESENTATIVE', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000010=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
+                    2000011=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000012=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000013=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000014=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000015=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000016=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000017=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
+                    2000018=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000019=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000020=rel(anchor='NP Mellies, Michael', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
                 }
                 """);
     }
@@ -425,14 +404,33 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(2009)
+    @Order(3001)
+    void removeSelfRepresentativeRelations() {
+        assumeThatWeAreImportingControlledTestData();
+
+        // this happens if a natural person is marked as 'contractual' for itself
+        final var idsToRemove = new HashSet<Integer>();
+        relations.forEach( (id, r) -> {
+            if (r.getHolder() == r.getAnchor() ) {
+                idsToRemove.add(id);
+            }
+        });
+
+        // remove self-representatives
+        idsToRemove.forEach(id -> {
+            System.out.println("removing self representative relation: " + relations.get(id).toString());
+            relations.remove(id);
+        });
+    }
+
+    @Test
+    @Order(3002)
     void removeEmptyRelations() {
         assumeThatWeAreImportingControlledTestData();
 
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
         relations.forEach( (id, r) -> {
-            // such a record
             if (r.getContact() == null || r.getContact().getLabel() == null ||
                r.getHolder() == null || r.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
@@ -447,7 +445,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(2002)
+    @Order(3003)
     void removeEmptyPartners() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -471,7 +469,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(2003)
+    @Order(3004)
     void removeEmptyDebitors() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -490,7 +488,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(3000)
+    @Order(9000)
     @Commit
     void persistEntities() {
 
@@ -516,6 +514,7 @@ public class ImportOfficeData extends ContextBasedTest {
             relations.forEach(this::persist);
         }).assertSuccessful();
 
+        System.out.println("persisting " + partners.size() + " partners");
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             partners.forEach((id, partner) -> {
@@ -533,7 +532,7 @@ public class ImportOfficeData extends ContextBasedTest {
             context(rbacSuperuser);
             debitors.forEach((id, debitor) -> {
                 debitor.setDebitorRel(em.merge(debitor.getDebitorRel()));
-                em.persist(debitor);
+                persist(id, debitor);
             });
         }).assertSuccessful();
 
@@ -721,7 +720,6 @@ public class ImportOfficeData extends ContextBasedTest {
                             null, // will be set in contacts import
                             null // will beset in contacts import
                     );
-                    relations.put(relationId++, debitorRel);
 
                     final var debitor = HsOfficeDebitorEntity.builder()
                             .debitorNumberSuffix("00")

@@ -167,7 +167,7 @@ public class RbacGrantsDiagramService {
             return "users";
         }
         if (refType.equals("perm")) {
-            return node.idName().split(" ", 4)[3];
+            return node.idName().split(":", 3)[1];
         }
         if (refType.equals("role")) {
             final var withoutRolePrefix = node.idName().substring("role:".length());
@@ -209,7 +209,7 @@ public class RbacGrantsDiagramService {
     }
 
 
-    class LimitedHashSet<T> extends HashSet<T> {
+    static class LimitedHashSet<T> extends HashSet<T> {
 
         @Override
         public boolean add(final T t) {

@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.rbac.rbacdef;
 
 import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.*;
@@ -15,16 +16,23 @@ public class RbacViewMermaidFlowchartGenerator {
     public static final String HOSTSHARING_DARK_BLUE = "#274d6e";
     public static final String HOSTSHARING_LIGHT_BLUE = "#99bcdb";
     private final RbacView rbacDef;
+
+    private final CaseDef forCase;
     private final StringWriter flowchart = new StringWriter();
 
-    public RbacViewMermaidFlowchartGenerator(final RbacView rbacDef) {
+    public RbacViewMermaidFlowchartGenerator(final RbacView rbacDef, final CaseDef forCase) {
         this.rbacDef = rbacDef;
+        this.forCase = forCase;
         flowchart.writeLn("""
                 %%{init:{'flowchart':{'htmlLabels':false}}}%%
                 flowchart TB
                 """);
         renderEntitySubgraphs();
         renderGrants();
+    }
+
+    public RbacViewMermaidFlowchartGenerator(final RbacView rbacDef) {
+       this(rbacDef, null);
     }
     private void renderEntitySubgraphs() {
         rbacDef.getEntityAliases().values().stream()
@@ -99,6 +107,7 @@ public class RbacViewMermaidFlowchartGenerator {
     private void renderGrants(final RbacView.RbacGrantDefinition.GrantType grantType, final String comment) {
         final var grantsOfRequestedType = rbacDef.getGrantDefs().stream()
                 .filter(g -> g.grantType() == grantType)
+                .filter(this::isToBeRenderedInThisGraph)
                 .toList();
         if ( !grantsOfRequestedType.isEmpty()) {
             flowchart.ensureSingleEmptyLine();
@@ -107,10 +116,19 @@ public class RbacViewMermaidFlowchartGenerator {
         }
     }
 
+    private boolean isToBeRenderedInThisGraph(final RbacView.RbacGrantDefinition g) {
+        if ( g.grantType() != ROLE_TO_ROLE )
+            return true;
+        if ( forCase == null && !g.isConditional() )
+            return true;
+        final var isToBeRenderedInThisGraph = g.getForCases() == null || g.getForCases().contains(forCase);
+        return isToBeRenderedInThisGraph;
+    }
+
     private String grantDef(final RbacView.RbacGrantDefinition grant) {
         final var arrow = (grant.isToCreate() ? " ==>" : " -.->")
                         + (grant.isAssumed() ? " " : "|XX| ");
-        return switch (grant.grantType()) {
+        final var grantDef = switch (grant.grantType()) {
             case ROLE_TO_USER ->
                 // TODO: other user types not implemented yet
                     "user:creator" + arrow + roleId(grant.getSubRoleDef());
@@ -118,6 +136,7 @@ public class RbacViewMermaidFlowchartGenerator {
                     roleId(grant.getSuperRoleDef()) + arrow + roleId(grant.getSubRoleDef());
             case PERM_TO_ROLE -> roleId(grant.getSuperRoleDef()) + arrow + permId(grant.getPermDef());
         };
+        return grantDef;
     }
 
     private String permDef(final RbacView.RbacPermissionDefinition perm) {
@@ -146,16 +165,17 @@ public class RbacViewMermaidFlowchartGenerator {
         Files.writeString(
                 path,
                 """
-                        ### rbac %{entityAlias}
-                        
-                        This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
-                                        
-                        ```mermaid
-                        %{flowchart}
-                        ```
-                        """
-                        .replace("%{entityAlias}", rbacDef.getRootEntityAlias().aliasName())
-                        .replace("%{flowchart}", flowchart.toString()),
+                    ### rbac %{entityAlias}%{case}
+    
+                    This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
+    
+                    ```mermaid
+                    %{flowchart}
+                    ```
+                    """
+                    .replace("%{entityAlias}", rbacDef.getRootEntityAlias().aliasName())
+                    .replace("%{flowchart}", flowchart.toString())
+                    .replace("%{case}", forCase == null ? "" : " " + forCase),
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         System.out.println("Markdown-File: " + path.toAbsolutePath());
     }

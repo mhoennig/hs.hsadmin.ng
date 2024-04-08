@@ -14,7 +14,6 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.test.cust.TestCustomerEntity;
 import net.hostsharing.hsadminng.test.dom.TestDomainEntity;
 import net.hostsharing.hsadminng.test.pac.TestPackageEntity;
@@ -27,18 +26,22 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.reflect.Modifier.isStatic;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.Part.AUTO_FETCH;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static org.apache.commons.collections4.SetUtils.hashSet;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 
 @Getter
+// TODO.refa: rename to RbacDSL
 public class RbacView {
 
     public static final String GLOBAL = "global";
@@ -61,11 +64,23 @@ public class RbacView {
     };
     private final Set<String> updatableColumns = new LinkedHashSet<>();
     private final Set<RbacGrantDefinition> grantDefs = new LinkedHashSet<>();
+    private final Set<CaseDef> allCases = new LinkedHashSet<>();
 
+    private String discriminatorColumName;
+    private CaseDef processingCase;
     private SQL identityViewSqlQuery;
     private SQL orderBySqlExpression;
     private EntityAlias rootEntityAliasProxy;
     private RbacRoleDefinition previousRoleDef;
+    private final Map<String, CaseDef> cases = new LinkedHashMap<>() {
+        @Override
+        public CaseDef put(final String key, final CaseDef value) {
+            if (containsKey(key)) {
+                throw new IllegalArgumentException("duplicate case: " + key);
+            }
+            return super.put(key, value);
+        }
+    };
 
     /** Crates an RBAC definition template for the given entity class and defining the given alias.
      *
@@ -239,7 +254,11 @@ public class RbacView {
     }
 
     private RbacPermissionDefinition createPermission(final EntityAlias entityAlias, final Permission permission) {
-        return new RbacPermissionDefinition(entityAlias, permission, null, true);
+        return permDefs.stream()
+                .filter(p -> p.permission == permission && p.entityAlias == entityAlias)
+                .findFirst()
+                // .map(g -> g.forCase(processingCase)) TODO.impl: not implemented case dependent
+                .orElseGet(() -> new RbacPermissionDefinition(entityAlias, permission, null, true));
     }
 
     public <EC extends RbacObject> RbacView declarePlaceholderEntityAliases(final String... aliasNames) {
@@ -278,12 +297,13 @@ public class RbacView {
     public <EC extends RbacObject> RbacView importRootEntityAliasProxy(
             final String aliasName,
             final Class<? extends RbacObject> entityClass,
+            final ColumnValue forCase,
             final SQL fetchSql,
             final Column dependsOnColum) {
         if (rootEntityAliasProxy != null) {
             throw new IllegalStateException("there is already an entityAliasProxy: " + rootEntityAliasProxy);
         }
-        rootEntityAliasProxy = importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false, NOT_NULL);
+        rootEntityAliasProxy = importEntityAliasImpl(aliasName, entityClass, forCase, fetchSql, dependsOnColum, false, NOT_NULL);
         return this;
     }
 
@@ -302,7 +322,7 @@ public class RbacView {
     public RbacView importSubEntityAlias(
             final String aliasName, final Class<? extends RbacObject> entityClass,
             final SQL fetchSql, final Column dependsOnColum) {
-        importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, true, NOT_NULL);
+        importEntityAliasImpl(aliasName, entityClass, usingDefaultCase(), fetchSql, dependsOnColum, true, NOT_NULL);
         return this;
     }
 
@@ -336,25 +356,17 @@ public class RbacView {
     public RbacView importEntityAlias(
             final String aliasName, final Class<? extends RbacObject> entityClass,
             final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
-        importEntityAliasImpl(aliasName, entityClass, fetchSql, dependsOnColum, false, nullable);
-        return this;
-    }
-
-    // TODO: remove once it's not used in HsOffice...Entity anymore
-    public RbacView importEntityAlias(
-            final String aliasName, final Class<? extends RbacObject> entityClass,
-            final Column dependsOnColum) {
-        importEntityAliasImpl(aliasName, entityClass, directlyFetchedByDependsOnColumn(), dependsOnColum, false, null);
+        importEntityAliasImpl(aliasName, entityClass, usingDefaultCase(), fetchSql, dependsOnColum, false, nullable);
         return this;
     }
 
     private EntityAlias importEntityAliasImpl(
-            final String aliasName, final Class<? extends RbacObject> entityClass,
+            final String aliasName, final Class<? extends RbacObject> entityClass, final ColumnValue forCase,
             final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity, final Nullable nullable) {
         final var entityAlias = new EntityAlias(aliasName, entityClass, fetchSql, dependsOnColum, asSubEntity, nullable);
         entityAliases.put(aliasName, entityAlias);
         try {
-            importAsAlias(aliasName, rbacDefinition(entityClass), asSubEntity);
+            importAsAlias(aliasName, rbacDefinition(entityClass), forCase, asSubEntity);
         } catch (final ReflectiveOperationException exc) {
             throw new RuntimeException("cannot import entity: " + entityClass, exc);
         }
@@ -366,7 +378,7 @@ public class RbacView {
         return (RbacView) entityClass.getMethod("rbac").invoke(null);
     }
 
-    private RbacView importAsAlias(final String aliasName, final RbacView importedRbacView, final boolean asSubEntity) {
+    private RbacView importAsAlias(final String aliasName, final RbacView importedRbacView, final ColumnValue forCase, final boolean asSubEntity) {
         final var mapper = new AliasNameMapper(importedRbacView, aliasName,
                 asSubEntity ? entityAliases.keySet() : null);
         importedRbacView.getEntityAliases().values().stream()
@@ -381,7 +393,8 @@ public class RbacView {
             new RbacRoleDefinition(findEntityAlias(mapper.map(roleDef.entityAlias.aliasName)), roleDef.role);
         });
         importedRbacView.getGrantDefs().forEach(grantDef -> {
-            if (grantDef.grantType() == RbacGrantDefinition.GrantType.ROLE_TO_ROLE) {
+            if ( grantDef.grantType() == RbacGrantDefinition.GrantType.ROLE_TO_ROLE &&
+                    (grantDef.forCases == null || grantDef.matchesCase(forCase)) ) {
                 final var importedGrantDef = findOrCreateGrantDef(
                         findRbacRole(
                                 mapper.map(grantDef.getSubRoleDef().entityAlias.aliasName),
@@ -394,6 +407,18 @@ public class RbacView {
                     importedGrantDef.unassumed();
                 }
             }
+        });
+        return this;
+    }
+
+    public RbacView switchOnColumn(final String discriminatorColumName, final CaseDef... caseDefs) {
+        this.discriminatorColumName = discriminatorColumName;
+        allCases.addAll(stream(caseDefs).toList());
+
+        stream(caseDefs).forEach(caseDef -> {
+            this.processingCase = caseDef;
+            caseDef.def.accept(this);
+            this.processingCase = null;
         });
         return this;
     }
@@ -456,7 +481,15 @@ public class RbacView {
     }
 
     public void generateWithBaseFileName(final String baseFileName) {
-        new RbacViewMermaidFlowchartGenerator(this).generateToMarkdownFile(Path.of(OUTPUT_BASEDIR, baseFileName + ".md"));
+        if (allCases.size() > 1) {
+            allCases.forEach(caseDef -> {
+                final var fileName = baseFileName + (caseDef.isDefaultCase() ? "" : "-" + caseDef.value) + ".md";
+                new RbacViewMermaidFlowchartGenerator(this, caseDef)
+                        .generateToMarkdownFile(Path.of(OUTPUT_BASEDIR, fileName));
+            });
+        } else {
+            new RbacViewMermaidFlowchartGenerator(this).generateToMarkdownFile(Path.of(OUTPUT_BASEDIR, baseFileName + ".md"));
+        }
         new RbacViewPostgresGenerator(this).generateToChangeLog(Path.of(OUTPUT_BASEDIR, baseFileName + ".sql"));
     }
 
@@ -496,22 +529,28 @@ public class RbacView {
         private final RbacPermissionDefinition permDef;
         private boolean assumed = true;
         private boolean toCreate = false;
+        private Set<CaseDef> forCases = new HashSet<>();
 
         @Override
         public String toString() {
             final var arrow = isAssumed() ? " --> " : " -- // --> ";
-            return switch (grantType()) {
+            final var grant = switch (grantType()) {
                 case ROLE_TO_USER -> userDef.toString() + arrow + subRoleDef.toString();
                 case ROLE_TO_ROLE -> superRoleDef + arrow + subRoleDef;
                 case PERM_TO_ROLE -> superRoleDef + arrow + permDef;
             };
+            final var condition = isConditional()
+                    ? (" (" +forCases.stream().map(CaseDef::toString).collect(Collectors.joining("||")) + ")")
+                    : "";
+            return grant + condition;
         }
 
-        RbacGrantDefinition(final RbacRoleDefinition subRoleDef, final RbacRoleDefinition superRoleDef) {
+        RbacGrantDefinition(final RbacRoleDefinition subRoleDef, final RbacRoleDefinition superRoleDef, final CaseDef forCase) {
             this.userDef = null;
             this.subRoleDef = subRoleDef;
             this.superRoleDef = superRoleDef;
             this.permDef = null;
+            this.forCases = forCase != null ? hashSet(forCase) : null;
             register(this);
         }
 
@@ -537,13 +576,30 @@ public class RbacView {
 
         @NotNull
         GrantType grantType() {
-            return permDef != null ? GrantType.PERM_TO_ROLE
+            return permDef != null ? PERM_TO_ROLE
                     : userDef != null ? GrantType.ROLE_TO_USER
                     : GrantType.ROLE_TO_ROLE;
         }
 
         boolean isAssumed() {
             return assumed;
+        }
+
+
+        RbacGrantDefinition forCase(final CaseDef processingCase) {
+            forCases.add(processingCase);
+            return this;
+        }
+
+        boolean isConditional() {
+            return forCases != null && !forCases.isEmpty() && forCases.size()<allCases.size();
+        }
+
+        boolean matchesCase(final ColumnValue requestedCase) {
+            final var noCasesDefined = forCases.isEmpty();
+            final var generateForAllCases = requestedCase == null;
+            final boolean isGrantedForRequestedCase = forCases.stream().anyMatch(c -> c.isCase(requestedCase));
+            return  noCasesDefined || generateForAllCases || isGrantedForRequestedCase;
         }
 
         boolean isToCreate() {
@@ -567,8 +623,9 @@ public class RbacView {
                     .orElse(false);
         }
 
-        public void unassumed() {
+        public RbacGrantDefinition unassumed() {
             this.assumed = false;
+            return this;
         }
 
         public enum GrantType {
@@ -794,7 +851,7 @@ public class RbacView {
 
     private RbacGrantDefinition findOrCreateGrantDef(final RbacPermissionDefinition permDef, final RbacRoleDefinition roleDef) {
         return grantDefs.stream()
-                .filter(g -> g.permDef == permDef && g.subRoleDef == roleDef)
+                .filter(g -> g.permDef == permDef && g.superRoleDef == roleDef)
                 .findFirst()
                 .orElseGet(() -> new RbacGrantDefinition(permDef, roleDef));
     }
@@ -802,10 +859,12 @@ public class RbacView {
     private RbacGrantDefinition findOrCreateGrantDef(
             final RbacRoleDefinition subRoleDefinition,
             final RbacRoleDefinition superRoleDefinition) {
-        return grantDefs.stream()
+        final var distinctGrantDef = grantDefs.stream()
                 .filter(g -> g.subRoleDef == subRoleDefinition && g.superRoleDef == superRoleDefinition)
                 .findFirst()
-                .orElseGet(() -> new RbacGrantDefinition(subRoleDefinition, superRoleDefinition));
+                .map(g -> g.forCase(processingCase))
+                .orElseGet(() -> new RbacGrantDefinition(subRoleDefinition, superRoleDefinition, processingCase));
+        return distinctGrantDef;
     }
 
     record EntityAlias(String aliasName, Class<? extends RbacObject> entityClass, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
@@ -1022,6 +1081,23 @@ public class RbacView {
         }
     }
 
+    public static class ColumnValue {
+
+        public static ColumnValue usingDefaultCase() {
+            return new ColumnValue(null);
+        }
+
+        public static ColumnValue usingCase(final String value) {
+            return new ColumnValue(value);
+        }
+
+        public final String value;
+
+        private ColumnValue(final String value) {
+            this.value = value;
+        }
+    }
+
     private static class AliasNameMapper {
 
         private final RbacView importedRbacView;
@@ -1043,6 +1119,55 @@ public class RbacView {
                 return outerAliasName;
             }
             return outerAliasName + "." + originalAliasName;
+        }
+    }
+
+    public static class CaseDef extends ColumnValue {
+
+        final Consumer<RbacView> def;
+
+        private CaseDef(final String discriminatorColumnValue, final Consumer<RbacView> def) {
+            super(discriminatorColumnValue);
+            this.def = def;
+        }
+
+
+        public static CaseDef inCaseOf(final String discriminatorColumnValue, final Consumer<RbacView> def) {
+            return new CaseDef(discriminatorColumnValue, def);
+        }
+
+        public static CaseDef inOtherCases(final Consumer<RbacView> def) {
+            return new CaseDef(null, def);
+        }
+
+        @Override
+        public int hashCode() {
+            return ofNullable(value).map(String::hashCode).orElse(0);
+        }
+
+        @Override
+        public boolean equals(final Object other) {
+            if (this == other)
+                return true;
+            if (other == null || getClass() != other.getClass())
+                return false;
+            final CaseDef caseDef = (CaseDef) other;
+            return Objects.equals(value, caseDef.value);
+        }
+
+        boolean isDefaultCase() {
+            return value == null;
+        }
+
+        @Override
+        public String toString() {
+            return isDefaultCase()
+                ? "inOtherCases"
+                : "inCaseOf:" + value;
+        }
+
+        public boolean isCase(final ColumnValue requestedCase) {
+            return Objects.equals(requestedCase.value, this.value);
         }
     }
 

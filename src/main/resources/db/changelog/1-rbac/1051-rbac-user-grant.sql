@@ -20,19 +20,18 @@ begin
     return currentSubjectsUuids[1];
 end; $$;
 
-create or replace procedure grantRoleToUserUnchecked(grantedByRoleUuid uuid, roleUuid uuid, userUuid uuid, doAssume boolean = true)
+create or replace procedure grantRoleToUserUnchecked(grantedByRoleUuid uuid, grantedRoleUuid uuid, userUuid uuid, doAssume boolean = true)
     language plpgsql as $$
 begin
     perform assertReferenceType('grantingRoleUuid', grantedByRoleUuid, 'RbacRole');
-    perform assertReferenceType('roleId (descendant)', roleUuid, 'RbacRole');
+    perform assertReferenceType('roleId (descendant)', grantedRoleUuid, 'RbacRole');
     perform assertReferenceType('userId (ascendant)', userUuid, 'RbacUser');
 
     insert
         into RbacGrants (grantedByRoleUuid, ascendantUuid, descendantUuid, assumed)
-        values (grantedByRoleUuid, userUuid, roleUuid, doAssume);
-    -- TODO.spec: What should happen on multiple grants? What if options (doAssume) are not the same?
-    --      Most powerful or latest grant wins? What about managed?
-    -- on conflict do nothing; -- allow granting multiple times
+        values (grantedByRoleUuid, userUuid, grantedRoleUuid, doAssume)
+    -- TODO: check if grantedByRoleUuid+doAssume are the same, otherwise raise exception?
+    on conflict do nothing; -- allow granting multiple times
 end; $$;
 
 create or replace procedure grantRoleToUser(grantedByRoleUuid uuid, grantedRoleUuid uuid, userUuid uuid, doAssume boolean = true)

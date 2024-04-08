@@ -1,10 +1,13 @@
 package net.hostsharing.hsadminng.rbac.rbacdef;
 
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacPermissionDefinition;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -22,7 +25,7 @@ import static org.apache.commons.lang3.StringUtils.uncapitalize;
 class RolesGrantsAndPermissionsGenerator {
 
     private final RbacView rbacDef;
-    private final Set<RbacView.RbacGrantDefinition> rbacGrants = new HashSet<>();
+    private final Set<RbacGrantDefinition> rbacGrants = new HashSet<>();
     private final String liquibaseTagPrefix;
     private final String simpleEntityName;
     private final String simpleEntityVarName;
@@ -31,7 +34,7 @@ class RolesGrantsAndPermissionsGenerator {
     RolesGrantsAndPermissionsGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
         this.rbacDef = rbacDef;
         this.rbacGrants.addAll(rbacDef.getGrantDefs().stream()
-                .filter(RbacView.RbacGrantDefinition::isToCreate)
+                .filter(RbacGrantDefinition::isToCreate)
                 .collect(toSet()));
         this.liquibaseTagPrefix = liquibaseTagPrefix;
 
@@ -67,13 +70,11 @@ class RolesGrantsAndPermissionsGenerator {
                     NEW ${rawTableName}
                 )
                     language plpgsql as $$
-
-                declare
                 """
                 .replace("${simpleEntityName}", simpleEntityName)
                 .replace("${rawTableName}", rawTableName));
 
-        plPgSql.chopEmptyLines();
+        plPgSql.writeLn("declare");
         plPgSql.indented(() -> {
             referencedEntityAliases()
                     .forEach((ea) -> plPgSql.writeLn(entityRefVar(NEW, ea) + " " + ea.getRawTableName() + ";"));
@@ -172,6 +173,10 @@ class RolesGrantsAndPermissionsGenerator {
                 .anyMatch(e -> true);
     }
 
+    private boolean hasAnyConditionalGrants() {
+        return rbacDef.getGrantDefs().stream().anyMatch(RbacGrantDefinition::isConditional);
+    }
+
     private void generateCreateRolesAndGrantsAfterInsert(final StringWriter plPgSql) {
         referencedEntityAliases()
                 .forEach((ea) -> {
@@ -186,7 +191,25 @@ class RolesGrantsAndPermissionsGenerator {
         createRolesWithGrantsSql(plPgSql, REFERRER);
 
         generateGrants(plPgSql, ROLE_TO_USER);
+
         generateGrants(plPgSql, ROLE_TO_ROLE);
+        if (!rbacDef.getAllCases().isEmpty()) {
+            plPgSql.writeLn();
+            final var ifOrElsIf = new AtomicReference<>("IF ");
+            rbacDef.getAllCases().forEach(caseDef -> {
+                if (caseDef.value != null) {
+                    plPgSql.writeLn(ifOrElsIf + "NEW." + rbacDef.getDiscriminatorColumName() + " = '" + caseDef.value + "' THEN");
+                } else {
+                    plPgSql.writeLn("ELSE");
+                }
+                plPgSql.indented(() -> {
+                    generateGrants(plPgSql, ROLE_TO_ROLE, caseDef);
+                });
+                ifOrElsIf.set("ELSIF ");
+            });
+            plPgSql.writeLn("END IF;");
+        }
+
         generateGrants(plPgSql, PERM_TO_ROLE);
     }
 
@@ -248,7 +271,7 @@ class RolesGrantsAndPermissionsGenerator {
 
     private void updateGrantsDependingOn(final StringWriter plPgSql, final String columnName) {
         rbacDef.getGrantDefs().stream()
-                .filter(RbacView.RbacGrantDefinition::isToCreate)
+                .filter(RbacGrantDefinition::isToCreate)
                 .filter(g -> g.dependsOnColumn(columnName))
                 .filter(g -> !isInsertPermissionGrant(g))
                 .forEach(g -> {
@@ -259,21 +282,31 @@ class RolesGrantsAndPermissionsGenerator {
                 });
     }
 
-    private static Boolean isInsertPermissionGrant(final RbacView.RbacGrantDefinition g) {
+    private static Boolean isInsertPermissionGrant(final RbacGrantDefinition g) {
         final var isInsertPermissionGrant = ofNullable(g.getPermDef()).map(RbacPermissionDefinition::getPermission).map(p -> p == INSERT).orElse(false);
         return isInsertPermissionGrant;
     }
 
-    private void generateGrants(final StringWriter plPgSql, final RbacView.RbacGrantDefinition.GrantType grantType) {
-        plPgSql.ensureSingleEmptyLine();
+    private void generateGrants(final StringWriter plPgSql, final RbacGrantDefinition.GrantType grantType, final CaseDef caseDef) {
         rbacGrants.stream()
+                .filter(g -> g.matchesCase(caseDef))
                 .filter(g -> g.grantType() == grantType)
                 .map(this::generateGrant)
                 .sorted()
-                .forEach(text -> plPgSql.writeLn(text));
+                .forEach(text -> plPgSql.writeLn(text, with("ref", NEW.name())));
     }
 
-    private String generateRevoke(RbacView.RbacGrantDefinition grantDef) {
+    private void generateGrants(final StringWriter plPgSql, final RbacGrantDefinition.GrantType grantType) {
+        plPgSql.ensureSingleEmptyLine();
+        rbacGrants.stream()
+                .filter(g -> !g.isConditional())
+                .filter(g -> g.grantType() == grantType)
+                .map(this::generateGrant)
+                .sorted()
+                .forEach(text -> plPgSql.writeLn(text, with("ref", NEW.name())));
+    }
+
+    private String generateRevoke(RbacGrantDefinition grantDef) {
         return switch (grantDef.grantType()) {
             case ROLE_TO_USER -> throw new IllegalArgumentException("unexpected grant");
             case ROLE_TO_ROLE -> "call revokeRoleFromRole(${subRoleRef}, ${superRoleRef});"
@@ -285,8 +318,8 @@ class RolesGrantsAndPermissionsGenerator {
         };
     }
 
-    private String generateGrant(RbacView.RbacGrantDefinition grantDef) {
-        return switch (grantDef.grantType()) {
+    private String generateGrant(RbacGrantDefinition grantDef) {
+        final var grantSql = switch (grantDef.grantType()) {
             case ROLE_TO_USER -> throw new IllegalArgumentException("unexpected grant");
             case ROLE_TO_ROLE -> "call grantRoleToRole(${subRoleRef}, ${superRoleRef}${assumed});"
                     .replace("${assumed}", grantDef.isAssumed() ? "" : ", unassumed()")
@@ -298,6 +331,7 @@ class RolesGrantsAndPermissionsGenerator {
                         .replace("${permRef}", createPerm(NEW, grantDef.getPermDef()))
                         .replace("${superRoleRef}", roleRef(NEW, grantDef.getSuperRoleDef()));
         };
+        return grantSql;
     }
 
     private String findPerm(final PostgresTriggerReference ref, final RbacPermissionDefinition permDef) {
@@ -362,11 +396,8 @@ class RolesGrantsAndPermissionsGenerator {
                     .replace("${roleSuffix}", capitalize(role.name())));
 
             generatePermissionsForRole(plPgSql, role);
-
             generateIncomingSuperRolesForRole(plPgSql, role);
-
             generateOutgoingSubRolesForRole(plPgSql, role);
-
             generateUserGrantsForRole(plPgSql, role);
 
             plPgSql.chopTail(",\n");
@@ -380,7 +411,7 @@ class RolesGrantsAndPermissionsGenerator {
         final var grantsToUsers = findGrantsToUserForRole(rbacDef.getRootEntityAlias(), role);
         if (!grantsToUsers.isEmpty()) {
             final var arrayElements = grantsToUsers.stream()
-                    .map(RbacView.RbacGrantDefinition::getUserDef)
+                    .map(RbacGrantDefinition::getUserDef)
                     .map(this::toPlPgSqlReference)
                     .toList();
             plPgSql.indented(() ->
@@ -393,7 +424,7 @@ class RolesGrantsAndPermissionsGenerator {
         final var permissionGrantsForRole = findPermissionsGrantsForRole(rbacDef.getRootEntityAlias(), role);
         if (!permissionGrantsForRole.isEmpty()) {
             final var arrayElements = permissionGrantsForRole.stream()
-                    .map(RbacView.RbacGrantDefinition::getPermDef)
+                    .map(RbacGrantDefinition::getPermDef)
                     .map(RbacPermissionDefinition::getPermission)
                     .map(RbacView.Permission::name)
                     .map(p -> "'" + p + "'")
@@ -406,26 +437,30 @@ class RolesGrantsAndPermissionsGenerator {
     }
 
     private void generateIncomingSuperRolesForRole(final StringWriter plPgSql, final RbacView.Role role) {
-        final var incomingGrants = findIncomingSuperRolesForRole(rbacDef.getRootEntityAlias(), role);
-        if (!incomingGrants.isEmpty()) {
-            final var arrayElements = incomingGrants.stream()
+        final var unconditionalIncomingGrants = findIncomingSuperRolesForRole(rbacDef.getRootEntityAlias(), role).stream()
+                .filter(g -> !g.isConditional())
+                .toList();
+        if (!unconditionalIncomingGrants.isEmpty()) {
+            final var arrayElements = unconditionalIncomingGrants.stream()
                     .map(g -> toPlPgSqlReference(NEW, g.getSuperRoleDef(), g.isAssumed()))
                     .sorted().toList();
             plPgSql.indented(() ->
                     plPgSql.writeLn("incomingSuperRoles => array[" + joinArrayElements(arrayElements, 1) + "],\n"));
-            rbacGrants.removeAll(incomingGrants);
+            rbacGrants.removeAll(unconditionalIncomingGrants);
         }
     }
 
     private void generateOutgoingSubRolesForRole(final StringWriter plPgSql, final RbacView.Role role) {
-        final var outgoingGrants = findOutgoingSuperRolesForRole(rbacDef.getRootEntityAlias(), role);
-        if (!outgoingGrants.isEmpty()) {
-            final var arrayElements = outgoingGrants.stream()
+        final var unconditionalOutgoingGrants = findOutgoingSuperRolesForRole(rbacDef.getRootEntityAlias(), role).stream()
+                .filter(g -> !g.isConditional())
+                .toList();
+        if (!unconditionalOutgoingGrants.isEmpty()) {
+            final var arrayElements = unconditionalOutgoingGrants.stream()
                     .map(g -> toPlPgSqlReference(NEW, g.getSubRoleDef(), g.isAssumed()))
                     .sorted().toList();
             plPgSql.indented(() ->
                     plPgSql.writeLn("outgoingSubRoles => array[" + joinArrayElements(arrayElements, 1) + "],\n"));
-            rbacGrants.removeAll(outgoingGrants);
+            rbacGrants.removeAll(unconditionalOutgoingGrants);
         }
     }
 
@@ -435,7 +470,7 @@ class RolesGrantsAndPermissionsGenerator {
                 : arrayElements.stream().collect(joining(",\n\t", "\n\t", ""));
     }
 
-    private Set<RbacView.RbacGrantDefinition> findPermissionsGrantsForRole(
+    private Set<RbacGrantDefinition> findPermissionsGrantsForRole(
             final RbacView.EntityAlias entityAlias,
             final RbacView.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
@@ -444,7 +479,7 @@ class RolesGrantsAndPermissionsGenerator {
                 .collect(toSet());
     }
 
-    private Set<RbacView.RbacGrantDefinition> findGrantsToUserForRole(
+    private Set<RbacGrantDefinition> findGrantsToUserForRole(
             final RbacView.EntityAlias entityAlias,
             final RbacView.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
@@ -453,7 +488,7 @@ class RolesGrantsAndPermissionsGenerator {
                 .collect(toSet());
     }
 
-    private Set<RbacView.RbacGrantDefinition> findIncomingSuperRolesForRole(
+    private Set<RbacGrantDefinition> findIncomingSuperRolesForRole(
             final RbacView.EntityAlias entityAlias,
             final RbacView.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
@@ -462,7 +497,7 @@ class RolesGrantsAndPermissionsGenerator {
                 .collect(toSet());
     }
 
-    private Set<RbacView.RbacGrantDefinition> findOutgoingSuperRolesForRole(
+    private Set<RbacGrantDefinition> findOutgoingSuperRolesForRole(
             final RbacView.EntityAlias entityAlias,
             final RbacView.Role role) {
         final var roleDef = rbacDef.findRbacRole(entityAlias, role);
@@ -506,7 +541,7 @@ class RolesGrantsAndPermissionsGenerator {
     private void generateUpdateTrigger(final StringWriter plPgSql) {
 
         generateHeader(plPgSql, "update");
-        if ( hasAnyUpdatableAndNullableEntityAliases() ) {
+        if ( hasAnyUpdatableAndNullableEntityAliases() || hasAnyConditionalGrants() ) {
             generateSimplifiedUpdateTriggerFunction(plPgSql);
         } else {
             generateUpdateTriggerFunction(plPgSql);

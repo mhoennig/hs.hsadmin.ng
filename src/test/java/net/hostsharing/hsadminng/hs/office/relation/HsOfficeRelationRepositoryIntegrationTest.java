@@ -140,9 +140,10 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
                     "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:UPDATE to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
                     "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN to role:hs_office_person#ErbenBesslerMelBessler:ADMIN by system and assume }",
+                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to role:hs_office_person#BesslerBert:ADMIN by system and assume }",
+                    "{ grant role:hs_office_person#ErbenBesslerMelBessler:OWNER to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
 
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office_person#BesslerBert:ADMIN by system and assume }",
+                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office_person#ErbenBesslerMelBessler:ADMIN by system and assume }",
                     "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
 
                     "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:SELECT to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
@@ -153,8 +154,6 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
                     // REPRESENTATIVE holder person -> (represented) anchor person
                     "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office_contact#fourthcontact:ADMIN by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office_person#BesslerBert:ADMIN by system and assume }",
-
                     null)
             );
         }
@@ -217,10 +216,10 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             context("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Bert", "fifth contact");
+            assertThatRelationActuallyInDatabase(givenRelation);
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
                     "hs_office_person#ErbenBesslerMelBessler:ADMIN");
-            assertThatRelationActuallyInDatabase(givenRelation);
             context("superuser-alex@hostsharing.net");
             final var givenContact = contactRepo.findContactByOptionalLabelLike("sixth contact").stream().findFirst().orElseThrow();
 
@@ -249,19 +248,19 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         }
 
         @Test
-        public void holderAdmin_canNotUpdateRelatedRelation() {
+        public void relationAgent_canSelectButNotUpdateRelatedRelation() {
             // given
             context("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler(
                     "Anita", "eighth");
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
-                    "hs_office_person#BesslerAnita:ADMIN");
+                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
             assertThatRelationActuallyInDatabase(givenRelation);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_person#BesslerAnita:ADMIN");
+                context("superuser-alex@hostsharing.net", "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
                 givenRelation.setContact(null);
                 return relationRepo.save(givenRelation);
             });

@@ -134,6 +134,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                             "{ grant perm:membership#M-1000117:SELECT to role:membership#M-1000117:AGENT by system and assume }",
                             "{ grant role:membership#M-1000117:AGENT to role:membership#M-1000117:ADMIN by system and assume }",
 
+                            // referrer
                             "{ grant role:membership#M-1000117:AGENT to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT by system and assume }",
                             "{ grant role:relation#HostsharingeG-with-PARTNER-FirstGmbH:TENANT to role:membership#M-1000117:AGENT by system and assume }",
 

@@ -96,15 +96,14 @@ role:partnerRel.contact:OWNER -.-> role:partnerRel.contact:ADMIN
 role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
 role:global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
-role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
-role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:AGENT
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
-role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:TENANT
 role:partnerRel.contact:ADMIN -.-> role:partnerRel:TENANT
 role:partnerRel:TENANT -.-> role:partnerRel.anchorPerson:REFERRER
 role:partnerRel:TENANT -.-> role:partnerRel.holderPerson:REFERRER
 role:partnerRel:TENANT -.-> role:partnerRel.contact:REFERRER
+role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel:OWNER
+role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:AGENT
 role:membership:OWNER ==> role:membership:ADMIN
 role:partnerRel:ADMIN ==> role:membership:ADMIN
 role:membership:ADMIN ==> role:membership:AGENT

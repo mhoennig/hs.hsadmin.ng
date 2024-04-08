@@ -17,7 +17,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 import jakarta.persistence.*;
-import java.lang.reflect.Method;
 import java.util.*;
 
 import static java.lang.System.out;
@@ -272,12 +271,11 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     /**
      * Generates a diagram of the RBAC-Grants to the current subjects (user or assumed roles).
      */
-    protected void generateRbacDiagramForCurrentSubjects(final EnumSet<RbacGrantsDiagramService.Include> include) {
-        final var title = testInfo.getTestMethod().map(Method::getName).orElseThrow();
+    protected void generateRbacDiagramForCurrentSubjects(final EnumSet<RbacGrantsDiagramService.Include> include, final String name) {
         RbacGrantsDiagramService.writeToFile(
-                title,
+                name,
                 diagramService.allGrantsToCurrentUser(include),
-                "doc/" + title + ".md"
+                "doc/temp/" + name + ".md"
         );
     }
 

@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import static jakarta.persistence.CascadeType.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
@@ -98,18 +99,19 @@ public class HsOfficePartnerEntity implements Stringifyable, RbacObject {
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
                 .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
+                        usingDefaultCase(),
                         directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("partnerRelUuid"))
-                .createPermission(DELETE).grantedTo("partnerRel", ADMIN)
-                .createPermission(UPDATE).grantedTo("partnerRel", AGENT)
+                .createPermission(DELETE).grantedTo("partnerRel", OWNER)
+                .createPermission(UPDATE).grantedTo("partnerRel", ADMIN)
                 .createPermission(SELECT).grantedTo("partnerRel", TENANT)
 
                 .importSubEntityAlias("partnerDetails", HsOfficePartnerDetailsEntity.class,
                         directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("detailsUuid"))
-                .createPermission("partnerDetails", DELETE).grantedTo("partnerRel", ADMIN)
+                .createPermission("partnerDetails", DELETE).grantedTo("partnerRel", OWNER)
                 .createPermission("partnerDetails", UPDATE).grantedTo("partnerRel", AGENT)
-                .createPermission("partnerDetails", SELECT).grantedTo("partnerRel", AGENT);
+                .createPermission("partnerDetails", SELECT).grantedTo("partnerRel", AGENT); // not TENANT!
     }
 
     public static void main(String[] args) throws IOException {

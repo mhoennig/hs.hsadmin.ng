@@ -248,7 +248,7 @@ declare
     objectUuidOfRole          uuid;
     roleUuid                  uuid;
 begin
-    -- TODO.refact: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
+    -- TODO.refa: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
     roleParts = overlay(roleIdName placing '#' from length(roleIdName) + 1 - strpos(reverse(roleIdName), ':'));
     objectTableFromRoleIdName = split_part(roleParts, '#', 1);
     objectNameFromRoleIdName = split_part(roleParts, '#', 2);
@@ -356,16 +356,13 @@ create trigger deleteRbacRolesOfRbacObject_Trigger
 /*
 
  */
-create domain RbacOp as varchar(67) -- TODO: shorten to 8, once the deprecated values are gone
+create domain RbacOp as varchar(6)
     check (
                VALUE = 'DELETE'
             or VALUE = 'UPDATE'
             or VALUE = 'SELECT'
             or VALUE = 'INSERT'
             or VALUE = 'ASSUME'
-            -- TODO: all values below are deprecated, use insert with table
-            or VALUE ~ '^add-[a-z]+$'
-            or VALUE ~ '^new-[a-z-]+$'
         );
 
 create table RbacPermission
@@ -416,37 +413,6 @@ begin
     end if;
     return permissionUuid;
 end; $$;
-
--- TODO: deprecated, remove and amend all usages to createPermission
-create or replace function createPermissions(forObjectUuid uuid, permitOps RbacOp[])
-    returns uuid[]
-    language plpgsql as $$
-declare
-    refId         uuid;
-    permissionIds uuid[] = array []::uuid[];
-begin
-    if (forObjectUuid is null) then
-        raise exception 'forObjectUuid must not be null';
-    end if;
-
-    for i in array_lower(permitOps, 1)..array_upper(permitOps, 1)
-        loop
-            refId = (select uuid from RbacPermission where objectUuid = forObjectUuid and op = permitOps[i]);
-            if (refId is null) then
-                insert
-                    into RbacReference ("type")
-                    values ('RbacPermission')
-                    returning uuid into refId;
-                insert
-                    into RbacPermission (uuid, objectUuid, op)
-                    values (refId, forObjectUuid, permitOps[i]);
-            end if;
-            permissionIds = permissionIds || refId;
-        end loop;
-
-    return permissionIds;
-end;
-$$;
 
 create or replace function findEffectivePermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
     returns uuid
@@ -649,25 +615,6 @@ begin
 end;
 $$;
 
--- TODO: deprecated, remove and use grantPermissionToRole(...)
-create or replace procedure grantPermissionsToRole(roleUuid uuid, permissionIds uuid[])
-    language plpgsql as $$
-begin
-    if cardinality(permissionIds) = 0 then return; end if;
-
-    for i in array_lower(permissionIds, 1)..array_upper(permissionIds, 1)
-        loop
-            perform assertReferenceType('roleId (ascendant)', roleUuid, 'RbacRole');
-            perform assertReferenceType('permissionId (descendant)', permissionIds[i], 'RbacPermission');
-
-            insert
-                into RbacGrants (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
-                values (currentTriggerObjectUuid(), roleUuid, permissionIds[i], true)
-            on conflict do nothing; -- allow granting multiple times
-        end loop;
-end;
-$$;
-
 create or replace procedure grantRoleToRole(subRoleId uuid, superRoleId uuid, doAssume bool = true)
     language plpgsql as $$
 begin
@@ -691,36 +638,12 @@ declare
     superRoleId uuid;
     subRoleId uuid;
 begin
-    -- TODO: maybe separate method grantRoleToRoleIfNotNull(...) for NULLABLE references
+    -- TODO.refa: maybe separate method grantRoleToRoleIfNotNull(...) for NULLABLE references
     if superRole.objectUuid is null or subRole.objectuuid is null then
         return;
     end if;
 
     superRoleId := findRoleId(superRole);
-    subRoleId := findRoleId(subRole);
-
-    perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
-    perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
-
-    if isGranted(subRoleId, superRoleId) then
-        call raiseDuplicateRoleGrantException(subRoleId, superRoleId);
-    end if;
-
-    insert
-        into RbacGrants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
-        values (currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
-    on conflict do nothing; -- allow granting multiple times
-end; $$;
-
-create or replace procedure grantRoleToRoleIfNotNull(subRole RbacRoleDescriptor, superRole RbacRoleDescriptor, doAssume bool = true)
-    language plpgsql as $$
-declare
-    superRoleId uuid;
-    subRoleId uuid;
-begin
-    if ( superRoleId is null ) then return; end if;
-    superRoleId := findRoleId(superRole);
-    if ( subRoleId is null ) then return; end if;
     subRoleId := findRoleId(subRole);
 
     perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');

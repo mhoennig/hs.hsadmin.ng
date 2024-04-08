@@ -57,16 +57,12 @@ begin
     perform createRoleWithGrants(
         hsOfficeRelationADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[
-            	hsOfficePersonADMIN(newAnchorPerson),
-            	hsOfficeRelationOWNER(NEW)]
+            incomingSuperRoles => array[hsOfficeRelationOWNER(NEW)]
     );
 
     perform createRoleWithGrants(
         hsOfficeRelationAGENT(NEW),
-            incomingSuperRoles => array[
-            	hsOfficePersonADMIN(newHolderPerson),
-            	hsOfficeRelationADMIN(NEW)]
+            incomingSuperRoles => array[hsOfficeRelationADMIN(NEW)]
     );
 
     perform createRoleWithGrants(
@@ -74,13 +70,21 @@ begin
             permissions => array['SELECT'],
             incomingSuperRoles => array[
             	hsOfficeContactADMIN(newContact),
-            	hsOfficePersonADMIN(newHolderPerson),
             	hsOfficeRelationAGENT(NEW)],
             outgoingSubRoles => array[
             	hsOfficeContactREFERRER(newContact),
             	hsOfficePersonREFERRER(newAnchorPerson),
             	hsOfficePersonREFERRER(newHolderPerson)]
     );
+
+    IF NEW.type = 'REPRESENTATIVE' THEN
+        call grantRoleToRole(hsOfficePersonOWNER(newAnchorPerson), hsOfficeRelationADMIN(NEW));
+        call grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newAnchorPerson));
+        call grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newHolderPerson));
+    ELSE
+        call grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newHolderPerson));
+        call grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newAnchorPerson));
+    END IF;
 
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -118,48 +122,12 @@ create or replace procedure updateRbacRulesForHsOfficeRelation(
     NEW hs_office_relation
 )
     language plpgsql as $$
-
-declare
-    oldHolderPerson hs_office_person;
-    newHolderPerson hs_office_person;
-    oldAnchorPerson hs_office_person;
-    newAnchorPerson hs_office_person;
-    oldContact hs_office_contact;
-    newContact hs_office_contact;
-
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_office_person WHERE uuid = OLD.holderUuid    INTO oldHolderPerson;
-    assert oldHolderPerson.uuid is not null, format('oldHolderPerson must not be null for OLD.holderUuid = %s', OLD.holderUuid);
-
-    SELECT * FROM hs_office_person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
-    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s', NEW.holderUuid);
-
-    SELECT * FROM hs_office_person WHERE uuid = OLD.anchorUuid    INTO oldAnchorPerson;
-    assert oldAnchorPerson.uuid is not null, format('oldAnchorPerson must not be null for OLD.anchorUuid = %s', OLD.anchorUuid);
-
-    SELECT * FROM hs_office_person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
-    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s', NEW.anchorUuid);
-
-    SELECT * FROM hs_office_contact WHERE uuid = OLD.contactUuid    INTO oldContact;
-    assert oldContact.uuid is not null, format('oldContact must not be null for OLD.contactUuid = %s', OLD.contactUuid);
-
-    SELECT * FROM hs_office_contact WHERE uuid = NEW.contactUuid    INTO newContact;
-    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s', NEW.contactUuid);
-
-
-    if NEW.contactUuid <> OLD.contactUuid then
-
-        call revokeRoleFromRole(hsOfficeRelationTENANT(OLD), hsOfficeContactADMIN(oldContact));
-        call grantRoleToRole(hsOfficeRelationTENANT(NEW), hsOfficeContactADMIN(newContact));
-
-        call revokeRoleFromRole(hsOfficeContactREFERRER(oldContact), hsOfficeRelationTENANT(OLD));
-        call grantRoleToRole(hsOfficeContactREFERRER(newContact), hsOfficeRelationTENANT(NEW));
-
+    if NEW.contactUuid is distinct from OLD.contactUuid then
+        delete from rbacgrants g where g.grantedbytriggerof = OLD.uuid;
+        call buildRbacSystemForHsOfficeRelation(NEW);
     end if;
-
-    call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*

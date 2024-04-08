@@ -362,7 +362,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
             assertThat(givenRelation.getContact().getLabel()).isEqualTo("seventh contact");
             final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)

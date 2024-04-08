@@ -1,6 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
@@ -15,7 +19,13 @@ import org.hibernate.annotations.JoinFormula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
 import java.io.IOException;
 import java.util.UUID;
@@ -26,6 +36,7 @@ import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.CascadeType.REFRESH;
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
@@ -157,6 +168,8 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
                 .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class,
+                        // TODO.spec: do we need a distinct case for DEBITOR-Relation?
+                        usingDefaultCase(),
                         directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("debitorRelUuid"))
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)

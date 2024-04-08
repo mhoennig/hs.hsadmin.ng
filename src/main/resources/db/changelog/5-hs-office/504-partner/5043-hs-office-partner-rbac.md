@@ -98,22 +98,21 @@ role:partnerRel.contact:OWNER -.-> role:partnerRel.contact:ADMIN
 role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
 role:global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
-role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
-role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:AGENT
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
-role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:TENANT
 role:partnerRel.contact:ADMIN -.-> role:partnerRel:TENANT
 role:partnerRel:TENANT -.-> role:partnerRel.anchorPerson:REFERRER
 role:partnerRel:TENANT -.-> role:partnerRel.holderPerson:REFERRER
 role:partnerRel:TENANT -.-> role:partnerRel.contact:REFERRER
+role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel:OWNER
+role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:AGENT
 
 %% granting permissions to roles
 role:global:ADMIN ==> perm:partner:INSERT
-role:partnerRel:ADMIN ==> perm:partner:DELETE
-role:partnerRel:AGENT ==> perm:partner:UPDATE
+role:partnerRel:OWNER ==> perm:partner:DELETE
+role:partnerRel:ADMIN ==> perm:partner:UPDATE
 role:partnerRel:TENANT ==> perm:partner:SELECT
-role:partnerRel:ADMIN ==> perm:partnerDetails:DELETE
+role:partnerRel:OWNER ==> perm:partnerDetails:DELETE
 role:partnerRel:AGENT ==> perm:partnerDetails:UPDATE
 role:partnerRel:AGENT ==> perm:partnerDetails:SELECT
 

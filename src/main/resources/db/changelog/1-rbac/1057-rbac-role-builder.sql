@@ -6,6 +6,7 @@
 --changeset rbac-role-builder-create-role:1 endDelimiter:--//
 -- -----------------------------------------------------------------
 
+-- TODO: rename to defineRoleWithGrants because it does not complain if the role already exists
 create or replace function createRoleWithGrants(
     roleDescriptor RbacRoleDescriptor,
     permissions RbacOp[] = array[]::RbacOp[],
@@ -28,7 +29,7 @@ declare
     userUuid                uuid;
     userGrantsByRoleUuid    uuid;
 begin
-    roleUuid := createRole(roleDescriptor);
+    roleUuid := coalesce(findRoleId(roleDescriptor), createRole(roleDescriptor));
 
     foreach permission in array permissions
         loop

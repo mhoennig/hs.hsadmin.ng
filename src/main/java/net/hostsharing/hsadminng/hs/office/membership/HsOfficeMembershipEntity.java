@@ -29,8 +29,6 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;

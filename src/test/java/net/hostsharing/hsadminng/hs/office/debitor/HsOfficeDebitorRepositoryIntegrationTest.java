@@ -186,13 +186,13 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "{ grant perm:debitor#D-1000122:DELETE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
                     "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:DELETE   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:global#global:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:person#FirstGmbH:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to user:superuser-alex@hostsharing.net by relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER and assume }",
 
                     // admin
                     "{ grant perm:debitor#D-1000122:UPDATE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
                     "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:UPDATE   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN    to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
-                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN    to role:person#FirstGmbH:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN    to role:relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN by system and assume }",
 
                     // agent
@@ -208,7 +208,6 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "{ grant role:person#FirstGmbH:REFERRER                         to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
                     "{ grant role:person#FourtheG:REFERRER                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT   to role:contact#fourthcontact:ADMIN by system and assume }",
-                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT   to role:person#FourtheG:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT by system and assume }",
 
                     null));
