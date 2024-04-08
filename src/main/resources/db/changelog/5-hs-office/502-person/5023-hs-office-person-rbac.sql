@@ -138,6 +138,8 @@ call generateRbacRestrictedView('hs_office_person',
     $orderBy$,
     $updates$
         personType = new.personType,
+        title = new.title,
+        salutation = new.salutation,
         tradeName = new.tradeName,
         givenName = new.givenName,
         familyName = new.familyName

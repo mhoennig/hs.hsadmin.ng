@@ -76,7 +76,7 @@ public class HsOfficePersonEntity implements RbacObject, Stringifyable {
     public static RbacView rbac() {
         return rbacViewFor("person", HsOfficePersonEntity.class)
                 .withIdentityView(SQL.projection("concat(tradeName, familyName, givenName)"))
-                .withUpdatableColumns("personType", "tradeName", "givenName", "familyName")
+                .withUpdatableColumns("personType", "title", "salutation", "tradeName", "givenName", "familyName")
                 .toRole("global", GUEST).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
