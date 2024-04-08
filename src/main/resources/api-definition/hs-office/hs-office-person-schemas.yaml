@@ -23,6 +23,10 @@ components:
                     $ref: '#/components/schemas/HsOfficePersonType'
                 tradeName:
                     type: string
+                salutation:
+                    type: string
+                title:
+                    type: string
                 givenName:
                     type: string
                 familyName:
@@ -34,6 +38,10 @@ components:
                 personType:
                     $ref: '#/components/schemas/HsOfficePersonType'
                 tradeName:
+                    type: string
+                salutation:
+                    type: string
+                title:
                     type: string
                 givenName:
                     type: string
@@ -49,6 +57,12 @@ components:
                     nullable: true
                     $ref: '#/components/schemas/HsOfficePersonType'
                 tradeName:
+                    type: string
+                    nullable: true
+                salutation:
+                    type: string
+                    nullable: true
+                title:
                     type: string
                     nullable: true
                 givenName:

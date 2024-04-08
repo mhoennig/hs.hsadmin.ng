@@ -22,6 +22,8 @@ class HsOfficePersonEntityPatcher implements EntityPatcher<HsOfficePersonPatchRe
                 .map(HsOfficePersonType::valueOf)
                 .ifPresent(entity::setPersonType);
         OptionalFromJson.of(resource.getTradeName()).ifPresent(entity::setTradeName);
+        OptionalFromJson.of(resource.getSalutation()).ifPresent(entity::setSalutation);
+        OptionalFromJson.of(resource.getTitle()).ifPresent(entity::setTitle);
         OptionalFromJson.of(resource.getFamilyName()).ifPresent(entity::setFamilyName);
         OptionalFromJson.of(resource.getGivenName()).ifPresent(entity::setGivenName);
     }

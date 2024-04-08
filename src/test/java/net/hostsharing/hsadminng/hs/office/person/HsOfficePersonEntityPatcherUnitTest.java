@@ -23,7 +23,9 @@ class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
         final var entity = new HsOfficePersonEntity();
         entity.setUuid(INITIAL_PERSON_UUID);
         entity.setPersonType(HsOfficePersonType.LEGAL_PERSON);
-        entity.setTradeName("initial@example.org");
+        entity.setTradeName("initial trade name");
+        entity.setTitle("Dr. Init.");
+        entity.setSalutation("Herr Initial");
         entity.setFamilyName("initial postal address");
         entity.setGivenName("+01 100 123456789");
         return entity;
@@ -54,6 +56,16 @@ class HsOfficePersonEntityPatcherUnitTest extends PatchUnitTestBase<
                         HsOfficePersonPatchResource::setTradeName,
                         "patched trade name",
                         HsOfficePersonEntity::setTradeName),
+                new JsonNullableProperty<>(
+                        "title",
+                        HsOfficePersonPatchResource::setTitle,
+                        "Dr. Patch.",
+                        HsOfficePersonEntity::setTitle),
+                new JsonNullableProperty<>(
+                        "salutation",
+                        HsOfficePersonPatchResource::setSalutation,
+                        "Hallo Ini",
+                        HsOfficePersonEntity::setSalutation),
                 new JsonNullableProperty<>(
                         "familyName",
                         HsOfficePersonPatchResource::setFamilyName,

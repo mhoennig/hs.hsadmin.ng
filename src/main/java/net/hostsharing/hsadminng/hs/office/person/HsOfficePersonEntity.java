@@ -35,6 +35,8 @@ public class HsOfficePersonEntity implements RbacObject, Stringifyable {
     private static Stringify<HsOfficePersonEntity> toString = stringify(HsOfficePersonEntity.class, "person")
             .withProp(Fields.personType, HsOfficePersonEntity::getPersonType)
             .withProp(Fields.tradeName, HsOfficePersonEntity::getTradeName)
+            .withProp(Fields.salutation, HsOfficePersonEntity::getSalutation)
+            .withProp(Fields.title, HsOfficePersonEntity::getTitle)
             .withProp(Fields.familyName, HsOfficePersonEntity::getFamilyName)
             .withProp(Fields.givenName, HsOfficePersonEntity::getGivenName);
 
@@ -47,6 +49,12 @@ public class HsOfficePersonEntity implements RbacObject, Stringifyable {
 
     @Column(name = "tradename")
     private String tradeName;
+
+    @Column(name = "salutation")
+    private String salutation;
+
+    @Column(name = "title")
+    private String title;
 
     @Column(name = "familyname")
     private String familyName;
@@ -68,7 +76,7 @@ public class HsOfficePersonEntity implements RbacObject, Stringifyable {
     public static RbacView rbac() {
         return rbacViewFor("person", HsOfficePersonEntity.class)
                 .withIdentityView(SQL.projection("concat(tradeName, familyName, givenName)"))
-                .withUpdatableColumns("personType", "tradeName", "givenName", "familyName")
+                .withUpdatableColumns("personType", "title", "salutation", "tradeName", "givenName", "familyName")
                 .toRole("global", GUEST).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {

@@ -19,6 +19,8 @@ create table if not exists hs_office_person
     uuid           uuid unique references RbacObject (uuid) initially deferred,
     personType     HsOfficePersonType not null,
     tradeName      varchar(96),
+    salutation     varchar(30),
+    title          varchar(20),
     givenName      varchar(48),
     familyName     varchar(48)
 );
