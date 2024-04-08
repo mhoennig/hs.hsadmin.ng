@@ -1,13 +1,11 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
 import jakarta.persistence.EntityManager;
-import java.util.UUID;
 
 class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatchResource> {
     private final EntityManager em;
@@ -21,19 +19,15 @@ class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatch
 
     @Override
     public void apply(final HsOfficePartnerPatchResource resource) {
-        OptionalFromJson.of(resource.getContactUuid()).ifPresent(newValue -> {
-            verifyNotNull(newValue, "contact");
-            entity.setContact(em.getReference(HsOfficeContactEntity.class, newValue));
-        });
-        OptionalFromJson.of(resource.getPersonUuid()).ifPresent(newValue -> {
-            verifyNotNull(newValue, "person");
-            entity.setPerson(em.getReference(HsOfficePersonEntity.class, newValue));
+        OptionalFromJson.of(resource.getPartnerRelUuid()).ifPresent(newValue -> {
+            verifyNotNull(newValue, "partnerRel");
+            entity.setPartnerRel(em.getReference(HsOfficeRelationEntity.class, newValue));
         });
 
         new HsOfficePartnerDetailsEntityPatcher(em, entity.getDetails()).apply(resource.getDetails());
     }
 
-    private void verifyNotNull(final UUID newValue, final String propertyName) {
+    private void verifyNotNull(final Object newValue, final String propertyName) {
         if (newValue == null) {
             throw new IllegalArgumentException("property '" + propertyName + "' must not be null");
         }

@@ -28,6 +28,7 @@ public class ArchitectureTest {
                     "..test",
                     "..test.cust",
                     "..test.pac",
+                    "..test.dom",
                     "..context",
                     "..generated..",
                     "..persistence..",
@@ -40,7 +41,7 @@ public class ArchitectureTest {
                     "..hs.office.migration",
                     "..hs.office.partner",
                     "..hs.office.person",
-                    "..hs.office.relationship",
+                    "..hs.office.relation",
                     "..hs.office.sepamandate",
                     "..errors",
                     "..mapper",
@@ -49,6 +50,8 @@ public class ArchitectureTest {
                     "..rbac.rbacuser",
                     "..rbac.rbacgrant",
                     "..rbac.rbacrole",
+                    "..rbac.rbacobject",
+                    "..rbac.rbacdef",
                     "..stringify"
                     // ATTENTION: Don't simply add packages here, also add arch rules for the new package!
             );
@@ -116,14 +119,18 @@ public class ArchitectureTest {
     public static final ArchRule hsAdminPackagesRule = classes()
             .that().resideInAPackage("..hs.office.(*)..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.(*)..");
+            .resideInAnyPackage(
+                    "..hs.office.(*)..",
+                    "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
+            );
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeBankAccountPackageRule = classes()
             .that().resideInAPackage("..hs.office.bankaccount..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.bankaccount..",
+            .resideInAnyPackage(
+                    "..hs.office.bankaccount..",
                     "..hs.office.sepamandate..",
                     "..hs.office.debitor..",
                     "..hs.office.migration..");
@@ -133,7 +140,8 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficeSepaMandatePackageRule = classes()
             .that().resideInAPackage("..hs.office.sepamandate..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.sepamandate..",
+            .resideInAnyPackage(
+                    "..hs.office.sepamandate..",
                     "..hs.office.debitor..",
                     "..hs.office.migration..");
 
@@ -142,7 +150,9 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficeContactPackageRule = classes()
             .that().resideInAPackage("..hs.office.contact..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.contact..", "..hs.office.relationship..",
+            .resideInAnyPackage(
+                    "..hs.office.contact..",
+                    "..hs.office.relation..",
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
@@ -153,37 +163,46 @@ public class ArchitectureTest {
     public static final ArchRule hsOfficePersonPackageRule = classes()
             .that().resideInAPackage("..hs.office.person..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.person..", "..hs.office.relationship..",
+            .resideInAnyPackage(
+                    "..hs.office.person..",
+                    "..hs.office.relation..",
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
-                    "..hs.office.migration..");
+                    "..hs.office.migration..")
+            .orShould().haveNameNotMatching(".*Test$");
+
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule hsOfficeRelationshipPackageRule = classes()
-            .that().resideInAPackage("..hs.office.relationship..")
+    public static final ArchRule hsOfficeRelationPackageRule = classes()
+            .that().resideInAPackage("..hs.office.relation..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.relationship..",
+            .resideInAnyPackage(
+                    "..hs.office.relation..",
                     "..hs.office.partner..",
-                    "..hs.office.migration..");
+                    "..hs.office.migration..")
+            .orShould().haveNameNotMatching(".*Test$");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficePartnerPackageRule = classes()
             .that().resideInAPackage("..hs.office.partner..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.partner..",
+            .resideInAnyPackage(
+                    "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
-                    "..hs.office.migration..");
+                    "..hs.office.migration..")
+            .orShould().haveNameNotMatching(".*Test$");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeMembershipPackageRule = classes()
             .that().resideInAPackage("..hs.office.membership..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.membership..",
+            .resideInAnyPackage(
+                    "..hs.office.membership..",
                     "..hs.office.coopassets..",
                     "..hs.office.coopshares..",
                     "..hs.office.migration..");

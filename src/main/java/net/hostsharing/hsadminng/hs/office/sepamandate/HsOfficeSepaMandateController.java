@@ -14,7 +14,6 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -57,7 +56,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     public ResponseEntity<HsOfficeSepaMandateResource> addSepaMandate(
             final String currentUser,
             final String assumedRoles,
-            @Valid final HsOfficeSepaMandateInsertResource body) {
+            final HsOfficeSepaMandateInsertResource body) {
 
         context.define(currentUser, assumedRoles);
 
@@ -132,6 +131,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
+        resource.getDebitor().setDebitorNumber(entity.getDebitor().getDebitorNumber());
     };
 
     final BiConsumer<HsOfficeSepaMandateInsertResource, HsOfficeSepaMandateEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {

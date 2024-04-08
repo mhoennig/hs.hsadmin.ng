@@ -18,10 +18,10 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipType;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.test.JpaAttempt;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -106,7 +106,7 @@ import static org.assertj.core.api.Fail.fail;
 @Tag("import")
 @DataJpaTest(properties = {
         "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers}",
-        "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:admin}",
+        "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
         "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
 })
@@ -127,7 +127,7 @@ public class ImportOfficeData extends ContextBasedTest {
             new String[]{"partner", "vip-contact", "ex-partner", "billing", "contractual", "operation"},
             SUBSCRIBER_ROLES);
 
-    static int relationshipId = 2000000;
+    static int relationId = 2000000;
 
     @Value("${spring.datasource.url}")
     private String jdbcUrl;
@@ -144,7 +144,7 @@ public class ImportOfficeData extends ContextBasedTest {
     private static Map<Integer, HsOfficeDebitorEntity> debitors = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeMembershipEntity> memberships = new WriteOnceMap<>();
 
-    private static Map<Integer, HsOfficeRelationshipEntity> relationships = new WriteOnceMap<>();
+    private static Map<Integer, HsOfficeRelationEntity> relations = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeSepaMandateEntity> sepaMandates = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeBankAccountEntity> bankAccounts = new WriteOnceMap<>();
     private static Map<Integer, HsOfficeCoopSharesTransactionEntity> coopShares = new WriteOnceMap<>();
@@ -175,33 +175,33 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1011)
+    @Order(1019)
     void verifyBusinessPartners() {
         assumeThatWeAreImportingControlledTestData();
 
         // no contacts yet => mostly null values
         assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
-                    17=partner(null null, null),
-                    20=partner(null null, null),
-                    22=partner(null null, null),
-                    99=partner(null null, null)
+                    17=partner(P-10017: null null, null),
+                    20=partner(P-10020: null null, null),
+                    22=partner(P-11022: null null, null),
+                    99=partner(P-19999: null null, null)
                 }
                 """);
         assertThat(toFormattedString(contacts)).isEqualTo("{}");
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
-                    17=debitor(D-1001700: null null, null: mih),
-                    20=debitor(D-1002000: null null, null: xyz),
-                    22=debitor(D-1102200: null null, null: xxx),
-                    99=debitor(D-1999900: null null, null: zzz)
+                    17=debitor(D-1001700: rel(anchor='null null, null', type='DEBITOR'), mih),
+                    20=debitor(D-1002000: rel(anchor='null null, null', type='DEBITOR'), xyz),
+                    22=debitor(D-1102200: rel(anchor='null null, null', type='DEBITOR'), xxx),
+                    99=debitor(D-1999900: rel(anchor='null null, null', type='DEBITOR'), zzz)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(M-1001700, null null, null, D-1001700, [2000-12-06,), NONE),
-                    20=Membership(M-1002000, null null, null, D-1002000, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(M-1102200, null null, null, D-1102200, [2021-04-01,), NONE)
+                    17=Membership(M-1001700, P-10017, [2000-12-06,), NONE),
+                    20=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(M-1102200, P-11022, [2021-04-01,), NONE)
                 }
                 """);
     }
@@ -220,15 +220,32 @@ public class ImportOfficeData extends ContextBasedTest {
 
     @Test
     @Order(1021)
+    void buildDebitorRelations() {
+        debitors.forEach( (id, debitor) -> {
+            final var debitorRel = HsOfficeRelationEntity.builder()
+                    .type(HsOfficeRelationType.DEBITOR)
+                    .anchor(debitor.getPartner().getPartnerRel().getHolder())
+                    .holder(debitor.getPartner().getPartnerRel().getHolder()) //  just 1 debitor/partner in legacy hsadmin
+                    // FIXME .contact()
+                    .build();
+            if (debitorRel.getAnchor() != null && debitorRel.getHolder() != null &&
+                    debitorRel.getContact() != null ) {
+                relations.put(relationId++, debitorRel);
+            }
+        });
+    }
+
+    @Test
+    @Order(1029)
     void verifyContacts() {
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
-                    17=partner(NP Mellies, Michael: Herr Michael Mellies ),
-                    20=partner(LP JM GmbH: Herr Philip Meyer-Contract , JM GmbH),
-                    22=partner(?? Test PS: Petra Schmidt , Test PS),
-                    99=partner(null null, null)
+                    17=partner(P-10017: NP Mellies, Michael, Herr Michael Mellies ),
+                    20=partner(P-10020: LP JM GmbH, Herr Philip Meyer-Contract , JM GmbH),
+                    22=partner(P-11022: ?? Test PS, Petra Schmidt , Test PS),
+                    99=partner(P-19999: null null, null)
                 }
                 """);
         assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
@@ -258,39 +275,47 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
-                    17=debitor(D-1001700: NP Mellies, Michael: mih), 
-                    20=debitor(D-1002000: LP JM GmbH: xyz), 
-                    22=debitor(D-1102200: ?? Test PS: xxx),
-                    99=debitor(D-1999900: null null, null: zzz)
+                    17=debitor(D-1001700: rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael'), mih),
+                    20=debitor(D-1002000: rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH'), xyz),
+                    22=debitor(D-1102200: rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS'), xxx),
+                    99=debitor(D-1999900: rel(anchor='null null, null', type='DEBITOR'), zzz)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(M-1001700, NP Mellies, Michael, D-1001700, [2000-12-06,), NONE),
-                    20=Membership(M-1002000, LP JM GmbH, D-1002000, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(M-1102200, ?? Test PS, D-1102200, [2021-04-01,), NONE)
+                    17=Membership(M-1001700, P-10017, [2000-12-06,), NONE),
+                    20=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(M-1102200, P-11022, [2021-04-01,), NONE)
                 }
                 """);
-        assertThat(toFormattedString(relationships)).isEqualToIgnoringWhitespace("""
+        assertThat(toFormattedString(relations)).isEqualToIgnoringWhitespace("""
                 {
-                    2000000=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000001=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000002=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000003=rel(relAnchor='LP Hostsharing eG', relType='PARTNER', relHolder='null null, null'),
-                    2000004=rel(relAnchor='NP Mellies, Michael', relType='OPERATIONS', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000005=rel(relAnchor='NP Mellies, Michael', relType='REPRESENTATIVE', relHolder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000006=rel(relAnchor='LP JM GmbH', relType='EX_PARTNER', relHolder='LP JM e.K.', contact='JM e.K.'),
-                    2000007=rel(relAnchor='LP JM GmbH', relType='OPERATIONS', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000008=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000009=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='operations-announce', relHolder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000010=rel(relAnchor='LP JM GmbH', relType='REPRESENTATIVE', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000011=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='members-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000012=rel(relAnchor='LP JM GmbH', relType='SUBSCRIBER', relMark='customers-announce', relHolder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000013=rel(relAnchor='LP JM GmbH', relType='VIP_CONTACT', relHolder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
-                    2000014=rel(relAnchor='?? Test PS', relType='OPERATIONS', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000015=rel(relAnchor='?? Test PS', relType='REPRESENTATIVE', relHolder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000016=rel(relAnchor='NP Mellies, Michael', relType='SUBSCRIBER', relMark='operations-announce', relHolder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
-                 }
+                    2000000=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000001=rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000002=rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000003=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000004=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
+                    2000005=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
+                    2000006=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000007=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000008=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000009=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='null null, null'),
+                    2000010=rel(anchor='null null, null', type='DEBITOR'),
+                    2000011=rel(anchor='null null, null', type='DEBITOR'),
+                    2000012=rel(anchor='NP Mellies, Michael', type='OPERATIONS', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000013=rel(anchor='NP Mellies, Michael', type='REPRESENTATIVE', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000014=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
+                    2000015=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000016=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000017=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000018=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000019=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000020=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000021=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
+                    2000022=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000023=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+2000024=rel(anchor='NP Mellies, Michael', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
+                }
                 """);
     }
 
@@ -307,15 +332,15 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1031)
+    @Order(1039)
     void verifySepaMandates() {
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(bankAccounts)).isEqualToIgnoringWhitespace("""
             {
-                234234=bankAccount(holder='Michael Mellies', iban='DE37500105177419788228', bic='INGDDEFFXXX'),
-                235600=bankAccount(holder='JM e.K.', iban='DE02300209000106531065', bic='CMCIDEDD'),
-                235662=bankAccount(holder='JM GmbH', iban='DE49500105174516484892', bic='INGDDEFFXXX')
+                234234=bankAccount(DE37500105177419788228: holder='Michael Mellies', bic='INGDDEFFXXX'),
+                235600=bankAccount(DE02300209000106531065: holder='JM e.K.', bic='CMCIDEDD'),
+                235662=bankAccount(DE49500105174516484892: holder='JM GmbH', bic='INGDDEFFXXX')
             }
             """);
         assertThat(toFormattedString(sepaMandates)).isEqualToIgnoringWhitespace("""
@@ -366,20 +391,20 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     @Test
-    @Order(1051)
+    @Order(1059)
     void verifyCoopAssets() {
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
                 {
-                    30000=CoopAssetsTransaction(1001700, 2000-12-06, DEPOSIT, 1280.00, for subscription A),
-                    31000=CoopAssetsTransaction(1002000, 2000-12-06, DEPOSIT, 128.00, for subscription B),
-                    32000=CoopAssetsTransaction(1001700, 2005-01-10, DEPOSIT, 2560.00, for subscription C),
-                    33001=CoopAssetsTransaction(1001700, 2005-01-10, TRANSFER, -512.00, for transfer to 10),
-                    33002=CoopAssetsTransaction(1002000, 2005-01-10, ADOPTION, 512.00, for transfer from 7),
-                    34001=CoopAssetsTransaction(1002000, 2016-12-31, CLEARING, -8.00, for cancellation D),
-                    34002=CoopAssetsTransaction(1002000, 2016-12-31, DISBURSAL, -100.00, for cancellation D),
-                    34003=CoopAssetsTransaction(1002000, 2016-12-31, LOSS, -20.00, for cancellation D)
+                    30000=CoopAssetsTransaction(M-1001700: 2000-12-06, DEPOSIT, 1280.00, for subscription A),
+                    31000=CoopAssetsTransaction(M-1002000: 2000-12-06, DEPOSIT, 128.00, for subscription B),
+                    32000=CoopAssetsTransaction(M-1001700: 2005-01-10, DEPOSIT, 2560.00, for subscription C),
+                    33001=CoopAssetsTransaction(M-1001700: 2005-01-10, TRANSFER, -512.00, for transfer to 10),
+                    33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, for transfer from 7),
+                    34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, for cancellation D),
+                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, for cancellation D),
+                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, for cancellation D)
                 }
                 """);
     }
@@ -388,31 +413,37 @@ public class ImportOfficeData extends ContextBasedTest {
     @Order(2000)
     void verifyAllPartnersHavePersons() {
         partners.forEach((id, p) -> {
+            final var partnerRel = p.getPartnerRel();
+            assertThat(partnerRel).describedAs("partner " + id + " without partnerRel").isNotNull();
             if ( id != 99 ) {
-                assertThat(p.getContact()).describedAs("partner " + id + " without contact").isNotNull();
-                assertThat(p.getContact().getLabel()).describedAs("partner " + id + " without valid contact").isNotNull();
-                assertThat(p.getPerson()).describedAs("partner " + id + " without person").isNotNull();
-                assertThat(p.getPerson().getPersonType()).describedAs("partner " + id + " without valid person").isNotNull();
+                assertThat(partnerRel.getContact()).describedAs("partner " + id + " without partnerRel.contact").isNotNull();
+                assertThat(partnerRel.getContact().getLabel()).describedAs("partner " + id + " without valid partnerRel.contact").isNotNull();
+                assertThat(partnerRel.getHolder()).describedAs("partner " + id + " without partnerRel.relHolder").isNotNull();
+                assertThat(partnerRel.getHolder().getPersonType()).describedAs("partner " + id + " without valid partnerRel.relHolder").isNotNull();
             }
         });
     }
 
     @Test
-    @Order(2001)
-    void removeEmptyRelationships() {
+    @Order(2009)
+    void removeEmptyRelations() {
         assumeThatWeAreImportingControlledTestData();
 
-        // avoid a error when persisting the deliberetely invalid partner entry #99
+        // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
-        relationships.forEach( (id, r) -> {
+        relations.forEach( (id, r) -> {
             // such a record
             if (r.getContact() == null || r.getContact().getLabel() == null ||
-               r.getRelHolder() == null | r.getRelHolder().getPersonType() == null ) {
+               r.getHolder() == null || r.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
             }
         });
-        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99 (partner+contractual roles)
-        idsToRemove.forEach(id -> relationships.remove(id));
+
+        // expected relations created from partner #99 + Hostsharing eG itself
+        idsToRemove.forEach(id -> {
+            System.out.println("removing unused relation: " + relations.get(id).toString());
+            relations.remove(id);
+        });
     }
 
     @Test
@@ -423,14 +454,20 @@ public class ImportOfficeData extends ContextBasedTest {
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
         partners.forEach( (id, r) -> {
-            // such a record
-            if (r.getContact() == null || r.getContact().getLabel() == null ||
-                    r.getPerson() == null | r.getPerson().getPersonType() == null ) {
+            final var partnerRole = r.getPartnerRel();
+
+            // such a record is in test data to test error messages
+            if (partnerRole.getContact() == null || partnerRole.getContact().getLabel() == null ||
+                    partnerRole.getHolder() == null | partnerRole.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
             }
         });
-        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99
-        idsToRemove.forEach(id -> partners.remove(id));
+
+        // expected partners created from partner #99 + Hostsharing eG itself
+        idsToRemove.forEach(id -> {
+            System.out.println("removing unused partner: " + partners.get(id).toString());
+            partners.remove(id);
+        });
     }
 
     @Test
@@ -440,10 +477,11 @@ public class ImportOfficeData extends ContextBasedTest {
 
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
-        debitors.forEach( (id, r) -> {
-            // such a record
-            if (r.getBillingContact() == null || r.getBillingContact().getLabel() == null ||
-                    r.getPartner().getPerson() == null | r.getPartner().getPerson().getPersonType() == null ) {
+        debitors.forEach( (id, d) -> {
+            final var debitorRel = d.getDebitorRel();
+            if (debitorRel.getContact() == null || debitorRel.getContact().getLabel() == null ||
+                    debitorRel.getAnchor() == null || debitorRel.getAnchor().getPersonType() == null ||
+                    debitorRel.getHolder() == null || debitorRel.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
             }
         });
@@ -475,18 +513,28 @@ public class ImportOfficeData extends ContextBasedTest {
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            relationships.forEach(this::persist);
+            relations.forEach(this::persist);
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            partners.forEach(this::persist);
+            partners.forEach((id, partner) -> {
+                // TODO: this is ugly and I don't know why it's suddenly necessary
+                partner.getPartnerRel().setAnchor(em.merge(partner.getPartnerRel().getAnchor()));
+                partner.getPartnerRel().setHolder(em.merge(partner.getPartnerRel().getHolder()));
+                partner.getPartnerRel().setContact(em.merge(partner.getPartnerRel().getContact()));
+                partner.setPartnerRel(em.merge(partner.getPartnerRel()));
+                em.persist(partner);
+            });
             updateLegacyIds(partners, "hs_office_partner_legacy_id", "bp_id");
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            debitors.forEach(this::persist);
+            debitors.forEach((id, debitor) -> {
+                debitor.setDebitorRel(em.merge(debitor.getDebitorRel()));
+                em.persist(debitor);
+            });
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -520,7 +568,7 @@ public class ImportOfficeData extends ContextBasedTest {
 
     }
 
-    private void persist(final Integer id, final HasUuid entity) {
+    private void persist(final Integer id, final RbacObject entity) {
         try {
             //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
             em.persist(entity);
@@ -552,7 +600,7 @@ public class ImportOfficeData extends ContextBasedTest {
             em.createNativeQuery("delete from hs_office_bankaccount where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_partner where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_partner_details where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_relationship where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office_relation where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_contact where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_person where true").executeUpdate();
         }).assertSuccessful();
@@ -591,7 +639,7 @@ public class ImportOfficeData extends ContextBasedTest {
         }).assertSuccessful();
     }
 
-    private <E extends HasUuid> void updateLegacyIds(
+    private <E extends RbacObject> void updateLegacyIds(
             Map<Integer, E> entities,
             final String legacyIdTable,
             final String legacyIdColumn) {
@@ -656,28 +704,30 @@ public class ImportOfficeData extends ContextBasedTest {
                 .forEach(rec -> {
                     final var person = HsOfficePersonEntity.builder().build();
 
-                    final var partnerRelationship = HsOfficeRelationshipEntity.builder()
-                            .relHolder(person)
-                            .relType(HsOfficeRelationshipType.PARTNER)
-                            .relAnchor(mandant)
-                            .contact(null) // is set during contacts import depending on assigned roles
-                            .build();
-                    relationships.put(relationshipId++, partnerRelationship);
+                    final var partnerRel = addRelation(
+                            HsOfficeRelationType.PARTNER, mandant, person,
+                            null  // is set during contacts import depending on assigned roles
+                    );
 
                     final var partner = HsOfficePartnerEntity.builder()
                             .partnerNumber(rec.getInteger("member_id"))
                             .details(HsOfficePartnerDetailsEntity.builder().build())
-                            .partnerRole(partnerRelationship)
-                            .contact(null) // is set during contacts import depending on assigned roles
-                            .person(person)
+                            .partnerRel(partnerRel)
                             .build();
                     partners.put(rec.getInteger("bp_id"), partner);
 
+                    final var debitorRel = addRelation(
+                            HsOfficeRelationType.DEBITOR, partnerRel.getHolder(), // partner person
+                            null, // will be set in contacts import
+                            null // will beset in contacts import
+                    );
+                    relations.put(relationId++, debitorRel);
+
                     final var debitor = HsOfficeDebitorEntity.builder()
+                            .debitorNumberSuffix("00")
                             .partner(partner)
-                            .debitorNumberSuffix((byte) 0)
+                            .debitorRel(debitorRel)
                             .defaultPrefix(rec.getString("member_code").replace("hsh00-", ""))
-                            .partner(partner)
                             .billable(rec.isEmpty("free") || rec.getString("free").equals("f"))
                             .vatReverseCharge(rec.getBoolean("exempt_vat"))
                             .vatBusiness("GROSS".equals(rec.getString("indicator_vat"))) // TODO: remove
@@ -698,7 +748,6 @@ public class ImportOfficeData extends ContextBasedTest {
                                         isBlank(rec.getString("member_until"))
                                                 ? HsOfficeReasonForTermination.NONE
                                                 : HsOfficeReasonForTermination.UNKNOWN)
-                                .mainDebitor(debitor)
                                 .build();
                         memberships.put(rec.getInteger("bp_id"), membership);
                     }
@@ -824,91 +873,92 @@ public class ImportOfficeData extends ContextBasedTest {
                     final var partner = partners.get(bpId);
                     final var debitor = debitors.get(bpId);
 
-                    final var partnerPerson = partner.getPerson();
-                    if (containsPartnerRole(rec)) {
-                        initPerson(partner.getPerson(), rec);
+                    final var partnerPerson = partner.getPartnerRel().getHolder();
+                    if (containsPartnerRel(rec)) {
+                        addPerson(partnerPerson, rec);
                     }
 
                     HsOfficePersonEntity contactPerson = partnerPerson;
                     if (!StringUtils.equals(rec.getString("firma"), partnerPerson.getTradeName()) ||
                             !StringUtils.equals(rec.getString("first_name"), partnerPerson.getGivenName()) ||
                             !StringUtils.equals(rec.getString("last_name"), partnerPerson.getFamilyName())) {
-                        contactPerson = initPerson(HsOfficePersonEntity.builder().build(), rec);
+                        contactPerson = addPerson(HsOfficePersonEntity.builder().build(), rec);
                     }
 
                     final var contact = HsOfficeContactEntity.builder().build();
                     initContact(contact, rec);
 
-                    if (containsPartnerRole(rec)) {
-                        assertThat(partner.getContact()).isNull();
-                        partner.setContact(contact);
-                        partner.getPartnerRole().setContact(contact);
+                    if (containsPartnerRel(rec)) {
+                        assertThat(partner.getPartnerRel().getContact()).isNull();
+                        partner.getPartnerRel().setContact(contact);
                     }
                     if (containsRole(rec, "billing")) {
-                        assertThat(debitor.getBillingContact()).isNull();
-                        debitor.setBillingContact(contact);
+                        assertThat(debitor.getDebitorRel().getContact()).isNull();
+                        debitor.getDebitorRel().setHolder(contactPerson);
+                        debitor.getDebitorRel().setContact(contact);
                     }
                     if (containsRole(rec, "operation")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.OPERATIONS);
+                        addRelation(HsOfficeRelationType.OPERATIONS, partnerPerson, contactPerson, contact);
                     }
                     if (containsRole(rec, "contractual")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.REPRESENTATIVE);
+                        addRelation(HsOfficeRelationType.REPRESENTATIVE, partnerPerson, contactPerson, contact);
                     }
                     if (containsRole(rec, "ex-partner")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.EX_PARTNER);
+                        addRelation(HsOfficeRelationType.EX_PARTNER, partnerPerson, contactPerson, contact);
                     }
                     if (containsRole(rec, "vip-contact")) {
-                        addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.VIP_CONTACT);
+                        addRelation(HsOfficeRelationType.VIP_CONTACT, partnerPerson, contactPerson, contact);
                     }
                     for (String subscriberRole: SUBSCRIBER_ROLES) {
                         if (containsRole(rec, subscriberRole)) {
-                            addRelationship(partnerPerson, contactPerson, contact, HsOfficeRelationshipType.SUBSCRIBER)
-                                    .setRelMark(subscriberRole.split(":")[1])
+                            addRelation(HsOfficeRelationType.SUBSCRIBER, partnerPerson, contactPerson, contact)
+                                    .setMark(subscriberRole.split(":")[1])
                             ;
                         }
                     }
                     verifyContainsOnlyKnownRoles(rec.getString("roles"));
                 });
 
-        optionallyAddMissingContractualRelationships();
+        optionallyAddMissingContractualRelations();
     }
 
-    private static void optionallyAddMissingContractualRelationships() {
+    private static void optionallyAddMissingContractualRelations() {
         final var contractualMissing = new HashSet<Integer>();
         partners.forEach( (id, partner) -> {
-            final var partnerPerson = partner.getPerson();
-            if (relationships.values().stream()
-                    .filter(rel -> rel.getRelAnchor() == partnerPerson && rel.getRelType() == HsOfficeRelationshipType.REPRESENTATIVE)
+            final var partnerPerson = partner.getPartnerRel().getHolder();
+            if (relations.values().stream()
+                    .filter(rel -> rel.getAnchor() == partnerPerson && rel.getType() == HsOfficeRelationType.REPRESENTATIVE)
                     .findFirst().isEmpty()) {
                 contractualMissing.add(partner.getPartnerNumber());
             }
         });
+        assertThat(contractualMissing).containsOnly(19999); // deliberately wrong partner entry
     }
     private static boolean containsRole(final Record rec, final String role) {
         final var roles = rec.getString("roles");
         return ("," + roles + ",").contains("," + role + ",");
     }
 
-    private static boolean containsPartnerRole(final Record rec) {
+    private static boolean containsPartnerRel(final Record rec) {
         return containsRole(rec, "partner");
     }
 
-    private static HsOfficeRelationshipEntity addRelationship(
-            final HsOfficePersonEntity partnerPerson,
-            final HsOfficePersonEntity contactPerson,
-            final HsOfficeContactEntity contact,
-            final HsOfficeRelationshipType representative) {
-        final var rel = HsOfficeRelationshipEntity.builder()
-                .relAnchor(partnerPerson)
-                .relHolder(contactPerson)
+    private static HsOfficeRelationEntity addRelation(
+            final HsOfficeRelationType type,
+            final HsOfficePersonEntity anchor,
+            final HsOfficePersonEntity holder,
+            final HsOfficeContactEntity contact) {
+        final var rel = HsOfficeRelationEntity.builder()
+                .anchor(anchor)
+                .holder(holder)
                 .contact(contact)
-                .relType(representative)
+                .type(type)
                 .build();
-        relationships.put(relationshipId++, rel);
+        relations.put(relationId++, rel);
         return rel;
     }
 
-    private HsOfficePersonEntity initPerson(final HsOfficePersonEntity person, final Record contactRecord) {
+    private HsOfficePersonEntity addPerson(final HsOfficePersonEntity person, final Record contactRecord) {
         // TODO: title+salutation: add to person
         person.setGivenName(contactRecord.getString("first_name"));
         person.setFamilyName(contactRecord.getString("last_name"));
@@ -1119,11 +1169,6 @@ class Record {
     boolean isEmpty(final String columnName) {
         final String value = getString(columnName);
         return value == null || value.isBlank();
-    }
-
-    Byte getByte(final String columnName) {
-        final String value = getString(columnName);
-        return isNotBlank(value) ? Byte.valueOf(value.trim()) : 0;
     }
 
     boolean getBoolean(final String columnName) {

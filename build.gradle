@@ -1,15 +1,15 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.1.7'
+    id 'org.springframework.boot' version '3.2.4'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'io.openapiprocessor.openapi-processor' version '2023.2'
-    id 'com.github.jk1.dependency-license-report' version '2.5'
-    id "org.owasp.dependencycheck" version "9.0.7"
-    id "com.diffplug.spotless" version "6.23.3"
+    id 'com.github.jk1.dependency-license-report' version '2.6'
+    id "org.owasp.dependencycheck" version "9.0.10"
+    id "com.diffplug.spotless" version "6.25.0"
     id 'jacoco'
     id 'info.solidsoft.pitest' version '1.15.0'
     id 'se.patrikerdes.use-latest-versions' version '0.2.18'
-    id 'com.github.ben-manes.versions' version '0.50.0'
+    id 'com.github.ben-manes.versions' version '0.51.0'
 }
 
 group = 'net.hostsharing'
@@ -59,28 +59,16 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'com.github.gavlyukovskiy:datasource-proxy-spring-boot-starter:1.9.1'
-    implementation 'org.springdoc:springdoc-openapi:2.3.0'
-    implementation 'org.postgresql:postgresql:42.7.1'
-    implementation 'org.liquibase:liquibase-core:4.25.1'
-    implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
-    implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+    implementation 'org.springdoc:springdoc-openapi:2.4.0'
+    implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'org.liquibase:liquibase-core:4.27.0'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.7.3'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0'
     implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
     implementation 'org.apache.commons:commons-text:1.11.0'
     implementation 'org.modelmapper:modelmapper:3.2.0'
     implementation 'org.iban4j:iban4j:3.2.7-RELEASE'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-
-    // fixes vulnerability CVE-2022-1471
-    // The dependency usually comes from Spring Boot, just in the wrong version.
-    // TODO: Remove this explicit dependency once we are on SpringBoot 3.2.x
-    // as well as the related exclude in settings.gradle
-    // and the dependency suppression in owasp-dependency-check-suppression.xml.
-    implementation('org.yaml:snakeyaml') {
-        version {
-            strictly('2.2')
-        }
-    }
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
 
     compileOnly 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'

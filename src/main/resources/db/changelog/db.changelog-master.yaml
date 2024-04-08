@@ -1,127 +1,129 @@
 databaseChangeLog:
     - include:
-        file: db/changelog/001-last-row-count.sql
+        file: db/changelog/0-basis/001-last-row-count.sql
     - include:
-        file: db/changelog/002-int-to-var.sql
+        file: db/changelog/0-basis/002-int-to-var.sql
     - include:
-        file: db/changelog/003-random-in-range.sql
+        file: db/changelog/0-basis/003-random-in-range.sql
     - include:
-        file: db/changelog/004-jsonb-changes-delta.sql
+        file: db/changelog/0-basis/004-jsonb-changes-delta.sql
     - include:
-        file: db/changelog/005-uuid-ossp-extension.sql
+        file: db/changelog/0-basis/005-uuid-ossp-extension.sql
     - include:
-        file: db/changelog/006-numeric-hash-functions.sql
+        file: db/changelog/0-basis/006-numeric-hash-functions.sql
     - include:
-        file: db/changelog/009-check-environment.sql
+        file: db/changelog/0-basis/007-table-columns.sql
     - include:
-        file: db/changelog/010-context.sql
+        file: db/changelog/0-basis/009-check-environment.sql
     - include:
-        file: db/changelog/020-audit-log.sql
+        file: db/changelog/0-basis/010-context.sql
     - include:
-        file: db/changelog/050-rbac-base.sql
+        file: db/changelog/0-basis/020-audit-log.sql
     - include:
-        file: db/changelog/051-rbac-user-grant.sql
+        file: db/changelog/1-rbac/1050-rbac-base.sql
     - include:
-        file: db/changelog/054-rbac-context.sql
+        file: db/changelog/1-rbac/1051-rbac-user-grant.sql
     - include:
-        file: db/changelog/055-rbac-views.sql
+        file: db/changelog/1-rbac/1054-rbac-context.sql
     - include:
-        file: db/changelog/056-rbac-trigger-context.sql
+        file: db/changelog/1-rbac/1055-rbac-views.sql
     - include:
-        file: db/changelog/057-rbac-role-builder.sql
+        file: db/changelog/1-rbac/1056-rbac-trigger-context.sql
     - include:
-        file: db/changelog/058-rbac-generators.sql
+        file: db/changelog/1-rbac/1057-rbac-role-builder.sql
     - include:
-        file: db/changelog/059-rbac-statistics.sql
+        file: db/changelog/1-rbac/1058-rbac-generators.sql
     - include:
-        file: db/changelog/080-rbac-global.sql
+        file: db/changelog/1-rbac/1059-rbac-statistics.sql
     - include:
-        file: db/changelog/110-test-customer.sql
+        file: db/changelog/1-rbac/1080-rbac-global.sql
     - include:
-        file: db/changelog/113-test-customer-rbac.sql
+        file: db/changelog/2-test/201-test-customer/2010-test-customer.sql
     - include:
-        file: db/changelog/118-test-customer-test-data.sql
+        file: db/changelog/2-test/201-test-customer/2013-test-customer-rbac.sql
     - include:
-        file: db/changelog/120-test-package.sql
+        file: db/changelog/2-test/201-test-customer/2018-test-customer-test-data.sql
     - include:
-        file: db/changelog/123-test-package-rbac.sql
+        file: db/changelog/2-test/202-test-package/2020-test-package.sql
     - include:
-        file: db/changelog/128-test-package-test-data.sql
+        file: db/changelog/2-test/202-test-package/2023-test-package-rbac.sql
     - include:
-        file: db/changelog/130-test-domain.sql
+        file: db/changelog/2-test/202-test-package/2028-test-package-test-data.sql
     - include:
-        file: db/changelog/133-test-domain-rbac.sql
+        file: db/changelog/2-test/203-test-domain/2030-test-domain.sql
     - include:
-        file: db/changelog/138-test-domain-test-data.sql
+        file: db/changelog/2-test/203-test-domain/2033-test-domain-rbac.sql
     - include:
-        file: db/changelog/200-hs-office-contact.sql
+        file: db/changelog/2-test/203-test-domain/2038-test-domain-test-data.sql
     - include:
-        file: db/changelog/203-hs-office-contact-rbac.sql
+        file: db/changelog/5-hs-office/501-contact/5010-hs-office-contact.sql
     - include:
-        file: db/changelog/206-hs-office-contact-migration.sql
+        file: db/changelog/5-hs-office/501-contact/5013-hs-office-contact-rbac.sql
     - include:
-        file: db/changelog/208-hs-office-contact-test-data.sql
+        file: db/changelog/5-hs-office/501-contact/5016-hs-office-contact-migration.sql
     - include:
-        file: db/changelog/210-hs-office-person.sql
+        file: db/changelog/5-hs-office/501-contact/5018-hs-office-contact-test-data.sql
     - include:
-        file: db/changelog/213-hs-office-person-rbac.sql
+        file: db/changelog/5-hs-office/502-person/5020-hs-office-person.sql
     - include:
-        file: db/changelog/218-hs-office-person-test-data.sql
+        file: db/changelog/5-hs-office/502-person/5023-hs-office-person-rbac.sql
     - include:
-        file: db/changelog/220-hs-office-relationship.sql
+        file: db/changelog/5-hs-office/502-person/5028-hs-office-person-test-data.sql
     - include:
-        file: db/changelog/223-hs-office-relationship-rbac.sql
+        file: db/changelog/5-hs-office/503-relation/5030-hs-office-relation.sql
     - include:
-        file: db/changelog/228-hs-office-relationship-test-data.sql
+        file: db/changelog/5-hs-office/503-relation/5033-hs-office-relation-rbac.sql
     - include:
-        file: db/changelog/230-hs-office-partner.sql
+        file: db/changelog/5-hs-office/503-relation/5038-hs-office-relation-test-data.sql
     - include:
-        file: db/changelog/233-hs-office-partner-rbac.sql
+        file: db/changelog/5-hs-office/504-partner/5040-hs-office-partner.sql
     - include:
-        file: db/changelog/234-hs-office-partner-details-rbac.sql
+        file: db/changelog/5-hs-office/504-partner/5043-hs-office-partner-rbac.sql
     - include:
-        file: db/changelog/236-hs-office-partner-migration.sql
+        file: db/changelog/5-hs-office/504-partner/5044-hs-office-partner-details-rbac.sql
     - include:
-        file: db/changelog/238-hs-office-partner-test-data.sql
+        file: db/changelog/5-hs-office/504-partner/5046-hs-office-partner-migration.sql
     - include:
-        file: db/changelog/240-hs-office-bankaccount.sql
+        file: db/changelog/5-hs-office/504-partner/5048-hs-office-partner-test-data.sql
     - include:
-        file: db/changelog/243-hs-office-bankaccount-rbac.sql
+        file: db/changelog/5-hs-office/505-bankaccount/5050-hs-office-bankaccount.sql
     - include:
-          file: db/changelog/248-hs-office-bankaccount-test-data.sql
+        file: db/changelog/5-hs-office/505-bankaccount/5053-hs-office-bankaccount-rbac.sql
     - include:
-        file: db/changelog/270-hs-office-debitor.sql
+          file: db/changelog/5-hs-office/505-bankaccount/5058-hs-office-bankaccount-test-data.sql
     - include:
-        file: db/changelog/273-hs-office-debitor-rbac.sql
+        file: db/changelog/5-hs-office/506-debitor/5060-hs-office-debitor.sql
     - include:
-        file: db/changelog/278-hs-office-debitor-test-data.sql
+        file: db/changelog/5-hs-office/506-debitor/5063-hs-office-debitor-rbac.sql
     - include:
-        file: db/changelog/250-hs-office-sepamandate.sql
+        file: db/changelog/5-hs-office/506-debitor/5068-hs-office-debitor-test-data.sql
     - include:
-        file: db/changelog/253-hs-office-sepamandate-rbac.sql
+        file: db/changelog/5-hs-office/507-sepamandate/5070-hs-office-sepamandate.sql
     - include:
-          file: db/changelog/256-hs-office-sepamandate-migration.sql
+        file: db/changelog/5-hs-office/507-sepamandate/5073-hs-office-sepamandate-rbac.sql
     - include:
-        file: db/changelog/258-hs-office-sepamandate-test-data.sql
+        file: db/changelog/5-hs-office/507-sepamandate/5076-hs-office-sepamandate-migration.sql
     - include:
-        file: db/changelog/300-hs-office-membership.sql
+        file: db/changelog/5-hs-office/507-sepamandate/5078-hs-office-sepamandate-test-data.sql
     - include:
-        file: db/changelog/303-hs-office-membership-rbac.sql
+        file: db/changelog/5-hs-office/510-membership/5100-hs-office-membership.sql
     - include:
-        file: db/changelog/308-hs-office-membership-test-data.sql
+        file: db/changelog/5-hs-office/510-membership/5103-hs-office-membership-rbac.sql
     - include:
-        file: db/changelog/310-hs-office-coopshares.sql
+        file: db/changelog/5-hs-office/510-membership/5108-hs-office-membership-test-data.sql
     - include:
-        file: db/changelog/313-hs-office-coopshares-rbac.sql
+        file: db/changelog/5-hs-office/511-coopshares/5110-hs-office-coopshares.sql
     - include:
-          file: db/changelog/316-hs-office-coopshares-migration.sql
+        file: db/changelog/5-hs-office/511-coopshares/5113-hs-office-coopshares-rbac.sql
     - include:
-        file: db/changelog/318-hs-office-coopshares-test-data.sql
+        file: db/changelog/5-hs-office/511-coopshares/5116-hs-office-coopshares-migration.sql
     - include:
-          file: db/changelog/320-hs-office-coopassets.sql
+        file: db/changelog/5-hs-office/511-coopshares/5118-hs-office-coopshares-test-data.sql
     - include:
-          file: db/changelog/323-hs-office-coopassets-rbac.sql
+        file: db/changelog/5-hs-office/512-coopassets/5120-hs-office-coopassets.sql
     - include:
-          file: db/changelog/326-hs-office-coopassets-migration.sql
+        file: db/changelog/5-hs-office/512-coopassets/5123-hs-office-coopassets-rbac.sql
     - include:
-          file: db/changelog/328-hs-office-coopassets-test-data.sql
+        file: db/changelog/5-hs-office/512-coopassets/5126-hs-office-coopassets-migration.sql
+    - include:
+        file: db/changelog/5-hs-office/512-coopassets/5128-hs-office-coopassets-test-data.sql

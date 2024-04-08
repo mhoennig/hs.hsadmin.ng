@@ -3,8 +3,8 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipEntity;
-import net.hostsharing.hsadminng.hs.office.relationship.HsOfficeRelationshipRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -54,7 +54,7 @@ class HsOfficePartnerControllerRestTest {
     HsOfficePartnerRepository partnerRepo;
 
     @MockBean
-    HsOfficeRelationshipRepository relationshipRepo;
+    HsOfficeRelationRepository relationRepo;
 
     @MockBean
     EntityManager em;
@@ -100,9 +100,9 @@ class HsOfficePartnerControllerRestTest {
                             .content("""
                                      {
                                         "partnerNumber": "20002",
-                                        "partnerRole": {
-                                             "relAnchorUuid": "%s",
-                                             "relHolderUuid": "%s",
+                                        "partnerRel": {
+                                             "anchorUuid": "%s",
+                                             "holderUuid": "%s",
                                              "contactUuid": "%s"
                                         },
                                         "personUuid": "%s",
@@ -137,9 +137,9 @@ class HsOfficePartnerControllerRestTest {
                             .content("""
                                      {
                                         "partnerNumber": "20002",
-                                        "partnerRole": {
-                                             "relAnchorUuid": "%s",
-                                             "relHolderUuid": "%s",
+                                        "partnerRel": {
+                                             "anchorUuid": "%s",
+                                             "holderUuid": "%s",
                                              "contactUuid": "%s"
                                         },
                                         "personUuid": "%s",
@@ -175,11 +175,11 @@ class HsOfficePartnerControllerRestTest {
             when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(partnerMock));
             when(partnerRepo.deleteByUuid(givenPartnerUuid)).thenReturn(0);
 
-            final UUID givenRelationshipUuid = UUID.randomUUID();
-            when(partnerMock.getPartnerRole()).thenReturn(HsOfficeRelationshipEntity.builder()
-                    .uuid(givenRelationshipUuid)
+            final UUID givenRelationUuid = UUID.randomUUID();
+            when(partnerMock.getPartnerRel()).thenReturn(HsOfficeRelationEntity.builder()
+                    .uuid(givenRelationUuid)
                     .build());
-            when(relationshipRepo.deleteByUuid(givenRelationshipUuid)).thenReturn(0);
+            when(relationRepo.deleteByUuid(givenRelationUuid)).thenReturn(0);
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
@@ -191,31 +191,5 @@ class HsOfficePartnerControllerRestTest {
                     // then
                     .andExpect(status().isForbidden());
         }
-
-        @Test
-        void respondBadRequest_ifRelationshipCannotBeDeleted() throws Exception {
-            // given
-            final UUID givenPartnerUuid = UUID.randomUUID();
-            when(partnerRepo.findByUuid(givenPartnerUuid)).thenReturn(Optional.of(partnerMock));
-            when(partnerRepo.deleteByUuid(givenPartnerUuid)).thenReturn(1);
-            when(relationshipRepo.deleteByUuid(any())).thenReturn(0);
-
-            final UUID givenRelationshipUuid = UUID.randomUUID();
-            when(partnerMock.getPartnerRole()).thenReturn(HsOfficeRelationshipEntity.builder()
-                    .uuid(givenRelationshipUuid)
-                    .build());
-            when(relationshipRepo.deleteByUuid(givenRelationshipUuid)).thenReturn(0);
-
-            // when
-            mockMvc.perform(MockMvcRequestBuilders
-                            .delete("/api/hs/office/partners/" + givenPartnerUuid)
-                            .header("current-user", "superuser-alex@hostsharing.net")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .accept(MediaType.APPLICATION_JSON))
-
-                    // then
-                    .andExpect(status().isForbidden());
-        }
-
     }
 }

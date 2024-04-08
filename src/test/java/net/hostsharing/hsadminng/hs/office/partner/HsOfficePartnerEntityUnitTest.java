@@ -3,39 +3,39 @@ package net.hostsharing.hsadminng.hs.office.partner;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficePartnerEntityUnitTest {
 
+    private final HsOfficePartnerEntity givenPartner = HsOfficePartnerEntity.builder()
+            .partnerNumber(12345)
+            .partnerRel(HsOfficeRelationEntity.builder()
+                    .anchor(HsOfficePersonEntity.builder()
+                            .personType(HsOfficePersonType.LEGAL_PERSON)
+                            .tradeName("Hostsharing eG")
+                            .build())
+                    .type(HsOfficeRelationType.PARTNER)
+                    .holder(HsOfficePersonEntity.builder()
+                            .personType(HsOfficePersonType.LEGAL_PERSON)
+                            .tradeName("some trade name")
+                            .build())
+                    .contact(HsOfficeContactEntity.builder().label("some label").build())
+                    .build())
+            .build();
+
     @Test
-    void toStringContainsPersonAndContact() {
-        final var given = HsOfficePartnerEntity.builder()
-                .person(HsOfficePersonEntity.builder()
-                        .personType(HsOfficePersonType.LEGAL_PERSON)
-                        .tradeName("some trade name")
-                        .build())
-                .contact(HsOfficeContactEntity.builder().label("some label").build())
-                .build();
-
-        final var result = given.toString();
-
-        assertThat(result).isEqualTo("partner(LP some trade name: some label)");
+    void toStringContainsPartnerNumberPersonAndContact() {
+        final var result = givenPartner.toString();
+        assertThat(result).isEqualTo("partner(P-12345: LP some trade name, some label)");
     }
 
     @Test
-    void toShortStringContainsPersonAndContact() {
-        final var given = HsOfficePartnerEntity.builder()
-                .person(HsOfficePersonEntity.builder()
-                        .personType(HsOfficePersonType.LEGAL_PERSON)
-                        .tradeName("some trade name")
-                        .build())
-                .contact(HsOfficeContactEntity.builder().label("some label").build())
-                .build();
-
-        final var result = given.toShortString();
-
-        assertThat(result).isEqualTo("LP some trade name");
+    void toShortStringContainsPartnerNumber() {
+        final var result = givenPartner.toShortString();
+        assertThat(result).isEqualTo("P-12345");
     }
 }

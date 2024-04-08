@@ -10,7 +10,7 @@ classDiagram
 
     namespace Partner {
         class partner-MeierGmbH
-        class role-MeierGmbH
+        class rel-MeierGmbH
         class personDetails-MeierGmbH
         class contactData-MeierGmbH
         class person-MeierGmbH
@@ -19,28 +19,29 @@ classDiagram
     namespace Representatives {
         class person-FrankMeier
         class contactData-FrankMeier
-        class role-MeierGmbH-FrankMeier
+        class rel-MeierGmbH-FrankMeier
     }
     
     namespace Debitors {
         class debitor-MeierGmbH
         class contactData-MeierGmbH-Buha
-        class role-MeierGmbH-Buha
+        class rel-MeierGmbH-Buha
     }
 
     namespace Operations {
         class person-SabineMeier
         class contactData-SabineMeier
-        class role-MeierGmbH-SabineMeier
+        class rel-MeierGmbH-SabineMeier
     }
     
     namespace Enums {
 
-        class RoleType {
+        class RelationType {
             <<enumeration>>
             UNKNOWN
+            PARTNER
+            DEBITOR
             REPRESENTATIVE
-            ACCOUNTING
             OPERATIONS
         }
 
@@ -64,9 +65,9 @@ classDiagram
 
     class partner-MeierGmbH {
         +Numeric partnerNumber: 12345
-        +Role partnerRole
+        +Relation partnerRel
     }
-    partner-MeierGmbH *-- role-MeierGmbH
+    partner-MeierGmbH *-- rel-MeierGmbH
 
     class person-MeierGmbH {
         +personType: LEGAL
@@ -90,32 +91,32 @@ classDiagram
         +emailAddresses:    office@meier-gmbh.de
     }
 
-    class role-MeierGmbH {
-        +RoleType RoleType PARTNER
+    class rel-MeierGmbH {
+        +RelationType type PARTNER
         +Person anchor
         +Person holder
-        +Contact roleContact
+        +Contact contact
     }
-    role-MeierGmbH o-- person-HostsharingEG : anchor
-    role-MeierGmbH o-- person-MeierGmbH : holder
-    role-MeierGmbH o-- contactData-MeierGmbH
+    rel-MeierGmbH o-- person-HostsharingEG : anchor
+    rel-MeierGmbH o-- person-MeierGmbH : holder
+    rel-MeierGmbH o-- contactData-MeierGmbH
 
     %% --- Debitors ---
 
     class debitor-MeierGmbH {
-        +Partner    partner
-        +Numeric[2] debitorNumberSuffix:    00
-        +Role       billingRole
-        +boolean    billable:               true
-        +String     vatId:                  ID123456789
-        +String     vatCountryCode:         DE
-        +boolean    vatBusiness:            true
-        +boolean    vatReverseCharge:       false
+        +Partner     partner
+        +Numeric[2]  debitorNumberSuffix:    00
+        +Relation    debitorRel
+        +boolean     billable:               true
+        +String      vatId:                  ID123456789
+        +String      vatCountryCode:         DE
+        +boolean     vatBusiness:            true
+        +boolean     vatReverseCharge:       false
         +BankAccount refundBankAccount
-        +String     defaultPrefix:          mei
+        +String      defaultPrefix:          mei
     }
     debitor-MeierGmbH o-- partner-MeierGmbH
-    debitor-MeierGmbH *-- role-MeierGmbH-Buha
+    debitor-MeierGmbH *-- rel-MeierGmbH-Buha
 
     class contactData-MeierGmbH-Buha {
         +postalAddress:     Hauptstraße 5, 22345 Hamburg
@@ -123,15 +124,15 @@ classDiagram
         +emailAddresses:    buha@meier-gmbh.de
     }
 
-    class role-MeierGmbH-Buha {
-        +RoleType RoleType ACCOUNTING
+    class rel-MeierGmbH-Buha {
+        +RelationType type DEBITOR
         +Person anchor
         +Person holder
-        +Contact roleContact
+        +Contact contact
     }
-    role-MeierGmbH-Buha o-- person-MeierGmbH : anchor
-    role-MeierGmbH-Buha o-- person-MeierGmbH : holder
-    role-MeierGmbH-Buha o-- contactData-MeierGmbH-Buha
+    rel-MeierGmbH-Buha o-- person-MeierGmbH : anchor
+    rel-MeierGmbH-Buha o-- person-MeierGmbH : holder
+    rel-MeierGmbH-Buha o-- contactData-MeierGmbH-Buha
 
     %% --- Representatives ---
 
@@ -148,15 +149,15 @@ classDiagram
         +emailAddresses: frank.meier@meier-gmbh.de
     }
 
-    class role-MeierGmbH-FrankMeier {
-        +RoleType RoleType REPRESENTATIVE
+    class rel-MeierGmbH-FrankMeier {
+        +RelationType type REPRESENTATIVE
         +Person anchor
         +Person holder
-        +Contact roleContact
+        +Contact contact
     }
-    role-MeierGmbH-FrankMeier o-- person-MeierGmbH : anchor
-    role-MeierGmbH-FrankMeier o-- person-FrankMeier : holder
-    role-MeierGmbH-FrankMeier o-- contactData-FrankMeier
+    rel-MeierGmbH-FrankMeier o-- person-MeierGmbH : anchor
+    rel-MeierGmbH-FrankMeier o-- person-FrankMeier : holder
+    rel-MeierGmbH-FrankMeier o-- contactData-FrankMeier
 
     %% --- Operations ---
 
@@ -173,14 +174,14 @@ classDiagram
         +emailAddresses: sabine.meier@meier-gmbh.de
     }
 
-    class role-MeierGmbH-SabineMeier {
-        +RoleType RoleType OPERATIONAL
+    class rel-MeierGmbH-SabineMeier {
+        +RelationType type OPERATIONAL
         +Person anchor
         +Person holder
-        +Contact roleContact
+        +Contact contact
     }
-    role-MeierGmbH-SabineMeier o-- person-MeierGmbH : anchor
-    role-MeierGmbH-SabineMeier o-- person-SabineMeier : holder
-    role-MeierGmbH-SabineMeier o-- contactData-SabineMeier
+    rel-MeierGmbH-SabineMeier o-- person-MeierGmbH : anchor
+    rel-MeierGmbH-SabineMeier o-- person-SabineMeier : holder
+    rel-MeierGmbH-SabineMeier o-- contactData-SabineMeier
 
 ```

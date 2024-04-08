@@ -20,7 +20,7 @@ CREATE POLICY customer_policy ON customer
     TO restricted
     USING (
         -- id=1000
-        isPermissionGrantedToSubject(findEffectivePermissionId('test_customer', id, 'view'), currentUserUuid())
+        isPermissionGrantedToSubject(findEffectivePermissionId('test_customer', id, 'SELECT'), currentUserUuid())
     );
 
 SET SESSION AUTHORIZATION restricted;
@@ -35,7 +35,7 @@ SELECT * FROM customer;
 CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
-    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findEffectivePermissionId('test_customer', id, 'view'), currentUserUuid());
+    SELECT * FROM customer WHERE isPermissionGrantedToSubject(findEffectivePermissionId('test_customer', id, 'SELECT'), currentUserUuid());
 SELECT * from cust_view LIMIT 10;
 
 select queryAllPermissionsOfSubjectId(findRbacUser('superuser-alex@hostsharing.net'));
@@ -52,7 +52,7 @@ CREATE OR REPLACE RULE "_RETURN" AS
     DO INSTEAD
     SELECT c.uuid, c.reference, c.prefix FROM customer AS c
       JOIN queryAllPermissionsOfSubjectId(currentUserUuid()) AS p
-           ON p.objectTable='test_customer' AND p.objectUuid=c.uuid AND p.op in ('*', 'view');
+           ON p.objectTable='test_customer' AND p.objectUuid=c.uuid;
 GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
 SET SESSION SESSION AUTHORIZATION restricted;
@@ -68,7 +68,7 @@ CREATE OR REPLACE VIEW cust_view AS
     SELECT c.uuid, c.reference, c.prefix
       FROM customer AS c
       JOIN queryAllPermissionsOfSubjectId(currentUserUuid()) AS p
-           ON p.objectUuid=c.uuid AND p.op in ('*', 'view');
+           ON p.objectUuid=c.uuid;
 GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
 SET SESSION SESSION AUTHORIZATION restricted;
@@ -81,9 +81,9 @@ select rr.uuid, rr.type from RbacGrants g
     join RbacReference RR on g.ascendantUuid = RR.uuid
     where g.descendantUuid in (
         select uuid from queryAllPermissionsOfSubjectId(findRbacUser('alex@example.com'))
-            where objectTable='test_customer' and op in ('*', 'view'));
+            where objectTable='test_customer');
 
-call grantRoleToUser(findRoleId('test_customer#aaa.admin'), findRbacUser('aaaaouq@example.com'));
+call grantRoleToUser(findRoleId('test_customer#aaa:ADMIN'), findRbacUser('aaaaouq@example.com'));
 
 select queryAllPermissionsOfSubjectId(findRbacUser('aaaaouq@example.com'));
 

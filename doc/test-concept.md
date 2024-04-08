@@ -87,7 +87,7 @@ Acceptance-Tests run on a fully integrated and deployed system with deployed dou
 
 Acceptance-tests, are blackbox-tests and do <u>not</u> count into test-code-coverage.
 
-TODO: Complete the Acceptance-Tests test concept.
+TODO.test: Complete the Acceptance-Tests test concept.
 
 
 #### Performance-Tests
@@ -107,4 +107,4 @@ We define System-Integration-Tests as test in which this system is deployed in a
 
 System-Integration-tests, are blackbox-tests and do <u>not</u> count into test-code-coverage.
 
-TODO: Complete the System-Integration-Tests test concept.
+TODO.test: Complete the System-Integration-Tests test concept.

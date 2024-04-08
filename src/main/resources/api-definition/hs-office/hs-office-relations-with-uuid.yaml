@@ -1,0 +1,83 @@
+get:
+    tags:
+        - hs-office-relations
+    description: 'Fetch a single person relation by its uuid, if visible for the current subject.'
+    operationId: getRelationByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: relationUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the relation to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
+
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+patch:
+    tags:
+        - hs-office-relations
+    description: 'Updates a single person relation by its uuid, if permitted for the current subject.'
+    operationId: patchRelation
+    parameters:
+        -   $ref: './auth.yaml#/components/parameters/currentUser'
+        -   $ref: './auth.yaml#/components/parameters/assumedRoles'
+        -   name: relationUUID
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationPatch'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - hs-office-relations
+    description: 'Delete a single person relation by its uuid, if permitted for the current subject.'
+    operationId: deleteRelationByUuid
+    parameters:
+        - $ref: './auth.yaml#/components/parameters/currentUser'
+        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - name: relationUUID
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the relation to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: './error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: './error-responses.yaml#/components/responses/NotFound'

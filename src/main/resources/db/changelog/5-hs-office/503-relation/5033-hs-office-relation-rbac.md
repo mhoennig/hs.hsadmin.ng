@@ -1,0 +1,102 @@
+### rbac relation
+
+This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
+
+```mermaid
+%%{init:{'flowchart':{'htmlLabels':false}}}%%
+flowchart TB
+
+subgraph holderPerson["`**holderPerson**`"]
+    direction TB
+    style holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph holderPerson:roles[ ]
+        style holderPerson:roles fill:#99bcdb,stroke:white
+
+        role:holderPerson:OWNER[[holderPerson:OWNER]]
+        role:holderPerson:ADMIN[[holderPerson:ADMIN]]
+        role:holderPerson:REFERRER[[holderPerson:REFERRER]]
+    end
+end
+
+subgraph anchorPerson["`**anchorPerson**`"]
+    direction TB
+    style anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph anchorPerson:roles[ ]
+        style anchorPerson:roles fill:#99bcdb,stroke:white
+
+        role:anchorPerson:OWNER[[anchorPerson:OWNER]]
+        role:anchorPerson:ADMIN[[anchorPerson:ADMIN]]
+        role:anchorPerson:REFERRER[[anchorPerson:REFERRER]]
+    end
+end
+
+subgraph contact["`**contact**`"]
+    direction TB
+    style contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph contact:roles[ ]
+        style contact:roles fill:#99bcdb,stroke:white
+
+        role:contact:OWNER[[contact:OWNER]]
+        role:contact:ADMIN[[contact:ADMIN]]
+        role:contact:REFERRER[[contact:REFERRER]]
+    end
+end
+
+subgraph relation["`**relation**`"]
+    direction TB
+    style relation fill:#dd4901,stroke:#274d6e,stroke-width:8px
+
+    subgraph relation:roles[ ]
+        style relation:roles fill:#dd4901,stroke:white
+
+        role:relation:OWNER[[relation:OWNER]]
+        role:relation:ADMIN[[relation:ADMIN]]
+        role:relation:AGENT[[relation:AGENT]]
+        role:relation:TENANT[[relation:TENANT]]
+    end
+
+    subgraph relation:permissions[ ]
+        style relation:permissions fill:#dd4901,stroke:white
+
+        perm:relation:DELETE{{relation:DELETE}}
+        perm:relation:UPDATE{{relation:UPDATE}}
+        perm:relation:SELECT{{relation:SELECT}}
+        perm:relation:INSERT{{relation:INSERT}}
+    end
+end
+
+%% granting roles to users
+user:creator ==> role:relation:OWNER
+
+%% granting roles to roles
+role:global:ADMIN -.-> role:anchorPerson:OWNER
+role:anchorPerson:OWNER -.-> role:anchorPerson:ADMIN
+role:anchorPerson:ADMIN -.-> role:anchorPerson:REFERRER
+role:global:ADMIN -.-> role:holderPerson:OWNER
+role:holderPerson:OWNER -.-> role:holderPerson:ADMIN
+role:holderPerson:ADMIN -.-> role:holderPerson:REFERRER
+role:global:ADMIN -.-> role:contact:OWNER
+role:contact:OWNER -.-> role:contact:ADMIN
+role:contact:ADMIN -.-> role:contact:REFERRER
+role:global:ADMIN ==> role:relation:OWNER
+role:relation:OWNER ==> role:relation:ADMIN
+role:anchorPerson:ADMIN ==> role:relation:ADMIN
+role:relation:ADMIN ==> role:relation:AGENT
+role:holderPerson:ADMIN ==> role:relation:AGENT
+role:relation:AGENT ==> role:relation:TENANT
+role:holderPerson:ADMIN ==> role:relation:TENANT
+role:contact:ADMIN ==> role:relation:TENANT
+role:relation:TENANT ==> role:anchorPerson:REFERRER
+role:relation:TENANT ==> role:holderPerson:REFERRER
+role:relation:TENANT ==> role:contact:REFERRER
+
+%% granting permissions to roles
+role:relation:OWNER ==> perm:relation:DELETE
+role:relation:ADMIN ==> perm:relation:UPDATE
+role:relation:TENANT ==> perm:relation:SELECT
+role:anchorPerson:ADMIN ==> perm:relation:INSERT
+
+```

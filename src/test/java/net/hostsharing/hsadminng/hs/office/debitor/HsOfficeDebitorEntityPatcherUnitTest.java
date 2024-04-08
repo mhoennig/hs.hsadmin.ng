@@ -1,9 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -28,9 +27,8 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
         > {
 
     private static final UUID INITIAL_DEBITOR_UUID = UUID.randomUUID();
-    private static final UUID INITIAL_PARTNER_UUID = UUID.randomUUID();
-    private static final UUID INITIAL_CONTACT_UUID = UUID.randomUUID();
-    private static final UUID PATCHED_CONTACT_UUID = UUID.randomUUID();
+    private static final UUID INITIAL_DEBITOR_REL_UUID = UUID.randomUUID();
+    private static final UUID PATCHED_DEBITOR_REL_UUID = UUID.randomUUID();
 
     private static final String PATCHED_DEFAULT_PREFIX = "xyz";
     private static final String PATCHED_VAT_COUNTRY_CODE = "ZZ";
@@ -46,12 +44,8 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final UUID INITIAL_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
     private static final UUID PATCHED_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
 
-    private final HsOfficePartnerEntity givenInitialPartner = HsOfficePartnerEntity.builder()
-            .uuid(INITIAL_PARTNER_UUID)
-            .build();
-
-    private final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
-            .uuid(INITIAL_CONTACT_UUID)
+    private final HsOfficeRelationEntity givenInitialDebitorRel = HsOfficeRelationEntity.builder()
+            .uuid(INITIAL_DEBITOR_REL_UUID)
             .build();
 
     private final HsOfficeBankAccountEntity givenInitialBankAccount = HsOfficeBankAccountEntity.builder()
@@ -62,8 +56,8 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeRelationEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeRelationEntity.builder().uuid(invocation.getArgument(1)).build());
         lenient().when(em.getReference(eq(HsOfficeBankAccountEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeBankAccountEntity.builder().uuid(invocation.getArgument(1)).build());
     }
@@ -72,8 +66,7 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsOfficeDebitorEntity newInitialEntity() {
         final var entity = new HsOfficeDebitorEntity();
         entity.setUuid(INITIAL_DEBITOR_UUID);
-        entity.setPartner(givenInitialPartner);
-        entity.setBillingContact(givenInitialContact);
+        entity.setDebitorRel(givenInitialDebitorRel);
         entity.setBillable(INITIAL_BILLABLE);
         entity.setVatId("initial VAT-ID");
         entity.setVatCountryCode("AA");
@@ -98,11 +91,11 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     protected Stream<Property> propertyTestDescriptors() {
         return Stream.of(
                 new JsonNullableProperty<>(
-                        "billingContact",
-                        HsOfficeDebitorPatchResource::setBillingContactUuid,
-                        PATCHED_CONTACT_UUID,
-                        HsOfficeDebitorEntity::setBillingContact,
-                        newBillingContact(PATCHED_CONTACT_UUID))
+                        "debitorRel",
+                        HsOfficeDebitorPatchResource::setDebitorRelUuid,
+                        PATCHED_DEBITOR_REL_UUID,
+                        HsOfficeDebitorEntity::setDebitorRel,
+                        newDebitorRel(PATCHED_DEBITOR_REL_UUID))
                         .notNullable(),
                 new SimpleProperty<>(
                         "billable",
@@ -129,7 +122,7 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
                 new SimpleProperty<>(
                         "vatReverseCharge",
                         HsOfficeDebitorPatchResource::setVatReverseCharge,
-                        PATCHED_BILLABLE,
+                        PATCHED_VAT_REVERSE_CHARGE,
                         HsOfficeDebitorEntity::setVatReverseCharge)
                         .notNullable(),
                 new JsonNullableProperty<>(
@@ -148,15 +141,15 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
         );
     }
 
-    private HsOfficeContactEntity newBillingContact(final UUID uuid) {
-        final var newContact = new HsOfficeContactEntity();
-        newContact.setUuid(uuid);
-        return newContact;
+    private HsOfficeRelationEntity newDebitorRel(final UUID uuid) {
+        return HsOfficeRelationEntity.builder()
+                .uuid(uuid)
+                .build();
     }
 
     private HsOfficeBankAccountEntity newBankAccount(final UUID uuid) {
-        final var newBankAccount = new HsOfficeBankAccountEntity();
-        newBankAccount.setUuid(uuid);
-        return newBankAccount;
+        return HsOfficeBankAccountEntity.builder()
+                .uuid(uuid)
+                .build();
     }
 }

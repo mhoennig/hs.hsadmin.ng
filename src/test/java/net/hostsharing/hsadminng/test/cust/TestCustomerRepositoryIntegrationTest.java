@@ -10,8 +10,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -27,9 +25,6 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
     @Autowired
     TestCustomerRepository testCustomerRepository;
 
-    @PersistenceContext
-    EntityManager em;
-
     @MockBean
     HttpServletRequest request;
 
@@ -43,7 +38,6 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             final var count = testCustomerRepository.count();
 
             // when
-
             final var result = attempt(em, () -> {
                 final var newCustomer = new TestCustomerEntity(
                         UUID.randomUUID(), "www", 90001, "customer-admin@www.example.com");
@@ -60,7 +54,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("superuser-alex@hostsharing.net", "test_customer#xxx.admin");
+            context("superuser-alex@hostsharing.net", "test_customer#xxx:ADMIN");
 
             // when
             final var result = attempt(em, () -> {
@@ -72,7 +66,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "add-customer not permitted for test_customer#xxx.admin");
+                    "ERROR: [403] insert into test_customer not allowed for current subjects {test_customer#xxx:ADMIN}");
         }
 
         @Test
@@ -90,7 +84,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "add-customer not permitted for customer-admin@xxx.example.com");
+                    "ERROR: [403] insert into test_customer not allowed for current subjects {customer-admin@xxx.example.com}");
 
         }
 
@@ -116,15 +110,15 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        public void globalAdmin_withAssumedglobalAdminRole_canViewAllCustomers() {
+        public void globalAdmin_withAssumedCustomerOwnerRole_canViewExactlyThatCustomer() {
             given:
-            context("superuser-alex@hostsharing.net", "global#global.admin");
+            context("superuser-alex@hostsharing.net", "test_customer#yyy:OWNER");
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
 
             then:
-            allTheseCustomersAreReturned(result, "xxx", "yyy", "zzz");
+            allTheseCustomersAreReturned(result, "yyy");
         }
 
         @Test
@@ -141,7 +135,9 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
-            context("customer-admin@xxx.example.com", "test_package#xxx00.admin");
+            context("customer-admin@xxx.example.com");
+
+            context("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
 
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
 

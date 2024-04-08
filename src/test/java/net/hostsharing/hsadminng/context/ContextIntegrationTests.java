@@ -59,13 +59,13 @@ class ContextIntegrationTests {
     void defineWithoutCurrentUserButWithAssumedRoles() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define(null, "test_package#yyy00.admin")
+                context.define(null, "test_package#yyy00:ADMIN")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "ERROR: [403] undefined has no permission to assume role test_package#yyy00.admin");
+                "ERROR: [403] undefined has no permission to assume role test_package#yyy00:ADMIN");
     }
 
     @Test
@@ -85,7 +85,7 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithCurrentUserAndAssumedRoles() {
         // given
-        context.define("superuser-alex@hostsharing.net", "test_customer#xxx.owner;test_customer#yyy.owner");
+        context.define("superuser-alex@hostsharing.net", "test_customer#xxx:OWNER;test_customer#yyy:OWNER");
 
         // when
         final var currentUser = context.getCurrentUser();
@@ -93,7 +93,7 @@ class ContextIntegrationTests {
 
         // then
         assertThat(context.getAssumedRoles())
-                .isEqualTo(Array.of("test_customer#xxx.owner", "test_customer#yyy.owner"));
+                .isEqualTo(Array.of("test_customer#xxx:OWNER", "test_customer#yyy:OWNER"));
         assertThat(context.currentSubjectsUuids()).hasSize(2);
     }
 
@@ -101,12 +101,12 @@ class ContextIntegrationTests {
     public void defineContextWithCurrentUserAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define("customer-admin@xxx.example.com", "test_package#yyy00.admin")
+                context.define("customer-admin@xxx.example.com", "test_package#yyy00:ADMIN")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role test_package#yyy00.admin");
+                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role test_package#yyy00:ADMIN");
     }
 }

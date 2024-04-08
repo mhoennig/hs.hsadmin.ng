@@ -1,6 +1,6 @@
 ## *hsadmin-ng*'s Role-Based-Access-Management (RBAC)
 
-The requirements of *hsadmin-ng* include table-m row- and column-level-security for read and write access to business-objects.
+The requirements of *hsadmin-ng* include table-, row- and column-level-security for read and write access to business-objects.
 More precisely, any access has to be controlled according to given rules depending on the accessing users, their roles and the accessed business-object.
 Further, roles and business-objects are hierarchical.
 
@@ -11,7 +11,7 @@ Our implementation is based on Role-Based-Access-Management (RBAC) in conjunctio
 As far as possible, we are using the same terms as defined in the RBAC standard, for our function names though, we chose more expressive names.
 
 In RBAC, subjects can be assigned to roles, roles can be hierarchical and eventually have assigned permissions.
-A permission allows a specific operation (e.g. view or edit) on a specific (business-) object.
+A permission allows a specific operation (e.g. SELECT or UPDATE) on a specific (business-) object.
 
 You can find the entity structure as a UML class diagram as follows:
 
@@ -101,13 +101,12 @@ package RBAC {
     RbacPermission *-- RbacObject
     
     enum RbacOperation {
-        add-package
-        add-domain
-        add-domain
+        INSERT:package
+        INSERT:domain
         ...
-        view
-        edit
-        delete
+        SELECT
+        UPDATE
+        DELETE
     }
     
     entity RbacObject {
@@ -172,11 +171,10 @@ An *RbacPermission* allows a specific *RbacOperation* on a specific *RbacObject*
 An *RbacOperation* determines, <u>what</u> an *RbacPermission* allows to do.
 It can be one of:
 
-- **'add-...'** - permits creating new instances of specific entity types underneath the object specified by the permission, e.g. "add-package"
-- **'view'** - permits reading the contents of the object specified by the permission
-- **'edit'** - change the contents of the object specified by the permission
-- **'delete'** - delete the object specified by the permission
-- **'\*'**
+- **'INSERT'** - permits inserting new rows related to the row, to which the permission belongs, in the table which is specified an extra column, includes 'SELECT'
+- **'SELECT'** - permits selecting the row specified by the permission, is included in all other permissions
+- **'UPDATE'** - permits updating (only the updatable columns of) the row specified by the permission, includes 'SELECT'
+- **'DELETE'** - permits deleting the row specified by the permission, includes 'SELECT'
 
 This list is extensible according to the needs of the access rule system.
 
@@ -198,56 +196,60 @@ E.g. if a new package is added, the admin-role of the related customer has to be
 There can be global roles like 'administrators'.
 Most roles, though, are specific for certain business-objects and automatically generated as such:
 
-    business-object-table#business-object-name.relative-role
+    business-object-table#business-object-name.role-stereotype
 
 
 Where *business-object-table* is the name of the SQL table of the business object (e.g *customer* or 'package'),
 *business-object-name* is generated from an immutable business key(e.g. a prefix like 'xyz' or 'xyz00')
-and the *relative-role*' describes the role relative to the referenced business-object as follows:
+and the *role-stereotype* describes a role relative to a referenced business-object as follows:
 
 #### owner
 
 The owner-role is granted to the subject which created the business object.
-E.g. for a new *customer* it would be granted to 'administrators' and for a new *package* to the 'customer#...admin'. 
+E.g. for a new *customer* it would be granted to 'administrators' and for a new *package* to the 'customer#...:ADMIN'. 
 
 Whoever has the owner-role assigned can do everything with the related business-object, including deleting (or deactivating) it.
 
-In most cases, the permissions to other operations than 'delete' are granted through the 'admin' role.
+In most cases, the permissions to other operations than 'DELETE' are granted through the 'admin' role.
 By this, all roles ob sub-objects, which are assigned to the 'admin' role, are also granted to the 'owner'.
 
-#### admin
+#### ADMIN
 
 The admin-role is granted to a role of those subjects who manage the business object.
 E.g. a 'package' is manged by the admin of the customer.
 
-Whoever has the admin-role assigned, can usually edit the related business-object but not deleting (or deactivating) it.
+Whoever has the admin-role assigned, can usually update the related business-object but not delete (or deactivating) it.
 
-The admin-role also comprises lesser roles, through which the view-permission is granted.
+The admin-role also comprises lesser roles, through which the SELECT-permission is granted.
 
-#### agent
+#### AGENT
 
 The agent-role is not used in the examples of this document, because it's for more complex cases.
-It's usually granted to those roles and users who represent the related business-object, but are not allowed to edit it.
+It's usually granted to those roles and users who represent the related business-object, but are not allowed to update it.
 
 Other than the tenant-role, it usually offers broader visibility of sub-business-objects (joined entities).
 E.g. a package-admin is allowed to see the related debitor-business-object, 
 but not its banking data.
 
-#### tenant
+#### TENANT
 
-The tenant-role is granted to everybody who needs to be able to view the business-object and (probably some) related business-objects.
+The tenant-role is granted to everybody who needs to be able to select the business-object and (probably some) related business-objects.
 Usually all owners, admins and tenants of sub-objects get this role granted.
 
-Some business-objects only have very limited data directly in the main business-object and store more sensitive data in special sub-objects (e.g. 'customer-details') to which tenants of sub-objects of the main-object (e.g. package admins) do not get view permission.
+Some business-objects only have very limited data directly in the main business-object and store more sensitive data in special sub-objects (e.g. 'customer-details') to which tenants of sub-objects of the main-object (e.g. package admins) do not get SELECT permission.
 
-#### guest
+#### GUEST
+
+(Deprecated)
+
+#### REFERRER
 
 Like the agent-role, the guest-role too is not used in the examples of this document, because it's for more complex cases.
 
-If the guest-role exists, the view-permission is granted to it, instead of to the tenant-role.
-Other than the tenant-role, the guest-roles does never grant any roles of related objects. 
+If the referrer-role exists, the SELECT-permission is granted to it, instead of to the tenant-role.
+Other than the tenant-role, the referrer-roles does never grant any roles of related objects. 
 
-Also, if the guest-role exists, the tenant-role receives the view-permission through the guest-role.
+Also, if the referrer-role exists, the tenant-role receives the SELECT-permission through the referrer-role.
 
 
 ### Referenced Business Objects and Role-Depreciation
@@ -263,7 +265,7 @@ The admin-role of one object could be granted visibility to another object throu
 
 But not in all cases role-depreciation takes place. 
 E.g. often a tenant-role is granted another tenant-role,
-because it should be again allowed to view sub-objects.
+because it should be again allowed to select sub-objects.
 The same for the agent-role, often it is granted another agent-role.
 
 
@@ -297,14 +299,14 @@ package RbacRoles {
 RbacUsers -[hidden]> RbacRoles
 
 package RbacPermissions {
-    object PermCustXyz_View
-    object PermCustXyz_Edit
-    object PermCustXyz_Delete
-    object PermCustXyz_AddPackage
-    object PermPackXyz00_View
-    object PermPackXyz00_Edit
-    object PermPackXyz00_Delete
-    object PermPackXyz00_AddUser
+    object PermCustXyz_SELECT
+    object PermCustXyz_UPDATE
+    object PermCustXyz_DELETE
+    object PermCustXyz_INSERT:Package
+    object PermPackXyz00_SELECT
+    object PermPackXyz00_EDIT
+    object PermPackXyz00_DELETE
+    object PermPackXyz00_INSERT:USER
 }
 RbacRoles -[hidden]> RbacPermissions
 
@@ -322,23 +324,23 @@ RoleAdministrators o..> RoleCustXyz_Owner
 RoleCustXyz_Owner o-> RoleCustXyz_Admin
 RoleCustXyz_Admin o-> RolePackXyz00_Owner
 
-RoleCustXyz_Owner o--> PermCustXyz_Edit
-RoleCustXyz_Owner o--> PermCustXyz_Delete
-RoleCustXyz_Admin o--> PermCustXyz_View
-RoleCustXyz_Admin o--> PermCustXyz_AddPackage
-RolePackXyz00_Owner o--> PermPackXyz00_View
-RolePackXyz00_Owner o--> PermPackXyz00_Edit
-RolePackXyz00_Owner o--> PermPackXyz00_Delete
-RolePackXyz00_Owner o--> PermPackXyz00_AddUser
+RoleCustXyz_Owner o--> PermCustXyz_UPDATE
+RoleCustXyz_Owner o--> PermCustXyz_DELETE
+RoleCustXyz_Admin o--> PermCustXyz_SELECT
+RoleCustXyz_Admin o--> PermCustXyz_INSERT:Package
+RolePackXyz00_Owner o--> PermPackXyz00_SELECT
+RolePackXyz00_Owner o--> PermPackXyz00_UPDATE
+RolePackXyz00_Owner o--> PermPackXyz00_DELETE
+RolePackXyz00_Owner o--> PermPackXyz00_INSERT:User
 
-PermCustXyz_View o--> CustXyz
-PermCustXyz_Edit o--> CustXyz
-PermCustXyz_Delete o--> CustXyz
-PermCustXyz_AddPackage o--> CustXyz
-PermPackXyz00_View o--> PackXyz00
-PermPackXyz00_Edit o--> PackXyz00
-PermPackXyz00_Delete o--> PackXyz00
-PermPackXyz00_AddUser o--> PackXyz00
+PermCustXyz_SELECT o--> CustXyz
+PermCustXyz_UPDATE o--> CustXyz
+PermCustXyz_DELETE o--> CustXyz
+PermCustXyz_INSERT:Package o--> CustXyz
+PermPackXyz00_SELECT o--> PackXyz00
+PermPackXyz00_UPDATE o--> PackXyz00
+PermPackXyz00_DELETE o--> PackXyz00
+PermPackXyz00_INSERT:User o--> PackXyz00
 
 @enduml
 ```
@@ -353,12 +355,12 @@ To support the RBAC system, for each business-object-table, some more artifacts 
 
 Not yet implemented, but planned are these actions:
 
-- an `ON DELETE ... DO INSTEAD` rule to allow `SQL DELETE` if applicable for the business-object-table and the user has 'delete' permission,
-- an `ON UPDATE ... DO INSTEAD` rule to allow `SQL UPDATE` if the user has 'edit' right,
-- an `ON INSERT ... DO INSTEAD` rule to allow `SQL INSERT` if the user has 'add-..' right to the parent-business-object.
+- an `ON DELETE ... DO INSTEAD` rule to allow `SQL DELETE` if applicable for the business-object-table and the user has 'DELETE' permission,
+- an `ON UPDATE ... DO INSTEAD` rule to allow `SQL UPDATE` if the user has 'UPDATE' right,
+- an `ON INSERT ... DO INSTEAD` rule to allow `SQL INSERT` if the user has the 'INSERT' right for the parent-business-object.
 
 The restricted view takes the current user from a session property and applies the hierarchy of its roles all the way down to the permissions related to the respective business-object-table.
-This way, each user can only view the data they have 'view'-permission for, only create those they have 'add-...'-permission, only update those they have 'edit'- and only delete those they have 'delete'-permission to.
+This way, each user can only select the data they have 'SELECT'-permission for, only create those they have 'add-...'-permission, only update those they have 'UPDATE'- and only delete those they have 'DELETE'-permission to.
 
 ### Current User
 
@@ -374,7 +376,7 @@ That user is also used for historicization and audit log, but which is a differe
 If the session variable `hsadminng.assumedRoles` is set to a non-empty value, its content is interpreted as a list of semicolon-separated role names.
 Example:
 
-    SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+    SET LOCAL hsadminng.assumedRoles = 'customer#aab:admin;customer#aac:admin';
 
 In this case, not the current user but the assumed roles are used as a starting point for any further queries.
 Roles which are not granted to the current user, directly or indirectly, cannot be assumed.
@@ -387,7 +389,7 @@ A full example is shown here:
     BEGIN TRANSACTION;
         SET SESSION SESSION AUTHORIZATION restricted;
         SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
-        SET LOCAL hsadminng.assumedRoles = 'customer#aab.admin;customer#aac.admin';
+        SET LOCAL hsadminng.assumedRoles = 'customer#aab:admin;customer#aac:admin';
         
         SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
           FROM emailaddress_rv ema
@@ -458,26 +460,26 @@ allow_mixing
 entity "BObj customer#xyz" as boCustXyz
 
 together {
-    entity "Perm customer#xyz *" as permCustomerXyzAll
-    permCustomerXyzAll --> boCustXyz
+    entity "Perm customer#xyz *" as permCustomerXyzDELETE
+    permCustomerXyzDELETE --> boCustXyz
     
-    entity "Perm customer#xyz add-package" as permCustomerXyzAddPack
-    permCustomerXyzAddPack --> boCustXyz
+    entity "Perm customer#xyz INSERT:package" as permCustomerXyzINSERT:package
+    permCustomerXyzINSERT:package --> boCustXyz
 
-    entity "Perm customer#xyz view" as permCustomerXyzView
-    permCustomerXyzView --> boCustXyz
+    entity "Perm customer#xyz SELECT" as permCustomerXyzSELECT
+    permCustomerXyzSELECT--> boCustXyz
 }
 
-entity "Role customer#xyz.tenant" as roleCustXyzTenant 
-roleCustXyzTenant --> permCustomerXyzView
+entity "Role customer#xyz:TENANT" as roleCustXyzTenant 
+roleCustXyzTenant --> permCustomerXyzSELECT
 
-entity "Role customer#xyz.admin" as roleCustXyzAdmin
+entity "Role customer#xyz:ADMIN" as roleCustXyzAdmin
 roleCustXyzAdmin --> roleCustXyzTenant
-roleCustXyzAdmin --> permCustomerXyzAddPack
+roleCustXyzAdmin --> permCustomerXyzINSERT:package
 
-entity "Role customer#xyz.owner" as roleCustXyzOwner
+entity "Role customer#xyz:OWNER" as roleCustXyzOwner
 roleCustXyzOwner ..> roleCustXyzAdmin
-roleCustXyzOwner --> permCustomerXyzAll
+roleCustXyzOwner --> permCustomerXyzDELETE
 
 actor "Customer XYZ Admin" as actorCustXyzAdmin
 actorCustXyzAdmin --> roleCustXyzAdmin
@@ -487,13 +489,11 @@ roleAdmins --> roleCustXyzOwner
 
 actor "Any Hostmaster" as actorHostmaster
 actorHostmaster --> roleAdmins
-
-
 @enduml
 ```
 
 As you can see, there something special:
-From the 'Role customer#xyz.owner' to the 'Role customer#xyz.admin' there is a dashed line, whereas all other lines are solid lines.
+From the 'Role customer#xyz:OWNER' to the 'Role customer#xyz:admin' there is a dashed line, whereas all other lines are solid lines.
 Solid lines means, that one role is granted to another and automatically assumed in all queries to the restricted views.
 The dashed line means that one role is granted to another but not automatically assumed in queries to the restricted views.
 
@@ -527,36 +527,36 @@ allow_mixing
 entity "BObj package#xyz00" as boPacXyz00
 
 together {
-    entity "Perm package#xyz00 *" as permPackageXyzAll
-    permPackageXyzAll --> boPacXyz00
+    entity "Perm package#xyz00 *" as permPackageXyzDELETE
+    permPackageXyzDELETE --> boPacXyz00
     
-    entity "Perm package#xyz00 add-domain" as permPacXyz00AddUser
-    permPacXyz00AddUser --> boPacXyz00
+    entity "Perm package#xyz00 INSERT:domain" as permPacXyz00INSERT:user
+    permPacXyz00INSERT:user --> boPacXyz00
 
-    entity "Perm package#xyz00 edit" as permPacXyz00Edit
-    permPacXyz00Edit --> boPacXyz00
+    entity "Perm package#xyz00 UPDATE" as permPacXyz00UPDATE
+    permPacXyz00UPDATE --> boPacXyz00
 
-    entity "Perm package#xyz00 view" as permPacXyz00View
-    permPacXyz00View --> boPacXyz00
+    entity "Perm package#xyz00 SELECT" as permPacXyz00SELECT
+    permPacXyz00SELECT --> boPacXyz00
 }
 
 package {
-    entity "Role customer#xyz.tenant" as roleCustXyzTenant
-    entity "Role customer#xyz.admin" as roleCustXyzAdmin    
-    entity "Role customer#xyz.owner" as roleCustXyzOwner
+    entity "Role customer#xyz:TENANT" as roleCustXyzTenant
+    entity "Role customer#xyz:ADMIN" as roleCustXyzAdmin    
+    entity "Role customer#xyz:OWNER" as roleCustXyzOwner
 }
 
 package {
-    entity "Role package#xyz00.owner" as rolePacXyz00Owner
-    entity "Role package#xyz00.admin" as rolePacXyz00Admin
-    entity "Role package#xyz00.tenant" as rolePacXyz00Tenant
+    entity "Role package#xyz00:OWNER" as rolePacXyz00Owner
+    entity "Role package#xyz00:ADMIN" as rolePacXyz00Admin
+    entity "Role package#xyz00:TENANT" as rolePacXyz00Tenant
 }
 
-rolePacXyz00Tenant --> permPacXyz00View
+rolePacXyz00Tenant --> permPacXyz00SELECT
 rolePacXyz00Tenant --> roleCustXyzTenant
 
 rolePacXyz00Owner --> rolePacXyz00Admin
-rolePacXyz00Owner --> permPackageXyzAll
+rolePacXyz00Owner --> permPackageXyzDELETE
     
 roleCustXyzAdmin --> rolePacXyz00Owner
 roleCustXyzAdmin --> roleCustXyzTenant
@@ -564,8 +564,8 @@ roleCustXyzAdmin --> roleCustXyzTenant
 roleCustXyzOwner ..> roleCustXyzAdmin
     
 rolePacXyz00Admin --> rolePacXyz00Tenant
-rolePacXyz00Admin --> permPacXyz00AddUser
-rolePacXyz00Admin --> permPacXyz00Edit
+rolePacXyz00Admin --> permPacXyz00INSERT:user
+rolePacXyz00Admin --> permPacXyz00UPDATE
 
 actor "Package XYZ00 Admin" as actorPacXyzAdmin
 actorPacXyzAdmin -l-> rolePacXyz00Admin
@@ -624,10 +624,10 @@ Let's have a look at the two view queries:
          WHERE target.uuid IN (
             SELECT uuid
               FROM queryAccessibleObjectUuidsOfSubjectIds( 
-                'view', 'customer', currentSubjectsUuids()));
+                'SELECT, 'customer', currentSubjectsUuids()));
 
 This view should be automatically updatable.
-Where, for updates, we actually have to check for 'edit' instead of 'view' operation, which makes it a bit more complicated.
+Where, for updates, we actually have to check for 'UPDATE' instead of 'SELECT' operation, which makes it a bit more complicated.
 
 With the larger dataset, the test suite initially needed over 7 seconds with this view query.
 At this point the second variant was tried.
@@ -642,7 +642,7 @@ Looks like the query optimizer needed some statistics to find the best path.
         SELECT DISTINCT target.*
           FROM customer AS target
           JOIN queryAccessibleObjectUuidsOfSubjectIds( 
-                'view', 'customer', currentSubjectsUuids()) AS allowedObjId
+                'SELECT, 'customer', currentSubjectsUuids()) AS allowedObjId
             ON target.uuid = allowedObjId;
 
 This view cannot is not updatable automatically,
@@ -688,13 +688,13 @@ Otherwise, it would not be possible to assign roles to new users.
 
 All roles are system-defined and cannot be created or modified by any external API.
 
-Users can view only the roles to which they are assigned.
+Users can view only the roles to which are granted to them.
 
 ## RbacGrant
 
 Grant can be `empowered`, this means that the grantee user can grant the granted role to other users
 and revoke grants to that role.
-(TODO: access control part not yet implemented)
+(TODO: access control part not yet implemented, currently all accessible roles can be granted to other users)
 
 Grants can be `managed`, which means they are created and deleted by system-defined rules.
 If a grant is not managed, it was created by an empowered user and can be deleted by empowered users.

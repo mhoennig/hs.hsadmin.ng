@@ -18,8 +18,8 @@ CREATE OR REPLACE FUNCTION historicize()
     RETURNS trigger
     LANGUAGE plpgsql STRICT AS $$
 DECLARE
-currentUser VARCHAR(64);
-    currentTask varchar;
+    currentUser VARCHAR(63);
+    currentTask VARCHAR(127);
     "row" RECORD;
     "alive" BOOLEAN;
     "sql" varchar;
@@ -37,27 +37,27 @@ END IF;
 
     -- determine task
     currentTask = current_setting('hsadminng.currentTask');
-    IF (currentTask IS NULL OR length(currentTask) < 12) THEN
-        RAISE EXCEPTION 'hsadminng.currentTask (%) must be defined and min 12 characters long, please use "SET LOCAL ...;"', currentTask;
-END IF;
-    RAISE NOTICE 'currentTask: %', currentTask;
+    assert currentTask IS NOT NULL AND length(currentTask) >= 12,
+        format('hsadminng.currentTask (%s) must be defined and min 12 characters long, please use "SET LOCAL ...;"', currentTask);
+    assert length(currentTask) <= 127,
+        format('hsadminng.currentTask (%s) must not be longer than 127 characters"', currentTask);
 
     IF (TG_OP = 'INSERT') OR (TG_OP = 'UPDATE') THEN
         "row" := NEW;
         "alive" := TRUE;
-ELSE -- DELETE or TRUNCATE
-        "row" := OLD;
-        "alive" := FALSE;
-END IF;
+    ELSE -- DELETE or TRUNCATE
+            "row" := OLD;
+            "alive" := FALSE;
+    END IF;
 
-sql := format('INSERT INTO tx_history VALUES (txid_current(), now(), %1L, %2L) ON CONFLICT DO NOTHING', currentUser, currentTask);
+    sql := format('INSERT INTO tx_history VALUES (txid_current(), now(), %1L, %2L) ON CONFLICT DO NOTHING', currentUser, currentTask);
     RAISE NOTICE 'sql: %', sql;
-EXECUTE sql;
-sql := format('INSERT INTO %3$I_versions VALUES (DEFAULT, txid_current(), %1$L, %2$L, $1.*)', TG_OP, alive, TG_TABLE_NAME);
-    RAISE NOTICE 'sql: %', sql;
-EXECUTE sql USING "row";
+    EXECUTE sql;
+    sql := format('INSERT INTO %3$I_versions VALUES (DEFAULT, txid_current(), %1$L, %2$L, $1.*)', TG_OP, alive, TG_TABLE_NAME);
+        RAISE NOTICE 'sql: %', sql;
+    EXECUTE sql USING "row";
 
-RETURN "row";
+    RETURN "row";
 END; $$;
 
 CREATE OR REPLACE PROCEDURE create_historical_view(baseTable varchar)

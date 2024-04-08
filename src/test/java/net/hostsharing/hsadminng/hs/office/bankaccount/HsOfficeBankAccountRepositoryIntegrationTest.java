@@ -102,23 +102,21 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_bankaccount#sometempaccC.owner",
-                    "hs_office_bankaccount#sometempaccC.admin",
-                    "hs_office_bankaccount#sometempaccC.tenant",
-                    "hs_office_bankaccount#sometempaccC.guest"
+                    "hs_office_bankaccount#DE25500105176934832579:OWNER",
+                    "hs_office_bankaccount#DE25500105176934832579:ADMIN",
+                    "hs_office_bankaccount#DE25500105176934832579:REFERRER"
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant perm delete on hs_office_bankaccount#sometempaccC to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
-                    "{ grant role hs_office_bankaccount#sometempaccC.owner     to role global#global.admin                              by system and assume }",
-                    "{ grant role hs_office_bankaccount#sometempaccC.owner     to user selfregistered-user-drew@hostsharing.org         by global#global.admin and assume }",
+                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:DELETE   to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to role:global#global:ADMIN                                    by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to user:selfregistered-user-drew@hostsharing.org               by hs_office_bankaccount#DE25500105176934832579:OWNER and assume }",
 
-                    "{ grant role hs_office_bankaccount#sometempaccC.admin     to role hs_office_bankaccount#sometempaccC.owner         by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:ADMIN    to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
+                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:UPDATE   to role:hs_office_bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
 
-                    "{ grant role hs_office_bankaccount#sometempaccC.tenant    to role hs_office_bankaccount#sometempaccC.admin         by system and assume }",
-
-                    "{ grant perm view on hs_office_bankaccount#sometempaccC   to role hs_office_bankaccount#sometempaccC.guest         by system and assume }",
-                    "{ grant role hs_office_bankaccount#sometempaccC.guest     to role hs_office_bankaccount#sometempaccC.tenant        by system and assume }",
+                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:SELECT   to role:hs_office_bankaccount#DE25500105176934832579:REFERRER  by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:REFERRER to role:hs_office_bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
                     null
             ));
         }
@@ -241,10 +239,6 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
             final var givenBankAccount = givenSomeTemporaryBankAccount("selfregistered-user-drew@hostsharing.org");
-            assertThat(distinctRoleNamesOf(rawRoleRepo.findAll()).size()).as("unexpected number of roles created")
-                    .isEqualTo(initialRoleNames.size() + 4);
-            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()).size()).as("unexpected number of grants created")
-                    .isEqualTo(initialGrantNames.size() + 7);
 
             // when
             final var result = jpaAttempt.transacted(() -> {

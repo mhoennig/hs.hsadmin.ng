@@ -82,7 +82,7 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     curl \
-        -H 'current-user: superuser-alex@hostsharing.net' -H 'assumed-roles: test_customer#yyy.admin' \
+        -H 'current-user: superuser-alex@hostsharing.net' -H 'assumed-roles: test_customer#yyy:ADMIN' \
         http://localhost:8080/api/test/packages
 
     # add a new customer
@@ -379,12 +379,6 @@ You can explore the prototype as follows:
 
 `src/`
     The actual source-code, see [Source Code Package Structure](#source-code-package-structure) for details.
-
-`TODO.md`
-    Requirements of initial project. Do not touch!
-
-`TODO-progress.png`
-    Generated diagram image of the project progress.
 
 `tools/`
     Some shell-scripts to useful tasks.
@@ -765,5 +759,4 @@ The output will list the generated files.
 ## Further Documentation
 
 - the `doc` directory contains architecture concepts and a glossary
-- TODO.md tracks requirements and progress for the contract of the initial project,
-  please do not amend anything in this document
+- the `ideas` directory contains unstructured ideas for future development or documentation

@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
-import com.vladmihalcea.hibernate.type.range.Range;
+import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeReasonForTerminationResource;
@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
 import static net.hostsharing.hsadminng.hs.office.partner.TestHsOfficePartner.TEST_PARTNER;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +31,6 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
         > {
 
     private static final UUID INITIAL_MEMBERSHIP_UUID = UUID.randomUUID();
-    private static final UUID PATCHED_MAIN_DEBITOR_UUID = UUID.randomUUID();
     private static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-04-15");
     private static final LocalDate PATCHED_VALID_TO = LocalDate.parse("2022-12-31");
 
@@ -56,7 +54,6 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsOfficeMembershipEntity newInitialEntity() {
         final var entity = new HsOfficeMembershipEntity();
         entity.setUuid(INITIAL_MEMBERSHIP_UUID);
-        entity.setMainDebitor(TEST_DEBITOR);
         entity.setPartner(TEST_PARTNER);
         entity.setValidity(Range.closedInfinite(GIVEN_VALID_FROM));
         entity.setMembershipFeeBillable(GIVEN_MEMBERSHIP_FEE_BILLABLE);
@@ -70,19 +67,12 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsOfficeMembershipEntityPatcher createPatcher(final HsOfficeMembershipEntity membership) {
-        return new HsOfficeMembershipEntityPatcher(em, mapper, membership);
+        return new HsOfficeMembershipEntityPatcher(mapper, membership);
     }
 
     @Override
     protected Stream<Property> propertyTestDescriptors() {
         return Stream.of(
-                new JsonNullableProperty<>(
-                        "debitor",
-                        HsOfficeMembershipPatchResource::setMainDebitorUuid,
-                        PATCHED_MAIN_DEBITOR_UUID,
-                        HsOfficeMembershipEntity::setMainDebitor,
-                        newDebitor(PATCHED_MAIN_DEBITOR_UUID))
-                        .notNullable(),
                 new JsonNullableProperty<>(
                         "valid",
                         HsOfficeMembershipPatchResource::setValidTo,
@@ -101,11 +91,5 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
                         PATCHED_MEMBERSHIP_FEE_BILLABLE,
                         HsOfficeMembershipEntity::setMembershipFeeBillable)
         );
-    }
-
-    private static HsOfficeDebitorEntity newDebitor(final UUID uuid) {
-        final var newDebitor = new HsOfficeDebitorEntity();
-        newDebitor.setUuid(uuid);
-        return newDebitor;
     }
 }

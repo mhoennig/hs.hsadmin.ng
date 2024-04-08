@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.mapper;
 
-import com.vladmihalcea.hibernate.type.range.Range;
+import io.hypersistence.utils.hibernate.type.range.Range;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDate;

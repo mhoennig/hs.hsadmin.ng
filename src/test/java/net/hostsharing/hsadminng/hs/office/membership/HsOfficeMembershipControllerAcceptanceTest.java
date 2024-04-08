@@ -1,11 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
-import com.vladmihalcea.hibernate.type.range.Range;
+import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
@@ -24,6 +23,7 @@ import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeReasonForTermination.CANCELLATION;
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeReasonForTermination.NONE;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
@@ -50,9 +50,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
     @Autowired
     HsOfficeMembershipRepository membershipRepo;
-
-    @Autowired
-    HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
     HsOfficePartnerRepository partnerRepo;
@@ -82,8 +79,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("", lenientlyEquals("""
                       [
                           {
-                              "partner": { "person": { "tradeName": "First GmbH" } },
-                              "mainDebitor": { "debitorNumber": 1000111 },
+                              "partner": { "partnerNumber": 10001 },
                               "memberNumber": 1000101,
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
@@ -91,8 +87,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "reasonForTermination": "NONE"
                           },
                           {
-                              "partner": { "person": { "tradeName": "Second e.K." } },
-                              "mainDebitor": { "debitorNumber": 1000212 },
+                              "partner": { "partnerNumber": 10002 },
                               "memberNumber": 1000202,
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
@@ -100,8 +95,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "reasonForTermination": "NONE"
                           },
                           {
-                              "partner": { "person": { "tradeName": "Third OHG" } },
-                              "mainDebitor": { "debitorNumber": 1000313 },
+                              "partner": { "partnerNumber": 10003 },
                               "memberNumber": 1000303,
                               "memberNumberSuffix": "03",
                               "validFrom": "2022-10-01",
@@ -132,8 +126,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("", lenientlyEquals("""
                       [
                           {
-                              "partner": { "person": { "tradeName": "First GmbH" } },
-                              "mainDebitor": { "debitorNumber": 1000111 },
+                              "partner": { "partnerNumber": 10001 },
                               "memberNumber": 1000101,
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
@@ -161,8 +154,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("", lenientlyEquals("""
                       [
                           {
-                              "partner": { "person": { "tradeName": "Second e.K." } },
-                              "mainDebitor": { "debitorNumber": 1000212 },
+                              "partner": { "partnerNumber": 10002 },
                               "memberNumber": 1000202,
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
@@ -184,7 +176,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("Third").get(0);
             final var givenMemberSuffix = TEMP_MEMBER_NUMBER_SUFFIX;
             final var expectedMemberNumber = Integer.parseInt(givenPartner.getPartnerNumber() + TEMP_MEMBER_NUMBER_SUFFIX);
 
@@ -195,12 +186,11 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                         .body("""
                                {
                                    "partnerUuid": "%s",
-                                   "mainDebitorUuid": "%s",
                                    "memberNumberSuffix": "%s",
                                    "validFrom": "2022-10-13",
                                    "membershipFeeBillable": "true"
                                  }
-                            """.formatted(givenPartner.getUuid(), givenDebitor.getUuid(), givenMemberSuffix))
+                            """.formatted(givenPartner.getUuid(), givenMemberSuffix))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/office/memberships")
@@ -208,9 +198,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("mainDebitor.debitorNumber", is(givenDebitor.getDebitorNumber()))
-                        .body("mainDebitor.debitorNumberSuffix", is((int) givenDebitor.getDebitorNumberSuffix()))
-                        .body("partner.person.tradeName", is("Third OHG"))
+                        .body("partner.partnerNumber", is(10003))
                         .body("memberNumber", is(expectedMemberNumber))
                         .body("memberNumberSuffix", is(givenMemberSuffix))
                         .body("validFrom", is("2022-10-13"))
@@ -246,8 +234,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "partner": { "person": { "tradeName": "First GmbH" } },
-                         "mainDebitor": { "debitorNumber": 1000111 },
+                         "partner": { "partnerNumber": 10001 },
                          "memberNumber": 1000101,
                          "memberNumberSuffix": "01",
                          "validFrom": "2022-10-01",
@@ -275,14 +262,14 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
 
         @Test
         @Accepts({ "Membership:X(Access Control)" })
-        void debitorAgentUser_canGetRelatedMembership() {
+        void parnerRelAgent_canGetRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).getUuid();
 
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_debitor#1000313:ThirdOHG-thirdcontact.agent")
+                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-ThirdOHG:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -291,11 +278,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "partner": { "person": { "tradeName": "Third OHG" } },
-                         "mainDebitor": {
-                             "debitorNumber": 1000313,
-                             "billingContact": { "label": "third contact" }
-                         },
+                         "partner": { "partnerNumber": 10003 },
                          "memberNumber": 1000303,
                          "memberNumberSuffix": "03",
                          "validFrom": "2022-10-01",
@@ -314,7 +297,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         void globalAdmin_canPatchValidToOfArbitraryMembership() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = givenSomeTemporaryMembershipBessler();
+            final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -333,10 +316,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
-                    .body("mainDebitor.debitorNumber", is(givenMembership.getMainDebitor().getDebitorNumber()))
-                    .body("mainDebitor.debitorNumberSuffix", is((int) givenMembership.getMainDebitor().getDebitorNumberSuffix()))
-                    .body("mainDebitor.debitorNumberSuffix", is((int) givenMembership.getMainDebitor().getDebitorNumberSuffix()))
+                    .body("partner.partnerNumber", is(givenMembership.getPartner().getPartnerNumber()))
                     .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2023-12-31"))
@@ -346,72 +326,31 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LP First GmbH");
-                        assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
+                        assertThat(mandate.getPartner().toShortString()).isEqualTo("P-10001");
                         assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-01)");
-                        assertThat(mandate.getReasonForTermination()).isEqualTo(HsOfficeReasonForTermination.CANCELLATION);
+                        assertThat(mandate.getReasonForTermination()).isEqualTo(CANCELLATION);
                         return true;
                     });
         }
 
         @Test
-        void globalAdmin_canPatchMainDebitorOfArbitraryMembership() {
+        void partnerRelAdmin_canPatchValidityOfRelatedMembership() {
 
-            context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = givenSomeTemporaryMembershipBessler();
-            final var givenNewMainDebitor = debitorRepo.findDebitorByDebitorNumber(1000313).get(0);
+            // given
+            final var givenPartnerAdmin = "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN";
+            context.define("superuser-alex@hostsharing.net", givenPartnerAdmin);
+            final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
+            // when
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("assumed-roles", givenPartnerAdmin)
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "mainDebitorUuid": "%s"
-                           }
-                          """.formatted(givenNewMainDebitor.getUuid()))
-                    .port(port)
-                .when()
-                    .patch("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())
-                .then().log().all().assertThat()
-                    .statusCode(200)
-                    .contentType(ContentType.JSON)
-                    .body("uuid", isUuidValid())
-                    .body("partner.person.tradeName", is(givenMembership.getPartner().getPerson().getTradeName()))
-                    .body("mainDebitor.debitorNumber", is(1000313))
-                    .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
-                    .body("validFrom", is("2022-11-01"))
-                    .body("validTo", nullValue())
-                    .body("reasonForTermination", is("NONE"));
-            // @formatter:on
-
-            // finally, the Membership is actually updated
-            assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
-                    .matches(mandate -> {
-                        assertThat(mandate.getPartner().toShortString()).isEqualTo("LP First GmbH");
-                        assertThat(mandate.getMainDebitor().toString()).isEqualTo(givenMembership.getMainDebitor().toString());
-                        assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
-                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");
-                        assertThat(mandate.getReasonForTermination()).isEqualTo(NONE);
-                        return true;
-                    });
-        }
-
-        @Test
-        void partnerAgent_canViewButNotPatchValidityOfRelatedMembership() {
-
-            context.define("superuser-alex@hostsharing.net", "hs_office_partner#10001:FirstGmbH-firstcontact.agent");
-            final var givenMembership = givenSomeTemporaryMembershipBessler();
-
-            final var location = RestAssured // @formatter:off
-                .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_partner#10001:FirstGmbH-firstcontact.agent")
-                    .contentType(ContentType.JSON)
-                    .body("""
-                           {
-                               "validTo": "2023-12-31",
+                               "validTo": "2024-01-01",
                                "reasonForTermination": "CANCELLATION"
                            }
                            """)
@@ -419,13 +358,13 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                 .when()
                     .patch("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())
                 .then().assertThat()
-                    .statusCode(403); // @formatter:on
+                    .statusCode(200); // @formatter:on
 
             // finally, the Membership is actually updated
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,)");
-                        assertThat(mandate.getReasonForTermination()).isEqualTo(NONE);
+                        assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-02)");
+                        assertThat(mandate.getReasonForTermination()).isEqualTo(CANCELLATION);
                         return true;
                     });
         }
@@ -438,7 +377,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Test
         void globalAdmin_canDeleteArbitraryMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = givenSomeTemporaryMembershipBessler();
+            final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
@@ -457,12 +396,12 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Accepts({ "Membership:X(Access Control)" })
         void partnerAgentUser_canNotDeleteRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = givenSomeTemporaryMembershipBessler();
+            final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_partner#FirstGmbH-firstcontact.agent")
+                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())
@@ -477,7 +416,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         @Accepts({ "Membership:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenMembership = givenSomeTemporaryMembershipBessler();
+            final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
             RestAssured // @formatter:off
                 .given()
@@ -493,15 +432,13 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
     }
 
-    private HsOfficeMembershipEntity givenSomeTemporaryMembershipBessler() {
+    private HsOfficeMembershipEntity givenSomeTemporaryMembershipBessler(final String partnerName) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
-            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("First").get(0);
+            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike(partnerName).get(0);
             final var newMembership = HsOfficeMembershipEntity.builder()
                     .uuid(UUID.randomUUID())
                     .partner(givenPartner)
-                    .mainDebitor(givenDebitor)
                     .memberNumberSuffix(TEMP_MEMBER_NUMBER_SUFFIX)
                     .validity(Range.closedInfinite(LocalDate.parse("2022-11-01")))
                     .reasonForTermination(NONE)

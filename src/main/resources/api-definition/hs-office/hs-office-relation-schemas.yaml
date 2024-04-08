@@ -1,0 +1,66 @@
+
+components:
+
+    schemas:
+
+        HsOfficeRelationType:
+            type: string
+            enum:
+                - UNKNOWN
+                - PARTNER
+                - EX_PARTNER
+                - DEBITOR
+                - REPRESENTATIVE
+                - VIP_CONTACT
+                - OPERATIONS
+                - SUBSCRIBER
+
+        HsOfficeRelation:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                anchor:
+                    $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                holder:
+                    $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                type:
+                    type: string
+                mark:
+                    type: string
+                    nullable: true
+                contact:
+                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+
+        HsOfficeRelationPatch:
+            type: object
+            properties:
+                contactUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+
+        HsOfficeRelationInsert:
+            type: object
+            properties:
+                anchorUuid:
+                    type: string
+                    format: uuid
+                holderUuid:
+                    type: string
+                    format: uuid
+                type:
+                    type: string
+                    nullable: true
+                mark:
+                    type: string
+                    nullable: true
+                contactUuid:
+                    type: string
+                    format: uuid
+            required:
+              - anchorUuid
+              - holderUuid
+              - type
+              - contactUuid

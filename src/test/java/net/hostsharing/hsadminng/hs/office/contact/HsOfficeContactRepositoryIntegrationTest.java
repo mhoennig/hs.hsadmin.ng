@@ -103,21 +103,20 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_contact#anothernewcontact.owner",
-                    "hs_office_contact#anothernewcontact.admin",
-                    "hs_office_contact#anothernewcontact.tenant",
-                    "hs_office_contact#anothernewcontact.guest"
+                    "hs_office_contact#anothernewcontact:OWNER",
+                    "hs_office_contact#anothernewcontact:ADMIN",
+                    "hs_office_contact#anothernewcontact:REFERRER"
             ));
-            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.from(
+            assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant role hs_office_contact#anothernewcontact.owner to role global#global.admin by system and assume }",
-                    "{ grant perm edit on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.admin by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.tenant to role hs_office_contact#anothernewcontact.admin by system and assume }",
-                    "{ grant perm * on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.owner by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.admin to role hs_office_contact#anothernewcontact.owner by system and assume }",
-                    "{ grant perm view on hs_office_contact#anothernewcontact to role hs_office_contact#anothernewcontact.guest by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.guest to role hs_office_contact#anothernewcontact.tenant by system and assume }",
-                    "{ grant role hs_office_contact#anothernewcontact.owner to user selfregistered-user-drew@hostsharing.org by global#global.admin and assume }"
+                    "{ grant role:hs_office_contact#anothernewcontact:OWNER     to role:global#global:ADMIN                          by system and assume }",
+                    "{ grant perm:hs_office_contact#anothernewcontact:UPDATE    to role:hs_office_contact#anothernewcontact:ADMIN    by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:OWNER     to user:selfregistered-user-drew@hostsharing.org     by hs_office_contact#anothernewcontact:OWNER and assume }",
+                    "{ grant perm:hs_office_contact#anothernewcontact:DELETE     to role:hs_office_contact#anothernewcontact:OWNER    by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:ADMIN     to role:hs_office_contact#anothernewcontact:OWNER    by system and assume }",
+
+                    "{ grant perm:hs_office_contact#anothernewcontact:SELECT    to role:hs_office_contact#anothernewcontact:REFERRER by system and assume }",
+                    "{ grant role:hs_office_contact#anothernewcontact:REFERRER  to role:hs_office_contact#anothernewcontact:ADMIN    by system and assume }"
             ));
         }
 

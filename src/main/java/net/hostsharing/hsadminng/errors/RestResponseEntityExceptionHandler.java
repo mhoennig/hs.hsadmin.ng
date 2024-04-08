@@ -11,16 +11,18 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.errors.CustomErrorResponse.*;
@@ -118,6 +120,28 @@ public class RestResponseEntityExceptionHandler
                 .toList();
         return errorResponse(request, HttpStatus.BAD_REQUEST, errorList.toString());
     }
+
+    @SuppressWarnings("unchecked,rawtypes")
+
+    @Override
+    protected ResponseEntity handleHandlerMethodValidationException(
+            final HandlerMethodValidationException exc,
+            final HttpHeaders headers,
+            final HttpStatusCode status,
+            final WebRequest request) {
+        final var errorList = exc
+                .getAllValidationResults()
+                .stream()
+                .map(ParameterValidationResult::getResolvableErrors)
+                .flatMap(Collection::stream)
+                .filter(FieldError.class::isInstance)
+                .map(FieldError.class::cast)
+                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage() + " but is \""
+                        + fieldError.getRejectedValue() + "\"")
+                .toList();
+        return errorResponse(request, HttpStatus.BAD_REQUEST, errorList.toString());
+    }
+
 
     private String userReadableEntityClassName(final String exceptionMessage) {
         final var regex = "(net.hostsharing.hsadminng.[a-z0-9_.]*.[A-Za-z0-9_$]*Entity) ";

@@ -9,6 +9,8 @@ components:
                 uuid:
                     type: string
                     format: uuid
+                debitorRel:
+                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 debitorNumber:
                     type: integer
                     format: int32
@@ -21,8 +23,6 @@ components:
                     maximum: 99
                 partner:
                     $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
-                billingContact:
-                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
                 billable:
                     type: boolean
                 vatId:
@@ -43,7 +43,7 @@ components:
         HsOfficeDebitorPatch:
             type: object
             properties:
-                billingContactUuid:
+                debitorRelUuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -75,14 +75,11 @@ components:
         HsOfficeDebitorInsert:
             type: object
             properties:
-                partnerUuid:
+                debitorRel:
+                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
+                debitorRelUuid:
                     type: string
                     format: uuid
-                    nullable: false
-                billingContactUuid:
-                    type: string
-                    format: uuid
-                    nullable: false
                 debitorNumberSuffix:
                     type: integer
                     format: int8
@@ -105,9 +102,7 @@ components:
                 defaultPrefix:
                     type: string
                     pattern: '^[a-z]{3}$'
-
             required:
-              - partnerUuid
-              - billingContactUuid
+              - debitorNumberSuffix
               - defaultPrefix
               - billable

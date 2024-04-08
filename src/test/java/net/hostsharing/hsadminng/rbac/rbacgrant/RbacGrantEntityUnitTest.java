@@ -34,13 +34,13 @@ class RbacGrantEntityUnitTest {
                 "GrantEE",  UUID.randomUUID(),
                 true,
                 "ObjectTable", "ObjectId", UUID.randomUUID(),
-                RbacRoleType.admin); // @formatter:on
+                RbacRoleType.ADMIN); // @formatter:on
 
         // when
         final var display = entity.toDisplay();
 
         // then
-        assertThat(display).isEqualTo("{ grant role GrantED to user GrantEE by role GrantER and assume }");
+        assertThat(display).isEqualTo("{ grant role:GrantED to user:GrantEE by role:GrantER and assume }");
     }
 
     @Test
@@ -52,12 +52,12 @@ class RbacGrantEntityUnitTest {
                 "GrantEE",  UUID.randomUUID(),
                 false,
                 "ObjectTable", "ObjectId", UUID.randomUUID(),
-                RbacRoleType.owner); // @formatter:on
+                RbacRoleType.OWNER); // @formatter:on
 
         // when
         final var display = entity.toDisplay();
 
         // then
-        assertThat(display).isEqualTo("{ grant role GrantED to user GrantEE by role GrantER }");
+        assertThat(display).isEqualTo("{ grant role:GrantED to user:GrantEE by role:GrantER }");
     }
 }

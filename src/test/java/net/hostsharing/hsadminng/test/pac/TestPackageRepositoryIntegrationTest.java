@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.test.pac;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.context.ContextBasedTest;
 import net.hostsharing.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,10 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class TestPackageRepositoryIntegrationTest {
-
-    @Autowired
-    Context context;
+class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
 
     @Autowired
     TestPackageRepository testPackageRepository;
@@ -40,9 +38,10 @@ class TestPackageRepositoryIntegrationTest {
     class FindAllByOptionalNameLike {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
+        public void globalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
             // given
-            context.define("superuser-alex@hostsharing.net");
+            // alex is not just global-admin but lso the creating user, thus we use fran
+            context.define("superuser-fran@hostsharing.net");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -52,9 +51,9 @@ class TestPackageRepositoryIntegrationTest {
         }
 
         @Test
-        public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotassumedd() {
+        public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
             given:
-            context.define("superuser-alex@hostsharing.net", "global#global.admin");
+            context.define("superuser-alex@hostsharing.net", "global#global:ADMIN");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
@@ -77,7 +76,7 @@ class TestPackageRepositoryIntegrationTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            context.define("customer-admin@xxx.example.com", "test_package#xxx00.admin");
+            context.define("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
 
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
@@ -89,19 +88,19 @@ class TestPackageRepositoryIntegrationTest {
     class OptimisticLocking {
 
         @Test
-        public void supportsOptimisticLocking() throws InterruptedException {
+        public void supportsOptimisticLocking() {
             // given
-            globalAdminWithAssumedRole("test_package#xxx00.admin");
+            globalAdminWithAssumedRole("test_package#xxx00:ADMIN");
             final var pac = testPackageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00.owner");
+                globalAdminWithAssumedRole("test_package#xxx00:OWNER");
                 pac.setDescription("description set by thread 1");
                 testPackageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00.owner");
+                globalAdminWithAssumedRole("test_package#xxx00:OWNER");
                 pac.setDescription("description set by thread 2");
                 testPackageRepository.save(pac);
                 sleep(1500);

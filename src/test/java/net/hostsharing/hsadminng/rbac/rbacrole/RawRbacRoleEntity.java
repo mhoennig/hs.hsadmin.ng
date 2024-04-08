@@ -35,7 +35,7 @@ public class RawRbacRoleEntity {
     @Enumerated(EnumType.STRING)
     private RbacRoleType roleType;
 
-    @Formula("objectTable||'#'||objectIdName||'.'||roleType")
+    @Formula("objectTable||'#'||objectIdName||':'||roleType")
     private String roleName;
 
     @NotNull

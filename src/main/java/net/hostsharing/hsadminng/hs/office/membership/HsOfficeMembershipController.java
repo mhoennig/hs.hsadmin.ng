@@ -12,9 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -31,9 +28,6 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Autowired
     private HsOfficeMembershipRepository membershipRepo;
-
-    @PersistenceContext
-    private EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,7 +52,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     public ResponseEntity<HsOfficeMembershipResource> addMembership(
             final String currentUser,
             final String assumedRoles,
-            @Valid final HsOfficeMembershipInsertResource body) {
+            final HsOfficeMembershipInsertResource body) {
 
         context.define(currentUser, assumedRoles);
 
@@ -121,7 +115,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
         final var current = membershipRepo.findByUuid(membershipUuid).orElseThrow();
 
-        new HsOfficeMembershipEntityPatcher(em, mapper, current).apply(body);
+        new HsOfficeMembershipEntityPatcher(mapper, current).apply(body);
 
         final var saved = membershipRepo.save(current);
         final var mapped = mapper.map(saved, HsOfficeMembershipResource.class, SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);

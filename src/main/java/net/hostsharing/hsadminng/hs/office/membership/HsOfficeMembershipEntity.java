@@ -1,23 +1,38 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
-import com.vladmihalcea.hibernate.type.range.PostgreSQLRangeType;
-import com.vladmihalcea.hibernate.type.range.Range;
+import io.hypersistence.utils.hibernate.type.range.PostgreSQLRangeType;
+import io.hypersistence.utils.hibernate.type.range.Range;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import net.hostsharing.hsadminng.persistence.HasUuid;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
+import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -28,17 +43,16 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Membership")
-public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
+public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
 
     public static final String MEMBER_NUMBER_TAG = "M-";
+    public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
 
     private static Stringify<HsOfficeMembershipEntity> stringify = stringify(HsOfficeMembershipEntity.class)
             .withProp(e -> MEMBER_NUMBER_TAG + e.getMemberNumber())
             .withProp(e -> e.getPartner().toShortString())
-            .withProp(e -> e.getMainDebitor().toShortString())
             .withProp(e -> e.getValidity().asString())
             .withProp(HsOfficeMembershipEntity::getReasonForTermination)
-            .withSeparator(", ")
             .quotedValues(false);
 
     @Id
@@ -49,12 +63,8 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
     @JoinColumn(name = "partneruuid")
     private HsOfficePartnerEntity partner;
 
-    @ManyToOne
-    @Fetch(FetchMode.JOIN)
-    @JoinColumn(name = "maindebitoruuid")
-    private HsOfficeDebitorEntity mainDebitor;
-
     @Column(name = "membernumbersuffix", length = 2)
+    @Pattern(regexp = TWO_DECIMAL_DIGITS)
     private String memberNumberSuffix;
 
     @Column(name = "validity", columnDefinition = "daterange")
@@ -113,5 +123,46 @@ public class HsOfficeMembershipEntity implements HasUuid, Stringifyable {
         if (getReasonForTermination() == null) {
             setReasonForTermination(HsOfficeReasonForTermination.NONE);
         }
+    }
+
+    public static RbacView rbac() {
+        return rbacViewFor("membership", HsOfficeMembershipEntity.class)
+                .withIdentityView(SQL.query("""
+                        SELECT m.uuid AS uuid,
+                                'M-' || p.partnerNumber || m.memberNumberSuffix as idName
+                        FROM hs_office_membership AS m
+                        JOIN hs_office_partner AS p ON p.uuid = m.partnerUuid
+                        """))
+                .withRestrictedViewOrderBy(SQL.projection("validity"))
+                .withUpdatableColumns("validity", "membershipFeeBillable", "reasonForTermination")
+
+                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
+                        dependsOnColumn("partnerUuid"),
+                        fetchedBySql("""
+                                SELECT ${columns}
+                                    FROM hs_office_partner AS partner
+                                    JOIN hs_office_relation AS partnerRel ON partnerRel.uuid = partner.partnerRelUuid
+                                    WHERE partner.uuid = ${REF}.partnerUuid
+                                """),
+                        NOT_NULL)
+                .toRole("global", ADMIN).grantPermission(INSERT)
+
+                .createRole(OWNER, (with) -> {
+                    with.owningUser(CREATOR);
+                })
+                .createSubRole(ADMIN, (with) -> {
+                    with.incomingSuperRole("partnerRel", ADMIN);
+                    with.permission(DELETE);
+                    with.permission(UPDATE);
+                })
+                .createSubRole(AGENT, (with) -> {
+                    with.incomingSuperRole("partnerRel", AGENT);
+                    with.outgoingSubRole("partnerRel", TENANT);
+                    with.permission(SELECT);
+                });
+    }
+
+    public static void main(String[] args) throws IOException {
+        rbac().generateWithBaseFileName("5-hs-office/510-membership/5103-hs-office-membership-rbac");
     }
 }

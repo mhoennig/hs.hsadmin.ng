@@ -3,10 +3,10 @@
 -- --------------------------------------------------------
 
 
-select isGranted(findRoleId('administrators'), findRoleId('test_package#aaa00.owner'));
-select isGranted(findRoleId('test_package#aaa00.owner'), findRoleId('administrators'));
--- call grantRoleToRole(findRoleId('test_package#aaa00.owner'), findRoleId('administrators'));
--- call grantRoleToRole(findRoleId('administrators'), findRoleId('test_package#aaa00.owner'));
+select isGranted(findRoleId('administrators'), findRoleId('test_package#aaa00:OWNER'));
+select isGranted(findRoleId('test_package#aaa00:OWNER'), findRoleId('administrators'));
+-- call grantRoleToRole(findRoleId('test_package#aaa00:OWNER'), findRoleId('administrators'));
+-- call grantRoleToRole(findRoleId('administrators'), findRoleId('test_package#aaa00:OWNER'));
 
 select count(*)
 FROM queryAllPermissionsOfSubjectIdForObjectUuids(findRbacUser('superuser-fran@hostsharing.net'),
@@ -25,7 +25,7 @@ FROM queryAllRbacUsersWithPermissionsFor(findEffectivePermissionId('customer',
 select *
 FROM queryAllRbacUsersWithPermissionsFor(findEffectivePermissionId('package',
                                                           (SELECT uuid FROM RbacObject WHERE objectTable = 'package' LIMIT 1),
-                                                          'delete'));
+                                                          'DELETE'));
 
 DO LANGUAGE plpgsql
 $$
@@ -34,12 +34,12 @@ $$
         result bool;
     BEGIN
         userId = findRbacUser('superuser-alex@hostsharing.net');
-        result = (SELECT * FROM isPermissionGrantedToSubject(findEffectivePermissionId('package', 94928, 'add-package'), userId));
+        result = (SELECT * FROM isPermissionGrantedToSubject(findPermissionId('package', 94928, 'add-package'), userId));
         IF (result) THEN
             RAISE EXCEPTION 'expected permission NOT to be granted, but it is';
         end if;
 
-        result = (SELECT * FROM isPermissionGrantedToSubject(findEffectivePermissionId('package', 94928, 'view'), userId));
+        result = (SELECT * FROM isPermissionGrantedToSubject(findPermissionId('package', 94928, 'SELECT'), userId));
         IF (NOT result) THEN
             RAISE EXCEPTION 'expected permission to be granted, but it is NOT';
         end if;

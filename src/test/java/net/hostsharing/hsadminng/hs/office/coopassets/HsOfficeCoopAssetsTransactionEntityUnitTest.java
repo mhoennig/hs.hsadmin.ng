@@ -23,27 +23,27 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
     void toStringContainsAlmostAllPropertiesAccount() {
         final var result = givenCoopAssetTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopAssetsTransaction(1000101, 2020-01-01, DEPOSIT, 128.00, some-ref)");
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref)");
     }
 
     @Test
     void toShortStringContainsOnlyMemberNumberSuffixAndSharesCountOnly() {
         final var result = givenCoopAssetTransaction.toShortString();
 
-        assertThat(result).isEqualTo("1000101+128.00");
+        assertThat(result).isEqualTo("M-1000101:+128.00");
     }
 
     @Test
     void toStringWithEmptyTransactionDoesNotThrowException() {
         final var result = givenEmptyCoopAssetsTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopAssetsTransaction()");
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-?????: )");
     }
 
     @Test
     void toShortStringEmptyTransactionDoesNotThrowException() {
         final var result = givenEmptyCoopAssetsTransaction.toShortString();
 
-        assertThat(result).isEqualTo("nullnu");
+        assertThat(result).isEqualTo("M-?????:+0.00");
     }
 }

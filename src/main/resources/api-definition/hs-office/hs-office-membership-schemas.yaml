@@ -46,10 +46,6 @@ components:
         HsOfficeMembershipPatch:
             type: object
             properties:
-                mainDebitorUuid:
-                    type: string
-                    format: uuid
-                    nullable: true
                 validTo:
                     type: string
                     format: date
@@ -66,10 +62,6 @@ components:
             type: object
             properties:
                 partnerUuid:
-                    type: string
-                    format: uuid
-                    nullable: false
-                mainDebitorUuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -95,7 +87,6 @@ components:
             required:
                 - partnerUuid
                 - memberNumberSuffix
-                - mainDebitorUuid
                 - validFrom
                 - membershipFeeBillable
             additionalProperties: false
