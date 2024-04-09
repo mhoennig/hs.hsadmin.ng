@@ -2,7 +2,11 @@ package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.hypersistence.utils.hibernate.type.range.PostgreSQLRangeType;
 import io.hypersistence.utils.hibernate.type.range.Range;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayName;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
@@ -13,17 +17,32 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Pattern;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
+import static io.hypersistence.utils.hibernate.type.range.Range.emptyRange;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.lowerInclusiveFromPostgresDateRange;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
+import static net.hostsharing.hsadminng.mapper.PostgresDateRange.upperInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
@@ -50,7 +69,7 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
             .withProp(e -> MEMBER_NUMBER_TAG + e.getMemberNumber())
             .withProp(e -> e.getPartner().toShortString())
             .withProp(e -> e.getValidity().asString())
-            .withProp(HsOfficeMembershipEntity::getReasonForTermination)
+            .withProp(HsOfficeMembershipEntity::getStatus)
             .quotedValues(false);
 
     @Id
@@ -75,9 +94,9 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
     @Column(name = "membershipfeebillable", nullable = false)
     private Boolean membershipFeeBillable; // not primitive to force setting the value
 
-    @Column(name = "reasonfortermination")
+    @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private HsOfficeReasonForTermination reasonForTermination;
+    private HsOfficeMembershipStatus status;
 
     public void setValidFrom(final LocalDate validFrom) {
         setValidity(toPostgresDateRange(validFrom, getValidTo()));
@@ -97,7 +116,7 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
 
     public Range<LocalDate> getValidity() {
         if (validity == null) {
-            validity = Range.infinite(LocalDate.class);
+            validity = emptyRange(LocalDate.class);
         }
         return validity;
     }
@@ -121,8 +140,8 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
 
     @PrePersist
     void init() {
-        if (getReasonForTermination() == null) {
-            setReasonForTermination(HsOfficeReasonForTermination.NONE);
+        if (getStatus() == null) {
+            setStatus(HsOfficeMembershipStatus.INVALID);
         }
     }
 
@@ -135,7 +154,7 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
                         JOIN hs_office_partner AS p ON p.uuid = m.partnerUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.projection("validity"))
-                .withUpdatableColumns("validity", "membershipFeeBillable", "reasonForTermination")
+                .withUpdatableColumns("validity", "membershipFeeBillable", "status")
 
                 .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
                         dependsOnColumn("partnerUuid"),

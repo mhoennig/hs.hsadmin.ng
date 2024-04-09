@@ -28,8 +28,8 @@ begin
     raise notice 'creating test Membership: M-% %', forPartnerNumber, newMemberNumberSuffix;
     raise notice '- using partner (%): %', relatedPartner.uuid, relatedPartner;
     insert
-        into hs_office_membership (uuid, partneruuid, memberNumberSuffix, validity, reasonfortermination)
-        values (uuid_generate_v4(), relatedPartner.uuid, newMemberNumberSuffix, daterange('20221001' , null, '[]'), 'NONE');
+        into hs_office_membership (uuid, partneruuid, memberNumberSuffix, validity, status)
+        values (uuid_generate_v4(), relatedPartner.uuid, newMemberNumberSuffix, daterange('20221001' , null, '[]'), 'ACTIVE');
 end; $$;
 --//
 

@@ -3,15 +3,17 @@ components:
 
     schemas:
 
-        HsOfficeReasonForTermination:
+        HsOfficeMembershipStatus:
             type: string
             enum:
-                - NONE
-                - CANCELLATION
-                - TRANSFER
-                - DEATH
-                - LIQUIDATION
-                - EXPULSION
+                - INVALID
+                - ACTIVE
+                - CANCELLED
+                - TRANSFERRED
+                - DECEASED
+                - LIQUIDATED
+                - EXPULSED
+                - UNKNOWN
 
         HsOfficeMembership:
             type: object
@@ -38,8 +40,8 @@ components:
                 validTo:
                    type: string
                    format: date
-                reasonForTermination:
-                   $ref: '#/components/schemas/HsOfficeReasonForTermination'
+                status:
+                   $ref: '#/components/schemas/HsOfficeMembershipStatus'
                 membershipFeeBillable:
                     type: boolean
 
@@ -50,9 +52,8 @@ components:
                     type: string
                     format: date
                     nullable: true
-                reasonForTermination:
-                    nullable: true
-                    $ref: '#/components/schemas/HsOfficeReasonForTermination'
+                status:
+                    $ref: '#/components/schemas/HsOfficeMembershipStatus'
                 membershipFeeBillable:
                     nullable: true
                     type: boolean
@@ -79,8 +80,8 @@ components:
                     type: string
                     format: date
                     nullable: true
-                reasonForTermination:
-                    $ref: '#/components/schemas/HsOfficeReasonForTermination'
+                status:
+                    $ref: '#/components/schemas/HsOfficeMembershipStatus'
                 membershipFeeBillable:
                     nullable: false
                     type: boolean

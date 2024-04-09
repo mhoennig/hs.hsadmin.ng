@@ -15,3 +15,6 @@ contact_id;	bp_id;	salut;	first_name;	last_name;	title;	firma;	co;	street;			zip
 
 # eine natürliche Person, die nur Subscriber ist
 1401;		17;	Frau;	Frauke;	Fanninga;		;	;	;	Am Walde 1;	29456;	Hitzacker;	DE;		;			;	;;		ff@example.org; subscriber:operations-announce
+
+# eine natürliche Person als Partner
+1501;		90;	Frau;	Cecilia;	Camus;		;	;	;	Rue d'Avignion 60;	45000;	Orléans;	FR;		;			;	;;		cc@example.org; partner,contractual,billing,operation

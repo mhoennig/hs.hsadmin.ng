@@ -172,7 +172,7 @@ call generateRbacRestrictedView('hs_office_membership',
     $updates$
         validity = new.validity,
         membershipFeeBillable = new.membershipFeeBillable,
-        reasonForTermination = new.reasonForTermination
+        status = new.status
     $updates$);
 --//
 

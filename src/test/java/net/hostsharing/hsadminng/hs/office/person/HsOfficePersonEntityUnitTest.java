@@ -86,7 +86,7 @@ class HsOfficePersonEntityUnitTest {
 
         final var actualDisplay = givenPersonEntity.toShortString();
 
-        assertThat(actualDisplay).isEqualTo("NP Frau some family name, some given name");
+        assertThat(actualDisplay).isEqualTo("NP some family name, some given name");
     }
 
     @Test

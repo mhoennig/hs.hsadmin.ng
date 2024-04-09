@@ -2,4 +2,5 @@ bp_id;member_id;member_code;member_since;member_until;member_role;author_contrac
 17;10017;hsh00-mih;2000-12-06;;Aufsichtsrat;2006-10-15;2001-10-15;false;false;NET;DE-VAT-007
 20;10020;hsh00-xyz;2000-12-06;2015-12-31;;;;false;false;GROSS;
 22;11022;hsh00-xxx;2021-04-01;;;;;true;true;GROSS;
+90;19090;hsh00-yyy;;;;;;true;true;GROSS;
 99;19999;hsh00-zzz;;;;;;false;false;GROSS;

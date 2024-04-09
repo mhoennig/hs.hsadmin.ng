@@ -62,27 +62,27 @@ class HsOfficeMembershipEntityUnitTest {
     }
 
     @Test
-    void getValidtyIfNull() {
+    void getEmptyValidtyIfNull() {
         givenMembership.setValidity(null);
         final var result = givenMembership.getValidity();
-        assertThat(result).isEqualTo(Range.infinite(LocalDate.class));
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
-    void initializesReasonForTerminationInPrePersistIfNull() throws Exception {
+    void initializesStatusInPrePersistIfNull() throws Exception {
         final var givenUninitializedMembership = new HsOfficeMembershipEntity();
-        assertThat(givenUninitializedMembership.getReasonForTermination()).as("precondition failed").isNull();
+        assertThat(givenUninitializedMembership.getStatus()).as("precondition failed").isNull();
 
         invokePrePersist(givenUninitializedMembership);
-        assertThat(givenUninitializedMembership.getReasonForTermination()).isEqualTo(HsOfficeReasonForTermination.NONE);
+        assertThat(givenUninitializedMembership.getStatus()).isEqualTo(HsOfficeMembershipStatus.INVALID);
     }
 
     @Test
-    void doesNotOverwriteReasonForTerminationInPrePersistIfNotNull() throws Exception {
-        givenMembership.setReasonForTermination(HsOfficeReasonForTermination.CANCELLATION);
+    void doesNotOverwriteStatusInPrePersistIfNotNull() throws Exception {
+        givenMembership.setStatus(HsOfficeMembershipStatus.CANCELLED);
 
         invokePrePersist(givenMembership);
-        assertThat(givenMembership.getReasonForTermination()).isEqualTo(HsOfficeReasonForTermination.CANCELLATION);
+        assertThat(givenMembership.getStatus()).isEqualTo(HsOfficeMembershipStatus.CANCELLED);
     }
 
     @Test

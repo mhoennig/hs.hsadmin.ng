@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
-import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeReasonForTerminationResource;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipStatusResource;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import net.hostsharing.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,11 +79,11 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
                         PATCHED_VALID_TO,
                         HsOfficeMembershipEntity::setValidTo),
                 new SimpleProperty<>(
-                        "reasonForTermination",
-                        HsOfficeMembershipPatchResource::setReasonForTermination,
-                        HsOfficeReasonForTerminationResource.CANCELLATION,
-                        HsOfficeMembershipEntity::setReasonForTermination,
-                        HsOfficeReasonForTermination.CANCELLATION)
+                        "status",
+                        HsOfficeMembershipPatchResource::setStatus,
+                        HsOfficeMembershipStatusResource.CANCELLED,
+                        HsOfficeMembershipEntity::setStatus,
+                        HsOfficeMembershipStatus.CANCELLED)
                         .notNullable(),
                 new JsonNullableProperty<>(
                         "membershipFeeBillable",

@@ -23,8 +23,8 @@ import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeReasonForTermination.CANCELLATION;
-import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeReasonForTermination.NONE;
+import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.ACTIVE;
+import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.CANCELLED;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,7 +84,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": null,
-                              "reasonForTermination": "NONE"
+                              "status": "ACTIVE"
                           },
                           {
                               "partner": { "partnerNumber": 10002 },
@@ -92,7 +92,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
                               "validTo": null,
-                              "reasonForTermination": "NONE"
+                              "status": "ACTIVE"
                           },
                           {
                               "partner": { "partnerNumber": 10003 },
@@ -100,7 +100,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "03",
                               "validFrom": "2022-10-01",
                               "validTo": null,
-                              "reasonForTermination": "NONE"
+                              "status": "ACTIVE"
                           }
                       ]
                     """));
@@ -131,7 +131,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": null,
-                              "reasonForTermination": "NONE"
+                              "status": "ACTIVE"
                           }
                       ]
                     """));
@@ -159,7 +159,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
                               "validTo": null,
-                              "reasonForTermination": "NONE"
+                              "status": "ACTIVE"
                           }
                       ]
                     """));
@@ -239,7 +239,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                          "memberNumberSuffix": "01",
                          "validFrom": "2022-10-01",
                          "validTo": null,
-                         "reasonForTermination": "NONE"
+                         "status": "ACTIVE"
                      }
                     """)); // @formatter:on
         }
@@ -283,7 +283,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                          "memberNumberSuffix": "03",
                          "validFrom": "2022-10-01",
                          "validTo": null,
-                         "reasonForTermination": "NONE"
+                         "status": "ACTIVE"
                     }
                     """)); // @formatter:on
         }
@@ -306,7 +306,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("""
                            {
                                "validTo": "2023-12-31",
-                               "reasonForTermination": "CANCELLATION"
+                               "status": "CANCELLED"
                            }
                           """)
                     .port(port)
@@ -320,7 +320,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2023-12-31"))
-                    .body("reasonForTermination", is("CANCELLATION"));
+                    .body("status", is("CANCELLED"));
             // @formatter:on
 
             // finally, the Membership is actually updated
@@ -329,7 +329,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                         assertThat(mandate.getPartner().toShortString()).isEqualTo("P-10001");
                         assertThat(mandate.getMemberNumberSuffix()).isEqualTo(givenMembership.getMemberNumberSuffix());
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-01)");
-                        assertThat(mandate.getReasonForTermination()).isEqualTo(CANCELLATION);
+                        assertThat(mandate.getStatus()).isEqualTo(CANCELLED);
                         return true;
                     });
         }
@@ -351,7 +351,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("""
                            {
                                "validTo": "2024-01-01",
-                               "reasonForTermination": "CANCELLATION"
+                               "status": "CANCELLED"
                            }
                            """)
                     .port(port)
@@ -364,7 +364,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getValidity().asString()).isEqualTo("[2022-11-01,2024-01-02)");
-                        assertThat(mandate.getReasonForTermination()).isEqualTo(CANCELLATION);
+                        assertThat(mandate.getStatus()).isEqualTo(CANCELLED);
                         return true;
                     });
         }
@@ -441,7 +441,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .partner(givenPartner)
                     .memberNumberSuffix(TEMP_MEMBER_NUMBER_SUFFIX)
                     .validity(Range.closedInfinite(LocalDate.parse("2022-11-01")))
-                    .reasonForTermination(NONE)
+                    .status(ACTIVE)
                     .membershipFeeBillable(true)
                     .build();
 

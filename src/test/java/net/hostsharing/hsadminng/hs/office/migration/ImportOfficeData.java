@@ -13,7 +13,7 @@ import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransact
 import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransactionType;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.hs.office.membership.HsOfficeReasonForTermination;
+import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 import static java.lang.Boolean.parseBoolean;
 import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -185,6 +186,7 @@ public class ImportOfficeData extends ContextBasedTest {
                     17=partner(P-10017: null null, null),
                     20=partner(P-10020: null null, null),
                     22=partner(P-11022: null null, null),
+                    90=partner(P-19090: null null, null),
                     99=partner(P-19999: null null, null)
                 }
                 """);
@@ -194,14 +196,15 @@ public class ImportOfficeData extends ContextBasedTest {
                     17=debitor(D-1001700: rel(anchor='null null, null', type='DEBITOR'), mih),
                     20=debitor(D-1002000: rel(anchor='null null, null', type='DEBITOR'), xyz),
                     22=debitor(D-1102200: rel(anchor='null null, null', type='DEBITOR'), xxx),
+                    90=debitor(D-1909000: rel(anchor='null null, null', type='DEBITOR'), yyy),
                     99=debitor(D-1999900: rel(anchor='null null, null', type='DEBITOR'), zzz)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(M-1001700, P-10017, [2000-12-06,), NONE),
+                    17=Membership(M-1001700, P-10017, [2000-12-06,), ACTIVE),
                     20=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(M-1102200, P-11022, [2021-04-01,), NONE)
+                    22=Membership(M-1102200, P-11022, [2021-04-01,), ACTIVE)
                 }
                 """);
     }
@@ -228,6 +231,7 @@ public class ImportOfficeData extends ContextBasedTest {
                     17=partner(P-10017: NP Mellies, Michael, Herr Michael Mellies ),
                     20=partner(P-10020: LP JM GmbH, Herr Philip Meyer-Contract , JM GmbH),
                     22=partner(P-11022: ?? Test PS, Petra Schmidt , Test PS),
+                    90=partner(P-19090: NP Camus, Cecilia, Frau Cecilia Camus ),
                     99=partner(P-19999: null null, null)
                 }
                 """);
@@ -240,7 +244,8 @@ public class ImportOfficeData extends ContextBasedTest {
                     1203=contact(label='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='pm-partner@example.org'),
                     1204=contact(label='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='tm-vip@example.org'),
                     1301=contact(label='Petra Schmidt , Test PS', emailAddresses='ps@example.com'),
-                    1401=contact(label='Frau Frauke Fanninga ', emailAddresses='ff@example.org')
+                    1401=contact(label='Frau Frauke Fanninga ', emailAddresses='ff@example.org'),
+                    1501=contact(label='Frau Cecilia Camus ', emailAddresses='cc@example.org')
                 }
                 """);
         assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
@@ -253,7 +258,8 @@ public class ImportOfficeData extends ContextBasedTest {
                     1203=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Contract', givenName='Philip'),
                     1204=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-VIP', givenName='Tammy'),
                     1301=person(personType='??', tradeName='Test PS', familyName='Schmidt', givenName='Petra'),
-                    1401=person(personType='NP', tradeName='', familyName='Fanninga', givenName='Frauke')
+                    1401=person(personType='NP', tradeName='', familyName='Fanninga', givenName='Frauke'),
+                    1501=person(personType='NP', tradeName='', familyName='Camus', givenName='Cecilia')
                 }
                 """);
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
@@ -261,14 +267,15 @@ public class ImportOfficeData extends ContextBasedTest {
                     17=debitor(D-1001700: rel(anchor='NP Mellies, Michael', type='DEBITOR', holder='NP Mellies, Michael'), mih),
                     20=debitor(D-1002000: rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH'), xyz),
                     22=debitor(D-1102200: rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS'), xxx),
+                    90=debitor(D-1909000: rel(anchor='NP Camus, Cecilia', type='DEBITOR', holder='NP Camus, Cecilia'), yyy),
                     99=debitor(D-1999900: rel(anchor='null null, null', type='DEBITOR'), zzz)
                 }
                 """);
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
-                    17=Membership(M-1001700, P-10017, [2000-12-06,), NONE),
+                    17=Membership(M-1001700, P-10017, [2000-12-06,), ACTIVE),
                     20=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
-                    22=Membership(M-1102200, P-11022, [2021-04-01,), NONE)
+                    22=Membership(M-1102200, P-11022, [2021-04-01,), ACTIVE)
                 }
                 """);
         assertThat(toFormattedString(relations)).isEqualToIgnoringWhitespace("""
@@ -279,21 +286,25 @@ public class ImportOfficeData extends ContextBasedTest {
                     2000003=rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH', contact='Frau Dr. Jenny Meyer-Billing , JM GmbH'),
                     2000004=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
                     2000005=rel(anchor='?? Test PS', type='DEBITOR', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000006=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='null null, null'),
-                    2000007=rel(anchor='null null, null', type='DEBITOR'),
-                    2000008=rel(anchor='NP Mellies, Michael', type='OPERATIONS', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000009=rel(anchor='NP Mellies, Michael', type='REPRESENTATIVE', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
-                    2000010=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
-                    2000011=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000012=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000013=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
-                    2000014=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000015=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000016=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
-                    2000017=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
-                    2000018=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000019=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
-                    2000020=rel(anchor='NP Mellies, Michael', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga ')
+                    2000006=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus '),
+                    2000007=rel(anchor='NP Camus, Cecilia', type='DEBITOR', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus '),
+                    2000008=rel(anchor='LP Hostsharing eG', type='PARTNER', holder='null null, null'),
+                    2000009=rel(anchor='null null, null', type='DEBITOR'),
+                    2000010=rel(anchor='NP Mellies, Michael', type='OPERATIONS', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000011=rel(anchor='NP Mellies, Michael', type='REPRESENTATIVE', holder='NP Mellies, Michael', contact='Herr Michael Mellies '),
+                    2000012=rel(anchor='LP JM GmbH', type='EX_PARTNER', holder='LP JM e.K.', contact='JM e.K.'),
+                    2000013=rel(anchor='LP JM GmbH', type='OPERATIONS', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000014=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000015=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='operations-announce', holder='LP JM GmbH', contact='Herr Andrew Meyer-Operation , JM GmbH'),
+                    2000016=rel(anchor='LP JM GmbH', type='REPRESENTATIVE', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000017=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='members-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000018=rel(anchor='LP JM GmbH', type='SUBSCRIBER', mark='customers-announce', holder='LP JM GmbH', contact='Herr Philip Meyer-Contract , JM GmbH'),
+                    2000019=rel(anchor='LP JM GmbH', type='VIP_CONTACT', holder='LP JM GmbH', contact='Frau Tammy Meyer-VIP , JM GmbH'),
+                    2000020=rel(anchor='?? Test PS', type='OPERATIONS', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000021=rel(anchor='?? Test PS', type='REPRESENTATIVE', holder='?? Test PS', contact='Petra Schmidt , Test PS'),
+                    2000022=rel(anchor='NP Mellies, Michael', type='SUBSCRIBER', mark='operations-announce', holder='NP Fanninga, Frauke', contact='Frau Frauke Fanninga '),
+                    2000023=rel(anchor='NP Camus, Cecilia', type='OPERATIONS', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus '),
+                    2000024=rel(anchor='NP Camus, Cecilia', type='REPRESENTATIVE', holder='NP Camus, Cecilia', contact='Frau Cecilia Camus ')
                 }
                 """);
     }
@@ -383,7 +394,23 @@ public class ImportOfficeData extends ContextBasedTest {
                     33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, for transfer from 7),
                     34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, for cancellation D),
                     34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, for cancellation D),
-                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, for cancellation D)
+                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, for cancellation D),
+                    35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, for subscription E),
+                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, chargeback for subscription E)
+                }
+                """);
+    }
+
+    @Test
+    @Order(1099)
+    void verifyMemberships() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
+                {
+                    17=Membership(M-1001700, P-10017, [2000-12-06,), ACTIVE),
+                    20=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
+                    22=Membership(M-1102200, P-11022, [2021-04-01,), ACTIVE),
+                    90=Membership(M-1909000, P-19090, empty, INVALID)
                 }
                 """);
     }
@@ -742,10 +769,10 @@ public class ImportOfficeData extends ContextBasedTest {
                                         rec.getLocalDate("member_since"),
                                         rec.getLocalDate("member_until")))
                                 .membershipFeeBillable(rec.isEmpty("member_role"))
-                                .reasonForTermination(
+                                .status(
                                         isBlank(rec.getString("member_until"))
-                                                ? HsOfficeReasonForTermination.NONE
-                                                : HsOfficeReasonForTermination.UNKNOWN)
+                                                ? HsOfficeMembershipStatus.ACTIVE
+                                                : HsOfficeMembershipStatus.UNKNOWN)
                                 .build();
                         memberships.put(rec.getInteger("bp_id"), membership);
                     }
@@ -760,7 +787,9 @@ public class ImportOfficeData extends ContextBasedTest {
                 .map(this::trimAll)
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
-                    final var member = memberships.get(rec.getInteger("bp_id"));
+                    final var bpId = rec.getInteger("bp_id");
+                    final var member = ofNullable(memberships.get(bpId))
+                            .orElseGet(() -> createOnDemandMembership(bpId));
 
                     final var shareTransaction = HsOfficeCoopSharesTransactionEntity.builder()
                             .membership(member)
@@ -788,11 +817,14 @@ public class ImportOfficeData extends ContextBasedTest {
                 .map(this::trimAll)
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
-                    final var member = memberships.get(rec.getInteger("bp_id"));
+                    final var bpId = rec.getInteger("bp_id");
+                    final var member = ofNullable(memberships.get(bpId))
+                            .orElseGet(() -> createOnDemandMembership(bpId));
 
                     final var assetTypeMapping = new HashMap<String, HsOfficeCoopAssetsTransactionType>() {
 
                         {
+                            put("ADJUSTMENT", HsOfficeCoopAssetsTransactionType.ADJUSTMENT);
                             put("HANDOVER", HsOfficeCoopAssetsTransactionType.TRANSFER);
                             put("ADOPTION", HsOfficeCoopAssetsTransactionType.ADOPTION);
                             put("LOSS", HsOfficeCoopAssetsTransactionType.LOSS);
@@ -821,6 +853,17 @@ public class ImportOfficeData extends ContextBasedTest {
 
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
                 });
+    }
+
+    private static HsOfficeMembershipEntity createOnDemandMembership(final Integer bpId) {
+        final var onDemandMembership = HsOfficeMembershipEntity.builder()
+                .memberNumberSuffix("00")
+                .membershipFeeBillable(false)
+                .partner(partners.get(bpId))
+                .status(HsOfficeMembershipStatus.INVALID)
+                .build();
+        memberships.put(bpId, onDemandMembership);
+        return onDemandMembership;
     }
 
     private void importSepaMandates(final String[] header, final List<String[]> records) {

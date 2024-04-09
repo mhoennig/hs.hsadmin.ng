@@ -23,9 +23,9 @@ public class HsOfficeMembershipEntityPatcher implements EntityPatcher<HsOfficeMe
     public void apply(final HsOfficeMembershipPatchResource resource) {
         OptionalFromJson.of(resource.getValidTo()).ifPresent(
                 entity::setValidTo);
-        Optional.ofNullable(resource.getReasonForTermination())
-                .map(v -> mapper.map(v, HsOfficeReasonForTermination.class))
-                .ifPresent(entity::setReasonForTermination);
+        Optional.ofNullable(resource.getStatus())
+                .map(v -> mapper.map(v, HsOfficeMembershipStatus.class))
+                .ifPresent(entity::setStatus);
         OptionalFromJson.of(resource.getMembershipFeeBillable()).ifPresent(
                 entity::setMembershipFeeBillable);
     }

@@ -4,9 +4,18 @@
 --changeset hs-office-membership-MAIN-TABLE:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficeReasonForTermination AS ENUM ('NONE', 'CANCELLATION', 'TRANSFER', 'DEATH', 'LIQUIDATION', 'EXPULSION', 'UNKNOWN');
+CREATE TYPE HsOfficeMembershipStatus AS ENUM (
+    'INVALID',
+    'ACTIVE',
+    'CANCELLED',
+    'TRANSFERRED',
+    'DECEASED',
+    'LIQUIDATED',
+    'EXPULSED',
+    'UNKNOWN'
+);
 
-CREATE CAST (character varying as HsOfficeReasonForTermination) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as HsOfficeMembershipStatus) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office_membership
 (
@@ -15,7 +24,7 @@ create table if not exists hs_office_membership
     partnerUuid             uuid not null references hs_office_partner(uuid),
     memberNumberSuffix      char(2) not null check (memberNumberSuffix::text ~ '^[0-9][0-9]$'),
     validity                daterange not null,
-    reasonForTermination    HsOfficeReasonForTermination not null default 'NONE',
+    status                  HsOfficeMembershipStatus not null default 'ACTIVE',
     membershipFeeBillable   boolean not null default true,
 
     UNIQUE(partnerUuid, memberNumberSuffix)

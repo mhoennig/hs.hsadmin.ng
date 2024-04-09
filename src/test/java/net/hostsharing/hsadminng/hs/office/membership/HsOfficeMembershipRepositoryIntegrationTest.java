@@ -161,9 +161,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // then
             exactlyTheseMembershipsAreReturned(
                     result,
-                    "Membership(M-1000101, P-10001, [2022-10-01,), NONE)",
-                    "Membership(M-1000202, P-10002, [2022-10-01,), NONE)",
-                    "Membership(M-1000303, P-10003, [2022-10-01,), NONE)");
+                    "Membership(M-1000101, P-10001, [2022-10-01,), ACTIVE)",
+                    "Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)",
+                    "Membership(M-1000303, P-10003, [2022-10-01,), ACTIVE)");
         }
 
         @Test
@@ -177,7 +177,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
             // then
             exactlyTheseMembershipsAreReturned(result,
-                    "Membership(M-1000101, P-10001, [2022-10-01,), NONE)");
+                    "Membership(M-1000101, P-10001, [2022-10-01,), ACTIVE)");
         }
 
         @Test
@@ -192,7 +192,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThat(result)
                     .isNotNull()
                     .extracting(Object::toString)
-                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,), NONE)");
+                    .isEqualTo("Membership(M-1000202, P-10002, [2022-10-01,), ACTIVE)");
         }
     }
 
@@ -213,7 +213,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                 context("superuser-alex@hostsharing.net");
                 givenMembership.setValidity(Range.closedOpen(
                         givenMembership.getValidity().lower(), newValidityEnd));
-                givenMembership.setReasonForTermination(HsOfficeReasonForTermination.CANCELLATION);
+                givenMembership.setStatus(HsOfficeMembershipStatus.CANCELLED);
                 return toCleanup(membershipRepo.save(givenMembership));
             });
 
