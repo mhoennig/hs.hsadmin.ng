@@ -26,6 +26,8 @@ import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
+
 @RestController
 
 public class HsOfficePartnerController implements HsOfficePartnersApi {
@@ -128,12 +130,21 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         context.define(currentUser, assumedRoles);
 
         final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
+        final var previousPartnerRel = current.getPartnerRel();
 
         new HsOfficePartnerEntityPatcher(em, current).apply(body);
 
         final var saved = partnerRepo.save(current);
+        optionallyCreateExPartnerRelation(saved, previousPartnerRel);
+
         final var mapped = mapper.map(saved, HsOfficePartnerResource.class);
         return ResponseEntity.ok(mapped);
+    }
+
+    private void optionallyCreateExPartnerRelation(final HsOfficePartnerEntity saved, final HsOfficeRelationEntity previousPartnerRel) {
+        if (!saved.getPartnerRel().getUuid().equals(previousPartnerRel.getUuid())) {
+            relationRepo.save(previousPartnerRel.toBuilder().uuid(null).type(EX_PARTNER).build());
+        }
     }
 
     private HsOfficePartnerEntity createPartnerEntity(final HsOfficePartnerInsertResource body) {

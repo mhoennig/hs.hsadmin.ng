@@ -30,7 +30,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Table(name = "hs_office_relation_rv")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +42,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    HsOfficeRelationRepository relationRepository;
+    HsOfficeRelationRepository relationRepo;
 
     @Autowired
     HsOfficePersonRepository personRepo;
@@ -377,6 +378,45 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
+        void patchingThePartnerRelCreatesExPartnerRel() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenPartner = givenSomeTemporaryPartnerBessler(20011);
+            final var givenPartnerRel = givenSomeTemporaryPartnerRel("Third OHG", "third contact");
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                   "partnerRelUuid": "%s"
+                                }
+                                """.formatted(givenPartnerRel.getUuid()))
+                        .port(port)
+                    .when()
+                        .patch("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
+                    .then().log().body()
+                        .assertThat().statusCode(200);
+            // @formatter:on
+
+            // then the partner got actually updated
+            context.define("superuser-alex@hostsharing.net");
+            assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
+                    .matches(partner -> {
+                        assertThat(partner.getPartnerRel().getHolder().getTradeName()).isEqualTo("Third OHG");
+                        assertThat(partner.getPartnerRel().getContact().getLabel()).isEqualTo("third contact");
+                        return true;
+                    });
+
+            // and an ex-partner-relation got created
+            final var anchorpartnerPersonUUid = givenPartner.getPartnerRel().getAnchor().getUuid();
+            assertThat(relationRepo.findRelationRelatedToPersonUuidAndRelationType(anchorpartnerPersonUUid, EX_PARTNER))
+                    .map(HsOfficeRelationEntity::toShortString)
+                    .contains("rel(anchor='LP Hostsharing eG', type='EX_PARTNER', holder='UF Erben Bessler')");
+        }
+
+        @Test
         void globalAdmin_withoutAssumedRole_canPatchPartialPropertiesOfArbitraryPartner() {
 
             context.define("superuser-alex@hostsharing.net");
@@ -402,23 +442,19 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("details.birthName", is("Maja Schmidt"));
-            // TODO: assert partnerRel
-//                    .body("contact.label", is(givenPartner.getContact().getLabel()))
-//                    .body("person.tradeName", is(givenPartner.getPerson().getTradeName()));
+                    .body("details.birthName", is("Maja Schmidt"))
+                    .body("partnerRel.contact.label", is(givenPartner.getPartnerRel().getContact().getLabel()));
             // @formatter:on
 
-            // finally, the partner is actually updated
+            // finally, the partner details and only the partner details are actually updated
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
-                    .matches(person -> {
-                        // TODO: assert partnerRel
-//                        assertThat(person.getPerson().getTradeName()).isEqualTo(givenPartner.getPerson().getTradeName());
-//                        assertThat(person.getContact().getLabel()).isEqualTo(givenPartner.getContact().getLabel());
-                        assertThat(person.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Leer");
-                        assertThat(person.getDetails().getRegistrationNumber()).isEqualTo("333333");
-                        assertThat(person.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
-                        assertThat(person.getDetails().getBirthday()).isEqualTo("1938-04-08");
-                        assertThat(person.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
+                    .matches(partner -> {
+                        assertThat(partner.getPartnerRel().getContact().getLabel()).isEqualTo(givenPartner.getPartnerRel().getContact().getLabel());
+                        assertThat(partner.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Leer");
+                        assertThat(partner.getDetails().getRegistrationNumber()).isEqualTo("333333");
+                        assertThat(partner.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
+                        assertThat(partner.getDetails().getBirthday()).isEqualTo("1938-04-08");
+                        assertThat(partner.getDetails().getDateOfDeath()).isEqualTo("2022-01-12");
                         return true;
                     });
         }
@@ -446,7 +482,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             // then the given partner is gone
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isEmpty();
-            assertThat(relationRepository.findByUuid(givenPartner.getPartnerRel().getUuid())).isEmpty();
+            assertThat(relationRepo.findByUuid(givenPartner.getPartnerRel().getUuid())).isEmpty();
         }
 
         @Test
