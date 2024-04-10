@@ -16,14 +16,36 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
             .valueDate(LocalDate.parse("2020-01-01"))
             .transactionType(HsOfficeCoopAssetsTransactionType.DEPOSIT)
             .assetValue(new BigDecimal("128.00"))
+            .comment("some comment")
             .build();
+
+
+    final HsOfficeCoopAssetsTransactionEntity givenCoopAssetAdjustmentTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
+            .membership(TEST_MEMBERSHIP)
+            .reference("some-ref")
+            .valueDate(LocalDate.parse("2020-01-15"))
+            .transactionType(HsOfficeCoopAssetsTransactionType.ADJUSTMENT)
+            .assetValue(new BigDecimal("-128.00"))
+            .comment("some comment")
+            .adjustedAssetTx(givenCoopAssetTransaction)
+            .build();
+
     final HsOfficeCoopAssetsTransactionEntity givenEmptyCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder().build();
 
     @Test
-    void toStringContainsAlmostAllPropertiesAccount() {
+    void toStringContainsAllNonNullProperties() {
         final var result = givenCoopAssetTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref)");
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref, some comment)");
+    }
+
+    @Test
+    void toStringWithReverseEntryContainsReverseEntry() {
+        givenCoopAssetTransaction.setAdjustedAssetTx(givenCoopAssetAdjustmentTransaction);
+
+        final var result = givenCoopAssetTransaction.toString();
+
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref, some comment, M-1000101:-128.00)");
     }
 
     @Test

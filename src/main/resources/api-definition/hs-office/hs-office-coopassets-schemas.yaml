@@ -32,6 +32,30 @@ components:
                     type: string
                 comment:
                     type: string
+                adjustedAssetTx:
+                    $ref: '#/components/schemas/HsOfficeAdjustedCoopAssetsTransaction'
+
+        HsOfficeAdjustedCoopAssetsTransaction:
+            description:
+                Similar to `HsOfficeCoopAssetsTransaction` but without the `reverseEntry`,
+                otherwise the JSON would be recursive.
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
+                assetValue:
+                    type: number
+                    format: currency
+                valueDate:
+                    type: string
+                    format: date
+                reference:
+                    type: string
+                comment:
+                    type: string
 
         HsOfficeCoopAssetsTransactionInsert:
             type: object
@@ -54,6 +78,9 @@ components:
                     maxLength: 48
                 comment:
                     type: string
+                reverseEntryUuid:
+                    type: string
+                    format: uuid
             required:
                 - membershipUuid
                 - transactionType

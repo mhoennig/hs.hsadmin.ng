@@ -387,16 +387,16 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
                 {
-                    30000=CoopAssetsTransaction(M-1001700: 2000-12-06, DEPOSIT, 1280.00, for subscription A),
-                    31000=CoopAssetsTransaction(M-1002000: 2000-12-06, DEPOSIT, 128.00, for subscription B),
-                    32000=CoopAssetsTransaction(M-1001700: 2005-01-10, DEPOSIT, 2560.00, for subscription C),
-                    33001=CoopAssetsTransaction(M-1001700: 2005-01-10, TRANSFER, -512.00, for transfer to 10),
-                    33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, for transfer from 7),
-                    34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, for cancellation D),
-                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, for cancellation D),
-                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, for cancellation D),
-                    35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, for subscription E),
-                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, chargeback for subscription E)
+                    30000=CoopAssetsTransaction(M-1001700: 2000-12-06, DEPOSIT, 1280.00, legacy data import, for subscription A),
+                    31000=CoopAssetsTransaction(M-1002000: 2000-12-06, DEPOSIT, 128.00, legacy data import, for subscription B),
+                    32000=CoopAssetsTransaction(M-1001700: 2005-01-10, DEPOSIT, 2560.00, legacy data import, for subscription C),
+                    33001=CoopAssetsTransaction(M-1001700: 2005-01-10, TRANSFER, -512.00, legacy data import, for transfer to 10),
+                    33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, legacy data import, for transfer from 7),
+                    34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, legacy data import, for cancellation D),
+                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, legacy data import, for cancellation D),
+                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, legacy data import, for cancellation D),
+                    35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, legacy data import, for subscription E),
+                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, legacy data import, chargeback for subscription E, M-1909000:+128.00)
                 }
                 """);
     }
@@ -849,7 +849,19 @@ public class ImportOfficeData extends ContextBasedTest {
                             .transactionType(assetTypeMapping.get(rec.getString("action")))
                             .assetValue(rec.getBigDecimal("amount"))
                             .comment(rec.getString("comment"))
+                            .reference("legacy data import") // TODO.spec: or use value from comment column?
                             .build();
+
+                    if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.ADJUSTMENT) {
+                        final var negativeValue = assetTransaction.getAssetValue().negate();
+                        final var adjustedAssetTx = coopAssets.values().stream().filter(a ->
+                                a.getTransactionType() != HsOfficeCoopAssetsTransactionType.ADJUSTMENT &&
+                                a.getMembership() == assetTransaction.getMembership() &&
+                                a.getAssetValue().equals(negativeValue))
+                                .findAny()
+                                .orElseThrow(() -> new IllegalStateException("cannot determine asset reverse entry for adjustment " + assetTransaction));
+                        assetTransaction.setAdjustedAssetTx(adjustedAssetTx);
+                    }
 
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
                 });

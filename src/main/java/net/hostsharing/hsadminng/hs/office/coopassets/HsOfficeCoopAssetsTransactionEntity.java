@@ -50,6 +50,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
             .withProp(HsOfficeCoopAssetsTransactionEntity::getAssetValue)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getReference)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getComment)
+            .withProp(at -> ofNullable(at.getAdjustedAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
             .quotedValues(false);
 
     @Id
@@ -93,6 +94,12 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
     @Column(name = "comment")
     private String comment;
 
+    /**
+     * Optionally, the UUID of the corresponding transaction for an adjustment transaction.
+     */
+    @OneToOne
+    @JoinColumn(name = "adjustedassettxuuid")
+    private HsOfficeCoopAssetsTransactionEntity adjustedAssetTx;
 
     public String getTaggedMemberNumber() {
         return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-?????");

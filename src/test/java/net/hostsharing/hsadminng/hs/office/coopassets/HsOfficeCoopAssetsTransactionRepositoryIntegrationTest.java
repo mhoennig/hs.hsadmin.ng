@@ -127,7 +127,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
     class FindAllCoopAssetsTransactions {
 
         @Test
-        public void globalAdmin_anViewAllCoopAssetsTransactions() {
+        public void globalAdmin_canViewAllCoopAssetsTransactions() {
             // given
             context("superuser-alex@hostsharing.net");
 
@@ -138,19 +138,22 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
                     null);
 
             // then
-            allTheseCoopAssetsTransactionsAreReturned(
+            exactlyTheseCoopAssetsTransactionsAreReturned(
                     result,
                     "CoopAssetsTransaction(M-1000101: 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
                     "CoopAssetsTransaction(M-1000101: 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
-                    "CoopAssetsTransaction(M-1000101: 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)",
+                    "CoopAssetsTransaction(M-1000101: 2022-10-20, DEPOSIT, 128.00, ref 1000101-3, some loss)",
+                    "CoopAssetsTransaction(M-1000101: 2022-10-21, ADJUSTMENT, -128.00, ref 1000101-3, some adjustment, M-1000101:+128.00)",
 
                     "CoopAssetsTransaction(M-1000202: 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
                     "CoopAssetsTransaction(M-1000202: 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
-                    "CoopAssetsTransaction(M-1000202: 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)",
+                    "CoopAssetsTransaction(M-1000202: 2022-10-20, DEPOSIT, 128.00, ref 1000202-3, some loss)",
+                    "CoopAssetsTransaction(M-1000202: 2022-10-21, ADJUSTMENT, -128.00, ref 1000202-3, some adjustment, M-1000202:+128.00)",
 
                     "CoopAssetsTransaction(M-1000303: 2010-03-15, DEPOSIT, 320.00, ref 1000303-1, initial deposit)",
                     "CoopAssetsTransaction(M-1000303: 2021-09-01, DISBURSAL, -128.00, ref 1000303-2, partial disbursal)",
-                    "CoopAssetsTransaction(M-1000303: 2022-10-20, ADJUSTMENT, 128.00, ref 1000303-3, some adjustment)");
+                    "CoopAssetsTransaction(M-1000303: 2022-10-20, DEPOSIT, 128.00, ref 1000303-3, some loss)",
+                    "CoopAssetsTransaction(M-1000303: 2022-10-21, ADJUSTMENT, -128.00, ref 1000303-3, some adjustment, M-1000303:+128.00)");
         }
 
         @Test
@@ -166,11 +169,12 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
                     null);
 
             // then
-            allTheseCoopAssetsTransactionsAreReturned(
+            exactlyTheseCoopAssetsTransactionsAreReturned(
                     result,
                     "CoopAssetsTransaction(M-1000202: 2010-03-15, DEPOSIT, 320.00, ref 1000202-1, initial deposit)",
                     "CoopAssetsTransaction(M-1000202: 2021-09-01, DISBURSAL, -128.00, ref 1000202-2, partial disbursal)",
-                    "CoopAssetsTransaction(M-1000202: 2022-10-20, ADJUSTMENT, 128.00, ref 1000202-3, some adjustment)");
+                    "CoopAssetsTransaction(M-1000202: 2022-10-20, DEPOSIT, 128.00, ref 1000202-3, some loss)",
+                    "CoopAssetsTransaction(M-1000202: 2022-10-21, ADJUSTMENT, -128.00, ref 1000202-3, some adjustment, M-1000202:+128.00)");
         }
 
         @Test
@@ -207,7 +211,8 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
                     result,
                     "CoopAssetsTransaction(M-1000101: 2010-03-15, DEPOSIT, 320.00, ref 1000101-1, initial deposit)",
                     "CoopAssetsTransaction(M-1000101: 2021-09-01, DISBURSAL, -128.00, ref 1000101-2, partial disbursal)",
-                    "CoopAssetsTransaction(M-1000101: 2022-10-20, ADJUSTMENT, 128.00, ref 1000101-3, some adjustment)");
+                    "CoopAssetsTransaction(M-1000101: 2022-10-20, DEPOSIT, 128.00, ref 1000101-3, some loss)",
+                    "CoopAssetsTransaction(M-1000101: 2022-10-21, ADJUSTMENT, -128.00, ref 1000101-3, some adjustment, M-1000101:+128.00)");
         }
     }
 

@@ -19,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +71,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("", hasSize(9));  // @formatter:on
+                    .body("", hasSize(12));  // @formatter:on
         }
 
         @Test
@@ -104,9 +106,16 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 "comment": "partial disbursal"
                             },
                             {
-                                "transactionType": "ADJUSTMENT",
+                                "transactionType": "DEPOSIT",
                                 "assetValue": 128.00,
                                 "valueDate": "2022-10-20",
+                                "reference": "ref 1000202-3",
+                                "comment": "some loss"
+                            },
+                            {
+                                "transactionType": "ADJUSTMENT",
+                                "assetValue": -128.00,
+                                "valueDate": "2022-10-21",
                                 "reference": "ref 1000202-3",
                                 "comment": "some adjustment"
                             }
@@ -188,9 +197,77 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new coopAssetsTransaction can be accessed under the generated UUID
-            final var newUserUuid = UUID.fromString(
+            final var newAssetTxUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isNotNull();
+            assertThat(newAssetTxUuid).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_canAddCoopAssetsAdjustmentTransaction() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+            final var givenTransaction = jpaAttempt.transacted(() -> {
+                // TODO.impl: introduce something like transactedAsSuperuser / transactedAs("...", ...)
+                context.define("superuser-alex@hostsharing.net");
+                return coopAssetsTransactionRepo.save(HsOfficeCoopAssetsTransactionEntity.builder()
+                                .transactionType(DEPOSIT)
+                                .valueDate(LocalDate.of(2022, 10, 20))
+                                .membership(givenMembership)
+                                .assetValue(new BigDecimal("256.00"))
+                                .reference("test ref")
+                        .build());
+                    }).assertSuccessful().assertNotNull().returnedValue();
+            toCleanup(HsOfficeCoopAssetsTransactionRawEntity.class, givenTransaction.getUuid());
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                   {
+                                       "membershipUuid": "%s",
+                                       "transactionType": "ADJUSTMENT",
+                                       "assetValue": %s,
+                                       "valueDate": "2022-10-30",
+                                       "reference": "test ref adjustment",
+                                       "comment": "some coop assets adjustment transaction",
+                                       "reverseEntryUuid": "%s"
+                                     }
+                                """.formatted(
+                                    givenMembership.getUuid(),
+                                    givenTransaction.getAssetValue().negate().toString(),
+                                    givenTransaction.getUuid()))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/office/coopassetstransactions")
+                    .then().log().all().assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("uuid", isUuidValid())
+                        .body("", lenientlyEquals("""
+                            {
+                                "transactionType": "ADJUSTMENT",
+                                "assetValue": -256.00,
+                                "valueDate": "2022-10-30",
+                                "reference": "test ref adjustment",
+                                "comment": "some coop assets adjustment transaction",
+                                "adjustedAssetTx": {
+                                    "transactionType": "DEPOSIT",
+                                    "assetValue": 256.00,
+                                    "valueDate": "2022-10-20",
+                                    "reference": "test ref"
+                                }
+                            }
+                            """.formatted(givenTransaction.getUuid())))
+                    .header("Location", startsWith("http://localhost"))
+                    .extract().header("Location");  // @formatter:on
+
+            // finally, the new coopAssetsTransaction can be accessed under the generated UUID
+            final var newAssetTxUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
+            assertThat(newAssetTxUuid).isNotNull();
+            toCleanup(HsOfficeCoopAssetsTransactionRawEntity.class, newAssetTxUuid);
         }
 
         @Test
@@ -199,7 +276,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)

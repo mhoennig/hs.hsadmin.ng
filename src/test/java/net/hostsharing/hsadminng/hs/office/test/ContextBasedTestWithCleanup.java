@@ -64,8 +64,10 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return merged;
     }
 
-    public UUID toCleanup(final Class<? extends RbacObject> entityClass, final UUID uuidToCleanup) {
-        out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup);
+    // TODO.test: back to `Class<? extends RbacObject> entityClass` but delete on raw table
+    // remove HsOfficeCoopAssetsTransactionRawEntity, which is not needed anymore after this change
+    public UUID toCleanup(final Class entityClass, final UUID uuidToCleanup) {
+        out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup + ")");
         entitiesToCleanup.put(uuidToCleanup, entityClass);
         return uuidToCleanup;
     }
@@ -120,7 +122,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         }
 
         if (initialRbacObjects != null){
-            assertNoNewRbackObjectsRolesAndGrantsLeaked();
+            assertNoNewRbacObjectsRolesAndGrantsLeaked();
         }
 
         initialTestDataValidated = false;
@@ -170,7 +172,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".cleanupAndCheckCleanup");
         cleanupTemporaryTestData();
         deleteLeakedRbacObjects();
-        long rbacObjectCount = assertNoNewRbackObjectsRolesAndGrantsLeaked();
+        long rbacObjectCount = assertNoNewRbacObjectsRolesAndGrantsLeaked();
 
         out.println("TOTAL OBJECT COUNT (after): " + rbacObjectCount);
     }
@@ -180,7 +182,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
             final var caughtException = jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net", null);
                 em.remove(em.getReference(entityClass, uuid));
-                out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " successful");
+                out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " generated");
             }).caughtException();
             if (caughtException != null) {
                 out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " failed: " + caughtException);
@@ -188,7 +190,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         });
     }
 
-    private long assertNoNewRbackObjectsRolesAndGrantsLeaked() {
+    private long assertNoNewRbacObjectsRolesAndGrantsLeaked() {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             assertEqual(initialRbacObjects, allRbacObjects());
