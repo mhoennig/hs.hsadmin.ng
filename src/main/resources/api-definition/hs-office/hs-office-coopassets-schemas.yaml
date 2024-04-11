@@ -33,12 +33,14 @@ components:
                 comment:
                     type: string
                 adjustedAssetTx:
-                    $ref: '#/components/schemas/HsOfficeAdjustedCoopAssetsTransaction'
+                    $ref: '#/components/schemas/HsOfficeReferencedCoopAssetsTransaction'
+                adjustmentAssetTx:
+                    $ref: '#/components/schemas/HsOfficeReferencedCoopAssetsTransaction'
 
-        HsOfficeAdjustedCoopAssetsTransaction:
+        HsOfficeReferencedCoopAssetsTransaction:
             description:
-                Similar to `HsOfficeCoopAssetsTransaction` but without the `reverseEntry`,
-                otherwise the JSON would be recursive.
+                Similar to `HsOfficeCoopAssetsTransaction` but without the self-referencing properties 
+                (`adjustedAssetTx` and `adjustmentAssetTx`), to avoid recursive JSON.
             type: object
             properties:
                 uuid:

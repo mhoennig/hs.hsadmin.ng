@@ -45,27 +45,27 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
 
         final var result = givenCoopAssetTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref, some comment, M-1000101:-128.00)");
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref, some comment, M-1000101:ADJ:-128.00)");
     }
 
     @Test
     void toShortStringContainsOnlyMemberNumberSuffixAndSharesCountOnly() {
         final var result = givenCoopAssetTransaction.toShortString();
 
-        assertThat(result).isEqualTo("M-1000101:+128.00");
+        assertThat(result).isEqualTo("M-1000101:DEP:+128.00");
     }
 
     @Test
     void toStringWithEmptyTransactionDoesNotThrowException() {
         final var result = givenEmptyCoopAssetsTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopAssetsTransaction(M-?????: )");
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-???????: )");
     }
 
     @Test
     void toShortStringEmptyTransactionDoesNotThrowException() {
         final var result = givenEmptyCoopAssetsTransaction.toShortString();
 
-        assertThat(result).isEqualTo("M-?????:+0.00");
+        assertThat(result).isEqualTo("M-???????:nul:+0.00");
     }
 }

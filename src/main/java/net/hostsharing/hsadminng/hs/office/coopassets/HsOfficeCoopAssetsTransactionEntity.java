@@ -51,6 +51,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
             .withProp(HsOfficeCoopAssetsTransactionEntity::getReference)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getComment)
             .withProp(at -> ofNullable(at.getAdjustedAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
+            .withProp(at -> ofNullable(at.getAdjustmentAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
             .quotedValues(false);
 
     @Id
@@ -101,8 +102,11 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
     @JoinColumn(name = "adjustedassettxuuid")
     private HsOfficeCoopAssetsTransactionEntity adjustedAssetTx;
 
+    @OneToOne(mappedBy = "adjustedAssetTx")
+    private HsOfficeCoopAssetsTransactionEntity adjustmentAssetTx;
+
     public String getTaggedMemberNumber() {
-        return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-?????");
+        return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-???????");
     }
 
     @Override
@@ -112,7 +116,10 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
 
     @Override
     public String toShortString() {
-        return "%s:%+1.2f".formatted(getTaggedMemberNumber(), Optional.ofNullable(assetValue).orElse(BigDecimal.ZERO));
+        return "%s:%.3s:%+1.2f".formatted(
+                getTaggedMemberNumber(),
+                transactionType,
+                ofNullable(assetValue).orElse(BigDecimal.ZERO));
     }
 
     public static RbacView rbac() {

@@ -110,14 +110,28 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 "assetValue": 128.00,
                                 "valueDate": "2022-10-20",
                                 "reference": "ref 1000202-3",
-                                "comment": "some loss"
+                                "comment": "some loss",
+                                "adjustmentAssetTx": {
+                                    "transactionType": "ADJUSTMENT",
+                                    "assetValue": -128.00,
+                                    "valueDate": "2022-10-21",
+                                    "reference": "ref 1000202-3",
+                                    "comment": "some adjustment"
+                                }
                             },
                             {
                                 "transactionType": "ADJUSTMENT",
                                 "assetValue": -128.00,
                                 "valueDate": "2022-10-21",
                                 "reference": "ref 1000202-3",
-                                "comment": "some adjustment"
+                                "comment": "some adjustment",
+                                "adjustedAssetTx": {
+                                    "transactionType": "DEPOSIT",
+                                    "assetValue": 128.00,
+                                    "valueDate": "2022-10-20",
+                                    "reference": "ref 1000202-3",
+                                    "comment": "some loss"
+                                }
                             }
                         ]
                         """)); // @formatter:on

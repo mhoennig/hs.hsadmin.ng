@@ -396,7 +396,7 @@ public class ImportOfficeData extends ContextBasedTest {
                     34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, legacy data import, for cancellation D),
                     34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, legacy data import, for cancellation D),
                     35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, legacy data import, for subscription E),
-                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, legacy data import, chargeback for subscription E, M-1909000:+128.00)
+                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, legacy data import, chargeback for subscription E, M-1909000:DEP:+128.00)
                 }
                 """);
     }
