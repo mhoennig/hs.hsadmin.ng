@@ -15,10 +15,21 @@ create table if not exists hs_office_coopsharestransaction
     membershipUuid  uuid not null references hs_office_membership(uuid),
     transactionType HsOfficeCoopSharesTransactionType not null,
     valueDate       date not null,
-    shareCount      integer,
-    reference       varchar(48),
+    shareCount      integer not null,
+    reference       varchar(48) not null,
+    adjustedShareTxUuid uuid unique REFERENCES hs_office_coopsharestransaction(uuid) DEFERRABLE INITIALLY DEFERRED,
     comment         varchar(512)
 );
+--//
+
+-- ============================================================================
+--changeset hs-office-coopshares-BUSINESS-RULES:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+alter table hs_office_coopsharestransaction
+    add constraint hs_office_coopsharestransaction_reverse_entry_missing
+        check ( transactionType = 'ADJUSTMENT' and adjustedShareTxUuid is not null
+             or transactionType <> 'ADJUSTMENT' and adjustedShareTxUuid is null);
 --//
 
 -- ============================================================================

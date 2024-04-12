@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
@@ -41,13 +42,15 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsOfficeCoopSharesTransactionEntity> stringify = stringify(HsOfficeCoopSharesTransactionEntity.class)
-            .withProp(HsOfficeCoopSharesTransactionEntity::getMemberNumberTagged)
+            .withIdProp(HsOfficeCoopSharesTransactionEntity::getMemberNumberTagged)
             .withProp(HsOfficeCoopSharesTransactionEntity::getValueDate)
             .withProp(HsOfficeCoopSharesTransactionEntity::getTransactionType)
             .withProp(HsOfficeCoopSharesTransactionEntity::getShareCount)
             .withProp(HsOfficeCoopSharesTransactionEntity::getReference)
             .withProp(HsOfficeCoopSharesTransactionEntity::getComment)
-            .quotedValues(false);
+            .withProp(at -> ofNullable(at.getAdjustedShareTx()).map(HsOfficeCoopSharesTransactionEntity::toShortString).orElse(null))
+            .withProp(at -> ofNullable(at.getAdjustmentShareTx()).map(HsOfficeCoopSharesTransactionEntity::toShortString).orElse(null))
+        .quotedValues(false);
 
     @Id
     @GeneratedValue
@@ -89,6 +92,16 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, RbacO
     @Column(name = "comment")
     private String comment;
 
+    /**
+     * Optionally, the UUID of the corresponding transaction for an adjustment transaction.
+     */
+    @OneToOne
+    @JoinColumn(name = "adjustedsharetxuuid")
+    private HsOfficeCoopSharesTransactionEntity adjustedShareTx;
+
+    @OneToOne(mappedBy = "adjustedShareTx")
+    private HsOfficeCoopSharesTransactionEntity adjustmentShareTx;
+
     @Override
     public String toString() {
         return stringify.apply(this);
@@ -100,7 +113,7 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, RbacO
 
     @Override
     public String toShortString() {
-        return "%s%+d".formatted(getMemberNumberTagged(), shareCount);
+        return "%s:%.3s:%+d".formatted(getMemberNumberTagged(), transactionType, shareCount);
     }
 
     public static RbacView rbac() {

@@ -1,7 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.coopshares;
 
+import jakarta.persistence.EntityNotFoundException;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
+import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionResource;
 import net.hostsharing.hsadminng.mapper.Mapper;
@@ -18,6 +21,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import static java.lang.String.join;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.CANCELLATION;
@@ -64,7 +68,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         context.define(currentUser, assumedRoles);
         validate(requestBody);
 
-        final var entityToSave = mapper.map(requestBody, HsOfficeCoopSharesTransactionEntity.class);
+        final var entityToSave = mapper.map(requestBody, HsOfficeCoopSharesTransactionEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = coopSharesTransactionRepo.save(entityToSave);
 
@@ -131,4 +135,10 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         }
     }
 
+    final BiConsumer<HsOfficeCoopSharesTransactionInsertResource, HsOfficeCoopSharesTransactionEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+        if ( resource.getAdjustedShareTxUuid() != null ) {
+            entity.setAdjustedShareTx(coopSharesTransactionRepo.findByUuid(resource.getAdjustedShareTxUuid())
+                .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] adjustedShareTxUuid %s not found".formatted(resource.getAdjustedShareTxUuid()))));
+        }
+    };
 }

@@ -360,10 +360,10 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
-                    33443=CoopShareTransaction(M-1001700, 2000-12-06, SUBSCRIPTION, 20, initial share subscription),
-                    33451=CoopShareTransaction(M-1002000, 2000-12-06, SUBSCRIPTION, 2, initial share subscription),
-                    33701=CoopShareTransaction(M-1001700, 2005-01-10, SUBSCRIPTION, 40, increase),
-                    33810=CoopShareTransaction(M-1002000, 2016-12-31, CANCELLATION, 22, membership ended)
+                    33443=CoopShareTransaction(M-1001700, 2000-12-06, SUBSCRIPTION, 20, legacy data import, initial share subscription),
+                    33451=CoopShareTransaction(M-1002000, 2000-12-06, SUBSCRIPTION, 2, legacy data import, initial share subscription),
+                    33701=CoopShareTransaction(M-1001700, 2005-01-10, SUBSCRIPTION, 40, legacy data import, increase),
+                    33810=CoopShareTransaction(M-1002000, 2016-12-31, CANCELLATION, 22, legacy data import, membership ended)
                 }
                 """);
     }
@@ -803,8 +803,19 @@ public class ImportOfficeData extends ContextBasedTest {
                             )
                             .shareCount(rec.getInteger("quantity"))
                             .comment( rec.getString("comment"))
+                            .reference("legacy data import") // TODO.spec: or use value from comment column?
                             .build();
 
+                    if (shareTransaction.getTransactionType() == HsOfficeCoopSharesTransactionType.ADJUSTMENT) {
+                        final var negativeValue = -shareTransaction.getShareCount();
+                        final var adjustedShareTx = coopShares.values().stream().filter(a ->
+                                a.getTransactionType() != HsOfficeCoopSharesTransactionType.ADJUSTMENT &&
+                                    a.getMembership() == shareTransaction.getMembership() &&
+                                    a.getShareCount() == negativeValue)
+                            .findAny()
+                            .orElseThrow(() -> new IllegalStateException("cannot determine share reverse entry for adjustment " + shareTransaction));
+                        shareTransaction.setAdjustedShareTx(adjustedShareTx);
+                    }
                     coopShares.put(rec.getInteger("member_share_id"), shareTransaction);
                 });
     }

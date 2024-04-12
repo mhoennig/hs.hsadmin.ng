@@ -4,6 +4,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
+import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRawEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
 import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
 import net.hostsharing.test.Accepts;
@@ -19,9 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
 import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +74,15 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         void globalAdmin_canViewAllCoopSharesTransactions() {
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions").then().log().all().assertThat().statusCode(200).contentType("application/json").body("", hasSize(9));  // @formatter:on
+                .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                .when()
+                    .get("http://localhost/api/hs/office/coopsharestransactions")
+                .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", hasSize(12));  // @formatter:on
         }
 
         @Test
@@ -96,11 +109,32 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                             "comment": "cancelling some"
                         },
                         {
+                                "transactionType": "SUBSCRIPTION",
+                                "shareCount": 2,
+                                "valueDate": "2022-10-20",
+                                "reference": "ref 1000202-3",
+                                "comment": "some subscription",
+                                "adjustmentShareTx": {
+                                    "transactionType": "ADJUSTMENT",
+                                    "shareCount": -2,
+                                    "valueDate": "2022-10-21",
+                                    "reference": "ref 1000202-4",
+                                    "comment": "some adjustment"
+                                }
+                            },
+                        {
                             "transactionType": "ADJUSTMENT",
-                            "shareCount": 2,
-                            "valueDate": "2022-10-20",
-                            "reference": "ref 1000202-3",
-                            "comment": "some adjustment"
+                            "shareCount": -2,
+                            "valueDate": "2022-10-21",
+                            "reference": "ref 1000202-4",
+                            "comment": "some adjustment",
+                            "adjustedShareTx": {
+                                    "transactionType": "SUBSCRIPTION",
+                                    "shareCount": 2,
+                                    "valueDate": "2022-10-20",
+                                    "reference": "ref 1000202-3",
+                                    "comment": "some subscription"
+                            }
                         }
                     ]
                     """)); // @formatter:on
@@ -159,8 +193,76 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                     """)).header("Location", startsWith("http://localhost")).extract().header("Location");  // @formatter:on
 
             // finally, the new coopSharesTransaction can be accessed under the generated UUID
-            final var newUserUuid = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isNotNull();
+            final var newShareTxUuid = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
+            assertThat(newShareTxUuid).isNotNull();
+        }
+
+        @Test
+        void globalAdmin_canAddCoopSharesAdjustmentTransaction() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+            final var givenTransaction = jpaAttempt.transacted(() -> {
+                // TODO.impl: introduce something like transactedAsSuperuser / transactedAs("...", ...)
+                context.define("superuser-alex@hostsharing.net");
+                return coopSharesTransactionRepo.save(HsOfficeCoopSharesTransactionEntity.builder()
+                    .transactionType(HsOfficeCoopSharesTransactionType.SUBSCRIPTION)
+                    .valueDate(LocalDate.of(2022, 10, 20))
+                    .membership(givenMembership)
+                    .shareCount(13)
+                    .reference("test ref")
+                    .build());
+            }).assertSuccessful().assertNotNull().returnedValue();
+            toCleanup(HsOfficeCoopSharesTransactionRawEntity.class, givenTransaction.getUuid());
+
+            final var location = RestAssured // @formatter:off
+                .given()
+                .header("current-user", "superuser-alex@hostsharing.net")
+                .contentType(ContentType.JSON)
+                .body("""
+                                   {
+                                       "membershipUuid": "%s",
+                                       "transactionType": "ADJUSTMENT",
+                                       "shareCount": %s,
+                                       "valueDate": "2022-10-30",
+                                       "reference": "test ref adjustment",
+                                       "comment": "some coop shares adjustment transaction",
+                                       "adjustedShareTxUuid": "%s"
+                                     }
+                                """.formatted(
+                    givenMembership.getUuid(),
+                    -givenTransaction.getShareCount(),
+                    givenTransaction.getUuid()))
+                .port(port)
+                .when()
+                .post("http://localhost/api/hs/office/coopsharestransactions")
+                .then().log().all().assertThat()
+                .statusCode(201)
+                .contentType(ContentType.JSON)
+                .body("uuid", isUuidValid())
+                .body("", lenientlyEquals("""
+                            {
+                                "transactionType": "ADJUSTMENT",
+                                "shareCount": -13,
+                                "valueDate": "2022-10-30",
+                                "reference": "test ref adjustment",
+                                "comment": "some coop shares adjustment transaction",
+                                "adjustedShareTx": {
+                                    "transactionType": "SUBSCRIPTION",
+                                    "shareCount": 13,
+                                    "valueDate": "2022-10-20",
+                                    "reference": "test ref"
+                                }
+                            }
+                            """))
+                .header("Location", startsWith("http://localhost"))
+                .extract().header("Location");  // @formatter:on
+
+            // finally, the new coopAssetsTransaction can be accessed under the generated UUID
+            final var newShareTxUuid = UUID.fromString(
+                location.substring(location.lastIndexOf('/') + 1));
+            assertThat(newShareTxUuid).isNotNull();
+            toCleanup(HsOfficeCoopSharesTransactionRawEntity.class, newShareTxUuid);
         }
 
         @Test
@@ -169,7 +271,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given().header("current-user", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
                     {
                         "membershipUuid": "%s",

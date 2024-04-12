@@ -27,6 +27,31 @@ components:
                     type: string
                 comment:
                     type: string
+                adjustedShareTx:
+                    $ref: '#/components/schemas/HsOfficeReferencedCoopSharesTransaction'
+                adjustmentShareTx:
+                    $ref: '#/components/schemas/HsOfficeReferencedCoopSharesTransaction'
+
+        HsOfficeReferencedCoopSharesTransaction:
+            description:
+                Similar to `HsOfficeCoopSharesTransaction` but without the self-referencing properties
+                (`adjustedShareTx` and `adjustmentShareTx`), to avoid recursive JSON.
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                transactionType:
+                    $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
+                shareCount:
+                    type: integer
+                valueDate:
+                    type: string
+                    format: date
+                reference:
+                    type: string
+                comment:
+                    type: string
 
         HsOfficeCoopSharesTransactionInsert:
             type: object
@@ -48,6 +73,9 @@ components:
                     maxLength: 48
                 comment:
                     type: string
+                adjustedShareTxUuid:
+                    type: string
+                    format: uuid
             required:
                 - membershipUuid
                 - transactionType
