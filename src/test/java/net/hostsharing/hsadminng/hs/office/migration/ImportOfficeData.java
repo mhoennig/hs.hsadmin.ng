@@ -4,7 +4,7 @@ import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
@@ -22,7 +22,7 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
@@ -360,10 +360,10 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
-                    33443=CoopShareTransaction(M-1001700, 2000-12-06, SUBSCRIPTION, 20, legacy data import, initial share subscription),
-                    33451=CoopShareTransaction(M-1002000, 2000-12-06, SUBSCRIPTION, 2, legacy data import, initial share subscription),
-                    33701=CoopShareTransaction(M-1001700, 2005-01-10, SUBSCRIPTION, 40, legacy data import, increase),
-                    33810=CoopShareTransaction(M-1002000, 2016-12-31, CANCELLATION, 22, legacy data import, membership ended)
+                    33443=CoopShareTransaction(M-1001700: 2000-12-06, SUBSCRIPTION, 20, legacy data import, initial share subscription),
+                    33451=CoopShareTransaction(M-1002000: 2000-12-06, SUBSCRIPTION, 2, legacy data import, initial share subscription),
+                    33701=CoopShareTransaction(M-1001700: 2005-01-10, SUBSCRIPTION, 40, legacy data import, increase),
+                    33810=CoopShareTransaction(M-1002000: 2016-12-31, CANCELLATION, 22, legacy data import, membership ended)
                 }
                 """);
     }
@@ -433,7 +433,6 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(3001)
     void removeSelfRepresentativeRelations() {
-        assumeThatWeAreImportingControlledTestData();
 
         // this happens if a natural person is marked as 'contractual' for itself
         final var idsToRemove = new HashSet<Integer>();
@@ -453,7 +452,6 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(3002)
     void removeEmptyRelations() {
-        assumeThatWeAreImportingControlledTestData();
 
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
@@ -474,7 +472,6 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(3003)
     void removeEmptyPartners() {
-        assumeThatWeAreImportingControlledTestData();
 
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
@@ -498,7 +495,6 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(3004)
     void removeEmptyDebitors() {
-        assumeThatWeAreImportingControlledTestData();
 
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
@@ -510,8 +506,10 @@ public class ImportOfficeData extends ContextBasedTest {
                 idsToRemove.add(id);
             }
         });
-        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99
         idsToRemove.forEach(id -> debitors.remove(id));
+
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(idsToRemove.size()).isEqualTo(1); // only from partner #99
     }
 
     @Test

@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.rbac.rbacrole;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.test.Array;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static net.hostsharing.test.JpaAttempt.attempt;
+import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest

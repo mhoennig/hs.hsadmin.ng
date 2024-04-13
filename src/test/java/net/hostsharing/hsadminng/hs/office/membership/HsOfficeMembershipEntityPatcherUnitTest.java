@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipStatusResource;
 import net.hostsharing.hsadminng.mapper.Mapper;
-import net.hostsharing.test.PatchUnitTestBase;
+import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;

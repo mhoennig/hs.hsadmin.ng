@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
-import net.hostsharing.test.Array;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static java.util.Comparator.comparing;
-import static net.hostsharing.test.JpaAttempt.attempt;
+import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest

@@ -10,9 +10,8 @@ import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,8 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -54,7 +53,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     JpaAttempt jpaAttempt;
 
     @Nested
-    @Accepts({ "Partner:F(Find)" })
     @Transactional
     class ListPartners {
 
@@ -84,7 +82,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Partner:C(Create)" })
     @Transactional
     class AddPartner {
 
@@ -226,7 +223,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Partner:R(Read)" })
     @Transactional
     class GetPartner {
 
@@ -264,7 +260,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Partner:X(Access Control)" })
         void normalUser_canNotGetUnrelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("First").get(0).getUuid();
@@ -280,7 +275,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Partner:X(Access Control)" })
         void contactAdminUser_canGetRelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartnerUuid = partnerRepo.findPartnerByOptionalNameLike("first contact").get(0).getUuid();
@@ -306,7 +300,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Partner:U(Update)" })
     @Transactional
     class PatchPartner {
 
@@ -462,7 +455,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Partner:D(Delete)" })
     @Transactional
     class DeletePartner {
 
@@ -486,7 +478,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Partner:X(Access Control)" })
         void contactAdminUser_canNotDeleteRelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20014);
@@ -506,7 +497,6 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Partner:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20015);

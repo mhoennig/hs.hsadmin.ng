@@ -5,9 +5,8 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +23,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
@@ -56,7 +55,6 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
     EntityManager em;
 
     @Nested
-    @Accepts({ "CoopAssetsTransaction:F(Find)" })
     class ListCoopAssetsTransactions {
 
         @Test
@@ -168,7 +166,6 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    @Accepts({ "CoopAssetsTransaction:C(Create)" })
     class AddCoopAssetsTransaction {
 
         @Test
@@ -232,7 +229,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 .reference("test ref")
                         .build());
                     }).assertSuccessful().assertNotNull().returnedValue();
-            toCleanup(HsOfficeCoopAssetsTransactionRawEntity.class, givenTransaction.getUuid());
+            toCleanup(HsOfficeCoopAssetsTransactionEntity.class, givenTransaction.getUuid());
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -281,7 +278,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
             final var newAssetTxUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newAssetTxUuid).isNotNull();
-            toCleanup(HsOfficeCoopAssetsTransactionRawEntity.class, newAssetTxUuid);
+            toCleanup(HsOfficeCoopAssetsTransactionEntity.class, newAssetTxUuid);
         }
 
         @Test
@@ -321,7 +318,6 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    @Accepts({ "CoopAssetTransaction:R(Read)" })
     class GetCoopAssetTransaction {
 
         @Test
@@ -348,7 +344,6 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
         }
 
         @Test
-        @Accepts({ "CoopAssetTransaction:X(Access Control)" })
         void normalUser_canNotGetUnrelatedCoopAssetTransaction() {
             context.define("superuser-alex@hostsharing.net");
             final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
@@ -366,7 +361,6 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
         }
 
         @Test
-        @Accepts({ "CoopAssetTransaction:X(Access Control)" })
         void partnerPersonUser_canGetRelatedCoopAssetTransaction() {
             context.define("superuser-alex@hostsharing.net");
             final var givenCoopAssetTransactionUuid = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(

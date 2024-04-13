@@ -2,22 +2,11 @@ package net.hostsharing.hsadminng.rbac.rbacdef;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
-import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransactionEntity;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
-import net.hostsharing.hsadminng.test.cust.TestCustomerEntity;
-import net.hostsharing.hsadminng.test.dom.TestDomainEntity;
-import net.hostsharing.hsadminng.test.pac.TestPackageEntity;
+import org.reflections.Reflections;
+import org.reflections.scanners.TypeAnnotationsScanner;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +16,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.lang.reflect.Modifier.isStatic;
 import static java.util.Arrays.stream;
@@ -1187,25 +1175,24 @@ public class RbacView {
         }
     }
 
+    public static Set<Class<? extends RbacObject>> findRbacEntityClasses(String packageName) {
+        final var reflections = new Reflections(packageName, TypeAnnotationsScanner.class);
+        return reflections.getTypesAnnotatedWith(Entity.class).stream()
+                .filter(c -> stream(c.getInterfaces()).anyMatch(i -> i==RbacObject.class))
+                .map(RbacView::castToSubclassOfRbacObject)
+                .collect(Collectors.toSet());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends RbacObject> castToSubclassOfRbacObject(final Class<?> clazz) {
+        return (Class<? extends RbacObject>) clazz;
+    }
+
     /**
      * This main method generates the RbacViews (PostgreSQL+diagram) for all given entity classes.
      */
-    public static void main(String[] args) {
-        Stream.of(
-                TestCustomerEntity.class,
-                TestPackageEntity.class,
-                TestDomainEntity.class,
-                HsOfficePersonEntity.class,
-                HsOfficePartnerEntity.class,
-                HsOfficePartnerDetailsEntity.class,
-                HsOfficeBankAccountEntity.class,
-                HsOfficeDebitorEntity.class,
-                HsOfficeRelationEntity.class,
-                HsOfficeCoopAssetsTransactionEntity.class,
-                HsOfficeContactEntity.class,
-                HsOfficeSepaMandateEntity.class,
-                HsOfficeCoopSharesTransactionEntity.class,
-                HsOfficeMembershipEntity.class
-        ).forEach(RbacView::generateRbacView);
+    public static void main(String[] args) throws Exception {
+        findRbacEntityClasses("net.hostsharing.hsadminng")
+                .forEach(RbacView::generateRbacView);
     }
 }

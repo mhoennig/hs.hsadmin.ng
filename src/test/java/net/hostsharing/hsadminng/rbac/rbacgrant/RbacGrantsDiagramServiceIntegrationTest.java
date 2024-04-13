@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService.Include;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

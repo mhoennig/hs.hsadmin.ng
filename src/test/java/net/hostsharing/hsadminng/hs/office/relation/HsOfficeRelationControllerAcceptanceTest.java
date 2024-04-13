@@ -2,14 +2,13 @@ package net.hostsharing.hsadminng.hs.office.relation;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationTypeResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,8 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -56,7 +55,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     JpaAttempt jpaAttempt;
 
     @Nested
-    @Accepts({ "Relation:F(Find)" })
     class ListRelations {
 
         @Test
@@ -119,7 +117,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     }
 
     @Nested
-    @Accepts({ "Relation:C(Create)" })
     class AddRelation {
 
         @Test
@@ -269,7 +266,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     }
 
     @Nested
-    @Accepts({ "Relation:R(Read)" })
     class GetRelation {
 
         @Test
@@ -296,7 +292,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
-        @Accepts({ "Relation:X(Access Control)" })
         void normalUser_canNotGetUnrelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final UUID givenRelationUuid = findRelation("First", "Firby").getUuid();
@@ -312,7 +307,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
-        @Accepts({ "Relation:X(Access Control)" })
         void contactAdminUser_canGetRelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = findRelation("First", "Firby");
@@ -351,7 +345,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     }
 
     @Nested
-    @Accepts({ "Relation:U(Update)" })
     class PatchRelation {
 
         @Test
@@ -398,7 +391,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     }
 
     @Nested
-    @Accepts({ "Relation:D(Delete)" })
     class DeleteRelation {
 
         @Test
@@ -420,7 +412,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
-        @Accepts({ "Relation:X(Access Control)" })
         void contactAdminUser_canNotDeleteRelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler();
@@ -440,7 +431,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
-        @Accepts({ "Relation:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler();

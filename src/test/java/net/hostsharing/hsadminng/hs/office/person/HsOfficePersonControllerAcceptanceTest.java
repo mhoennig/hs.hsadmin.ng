@@ -4,9 +4,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -20,8 +19,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -50,7 +49,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     EntityManager em;
 
     @Nested
-    @Accepts({ "Person:F(Find)" })
     class ListPersons {
 
         @Test
@@ -71,7 +69,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
-    @Accepts({ "Person:C(Create)" })
     class AddPerson {
 
         @Test
@@ -109,7 +106,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
-    @Accepts({ "Person:R(Read)" })
     @Transactional
     class GetPerson {
 
@@ -135,7 +131,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        @Accepts({ "Person:X(Access Control)" })
         void normalUser_canNotGetUnrelatedPerson() {
             final var givenPersonUuid = jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
@@ -153,7 +148,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        @Accepts({ "Person:X(Access Control)" })
         void personOwnerUser_canGetRelatedPerson() {
             final var givenPersonUuid = jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
@@ -181,7 +175,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
-    @Accepts({ "Person:U(Update)" })
     @Transactional
     class PatchPerson {
 
@@ -269,7 +262,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
-    @Accepts({ "Person:D(Delete)" })
     @Transactional
     class DeletePerson {
 
@@ -293,7 +285,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        @Accepts({ "Person:X(Access Control)" })
         void personOwner_canDeleteRelatedPerson() {
             final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
 
@@ -311,7 +302,6 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        @Accepts({ "Person:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedPerson() {
             final var givenPerson = givenSomeTemporaryPersonCreatedBy("selfregistered-test-user@hostsharing.org");
 

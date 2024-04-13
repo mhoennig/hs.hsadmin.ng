@@ -4,12 +4,9 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
-import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRawEntity;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipRepository;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -22,13 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
@@ -67,7 +62,6 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    @Accepts({"CoopSharesTransaction:F(Find)"})
     class ListCoopSharesTransactions {
 
         @Test
@@ -163,7 +157,6 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    @Accepts({"CoopSharesTransaction:C(Create)"})
     class AddCoopSharesTransaction {
 
         @Test
@@ -213,7 +206,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                     .reference("test ref")
                     .build());
             }).assertSuccessful().assertNotNull().returnedValue();
-            toCleanup(HsOfficeCoopSharesTransactionRawEntity.class, givenTransaction.getUuid());
+            toCleanup(HsOfficeCoopSharesTransactionEntity.class, givenTransaction.getUuid());
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -262,7 +255,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var newShareTxUuid = UUID.fromString(
                 location.substring(location.lastIndexOf('/') + 1));
             assertThat(newShareTxUuid).isNotNull();
-            toCleanup(HsOfficeCoopSharesTransactionRawEntity.class, newShareTxUuid);
+            toCleanup(HsOfficeCoopSharesTransactionEntity.class, newShareTxUuid);
         }
 
         @Test
@@ -292,7 +285,6 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    @Accepts({"CoopShareTransaction:R(Read)"})
     class GetCoopShareTransaction {
 
         @Test
@@ -309,7 +301,6 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         }
 
         @Test
-        @Accepts({"CoopShareTransaction:X(Access Control)"})
         void normalUser_canNotGetUnrelatedCoopShareTransaction() {
             context.define("superuser-alex@hostsharing.net");
             final var givenCoopShareTransactionUuid = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
@@ -319,7 +310,6 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         }
 
         @Test
-        @Accepts({"CoopShareTransaction:X(Access Control)"})
         void partnerPersonUser_canGetRelatedCoopShareTransaction() {
             context.define("superuser-alex@hostsharing.net");
             final var givenCoopShareTransactionUuid = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();

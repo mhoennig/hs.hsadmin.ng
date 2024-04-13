@@ -1,12 +1,11 @@
 package net.hostsharing.hsadminng.rbac.rbacgrant;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserEntity;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserRepository;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.test.JpaAttempt.attempt;
+import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -58,7 +57,6 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
     class FindAllGrantsOfUser {
 
         @Test
-        @Accepts({ "GRT:L(List)" })
         public void packageAdmin_canViewItsRbacGrants() {
             // given
             context("pac-admin-xxx00@xxx.example.com", null);
@@ -73,7 +71,6 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:L(List)" })
         public void customerAdmin_canViewItsRbacGrants() {
             // given
             context("customer-admin@xxx.example.com", null);
@@ -91,7 +88,6 @@ class RbacGrantRepositoryIntegrationTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:L(List)" })
         public void customerAdmin_withAssumedRole_canOnlyViewRbacGrantsVisibleByAssumedRole() {
             // given:
             context("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");

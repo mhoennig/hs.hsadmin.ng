@@ -10,9 +10,8 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,8 +27,8 @@ import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -74,7 +73,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     EntityManager em;
 
     @Nested
-    @Accepts({ "Debitor:F(Find)" })
     class ListDebitors {
 
         @Test
@@ -434,7 +432,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Debitor:R(Read)" })
     class GetDebitor {
 
         @Test
@@ -499,7 +496,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Debitor:X(Access Control)" })
         void normalUser_canNotGetUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorUuid = debitorRepo.findDebitorByOptionalNameLike("First").get(0).getUuid();
@@ -515,7 +511,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Debitor:X(Access Control)" })
         void contactAdminUser_canGetRelatedDebitorExceptRefundBankAccount() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorUuid = debitorRepo.findDebitorByOptionalNameLike("first contact").get(0).getUuid();
@@ -541,7 +536,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Debitor:U(Update)" })
     class PatchDebitor {
 
         @Test
@@ -654,7 +648,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Debitor:D(Delete)" })
     class DeleteDebitor {
 
         @Test
@@ -676,7 +669,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Debitor:X(Access Control)" })
         void contactAdminUser_canNotDeleteRelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
@@ -696,7 +688,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Debitor:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.mapper.Mapper;
-import net.hostsharing.test.JsonBuilder;
+import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.UUID;
 import java.util.function.Function;
 
-import static net.hostsharing.test.JsonBuilder.jsonObject;
+import static net.hostsharing.hsadminng.rbac.test.JsonBuilder.jsonObject;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

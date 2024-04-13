@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
-import net.hostsharing.test.PatchUnitTestBase;
+import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactPatchResource;
 import org.junit.jupiter.api.TestInstance;
 

@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.relation;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.test.PatchUnitTestBase;
+import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;

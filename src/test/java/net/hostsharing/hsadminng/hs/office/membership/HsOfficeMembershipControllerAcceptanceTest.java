@@ -6,9 +6,8 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -25,8 +24,8 @@ import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.ACTIVE;
 import static net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipStatus.CANCELLED;
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -61,7 +60,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     EntityManager em;
 
     @Nested
-    @Accepts({ "Membership:F(Find)" })
     class ListMemberships {
 
         @Test
@@ -168,7 +166,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     }
 
     @Nested
-    @Accepts({ "Membership:C(Create)" })
     class AddMembership {
 
         @Test
@@ -215,7 +212,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     }
 
     @Nested
-    @Accepts({ "Membership:R(Read)" })
     class GetMembership {
 
         @Test
@@ -245,7 +241,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        @Accepts({ "Membership:X(Access Control)" })
         void normalUser_canNotGetUnrelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000101).getUuid();
@@ -261,7 +256,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        @Accepts({ "Membership:X(Access Control)" })
         void parnerRelAgent_canGetRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).getUuid();
@@ -290,7 +284,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     }
 
     @Nested
-    @Accepts({ "Membership:U(Update)" })
     class PatchMembership {
 
         @Test
@@ -371,7 +364,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
     }
 
     @Nested
-    @Accepts({ "Membership:D(Delete)" })
     class DeleteMembership {
 
         @Test
@@ -393,7 +385,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        @Accepts({ "Membership:X(Access Control)" })
         void partnerAgentUser_canNotDeleteRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
@@ -413,7 +404,6 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        @Accepts({ "Membership:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");

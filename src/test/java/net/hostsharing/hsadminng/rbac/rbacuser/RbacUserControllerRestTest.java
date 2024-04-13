@@ -21,7 +21,7 @@ import jakarta.persistence.SynchronizationType;
 import java.util.Map;
 import java.util.UUID;
 
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;

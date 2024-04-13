@@ -4,8 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,6 @@ class RbacUserControllerAcceptanceTest {
     class CreateRbacUser {
 
         @Test
-        @Accepts({ "USR:C(Create)", "USR:X(Access Control)" })
         void anybody_canCreateANewUser() {
 
             // @formatter:off
@@ -77,7 +75,6 @@ class RbacUserControllerAcceptanceTest {
     class GetRbacUser {
 
         @Test
-        @Accepts({ "USR:R(Read)" })
         void globalAdmin_withoutAssumedRole_canGetArbitraryUser() {
             final var givenUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
 
@@ -96,7 +93,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:R(Read)", "USR:X(Access Control)" })
         void globalAdmin_withAssumedCustomerAdminRole_canGetUserWithinInItsRealm() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
@@ -116,7 +112,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:R(Read)", "USR:X(Access Control)" })
         void customerAdmin_withoutAssumedRole_canGetUserWithinInItsRealm() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
@@ -135,7 +130,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:R(Read)", "USR:X(Access Control)" })
         void customerAdmin_withoutAssumedRole_canNotGetUserOutsideOfItsRealm() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
@@ -156,7 +150,6 @@ class RbacUserControllerAcceptanceTest {
     class ListRbacUsers {
 
         @Test
-        @Accepts({ "USR:L(List)" })
         void globalAdmin_withoutAssumedRole_canViewAllUsers() {
 
             // @formatter:off
@@ -182,7 +175,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:F(Filter)" })
         void globalAdmin_withoutAssumedRole_canViewAllUsersByName() {
 
             // @formatter:off
@@ -203,7 +195,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:L(List)", "USR:X(Access Control)" })
         void globalAdmin_withAssumedCustomerAdminRole_canViewUsersInItsRealm() {
 
             // @formatter:off
@@ -226,7 +217,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:L(List)", "USR:X(Access Control)" })
         void customerAdmin_withoutAssumedRole_canViewUsersInItsRealm() {
 
             // @formatter:off
@@ -248,7 +238,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:L(List)", "USR:X(Access Control)" })
         void packetAdmin_withoutAssumedRole_canViewAllUsersOfItsPackage() {
 
             // @formatter:off
@@ -271,7 +260,6 @@ class RbacUserControllerAcceptanceTest {
     class ListRbacUserPermissions {
 
         @Test
-        @Accepts({ "PRM:L(List)" })
         void globalAdmin_withoutAssumedRole_canViewArbitraryUsersPermissions() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
@@ -301,7 +289,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "PRM:L(List)" })
         void globalAdmin_withAssumedCustomerAdminRole_canViewArbitraryUsersPermissions() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
@@ -332,7 +319,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "PRM:L(List)" })
         void packageAdmin_withoutAssumedRole_canViewPermissionsOfUsersInItsRealm() {
             final var givenUser = findRbacUserByName("pac-admin-yyy00@yyy.example.com");
 
@@ -362,7 +348,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "PRM:L(List)" })
         void packageAdmin_canViewPermissionsOfUsersOutsideOfItsRealm() {
             final var givenUser = findRbacUserByName("pac-admin-xxx00@xxx.example.com");
 
@@ -385,7 +370,6 @@ class RbacUserControllerAcceptanceTest {
     class DeleteRbacUser {
 
         @Test
-        @Accepts({ "USR:D(Create)" })
         void anybody_canDeleteTheirOwnUser() {
 
             // given
@@ -407,7 +391,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:D(Create)", "USR:X(Access Control)" })
         void customerAdmin_canNotDeleteOtherUser() {
 
             // given
@@ -430,7 +413,6 @@ class RbacUserControllerAcceptanceTest {
         }
 
         @Test
-        @Accepts({ "USR:D(Create)", "USR:X(Access Control)" })
         void globalAdmin_canDeleteArbitraryUser() {
 
             // given

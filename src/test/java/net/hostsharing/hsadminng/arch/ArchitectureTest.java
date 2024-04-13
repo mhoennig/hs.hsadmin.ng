@@ -1,17 +1,24 @@
 package net.hostsharing.hsadminng.arch;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.test.Accepts;
-import org.junit.jupiter.api.Test;
-import org.springframework.data.jpa.repository.JpaRepository;
+import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import org.springframework.data.repository.Repository;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.persistence.Table;
 
 import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+import static java.lang.String.format;
 
 @AnalyzeClasses(packages = ArchitectureTest.NET_HOSTSHARING_HSADMINNG)
 public class ArchitectureTest {
@@ -234,20 +241,6 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule acceptsAnnotationOnMethodsRule = methods()
-            .that().areAnnotatedWith(Accepts.class)
-            .should().beDeclaredInClassesThat().haveSimpleNameEndingWith("AcceptanceTest")
-            .orShould().beDeclaredInClassesThat().haveSimpleNameNotContaining("AcceptanceTest$");
-
-    @ArchTest
-    @SuppressWarnings("unused")
-    public static final ArchRule acceptsAnnotationOnClasesRule = classes()
-            .that().areAnnotatedWith(Accepts.class)
-            .should().haveSimpleNameEndingWith("AcceptanceTest")
-            .orShould().haveSimpleNameNotContaining("AcceptanceTest$");
-
-    @ArchTest
-    @SuppressWarnings("unused")
     public static final ArchRule doNotUseJakartaTransactionAnnotationAtClassLevel = noClasses()
             .should().beAnnotatedWith(jakarta.transaction.Transactional.class.getName())
             .as("Use @%s instead of @%s.".formatted(
@@ -270,18 +263,51 @@ public class ArchitectureTest {
                     org.junit.jupiter.api.Test.class.getName(),
                     org.junit.Test.class.getName()));
 
-    @Test
-    public void everythingShouldBeFreeOfCycles() {
-        slices().matching("net.hostsharing.hsadminng.(*)..").should().beFreeOfCycles();
-    }
+    @ArchTest
+    @SuppressWarnings("unused")
+    static final ArchRule everythingShouldBeFreeOfCycles =
+        slices().matching("net.hostsharing.hsadminng.(*)..")
+                .should().beFreeOfCycles()
+                .ignoreDependency(
+                        ContextBasedTest.class,
+                        net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService.class);
 
-    @Test
-    public void restControllerNaming() {
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    static final ArchRule restControllerNaming =
         classes().that().areAnnotatedWith(RestController.class).should().haveSimpleNameEndingWith("Controller");
-    }
 
-    @Test
-    public void repositoryNaming() {
-        classes().that().implement(JpaRepository.class).should().haveSimpleNameEndingWith("Repository");
+    @ArchTest
+    @SuppressWarnings("unused")
+    static final ArchRule repositoryNaming =
+        classes().that().areAssignableTo(Repository.class).should().haveSimpleNameEndingWith("Repository");
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    static final ArchRule tableNamesOfRbacEntitiesShouldEndWith_rv =
+        classes()
+                .that().areAnnotatedWith(Table.class)
+                .and().areAssignableTo(RbacObject.class)
+                .should(haveTableNameEndingWith_rv())
+                .because("it's required that the table names of RBAC entities end with '_rv'");
+
+    static ArchCondition<JavaClass> haveTableNameEndingWith_rv() {
+        return new ArchCondition<>("RBAC table name end with _rv") {
+
+            @Override
+            public void check(JavaClass javaClass, ConditionEvents events) {
+                final var table = javaClass.getAnnotationOfType(Table.class);
+                if (table == null) {
+                    events.add(SimpleConditionEvent.violated(javaClass,
+                            format("@Table annotation missing for RBAC entity %s",
+                                javaClass.getName(), table.name())));
+                } else if (!table.name().endsWith("_rv")) {
+                    events.add(SimpleConditionEvent.violated(javaClass,
+                            format("Table name of %s does not end with '_rv' for RBAC entity %s",
+                                javaClass.getName(), table.name())));
+                }
+            }
+        };
     }
 }

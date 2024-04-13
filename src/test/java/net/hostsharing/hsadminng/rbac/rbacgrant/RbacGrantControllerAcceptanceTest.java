@@ -4,13 +4,12 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.context.ContextBasedTest;
+import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserEntity;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserRepository;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,6 @@ import static org.hamcrest.Matchers.*;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
-@Accepts({ "GRT:S(Schema)" })
 @Transactional(readOnly = true, propagation = Propagation.NEVER)
 class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
@@ -60,7 +58,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     class ListGrants {
 
         @Test
-        @Accepts("GRT:L(List)")
         void globalAdmin_withoutAssumedRole_canViewAllGrants() {
             RestAssured // @formatter:off
                 .given()
@@ -113,7 +110,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:L(List)", "GRT:X(Access Control)" })
         void globalAdmin_withAssumedPackageAdminRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
@@ -137,7 +133,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:L(List)", "GRT:X(Access Control)" })
         void packageAdmin_withoutAssumedRole_canViewPacketRelatedGrants() {
             RestAssured // @formatter:off
                 .given()
@@ -166,7 +161,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     class GetGrantById {
 
         @Test
-        @Accepts({ "GRT:R(Read)" })
         void customerAdmin_withAssumedPacketAdminRole_canReadPacketAdminsGrantById() {
             // given
             final var givenCurrentUserAsPackageAdmin = new Subject("customer-admin@xxx.example.com");
@@ -186,7 +180,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:R(Read)" })
         void packageAdmin_withoutAssumedRole_canReadItsOwnGrantById() {
             // given
             final var givenCurrentUserAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com");
@@ -206,7 +199,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:R(Read)", "GRT:X(Access Control)" })
         void packageAdmin_withAssumedPackageAdmin_canStillReadItsOwnGrantById() {
             // given
             final var givenCurrentUserAsPackageAdmin = new Subject(
@@ -228,7 +220,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:R(Read)", "GRT:X(Access Control)" })
         void packageAdmin_withAssumedPackageTenantRole_canNotReadItsOwnGrantByIdAnymore() {
 
             // given
@@ -250,7 +241,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     class GrantRoleToUser {
 
         @Test
-        @Accepts({ "GRT:C(Create)" })
         void packageAdmin_canGrantOwnPackageAdminRole_toArbitraryUser() {
 
             // given
@@ -280,7 +270,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
         }
 
         @Test
-        @Accepts({ "GRT:C(Create)", "GRT:X(Access Control)" })
         void packageAdmin_canNotGrantAlienPackageAdminRole_toArbitraryUser() {
 
             // given
@@ -309,7 +298,6 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
     class RevokeRoleFromUser {
 
         @Test
-        @Accepts({ "GRT:D(Delete)" })
         @Transactional(propagation = Propagation.NEVER)
         void packageAdmin_canRevokePackageAdminRole_grantedByPackageAdmin_fromArbitraryUser() {
 

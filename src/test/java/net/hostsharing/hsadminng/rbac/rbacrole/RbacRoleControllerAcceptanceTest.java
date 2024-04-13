@@ -4,7 +4,6 @@ import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.rbacuser.RbacUserRepository;
-import net.hostsharing.test.Accepts;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +15,6 @@ import static org.hamcrest.Matchers.*;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = HsadminNgApplication.class
 )
-@Accepts({ "ROL:*:S:Schema" })
 class RbacRoleControllerAcceptanceTest {
 
     @LocalServerPort
@@ -32,7 +30,6 @@ class RbacRoleControllerAcceptanceTest {
     RbacRoleRepository rbacRoleRepository;
 
     @Test
-    @Accepts({ "ROL:L(List)" })
     void globalAdmin_withoutAssumedRole_canViewAllRoles() {
 
         // @formatter:off
@@ -58,7 +55,6 @@ class RbacRoleControllerAcceptanceTest {
     }
 
     @Test
-    @Accepts({ "ROL:L(List)", "ROL:X(Access Control)" })
     void globalAdmin_withAssumedPackageAdminRole_canViewPackageAdminRoles() {
 
         // @formatter:off
@@ -92,7 +88,6 @@ class RbacRoleControllerAcceptanceTest {
     }
 
     @Test
-    @Accepts({ "ROL:L(List)", "ROL:X(Access Control)" })
     void packageAdmin_withoutAssumedRole_canViewPackageAdminRoles() {
 
         // @formatter:off

@@ -4,9 +4,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONException;
 import org.junit.jupiter.api.*;
@@ -19,8 +18,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -48,7 +47,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     EntityManager em;
 
     @Nested
-    @Accepts({ "bankaccount:F(Find)" })
     class ListBankAccounts {
 
         @Test
@@ -113,7 +111,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "bankaccount:C(Create)" })
     class CreateBankAccount {
 
         @Test
@@ -153,7 +150,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "bankaccount:R(Read)" })
     class GetBankAccount {
 
         @Test
@@ -178,7 +174,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "bankaccount:X(Access Control)" })
         void normalUser_canNotGetUnrelatedBankAccount() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBankAccountUuid = bankAccountRepo.findByOptionalHolderLike("first").get(0).getUuid();
@@ -258,7 +253,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "bankaccount:D(Delete)" })
     class DeleteBankAccount {
 
         @Test
@@ -280,7 +274,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "bankaccount:X(Access Control)" })
         void bankaccountOwner_canDeleteRelatedBankAaccount() {
             final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");
 
@@ -298,7 +291,6 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "bankaccount:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedBankAccount() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBankAccount = givenSomeTemporaryBankAccountCreatedBy("selfregistered-test-user@hostsharing.org");

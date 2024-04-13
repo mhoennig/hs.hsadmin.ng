@@ -4,9 +4,8 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
@@ -22,8 +21,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.UUID;
 
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
@@ -54,7 +53,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     EntityManager em;
 
     @Nested
-    @Accepts({ "Contact:F(Find)" })
     class ListContacts {
 
         @Test
@@ -91,7 +89,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Contact:C(Create)" })
     class AddContact {
 
         @Test
@@ -129,7 +126,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Contact:R(Read)" })
     class GetContact {
 
         @Test
@@ -154,7 +150,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Contact:X(Access Control)" })
         void normalUser_canNotGetUnrelatedContact() {
             context.define("superuser-alex@hostsharing.net");
             final var givenContactUuid = contactRepo.findContactByOptionalLabelLike("first").get(0).getUuid();
@@ -170,7 +165,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Contact:X(Access Control)" })
         void contactAdminUser_canGetRelatedContact() {
             context.define("superuser-alex@hostsharing.net");
             final var givenContactUuid = contactRepo.findContactByOptionalLabelLike("first").get(0).getUuid();
@@ -195,7 +189,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Contact:U(Update)" })
     class PatchContact {
 
         @Test
@@ -284,7 +277,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    @Accepts({ "Contact:D(Delete)" })
     class DeleteContact {
 
         @Test
@@ -306,7 +298,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Contact:X(Access Control)" })
         void contactOwner_canDeleteRelatedContact() {
             final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");
 
@@ -324,7 +315,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        @Accepts({ "Contact:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedContact() {
             context.define("superuser-alex@hostsharing.net");
             final var givenContact = givenSomeTemporaryContactCreatedBy("selfregistered-test-user@hostsharing.org");

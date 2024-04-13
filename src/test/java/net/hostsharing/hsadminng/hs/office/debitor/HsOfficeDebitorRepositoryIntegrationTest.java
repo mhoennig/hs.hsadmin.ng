@@ -7,12 +7,12 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
-import net.hostsharing.test.Array;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
@@ -33,10 +33,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.hostsharing.hsadminng.hs.office.test.EntityList.one;
+import static net.hostsharing.hsadminng.rbac.test.EntityList.one;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
-import static net.hostsharing.test.JpaAttempt.attempt;
+import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest

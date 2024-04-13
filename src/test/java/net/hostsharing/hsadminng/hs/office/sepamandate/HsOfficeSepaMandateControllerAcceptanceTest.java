@@ -6,9 +6,8 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
-import net.hostsharing.hsadminng.hs.office.test.ContextBasedTestWithCleanup;
-import net.hostsharing.test.Accepts;
-import net.hostsharing.test.JpaAttempt;
+import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
+import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +24,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.test.IsValidUuidMatcher.isUuidValid;
-import static net.hostsharing.test.JsonMatcher.lenientlyEquals;
+import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
+import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -56,7 +55,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     EntityManager em;
 
     @Nested
-    @Accepts({ "SepaMandate:F(Find)" })
     class ListSepaMandates {
 
         @Test
@@ -102,7 +100,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "SepaMandate:C(Create)" })
     class AddSepaMandate {
 
         @Test
@@ -234,7 +231,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "SepaMandate:R(Read)" })
     class GetSepaMandate {
 
         @Test
@@ -268,7 +264,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "SepaMandate:X(Access Control)" })
         void normalUser_canNotGetUnrelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
@@ -286,7 +281,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "SepaMandate:X(Access Control)" })
         void bankAccountAdminUser_canGetRelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandateUuid = sepaMandateRepo.findSepaMandateByOptionalIban("DE02120300000000202051")
@@ -318,7 +312,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "SepaMandate:U(Update)" })
     class PatchSepaMandate {
 
         @Test
@@ -439,7 +432,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     }
 
     @Nested
-    @Accepts({ "SepaMandate:D(Delete)" })
     class DeleteSepaMandate {
 
         @Test
@@ -461,7 +453,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "SepaMandate:X(Access Control)" })
         void bankAccountAdminUser_canNotDeleteRelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
@@ -480,7 +471,6 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
         }
 
         @Test
-        @Accepts({ "SepaMandate:X(Access Control)" })
         void normalUser_canNotDeleteUnrelatedSepaMandate() {
             context.define("superuser-alex@hostsharing.net");
             final var givenSepaMandate = givenSomeTemporarySepaMandateForDebitorNumber(1000111);
