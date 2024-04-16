@@ -128,6 +128,9 @@ public class ImportOfficeData extends ContextBasedTest {
             new String[]{"partner", "vip-contact", "ex-partner", "billing", "contractual", "operation"},
             SUBSCRIBER_ROLES);
 
+    // at least as the number of lines in business-partners.csv from test-data, but less than real data partner count
+    public static final int MAX_NUMBER_OF_TEST_DATA_PARTNERS = 100;
+
     static int relationId = 2000000;
 
     @Value("${spring.datasource.url}")
@@ -606,8 +609,12 @@ public class ImportOfficeData extends ContextBasedTest {
 
     }
 
+    private static boolean isImportingControlledTestData() {
+        return partners.size() <= MAX_NUMBER_OF_TEST_DATA_PARTNERS;
+    }
+
     private static void assumeThatWeAreImportingControlledTestData() {
-        assumeThat(partners.size()).isLessThan(100);
+        assumeThat(partners.size()).isLessThanOrEqualTo(MAX_NUMBER_OF_TEST_DATA_PARTNERS);
     }
 
     private void deleteTestDataFromHsOfficeTables() {
@@ -982,10 +989,10 @@ public class ImportOfficeData extends ContextBasedTest {
                     verifyContainsOnlyKnownRoles(rec.getString("roles"));
                 });
 
-        optionallyAddMissingContractualRelations();
+        assertNoMissingContractualRelations();
     }
 
-    private static void optionallyAddMissingContractualRelations() {
+    private static void assertNoMissingContractualRelations() {
         final var contractualMissing = new HashSet<Integer>();
         partners.forEach( (id, partner) -> {
             final var partnerPerson = partner.getPartnerRel().getHolder();
@@ -995,8 +1002,13 @@ public class ImportOfficeData extends ContextBasedTest {
                 contractualMissing.add(partner.getPartnerNumber());
             }
         });
-        assertThat(contractualMissing).containsOnly(19999); // deliberately wrong partner entry
+        if (isImportingControlledTestData()) {
+            assertThat(contractualMissing).containsOnly(19999); // deliberately wrong partner entry
+        } else {
+            assertThat(contractualMissing).as("partners without contractual contact found").isEmpty();
+        }
     }
+
     private static boolean containsRole(final Record rec, final String role) {
         final var roles = rec.getString("roles");
         return ("," + roles + ",").contains("," + role + ",");
