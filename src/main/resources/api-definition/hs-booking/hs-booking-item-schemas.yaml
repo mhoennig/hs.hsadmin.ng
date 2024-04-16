@@ -1,0 +1,113 @@
+
+components:
+
+    schemas:
+
+        HsBookingItem:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                caption:
+                    type: string
+                validFrom:
+                   type: string
+                   format: date
+                validTo:
+                   type: string
+                   format: date
+                resources:
+                    $ref: '#/components/schemas/BookingResources'
+            required:
+                - uuid
+                - validFrom
+                - validTo
+                - resources
+
+        HsBookingItemPatch:
+            type: object
+            properties:
+                caption:
+                    type: string
+                    nullable: true
+                validTo:
+                    type: string
+                    format: date
+                    nullable: true
+                resources:
+                    $ref: '#/components/schemas/BookingResources'
+
+        HsBookingItemInsert:
+            type: object
+            properties:
+                debitorUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                caption:
+                    type: string
+                    minLength: 3
+                    maxLength:
+                    nullable: false
+                validFrom:
+                    type: string
+                    format: date
+                    nullable: false
+                validTo:
+                    type: string
+                    format: date
+                    nullable: true
+                resources:
+                    $ref: '#/components/schemas/BookingResources'
+            required:
+                - caption
+                - debitorUuid
+                - validFrom
+                - resources
+            additionalProperties: false
+
+        BookingResources:
+            anyOf:
+                - $ref: '#/components/schemas/ManagedServerBookingResources'
+                - $ref: '#/components/schemas/ManagedWebspaceBookingResources'
+
+        ManagedServerBookingResources:
+            type: object
+            properties:
+                caption:
+                    type: string
+                    minLength: 3
+                    maxLength:
+                    nullable: false
+                CPU:
+                    type: integer
+                    minimum: 1
+                    maximum: 16
+                SSD:
+                    type: integer
+                    minimum: 16
+                    maximum: 4096
+                HDD:
+                    type: integer
+                    minimum: 16
+                    maximum: 4096
+            additionalProperties: false
+
+        ManagedWebspaceBookingResources:
+            type: object
+            properties:
+                disk:
+                    type: integer
+                    minimum: 1
+                    maximum: 16
+                SSD:
+                    type: integer
+                    minimum: 16
+                    maximum: 4096
+                HDD:
+                    type: integer
+                    minimum: 16
+                    maximum: 4096
+            additionalProperties: false
+

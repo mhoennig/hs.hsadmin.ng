@@ -50,6 +50,7 @@ public class ArchitectureTest {
                     "..hs.office.person",
                     "..hs.office.relation",
                     "..hs.office.sepamandate",
+                    "..hs.booking.item",
                     "..errors",
                     "..mapper",
                     "..ping",
@@ -123,11 +124,22 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
-    public static final ArchRule hsAdminPackagesRule = classes()
+    public static final ArchRule hsOfficePackageAccessRule = classes()
             .that().resideInAPackage("..hs.office.(*)..")
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.office.(*)..",
+                    "..hs.booking.(*)..",
+                    "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
+            );
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsBookingPackageAccessRule = classes()
+            .that().resideInAPackage("..hs.booking.(*)..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage(
+                    "..hs.booking.(*)..",
                     "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
             );
 

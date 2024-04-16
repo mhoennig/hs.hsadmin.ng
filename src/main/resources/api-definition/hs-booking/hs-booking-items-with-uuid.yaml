@@ -1,0 +1,83 @@
+get:
+    tags:
+        - hs-booking-items
+    description: 'Fetch a single booking item its uuid, if visible for the current subject.'
+    operationId: getBookingItemByUuid
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: bookingItemUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the booking item to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-booking-item-schemas.yaml#/components/schemas/HsBookingItem'
+
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+
+patch:
+    tags:
+        - hs-booking-items
+    description: 'Updates a single booking item identified by its uuid, if permitted for the current subject.'
+    operationId: patchBookingItem
+    parameters:
+        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        -   name: bookingItemUuid
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: 'hs-booking-item-schemas.yaml#/components/schemas/HsBookingItemPatch'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-booking-item-schemas.yaml#/components/schemas/HsBookingItem'
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - hs-booking-items
+    description: 'Delete a single booking item identified by its uuid, if permitted for the current subject.'
+    operationId: deleteBookingIemByUuid
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: bookingItemUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the booking item to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: 'error-responses.yaml#/components/responses/NotFound'

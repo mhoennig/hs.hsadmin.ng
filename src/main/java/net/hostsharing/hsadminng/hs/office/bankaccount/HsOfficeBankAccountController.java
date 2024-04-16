@@ -74,11 +74,11 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     public ResponseEntity<HsOfficeBankAccountResource> getBankAccountByUuid(
             final String currentUser,
             final String assumedRoles,
-            final UUID BankAccountUuid) {
+            final UUID bankAccountUuid) {
 
         context.define(currentUser, assumedRoles);
 
-        final var result = bankAccountRepo.findByUuid(BankAccountUuid);
+        final var result = bankAccountRepo.findByUuid(bankAccountUuid);
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

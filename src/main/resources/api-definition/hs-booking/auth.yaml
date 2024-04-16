@@ -1,0 +1,20 @@
+
+components:
+
+    parameters:
+
+        currentUser:
+            name: current-user
+            in: header
+            required: true
+            schema:
+                type: string
+            description: Identifying name of the currently logged in user.
+
+        assumedRoles:
+            name: assumed-roles
+            in: header
+            required: false
+            schema:
+                type: string
+            description: Semicolon-separated list of roles to assume. The current user needs to have the right to assume these roles.

@@ -1,0 +1,17 @@
+openapi-processor-mapping: v2
+
+options:
+    package-name: net.hostsharing.hsadminng.hs.booking.generated.api.v1
+    model-name-suffix: Resource
+    bean-validation: true
+
+map:
+    result: org.springframework.http.ResponseEntity
+
+    types:
+        - type: array => java.util.List
+        - type: string:uuid => java.util.UUID
+
+    paths:
+        /api/hs/booking/items/{bookingItemUuid}:
+            null: org.openapitools.jackson.nullable.JsonNullable

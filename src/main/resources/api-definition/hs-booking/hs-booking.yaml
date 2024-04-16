@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Hostsharing hsadmin-ng API
+  version: v0
+servers:
+  - url: http://localhost:8080
+    description: Local development default URL.
+
+paths:
+
+  # Items
+
+  /api/hs/booking/items:
+    $ref: "hs-booking-items.yaml"
+
+  /api/hs/booking/items/{bookingItemUuid}:
+    $ref: "hs-booking-items-with-uuid.yaml"

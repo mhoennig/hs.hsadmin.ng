@@ -613,6 +613,7 @@ public class ImportOfficeData extends ContextBasedTest {
     private void deleteTestDataFromHsOfficeTables() {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
+            em.createNativeQuery("delete from hs_booking_item where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopassetstransaction where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopassetstransaction_legacy_id where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopsharestransaction where true").executeUpdate();

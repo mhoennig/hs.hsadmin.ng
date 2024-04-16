@@ -127,3 +127,9 @@ databaseChangeLog:
         file: db/changelog/5-hs-office/512-coopassets/5126-hs-office-coopassets-migration.sql
     - include:
         file: db/changelog/5-hs-office/512-coopassets/5128-hs-office-coopassets-test-data.sql
+    - include:
+        file: db/changelog/6-hs-booking/601-booking-item/6010-hs-booking-item.sql
+    - include:
+        file: db/changelog/6-hs-booking/601-booking-item/6013-hs-booking-item-rbac.sql
+    - include:
+        file: db/changelog/6-hs-booking/601-booking-item/6018-hs-booking-item-test-data.sql
