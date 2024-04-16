@@ -5,8 +5,8 @@ get:
     - hs-office-coopShares
   operationId: listCoopShares
   parameters:
-    - $ref: './auth.yaml#/components/parameters/currentUser'
-    - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    - $ref: 'auth.yaml#/components/parameters/currentUser'
+    - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     - name: membershipUuid
       in: query
       required: false
@@ -36,11 +36,11 @@ get:
           schema:
             type: array
             items:
-              $ref: './hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransaction'
+              $ref: 'hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransaction'
     "401":
-      $ref: './error-responses.yaml#/components/responses/Unauthorized'
+      $ref: 'error-responses.yaml#/components/responses/Unauthorized'
     "403":
-      $ref: './error-responses.yaml#/components/responses/Forbidden'
+      $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
   summary: Adds a new cooperative share transaction.
@@ -48,25 +48,25 @@ post:
     - hs-office-coopShares
   operationId: addCoopSharesTransaction
   parameters:
-    - $ref: './auth.yaml#/components/parameters/currentUser'
-    - $ref: './auth.yaml#/components/parameters/assumedRoles'
+    - $ref: 'auth.yaml#/components/parameters/currentUser'
+    - $ref: 'auth.yaml#/components/parameters/assumedRoles'
   requestBody:
     description: A JSON object describing the new cooperative shares transaction.
     required: true
     content:
       application/json:
         schema:
-          $ref: '/hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransactionInsert'
+          $ref: 'hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransactionInsert'
   responses:
     "201":
       description: Created
       content:
         'application/json':
           schema:
-            $ref: './hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransaction'
+            $ref: 'hs-office-coopshares-schemas.yaml#/components/schemas/HsOfficeCoopSharesTransaction'
     "401":
-      $ref: './error-responses.yaml#/components/responses/Unauthorized'
+      $ref: 'error-responses.yaml#/components/responses/Unauthorized'
     "403":
-      $ref: './error-responses.yaml#/components/responses/Forbidden'
+      $ref: 'error-responses.yaml#/components/responses/Forbidden'
     "409":
-      $ref: './error-responses.yaml#/components/responses/Conflict'
+      $ref: 'error-responses.yaml#/components/responses/Conflict'

@@ -9,20 +9,20 @@ servers:
 paths:
 
     /api/rbac/users:
-        $ref: './rbac-users.yaml'
+        $ref: 'rbac-users.yaml'
 
     /api/rbac/users/{userUuid}/permissions:
-        $ref: './rbac-users-with-id-permissions.yaml'
+        $ref: 'rbac-users-with-id-permissions.yaml'
 
     /api/rbac/users/{userUuid}:
-        $ref: './rbac-users-with-uuid.yaml'
+        $ref: 'rbac-users-with-uuid.yaml'
 
     /api/rbac/roles:
-        $ref: './rbac-roles.yaml'
+        $ref: 'rbac-roles.yaml'
 
     /api/rbac/grants:
-        $ref: './rbac-grants.yaml'
+        $ref: 'rbac-grants.yaml'
 
     /api/rbac/grants/{grantedRoleUuid}/{granteeUserUuid}:
-        $ref: './rbac-grants-with-id.yaml'
+        $ref: 'rbac-grants-with-id.yaml'
 

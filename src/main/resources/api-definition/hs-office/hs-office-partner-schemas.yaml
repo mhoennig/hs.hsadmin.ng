@@ -15,7 +15,7 @@ components:
                     minimum: 10000
                     maximum: 99999
                 partnerRel:
-                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
+                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 details:
                     $ref: '#/components/schemas/HsOfficePartnerDetails'
 

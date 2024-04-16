@@ -115,7 +115,7 @@ tasks.named('test') {
 openapiProcessor {
     springRoot {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
+        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
         apiPath "$projectDir/src/main/resources/api-definition.yaml"
         mapping "$projectDir/src/main/resources/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -124,7 +124,7 @@ openapiProcessor {
     }
     springRbac {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
+        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
         apiPath "$projectDir/src/main/resources/api-definition/rbac/rbac.yaml"
         mapping "$projectDir/src/main/resources/api-definition/rbac/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -133,7 +133,7 @@ openapiProcessor {
     }
     springTest {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
+        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
         apiPath "$projectDir/src/main/resources/api-definition/test/test.yaml"
         mapping "$projectDir/src/main/resources/api-definition/test/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -142,7 +142,7 @@ openapiProcessor {
     }
     springHs {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
+        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
         apiPath "$projectDir/src/main/resources/api-definition/hs-office/hs-office.yaml"
         mapping "$projectDir/src/main/resources/api-definition/hs-office/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"

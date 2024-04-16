@@ -11,87 +11,87 @@ paths:
   # Partners
 
   /api/hs/office/partners:
-    $ref: "./hs-office-partners.yaml"
+    $ref: "hs-office-partners.yaml"
 
   /api/hs/office/partners/{partnerUUID}:
-    $ref: "./hs-office-partners-with-uuid.yaml"
+    $ref: "hs-office-partners-with-uuid.yaml"
 
 
   # Contacts
 
   /api/hs/office/contacts:
-    $ref: "./hs-office-contacts.yaml"
+    $ref: "hs-office-contacts.yaml"
 
   /api/hs/office/contacts/{contactUUID}:
-    $ref: "./hs-office-contacts-with-uuid.yaml"
+    $ref: "hs-office-contacts-with-uuid.yaml"
 
 
   # Persons
 
   /api/hs/office/persons:
-    $ref: "./hs-office-persons.yaml"
+    $ref: "hs-office-persons.yaml"
 
   /api/hs/office/persons/{personUUID}:
-    $ref: "./hs-office-persons-with-uuid.yaml"
+    $ref: "hs-office-persons-with-uuid.yaml"
 
 
   # Relations
 
   /api/hs/office/relations:
-    $ref: "./hs-office-relations.yaml"
+    $ref: "hs-office-relations.yaml"
 
   /api/hs/office/relations/{relationUUID}:
-    $ref: "./hs-office-relations-with-uuid.yaml"
+    $ref: "hs-office-relations-with-uuid.yaml"
 
 
   # BankAccounts
 
   /api/hs/office/bankaccounts:
-    $ref: "./hs-office-bankaccounts.yaml"
+    $ref: "hs-office-bankaccounts.yaml"
 
   /api/hs/office/bankaccounts/{bankAccountUUID}:
-    $ref: "./hs-office-bankaccounts-with-uuid.yaml"
+    $ref: "hs-office-bankaccounts-with-uuid.yaml"
 
 
   # Debitors
 
   /api/hs/office/debitors:
-    $ref: "./hs-office-debitors.yaml"
+    $ref: "hs-office-debitors.yaml"
 
   /api/hs/office/debitors/{debitorUUID}:
-    $ref: "./hs-office-debitors-with-uuid.yaml"
+    $ref: "hs-office-debitors-with-uuid.yaml"
 
 
   # SepaMandates
 
   /api/hs/office/sepamandates:
-    $ref: "./hs-office-sepamandates.yaml"
+    $ref: "hs-office-sepamandates.yaml"
 
   /api/hs/office/sepamandates/{sepaMandateUUID}:
-    $ref: "./hs-office-sepamandates-with-uuid.yaml"
+    $ref: "hs-office-sepamandates-with-uuid.yaml"
 
 
   # Membership
 
   /api/hs/office/memberships:
-    $ref: "./hs-office-memberships.yaml"
+    $ref: "hs-office-memberships.yaml"
 
   /api/hs/office/memberships/{membershipUUID}:
-    $ref: "./hs-office-memberships-with-uuid.yaml"
+    $ref: "hs-office-memberships-with-uuid.yaml"
 
 
   # Coop Shares Transaction
 
   /api/hs/office/coopsharestransactions:
-    $ref: "./hs-office-coopshares.yaml"
+    $ref: "hs-office-coopshares.yaml"
 
   /api/hs/office/coopsharestransactions/{shareTransactionUUID}:
-      $ref: "./hs-office-coopshares-with-uuid.yaml"
+      $ref: "hs-office-coopshares-with-uuid.yaml"
 
   # Coop Assets Transaction
 
   /api/hs/office/coopassetstransactions:
-      $ref: "./hs-office-coopassets.yaml"
+      $ref: "hs-office-coopassets.yaml"
 
   /api/hs/office/coopassetstransactions/{assetTransactionUUID}:
-      $ref: "./hs-office-coopassets-with-uuid.yaml"
+      $ref: "hs-office-coopassets-with-uuid.yaml"

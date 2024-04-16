@@ -10,9 +10,9 @@ components:
                     type: string
                     format: uuid
                 debitor:
-                    $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
+                    $ref: 'hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
                 bankAccount:
-                    $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                    $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
                 reference:
                    type: string
                 agreement:

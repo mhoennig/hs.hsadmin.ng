@@ -10,7 +10,7 @@ components:
                     type: string
                     format: uuid
                 debitorRel:
-                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
+                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 debitorNumber:
                     type: integer
                     format: int32
@@ -22,7 +22,7 @@ components:
                     minimum: 00
                     maximum: 99
                 partner:
-                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                    $ref: 'hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
                 billable:
                     type: boolean
                 vatId:
@@ -35,7 +35,7 @@ components:
                 vatReverseCharge:
                    type: boolean
                 refundBankAccount:
-                    $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                    $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
                 defaultPrefix:
                     type: string
                     pattern: '^[a-z0-9]{3}$'
@@ -76,7 +76,7 @@ components:
             type: object
             properties:
                 debitorRel:
-                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
+                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
                 debitorRelUuid:
                     type: string
                     format: uuid

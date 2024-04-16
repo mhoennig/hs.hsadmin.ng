@@ -4,8 +4,8 @@ get:
     description: 'Fetch a single user by its id, if visible for the current subject.'
     operationId: getUserById
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: userUuid
           in: path
           required: true
@@ -18,12 +18,12 @@ get:
             content:
                 'application/json':
                     schema:
-                        $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+                        $ref: 'rbac-user-schemas.yaml#/components/schemas/RbacUser'
 
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 
 delete:
@@ -31,8 +31,8 @@ delete:
         - rbac-users
     operationId: deleteUserByUuid
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: userUuid
           in: path
           required: true
@@ -44,8 +44,8 @@ delete:
         "204":
             description: No Content
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         "404":
-            $ref: './error-responses.yaml#/components/responses/NotFound'
+            $ref: 'error-responses.yaml#/components/responses/NotFound'

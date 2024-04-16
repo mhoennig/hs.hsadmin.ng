@@ -4,8 +4,8 @@ get:
     description: List accessible RBAC users with optional filter by name.
     operationId: listUsers
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query
           required: false
@@ -19,11 +19,11 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+                            $ref: 'rbac-user-schemas.yaml#/components/schemas/RbacUser'
         '401':
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         '403':
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
     tags:
@@ -35,14 +35,14 @@ post:
         content:
             application/json:
                 schema:
-                    $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+                    $ref: 'rbac-user-schemas.yaml#/components/schemas/RbacUser'
     responses:
         '201':
             description: Created
             content:
                 'application/json':
                     schema:
-                        $ref: './rbac-user-schemas.yaml#/components/schemas/RbacUser'
+                        $ref: 'rbac-user-schemas.yaml#/components/schemas/RbacUser'
         '409':
-            $ref: './error-responses.yaml#/components/responses/Conflict'
+            $ref: 'error-responses.yaml#/components/responses/Conflict'
 

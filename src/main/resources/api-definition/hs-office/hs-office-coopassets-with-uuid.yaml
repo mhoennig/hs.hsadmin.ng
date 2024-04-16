@@ -4,8 +4,8 @@ get:
     description: 'Fetch a single asset transaction by its uuid, if visible for the current subject.'
     operationId: getCoopAssetTransactionByUuid
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: assetTransactionUUID
           in: path
           required: true
@@ -19,9 +19,9 @@ get:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-coopassets-schemas.yaml#/components/schemas/HsOfficeCoopAssetsTransaction'
+                        $ref: 'hs-office-coopassets-schemas.yaml#/components/schemas/HsOfficeCoopAssetsTransaction'
 
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

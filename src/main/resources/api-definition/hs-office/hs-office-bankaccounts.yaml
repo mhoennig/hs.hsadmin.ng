@@ -5,8 +5,8 @@ get:
         - hs-office-bank-accounts
     operationId: listBankAccounts
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: holder
           in: query
           required: false
@@ -21,11 +21,11 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                            $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
     summary: Adds a new bank account.
@@ -33,13 +33,13 @@ post:
         - hs-office-bank-accounts
     operationId: addBankAccount
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccountInsert'
+                    $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccountInsert'
         required: true
     responses:
         "201":
@@ -47,10 +47,10 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                        $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         "409":
-            $ref: './error-responses.yaml#/components/responses/Conflict'
+            $ref: 'error-responses.yaml#/components/responses/Conflict'

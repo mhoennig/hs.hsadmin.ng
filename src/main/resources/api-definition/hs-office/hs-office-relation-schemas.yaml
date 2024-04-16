@@ -22,16 +22,16 @@ components:
                     type: string
                     format: uuid
                 anchor:
-                    $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
                 holder:
-                    $ref: './hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
+                    $ref: 'hs-office-person-schemas.yaml#/components/schemas/HsOfficePerson'
                 type:
                     type: string
                 mark:
                     type: string
                     nullable: true
                 contact:
-                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                    $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
 
         HsOfficeRelationPatch:
             type: object

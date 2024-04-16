@@ -5,8 +5,8 @@ get:
         - hs-office-contacts
     operationId: listContacts
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query
           required: false
@@ -21,11 +21,11 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                            $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
     summary: Adds a new contact.
@@ -33,13 +33,13 @@ post:
         - hs-office-contacts
     operationId: addContact
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContactInsert'
+                    $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContactInsert'
         required: true
     responses:
         "201":
@@ -47,10 +47,10 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
+                        $ref: 'hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         "409":
-            $ref: './error-responses.yaml#/components/responses/Conflict'
+            $ref: 'error-responses.yaml#/components/responses/Conflict'

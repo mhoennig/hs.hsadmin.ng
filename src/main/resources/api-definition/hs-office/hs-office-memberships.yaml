@@ -6,8 +6,8 @@ get:
         - hs-office-memberships
     operationId: listMemberships
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: partnerUuid
           in: query
           required: false
@@ -29,11 +29,11 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
+                            $ref: 'hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
     summary: Adds a new membership.
@@ -41,25 +41,25 @@ post:
         - hs-office-memberships
     operationId: addMembership
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new membership.
         required: true
         content:
             application/json:
                 schema:
-                    $ref: '/hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembershipInsert'
+                    $ref: 'hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembershipInsert'
     responses:
         "201":
             description: Created
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
+                        $ref: 'hs-office-membership-schemas.yaml#/components/schemas/HsOfficeMembership'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         "409":
-            $ref: './error-responses.yaml#/components/responses/Conflict'
+            $ref: 'error-responses.yaml#/components/responses/Conflict'

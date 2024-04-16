@@ -4,8 +4,8 @@ get:
     description: 'Fetch a single bank account by its uuid, if visible for the current subject.'
     operationId: getBankAccountByUuid
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: bankAccountUUID
           in: path
           required: true
@@ -19,11 +19,11 @@ get:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
+                        $ref: 'hs-office-bankaccount-schemas.yaml#/components/schemas/HsOfficeBankAccount'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 delete:
     tags:
@@ -31,8 +31,8 @@ delete:
     description: 'Delete a single bank account by its uuid, if permitted for the current subject.'
     operationId: deleteBankAccountByUuid
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: bankAccountUUID
           in: path
           required: true
@@ -44,8 +44,8 @@ delete:
         "204":
             description: No Content
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         "404":
-            $ref: './error-responses.yaml#/components/responses/NotFound'
+            $ref: 'error-responses.yaml#/components/responses/NotFound'

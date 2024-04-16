@@ -5,8 +5,8 @@ get:
         - hs-office-relations
     operationId: listRelations
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUuid
           in: query
           required: true
@@ -18,7 +18,7 @@ get:
           in: query
           required: false
           schema:
-              $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationType'
+              $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationType'
           description: Prefix of name properties from holder or contact to filter the results.
     responses:
         "200":
@@ -28,11 +28,11 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
+                            $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
     summary: Adds a new person relation.
@@ -40,13 +40,13 @@ post:
         - hs-office-relations
     operationId: addRelation
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:
             'application/json':
                 schema:
-                    $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
+                    $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationInsert'
         required: true
     responses:
         "201":
@@ -54,10 +54,10 @@ post:
             content:
                 'application/json':
                     schema:
-                        $ref: './hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
+                        $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
         "409":
-            $ref: './error-responses.yaml#/components/responses/Conflict'
+            $ref: 'error-responses.yaml#/components/responses/Conflict'

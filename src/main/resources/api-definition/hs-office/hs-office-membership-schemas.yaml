@@ -22,9 +22,9 @@ components:
                     type: string
                     format: uuid
                 partner:
-                    $ref: './hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
+                    $ref: 'hs-office-partner-schemas.yaml#/components/schemas/HsOfficePartner'
                 mainDebitor:
-                    $ref: './hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
+                    $ref: 'hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
                 memberNumber:
                     type: integer
                     minimum: 1000000
