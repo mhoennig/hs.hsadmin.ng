@@ -3,8 +3,8 @@ patch:
         - testPackages
     operationId: updatePackage
     parameters:
-        -   $ref: './auth.yaml#/components/parameters/currentUser'
-        -   $ref: './auth.yaml#/components/parameters/assumedRoles'
+        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: packageUUID
             in: path
             required: true
@@ -15,15 +15,15 @@ patch:
         content:
             'application/json':
                 schema:
-                    $ref: './test-package-schemas.yaml#/components/schemas/TestPackageUpdate'
+                    $ref: 'test-package-schemas.yaml#/components/schemas/TestPackageUpdate'
     responses:
         "200":
             description: OK
             content:
                 'application/json':
                     schema:
-                        $ref: './test-package-schemas.yaml#/components/schemas/TestPackage'
+                        $ref: 'test-package-schemas.yaml#/components/schemas/TestPackage'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

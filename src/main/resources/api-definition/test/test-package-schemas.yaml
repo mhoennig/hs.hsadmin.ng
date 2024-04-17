@@ -10,7 +10,7 @@ components:
                     type: string
                     format: uuid
                 customer:
-                    $ref: './test-customer-schemas.yaml#/components/schemas/TestCustomer'
+                    $ref: 'test-customer-schemas.yaml#/components/schemas/TestCustomer'
                 name:
                     type: string
                 description:

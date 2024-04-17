@@ -115,7 +115,7 @@ tasks.named('test') {
 openapiProcessor {
     springRoot {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition.yaml"
         mapping "$projectDir/src/main/resources/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -124,7 +124,7 @@ openapiProcessor {
     }
     springRbac {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/rbac/rbac.yaml"
         mapping "$projectDir/src/main/resources/api-definition/rbac/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -133,7 +133,7 @@ openapiProcessor {
     }
     springTest {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/test/test.yaml"
         mapping "$projectDir/src/main/resources/api-definition/test/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -142,7 +142,7 @@ openapiProcessor {
     }
     springHsOffice {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/hs-office/hs-office.yaml"
         mapping "$projectDir/src/main/resources/api-definition/hs-office/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -151,7 +151,7 @@ openapiProcessor {
     }
     springHsBooking {
         processorName 'spring'
-        processor 'io.openapiprocessor:openapi-processor-spring:2024.2'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
         apiPath "$projectDir/src/main/resources/api-definition/hs-booking/hs-booking.yaml"
         mapping "$projectDir/src/main/resources/api-definition/hs-booking/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
@@ -175,6 +175,8 @@ project.tasks.compileJava.dependsOn processSpring
 
 // Rename javax to jakarta in OpenApi generated java files because
 // io.openapiprocessor.openapi-processor 2022.2 does not yet support the openapiprocessor useSpringBoot3 config option.
+// TODO.impl: Upgrade to io.openapiprocessor.openapi-processor >= 2024.2
+//  and use either `bean-validation: true` in api-mapping.yaml or `useSpringBoot3 true` (not sure where exactly).
 task openApiGenerate(type: Copy) {
     from "$buildDir/generated/sources/openapi-javax"
     into "$buildDir/generated/sources/openapi"

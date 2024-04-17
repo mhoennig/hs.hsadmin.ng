@@ -273,7 +273,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(D-1000111: rel(anchor='LP First GmbH', type='DEBITOR', holder='LP First GmbH'), fir)");
-                        assertThat(mandate.getValidFrom()).isEqualTo("2020-06-05");
+                        assertThat(mandate.getValidFrom()).isEqualTo("2022-11-01");
                         assertThat(mandate.getValidTo()).isEqualTo("2022-12-31");
                         return true;
                     });

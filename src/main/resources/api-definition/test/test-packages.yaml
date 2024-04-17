@@ -3,8 +3,8 @@ get:
         - testPackages
     operationId: listPackages
     parameters:
-        - $ref: './auth.yaml#/components/parameters/currentUser'
-        - $ref: './auth.yaml#/components/parameters/assumedRoles'
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query
           required: false
@@ -18,8 +18,8 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: './test-package-schemas.yaml#/components/schemas/TestPackage'
+                            $ref: 'test-package-schemas.yaml#/components/schemas/TestPackage'
         "401":
-            $ref: './error-responses.yaml#/components/responses/Unauthorized'
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
-            $ref: './error-responses.yaml#/components/responses/Forbidden'
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
