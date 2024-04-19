@@ -95,6 +95,7 @@ subgraph bookingItem["`**bookingItem**`"]
 
         role:bookingItem:OWNER[[bookingItem:OWNER]]
         role:bookingItem:ADMIN[[bookingItem:ADMIN]]
+        role:bookingItem:AGENT[[bookingItem:AGENT]]
         role:bookingItem:TENANT[[bookingItem:TENANT]]
     end
 
@@ -273,13 +274,15 @@ role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
 role:debitorRel:AGENT ==> role:bookingItem:OWNER
 role:bookingItem:OWNER ==> role:bookingItem:ADMIN
-role:bookingItem:ADMIN ==> role:bookingItem:TENANT
+role:debitorRel:AGENT ==> role:bookingItem:ADMIN
+role:bookingItem:ADMIN ==> role:bookingItem:AGENT
+role:bookingItem:AGENT ==> role:bookingItem:TENANT
 role:bookingItem:TENANT ==> role:debitorRel:TENANT
 
 %% granting permissions to roles
 role:debitorRel:ADMIN ==> perm:bookingItem:INSERT
 role:global:ADMIN ==> perm:bookingItem:DELETE
-role:bookingItem:OWNER ==> perm:bookingItem:UPDATE
+role:bookingItem:ADMIN ==> perm:bookingItem:UPDATE
 role:bookingItem:TENANT ==> perm:bookingItem:SELECT
 
 ```

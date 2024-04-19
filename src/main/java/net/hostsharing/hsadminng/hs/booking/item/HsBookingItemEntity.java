@@ -141,12 +141,12 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     public static RbacView rbac() {
         return rbacViewFor("bookingItem", HsBookingItemEntity.class)
                 .withIdentityView(SQL.query("""
-                        SELECT i.uuid as uuid, d.idName || ':' || i.caption as idName 
-                            FROM hs_booking_item i
-                            JOIN hs_office_debitor_iv d ON d.uuid = i.debitorUuid
+                        SELECT bookingItem.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingItem.caption) as idName
+                            FROM hs_booking_item bookingItem
+                            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingItem.debitorUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.expression("validity"))
-                .withUpdatableColumns("version", "validity", "resources")
+                .withUpdatableColumns("version", "caption", "validity", "resources")
 
                 .importEntityAlias("debitor", HsOfficeDebitorEntity.class,
                         dependsOnColumn("debitorUuid"),
@@ -167,9 +167,12 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
 
                 .createRole(OWNER, (with) -> {
                     with.incomingSuperRole("debitorRel", AGENT);
+                })
+                .createSubRole(ADMIN, (with) -> {
+                    with.incomingSuperRole("debitorRel", AGENT);
                     with.permission(UPDATE);
                 })
-                .createSubRole(ADMIN)
+                .createSubRole(AGENT)
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("debitorRel", TENANT);
                     with.permission(SELECT);

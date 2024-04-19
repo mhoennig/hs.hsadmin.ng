@@ -109,28 +109,35 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_booking_item#D-1000111:some new booking item:ADMIN",
-                    "hs_booking_item#D-1000111:some new booking item:OWNER",
-                    "hs_booking_item#D-1000111:some new booking item:TENANT"));
+                    "hs_booking_item#D-1000111-somenewbookingitem:ADMIN",
+                    "hs_booking_item#D-1000111-somenewbookingitem:AGENT",
+                    "hs_booking_item#D-1000111-somenewbookingitem:OWNER",
+                    "hs_booking_item#D-1000111-somenewbookingitem:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
                             // insert+delete
-                            "{ grant perm:hs_booking_item#D-1000111:some new booking item:DELETE to role:global#global:ADMIN by system and assume }",
+                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:DELETE to role:global#global:ADMIN by system and assume }",
 
                             // owner
-                            "{ grant perm:hs_booking_item#D-1000111:some new booking item:UPDATE to role:hs_booking_item#D-1000111:some new booking item:OWNER by system and assume }",
-                            "{ grant role:hs_booking_item#D-1000111:some new booking item:OWNER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
+                            //"{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:UPDATE to role:hs_booking_item#D-1000111-somenewbookingitem:OWNER by system and assume }",
+                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:OWNER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
 
                             // admin
-                            "{ grant role:hs_booking_item#D-1000111:some new booking item:ADMIN to role:hs_booking_item#D-1000111:some new booking item:OWNER by system and assume }",
+                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:UPDATE to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
+                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN to role:hs_booking_item#D-1000111-somenewbookingitem:OWNER by system and assume }",
+                            //"{ grant role:hs_booking_item#D-1000111-somenewbookingitem:TENANT to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
+
+                            // agent
+                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
+                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:AGENT to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
 
                             // tenant
-                            "{ grant role:hs_booking_item#D-1000111:some new booking item:TENANT to role:hs_booking_item#D-1000111:some new booking item:ADMIN by system and assume }",
-                            "{ grant perm:hs_booking_item#D-1000111:some new booking item:SELECT to role:hs_booking_item#D-1000111:some new booking item:TENANT by system and assume }",
-                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:hs_booking_item#D-1000111:some new booking item:TENANT by system and assume }",
+                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:TENANT to role:hs_booking_item#D-1000111-somenewbookingitem:AGENT by system and assume }",
+                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:SELECT to role:hs_booking_item#D-1000111-somenewbookingitem:TENANT by system and assume }",
+                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:hs_booking_item#D-1000111-somenewbookingitem:TENANT by system and assume }",
 
                             null));
         }
@@ -159,7 +166,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     result,
                     "HsBookingItemEntity(D-1000212, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
                     "HsBookingItemEntity(D-1000212, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
-                    "HsBookingItemEntity(D-1000212, [2024-04-01,), some Whatever, { CPU: 1, HDD: 2048, SDD: 512, extra: 42 })");
+                    "HsBookingItemEntity(D-1000212, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
         }
 
         @Test
@@ -176,7 +183,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     result,
                     "HsBookingItemEntity(D-1000111, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
                     "HsBookingItemEntity(D-1000111, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
-                    "HsBookingItemEntity(D-1000111, [2024-04-01,), some Whatever, { CPU: 1, HDD: 2048, SDD: 512, extra: 42 })");
+                    "HsBookingItemEntity(D-1000111, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
         }
     }
 

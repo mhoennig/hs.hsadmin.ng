@@ -89,13 +89,13 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                              }
                          },
                          {
-                             "caption": "some Whatever",
+                             "caption": "some PrivateCloud",
                              "validFrom": "2024-04-01",
                              "validTo": null,
                              "resources": {
-                                 "CPU": 1,
-                                 "HDD": 2048,
-                                 "SDD": 512,
+                                 "CPU": 10,
+                                 "HDD": 10240,
+                                 "SDD": 10240,
                                  "extra": 42
                              }
                          }
