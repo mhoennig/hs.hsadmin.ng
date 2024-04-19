@@ -48,7 +48,7 @@ components:
                 caption:
                     type: string
                     minLength: 3
-                    maxLength:
+                    maxLength: 80
                     nullable: false
                 validFrom:
                     type: string
@@ -75,11 +75,6 @@ components:
         ManagedServerBookingResources:
             type: object
             properties:
-                caption:
-                    type: string
-                    minLength: 3
-                    maxLength:
-                    nullable: false
                 CPU:
                     type: integer
                     minimum: 1

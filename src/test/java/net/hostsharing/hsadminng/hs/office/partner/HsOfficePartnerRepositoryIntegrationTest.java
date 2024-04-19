@@ -141,6 +141,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(distinct(from(
                             initialGrantNames,
+                            // TODO.rbac: this grant should only be created for DEBITOR-Relationships, thus the RBAC DSL needs to support conditional grants
                             "{ grant perm:relation#HostsharingeG-with-PARTNER-EBess:INSERT>sepamandate to role:relation#HostsharingeG-with-PARTNER-EBess:ADMIN by system and assume }",
 
                             // permissions on partner

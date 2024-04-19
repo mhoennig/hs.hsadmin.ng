@@ -49,19 +49,26 @@ begin
 
     perform createRoleWithGrants(
         hsBookingItemOWNER(NEW),
-            permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficeRelationAGENT(newDebitorRel)]
     );
 
     perform createRoleWithGrants(
         hsBookingItemADMIN(NEW),
-            incomingSuperRoles => array[hsBookingItemOWNER(NEW)]
+            permissions => array['UPDATE'],
+            incomingSuperRoles => array[
+            	hsBookingItemOWNER(NEW),
+            	hsOfficeRelationAGENT(newDebitorRel)]
+    );
+
+    perform createRoleWithGrants(
+        hsBookingItemAGENT(NEW),
+            incomingSuperRoles => array[hsBookingItemADMIN(NEW)]
     );
 
     perform createRoleWithGrants(
         hsBookingItemTENANT(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsBookingItemADMIN(NEW)],
+            incomingSuperRoles => array[hsBookingItemAGENT(NEW)],
             outgoingSubRoles => array[hsOfficeRelationTENANT(newDebitorRel)]
     );
 
@@ -177,9 +184,9 @@ create trigger hs_booking_item_insert_permission_check_tg
 
     call generateRbacIdentityViewFromQuery('hs_booking_item',
         $idName$
-            SELECT i.uuid as uuid, d.idName || ':' || i.caption as idName
-            FROM hs_booking_item i
-            JOIN hs_office_debitor_iv d ON d.uuid = i.debitorUuid
+            SELECT bookingItem.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingItem.caption) as idName
+            FROM hs_booking_item bookingItem
+            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingItem.debitorUuid
         $idName$);
 --//
 
@@ -192,6 +199,7 @@ call generateRbacRestrictedView('hs_booking_item',
     $orderBy$,
     $updates$
         version = new.version,
+        caption = new.caption,
         validity = new.validity,
         resources = new.resources
     $updates$);

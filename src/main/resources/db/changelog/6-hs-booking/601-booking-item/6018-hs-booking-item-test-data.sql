@@ -34,7 +34,7 @@ begin
         into hs_booking_item (uuid, debitoruuid, caption, validity, resources)
         values (uuid_generate_v4(), relatedDebitor.uuid, 'some ManagedServer', daterange('20221001', null, '[]'), '{ "CPU": 2, "SDD": 512, "extra": 42 }'::jsonb),
                (uuid_generate_v4(), relatedDebitor.uuid, 'some CloudServer', daterange('20230115', '20240415', '[)'), '{ "CPU": 2, "HDD": 1024, "extra": 42 }'::jsonb),
-               (uuid_generate_v4(), relatedDebitor.uuid, 'some Whatever', daterange('20240401', null, '[]'), '{ "CPU": 1, "SDD": 512, "HDD": 2048, "extra": 42 }'::jsonb);
+               (uuid_generate_v4(), relatedDebitor.uuid, 'some PrivateCloud', daterange('20240401', null, '[]'), '{ "CPU": 10, "SDD": 10240, "HDD": 10240, "extra": 42 }'::jsonb);
 end; $$;
 --//
 

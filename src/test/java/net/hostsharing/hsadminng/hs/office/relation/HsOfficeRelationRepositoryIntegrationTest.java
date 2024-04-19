@@ -131,7 +131,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    // TODO: this grant should only be created for DEBITOR-Relationships, thus the RBAC DSL needs to support conditional grants
+                    // TODO.rbac: this grant should only be created for DEBITOR-Relationships, thus the RBAC DSL needs to support conditional grants
                     "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:INSERT>hs_office_sepamandate to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
 
                     "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:DELETE to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
