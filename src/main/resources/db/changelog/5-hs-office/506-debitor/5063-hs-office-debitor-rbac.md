@@ -149,16 +149,6 @@ role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel.holderPerson:REFERRER
 role:global:ADMIN -.-> role:debitorRel.contact:OWNER
 role:debitorRel.contact:OWNER -.-> role:debitorRel.contact:ADMIN
 role:debitorRel.contact:ADMIN -.-> role:debitorRel.contact:REFERRER
-role:global:ADMIN -.-> role:debitorRel:OWNER
-role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
-role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
-role:debitorRel:AGENT -.-> role:debitorRel:TENANT
-role:debitorRel.contact:ADMIN -.-> role:debitorRel:TENANT
-role:debitorRel:TENANT -.-> role:debitorRel.anchorPerson:REFERRER
-role:debitorRel:TENANT -.-> role:debitorRel.holderPerson:REFERRER
-role:debitorRel:TENANT -.-> role:debitorRel.contact:REFERRER
-role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:OWNER
-role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
 role:global:ADMIN -.-> role:refundBankAccount:OWNER
 role:refundBankAccount:OWNER -.-> role:refundBankAccount:ADMIN
 role:refundBankAccount:ADMIN -.-> role:refundBankAccount:REFERRER

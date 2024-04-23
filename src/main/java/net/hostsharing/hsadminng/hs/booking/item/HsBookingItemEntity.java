@@ -35,10 +35,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.lowerInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.upperInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
@@ -148,12 +151,12 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
                 .withRestrictedViewOrderBy(SQL.expression("validity"))
                 .withUpdatableColumns("version", "caption", "validity", "resources")
 
-                .importEntityAlias("debitor", HsOfficeDebitorEntity.class,
+                .importEntityAlias("debitor", HsOfficeDebitorEntity.class, usingDefaultCase(),
                         dependsOnColumn("debitorUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
 
-                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class,
+                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),
                         dependsOnColumn("debitorUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}

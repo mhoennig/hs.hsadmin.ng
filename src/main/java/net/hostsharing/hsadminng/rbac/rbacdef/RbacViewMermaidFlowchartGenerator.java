@@ -15,6 +15,9 @@ public class RbacViewMermaidFlowchartGenerator {
     public static final String HOSTSHARING_LIGHT_ORANGE = "#feb28c";
     public static final String HOSTSHARING_DARK_BLUE = "#274d6e";
     public static final String HOSTSHARING_LIGHT_BLUE = "#99bcdb";
+
+    // TODO.rbac: implement level limit for all renderable items and remove items which not part of a grant
+    private static final long MAX_LEVEL_TO_RENDER = 3;
     private final RbacView rbacDef;
 
     private final CaseDef forCase;
@@ -56,6 +59,7 @@ public class RbacViewMermaidFlowchartGenerator {
 
         flowchart.indented( () -> {
             rbacDef.getEntityAliases().values().stream()
+                    .filter(e -> e.level() <= MAX_LEVEL_TO_RENDER)
                     .filter(e -> e.aliasName().startsWith(entity.aliasName() + ":"))
                     .forEach(this::renderEntitySubgraph);
 
@@ -106,6 +110,7 @@ public class RbacViewMermaidFlowchartGenerator {
 
     private void renderGrants(final RbacView.RbacGrantDefinition.GrantType grantType, final String comment) {
         final var grantsOfRequestedType = rbacDef.getGrantDefs().stream()
+                .filter(g -> g.level() <= MAX_LEVEL_TO_RENDER)
                 .filter(g -> g.grantType() == grantType)
                 .filter(this::isToBeRenderedInThisGraph)
                 .toList();

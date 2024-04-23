@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
@@ -49,7 +50,7 @@ public class TestPackageEntity implements RbacObject {
                 .withIdentityView(SQL.projection("name"))
                 .withUpdatableColumns("version", "customerUuid", "description")
 
-                .importEntityAlias("customer", TestCustomerEntity.class,
+                .importEntityAlias("customer", TestCustomerEntity.class, usingDefaultCase(),
                         dependsOnColumn("customerUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)

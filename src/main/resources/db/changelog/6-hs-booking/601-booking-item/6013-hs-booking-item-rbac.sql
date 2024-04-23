@@ -111,7 +111,7 @@ do language plpgsql $$
         call defineContext('create INSERT INTO hs_booking_item permissions for the related hs_office_relation rows');
 
         FOR row IN SELECT * FROM hs_office_relation
-                WHERE type in ('DEBITOR') -- TODO.rbac: currently manually patched, needs to be generated
+			WHERE type = 'DEBITOR'
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
@@ -128,11 +128,11 @@ create or replace function hs_booking_item_hs_office_relation_insert_tf()
     language plpgsql
     strict as $$
 begin
-    if NEW.type = 'DEBITOR' then -- TODO.rbac: currently manually patched, needs to be generated
-        call grantPermissionToRole(
+    if NEW.type = 'DEBITOR' then
+		call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
             hsOfficeRelationADMIN(NEW));
-    end if;
+	end if;
     return NEW;
 end; $$;
 

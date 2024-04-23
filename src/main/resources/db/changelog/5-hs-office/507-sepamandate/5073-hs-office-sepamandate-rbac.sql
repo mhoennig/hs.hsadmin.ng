@@ -115,6 +115,7 @@ do language plpgsql $$
         call defineContext('create INSERT INTO hs_office_sepamandate permissions for the related hs_office_relation rows');
 
         FOR row IN SELECT * FROM hs_office_relation
+			WHERE type = 'DEBITOR'
             LOOP
                 call grantPermissionToRole(
                     createPermission(row.uuid, 'INSERT', 'hs_office_sepamandate'),
@@ -131,9 +132,11 @@ create or replace function hs_office_sepamandate_hs_office_relation_insert_tf()
     language plpgsql
     strict as $$
 begin
-    call grantPermissionToRole(
+    if NEW.type = 'DEBITOR' then
+		call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_sepamandate'),
             hsOfficeRelationADMIN(NEW));
+	end if;
     return NEW;
 end; $$;
 

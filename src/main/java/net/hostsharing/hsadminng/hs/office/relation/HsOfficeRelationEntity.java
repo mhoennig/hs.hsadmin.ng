@@ -19,6 +19,8 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inOtherCases;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
@@ -94,15 +96,15 @@ public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
                 .withRestrictedViewOrderBy(SQL.expression(
                         "(select idName from hs_office_person_iv p where p.uuid = target.holderUuid)"))
                 .withUpdatableColumns("contactUuid")
-                .importEntityAlias("anchorPerson", HsOfficePersonEntity.class,
+                .importEntityAlias("anchorPerson", HsOfficePersonEntity.class, usingDefaultCase(),
                         dependsOnColumn("anchorUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
-                .importEntityAlias("holderPerson", HsOfficePersonEntity.class,
+                .importEntityAlias("holderPerson", HsOfficePersonEntity.class, usingDefaultCase(),
                         dependsOnColumn("holderUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
-                .importEntityAlias("contact", HsOfficeContactEntity.class,
+                .importEntityAlias("contact", HsOfficeContactEntity.class, usingDefaultCase(),
                         dependsOnColumn("contactUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)

@@ -38,6 +38,7 @@ import static net.hostsharing.hsadminng.mapper.PostgresDateRange.lowerInclusiveF
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.upperInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
@@ -156,7 +157,7 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
                 .withRestrictedViewOrderBy(SQL.projection("validity"))
                 .withUpdatableColumns("validity", "membershipFeeBillable", "status")
 
-                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
+                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class, usingDefaultCase(),
                         dependsOnColumn("partnerUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}

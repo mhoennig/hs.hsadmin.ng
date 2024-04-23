@@ -18,8 +18,11 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.*;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
@@ -107,7 +110,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, RbacObject {
                 .withRestrictedViewOrderBy(expression("validity"))
                 .withUpdatableColumns("reference", "agreement", "validity")
 
-                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class,
+                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),
                         dependsOnColumn("debitorUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}
@@ -116,7 +119,7 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, RbacObject {
                                     WHERE debitor.uuid = ${REF}.debitorUuid
                                 """),
                         NOT_NULL)
-                .importEntityAlias("bankAccount", HsOfficeBankAccountEntity.class,
+                .importEntityAlias("bankAccount", HsOfficeBankAccountEntity.class, usingDefaultCase(),
                         dependsOnColumn("bankAccountUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)

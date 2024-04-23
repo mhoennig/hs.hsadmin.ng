@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
@@ -125,7 +126,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
         return rbacViewFor("coopAssetsTransaction", HsOfficeCoopAssetsTransactionEntity.class)
                 .withIdentityView(RbacView.SQL.projection("reference"))
                 .withUpdatableColumns("comment")
-                .importEntityAlias("membership", HsOfficeMembershipEntity.class,
+                .importEntityAlias("membership", HsOfficeMembershipEntity.class, usingDefaultCase(),
                         dependsOnColumn("membershipUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)

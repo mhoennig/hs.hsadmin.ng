@@ -18,7 +18,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.reflect.Modifier.isStatic;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Collections.max;
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
@@ -325,6 +327,9 @@ public class RbacView {
      *  A JPA entity class extending RbacObject which also implements an `rbac` method returning
      *  its RBAC specification.
      *
+     * @param usingCase
+     *  Only use this case value for a switch within the rbac rules.
+     *
      * @param fetchSql
      *  An SQL SELECT statement which fetches the referenced row. Use `${REF}` to speficiy the
      *  newly created or updated row (will be replaced by NEW/OLD from the trigger method).
@@ -342,19 +347,29 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importEntityAlias(
-            final String aliasName, final Class<? extends RbacObject> entityClass,
+            final String aliasName, final Class<? extends RbacObject> entityClass, final ColumnValue usingCase,
             final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
-        importEntityAliasImpl(aliasName, entityClass, usingDefaultCase(), fetchSql, dependsOnColum, false, nullable);
+        importEntityAliasImpl(aliasName, entityClass, usingCase, fetchSql, dependsOnColum, false, nullable);
         return this;
     }
 
     private EntityAlias importEntityAliasImpl(
-            final String aliasName, final Class<? extends RbacObject> entityClass, final ColumnValue forCase,
+            final String aliasName, final Class<? extends RbacObject> entityClass, final ColumnValue usingCase,
             final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity, final Nullable nullable) {
-        final var entityAlias = new EntityAlias(aliasName, entityClass, fetchSql, dependsOnColum, asSubEntity, nullable);
-        entityAliases.put(aliasName, entityAlias);
+
+        final var entityAlias = ofNullable(entityAliases.get(aliasName))
+                .orElseGet(() -> {
+                    final var ea = new EntityAlias(aliasName, entityClass, usingCase, fetchSql, dependsOnColum, asSubEntity, nullable);
+                    entityAliases.put(aliasName, ea);
+                    return ea;
+                });
+
         try {
-            importAsAlias(aliasName, rbacDefinition(entityClass), forCase, asSubEntity);
+            // TODO.rbac: this only works for directly recursive RBAC definitions, not for indirect recursion
+            final var rbacDef = entityClass == rootEntityAlias.entityClass
+                ? this
+                : rbacDefinition(entityClass);
+            importAsAlias(aliasName, rbacDef, usingCase, asSubEntity);
         } catch (final ReflectiveOperationException exc) {
             throw new RuntimeException("cannot import entity: " + entityClass, exc);
         }
@@ -369,7 +384,7 @@ public class RbacView {
     private RbacView importAsAlias(final String aliasName, final RbacView importedRbacView, final ColumnValue forCase, final boolean asSubEntity) {
         final var mapper = new AliasNameMapper(importedRbacView, aliasName,
                 asSubEntity ? entityAliases.keySet() : null);
-        importedRbacView.getEntityAliases().values().stream()
+        copyOf(importedRbacView.getEntityAliases().values()).stream()
                 .filter(entityAlias -> !importedRbacView.isRootEntityAlias(entityAlias))
                 .filter(entityAlias -> !entityAlias.isGlobal())
                 .filter(entityAlias -> !asSubEntity || !entityAliases.containsKey(entityAlias.aliasName))
@@ -377,10 +392,10 @@ public class RbacView {
                     final String mappedAliasName = mapper.map(entityAlias.aliasName);
                     entityAliases.put(mappedAliasName, new EntityAlias(mappedAliasName, entityAlias.entityClass));
                 });
-        importedRbacView.getRoleDefs().forEach(roleDef -> {
+        copyOf(importedRbacView.getRoleDefs()).forEach(roleDef -> {
             new RbacRoleDefinition(findEntityAlias(mapper.map(roleDef.entityAlias.aliasName)), roleDef.role);
         });
-        importedRbacView.getGrantDefs().forEach(grantDef -> {
+        copyOf(importedRbacView.getGrantDefs()).forEach(grantDef -> {
             if ( grantDef.grantType() == RbacGrantDefinition.GrantType.ROLE_TO_ROLE &&
                     (grantDef.forCases == null || grantDef.matchesCase(forCase)) ) {
                 final var importedGrantDef = findOrCreateGrantDef(
@@ -409,6 +424,10 @@ public class RbacView {
             this.processingCase = null;
         });
         return this;
+    }
+
+    private static <T> List<T> copyOf(final Collection<T> eas) {
+        return eas.stream().toList();
     }
 
     private void verifyVersionColumnExists() {
@@ -613,6 +632,13 @@ public class RbacView {
         public RbacGrantDefinition unassumed() {
             this.assumed = false;
             return this;
+        }
+
+        public long level() {
+            return max(asList(
+                    superRoleDef != null ? superRoleDef.entityAlias.level() : 0,
+                    subRoleDef != null ? subRoleDef.entityAlias.level() : 0,
+                    permDef != null ? permDef.entityAlias.level() : 0));
         }
 
         public enum GrantType {
@@ -854,14 +880,14 @@ public class RbacView {
         return distinctGrantDef;
     }
 
-    record EntityAlias(String aliasName, Class<? extends RbacObject> entityClass, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
+    record EntityAlias(String aliasName, Class<? extends RbacObject> entityClass, ColumnValue usingCase, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
 
         public EntityAlias(final String aliasName) {
-            this(aliasName, null, null, null, false, null);
+            this(aliasName, null, null, null, null, false, null);
         }
 
         public EntityAlias(final String aliasName, final Class<? extends RbacObject> entityClass) {
-            this(aliasName, entityClass, null, null, false, null);
+            this(aliasName, entityClass, null, null, null, false, null);
         }
 
         boolean isGlobal() {
@@ -873,7 +899,6 @@ public class RbacView {
         }
 
         @NotNull
-        @Override
         public SQL fetchSql() {
             if (fetchSql == null) {
                 return SQL.noop();
@@ -913,6 +938,14 @@ public class RbacView {
                         "Entity " + aliasName + "(" + entityClass.getSimpleName() + ")" + ": please add dependsOnColum");
             }
             return dependsOnColum.column;
+        }
+
+        long level() {
+            return aliasName.chars().filter(ch -> ch == '.').count() + 1;
+        }
+
+        boolean isCaseDependent() {
+            return usingCase != null && usingCase.value != null;
         }
     }
 
@@ -1074,10 +1107,9 @@ public class RbacView {
             return new ColumnValue(null);
         }
 
-        public static ColumnValue usingCase(final String value) {
-            return new ColumnValue(value);
+        public static <E extends Enum<E>> ColumnValue usingCase(final E value) {
+            return new ColumnValue(value.name());
         }
-
         public final String value;
 
         private ColumnValue(final String value) {

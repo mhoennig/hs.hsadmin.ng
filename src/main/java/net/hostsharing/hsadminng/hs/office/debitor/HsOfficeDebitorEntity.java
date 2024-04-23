@@ -36,7 +36,9 @@ import static jakarta.persistence.CascadeType.MERGE;
 import static jakarta.persistence.CascadeType.PERSIST;
 import static jakarta.persistence.CascadeType.REFRESH;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
@@ -171,23 +173,21 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
                         "defaultPrefix" /* TODO.spec: do we want that updatable? */)
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
-                .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class,
-                        // TODO.spec: do we need a distinct case for DEBITOR-Relation?
-                        usingDefaultCase(),
+                .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),
                         directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("debitorRelUuid"))
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)
                 .createPermission(UPDATE).grantedTo("debitorRel", ADMIN)
                 .createPermission(SELECT).grantedTo("debitorRel", TENANT)
 
-                .importEntityAlias("refundBankAccount", HsOfficeBankAccountEntity.class,
+                .importEntityAlias("refundBankAccount", HsOfficeBankAccountEntity.class, usingDefaultCase(),
                         dependsOnColumn("refundBankAccountUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
                 .toRole("refundBankAccount", ADMIN).grantRole("debitorRel", AGENT)
                 .toRole("debitorRel", AGENT).grantRole("refundBankAccount", REFERRER)
 
-                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class,
+                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class, usingDefaultCase(),
                         dependsOnColumn("debitorRelUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}

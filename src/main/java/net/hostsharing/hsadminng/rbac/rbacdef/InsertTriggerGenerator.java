@@ -50,7 +50,7 @@ public class InsertTriggerGenerator {
                     begin
                         call defineContext('create INSERT INTO ${rawSubTableName} permissions for the related ${rawSuperTableName} rows');
                     
-                        FOR row IN SELECT * FROM ${rawSuperTableName}
+                        FOR row IN SELECT * FROM ${rawSuperTableName}${typeCondition}
                             LOOP
                                 call grantPermissionToRole(
                                     createPermission(row.uuid, 'INSERT', '${rawSubTableName}'),
@@ -61,7 +61,10 @@ public class InsertTriggerGenerator {
                 """,
                 with("rawSubTableName", rbacDef.getRootEntityAlias().getRawTableName()),
                 with("rawSuperTableName", superRoleDef.getEntityAlias().getRawTableName()),
-                with("rawSuperRoleDescriptor", toRoleDescriptor(superRoleDef, "row"))
+                with("rawSuperRoleDescriptor", toRoleDescriptor(superRoleDef, "row")),
+                with("typeCondition", superRoleDef.getEntityAlias().isCaseDependent()
+                        ? "\n\t\t\tWHERE type = '${case}'".replace("${case}", superRoleDef.getEntityAlias().usingCase().value)
+                        : "")
                 );
         });
     }
@@ -77,9 +80,9 @@ public class InsertTriggerGenerator {
                     language plpgsql
                     strict as $$
                 begin
-                    call grantPermissionToRole(
+                    ${typeConditionIf}call grantPermissionToRole(
                             createPermission(NEW.uuid, 'INSERT', '${rawSubTableName}'),
-                            ${rawSuperRoleDescriptor});
+                            ${rawSuperRoleDescriptor});${typeConditionEndIf}
                     return NEW;
                 end; $$;
                                 
@@ -91,7 +94,14 @@ public class InsertTriggerGenerator {
                 """,
                 with("rawSubTableName", rbacDef.getRootEntityAlias().getRawTableName()),
                 with("rawSuperTableName", superRoleDef.getEntityAlias().getRawTableName()),
-                with("rawSuperRoleDescriptor", toRoleDescriptor(superRoleDef, NEW.name()))
+                with("rawSuperRoleDescriptor", toRoleDescriptor(superRoleDef, NEW.name())),
+                with("typeConditionIf",
+                        superRoleDef.getEntityAlias().isCaseDependent()
+                            ? "if NEW.type = '${case}' then\n\t\t".replace("${case}", superRoleDef.getEntityAlias().usingCase().value)
+                            : ""),
+                with("typeConditionEndIf", superRoleDef.getEntityAlias().isCaseDependent()
+                        ? "\n\tend if;"
+                        : "")
             );
         });
     }
@@ -241,7 +251,10 @@ public class InsertTriggerGenerator {
 
     private static <T> BinaryOperator<T> singleton() {
         return (x, y) -> {
-            throw new IllegalStateException("only a single INSERT permission grant allowed");
+            if ( !x.equals(y) ) {
+                throw new IllegalStateException("only a single INSERT permission grant allowed");
+            }
+            return x;
         };
     }
 

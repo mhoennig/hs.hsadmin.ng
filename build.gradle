@@ -174,7 +174,7 @@ project.tasks.processResources.dependsOn processSpring
 project.tasks.compileJava.dependsOn processSpring
 
 // Rename javax to jakarta in OpenApi generated java files because
-// io.openapiprocessor.openapi-processor 2022.2 does not yet support the openapiprocessor useSpringBoot3 config option.
+// io.openapiprocessor.openapi-processor 2022.5 does not yet support the openapiprocessor useSpringBoot3 config option.
 // TODO.impl: Upgrade to io.openapiprocessor.openapi-processor >= 2024.2
 //  and use either `bean-validation: true` in api-mapping.yaml or `useSpringBoot3 true` (not sure where exactly).
 task openApiGenerate(type: Copy) {
