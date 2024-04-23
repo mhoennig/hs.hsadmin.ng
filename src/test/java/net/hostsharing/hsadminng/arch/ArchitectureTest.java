@@ -51,6 +51,7 @@ public class ArchitectureTest {
                     "..hs.office.relation",
                     "..hs.office.sepamandate",
                     "..hs.booking.item",
+                    "..hs.hosting.asset",
                     "..errors",
                     "..mapper",
                     "..ping",
@@ -130,6 +131,7 @@ public class ArchitectureTest {
             .resideInAnyPackage(
                     "..hs.office.(*)..",
                     "..hs.booking.(*)..",
+                    "..hs.hosting.(*)..",
                     "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
             );
 
@@ -140,7 +142,16 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.booking.(*)..",
-                    "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
+                    "..hs.hosting.(*).."
+            );
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule hsHostingPackageAccessRule = classes()
+            .that().resideInAPackage("..hs.hosting.(*)..")
+            .should().onlyBeAccessed().byClassesThat()
+            .resideInAnyPackage(
+                    "..hs.hosting.(*).."
             );
 
     @ArchTest

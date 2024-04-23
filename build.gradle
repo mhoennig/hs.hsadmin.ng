@@ -158,6 +158,15 @@ openapiProcessor {
         showWarnings true
         openApiNullable true
     }
+    springHsHosting {
+        processorName 'spring'
+        processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
+        apiPath "$projectDir/src/main/resources/api-definition/hs-hosting/hs-hosting.yaml"
+        mapping "$projectDir/src/main/resources/api-definition/hs-hosting/api-mappings.yaml"
+        targetDir "$buildDir/generated/sources/openapi-javax"
+        showWarnings true
+        openApiNullable true
+    }
 }
 sourceSets.main.java.srcDir 'build/generated/sources/openapi'
 abstract class ProcessSpring extends DefaultTask {}
@@ -166,7 +175,8 @@ tasks.register('processSpring', ProcessSpring)
  'processSpringRbac',
  'processSpringTest',
  'processSpringHsOffice',
- 'processSpringHsBooking'
+ 'processSpringHsBooking',
+ 'processSpringHsHosting'
 ].each {
     project.tasks.processSpring.dependsOn it
 }

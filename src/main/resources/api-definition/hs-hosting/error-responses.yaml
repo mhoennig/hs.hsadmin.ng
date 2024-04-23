@@ -1,0 +1,40 @@
+components:
+
+    responses:
+        NotFound:
+            description: The specified  was not found.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+        Unauthorized:
+            description: The current user is unknown or not authorized.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+        Forbidden:
+            description: The current user or none of the assumed or roles is granted access to the resource.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+        Conflict:
+            description: The request could not be completed due to a conflict with the current state of the target resource.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+
+    schemas:
+
+        Error:
+            type: object
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+            required:
+                - code
+                - message

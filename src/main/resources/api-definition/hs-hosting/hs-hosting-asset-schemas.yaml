@@ -1,0 +1,97 @@
+
+components:
+
+    schemas:
+
+        HsHostingAssetType:
+            type: string
+            enum:
+                - CLOUD_SERVER
+                - MANAGED_SERVER
+                - MANAGED_WEBSPACE
+                - UNIX_USER
+                - DOMAIN_SETUP
+                - EMAIL_ALIAS
+                - EMAIL_ADDRESS
+                - PGSQL_USER
+                - PGSQL_DATABASE
+                - MARIADB_USER
+                - MARIADB_DATABASE
+
+        HsHostingAsset:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                type:
+                    $ref: '#/components/schemas/HsHostingAssetType'
+                identifier:
+                    type: string
+                caption:
+                    type: string
+                config:
+                    $ref: '#/components/schemas/HsHostingAssetConfiguration'
+            required:
+                - type
+                - ídentifier
+                - uuid
+                - config
+
+        HsHostingAssetPatch:
+            type: object
+            properties:
+                caption:
+                    type: string
+                    nullable: true
+                config:
+                    $ref: '#/components/schemas/HsHostingAssetConfiguration'
+
+        HsHostingAssetInsert:
+            type: object
+            properties:
+                bookingItemUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                type:
+                    $ref: '#/components/schemas/HsHostingAssetType'
+                identifier:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+                caption:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+                config:
+                    $ref: '#/components/schemas/HsHostingAssetConfiguration'
+            required:
+                - type
+                - identifier
+                - caption
+                - debitorUuid
+                - config
+            additionalProperties: false
+
+        HsHostingAssetConfiguration:
+            # forces generating a java.lang.Object containing a Map, instead of class AssetConfiguration
+            anyOf:
+                - type: object
+                  properties:
+                    CPU:
+                        type: integer
+                        minimum: 1
+                        maximum: 16
+                    SSD:
+                        type: integer
+                        minimum: 16
+                        maximum: 4096
+                    HDD:
+                        type: integer
+                        minimum: 16
+                        maximum: 4096
+                  additionalProperties: true
+

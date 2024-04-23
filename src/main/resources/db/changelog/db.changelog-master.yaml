@@ -133,3 +133,9 @@ databaseChangeLog:
         file: db/changelog/6-hs-booking/601-booking-item/6013-hs-booking-item-rbac.sql
     - include:
         file: db/changelog/6-hs-booking/601-booking-item/6018-hs-booking-item-test-data.sql
+    - include:
+        file: db/changelog/7-hs-hosting/701-hosting-asset/7010-hs-hosting-asset.sql
+    - include:
+        file: db/changelog/7-hs-hosting/701-hosting-asset/7013-hs-hosting-asset-rbac.sql
+    - include:
+        file: db/changelog/7-hs-hosting/701-hosting-asset/7018-hs-hosting-asset-test-data.sql

@@ -118,17 +118,16 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
-                            // insert+delete
+                            // global-admin
                             "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:DELETE to role:global#global:ADMIN by system and assume }",
 
                             // owner
-                            //"{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:UPDATE to role:hs_booking_item#D-1000111-somenewbookingitem:OWNER by system and assume }",
                             "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:OWNER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
 
                             // admin
                             "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:UPDATE to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
                             "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN to role:hs_booking_item#D-1000111-somenewbookingitem:OWNER by system and assume }",
-                            //"{ grant role:hs_booking_item#D-1000111-somenewbookingitem:TENANT to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
+                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:INSERT>hs_hosting_asset to role:hs_booking_item#D-1000111-somenewbookingitem:AGENT by system and assume }",
 
                             // agent
                             "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",

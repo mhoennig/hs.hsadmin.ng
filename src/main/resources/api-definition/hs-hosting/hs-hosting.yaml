@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Hostsharing hsadmin-ng API
+  version: v0
+servers:
+  - url: http://localhost:8080
+    description: Local development default URL.
+
+paths:
+
+  # Items
+
+  /api/hs/hosting/assets:
+    $ref: "hs-hosting-assets.yaml"
+
+  /api/hs/hosting/assets/{assetUuid}:
+    $ref: "hs-hosting-assets-with-uuid.yaml"
