@@ -68,12 +68,13 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // given
             context("superuser-alex@hostsharing.net");
             final var count = assetRepo.count();
-            final var givenBookingItem = givenBookingItem("First", "some CloudServer");
+            final var givenManagedServer = givenManagedServer("First", "some ManagedServer");
 
             // when
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetEntity.builder()
-                        .bookingItem(givenBookingItem)
+                        .bookingItem(givenManagedServer.getBookingItem())
+                        .parentAsset(givenManagedServer)
                         .caption("some new managed webspace")
                         .type(HsHostingAssetType.MANAGED_WEBSPACE)
                         .identifier("xyz90")
@@ -96,14 +97,14 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("hs_office_", ""))
                     .toList();
-            final var givenBookingItem = givenBookingItem("First", "some CloudServer");
+            final var givenBookingItem = givenBookingItem("First", "some PrivateCloud");
 
             // when
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetEntity.builder()
                         .bookingItem(givenBookingItem)
-                        .type(HsHostingAssetType.MANAGED_WEBSPACE)
-                        .identifier("xyz91")
+                        .type(HsHostingAssetType.MANAGED_SERVER)
+                        .identifier("vm9000")
                         .caption("some new managed webspace")
                         .build();
                 return toCleanup(assetRepo.save(newAsset));
@@ -114,27 +115,27 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_hosting_asset#D-1000111-someCloudServer-xyz91:ADMIN",
-                    "hs_hosting_asset#D-1000111-someCloudServer-xyz91:OWNER",
-                    "hs_hosting_asset#D-1000111-someCloudServer-xyz91:TENANT"));
+                    "hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:ADMIN",
+                    "hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:OWNER",
+                    "hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
-                            // global-admin
 
                             // owner
-                            "{ grant perm:hs_hosting_asset#D-1000111-someCloudServer-xyz91:DELETE to role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:OWNER by system and assume }",
+                            "{ grant perm:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:DELETE to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:OWNER by system and assume }",
+                            "{ grant role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:OWNER to role:hs_booking_item#D-1000111-somePrivateCloud:ADMIN by system and assume }",
 
                             // admin
-                            "{ grant perm:hs_hosting_asset#D-1000111-someCloudServer-xyz91:UPDATE to role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:ADMIN by system and assume }",
-                            "{ grant role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:ADMIN to role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:OWNER by system and assume }",
-                            "{ grant role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:OWNER to role:hs_booking_item#D-1000111-someCloudServer:ADMIN by system and assume }",
+                            "{ grant perm:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:INSERT>hs_hosting_asset to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:ADMIN by system and assume }",
+                            "{ grant perm:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:UPDATE to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:ADMIN by system and assume }",
+                            "{ grant role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:ADMIN to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:OWNER by system and assume }",
 
                             // tenant
-                            "{ grant perm:hs_hosting_asset#D-1000111-someCloudServer-xyz91:SELECT to role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:TENANT by system and assume }",
-                            "{ grant role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:TENANT to role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:ADMIN by system and assume }",
-                            "{ grant role:hs_booking_item#D-1000111-someCloudServer:TENANT to role:hs_hosting_asset#D-1000111-someCloudServer-xyz91:TENANT by system and assume }",
+                            "{ grant perm:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:SELECT to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:TENANT by system and assume }",
+                            "{ grant role:hs_booking_item#D-1000111-somePrivateCloud:TENANT to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:TENANT by system and assume }",
+                            "{ grant role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:TENANT to role:hs_hosting_asset#D-1000111-somePrivateCloud-vm9000:ADMIN by system and assume }",
 
                             null));
         }
@@ -161,7 +162,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(D-1000212:some PrivateCloud, MANAGED_WEBSPACE, bbb01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(D-1000212:some PrivateCloud, MANAGED_WEBSPACE, D-1000212:some PrivateCloud:vm1012, bbb01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000212:some PrivateCloud, MANAGED_SERVER, vm1012, some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000212:some PrivateCloud, CLOUD_SERVER, vm2012, another CloudServer, { CPU: 2, HDD: 1024, extra: 42 })");
         }
@@ -178,7 +179,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then:
             exactlyTheseAssetsAreReturned(
                     result,
-                    "HsHostingAssetEntity(D-1000111:some PrivateCloud, MANAGED_WEBSPACE, aaa01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(D-1000111:some PrivateCloud, MANAGED_WEBSPACE, D-1000111:some PrivateCloud:vm1011, aaa01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000111:some PrivateCloud, MANAGED_SERVER, vm1011, some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000111:some PrivateCloud, CLOUD_SERVER, vm2011, another CloudServer, { CPU: 2, HDD: 1024, extra: 42 })");
         }
@@ -349,6 +350,13 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike(debitorName).stream().findAny().orElseThrow();
         return bookingItemRepo.findAllByDebitorUuid(givenDebitor.getUuid()).stream()
                 .filter(i -> i.getCaption().equals(bookingItemCaption))
+                .findAny().orElseThrow();
+    }
+
+    HsHostingAssetEntity givenManagedServer(final String debitorName, final String hostingAssetCaption) {
+        final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike(debitorName).stream().findAny().orElseThrow();
+        return assetRepo.findAllByDebitorUuid(givenDebitor.getUuid()).stream()
+                .filter(i -> i.getCaption().equals(hostingAssetCaption))
                 .findAny().orElseThrow();
     }
 

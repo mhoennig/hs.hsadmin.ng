@@ -5,7 +5,12 @@ import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition.GrantType.*;
 
@@ -15,10 +20,9 @@ public class RbacViewMermaidFlowchartGenerator {
     public static final String HOSTSHARING_LIGHT_ORANGE = "#feb28c";
     public static final String HOSTSHARING_DARK_BLUE = "#274d6e";
     public static final String HOSTSHARING_LIGHT_BLUE = "#99bcdb";
-
-    // TODO.rbac: implement level limit for all renderable items and remove items which not part of a grant
-    private static final long MAX_LEVEL_TO_RENDER = 3;
     private final RbacView rbacDef;
+
+    private final List<RbacView.EntityAlias> usedEntityAliases;
 
     private final CaseDef forCase;
     private final StringWriter flowchart = new StringWriter();
@@ -26,6 +30,18 @@ public class RbacViewMermaidFlowchartGenerator {
     public RbacViewMermaidFlowchartGenerator(final RbacView rbacDef, final CaseDef forCase) {
         this.rbacDef = rbacDef;
         this.forCase = forCase;
+
+        usedEntityAliases = rbacDef.getGrantDefs().stream()
+                        .flatMap(g -> Stream.of(
+                                g.getSuperRoleDef() != null ? g.getSuperRoleDef().getEntityAlias() : null,
+                                g.getSubRoleDef() != null ? g.getSubRoleDef().getEntityAlias() : null,
+                                g.getPermDef() != null ? g.getPermDef().getEntityAlias() : null))
+                        .filter(Objects::nonNull)
+                        .sorted(comparing(RbacView.EntityAlias::aliasName))
+                        .distinct()
+                        .filter(rbacDef::renderInDiagram)
+                        .collect(Collectors.toList());
+
         flowchart.writeLn("""
                 %%{init:{'flowchart':{'htmlLabels':false}}}%%
                 flowchart TB
@@ -38,13 +54,18 @@ public class RbacViewMermaidFlowchartGenerator {
        this(rbacDef, null);
     }
     private void renderEntitySubgraphs() {
-        rbacDef.getEntityAliases().values().stream()
+        usedEntityAliases.stream()
                 .filter(entityAlias -> !rbacDef.isEntityAliasProxy(entityAlias))
                 .filter(entityAlias -> !entityAlias.isPlaceholder())
+                .filter(rbacDef::renderInDiagram)
                 .forEach(this::renderEntitySubgraph);
     }
 
     private void renderEntitySubgraph(final RbacView.EntityAlias entity) {
+        if (!rbacDef.renderInDiagram(entity)) {
+            return;
+        }
+
         final var color = rbacDef.isRootEntityAlias(entity) ? HOSTSHARING_DARK_ORANGE
                 : entity.isSubEntity() ? HOSTSHARING_LIGHT_ORANGE
                 : HOSTSHARING_LIGHT_BLUE;
@@ -58,8 +79,7 @@ public class RbacViewMermaidFlowchartGenerator {
             .replace("%{strokeColor}", HOSTSHARING_DARK_BLUE ));
 
         flowchart.indented( () -> {
-            rbacDef.getEntityAliases().values().stream()
-                    .filter(e -> e.level() <= MAX_LEVEL_TO_RENDER)
+            usedEntityAliases.stream()
                     .filter(e -> e.aliasName().startsWith(entity.aliasName() + ":"))
                     .forEach(this::renderEntitySubgraph);
 
@@ -110,9 +130,9 @@ public class RbacViewMermaidFlowchartGenerator {
 
     private void renderGrants(final RbacView.RbacGrantDefinition.GrantType grantType, final String comment) {
         final var grantsOfRequestedType = rbacDef.getGrantDefs().stream()
-                .filter(g -> g.level() <= MAX_LEVEL_TO_RENDER)
                 .filter(g -> g.grantType() == grantType)
-                .filter(this::isToBeRenderedInThisGraph)
+                .filter(rbacDef::renderInDiagram)
+                .filter(this::isToBeRenderedForThisCase)
                 .toList();
         if ( !grantsOfRequestedType.isEmpty()) {
             flowchart.ensureSingleEmptyLine();
@@ -121,8 +141,8 @@ public class RbacViewMermaidFlowchartGenerator {
         }
     }
 
-    private boolean isToBeRenderedInThisGraph(final RbacView.RbacGrantDefinition g) {
-        if ( g.grantType() != ROLE_TO_ROLE )
+    private boolean isToBeRenderedForThisCase(final RbacView.RbacGrantDefinition g) {
+        if ( g.grantType() == ROLE_TO_USER )
             return true;
         if ( forCase == null && !g.isConditional() )
             return true;

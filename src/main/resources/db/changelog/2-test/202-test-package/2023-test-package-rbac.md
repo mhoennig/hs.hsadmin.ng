@@ -6,6 +6,19 @@ This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manua
 %%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
+subgraph customer["`**customer**`"]
+    direction TB
+    style customer fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph customer:roles[ ]
+        style customer:roles fill:#99bcdb,stroke:white
+
+        role:customer:OWNER[[customer:OWNER]]
+        role:customer:ADMIN[[customer:ADMIN]]
+        role:customer:TENANT[[customer:TENANT]]
+    end
+end
+
 subgraph package["`**package**`"]
     direction TB
     style package fill:#dd4901,stroke:#274d6e,stroke-width:8px
@@ -25,19 +38,6 @@ subgraph package["`**package**`"]
         perm:package:DELETE{{package:DELETE}}
         perm:package:UPDATE{{package:UPDATE}}
         perm:package:SELECT{{package:SELECT}}
-    end
-end
-
-subgraph customer["`**customer**`"]
-    direction TB
-    style customer fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph customer:roles[ ]
-        style customer:roles fill:#99bcdb,stroke:white
-
-        role:customer:OWNER[[customer:OWNER]]
-        role:customer:ADMIN[[customer:ADMIN]]
-        role:customer:TENANT[[customer:TENANT]]
     end
 end
 

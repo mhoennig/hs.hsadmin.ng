@@ -1,4 +1,4 @@
-### rbac asset inCaseOf:CLOUD_SERVER
+### rbac asset inOtherCases
 
 This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manually.
 
@@ -84,7 +84,6 @@ role:asset:ADMIN ==> role:asset:TENANT
 role:asset:TENANT ==> role:bookingItem:TENANT
 
 %% granting permissions to roles
-role:bookingItem:AGENT ==> perm:asset:INSERT
 role:asset:OWNER ==> perm:asset:DELETE
 role:asset:ADMIN ==> perm:asset:UPDATE
 role:asset:TENANT ==> perm:asset:SELECT

@@ -142,67 +142,81 @@ execute procedure updateTriggerForTestPackage_tf();
 
 
 -- ============================================================================
---changeset test-package-rbac-INSERT:1 endDelimiter:--//
+--changeset test-package-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- granting INSERT permission to test_customer ----------------------------
+
 /*
-    Creates INSERT INTO test_package permissions for the related test_customer rows.
+    Grants INSERT INTO test_package permissions to specified role of pre-existing test_customer rows.
  */
 do language plpgsql $$
     declare
         row test_customer;
     begin
-        call defineContext('create INSERT INTO test_package permissions for the related test_customer rows');
+        call defineContext('create INSERT INTO test_package permissions for pre-exising test_customer rows');
 
         FOR row IN SELECT * FROM test_customer
+            -- unconditional for all rows in that table
             LOOP
                 call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'test_package'),
-                    testCustomerADMIN(row));
+                        createPermission(row.uuid, 'INSERT', 'test_package'),
+                        testCustomerADMIN(row));
             END LOOP;
-    END;
+    end;
 $$;
 
 /**
-    Adds test_package INSERT permission to specified role of new test_customer rows.
+    Grants test_package INSERT permission to specified role of new test_customer rows.
 */
-create or replace function test_package_test_customer_insert_tf()
+create or replace function new_test_package_grants_insert_to_test_customer_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call grantPermissionToRole(
+    -- unconditional for all rows in that table
+        call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'test_package'),
             testCustomerADMIN(NEW));
+    -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_test_package_test_customer_insert_tg
+create trigger z_new_test_package_grants_insert_to_test_customer_tg
     after insert on test_customer
     for each row
-execute procedure test_package_test_customer_insert_tf();
+execute procedure new_test_package_grants_insert_to_test_customer_tf();
+
+
+-- ============================================================================
+--changeset test_package-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to test_package,
-    where the check is performed by a direct role.
-
-    A direct role is a role depending on a foreign key directly available in the NEW row.
+    Checks if the user respectively the assumed roles are allowed to insert a row to test_package.
 */
-create or replace function test_package_insert_permission_missing_tf()
+create or replace function test_package_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
+declare
+    superObjectUuid uuid;
 begin
+    -- check INSERT permission via direct foreign key: NEW.customerUuid
+    if hasInsertPermission(NEW.customerUuid, 'test_package') then
+        return NEW;
+    end if;
+
     raise exception '[403] insert into test_package not allowed for current subjects % (%)',
-        currentSubjects(), currentSubjectsUuids();
+            currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger test_package_insert_permission_check_tg
     before insert on test_package
     for each row
-    when ( not hasInsertPermission(NEW.customerUuid, 'INSERT', 'test_package') )
-        execute procedure test_package_insert_permission_missing_tf();
+        execute procedure test_package_insert_permission_check_tf();
 --//
+
 
 -- ============================================================================
 --changeset test-package-rbac-IDENTITY-VIEW:1 endDelimiter:--//
@@ -213,6 +227,7 @@ call generateRbacIdentityViewFromProjection('test_package',
         name
     $idName$);
 --//
+
 
 -- ============================================================================
 --changeset test-package-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

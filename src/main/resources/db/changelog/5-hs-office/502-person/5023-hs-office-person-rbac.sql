@@ -77,49 +77,6 @@ execute procedure insertTriggerForHsOfficePerson_tf();
 
 
 -- ============================================================================
---changeset hs-office-person-rbac-INSERT:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/*
-    Creates INSERT INTO hs_office_person permissions for the related global rows.
- */
-do language plpgsql $$
-    declare
-        row global;
-    begin
-        call defineContext('create INSERT INTO hs_office_person permissions for the related global rows');
-
-        FOR row IN SELECT * FROM global
-            LOOP
-                call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'hs_office_person'),
-                    globalGUEST());
-            END LOOP;
-    END;
-$$;
-
-/**
-    Adds hs_office_person INSERT permission to specified role of new global rows.
-*/
-create or replace function hs_office_person_global_insert_tf()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_office_person'),
-            globalGUEST());
-    return NEW;
-end; $$;
-
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_hs_office_person_global_insert_tg
-    after insert on global
-    for each row
-execute procedure hs_office_person_global_insert_tf();
---//
-
--- ============================================================================
 --changeset hs-office-person-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
@@ -128,6 +85,7 @@ call generateRbacIdentityViewFromProjection('hs_office_person',
         concat(tradeName, familyName, givenName)
     $idName$);
 --//
+
 
 -- ============================================================================
 --changeset hs-office-person-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

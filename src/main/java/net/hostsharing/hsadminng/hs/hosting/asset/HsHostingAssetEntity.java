@@ -37,6 +37,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOU
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inOtherCases;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
@@ -156,9 +157,10 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
                                 dependsOnColumn("parentAssetUuid"),
                                 directlyFetchedByDependsOnColumn(),
                                 NULLABLE)
-                            // TODO.rbac: implement multiple INSERT-rules, e.g. for Asset.bookingItem + Asset.parentAsset
-                            //.toRole("parentServer", AGENT).grantPermission(INSERT)
-                    )
+                            .toRole("parentServer", ADMIN).grantPermission(INSERT)
+                            .toRole("bookingItem", AGENT).grantPermission(INSERT)
+                    ),
+                    inOtherCases(then -> {})
                 )
 
                 .createRole(OWNER, (with) -> {
@@ -171,7 +173,9 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("bookingItem", TENANT);
                     with.permission(SELECT);
-                });
+                })
+
+                .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentServer", "global");
     }
 
     public static void main(String[] args) throws IOException {

@@ -569,14 +569,14 @@ select exists(
            );
 $$;
 
-create or replace function hasInsertPermission(objectUuid uuid, forOp RbacOp, tableName text )
+create or replace function hasInsertPermission(objectUuid uuid, tableName text )
     returns BOOL
     stable -- leakproof
     language plpgsql as $$
 declare
     permissionUuid uuid;
 begin
-    permissionUuid = findPermissionId(objectUuid, forOp, tableName);
+    permissionUuid = findPermissionId(objectUuid, 'INSERT'::RbacOp, tableName);
     return permissionUuid is not null;
 end;
 $$;

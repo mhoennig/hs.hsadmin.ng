@@ -141,67 +141,81 @@ execute procedure updateTriggerForTestDomain_tf();
 
 
 -- ============================================================================
---changeset test-domain-rbac-INSERT:1 endDelimiter:--//
+--changeset test-domain-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- granting INSERT permission to test_package ----------------------------
+
 /*
-    Creates INSERT INTO test_domain permissions for the related test_package rows.
+    Grants INSERT INTO test_domain permissions to specified role of pre-existing test_package rows.
  */
 do language plpgsql $$
     declare
         row test_package;
     begin
-        call defineContext('create INSERT INTO test_domain permissions for the related test_package rows');
+        call defineContext('create INSERT INTO test_domain permissions for pre-exising test_package rows');
 
         FOR row IN SELECT * FROM test_package
+            -- unconditional for all rows in that table
             LOOP
                 call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'test_domain'),
-                    testPackageADMIN(row));
+                        createPermission(row.uuid, 'INSERT', 'test_domain'),
+                        testPackageADMIN(row));
             END LOOP;
-    END;
+    end;
 $$;
 
 /**
-    Adds test_domain INSERT permission to specified role of new test_package rows.
+    Grants test_domain INSERT permission to specified role of new test_package rows.
 */
-create or replace function test_domain_test_package_insert_tf()
+create or replace function new_test_domain_grants_insert_to_test_package_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call grantPermissionToRole(
+    -- unconditional for all rows in that table
+        call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'test_domain'),
             testPackageADMIN(NEW));
+    -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_test_domain_test_package_insert_tg
+create trigger z_new_test_domain_grants_insert_to_test_package_tg
     after insert on test_package
     for each row
-execute procedure test_domain_test_package_insert_tf();
+execute procedure new_test_domain_grants_insert_to_test_package_tf();
+
+
+-- ============================================================================
+--changeset test_domain-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to test_domain,
-    where the check is performed by a direct role.
-
-    A direct role is a role depending on a foreign key directly available in the NEW row.
+    Checks if the user respectively the assumed roles are allowed to insert a row to test_domain.
 */
-create or replace function test_domain_insert_permission_missing_tf()
+create or replace function test_domain_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
+declare
+    superObjectUuid uuid;
 begin
+    -- check INSERT permission via direct foreign key: NEW.packageUuid
+    if hasInsertPermission(NEW.packageUuid, 'test_domain') then
+        return NEW;
+    end if;
+
     raise exception '[403] insert into test_domain not allowed for current subjects % (%)',
-        currentSubjects(), currentSubjectsUuids();
+            currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger test_domain_insert_permission_check_tg
     before insert on test_domain
     for each row
-    when ( not hasInsertPermission(NEW.packageUuid, 'INSERT', 'test_domain') )
-        execute procedure test_domain_insert_permission_missing_tf();
+        execute procedure test_domain_insert_permission_check_tf();
 --//
+
 
 -- ============================================================================
 --changeset test-domain-rbac-IDENTITY-VIEW:1 endDelimiter:--//
@@ -212,6 +226,7 @@ call generateRbacIdentityViewFromProjection('test_domain',
         name
     $idName$);
 --//
+
 
 -- ============================================================================
 --changeset test-domain-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

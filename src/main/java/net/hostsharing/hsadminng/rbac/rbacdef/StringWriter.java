@@ -2,8 +2,6 @@ package net.hostsharing.hsadminng.rbac.rbacdef;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.regex.Pattern;
-
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 
@@ -111,9 +109,11 @@ public class StringWriter {
         String apply(final String textToAppend) {
             text = textToAppend;
             stream(varDefs).forEach(varDef -> {
-                final var pattern = Pattern.compile("\\$\\{" + varDef.name() + "}", Pattern.CASE_INSENSITIVE);
-                final var matcher = pattern.matcher(text);
-                text = matcher.replaceAll(varDef.value());
+                // TODO.impl: I actually want a case-independent search+replace but ...
+                // for which the substitution String can contain sequences of "${...}" to be replaced by further varDefs.
+                text = text.replace("${" + varDef.name() + "}", varDef.value());
+                text = text.replace("${" + varDef.name().toUpperCase() + "}", varDef.value());
+                text = text.replace("${" + varDef.name().toLowerCase() + "}", varDef.value());
             });
             return text;
         }

@@ -6,19 +6,6 @@ This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manua
 %%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
-subgraph holderPerson["`**holderPerson**`"]
-    direction TB
-    style holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph holderPerson:roles[ ]
-        style holderPerson:roles fill:#99bcdb,stroke:white
-
-        role:holderPerson:OWNER[[holderPerson:OWNER]]
-        role:holderPerson:ADMIN[[holderPerson:ADMIN]]
-        role:holderPerson:REFERRER[[holderPerson:REFERRER]]
-    end
-end
-
 subgraph anchorPerson["`**anchorPerson**`"]
     direction TB
     style anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
@@ -42,6 +29,19 @@ subgraph contact["`**contact**`"]
         role:contact:OWNER[[contact:OWNER]]
         role:contact:ADMIN[[contact:ADMIN]]
         role:contact:REFERRER[[contact:REFERRER]]
+    end
+end
+
+subgraph holderPerson["`**holderPerson**`"]
+    direction TB
+    style holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph holderPerson:roles[ ]
+        style holderPerson:roles fill:#99bcdb,stroke:white
+
+        role:holderPerson:OWNER[[holderPerson:OWNER]]
+        role:holderPerson:ADMIN[[holderPerson:ADMIN]]
+        role:holderPerson:REFERRER[[holderPerson:REFERRER]]
     end
 end
 

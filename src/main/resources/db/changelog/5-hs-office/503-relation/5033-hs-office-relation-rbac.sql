@@ -151,67 +151,81 @@ execute procedure updateTriggerForHsOfficeRelation_tf();
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-INSERT:1 endDelimiter:--//
+--changeset hs-office-relation-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- granting INSERT permission to hs_office_person ----------------------------
+
 /*
-    Creates INSERT INTO hs_office_relation permissions for the related hs_office_person rows.
+    Grants INSERT INTO hs_office_relation permissions to specified role of pre-existing hs_office_person rows.
  */
 do language plpgsql $$
     declare
         row hs_office_person;
     begin
-        call defineContext('create INSERT INTO hs_office_relation permissions for the related hs_office_person rows');
+        call defineContext('create INSERT INTO hs_office_relation permissions for pre-exising hs_office_person rows');
 
         FOR row IN SELECT * FROM hs_office_person
+            -- unconditional for all rows in that table
             LOOP
                 call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
-                    hsOfficePersonADMIN(row));
+                        createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
+                        hsOfficePersonADMIN(row));
             END LOOP;
-    END;
+    end;
 $$;
 
 /**
-    Adds hs_office_relation INSERT permission to specified role of new hs_office_person rows.
+    Grants hs_office_relation INSERT permission to specified role of new hs_office_person rows.
 */
-create or replace function hs_office_relation_hs_office_person_insert_tf()
+create or replace function new_hs_office_relation_grants_insert_to_hs_office_person_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call grantPermissionToRole(
+    -- unconditional for all rows in that table
+        call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_relation'),
             hsOfficePersonADMIN(NEW));
+    -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_hs_office_relation_hs_office_person_insert_tg
+create trigger z_new_hs_office_relation_grants_insert_to_hs_office_person_tg
     after insert on hs_office_person
     for each row
-execute procedure hs_office_relation_hs_office_person_insert_tf();
+execute procedure new_hs_office_relation_grants_insert_to_hs_office_person_tf();
+
+
+-- ============================================================================
+--changeset hs_office_relation-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to hs_office_relation,
-    where the check is performed by a direct role.
-
-    A direct role is a role depending on a foreign key directly available in the NEW row.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office_relation.
 */
-create or replace function hs_office_relation_insert_permission_missing_tf()
+create or replace function hs_office_relation_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
+declare
+    superObjectUuid uuid;
 begin
+    -- check INSERT permission via direct foreign key: NEW.anchorUuid
+    if hasInsertPermission(NEW.anchorUuid, 'hs_office_relation') then
+        return NEW;
+    end if;
+
     raise exception '[403] insert into hs_office_relation not allowed for current subjects % (%)',
-        currentSubjects(), currentSubjectsUuids();
+            currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger hs_office_relation_insert_permission_check_tg
     before insert on hs_office_relation
     for each row
-    when ( not hasInsertPermission(NEW.anchorUuid, 'INSERT', 'hs_office_relation') )
-        execute procedure hs_office_relation_insert_permission_missing_tf();
+        execute procedure hs_office_relation_insert_permission_check_tf();
 --//
+
 
 -- ============================================================================
 --changeset hs-office-relation-rbac-IDENTITY-VIEW:1 endDelimiter:--//
@@ -224,6 +238,7 @@ call generateRbacIdentityViewFromProjection('hs_office_relation',
              || (select idName from hs_office_person_iv p where p.uuid = holderUuid)
     $idName$);
 --//
+
 
 -- ============================================================================
 --changeset hs-office-relation-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

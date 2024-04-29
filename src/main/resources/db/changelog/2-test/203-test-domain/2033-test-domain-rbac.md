@@ -6,32 +6,6 @@ This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manua
 %%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
-subgraph package.customer["`**package.customer**`"]
-    direction TB
-    style package.customer fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph package.customer:roles[ ]
-        style package.customer:roles fill:#99bcdb,stroke:white
-
-        role:package.customer:OWNER[[package.customer:OWNER]]
-        role:package.customer:ADMIN[[package.customer:ADMIN]]
-        role:package.customer:TENANT[[package.customer:TENANT]]
-    end
-end
-
-subgraph package["`**package**`"]
-    direction TB
-    style package fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph package:roles[ ]
-        style package:roles fill:#99bcdb,stroke:white
-
-        role:package:OWNER[[package:OWNER]]
-        role:package:ADMIN[[package:ADMIN]]
-        role:package:TENANT[[package:TENANT]]
-    end
-end
-
 subgraph domain["`**domain**`"]
     direction TB
     style domain fill:#dd4901,stroke:#274d6e,stroke-width:8px
@@ -50,6 +24,32 @@ subgraph domain["`**domain**`"]
         perm:domain:DELETE{{domain:DELETE}}
         perm:domain:UPDATE{{domain:UPDATE}}
         perm:domain:SELECT{{domain:SELECT}}
+    end
+end
+
+subgraph package["`**package**`"]
+    direction TB
+    style package fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph package:roles[ ]
+        style package:roles fill:#99bcdb,stroke:white
+
+        role:package:OWNER[[package:OWNER]]
+        role:package:ADMIN[[package:ADMIN]]
+        role:package:TENANT[[package:TENANT]]
+    end
+end
+
+subgraph package.customer["`**package.customer**`"]
+    direction TB
+    style package.customer fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph package.customer:roles[ ]
+        style package.customer:roles fill:#99bcdb,stroke:white
+
+        role:package.customer:OWNER[[package.customer:OWNER]]
+        role:package.customer:ADMIN[[package.customer:ADMIN]]
+        role:package.customer:TENANT[[package.customer:TENANT]]
     end
 end
 

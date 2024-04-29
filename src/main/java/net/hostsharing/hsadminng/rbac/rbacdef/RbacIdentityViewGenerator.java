@@ -32,10 +32,10 @@ public class RbacIdentityViewGenerator {
                         $idName$);
                     """;
             case SQL_QUERY -> """
-                    call generateRbacIdentityViewFromQuery('${rawTableName}', 
-                        $idName$
-                    ${identityViewSqlPart}
-                        $idName$);
+                call generateRbacIdentityViewFromQuery('${rawTableName}', 
+                    $idName$
+                ${identityViewSqlPart}
+                    $idName$);
                 """;
             default -> throw new IllegalStateException("illegal SQL part given");
             },
@@ -43,5 +43,6 @@ public class RbacIdentityViewGenerator {
             with("rawTableName", rawTableName));
 
         plPgSql.writeLn("--//");
+        plPgSql.writeLn();
     }
 }

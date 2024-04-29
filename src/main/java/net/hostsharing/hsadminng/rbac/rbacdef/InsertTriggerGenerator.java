@@ -1,12 +1,16 @@
 package net.hostsharing.hsadminng.rbac.rbacdef;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.rbac.rbacdef.PostgresTriggerReference.NEW;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.GUEST;
 import static net.hostsharing.hsadminng.rbac.rbacdef.StringWriter.with;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
@@ -22,194 +26,121 @@ public class InsertTriggerGenerator {
     }
 
     void generateTo(final StringWriter plPgSql) {
-        generateLiquibaseChangesetHeader(plPgSql);
-        generateGrantInsertRoleToExistingObjects(plPgSql);
-        generateInsertPermissionGrantTrigger(plPgSql);
-        generateInsertCheckTrigger(plPgSql);
-        plPgSql.writeLn("--//");
+        if (isInsertPermissionGrantedToGlobalGuest()) {
+            // any user is allowed to insert new rows => no insert check needed
+            return;
+        }
+
+        generateInsertGrants(plPgSql);
+        generateInsertPermissionChecks(plPgSql);
     }
 
-    private void generateLiquibaseChangesetHeader(final StringWriter plPgSql) {
+    private void generateInsertGrants(final StringWriter plPgSql) {
+        if (isInsertPermissionIsNotGrantedAtAll()) {
+            generateInsertPermissionTriggerAlwaysDisallow(plPgSql);
+        } else {
+            generateInsertPermissionGrants(plPgSql);
+        }
+    }
+
+    private void generateInsertPermissionGrants(final StringWriter plPgSql) {
         plPgSql.writeLn("""
-                -- ============================================================================
-                --changeset ${liquibaseTagPrefix}-rbac-INSERT:1 endDelimiter:--//
-                -- ----------------------------------------------------------------------------
-                """,
+            -- ============================================================================
+            --changeset ${liquibaseTagPrefix}-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+            -- ----------------------------------------------------------------------------
+            """,
                 with("liquibaseTagPrefix", liquibaseTagPrefix));
-    }
 
-    private void generateGrantInsertRoleToExistingObjects(final StringWriter plPgSql) {
-        getOptionalInsertSuperRole().ifPresent( superRoleDef -> {
+        getInsertGrants().forEach( g -> {
             plPgSql.writeLn("""
-                /*
-                    Creates INSERT INTO ${rawSubTableName} permissions for the related ${rawSuperTableName} rows.
-                 */
-                do language plpgsql $$
-                    declare
-                        row ${rawSuperTableName};
-                    begin
-                        call defineContext('create INSERT INTO ${rawSubTableName} permissions for the related ${rawSuperTableName} rows');
-                    
-                        FOR row IN SELECT * FROM ${rawSuperTableName}${typeCondition}
-                            LOOP
-                                call grantPermissionToRole(
-                                    createPermission(row.uuid, 'INSERT', '${rawSubTableName}'),
-                                    ${rawSuperRoleDescriptor});
-                            END LOOP;
-                    END;
-                $$;
-                """,
-                with("rawSubTableName", rbacDef.getRootEntityAlias().getRawTableName()),
-                with("rawSuperTableName", superRoleDef.getEntityAlias().getRawTableName()),
-                with("rawSuperRoleDescriptor", toRoleDescriptor(superRoleDef, "row")),
-                with("typeCondition", superRoleDef.getEntityAlias().isCaseDependent()
-                        ? "\n\t\t\tWHERE type = '${case}'".replace("${case}", superRoleDef.getEntityAlias().usingCase().value)
-                        : "")
-                );
-        });
-    }
+                    -- granting INSERT permission to ${rawSubTable} ----------------------------
+                    """,
+                with("rawSubTable", g.getSuperRoleDef().getEntityAlias().getRawTableName()));
 
-    private void generateInsertPermissionGrantTrigger(final StringWriter plPgSql) {
-        getOptionalInsertSuperRole().ifPresent( superRoleDef -> {
-            plPgSql.writeLn("""
+            if (isGrantToADifferentTable(g)) {
+                plPgSql.writeLn(
+                    """
+                    /*
+                        Grants INSERT INTO ${rawSubTable} permissions to specified role of pre-existing ${rawSuperTable} rows.
+                     */
+                    do language plpgsql $$
+                        declare
+                            row ${rawSuperTable};
+                        begin
+                            call defineContext('create INSERT INTO ${rawSubTable} permissions for pre-exising ${rawSuperTable} rows');
+                                
+                            FOR row IN SELECT * FROM ${rawSuperTable}
+                                ${whenCondition}
+                                LOOP
+                                    call grantPermissionToRole(
+                                            createPermission(row.uuid, 'INSERT', '${rawSubTable}'),
+                                            ${superRoleRef});
+                                END LOOP;
+                        end;
+                    $$;
+                    """,
+                    with("whenCondition", g.getSuperRoleDef().getEntityAlias().isCaseDependent()
+                            // TODO.impl: 'type' needs to be dynamically generated
+                            ? "WHERE type = '${value}'"
+                            .replace("${value}", g.getSuperRoleDef().getEntityAlias().usingCase().value)
+                            : "-- unconditional for all rows in that table"),
+                    with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableName()),
+                    with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableName()),
+                    with("superRoleRef", toRoleDescriptor(g.getSuperRoleDef(), "row")));
+            } else {
+                plPgSql.writeLn("""
+                    -- Granting INSERT INTO hs_hosting_asset permissions to specified role of pre-existing hs_hosting_asset rows slipped,
+                    -- because there cannot yet be any pre-existing rows in the same table yet.
+                    """,
+                    with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableName()),
+                    with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableName()));
+            }
+
+            plPgSql.writeLn("""    
                 /**
-                    Adds ${rawSubTableName} INSERT permission to specified role of new ${rawSuperTableName} rows.
+                    Grants ${rawSubTable} INSERT permission to specified role of new ${rawSuperTable} rows.
                 */
-                create or replace function ${rawSubTableName}_${rawSuperTableName}_insert_tf()
+                create or replace function new_${rawSubTable}_grants_insert_to_${rawSuperTable}_tf()
                     returns trigger
                     language plpgsql
                     strict as $$
                 begin
-                    ${typeConditionIf}call grantPermissionToRole(
-                            createPermission(NEW.uuid, 'INSERT', '${rawSubTableName}'),
-                            ${rawSuperRoleDescriptor});${typeConditionEndIf}
+                    ${ifConditionThen}
+                        call grantPermissionToRole(
+                            createPermission(NEW.uuid, 'INSERT', '${rawSubTable}'),
+                            ${superRoleRef});
+                    ${ifConditionEnd}
                     return NEW;
                 end; $$;
-                                
-                -- z_... is to put it at the end of after insert triggers, to make sure the roles exist                
-                create trigger z_${rawSubTableName}_${rawSuperTableName}_insert_tg
-                    after insert on ${rawSuperTableName}
+                            
+                -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+                create trigger z_new_${rawSubTable}_grants_insert_to_${rawSuperTable}_tg
+                    after insert on ${rawSuperTable}
                     for each row
-                execute procedure ${rawSubTableName}_${rawSuperTableName}_insert_tf();
+                execute procedure new_${rawSubTable}_grants_insert_to_${rawSuperTable}_tf();
                 """,
-                with("rawSubTableName", rbacDef.getRootEntityAlias().getRawTableName()),
-                with("rawSuperTableName", superRoleDef.getEntityAlias().getRawTableName()),
-                with("rawSuperRoleDescriptor", toRoleDescriptor(superRoleDef, NEW.name())),
-                with("typeConditionIf",
-                        superRoleDef.getEntityAlias().isCaseDependent()
-                            ? "if NEW.type = '${case}' then\n\t\t".replace("${case}", superRoleDef.getEntityAlias().usingCase().value)
-                            : ""),
-                with("typeConditionEndIf", superRoleDef.getEntityAlias().isCaseDependent()
-                        ? "\n\tend if;"
-                        : "")
-            );
+                    with("ifConditionThen", g.getSuperRoleDef().getEntityAlias().isCaseDependent()
+                            // TODO.impl: .type needs to be dynamically generated
+                            ? "if NEW.type = '" + g.getSuperRoleDef().getEntityAlias().usingCase().value + "' then"
+                            : "-- unconditional for all rows in that table"),
+                    with("ifConditionEnd", g.getSuperRoleDef().getEntityAlias().isCaseDependent()
+                            ? "end if;"
+                            : "-- end."),
+                    with("superRoleRef", toRoleDescriptor(g.getSuperRoleDef(), NEW.name())),
+                    with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableName()),
+                    with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableName()));
+
         });
     }
 
-    private void generateInsertCheckTrigger(final StringWriter plPgSql) {
-        getOptionalInsertGrant().ifPresentOrElse(g -> {
-            if (g.getSuperRoleDef().getEntityAlias().isGlobal()) {
-                switch (g.getSuperRoleDef().getRole()) {
-                    case ADMIN -> {
-                        generateInsertPermissionTriggerAllowOnlyGlobalAdmin(plPgSql);
-                    }
-                    case GUEST -> {
-                        // no permission check trigger generated, as anybody can insert rows into this table
-                    }
-                    default -> {
-                        throw new IllegalArgumentException(
-                                "invalid global role for INSERT permission: " + g.getSuperRoleDef().getRole());
-                    }
-                }
-            } else {
-                if (g.getSuperRoleDef().getEntityAlias().isFetchedByDirectForeignKey()) {
-                    generateInsertPermissionTriggerAllowByRoleOfDirectForeignKey(plPgSql, g);
-                } else {
-                    generateInsertPermissionTriggerAllowByRoleOfIndirectForeignKey(plPgSql, g);
-                }
-            }
-        },
-        () -> {
-            System.err.println("WARNING: no explicit INSERT grant for " + rbacDef.getRootEntityAlias().simpleName() + " => implicitly grant INSERT to global:ADMIN");
-            generateInsertPermissionTriggerAllowOnlyGlobalAdmin(plPgSql);
-        });
-    }
-
-    private void generateInsertPermissionTriggerAllowByRoleOfDirectForeignKey(final StringWriter plPgSql, final RbacView.RbacGrantDefinition g) {
+    private void generateInsertPermissionTriggerAlwaysDisallow(final StringWriter plPgSql) {
         plPgSql.writeLn("""
-                /**
-                    Checks if the user or assumed roles are allowed to insert a row to ${rawSubTable},
-                    where the check is performed by a direct role.
-                    
-                    A direct role is a role depending on a foreign key directly available in the NEW row.
-                */
-                create or replace function ${rawSubTable}_insert_permission_missing_tf()
-                    returns trigger
-                    language plpgsql as $$
-                begin
-                    raise exception '[403] insert into ${rawSubTable} not allowed for current subjects % (%)',
-                        currentSubjects(), currentSubjectsUuids();
-                end; $$;
+            -- ============================================================================
+            --changeset ${liquibaseTagPrefix}-rbac-ALWAYS-DISALLOW-INSERT:1 endDelimiter:--//
+            -- ----------------------------------------------------------------------------
+            """,
+            with("liquibaseTagPrefix", liquibaseTagPrefix));
 
-                create trigger ${rawSubTable}_insert_permission_check_tg
-                    before insert on ${rawSubTable}
-                    for each row
-                    when ( not hasInsertPermission(NEW.${referenceColumn}, 'INSERT', '${rawSubTable}') )
-                        execute procedure ${rawSubTable}_insert_permission_missing_tf();
-                """,
-                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()),
-                with("referenceColumn", g.getSuperRoleDef().getEntityAlias().dependsOnColumName()));
-    }
-
-    private void generateInsertPermissionTriggerAllowByRoleOfIndirectForeignKey(
-            final StringWriter plPgSql,
-            final RbacView.RbacGrantDefinition g) {
-        plPgSql.writeLn("""
-                /**
-                    Checks if the user or assumed roles are allowed to insert a row to ${rawSubTable},
-                    where the check is performed by an indirect role.
-                    
-                    An indirect role is a role which depends on an object uuid which is not a direct foreign key
-                    of the source entity, but needs to be fetched via joined tables.
-                */
-                create or replace function ${rawSubTable}_insert_permission_check_tf()
-                    returns trigger
-                    language plpgsql as $$
-
-                declare
-                    superRoleObjectUuid uuid;
-
-                begin
-                """,
-                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
-        plPgSql.chopEmptyLines();
-        plPgSql.indented(2, () ->  {
-            plPgSql.writeLn(
-                    "superRoleObjectUuid := (" + g.getSuperRoleDef().getEntityAlias().fetchSql().sql + ");\n" +
-                    "assert superRoleObjectUuid is not null, 'superRoleObjectUuid must not be null';",
-                    with("columns", g.getSuperRoleDef().getEntityAlias().aliasName() + ".uuid"),
-                    with("ref", NEW.name()));
-        });
-        plPgSql.writeLn();
-        plPgSql.writeLn("""
-                        if ( not hasInsertPermission(superRoleObjectUuid, 'INSERT', '${rawSubTable}') ) then
-                            raise exception
-                                '[403] insert into ${rawSubTable} not allowed for current subjects % (%)',
-                                currentSubjects(), currentSubjectsUuids();
-                    end if;
-                    return NEW;
-                end; $$;
-
-                create trigger ${rawSubTable}_insert_permission_check_tg
-                    before insert on ${rawSubTable}
-                    for each row
-                        execute procedure ${rawSubTable}_insert_permission_check_tf();
-                    
-                """,
-                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
-    }
-
-    private void generateInsertPermissionTriggerAllowOnlyGlobalAdmin(final StringWriter plPgSql) {
         plPgSql.writeLn("""
             /**
                 Checks if the user or assumed roles are allowed to insert a row to ${rawSubTable},
@@ -219,23 +150,144 @@ public class InsertTriggerGenerator {
                 returns trigger
                 language plpgsql as $$
             begin
-                raise exception '[403] insert into ${rawSubTable} not allowed for current subjects % (%)',
-                    currentSubjects(), currentSubjectsUuids();
+                raise exception '[403] insert into ${rawSubTable} not allowed regardless of current subject, no insert permissions grated at all';
             end; $$;
                        
             create trigger ${rawSubTable}_insert_permission_check_tg
                 before insert on ${rawSubTable}
                 for each row
-                when ( not isGlobalAdmin() )
                     execute procedure ${rawSubTable}_insert_permission_missing_tf();
             """,
             with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
+
+        plPgSql.writeLn("--//");
+    }
+
+    private void generateInsertPermissionChecks(final StringWriter plPgSql) {
+        generateInsertPermissionsCheckHeader(plPgSql);
+
+        plPgSql.indented(1, () -> {
+            getInsertGrants().forEach(g -> {
+                generateInsertPermissionChecksForSingleGrant(plPgSql, g);
+            });
+            plPgSql.chopTail(" or\n");
+        });
+
+        generateInsertPermissionsChecksFooter(plPgSql);
+    }
+
+    private void generateInsertPermissionsCheckHeader(final StringWriter plPgSql) {
+        plPgSql.writeLn("""
+            -- ============================================================================
+            --changeset ${rawSubTable}-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+            -- ----------------------------------------------------------------------------
+
+            /**
+                Checks if the user respectively the assumed roles are allowed to insert a row to ${rawSubTable}.
+            */
+            create or replace function ${rawSubTable}_insert_permission_check_tf()
+                returns trigger
+                language plpgsql as $$
+            declare
+                superObjectUuid uuid;
+            begin
+            """,
+                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
+        plPgSql.chopEmptyLines();
+    }
+
+    private void generateInsertPermissionChecksForSingleGrant(final StringWriter plPgSql, final RbacView.RbacGrantDefinition g) {
+        final RbacView.EntityAlias superRoleEntityAlias = g.getSuperRoleDef().getEntityAlias();
+
+        final var caseCondition = g.isConditional()
+                ? ("NEW.type in (" + toStringList(g.getForCases()) + ") and ")
+                : "";
+
+        if (g.getSuperRoleDef().isGlobal(GUEST)) {
+            plPgSql.writeLn(
+                    """
+                    -- check INSERT INSERT permission for global anyone
+                    if ${caseCondition}true then
+                        return NEW;
+                    end if;
+                    """,
+                    with("caseCondition", caseCondition));
+        } else if (g.getSuperRoleDef().isGlobal(ADMIN)) {
+            plPgSql.writeLn(
+                    """
+                    -- check INSERT INSERT if global ADMIN
+                    if ${caseCondition}isGlobalAdmin() then
+                        return NEW;
+                    end if;
+                    """,
+                    with("caseCondition", caseCondition));
+        } else if (g.getSuperRoleDef().getEntityAlias().isFetchedByDirectForeignKey()) {
+                plPgSql.writeLn(
+                    """
+                    -- check INSERT permission via direct foreign key: NEW.${refColumn}
+                    if ${caseCondition}hasInsertPermission(NEW.${refColumn}, '${rawSubTable}') then
+                        return NEW;
+                    end if;
+                    """,
+                    with("caseCondition", caseCondition),
+                    with("refColumn", superRoleEntityAlias.dependsOnColumName()),
+                    with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
+        } else {
+            plPgSql.writeLn(
+                """
+                -- check INSERT permission via indirect foreign key: NEW.${refColumn}
+                superObjectUuid := (${fetchSql});
+                assert superObjectUuid is not null, 'object uuid fetched depending on ${rawSubTable}.${refColumn} must not be null, also check fetchSql in RBAC DSL';
+                if ${caseCondition}hasInsertPermission(superObjectUuid, '${rawSubTable}') then
+                    return NEW;
+                end if;
+                """,
+                with("caseCondition", caseCondition),
+                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()),
+                with("refColumn", superRoleEntityAlias.dependsOnColumName()),
+                with("fetchSql", g.getSuperRoleDef().getEntityAlias().fetchSql().sql),
+                with("columns", g.getSuperRoleDef().getEntityAlias().aliasName() + ".uuid"),
+                with("ref", NEW.name()));
+        }
+    }
+
+    private void generateInsertPermissionsChecksFooter(final StringWriter plPgSql) {
+        plPgSql.writeLn();
+        plPgSql.writeLn("""
+                raise exception '[403] insert into ${rawSubTable} not allowed for current subjects % (%)',
+                        currentSubjects(), currentSubjectsUuids();
+            end; $$;
+            
+            create trigger ${rawSubTable}_insert_permission_check_tg
+                before insert on ${rawSubTable}
+                for each row
+                    execute procedure ${rawSubTable}_insert_permission_check_tf();
+            --//
+            """,
+                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
+    }
+
+    private String toStringList(final Set<RbacView.CaseDef> cases) {
+        return cases.stream().map(c -> "'" + c.value + "'").collect(joining(", "));
+    }
+
+    private boolean isGrantToADifferentTable(final RbacView.RbacGrantDefinition g) {
+        return !rbacDef.getRootEntityAlias().getRawTableName().equals(g.getSuperRoleDef().getEntityAlias().getRawTableName());
     }
 
     private Stream<RbacView.RbacGrantDefinition> getInsertGrants() {
         return rbacDef.getGrantDefs().stream()
                 .filter(g -> g.grantType() == PERM_TO_ROLE)
                 .filter(g -> g.getPermDef().toCreate && g.getPermDef().getPermission() == INSERT);
+    }
+
+    private boolean isInsertPermissionIsNotGrantedAtAll() {
+        return getInsertGrants().findAny().isEmpty();
+    }
+
+    private boolean isInsertPermissionGrantedToGlobalGuest() {
+         return getInsertGrants().anyMatch(g ->
+                 g.getSuperRoleDef().getEntityAlias().isGlobal() && g.getSuperRoleDef().getRole() == GUEST);
     }
 
     private Optional<RbacView.RbacGrantDefinition> getOptionalInsertGrant() {
@@ -252,7 +304,8 @@ public class InsertTriggerGenerator {
     private static <T> BinaryOperator<T> singleton() {
         return (x, y) -> {
             if ( !x.equals(y) ) {
-                throw new IllegalStateException("only a single INSERT permission grant allowed");
+                return x;
+                // throw new IllegalStateException("only a single INSERT permission grant allowed");
             }
             return x;
         };

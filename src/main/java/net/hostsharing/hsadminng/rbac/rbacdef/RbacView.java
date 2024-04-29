@@ -25,6 +25,7 @@ import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition.GrantType.PERM_TO_ROLE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacGrantDefinition.GrantType.ROLE_TO_ROLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.Part.AUTO_FETCH;
 import static org.apache.commons.collections4.SetUtils.hashSet;
@@ -62,6 +63,7 @@ public class RbacView {
     private SQL orderBySqlExpression;
     private EntityAlias rootEntityAliasProxy;
     private RbacRoleDefinition previousRoleDef;
+    private Set<String> limitDiagramToAliasNames;
     private final Map<String, CaseDef> cases = new LinkedHashMap<>() {
         @Override
         public CaseDef put(final String key, final CaseDef value) {
@@ -396,8 +398,7 @@ public class RbacView {
             new RbacRoleDefinition(findEntityAlias(mapper.map(roleDef.entityAlias.aliasName)), roleDef.role);
         });
         copyOf(importedRbacView.getGrantDefs()).forEach(grantDef -> {
-            if ( grantDef.grantType() == RbacGrantDefinition.GrantType.ROLE_TO_ROLE &&
-                    (grantDef.forCases == null || grantDef.matchesCase(forCase)) ) {
+            if ( grantDef.grantType() == ROLE_TO_ROLE && grantDef.matchesCase(forCase) ) {
                 final var importedGrantDef = findOrCreateGrantDef(
                         findRbacRole(
                                 mapper.map(grantDef.getSubRoleDef().entityAlias.aliasName),
@@ -499,6 +500,29 @@ public class RbacView {
         new RbacViewPostgresGenerator(this).generateToChangeLog(Path.of(OUTPUT_BASEDIR, baseFileName + ".sql"));
     }
 
+    public RbacView limitDiagramTo(final String... aliasNames) {
+        this.limitDiagramToAliasNames = Set.of(aliasNames);
+        return this;
+    }
+
+    public boolean renderInDiagram(final EntityAlias ea) {
+        return limitDiagramToAliasNames == null || limitDiagramToAliasNames.contains(ea.aliasName());
+    }
+
+    public boolean renderInDiagram(final RbacGrantDefinition g) {
+        if ( limitDiagramToAliasNames == null ) {
+            return true;
+        }
+        return switch (g.grantType()) {
+        case ROLE_TO_USER ->
+                renderInDiagram(g.getSubRoleDef().getEntityAlias());
+        case ROLE_TO_ROLE ->
+                renderInDiagram(g.getSuperRoleDef().getEntityAlias()) && renderInDiagram(g.getSubRoleDef().getEntityAlias());
+        case PERM_TO_ROLE ->
+                renderInDiagram(g.getSuperRoleDef().getEntityAlias()) && renderInDiagram(g.getPermDef().getEntityAlias());
+        };
+    }
+
     public class RbacGrantBuilder {
 
         private final RbacRoleDefinition superRoleDef;
@@ -535,7 +559,7 @@ public class RbacView {
         private final RbacPermissionDefinition permDef;
         private boolean assumed = true;
         private boolean toCreate = false;
-        private Set<CaseDef> forCases = new HashSet<>();
+        private Set<CaseDef> forCases = new LinkedHashSet<>();
 
         @Override
         public String toString() {
@@ -560,11 +584,13 @@ public class RbacView {
             register(this);
         }
 
-        public RbacGrantDefinition(final RbacPermissionDefinition permDef, final RbacRoleDefinition roleDef) {
+        public RbacGrantDefinition(final RbacPermissionDefinition permDef, final RbacRoleDefinition roleDef,
+                final CaseDef forCase) {
             this.userDef = null;
             this.subRoleDef = null;
             this.superRoleDef = roleDef;
             this.permDef = permDef;
+            this.forCases = forCase != null ? hashSet(forCase) : null;
             register(this);
         }
 
@@ -584,7 +610,7 @@ public class RbacView {
         GrantType grantType() {
             return permDef != null ? PERM_TO_ROLE
                     : userDef != null ? GrantType.ROLE_TO_USER
-                    : GrantType.ROLE_TO_ROLE;
+                    : ROLE_TO_ROLE;
         }
 
         boolean isAssumed() {
@@ -602,9 +628,10 @@ public class RbacView {
         }
 
         boolean matchesCase(final ColumnValue requestedCase) {
-            final var noCasesDefined = forCases.isEmpty();
+            final var noCasesDefined = forCases == null;
             final var generateForAllCases = requestedCase == null;
-            final boolean isGrantedForRequestedCase = forCases.stream().anyMatch(c -> c.isCase(requestedCase));
+            final boolean isGrantedForRequestedCase = forCases == null || forCases.stream().anyMatch(c -> c.isCase(requestedCase))
+                    || forCases.stream().anyMatch(CaseDef::isDefaultCase) && !allCases.stream().anyMatch(c -> c.isCase(requestedCase));
             return  noCasesDefined || generateForAllCases || isGrantedForRequestedCase;
         }
 
@@ -676,7 +703,8 @@ public class RbacView {
         final String tableName;
         final boolean toCreate;
 
-        private RbacPermissionDefinition(final EntityAlias entityAlias, final Permission permission, final String tableName, final boolean toCreate) {
+        private RbacPermissionDefinition(final EntityAlias entityAlias, final Permission permission, final String tableName,
+                final boolean toCreate) {
             this.entityAlias = entityAlias;
             this.permission = permission;
             this.tableName = tableName;
@@ -788,6 +816,10 @@ public class RbacView {
         public String toString() {
             return "role:" + entityAlias.aliasName + role;
         }
+
+        public boolean isGlobal(final Role role) {
+            return entityAlias.isGlobal() && this.role == role;
+        }
     }
 
     public RbacUserReference findUserRef(final RbacUserReference.UserRole userRole) {
@@ -842,19 +874,6 @@ public class RbacView {
             .orElseGet(() -> new RbacPermissionDefinition(entityAlias, perm, tableName, true)); // TODO: true => toCreate
     }
 
-
-    RbacPermissionDefinition findRbacPerm(final EntityAlias entityAlias, final Permission perm) {
-        return findRbacPerm(entityAlias, perm, null);
-    }
-
-    public RbacPermissionDefinition findRbacPerm(final String entityAliasName, final Permission perm, String tableName) {
-        return findRbacPerm(findEntityAlias(entityAliasName), perm, tableName);
-    }
-
-    public RbacPermissionDefinition findRbacPerm(final String entityAliasName, final Permission perm) {
-        return findRbacPerm(findEntityAlias(entityAliasName), perm);
-    }
-
     private RbacGrantDefinition findOrCreateGrantDef(final RbacRoleDefinition roleDefinition, final RbacUserReference user) {
         return grantDefs.stream()
                 .filter(g -> g.subRoleDef == roleDefinition && g.userDef == user)
@@ -866,7 +885,8 @@ public class RbacView {
         return grantDefs.stream()
                 .filter(g -> g.permDef == permDef && g.superRoleDef == roleDef)
                 .findFirst()
-                .orElseGet(() -> new RbacGrantDefinition(permDef, roleDef));
+                .map(g -> g.forCase(processingCase))
+                .orElseGet(() -> new RbacGrantDefinition(permDef, roleDef, processingCase));
     }
 
     private RbacGrantDefinition findOrCreateGrantDef(

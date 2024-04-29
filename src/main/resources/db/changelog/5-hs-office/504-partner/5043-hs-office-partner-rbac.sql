@@ -154,65 +154,81 @@ execute procedure updateTriggerForHsOfficePartner_tf();
 
 
 -- ============================================================================
---changeset hs-office-partner-rbac-INSERT:1 endDelimiter:--//
+--changeset hs-office-partner-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- granting INSERT permission to global ----------------------------
+
 /*
-    Creates INSERT INTO hs_office_partner permissions for the related global rows.
+    Grants INSERT INTO hs_office_partner permissions to specified role of pre-existing global rows.
  */
 do language plpgsql $$
     declare
         row global;
     begin
-        call defineContext('create INSERT INTO hs_office_partner permissions for the related global rows');
+        call defineContext('create INSERT INTO hs_office_partner permissions for pre-exising global rows');
 
         FOR row IN SELECT * FROM global
+            -- unconditional for all rows in that table
             LOOP
                 call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'hs_office_partner'),
-                    globalADMIN());
+                        createPermission(row.uuid, 'INSERT', 'hs_office_partner'),
+                        globalADMIN());
             END LOOP;
-    END;
+    end;
 $$;
 
 /**
-    Adds hs_office_partner INSERT permission to specified role of new global rows.
+    Grants hs_office_partner INSERT permission to specified role of new global rows.
 */
-create or replace function hs_office_partner_global_insert_tf()
+create or replace function new_hs_office_partner_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call grantPermissionToRole(
+    -- unconditional for all rows in that table
+        call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_office_partner'),
             globalADMIN());
+    -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_hs_office_partner_global_insert_tg
+create trigger z_new_hs_office_partner_grants_insert_to_global_tg
     after insert on global
     for each row
-execute procedure hs_office_partner_global_insert_tf();
+execute procedure new_hs_office_partner_grants_insert_to_global_tf();
+
+
+-- ============================================================================
+--changeset hs_office_partner-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to hs_office_partner,
-    where only global-admin has that permission.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office_partner.
 */
-create or replace function hs_office_partner_insert_permission_missing_tf()
+create or replace function hs_office_partner_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
+declare
+    superObjectUuid uuid;
 begin
+    -- check INSERT INSERT if global ADMIN
+    if isGlobalAdmin() then
+        return NEW;
+    end if;
+
     raise exception '[403] insert into hs_office_partner not allowed for current subjects % (%)',
-        currentSubjects(), currentSubjectsUuids();
+            currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger hs_office_partner_insert_permission_check_tg
     before insert on hs_office_partner
     for each row
-    when ( not isGlobalAdmin() )
-        execute procedure hs_office_partner_insert_permission_missing_tf();
+        execute procedure hs_office_partner_insert_permission_check_tf();
 --//
+
 
 -- ============================================================================
 --changeset hs-office-partner-rbac-IDENTITY-VIEW:1 endDelimiter:--//
@@ -223,6 +239,7 @@ call generateRbacIdentityViewFromProjection('hs_office_partner',
         'P-' || partnerNumber
     $idName$);
 --//
+
 
 -- ============================================================================
 --changeset hs-office-partner-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

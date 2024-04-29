@@ -6,19 +6,6 @@ This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manua
 %%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
-subgraph partnerRel.contact["`**partnerRel.contact**`"]
-    direction TB
-    style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph partnerRel.contact:roles[ ]
-        style partnerRel.contact:roles fill:#99bcdb,stroke:white
-
-        role:partnerRel.contact:OWNER[[partnerRel.contact:OWNER]]
-        role:partnerRel.contact:ADMIN[[partnerRel.contact:ADMIN]]
-        role:partnerRel.contact:REFERRER[[partnerRel.contact:REFERRER]]
-    end
-end
-
 subgraph partner["`**partner**`"]
     direction TB
     style partner fill:#dd4901,stroke:#274d6e,stroke-width:8px
@@ -70,6 +57,19 @@ subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
         role:partnerRel.anchorPerson:OWNER[[partnerRel.anchorPerson:OWNER]]
         role:partnerRel.anchorPerson:ADMIN[[partnerRel.anchorPerson:ADMIN]]
         role:partnerRel.anchorPerson:REFERRER[[partnerRel.anchorPerson:REFERRER]]
+    end
+end
+
+subgraph partnerRel.contact["`**partnerRel.contact**`"]
+    direction TB
+    style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.contact:roles[ ]
+        style partnerRel.contact:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel.contact:OWNER[[partnerRel.contact:OWNER]]
+        role:partnerRel.contact:ADMIN[[partnerRel.contact:ADMIN]]
+        role:partnerRel.contact:REFERRER[[partnerRel.contact:REFERRER]]
     end
 end
 

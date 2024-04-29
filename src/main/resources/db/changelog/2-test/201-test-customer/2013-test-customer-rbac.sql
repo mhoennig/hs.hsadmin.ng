@@ -77,65 +77,81 @@ execute procedure insertTriggerForTestCustomer_tf();
 
 
 -- ============================================================================
---changeset test-customer-rbac-INSERT:1 endDelimiter:--//
+--changeset test-customer-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- granting INSERT permission to global ----------------------------
+
 /*
-    Creates INSERT INTO test_customer permissions for the related global rows.
+    Grants INSERT INTO test_customer permissions to specified role of pre-existing global rows.
  */
 do language plpgsql $$
     declare
         row global;
     begin
-        call defineContext('create INSERT INTO test_customer permissions for the related global rows');
+        call defineContext('create INSERT INTO test_customer permissions for pre-exising global rows');
 
         FOR row IN SELECT * FROM global
+            -- unconditional for all rows in that table
             LOOP
                 call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'test_customer'),
-                    globalADMIN());
+                        createPermission(row.uuid, 'INSERT', 'test_customer'),
+                        globalADMIN());
             END LOOP;
-    END;
+    end;
 $$;
 
 /**
-    Adds test_customer INSERT permission to specified role of new global rows.
+    Grants test_customer INSERT permission to specified role of new global rows.
 */
-create or replace function test_customer_global_insert_tf()
+create or replace function new_test_customer_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call grantPermissionToRole(
+    -- unconditional for all rows in that table
+        call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'test_customer'),
             globalADMIN());
+    -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_test_customer_global_insert_tg
+create trigger z_new_test_customer_grants_insert_to_global_tg
     after insert on global
     for each row
-execute procedure test_customer_global_insert_tf();
+execute procedure new_test_customer_grants_insert_to_global_tf();
+
+
+-- ============================================================================
+--changeset test_customer-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to test_customer,
-    where only global-admin has that permission.
+    Checks if the user respectively the assumed roles are allowed to insert a row to test_customer.
 */
-create or replace function test_customer_insert_permission_missing_tf()
+create or replace function test_customer_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
+declare
+    superObjectUuid uuid;
 begin
+    -- check INSERT INSERT if global ADMIN
+    if isGlobalAdmin() then
+        return NEW;
+    end if;
+
     raise exception '[403] insert into test_customer not allowed for current subjects % (%)',
-        currentSubjects(), currentSubjectsUuids();
+            currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger test_customer_insert_permission_check_tg
     before insert on test_customer
     for each row
-    when ( not isGlobalAdmin() )
-        execute procedure test_customer_insert_permission_missing_tf();
+        execute procedure test_customer_insert_permission_check_tf();
 --//
+
 
 -- ============================================================================
 --changeset test-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
@@ -146,6 +162,7 @@ call generateRbacIdentityViewFromProjection('test_customer',
         prefix
     $idName$);
 --//
+
 
 -- ============================================================================
 --changeset test-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

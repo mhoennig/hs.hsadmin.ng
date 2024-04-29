@@ -98,78 +98,79 @@ execute procedure insertTriggerForHsBookingItem_tf();
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-INSERT:1 endDelimiter:--//
+--changeset hs-booking-item-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- granting INSERT permission to hs_office_relation ----------------------------
+
 /*
-    Creates INSERT INTO hs_booking_item permissions for the related hs_office_relation rows.
+    Grants INSERT INTO hs_booking_item permissions to specified role of pre-existing hs_office_relation rows.
  */
 do language plpgsql $$
     declare
         row hs_office_relation;
     begin
-        call defineContext('create INSERT INTO hs_booking_item permissions for the related hs_office_relation rows');
+        call defineContext('create INSERT INTO hs_booking_item permissions for pre-exising hs_office_relation rows');
 
         FOR row IN SELECT * FROM hs_office_relation
-			WHERE type = 'DEBITOR'
+            WHERE type = 'DEBITOR'
             LOOP
                 call grantPermissionToRole(
-                    createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
-                    hsOfficeRelationADMIN(row));
+                        createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
+                        hsOfficeRelationADMIN(row));
             END LOOP;
-    END;
+    end;
 $$;
 
 /**
-    Adds hs_booking_item INSERT permission to specified role of new hs_office_relation rows.
+    Grants hs_booking_item INSERT permission to specified role of new hs_office_relation rows.
 */
-create or replace function hs_booking_item_hs_office_relation_insert_tf()
+create or replace function new_hs_booking_item_grants_insert_to_hs_office_relation_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if NEW.type = 'DEBITOR' then
-		call grantPermissionToRole(
+        call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
             hsOfficeRelationADMIN(NEW));
-	end if;
+    end if;
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_hs_booking_item_hs_office_relation_insert_tg
+create trigger z_new_hs_booking_item_grants_insert_to_hs_office_relation_tg
     after insert on hs_office_relation
     for each row
-execute procedure hs_booking_item_hs_office_relation_insert_tf();
+execute procedure new_hs_booking_item_grants_insert_to_hs_office_relation_tf();
+
+
+-- ============================================================================
+--changeset hs_booking_item-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user or assumed roles are allowed to insert a row to hs_booking_item,
-    where the check is performed by an indirect role.
-
-    An indirect role is a role which depends on an object uuid which is not a direct foreign key
-    of the source entity, but needs to be fetched via joined tables.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_booking_item.
 */
 create or replace function hs_booking_item_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
-
 declare
-    superRoleObjectUuid uuid;
-
+    superObjectUuid uuid;
 begin
-        superRoleObjectUuid := (SELECT debitorRel.uuid
-            FROM hs_office_relation debitorRel
-            JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
-            WHERE debitor.uuid = NEW.debitorUuid
-        );
-        assert superRoleObjectUuid is not null, 'superRoleObjectUuid must not be null';
-
-        if ( not hasInsertPermission(superRoleObjectUuid, 'INSERT', 'hs_booking_item') ) then
-            raise exception
-                '[403] insert into hs_booking_item not allowed for current subjects % (%)',
-                currentSubjects(), currentSubjectsUuids();
+    -- check INSERT permission via indirect foreign key: NEW.debitorUuid
+    superObjectUuid := (SELECT debitorRel.uuid
+        FROM hs_office_relation debitorRel
+        JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+        WHERE debitor.uuid = NEW.debitorUuid
+    );
+    assert superObjectUuid is not null, 'object uuid fetched depending on hs_booking_item.debitorUuid must not be null, also check fetchSql in RBAC DSL';
+    if hasInsertPermission(superObjectUuid, 'hs_booking_item') then
+        return NEW;
     end if;
-    return NEW;
+
+    raise exception '[403] insert into hs_booking_item not allowed for current subjects % (%)',
+            currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger hs_booking_item_insert_permission_check_tg
@@ -178,17 +179,19 @@ create trigger hs_booking_item_insert_permission_check_tg
         execute procedure hs_booking_item_insert_permission_check_tf();
 --//
 
+
 -- ============================================================================
 --changeset hs-booking-item-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-    call generateRbacIdentityViewFromQuery('hs_booking_item',
-        $idName$
-            SELECT bookingItem.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingItem.caption) as idName
+call generateRbacIdentityViewFromQuery('hs_booking_item',
+    $idName$
+        SELECT bookingItem.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingItem.caption) as idName
             FROM hs_booking_item bookingItem
             JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingItem.debitorUuid
-        $idName$);
+    $idName$);
 --//
+
 
 -- ============================================================================
 --changeset hs-booking-item-rbac-RESTRICTED-VIEW:1 endDelimiter:--//

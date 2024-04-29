@@ -179,7 +179,9 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("debitorRel", TENANT);
                     with.permission(SELECT);
-                });
+                })
+
+                .limitDiagramTo("bookingItem", "debitorRel", "global");
     }
 
     public static void main(String[] args) throws IOException {

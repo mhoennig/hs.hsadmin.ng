@@ -6,45 +6,6 @@ This code generated was by RbacViewMermaidFlowchartGenerator, do not amend manua
 %%{init:{'flowchart':{'htmlLabels':false}}}%%
 flowchart TB
 
-subgraph debitorRel.anchorPerson["`**debitorRel.anchorPerson**`"]
-    direction TB
-    style debitorRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph debitorRel.anchorPerson:roles[ ]
-        style debitorRel.anchorPerson:roles fill:#99bcdb,stroke:white
-
-        role:debitorRel.anchorPerson:OWNER[[debitorRel.anchorPerson:OWNER]]
-        role:debitorRel.anchorPerson:ADMIN[[debitorRel.anchorPerson:ADMIN]]
-        role:debitorRel.anchorPerson:REFERRER[[debitorRel.anchorPerson:REFERRER]]
-    end
-end
-
-subgraph debitorRel.holderPerson["`**debitorRel.holderPerson**`"]
-    direction TB
-    style debitorRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph debitorRel.holderPerson:roles[ ]
-        style debitorRel.holderPerson:roles fill:#99bcdb,stroke:white
-
-        role:debitorRel.holderPerson:OWNER[[debitorRel.holderPerson:OWNER]]
-        role:debitorRel.holderPerson:ADMIN[[debitorRel.holderPerson:ADMIN]]
-        role:debitorRel.holderPerson:REFERRER[[debitorRel.holderPerson:REFERRER]]
-    end
-end
-
-subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
-    direction TB
-    style partnerRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph partnerRel.holderPerson:roles[ ]
-        style partnerRel.holderPerson:roles fill:#99bcdb,stroke:white
-
-        role:partnerRel.holderPerson:OWNER[[partnerRel.holderPerson:OWNER]]
-        role:partnerRel.holderPerson:ADMIN[[partnerRel.holderPerson:ADMIN]]
-        role:partnerRel.holderPerson:REFERRER[[partnerRel.holderPerson:REFERRER]]
-    end
-end
-
 subgraph debitor["`**debitor**`"]
     direction TB
     style debitor fill:#dd4901,stroke:#274d6e,stroke-width:8px
@@ -73,30 +34,16 @@ subgraph debitor["`**debitor**`"]
     end
 end
 
-subgraph partnerRel["`**partnerRel**`"]
+subgraph debitorRel.anchorPerson["`**debitorRel.anchorPerson**`"]
     direction TB
-    style partnerRel fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+    style debitorRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
 
-    subgraph partnerRel:roles[ ]
-        style partnerRel:roles fill:#99bcdb,stroke:white
+    subgraph debitorRel.anchorPerson:roles[ ]
+        style debitorRel.anchorPerson:roles fill:#99bcdb,stroke:white
 
-        role:partnerRel:OWNER[[partnerRel:OWNER]]
-        role:partnerRel:ADMIN[[partnerRel:ADMIN]]
-        role:partnerRel:AGENT[[partnerRel:AGENT]]
-        role:partnerRel:TENANT[[partnerRel:TENANT]]
-    end
-end
-
-subgraph partnerRel.contact["`**partnerRel.contact**`"]
-    direction TB
-    style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
-
-    subgraph partnerRel.contact:roles[ ]
-        style partnerRel.contact:roles fill:#99bcdb,stroke:white
-
-        role:partnerRel.contact:OWNER[[partnerRel.contact:OWNER]]
-        role:partnerRel.contact:ADMIN[[partnerRel.contact:ADMIN]]
-        role:partnerRel.contact:REFERRER[[partnerRel.contact:REFERRER]]
+        role:debitorRel.anchorPerson:OWNER[[debitorRel.anchorPerson:OWNER]]
+        role:debitorRel.anchorPerson:ADMIN[[debitorRel.anchorPerson:ADMIN]]
+        role:debitorRel.anchorPerson:REFERRER[[debitorRel.anchorPerson:REFERRER]]
     end
 end
 
@@ -113,6 +60,33 @@ subgraph debitorRel.contact["`**debitorRel.contact**`"]
     end
 end
 
+subgraph debitorRel.holderPerson["`**debitorRel.holderPerson**`"]
+    direction TB
+    style debitorRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph debitorRel.holderPerson:roles[ ]
+        style debitorRel.holderPerson:roles fill:#99bcdb,stroke:white
+
+        role:debitorRel.holderPerson:OWNER[[debitorRel.holderPerson:OWNER]]
+        role:debitorRel.holderPerson:ADMIN[[debitorRel.holderPerson:ADMIN]]
+        role:debitorRel.holderPerson:REFERRER[[debitorRel.holderPerson:REFERRER]]
+    end
+end
+
+subgraph partnerRel["`**partnerRel**`"]
+    direction TB
+    style partnerRel fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel:roles[ ]
+        style partnerRel:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel:OWNER[[partnerRel:OWNER]]
+        role:partnerRel:ADMIN[[partnerRel:ADMIN]]
+        role:partnerRel:AGENT[[partnerRel:AGENT]]
+        role:partnerRel:TENANT[[partnerRel:TENANT]]
+    end
+end
+
 subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
     direction TB
     style partnerRel.anchorPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
@@ -123,6 +97,32 @@ subgraph partnerRel.anchorPerson["`**partnerRel.anchorPerson**`"]
         role:partnerRel.anchorPerson:OWNER[[partnerRel.anchorPerson:OWNER]]
         role:partnerRel.anchorPerson:ADMIN[[partnerRel.anchorPerson:ADMIN]]
         role:partnerRel.anchorPerson:REFERRER[[partnerRel.anchorPerson:REFERRER]]
+    end
+end
+
+subgraph partnerRel.contact["`**partnerRel.contact**`"]
+    direction TB
+    style partnerRel.contact fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.contact:roles[ ]
+        style partnerRel.contact:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel.contact:OWNER[[partnerRel.contact:OWNER]]
+        role:partnerRel.contact:ADMIN[[partnerRel.contact:ADMIN]]
+        role:partnerRel.contact:REFERRER[[partnerRel.contact:REFERRER]]
+    end
+end
+
+subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
+    direction TB
+    style partnerRel.holderPerson fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+
+    subgraph partnerRel.holderPerson:roles[ ]
+        style partnerRel.holderPerson:roles fill:#99bcdb,stroke:white
+
+        role:partnerRel.holderPerson:OWNER[[partnerRel.holderPerson:OWNER]]
+        role:partnerRel.holderPerson:ADMIN[[partnerRel.holderPerson:ADMIN]]
+        role:partnerRel.holderPerson:REFERRER[[partnerRel.holderPerson:REFERRER]]
     end
 end
 
@@ -149,6 +149,16 @@ role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel.holderPerson:REFERRER
 role:global:ADMIN -.-> role:debitorRel.contact:OWNER
 role:debitorRel.contact:OWNER -.-> role:debitorRel.contact:ADMIN
 role:debitorRel.contact:ADMIN -.-> role:debitorRel.contact:REFERRER
+role:global:ADMIN -.-> role:debitorRel:OWNER
+role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
+role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
+role:debitorRel:AGENT -.-> role:debitorRel:TENANT
+role:debitorRel.contact:ADMIN -.-> role:debitorRel:TENANT
+role:debitorRel:TENANT -.-> role:debitorRel.anchorPerson:REFERRER
+role:debitorRel:TENANT -.-> role:debitorRel.holderPerson:REFERRER
+role:debitorRel:TENANT -.-> role:debitorRel.contact:REFERRER
+role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:OWNER
+role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
 role:global:ADMIN -.-> role:refundBankAccount:OWNER
 role:refundBankAccount:OWNER -.-> role:refundBankAccount:ADMIN
 role:refundBankAccount:ADMIN -.-> role:refundBankAccount:REFERRER
