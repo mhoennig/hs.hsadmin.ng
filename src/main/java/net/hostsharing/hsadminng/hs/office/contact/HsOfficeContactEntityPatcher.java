@@ -1,14 +1,17 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
+import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactPatchResource;
 
-class HsOfficeContactEntityPatch implements EntityPatcher<HsOfficeContactPatchResource> {
+import java.util.Optional;
+
+class HsOfficeContactEntityPatcher implements EntityPatcher<HsOfficeContactPatchResource> {
 
     private final HsOfficeContactEntity entity;
 
-    HsOfficeContactEntityPatch(final HsOfficeContactEntity entity) {
+    HsOfficeContactEntityPatcher(final HsOfficeContactEntity entity) {
         this.entity = entity;
     }
 
@@ -16,7 +19,9 @@ class HsOfficeContactEntityPatch implements EntityPatcher<HsOfficeContactPatchRe
     public void apply(final HsOfficeContactPatchResource resource) {
         OptionalFromJson.of(resource.getLabel()).ifPresent(entity::setLabel);
         OptionalFromJson.of(resource.getPostalAddress()).ifPresent(entity::setPostalAddress);
-        OptionalFromJson.of(resource.getEmailAddresses()).ifPresent(entity::setEmailAddresses);
-        OptionalFromJson.of(resource.getPhoneNumbers()).ifPresent(entity::setPhoneNumbers);
+        Optional.ofNullable(resource.getEmailAddresses())
+                .ifPresent(r -> entity.getEmailAddresses().patch(KeyValueMap.from(resource.getEmailAddresses())));
+        Optional.ofNullable(resource.getPhoneNumbers())
+                .ifPresent(r -> entity.getPhoneNumbers().patch(KeyValueMap.from(resource.getPhoneNumbers())));
     }
 }

@@ -4,7 +4,9 @@ import net.hostsharing.hsadminng.errors.DisplayName;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -62,6 +64,7 @@ public final class Stringify<B> {
         final var propValues = props.stream()
                 .map(prop -> PropertyValue.of(prop, prop.getter.apply(object)))
                 .filter(Objects::nonNull)
+                .filter(PropertyValue::nonEmpty)
                 .map(propVal -> {
                     if (propVal.rawValue instanceof Stringifyable stringifyable) {
                         return new PropertyValue<>(propVal.prop, propVal.rawValue, stringifyable.toShortString());
@@ -109,6 +112,13 @@ public final class Stringify<B> {
 
         static <B> PropertyValue<B> of(Property<B> prop, Object rawValue) {
             return rawValue != null ? new PropertyValue<>(prop, rawValue, rawValue.toString()) : null;
+        }
+
+        boolean nonEmpty() {
+            return rawValue != null &&
+                    (!(rawValue instanceof Collection<?> c) || !c.isEmpty()) &&
+                    (!(rawValue instanceof Map<?,?> m) || !m.isEmpty()) &&
+                    (!(rawValue instanceof String s) || !s.isEmpty());
         }
     }
 }

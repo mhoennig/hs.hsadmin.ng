@@ -14,9 +14,9 @@ components:
                 postalAddress:
                     type: string
                 emailAddresses:
-                    type: string
+                    $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
-                    type: string
+                    $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
 
         HsOfficeContactInsert:
             type: object
@@ -26,9 +26,9 @@ components:
                 postalAddress:
                     type: string
                 emailAddresses:
-                    type: string
+                    $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
-                    type: string
+                    $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
             required:
                 - label
 
@@ -42,8 +42,31 @@ components:
                     type: string
                     nullable: true
                 emailAddresses:
-                    type: string
-                    nullable: true
+                    $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
-                    type: string
-                    nullable: true
+                    $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
+
+        HsOfficeContactEmailAddresses:
+            # forces generating a java.lang.Object containing a Map, instead of class HsOfficeContactEmailAddresses
+            anyOf:
+                - type: object
+                  additionalProperties: true
+
+        HsOfficeContactPhoneNumbers:
+            # forces generating a java.lang.Object containing a Map, instead of class HsOfficeContactEmailAddresses
+            anyOf:
+                - type: object
+                  properties:
+                      phone_office:
+                            type: string
+                            nullable: true
+                      phone_private:
+                          type: string
+                          nullable: true
+                      phone_mobile:
+                          type: string
+                          nullable: true
+                      fax:
+                          type: string
+                          nullable: true
+                  additionalProperties: false

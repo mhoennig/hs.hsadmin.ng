@@ -98,7 +98,15 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     private Map<String, Object> resources = new HashMap<>();
 
     @Transient
-    private PatchableMapWrapper resourcesWrapper;
+    private PatchableMapWrapper<Object> resourcesWrapper;
+
+    public PatchableMapWrapper<Object> getResources() {
+        return PatchableMapWrapper.of(resourcesWrapper, (newWrapper) -> {resourcesWrapper = newWrapper; }, resources );
+    }
+
+    public void putResources(Map<String, Object> newResources) {
+        getResources().assign(newResources);
+    }
 
     public void setValidFrom(final LocalDate validFrom) {
         setValidity(toPostgresDateRange(validFrom, getValidTo()));
@@ -114,20 +122,6 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
 
     public LocalDate getValidTo() {
         return upperInclusiveFromPostgresDateRange(getValidity());
-    }
-
-    public PatchableMapWrapper getResources() {
-        if ( resourcesWrapper == null ) {
-            resourcesWrapper = new PatchableMapWrapper(resources);
-        }
-        return resourcesWrapper;
-    }
-
-    public void putResources(Map<String, Object> entries) {
-        if ( resourcesWrapper == null ) {
-            resourcesWrapper = new PatchableMapWrapper(resources);
-        }
-        resourcesWrapper.assign(entries);
     }
 
     @Override

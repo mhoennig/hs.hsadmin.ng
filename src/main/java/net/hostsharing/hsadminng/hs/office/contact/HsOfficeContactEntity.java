@@ -1,17 +1,22 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
@@ -44,17 +49,45 @@ public class HsOfficeContactEntity implements Stringifyable, RbacObject {
     @Version
     private int version;
 
-    @Column(name = "label")
+    @Column(name = "label") // TODO.impl: rename to caption
     private String label;
 
     @Column(name = "postaladdress")
-    private String postalAddress; // TODO.spec: check if we really want multiple, if so: JSON-Array or Postgres-Array?
+    private String postalAddress; // multiline free-format text
 
-    @Column(name = "emailaddresses", columnDefinition = "json")
-    private String emailAddresses; // TODO.spec: check if we can really add multiple. format: ["eins@...", "zwei@..."]
+    @Builder.Default
+    @Setter(AccessLevel.NONE)
+    @Type(JsonType.class)
+    @Column(name = "emailaddresses")
+    private Map<String, String> emailAddresses = new HashMap<>();
 
-    @Column(name = "phonenumbers", columnDefinition = "json")
-    private String phoneNumbers; // TODO.spec: check if we can really add multiple. format: { "office": "+49 40 12345-10", "fax": "+49 40 12345-05" }
+    @Transient
+    private PatchableMapWrapper<String> emailAddressesWrapper;
+
+    @Builder.Default
+    @Setter(AccessLevel.NONE)
+    @Type(JsonType.class)
+    @Column(name = "phonenumbers")
+    private Map<String, String> phoneNumbers = new HashMap<>();
+
+    @Transient
+    private PatchableMapWrapper<String> phoneNumbersWrapper;
+
+    public PatchableMapWrapper<String> getEmailAddresses() {
+        return PatchableMapWrapper.of(emailAddressesWrapper, (newWrapper) -> {emailAddressesWrapper = newWrapper; }, emailAddresses );
+    }
+
+    public void putEmailAddresses(Map<String, String> newEmailAddresses) {
+        getEmailAddresses().assign(newEmailAddresses);
+    }
+
+    public PatchableMapWrapper<String> getPhoneNumbers() {
+        return PatchableMapWrapper.of(phoneNumbersWrapper, (newWrapper) -> {phoneNumbersWrapper = newWrapper; }, phoneNumbers );
+    }
+
+    public void putPhoneNumbers(Map<String, String> newPhoneNumbers) {
+        getPhoneNumbers().assign(newPhoneNumbers);
+    }
 
     @Override
     public String toString() {

@@ -107,8 +107,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                           "mark": null,
                           "contact": {
                             "label": "first contact",
-                            "emailAddresses": "contact-admin@firstcontact.example.com",
-                            "phoneNumbers": "+49 123 1234567"
+                            "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
+                            "phoneNumbers": { "phone_office": "+49 123 1234567" }
                           }
                         },
                         "debitorNumber": 1000111,
@@ -132,8 +132,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "mark": null,
                             "contact": {
                               "label": "first contact",
-                              "emailAddresses": "contact-admin@firstcontact.example.com",
-                              "phoneNumbers": "+49 123 1234567"
+                              "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
+                              "phoneNumbers": { "phone_office": "+49 123 1234567" }
                             }
                           },
                           "details": {
@@ -162,7 +162,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                           "anchor": {"tradeName": "Second e.K."},
                           "holder": {"tradeName": "Second e.K."},
                           "type": "DEBITOR",
-                          "contact": {"emailAddresses": "contact-admin@secondcontact.example.com"}
+                          "contact": {
+                            "emailAddresses": { "main": "contact-admin@secondcontact.example.com" }
+                           }
                         },
                         "debitorNumber": 1000212,
                         "debitorNumberSuffix": 12,
@@ -172,7 +174,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "anchor": {"tradeName": "Hostsharing eG"},
                             "holder": {"tradeName": "Second e.K."},
                             "type": "PARTNER",
-                            "contact": {"emailAddresses": "contact-admin@secondcontact.example.com"}
+                            "contact": {
+                                "emailAddresses": { "main": "contact-admin@secondcontact.example.com" }
+                            }
                           },
                           "details": {
                             "registrationOffice": "Hamburg",
@@ -192,7 +196,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                           "anchor": {"tradeName": "Third OHG"},
                           "holder": {"tradeName": "Third OHG"},
                           "type": "DEBITOR",
-                          "contact": {"emailAddresses": "contact-admin@thirdcontact.example.com"}
+                          "contact": {
+                                "emailAddresses": { "main": "contact-admin@thirdcontact.example.com" }
+                            }
                         },
                         "debitorNumber": 1000313,
                         "debitorNumberSuffix": 13,
@@ -202,7 +208,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "anchor": {"tradeName": "Hostsharing eG"},
                             "holder": {"tradeName": "Third OHG"},
                             "type": "PARTNER",
-                            "contact": {"emailAddresses": "contact-admin@thirdcontact.example.com"}
+                            "contact": {
+                                "emailAddresses": { "main": "contact-admin@thirdcontact.example.com" }
+                            }
                           },
                           "details": {
                             "registrationOffice": "Hamburg",
@@ -223,7 +231,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canFindDebitorDebitorByDebitorNumber() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canFindDebitorDebitorByDebitorNumber() {
 
             RestAssured // @formatter:off
                     .given()
@@ -456,9 +464,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                              "type": "DEBITOR",
                              "contact": {
                                  "label": "first contact",
-                                 "postalAddress": "\\nVorname Nachname\\nStraße Hnr\\nPLZ Stadt\\n",
-                                 "emailAddresses": "contact-admin@firstcontact.example.com",
-                                 "phoneNumbers": "+49 123 1234567"
+                                 "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
+                                 "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
+                                 "phoneNumbers": { "phone_office":  "+49 123 1234567" }
                              }
                          },
                          "debitorNumber": 1000111,
@@ -472,9 +480,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                  "mark": null,
                                  "contact": {
                                      "label": "first contact",
-                                     "postalAddress": "\\nVorname Nachname\\nStraße Hnr\\nPLZ Stadt\\n",
-                                     "emailAddresses": "contact-admin@firstcontact.example.com",
-                                     "phoneNumbers": "+49 123 1234567"
+                                     "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
+                                     "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
+                                     "phoneNumbers": { "phone_office": "+49 123 1234567" }
                                  }
                              },
                              "details": {

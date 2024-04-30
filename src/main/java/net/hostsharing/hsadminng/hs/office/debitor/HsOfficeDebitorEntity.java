@@ -170,7 +170,7 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
                         "vatCountryCode",
                         "vatBusiness",
                         "vatReverseCharge",
-                        "defaultPrefix" /* TODO.spec: do we want that updatable? */)
+                        "defaultPrefix")
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
                 .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),

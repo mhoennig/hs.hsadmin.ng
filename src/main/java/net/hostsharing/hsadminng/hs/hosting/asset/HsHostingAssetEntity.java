@@ -105,20 +105,14 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     private Map<String, Object> config = new HashMap<>();
 
     @Transient
-    private PatchableMapWrapper configWrapper;
+    private PatchableMapWrapper<Object> configWrapper;
 
-    public PatchableMapWrapper getConfig() {
-        if ( configWrapper == null ) {
-            configWrapper = new PatchableMapWrapper(config);
-        }
-        return configWrapper;
+    public PatchableMapWrapper<Object> getConfig() {
+        return PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config );
     }
 
-    public void putConfig(Map<String, Object> entries) {
-        if ( configWrapper == null ) {
-            configWrapper = new PatchableMapWrapper(config);
-        }
-        configWrapper.assign(entries);
+    public void putConfig(Map<String, Object> newConfg) {
+        PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config).assign(newConfg);
     }
 
     @Override

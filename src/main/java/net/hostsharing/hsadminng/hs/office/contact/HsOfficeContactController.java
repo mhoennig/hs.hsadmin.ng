@@ -14,6 +14,9 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+
+import static net.hostsharing.hsadminng.mapper.KeyValueMap.from;
 
 @RestController
 
@@ -51,7 +54,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsOfficeContactEntity.class);
+        final var entityToSave = mapper.map(body, HsOfficeContactEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = contactRepo.save(entityToSave);
 
@@ -108,10 +111,16 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
         final var current = contactRepo.findByUuid(contactUuid).orElseThrow();
 
-        new HsOfficeContactEntityPatch(current).apply(body);
+        new HsOfficeContactEntityPatcher(current).apply(body);
 
         final var saved = contactRepo.save(current);
         final var mapped = mapper.map(saved, HsOfficeContactResource.class);
         return ResponseEntity.ok(mapped);
     }
+
+    @SuppressWarnings("unchecked")
+    final BiConsumer<HsOfficeContactInsertResource, HsOfficeContactEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+        entity.putEmailAddresses(from(resource.getEmailAddresses()));
+        entity.putPhoneNumbers(from(resource.getPhoneNumbers()));
+    };
 }

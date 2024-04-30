@@ -12,19 +12,19 @@ import static java.util.Arrays.stream;
  * This is a map which can take key-value-pairs where the value can be null
  * thus JSON nullable object structures from HTTP PATCH can be represented.
  */
-public class PatchMap extends TreeMap<String, Object> {
+public class PatchMap<T> extends TreeMap<String, T> {
 
-    public PatchMap(final ImmutablePair<String, Object>[] entries) {
+    public PatchMap(final ImmutablePair<String, T>[] entries) {
         stream(entries).forEach(r -> put(r.getKey(), r.getValue()));
     }
 
     @SafeVarargs
-    public static Map<String, Object> patchMap(final ImmutablePair<String, Object>... entries) {
+    public static <T> Map<String, T> patchMap(final ImmutablePair<String, Object>... entries) {
         return new PatchMap(entries);
     }
 
     @NotNull
-    public static ImmutablePair<String, Object> entry(final String key, final Object value) {
+    public static <T> ImmutablePair<String, T> entry(final String key, final T value) {
         return new ImmutablePair<>(key, value);
     }
 }

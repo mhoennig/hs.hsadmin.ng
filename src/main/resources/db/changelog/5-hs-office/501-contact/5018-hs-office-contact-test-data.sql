@@ -11,8 +11,9 @@
 create or replace procedure createHsOfficeContactTestData(contLabel varchar)
     language plpgsql as $$
 declare
-    currentTask   varchar;
-    emailAddr varchar;
+    currentTask     varchar;
+    postalAddr      varchar;
+    emailAddr       varchar;
 begin
     currentTask = 'creating contact test-data ' || contLabel;
     execute format('set local hsadminng.currentTask to %L', currentTask);
@@ -22,14 +23,17 @@ begin
     perform createRbacUser(emailAddr);
     call defineContext(currentTask, null, emailAddr);
 
+    postalAddr := E'Vorname Nachname\nStraße Hnr\nPLZ Stadt';
+
     raise notice 'creating test contact: %', contLabel;
     insert
         into hs_office_contact (label, postaladdress, emailaddresses, phonenumbers)
-        values (contLabel, $address$
-Vorname Nachname
-Straße Hnr
-PLZ Stadt
-$address$, emailAddr, '+49 123 1234567');
+        values (
+            contLabel,
+            postalAddr,
+            ('{ "main": "' || emailAddr || '" }')::jsonb,
+            ('{ "phone_office": "+49 123 1234567" }')::jsonb
+        );
 end; $$;
 --//
 

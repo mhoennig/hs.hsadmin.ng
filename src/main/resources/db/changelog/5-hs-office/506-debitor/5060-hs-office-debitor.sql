@@ -11,7 +11,7 @@ create table hs_office_debitor
     debitorNumberSuffix     char(2) not null check (debitorNumberSuffix::text ~ '^[0-9][0-9]$'),
     debitorRelUuid          uuid not null references hs_office_relation(uuid),
     billable                boolean not null default true,
-    vatId                   varchar(24), -- TODO.spec: here or in person?
+    vatId                   varchar(24),
     vatCountryCode          varchar(2),
     vatBusiness             boolean not null,
     vatReverseCharge        boolean not null,

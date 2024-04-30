@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
+import java.util.Map;
 
 public class TestHsOfficeContact {
 
@@ -9,7 +10,7 @@ public class TestHsOfficeContact {
         return HsOfficeContactEntity.builder()
                 .label(label)
                 .postalAddress("address of " + label)
-                .emailAddresses(emailAddr)
+                .emailAddresses(Map.of("main", emailAddr))
                 .build();
     }
 }

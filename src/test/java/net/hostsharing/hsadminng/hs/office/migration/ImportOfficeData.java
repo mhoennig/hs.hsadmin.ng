@@ -240,30 +240,30 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
                 {
-                    1101=contact(label='Herr Michael Mellies ', emailAddresses='mih@example.org'),
-                    1200=contact(label='JM e.K.', emailAddresses='jm-ex-partner@example.org'),
-                    1201=contact(label='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='jm-billing@example.org'),
-                    1202=contact(label='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='am-operation@example.org'),
-                    1203=contact(label='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='pm-partner@example.org'),
-                    1204=contact(label='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='tm-vip@example.org'),
-                    1301=contact(label='Petra Schmidt , Test PS', emailAddresses='ps@example.com'),
-                    1401=contact(label='Frau Frauke Fanninga ', emailAddresses='ff@example.org'),
-                    1501=contact(label='Frau Cecilia Camus ', emailAddresses='cc@example.org')
+                    1101=contact(label='Herr Michael Mellies ', emailAddresses='{ main: mih@example.org }'),
+                    1200=contact(label='JM e.K.', emailAddresses='{ main: jm-ex-partner@example.org }'),
+                    1201=contact(label='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='{ main: jm-billing@example.org }'),
+                    1202=contact(label='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='{ main: am-operation@example.org }'),
+                    1203=contact(label='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='{ main: pm-partner@example.org }'),
+                    1204=contact(label='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='{ main: tm-vip@example.org }'),
+                    1301=contact(label='Petra Schmidt , Test PS', emailAddresses='{ main: ps@example.com }'),
+                    1401=contact(label='Frau Frauke Fanninga ', emailAddresses='{ main: ff@example.org }'),
+                    1501=contact(label='Frau Cecilia Camus ', emailAddresses='{ main: cc@example.org }')
                 }
                 """);
         assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
                 {
                     1=person(personType='LP', tradeName='Hostsharing eG'),
-                    1101=person(personType='NP', tradeName='', familyName='Mellies', givenName='Michael'),
-                    1200=person(personType='LP', tradeName='JM e.K.', familyName='', givenName=''),
+                    1101=person(personType='NP', familyName='Mellies', givenName='Michael'),
+                    1200=person(personType='LP', tradeName='JM e.K.'),
                     1201=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Billing', givenName='Jenny'),
                     1202=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Operation', givenName='Andrew'),
                     1203=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-Contract', givenName='Philip'),
                     1204=person(personType='LP', tradeName='JM GmbH', familyName='Meyer-VIP', givenName='Tammy'),
                     1301=person(personType='??', tradeName='Test PS', familyName='Schmidt', givenName='Petra'),
-                    1401=person(personType='NP', tradeName='', familyName='Fanninga', givenName='Frauke'),
-                    1501=person(personType='NP', tradeName='', familyName='Camus', givenName='Cecilia')
-                }
+                    1401=person(personType='NP', familyName='Fanninga', givenName='Frauke'),
+                    1501=person(personType='NP', familyName='Camus', givenName='Cecilia')
+                 }
                 """);
         assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
@@ -363,11 +363,11 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
-                    33443=CoopShareTransaction(M-1001700: 2000-12-06, SUBSCRIPTION, 20, legacy data import, initial share subscription),
-                    33451=CoopShareTransaction(M-1002000: 2000-12-06, SUBSCRIPTION, 2, legacy data import, initial share subscription),
-                    33701=CoopShareTransaction(M-1001700: 2005-01-10, SUBSCRIPTION, 40, legacy data import, increase),
-                    33810=CoopShareTransaction(M-1002000: 2016-12-31, CANCELLATION, 22, legacy data import, membership ended)
-                }
+                    33443=CoopShareTransaction(M-1001700: 2000-12-06, SUBSCRIPTION, 20, 1001700, initial share subscription),
+                    33451=CoopShareTransaction(M-1002000: 2000-12-06, SUBSCRIPTION, 2, 1002000, initial share subscription),
+                    33701=CoopShareTransaction(M-1001700: 2005-01-10, SUBSCRIPTION, 40, 1001700, increase),
+                    33810=CoopShareTransaction(M-1002000: 2016-12-31, CANCELLATION, 22, 1002000, membership ended)
+                 }
                 """);
     }
 
@@ -390,16 +390,16 @@ public class ImportOfficeData extends ContextBasedTest {
 
         assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
                 {
-                    30000=CoopAssetsTransaction(M-1001700: 2000-12-06, DEPOSIT, 1280.00, legacy data import, for subscription A),
-                    31000=CoopAssetsTransaction(M-1002000: 2000-12-06, DEPOSIT, 128.00, legacy data import, for subscription B),
-                    32000=CoopAssetsTransaction(M-1001700: 2005-01-10, DEPOSIT, 2560.00, legacy data import, for subscription C),
-                    33001=CoopAssetsTransaction(M-1001700: 2005-01-10, TRANSFER, -512.00, legacy data import, for transfer to 10),
-                    33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, legacy data import, for transfer from 7),
-                    34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, legacy data import, for cancellation D),
-                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, legacy data import, for cancellation D),
-                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, legacy data import, for cancellation D),
-                    35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, legacy data import, for subscription E),
-                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, legacy data import, chargeback for subscription E, M-1909000:DEP:+128.00)
+                    30000=CoopAssetsTransaction(M-1001700: 2000-12-06, DEPOSIT, 1280.00, 1001700, for subscription A),
+                    31000=CoopAssetsTransaction(M-1002000: 2000-12-06, DEPOSIT, 128.00, 1002000, for subscription B),
+                    32000=CoopAssetsTransaction(M-1001700: 2005-01-10, DEPOSIT, 2560.00, 1001700, for subscription C),
+                    33001=CoopAssetsTransaction(M-1001700: 2005-01-10, TRANSFER, -512.00, 1001700, for transfer to 10),
+                    33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, 1002000, for transfer from 7),
+                    34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, 1002000, for cancellation D),
+                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, 1002000, for cancellation D),
+                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, 1002000, for cancellation D),
+                    35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, 1909000, for subscription E),
+                    35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, 1909000, chargeback for subscription E, M-1909000:DEP:+128.00)
                 }
                 """);
     }
@@ -810,7 +810,7 @@ public class ImportOfficeData extends ContextBasedTest {
                             )
                             .shareCount(rec.getInteger("quantity"))
                             .comment( rec.getString("comment"))
-                            .reference("legacy data import") // TODO.spec: or use value from comment column?
+                            .reference(member.getMemberNumber().toString())
                             .build();
 
                     if (shareTransaction.getTransactionType() == HsOfficeCoopSharesTransactionType.ADJUSTMENT) {
@@ -867,7 +867,7 @@ public class ImportOfficeData extends ContextBasedTest {
                             .transactionType(assetTypeMapping.get(rec.getString("action")))
                             .assetValue(rec.getBigDecimal("amount"))
                             .comment(rec.getString("comment"))
-                            .reference("legacy data import") // TODO.spec: or use value from comment column?
+                            .reference(member.getMemberNumber().toString())
                             .build();
 
                     if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.ADJUSTMENT) {
@@ -1092,9 +1092,9 @@ public class ImportOfficeData extends ContextBasedTest {
                 contactRecord.getString("first_name"),
                 contactRecord.getString("last_name"),
                 contactRecord.getString("firma")));
-        contact.setEmailAddresses(contactRecord.getString("email"));
+        contact.putEmailAddresses( Map.of("main", contactRecord.getString("email")));
         contact.setPostalAddress(toAddress(contactRecord));
-        contact.setPhoneNumbers(toPhoneNumbers(contactRecord));
+        contact.putPhoneNumbers(toPhoneNumbers(contactRecord));
 
         contacts.put(contactRecord.getInteger("contact_id"), contact);
         return contact;
@@ -1120,17 +1120,17 @@ public class ImportOfficeData extends ContextBasedTest {
         return record;
     }
 
-    private String toPhoneNumbers(final Record rec) {
-        final var result = new StringBuilder("{\n");
+    private Map<String, String> toPhoneNumbers(final Record rec) {
+        final var phoneNumbers = new LinkedHashMap<String, String>();
         if (isNotBlank(rec.getString("phone_private")))
-            result.append("    \"private\": " + "\"" + rec.getString("phone_private") + "\",\n");
+            phoneNumbers.put("phone_private", rec.getString("phone_private"));
         if (isNotBlank(rec.getString("phone_office")))
-            result.append("    \"office\": " + "\"" + rec.getString("phone_office") + "\",\n");
+            phoneNumbers.put("phone_office", rec.getString("phone_office"));
         if (isNotBlank(rec.getString("phone_mobile")))
-            result.append("    \"mobile\": " + "\"" + rec.getString("phone_mobile") + "\",\n");
+            phoneNumbers.put("phone_mobile", rec.getString("phone_mobile"));
         if (isNotBlank(rec.getString("fax")))
-            result.append("    \"fax\": " + "\"" + rec.getString("fax") + "\",\n");
-        return (result + "}").replace("\",\n}", "\"\n}");
+            phoneNumbers.put("fax", rec.getString("fax"));
+        return phoneNumbers;
     }
 
     private String toAddress(final Record rec) {

@@ -52,7 +52,7 @@ begin
     if cardinality(userUuids) > 0 then
         -- direct grants to users need a grantedByRole which can revoke the grant
         if grantedByRole is null then
-            userGrantsByRoleUuid := roleUuid; -- TODO.spec: or do we want to require an explicit userGrantsByRoleUuid?
+            userGrantsByRoleUuid := roleUuid; -- TODO.impl: or do we want to require an explicit userGrantsByRoleUuid?
         else
             userGrantsByRoleUuid := getRoleId(grantedByRole);
         end if;

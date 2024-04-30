@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.Map;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
@@ -103,7 +104,9 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .body("""
                                {
                                    "label": "Temp Contact",
-                                   "emailAddresses": "test@example.org"
+                                   "emailAddresses": {
+                                        "main": "test@example.org"
+                                   }
                                  }
                             """)
                         .port(port)
@@ -114,7 +117,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
                         .body("label", is("Temp Contact"))
-                        .body("emailAddresses", is("test@example.org"))
+                        .body("emailAddresses", is(Map.of("main", "test@example.org")))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -180,9 +183,13 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "label": "first contact",
-                         "emailAddresses": "contact-admin@firstcontact.example.com",
-                         "phoneNumbers": "+49 123 1234567"
+                        "label": "first contact",
+                        "emailAddresses": {
+                            "main": "contact-admin@firstcontact.example.com"
+                        },
+                        "phoneNumbers": {
+                            "phone_office": "+49 123 1234567"
+                        }
                      }
                     """)); // @formatter:on
         }
@@ -204,9 +211,13 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                        {
                            "label": "Temp patched contact",
-                           "emailAddresses": "patched@example.org",
+                           "emailAddresses": {
+                                "main": "patched@example.org"
+                           },
                            "postalAddress": "Patched Address",
-                           "phoneNumbers": "+01 100 123456"
+                           "phoneNumbers": {
+                                "phone_office": "+01 100 123456"
+                            }
                        }
                        """)
                     .port(port)
@@ -217,9 +228,9 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("label", is("Temp patched contact"))
-                    .body("emailAddresses", is("patched@example.org"))
+                    .body("emailAddresses", is(Map.of("main", "patched@example.org")))
                     .body("postalAddress", is("Patched Address"))
-                    .body("phoneNumbers", is("+01 100 123456"));
+                    .body("phoneNumbers", is(Map.of("phone_office", "+01 100 123456")));
                 // @formatter:on
 
             // finally, the contact is actually updated
@@ -227,9 +238,9 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             assertThat(contactRepo.findByUuid(givenContact.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getLabel()).isEqualTo("Temp patched contact");
-                        assertThat(person.getEmailAddresses()).isEqualTo("patched@example.org");
+                        assertThat(person.getEmailAddresses()).containsExactlyEntriesOf(Map.of("main", "patched@example.org"));
                         assertThat(person.getPostalAddress()).isEqualTo("Patched Address");
-                        assertThat(person.getPhoneNumbers()).isEqualTo("+01 100 123456");
+                        assertThat(person.getPhoneNumbers()).containsExactlyEntriesOf(Map.of("phone_office", "+01 100 123456"));
                         return true;
                     });
         }
@@ -246,8 +257,12 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                        {
-                           "emailAddresses": "patched@example.org",
-                           "phoneNumbers": "+01 100 123456"
+                           "emailAddresses": {
+                                "main": "patched@example.org"
+                           },
+                           "phoneNumbers": {
+                                "phone_office": "+01 100 123456"
+                            }
                        }
                             """)
                     .port(port)
@@ -258,18 +273,18 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("label", is(givenContact.getLabel()))
-                    .body("emailAddresses", is("patched@example.org"))
+                    .body("emailAddresses", is(Map.of("main", "patched@example.org")))
                     .body("postalAddress", is(givenContact.getPostalAddress()))
-                    .body("phoneNumbers", is("+01 100 123456"));
+                    .body("phoneNumbers", is(Map.of("phone_office", "+01 100 123456")));
             // @formatter:on
 
             // finally, the contact is actually updated
             assertThat(contactRepo.findByUuid(givenContact.getUuid())).isPresent().get()
                     .matches(person -> {
                         assertThat(person.getLabel()).isEqualTo(givenContact.getLabel());
-                        assertThat(person.getEmailAddresses()).isEqualTo("patched@example.org");
+                        assertThat(person.getEmailAddresses()).containsExactlyEntriesOf(Map.of("main", "patched@example.org"));
                         assertThat(person.getPostalAddress()).isEqualTo(givenContact.getPostalAddress());
-                        assertThat(person.getPhoneNumbers()).isEqualTo("+01 100 123456");
+                        assertThat(person.getPhoneNumbers()).containsExactlyEntriesOf(Map.of("phone_office", "+01 100 123456"));
                         return true;
                     });
         }
@@ -340,9 +355,9 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var newContact = HsOfficeContactEntity.builder()
                     .uuid(UUID.randomUUID())
                     .label("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
-                    .emailAddresses(RandomStringUtils.randomAlphabetic(10) + "@example.org")
+                    .emailAddresses(Map.of("main", RandomStringUtils.randomAlphabetic(10) + "@example.org"))
                     .postalAddress("Postal Address " + RandomStringUtils.randomAlphabetic(10))
-                    .phoneNumbers("+01 200 " + RandomStringUtils.randomNumeric(8))
+                    .phoneNumbers(Map.of("phone_office", "+01 200 " + RandomStringUtils.randomNumeric(8)))
                     .build();
 
             return contactRepo.save(newContact);

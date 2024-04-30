@@ -142,7 +142,7 @@ public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
                                 with.permission(UPDATE);
                             })
                             .createSubRole(AGENT, (with) -> {
-                                // TODO.spec: we need relation:PROXY, to allow changing the relation contact.
+                                // TODO.rbac: we need relation:PROXY, to allow changing the relation contact.
                                 // the alternative would be to move this to the relation:ADMIN role,
                                 // but then the partner holder person could update the partner relation itself,
                                 // see partner entity.

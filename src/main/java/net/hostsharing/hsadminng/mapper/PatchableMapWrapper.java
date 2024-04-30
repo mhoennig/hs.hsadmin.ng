@@ -6,31 +6,43 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 
 /** This class wraps another (usually persistent) map and
  * supports applying `PatchMap` as well as a toString method with stable entry order.
  */
-public class PatchableMapWrapper implements Map<String, Object> {
+public class PatchableMapWrapper<T> implements Map<String, T> {
 
-    private final Map<String, Object> delegate;
+    private final Map<String, T> delegate;
 
-    public PatchableMapWrapper(final Map<String, Object> map) {
+    private PatchableMapWrapper(final Map<String, T> map) {
         delegate = map;
     }
 
+    public static <T> PatchableMapWrapper<T> of(final PatchableMapWrapper<T> currentWrapper, final Consumer<PatchableMapWrapper<T>> setWrapper, final  Map<String, T> target) {
+        return ofNullable(currentWrapper).orElseGet(() -> {
+            final var newWrapper = new PatchableMapWrapper<T>(target);
+            setWrapper.accept(newWrapper);
+            return newWrapper;
+        });
+    }
+
     @NotNull
-    public static ImmutablePair<String, Object> entry(final String key, final Object value) {
+    public static <E> ImmutablePair<String, E> entry(final String key, final E value) {
         return new ImmutablePair<>(key, value);
     }
 
-    public void assign(final Map<String, Object> entries) {
-        delegate.clear();
-        delegate.putAll(entries);
+    public void assign(final Map<String, T> entries) {
+        if (entries != null ) {
+            delegate.clear();
+            delegate.putAll(entries);
+        }
     }
 
-    public void patch(final Map<String, Object> patch) {
+    public void patch(final Map<String, T> patch) {
         patch.forEach((key, value) -> {
             if (value == null) {
                 remove(key);
@@ -73,22 +85,22 @@ public class PatchableMapWrapper implements Map<String, Object> {
     }
 
     @Override
-    public Object get(final Object key) {
+    public T get(final Object key) {
         return delegate.get(key);
     }
 
     @Override
-    public Object put(final String key, final Object value) {
+    public T put(final String key, final T value) {
         return delegate.put(key, value);
     }
 
     @Override
-    public Object remove(final Object key) {
+    public T remove(final Object key) {
         return delegate.remove(key);
     }
 
     @Override
-    public void putAll(final Map<? extends String, ?> m) {
+    public void putAll(final @NotNull Map<? extends String, ? extends T> m) {
         delegate.putAll(m);
     }
 
@@ -103,12 +115,12 @@ public class PatchableMapWrapper implements Map<String, Object> {
     }
 
     @Override
-    public Collection<Object> values() {
+    public Collection<T> values() {
         return delegate.values();
     }
 
     @Override
-    public Set<Entry<String, Object>> entrySet() {
+    public Set<Entry<String, T>> entrySet() {
         return delegate.entrySet();
     }
 }
