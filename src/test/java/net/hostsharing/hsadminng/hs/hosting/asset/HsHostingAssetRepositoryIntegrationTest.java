@@ -26,6 +26,7 @@ import java.util.Map;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.Array.fromFormatted;
@@ -68,7 +69,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // given
             context("superuser-alex@hostsharing.net");
             final var count = assetRepo.count();
-            final var givenManagedServer = givenManagedServer("First", "some ManagedServer");
+            final var givenManagedServer = givenManagedServer("First", MANAGED_SERVER);
 
             // when
             final var result = attempt(em, () -> {
@@ -162,7 +163,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(D-1000212:some PrivateCloud, MANAGED_WEBSPACE, D-1000212:some PrivateCloud:vm1012, bbb01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(D-1000212:some ManagedServer, MANAGED_WEBSPACE, D-1000212:some PrivateCloud:vm1012, bbb01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000212:some PrivateCloud, MANAGED_SERVER, vm1012, some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000212:some PrivateCloud, CLOUD_SERVER, vm2012, another CloudServer, { CPU: 2, HDD: 1024, extra: 42 })");
         }
@@ -179,7 +180,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then:
             exactlyTheseAssetsAreReturned(
                     result,
-                    "HsHostingAssetEntity(D-1000111:some PrivateCloud, MANAGED_WEBSPACE, D-1000111:some PrivateCloud:vm1011, aaa01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(D-1000111:some ManagedServer, MANAGED_WEBSPACE, D-1000111:some PrivateCloud:vm1011, aaa01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000111:some PrivateCloud, MANAGED_SERVER, vm1011, some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
                     "HsHostingAssetEntity(D-1000111:some PrivateCloud, CLOUD_SERVER, vm2011, another CloudServer, { CPU: 2, HDD: 1024, extra: 42 })");
         }
@@ -353,10 +354,10 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                 .findAny().orElseThrow();
     }
 
-    HsHostingAssetEntity givenManagedServer(final String debitorName, final String hostingAssetCaption) {
+    HsHostingAssetEntity givenManagedServer(final String debitorName, final HsHostingAssetType type) {
         final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike(debitorName).stream().findAny().orElseThrow();
         return assetRepo.findAllByDebitorUuid(givenDebitor.getUuid()).stream()
-                .filter(i -> i.getCaption().equals(hostingAssetCaption))
+                .filter(i -> i.getType().equals(type))
                 .findAny().orElseThrow();
     }
 

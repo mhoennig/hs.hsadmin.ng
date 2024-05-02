@@ -3,12 +3,22 @@ components:
 
     schemas:
 
+        HsBookingItemType:
+            type: string
+            enum:
+                - PRIVATE_CLOUD
+                - CLOUD_SERVER
+                - MANAGED_SERVER
+                - MANAGED_WEBSPACE
+
         HsBookingItem:
             type: object
             properties:
                 uuid:
                     type: string
                     format: uuid
+                type:
+                    $ref: '#/components/schemas/HsBookingItemType'
                 caption:
                     type: string
                 validFrom:
@@ -45,6 +55,8 @@ components:
                     type: string
                     format: uuid
                     nullable: false
+                type:
+                    $ref: '#/components/schemas/HsBookingItemType'
                 caption:
                     type: string
                     minLength: 3

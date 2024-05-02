@@ -16,6 +16,7 @@ class HsBookingItemEntityUnitTest {
 
     final HsBookingItemEntity givenBookingItem = HsBookingItemEntity.builder()
             .debitor(TEST_DEBITOR)
+            .type(HsBookingItemType.CLOUD_SERVER)
             .caption("some caption")
             .resources(Map.ofEntries(
                     entry("CPUs", 2),
@@ -28,7 +29,7 @@ class HsBookingItemEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
         final var result = givenBookingItem.toString();
 
-        assertThat(result).isEqualTo("HsBookingItemEntity(D-1000100, [2020-01-01,2031-01-01), some caption, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+        assertThat(result).isEqualTo("HsBookingItemEntity(D-1000100, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
     }
 
     @Test

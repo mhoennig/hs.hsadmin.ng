@@ -31,10 +31,10 @@ begin
     raise notice 'creating test booking-item: %', givenPartnerNumber::text || givenDebitorSuffix::text;
     raise notice '- using debitor (%): %', relatedDebitor.uuid, relatedDebitor;
     insert
-        into hs_booking_item (uuid, debitoruuid, caption, validity, resources)
-        values (uuid_generate_v4(), relatedDebitor.uuid, 'some ManagedServer', daterange('20221001', null, '[]'), '{ "CPU": 2, "SDD": 512, "extra": 42 }'::jsonb),
-               (uuid_generate_v4(), relatedDebitor.uuid, 'some CloudServer', daterange('20230115', '20240415', '[)'), '{ "CPU": 2, "HDD": 1024, "extra": 42 }'::jsonb),
-               (uuid_generate_v4(), relatedDebitor.uuid, 'some PrivateCloud', daterange('20240401', null, '[]'), '{ "CPU": 10, "SDD": 10240, "HDD": 10240, "extra": 42 }'::jsonb);
+        into hs_booking_item (uuid, debitoruuid, type, caption, validity, resources)
+        values (uuid_generate_v4(), relatedDebitor.uuid, 'MANAGED_SERVER', 'some ManagedServer', daterange('20221001', null, '[]'), '{ "CPU": 2, "SDD": 512, "extra": 42 }'::jsonb),
+               (uuid_generate_v4(), relatedDebitor.uuid, 'CLOUD_SERVER', 'some CloudServer', daterange('20230115', '20240415', '[)'), '{ "CPU": 2, "HDD": 1024, "extra": 42 }'::jsonb),
+               (uuid_generate_v4(), relatedDebitor.uuid, 'PRIVATE_CLOUD', 'some PrivateCloud', daterange('20240401', null, '[]'), '{ "CPU": 10, "SDD": 10240, "HDD": 10240, "extra": 42 }'::jsonb);
 end; $$;
 --//
 
@@ -50,3 +50,4 @@ do language plpgsql $$
         call createHsBookingItemTransactionTestData(10003, '13');
     end;
 $$;
+--//

@@ -25,7 +25,7 @@ create table if not exists hs_hosting_asset
     uuid                uuid unique references RbacObject (uuid),
     version             int not null default 0,
     bookingItemUuid     uuid not null references hs_booking_item(uuid),
-    type                HsHostingAssetType,
+    type                HsHostingAssetType not null,
     parentAssetUuid     uuid null references hs_hosting_asset(uuid),
     identifier          varchar(80) not null,
     caption             varchar(80) not null,
@@ -35,7 +35,7 @@ create table if not exists hs_hosting_asset
 
 
 -- ============================================================================
---changeset hosting-asset-HIERARCHY-CHECK:1 endDelimiter:--//
+--changeset hosting-asset-TYPE-HIERARCHY-CHECK:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create or replace function hs_hosting_asset_type_hierarchy_check_tf()
@@ -80,6 +80,47 @@ create trigger hs_hosting_asset_type_hierarchy_check_tg
     before insert on hs_hosting_asset
     for each row
         execute procedure hs_hosting_asset_type_hierarchy_check_tf();
+--//
+
+
+-- ============================================================================
+--changeset hosting-asset-BOOKING-ITEM-HIERARCHY-CHECK:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace function hs_hosting_asset_booking_item_hierarchy_check_tf()
+    returns trigger
+    language plpgsql as $$
+declare
+    actualBookingItemType       HsBookingItemType;
+    expectedBookingItemTypes    HsBookingItemType[];
+begin
+    actualBookingItemType := (select type
+                                 from hs_booking_item
+                                 where NEW.bookingItemUuid = uuid);
+
+    if NEW.type = 'CLOUD_SERVER' then
+        expectedBookingItemTypes := ARRAY['PRIVATE_CLOUD', 'CLOUD_SERVER'];
+    elsif NEW.type = 'MANAGED_SERVER' then
+        expectedBookingItemTypes := ARRAY['PRIVATE_CLOUD', 'MANAGED_SERVER'];
+    elsif NEW.type = 'MANAGED_WEBSPACE' then
+        if NEW.parentAssetUuid is null then
+            expectedBookingItemTypes := ARRAY['MANAGED_WEBSPACE'];
+        else
+            expectedBookingItemTypes := ARRAY['PRIVATE_CLOUD', 'MANAGED_SERVER'];
+        end if;
+    end if;
+
+    if not actualBookingItemType = any(expectedBookingItemTypes) then
+        raise exception '[400] % % must have any of % as booking-item, but got %',
+            NEW.type, NEW.identifier, expectedBookingItemTypes, actualBookingItemType;
+    end if;
+    return NEW;
+end; $$;
+
+create trigger hs_hosting_asset_booking_item_hierarchy_check_tg
+    before insert on hs_hosting_asset
+    for each row
+execute procedure hs_hosting_asset_booking_item_hierarchy_check_tf();
 --//
 
 

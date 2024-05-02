@@ -121,6 +121,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .body("""
                             {
                                 "debitorUuid": "%s",
+                                "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "resources": { "CPU": 12, "extra": 42 },
                                 "validFrom": "2022-10-13"
@@ -134,6 +135,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("", lenientlyEquals("""
                             {
+                                "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validFrom": "2022-10-13",
                                 "validTo": null,
@@ -328,6 +330,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             final var newBookingItem = HsBookingItemEntity.builder()
                     .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
+                    .type(HsBookingItemType.MANAGED_WEBSPACE)
                     .caption("some test-booking")
                     .resources(Map.ofEntries(resources))
                     .validity(Range.closedOpen(

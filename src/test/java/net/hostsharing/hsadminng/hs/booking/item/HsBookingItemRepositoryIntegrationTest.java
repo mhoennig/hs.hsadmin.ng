@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
+import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.Array.fromFormatted;
@@ -70,6 +72,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var result = attempt(em, () -> {
                 final var newBookingItem = HsBookingItemEntity.builder()
                         .debitor(givenDebitor)
+                        .type(HsBookingItemType.CLOUD_SERVER)
                         .caption("some new booking item")
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
@@ -98,6 +101,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                 final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
                 final var newBookingItem = HsBookingItemEntity.builder()
                         .debitor(givenDebitor)
+                        .type(MANAGED_WEBSPACE)
                         .caption("some new booking item")
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
@@ -163,9 +167,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000212, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsBookingItemEntity(D-1000212, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
-                    "HsBookingItemEntity(D-1000212, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
+                    "HsBookingItemEntity(D-1000212, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
+                    "HsBookingItemEntity(D-1000212, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
+                    "HsBookingItemEntity(D-1000212, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
         }
 
         @Test
@@ -180,9 +184,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then:
             exactlyTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000111, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsBookingItemEntity(D-1000111, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
-                    "HsBookingItemEntity(D-1000111, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
+                    "HsBookingItemEntity(D-1000111, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
+                    "HsBookingItemEntity(D-1000111, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
+                    "HsBookingItemEntity(D-1000111, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
         }
     }
 
@@ -315,6 +319,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).get(0);
             final var newBookingItem = HsBookingItemEntity.builder()
                     .debitor(givenDebitor)
+                    .type(MANAGED_SERVER)
                     .caption("some temp booking item")
                     .validity(Range.closedOpen(
                             LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))

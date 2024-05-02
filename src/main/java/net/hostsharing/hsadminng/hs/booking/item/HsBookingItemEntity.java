@@ -21,6 +21,8 @@ import org.hibernate.annotations.Type;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -66,7 +68,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsBookingItemEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
-            .withProp(e -> e.getDebitor().toShortString())
+            .withProp(HsBookingItemEntity::getDebitor)
+            .withProp(HsBookingItemEntity::getType)
             .withProp(e -> e.getValidity().asString())
             .withProp(HsBookingItemEntity::getCaption)
             .withProp(HsBookingItemEntity::getResources)
@@ -82,6 +85,10 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     @ManyToOne(optional = false)
     @JoinColumn(name = "debitoruuid")
     private HsOfficeDebitorEntity debitor;
+
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
+    private HsBookingItemType type;
 
     @Builder.Default
     @Type(PostgreSQLRangeType.class)
