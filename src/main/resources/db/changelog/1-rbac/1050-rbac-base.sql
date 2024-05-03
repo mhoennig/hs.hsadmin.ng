@@ -97,7 +97,7 @@ $$;
 create table RbacObject
 (
     uuid        uuid primary key default uuid_generate_v4(),
-    serialId    serial, -- TODO: we might want to remove this once test data deletion works properly
+    serialId    serial, -- TODO.perf: only needed for reverse deletion of temp test data
     objectTable varchar(64) not null,
     unique (objectTable, uuid)
 );

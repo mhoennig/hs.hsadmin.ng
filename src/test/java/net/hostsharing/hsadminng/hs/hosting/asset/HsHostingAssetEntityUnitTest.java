@@ -37,13 +37,13 @@ class HsHostingAssetEntityUnitTest {
         final var result = givenServer.toString();
 
         assertThat(result).isEqualTo(
-                "HsHostingAssetEntity(D-1000100:test booking item, MANAGED_WEBSPACE, D-1000100:test booking item:vm1234, xyz00, some managed webspace, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1000100:test booking item, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
     }
 
     @Test
     void toShortStringContainsOnlyMemberNumberAndCaption() {
         final var result = givenServer.toShortString();
 
-        assertThat(result).isEqualTo("D-1000100:test booking item:xyz00");
+        assertThat(result).isEqualTo("MANAGED_WEBSPACE:xyz00");
     }
 }

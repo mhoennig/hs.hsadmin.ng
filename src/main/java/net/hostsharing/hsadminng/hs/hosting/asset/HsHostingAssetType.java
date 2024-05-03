@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+
 public enum HsHostingAssetType {
     CLOUD_SERVER, // named e.g. vm1234
     MANAGED_SERVER, // named e.g. vm1234
@@ -24,5 +25,13 @@ public enum HsHostingAssetType {
 
     HsHostingAssetType() {
         this(null);
+    }
+
+    public static <T extends Enum<?>> HsHostingAssetType of(final T value) {
+        return value == null ? null : valueOf(value.name());
+    }
+
+    static String asString(final HsHostingAssetType type) {
+        return type == null ? null : type.name();
     }
 }

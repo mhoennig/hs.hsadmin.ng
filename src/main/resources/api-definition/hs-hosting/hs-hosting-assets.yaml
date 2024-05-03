@@ -1,18 +1,29 @@
 get:
-    summary: Returns a list of all hosting assets for a specified debitor.
-    description: Returns the list of all hosting assets for a debitor which are visible to the current user or any of it's assumed roles.
+    summary: Returns a filtered list of all hosting assets.
+    description: Returns the list of all hosting assets which match the given filters and are visible to the current user or any of it's assumed roles.
     tags:
         - hs-hosting-assets
-    operationId: listAssetsByDebitorUuid
+    operationId: listAssets
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentUser'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: debitorUuid
           in: query
-          required: true
+          required: false
           schema:
               type: string
               format: uuid
+        - name: parentAssetUuid
+          in: query
+          required: false
+          schema:
+              type: string
+              format: uuid
+        - name: type
+          in: query
+          required: false
+          schema:
+              $ref: 'hs-hosting-asset-schemas.yaml#/components/schemas/HsHostingAssetType'
           description: The UUID of the debitor, whose hosting assets are to be listed.
     responses:
         "200":

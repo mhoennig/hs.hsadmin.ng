@@ -27,6 +27,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.Array.fromFormatted;
@@ -77,7 +78,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                         .bookingItem(givenManagedServer.getBookingItem())
                         .parentAsset(givenManagedServer)
                         .caption("some new managed webspace")
-                        .type(HsHostingAssetType.MANAGED_WEBSPACE)
+                        .type(MANAGED_WEBSPACE)
                         .identifier("xyz90")
                         .build();
                 return toCleanup(assetRepo.save(newAsset));
@@ -151,21 +152,19 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     class FindByDebitorUuid {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllAssetsOfArbitraryDebitor() {
+        public void globalAdmin_withoutAssumedRole_canViewArbitraryAssetsOfAllDebitors() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var debitorUuid = debitorRepo.findDebitorByDebitorNumber(1000212).stream()
-                    .findAny().orElseThrow().getUuid();
 
             // when
-            final var result = assetRepo.findAllByDebitorUuid(debitorUuid);
+            final var result = assetRepo.findAllByCriteria(null, null, MANAGED_WEBSPACE);
 
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(D-1000212:some ManagedServer, MANAGED_WEBSPACE, D-1000212:some PrivateCloud:vm1012, bbb01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(D-1000212:some PrivateCloud, MANAGED_SERVER, vm1012, some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(D-1000212:some PrivateCloud, CLOUD_SERVER, vm2012, another CloudServer, { CPU: 2, HDD: 1024, extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, bbb01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:some ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, aaa01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:some ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, ccc01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:some ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })");
         }
 
         @Test
@@ -175,15 +174,32 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var debitorUuid = debitorRepo.findDebitorByDebitorNumber(1000111).stream().findAny().orElseThrow().getUuid();
 
             // when:
-            final var result = assetRepo.findAllByDebitorUuid(debitorUuid);
+            final var result = assetRepo.findAllByCriteria(debitorUuid, null, null);
 
             // then:
             exactlyTheseAssetsAreReturned(
                     result,
-                    "HsHostingAssetEntity(D-1000111:some ManagedServer, MANAGED_WEBSPACE, D-1000111:some PrivateCloud:vm1011, aaa01, some Webspace, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(D-1000111:some PrivateCloud, MANAGED_SERVER, vm1011, some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(D-1000111:some PrivateCloud, CLOUD_SERVER, vm2011, another CloudServer, { CPU: 2, HDD: 1024, extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, aaa01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:some ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:some PrivateCloud, { CPU: 2, SDD: 512, extra: 42 })",
+                    "HsHostingAssetEntity(CLOUD_SERVER, vm2011, another CloudServer, D-1000111:some PrivateCloud, { CPU: 2, HDD: 1024, extra: 42 })");
         }
+
+        @Test
+        public void normalUser_canFilterAssetsRelatedToParentAsset() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var parentAssetUuid = assetRepo.findAllByCriteria(null, null, MANAGED_SERVER).stream()
+                    .findAny().orElseThrow().getUuid();
+
+            // when
+            final var result = assetRepo.findAllByCriteria(null, parentAssetUuid, null);
+
+            // then
+            allTheseServersAreReturned(
+                    result,
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, aaa01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:some ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })");
+        }
+
     }
 
     @Nested
@@ -356,8 +372,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
     HsHostingAssetEntity givenManagedServer(final String debitorName, final HsHostingAssetType type) {
         final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike(debitorName).stream().findAny().orElseThrow();
-        return assetRepo.findAllByDebitorUuid(givenDebitor.getUuid()).stream()
-                .filter(i -> i.getType().equals(type))
+        return assetRepo.findAllByCriteria(givenDebitor.getUuid(), null, type).stream()
                 .findAny().orElseThrow();
     }
 

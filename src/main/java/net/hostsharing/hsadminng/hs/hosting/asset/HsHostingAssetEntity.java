@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
@@ -65,11 +64,11 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsHostingAssetEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsHostingAssetEntity> stringify = stringify(HsHostingAssetEntity.class)
-            .withProp(HsHostingAssetEntity::getBookingItem)
             .withProp(HsHostingAssetEntity::getType)
-            .withProp(HsHostingAssetEntity::getParentAsset)
             .withProp(HsHostingAssetEntity::getIdentifier)
             .withProp(HsHostingAssetEntity::getCaption)
+            .withProp(HsHostingAssetEntity::getParentAsset)
+            .withProp(HsHostingAssetEntity::getBookingItem)
             .withProp(HsHostingAssetEntity::getConfig)
             .quotedValues(false);
 
@@ -122,8 +121,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
 
     @Override
     public String toShortString() {
-        return ofNullable(bookingItem).map(HsBookingItemEntity::toShortString).orElse("D-???????:?") +
-                ":" + identifier;
+        return type + ":" + identifier;
     }
 
     public static RbacView rbac() {

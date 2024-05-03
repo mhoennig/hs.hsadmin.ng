@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetInsertResource;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
+import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +34,15 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsHostingAssetResource>> listAssetsByDebitorUuid(
+    public ResponseEntity<List<HsHostingAssetResource>> listAssets(
             final String currentUser,
             final String assumedRoles,
-            final UUID debitorUuid) {
+            final UUID debitorUuid,
+            final UUID parentAssetUuid,
+            final HsHostingAssetTypeResource type) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = assetRepo.findAllByDebitorUuid(debitorUuid);
+        final var entities = assetRepo.findAllByCriteria(debitorUuid, parentAssetUuid, HsHostingAssetType.of(type));
 
         final var resources = mapper.mapList(entities, HsHostingAssetResource.class);
         return ResponseEntity.ok(resources);

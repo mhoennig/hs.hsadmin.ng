@@ -101,6 +101,58 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     """));
                 // @formatter:on
         }
+
+        @Test
+        void globalAdmin_canViewAllAssetsByType() {
+
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/hosting/assets?type=" + HsHostingAssetType.MANAGED_SERVER)
+                    .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                    [
+                        {
+                            "type": "MANAGED_SERVER",
+                            "identifier": "vm1011",
+                            "caption": "some ManagedServer",
+                            "config": {
+                                "CPU": 2,
+                                "SDD": 512,
+                                "extra": 42
+                            }
+                        },
+                        {
+                            "type": "MANAGED_SERVER",
+                            "identifier": "vm1013",
+                            "caption": "some ManagedServer",
+                            "config": {
+                                "CPU": 2,
+                                "SDD": 512,
+                                "extra": 42
+                            }
+                        },
+                        {
+                            "type": "MANAGED_SERVER",
+                            "identifier": "vm1012",
+                            "caption": "some ManagedServer",
+                            "config": {
+                                "CPU": 2,
+                                "SDD": 512,
+                                "extra": 42
+                            }
+                        }
+                    ]
+                    """));
+            // @formatter:on
+        }
     }
 
     @Nested
@@ -274,7 +326,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             assertThat(assetRepo.findByUuid(givenAsset.getUuid())).isPresent().get()
                     .matches(asset -> {
-                        assertThat(asset.toString()).isEqualTo("HsHostingAssetEntity(D-1000111:some CloudServer, CLOUD_SERVER, vm2001, some test-asset, { CPU: 4, SSD: 4096, something: 1 })");
+                        assertThat(asset.toString()).isEqualTo("HsHostingAssetEntity(CLOUD_SERVER, vm2001, some test-asset, D-1000111:some CloudServer, { CPU: 4, SSD: 4096, something: 1 })");
                         return true;
                     });
         }

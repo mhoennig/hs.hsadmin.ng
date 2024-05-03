@@ -7,16 +7,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+
 public interface HsHostingAssetRepository extends Repository<HsHostingAssetEntity, UUID> {
 
     List<HsHostingAssetEntity> findAll();
     Optional<HsHostingAssetEntity> findByUuid(final UUID serverUuid);
 
     @Query("""
-        SELECT s FROM HsHostingAssetEntity s
-            WHERE s.bookingItem.debitor.uuid = :debitorUuid
+        SELECT asset FROM HsHostingAssetEntity asset
+            WHERE (:debitorUuid IS NULL OR asset.bookingItem.debitor.uuid = :debitorUuid)
+              AND (:parentAssetUuid IS NULL OR asset.parentAsset.uuid = :parentAssetUuid)
+              AND (:type IS NULL OR :type = CAST(asset.type AS String))
     """)
-    List<HsHostingAssetEntity> findAllByDebitorUuid(final UUID debitorUuid);
+    List<HsHostingAssetEntity> findAllByCriteriaImpl(UUID debitorUuid, UUID parentAssetUuid, String type);
+    default List<HsHostingAssetEntity> findAllByCriteria(final UUID debitorUuid, final UUID parentAssetUuid, final HsHostingAssetType type) {
+        return findAllByCriteriaImpl(debitorUuid, parentAssetUuid, HsHostingAssetType.asString(type));
+    }
 
     HsHostingAssetEntity save(HsHostingAssetEntity current);
 
