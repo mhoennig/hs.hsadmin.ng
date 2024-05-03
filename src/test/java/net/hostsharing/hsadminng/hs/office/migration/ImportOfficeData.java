@@ -120,6 +120,7 @@ public class ImportOfficeData extends ContextBasedTest {
     private static final String[] SUBSCRIBER_ROLES = new String[] {
             "subscriber:operations-discussion",
             "subscriber:operations-announce",
+            "subscriber:generalversammlung",
             "subscriber:members-announce",
             "subscriber:members-discussion",
             "subscriber:customers-announce"
