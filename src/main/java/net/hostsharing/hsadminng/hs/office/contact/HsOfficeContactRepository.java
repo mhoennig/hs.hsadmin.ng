@@ -13,10 +13,10 @@ public interface HsOfficeContactRepository extends Repository<HsOfficeContactEnt
 
     @Query("""
             SELECT c FROM HsOfficeContactEntity c
-                WHERE :label is null
-                    OR c.label like concat(cast(:label as text), '%')
+                WHERE :caption is null
+                    OR c.caption like concat(cast(:caption as text), '%')
                """)
-    List<HsOfficeContactEntity> findContactByOptionalLabelLike(String label);
+    List<HsOfficeContactEntity> findContactByOptionalCaptionLike(String caption);
 
     HsOfficeContactEntity save(final HsOfficeContactEntity entity);
 

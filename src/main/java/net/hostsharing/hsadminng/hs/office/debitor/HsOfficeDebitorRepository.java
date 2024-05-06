@@ -41,7 +41,7 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                     OR person.tradeName like concat(cast(:name as text), '%')
                     OR person.familyName like concat(cast(:name as text), '%')
                     OR person.givenName like concat(cast(:name as text), '%')
-                    OR contact.label like concat(cast(:name as text), '%')
+                    OR contact.caption like concat(cast(:name as text), '%')
                """)
     List<HsOfficeDebitorEntity> findDebitorByOptionalNameLike(String name);
 

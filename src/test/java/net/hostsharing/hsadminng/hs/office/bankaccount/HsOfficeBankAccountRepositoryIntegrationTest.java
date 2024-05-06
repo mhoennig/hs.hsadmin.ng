@@ -297,17 +297,17 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
     void exactlyTheseBankAccountsAreReturned(
             final List<HsOfficeBankAccountEntity> actualResult,
-            final String... bankaccountLabels) {
+            final String... bankaccountCaptions) {
         assertThat(actualResult)
                 .extracting(HsOfficeBankAccountEntity::getHolder)
-                .containsExactlyInAnyOrder(bankaccountLabels);
+                .containsExactlyInAnyOrder(bankaccountCaptions);
     }
 
     void allTheseBankAccountsAreReturned(
             final List<HsOfficeBankAccountEntity> actualResult,
-            final String... bankaccountLabels) {
+            final String... bankaccountCaptions) {
         assertThat(actualResult)
                 .extracting(HsOfficeBankAccountEntity::getHolder)
-                .contains(bankaccountLabels);
+                .contains(bankaccountCaptions);
     }
 }

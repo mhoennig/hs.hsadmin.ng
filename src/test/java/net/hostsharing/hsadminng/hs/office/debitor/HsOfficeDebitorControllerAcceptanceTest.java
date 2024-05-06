@@ -106,7 +106,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                           "type": "DEBITOR",
                           "mark": null,
                           "contact": {
-                            "label": "first contact",
+                            "caption": "first contact",
                             "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
                             "phoneNumbers": { "phone_office": "+49 123 1234567" }
                           }
@@ -131,7 +131,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "type": "PARTNER",
                             "mark": null,
                             "contact": {
-                              "label": "first contact",
+                              "caption": "first contact",
                               "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
                               "phoneNumbers": { "phone_office": "+49 123 1234567" }
                             }
@@ -248,7 +248,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                              "debitorNumber": 1000212,
                              "partner": { "partnerNumber": 10002 },
                              "debitorRel": {
-                                "contact": { "label": "second contact" }
+                                "contact": { "caption": "second contact" }
                              },
                              "vatId": null,
                              "vatCountryCode": null,
@@ -268,7 +268,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
             final var givenBillingPerson = personRepo.findPersonByOptionalNameLike("Fourth").get(0);
 
@@ -308,7 +308,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .body("uuid", isUuidValid())
                         .body("vatId", is("VAT123456"))
                         .body("defaultPrefix", is("for"))
-                        .body("debitorRel.contact.label", is(givenContact.getLabel()))
+                        .body("debitorRel.contact.caption", is(givenContact.getCaption()))
                         .body("debitorRel.holder.tradeName", is(givenBillingPerson.getTradeName()))
                         .body("refundBankAccount.holder", is(givenBankAccount.getHolder()))
                         .header("Location", startsWith("http://localhost"))
@@ -325,7 +325,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -356,7 +356,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(201)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("debitorRel.contact.label", is(givenContact.getLabel()))
+                    .body("debitorRel.contact.caption", is(givenContact.getCaption()))
                     .body("partner.partnerRel.holder.tradeName", is(givenPartner.getPartnerRel().getHolder().getTradeName()))
                     .body("vatId", equalTo(null))
                     .body("vatCountryCode", equalTo(null))
@@ -414,7 +414,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorRelUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -463,7 +463,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                              "holder": { "personType": "LEGAL_PERSON", "tradeName": "First GmbH"},
                              "type": "DEBITOR",
                              "contact": {
-                                 "label": "first contact",
+                                 "caption": "first contact",
                                  "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
                                  "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
                                  "phoneNumbers": { "phone_office":  "+49 123 1234567" }
@@ -479,7 +479,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                  "type": "PARTNER",
                                  "mark": null,
                                  "contact": {
-                                     "label": "first contact",
+                                     "caption": "first contact",
                                      "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
                                      "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
                                      "phoneNumbers": { "phone_office": "+49 123 1234567" }
@@ -536,7 +536,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     {
                         "debitorNumber": 1000111,
                         "partner": { "partnerNumber": 10001 },
-                        "debitorRel": { "contact": { "label": "first contact" } },
+                        "debitorRel": { "contact": { "caption": "first contact" } },
                         "refundBankAccount": null
                     }
                     """)); // @formatter:on
@@ -551,7 +551,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -579,7 +579,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                     "holder": { "tradeName": "Fourth eG" },
                                     "type": "DEBITOR",
                                     "mark": null,
-                                    "contact": { "label": "fourth contact" }
+                                    "contact": { "caption": "fourth contact" }
                                 },
                                 "debitorNumber": 10004${debitorNumberSuffix},
                                 "debitorNumberSuffix": ${debitorNumberSuffix},
@@ -590,7 +590,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                         "holder": { "tradeName": "Fourth eG" },
                                         "type": "PARTNER",
                                         "mark": null,
-                                        "contact": { "label": "fourth contact" }
+                                        "contact": { "caption": "fourth contact" }
                                     },
                                     "details": {
                                         "registrationOffice": "Hamburg",
@@ -619,7 +619,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .matches(debitor -> {
                         assertThat(debitor.getDebitorRel().getHolder().getTradeName())
                                 .isEqualTo(givenDebitor.getDebitorRel().getHolder().getTradeName());
-                        assertThat(debitor.getDebitorRel().getContact().getLabel()).isEqualTo("fourth contact");
+                        assertThat(debitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
                         assertThat(debitor.getVatId()).isEqualTo("VAT222222");
                         assertThat(debitor.getVatCountryCode()).isEqualTo("AA");
                         assertThat(debitor.isVatBusiness()).isEqualTo(true);
@@ -680,7 +680,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void contactAdminUser_canNotDeleteRelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getDebitorRel().getContact().getLabel()).isEqualTo("fourth contact");
+            assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -699,7 +699,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void normalUser_canNotDeleteUnrelatedDebitor() {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            assertThat(givenDebitor.getDebitorRel().getContact().getLabel()).isEqualTo("fourth contact");
+            assertThat(givenDebitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -719,7 +719,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(nextDebitorSuffix())
                     .billable(true)

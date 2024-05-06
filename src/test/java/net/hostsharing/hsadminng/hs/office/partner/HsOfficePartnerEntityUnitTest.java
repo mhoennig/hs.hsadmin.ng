@@ -23,14 +23,14 @@ class HsOfficePartnerEntityUnitTest {
                             .personType(HsOfficePersonType.LEGAL_PERSON)
                             .tradeName("some trade name")
                             .build())
-                    .contact(HsOfficeContactEntity.builder().label("some label").build())
+                    .contact(HsOfficeContactEntity.builder().caption("some caption").build())
                     .build())
             .build();
 
     @Test
     void toStringContainsPartnerNumberPersonAndContact() {
         final var result = givenPartner.toString();
-        assertThat(result).isEqualTo("partner(P-12345: LP some trade name, some label)");
+        assertThat(result).isEqualTo("partner(P-12345: LP some trade name, some caption)");
     }
 
     @Test

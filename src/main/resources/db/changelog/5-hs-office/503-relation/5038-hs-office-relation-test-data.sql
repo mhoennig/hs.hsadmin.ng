@@ -12,7 +12,7 @@ create or replace procedure createHsOfficeRelationTestData(
         holderPersonName varchar,
         relationType HsOfficeRelationType,
         anchorPersonName varchar,
-        contactLabel varchar,
+        contactCaption varchar,
         mark varchar default null)
     language plpgsql as $$
 declare
@@ -44,9 +44,9 @@ begin
         raise exception 'holderPerson "%" not found', holderPersonName;
     end if;
 
-    select c.* into contact from hs_office_contact c where c.label = contactLabel;
+    select c.* into contact from hs_office_contact c where c.caption = contactCaption;
     if contact is null then
-        raise exception 'contact "%" not found', contactLabel;
+        raise exception 'contact "%" not found', contactCaption;
     end if;
 
     raise notice 'creating test relation: %', idName;
@@ -74,7 +74,7 @@ begin
     for t in startCount..endCount
         loop
             select p.* from hs_office_person p where tradeName = intToVarChar(t, 4) into person;
-            select c.* from hs_office_contact c where c.label = intToVarChar(t, 4) || '#' || t into contact;
+            select c.* from hs_office_contact c where c.caption = intToVarChar(t, 4) || '#' || t into contact;
 
             call createHsOfficeRelationTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
             commit;

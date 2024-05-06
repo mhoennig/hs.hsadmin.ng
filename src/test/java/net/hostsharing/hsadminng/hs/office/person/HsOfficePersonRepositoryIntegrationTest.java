@@ -163,7 +163,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    class FindByLabelLike {
+    class FindByCaptionLike {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllPersons() {
@@ -288,15 +288,15 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                 hsOfficePerson("some temporary person #" + RandomStringUtils.random(12)));
     }
 
-    void exactlyThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personLabels) {
+    void exactlyThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personCaptions) {
         assertThat(actualResult)
                 .extracting(HsOfficePersonEntity::getTradeName)
-                .containsExactlyInAnyOrder(personLabels);
+                .containsExactlyInAnyOrder(personCaptions);
     }
 
-    void allThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personLabels) {
+    void allThesePersonsAreReturned(final List<HsOfficePersonEntity> actualResult, final String... personCaptions) {
         assertThat(actualResult)
                 .extracting(hsOfficePersonEntity -> hsOfficePersonEntity.toShortString())
-                .contains(personLabels);
+                .contains(personCaptions);
     }
 }

@@ -241,15 +241,15 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
                 {
-                    1101=contact(label='Herr Michael Mellies ', emailAddresses='{ main: mih@example.org }'),
-                    1200=contact(label='JM e.K.', emailAddresses='{ main: jm-ex-partner@example.org }'),
-                    1201=contact(label='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='{ main: jm-billing@example.org }'),
-                    1202=contact(label='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='{ main: am-operation@example.org }'),
-                    1203=contact(label='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='{ main: pm-partner@example.org }'),
-                    1204=contact(label='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='{ main: tm-vip@example.org }'),
-                    1301=contact(label='Petra Schmidt , Test PS', emailAddresses='{ main: ps@example.com }'),
-                    1401=contact(label='Frau Frauke Fanninga ', emailAddresses='{ main: ff@example.org }'),
-                    1501=contact(label='Frau Cecilia Camus ', emailAddresses='{ main: cc@example.org }')
+                    1101=contact(caption='Herr Michael Mellies ', emailAddresses='{ main: mih@example.org }'),
+                    1200=contact(caption='JM e.K.', emailAddresses='{ main: jm-ex-partner@example.org }'),
+                    1201=contact(caption='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='{ main: jm-billing@example.org }'),
+                    1202=contact(caption='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='{ main: am-operation@example.org }'),
+                    1203=contact(caption='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='{ main: pm-partner@example.org }'),
+                    1204=contact(caption='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='{ main: tm-vip@example.org }'),
+                    1301=contact(caption='Petra Schmidt , Test PS', emailAddresses='{ main: ps@example.com }'),
+                    1401=contact(caption='Frau Frauke Fanninga ', emailAddresses='{ main: ff@example.org }'),
+                    1501=contact(caption='Frau Cecilia Camus ', emailAddresses='{ main: cc@example.org }')
                 }
                 """);
         assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
@@ -427,7 +427,7 @@ public class ImportOfficeData extends ContextBasedTest {
             assertThat(partnerRel).describedAs("partner " + id + " without partnerRel").isNotNull();
             if ( id != 99 ) {
                 assertThat(partnerRel.getContact()).describedAs("partner " + id + " without partnerRel.contact").isNotNull();
-                assertThat(partnerRel.getContact().getLabel()).describedAs("partner " + id + " without valid partnerRel.contact").isNotNull();
+                assertThat(partnerRel.getContact().getCaption()).describedAs("partner " + id + " without valid partnerRel.contact").isNotNull();
                 assertThat(partnerRel.getHolder()).describedAs("partner " + id + " without partnerRel.relHolder").isNotNull();
                 assertThat(partnerRel.getHolder().getPersonType()).describedAs("partner " + id + " without valid partnerRel.relHolder").isNotNull();
             }
@@ -460,7 +460,7 @@ public class ImportOfficeData extends ContextBasedTest {
         // avoid a error when persisting the deliberately invalid partner entry #99
         final var idsToRemove = new HashSet<Integer>();
         relations.forEach( (id, r) -> {
-            if (r.getContact() == null || r.getContact().getLabel() == null ||
+            if (r.getContact() == null || r.getContact().getCaption() == null ||
                r.getHolder() == null || r.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
             }
@@ -483,7 +483,7 @@ public class ImportOfficeData extends ContextBasedTest {
             final var partnerRole = r.getPartnerRel();
 
             // such a record is in test data to test error messages
-            if (partnerRole.getContact() == null || partnerRole.getContact().getLabel() == null ||
+            if (partnerRole.getContact() == null || partnerRole.getContact().getCaption() == null ||
                     partnerRole.getHolder() == null | partnerRole.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
             }
@@ -504,7 +504,7 @@ public class ImportOfficeData extends ContextBasedTest {
         final var idsToRemove = new HashSet<Integer>();
         debitors.forEach( (id, d) -> {
             final var debitorRel = d.getDebitorRel();
-            if (debitorRel.getContact() == null || debitorRel.getContact().getLabel() == null ||
+            if (debitorRel.getContact() == null || debitorRel.getContact().getCaption() == null ||
                     debitorRel.getAnchor() == null || debitorRel.getAnchor().getPersonType() == null ||
                     debitorRel.getHolder() == null || debitorRel.getHolder().getPersonType() == null ) {
                 idsToRemove.add(id);
@@ -1087,7 +1087,7 @@ public class ImportOfficeData extends ContextBasedTest {
 
     private HsOfficeContactEntity initContact(final HsOfficeContactEntity contact, final Record contactRecord) {
 
-        contact.setLabel(toLabel(
+        contact.setCaption(toCaption(
                 contactRecord.getString("salut"),
                 contactRecord.getString("title"),
                 contactRecord.getString("first_name"),
@@ -1166,7 +1166,7 @@ public class ImportOfficeData extends ContextBasedTest {
         return result.toString();
     }
 
-    private String toLabel(
+    private String toCaption(
             final String salut,
             final String title,
             final String firstname,
@@ -1188,7 +1188,7 @@ public class ImportOfficeData extends ContextBasedTest {
     }
 
     private String toName(final String salut, final String title, final String firstname, final String lastname) {
-        return toLabel(salut, title, firstname, lastname, null);
+        return toCaption(salut, title, firstname, lastname, null);
     }
 
     private Reader resourceReader(@NotNull final String resourcePath) {

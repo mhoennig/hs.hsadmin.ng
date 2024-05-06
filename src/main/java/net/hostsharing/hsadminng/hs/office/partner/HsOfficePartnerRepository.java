@@ -20,7 +20,7 @@ public interface HsOfficePartnerRepository extends Repository<HsOfficePartnerEnt
                 JOIN HsOfficePersonEntity person ON person.uuid = rel.holder.uuid
                 WHERE :name is null
                     OR partner.details.birthName like concat(cast(:name as text), '%')
-                    OR contact.label like concat(cast(:name as text), '%')
+                    OR contact.caption like concat(cast(:name as text), '%')
                     OR person.tradeName like concat(cast(:name as text), '%')
                     OR person.givenName like concat(cast(:name as text), '%')
                     OR person.familyName like concat(cast(:name as text), '%')

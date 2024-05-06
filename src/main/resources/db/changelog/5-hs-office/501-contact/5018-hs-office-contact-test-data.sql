@@ -8,28 +8,28 @@
 /*
     Creates a single contact test record.
  */
-create or replace procedure createHsOfficeContactTestData(contLabel varchar)
+create or replace procedure createHsOfficeContactTestData(contCaption varchar)
     language plpgsql as $$
 declare
     currentTask     varchar;
     postalAddr      varchar;
     emailAddr       varchar;
 begin
-    currentTask = 'creating contact test-data ' || contLabel;
+    currentTask = 'creating contact test-data ' || contCaption;
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
-    emailAddr = 'contact-admin@' || cleanIdentifier(contLabel) || '.example.com';
+    emailAddr = 'contact-admin@' || cleanIdentifier(contCaption) || '.example.com';
     call defineContext(currentTask);
     perform createRbacUser(emailAddr);
     call defineContext(currentTask, null, emailAddr);
 
     postalAddr := E'Vorname Nachname\nStraße Hnr\nPLZ Stadt';
 
-    raise notice 'creating test contact: %', contLabel;
+    raise notice 'creating test contact: %', contCaption;
     insert
-        into hs_office_contact (label, postaladdress, emailaddresses, phonenumbers)
+        into hs_office_contact (caption, postaladdress, emailaddresses, phonenumbers)
         values (
-            contLabel,
+            contCaption,
             postalAddr,
             ('{ "main": "' || emailAddr || '" }')::jsonb,
             ('{ "phone_office": "+49 123 1234567" }')::jsonb

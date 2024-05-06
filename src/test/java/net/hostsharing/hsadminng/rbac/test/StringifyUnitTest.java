@@ -21,7 +21,7 @@ class StringifyUnitTest {
     public static class TestBean implements Stringifyable {
 
         private static Stringify<TestBean> toString = stringify(TestBean.class, "bean")
-                .withProp(TestBean.Fields.label, TestBean::getLabel)
+                .withProp(TestBean.Fields.caption, TestBean::getCaption)
                 .withProp(TestBean.Fields.contentA, TestBean::getContentA)
                 .withProp(TestBean.Fields.contentB, TestBean::getContentB)
                 .withProp(TestBean.Fields.value, TestBean::getValue)
@@ -29,7 +29,7 @@ class StringifyUnitTest {
 
         private UUID uuid;
 
-        private String label;
+        private String caption;
 
         private SubBeanWithUnquotedValues contentA;
 
@@ -45,7 +45,7 @@ class StringifyUnitTest {
 
         @Override
         public String toShortString() {
-            return label;
+            return caption;
         }
     }
 
@@ -103,14 +103,14 @@ class StringifyUnitTest {
 
     @Test
     void stringifyWhenAllPropsHaveValues() {
-        final var given = new TestBean(UUID.randomUUID(), "some label",
+        final var given = new TestBean(UUID.randomUUID(), "some caption",
                 new SubBeanWithUnquotedValues("some key", "some value"),
                 new SubBeanWithQuotedValues("some key", 1234),
                 42,
                 false);
         final var result = given.toString();
         assertThat(result).isEqualTo(
-                "bean(label='some label', contentA='some key:some value', contentB='some key:1234', value=42, active=false)");
+                "bean(caption='some caption', contentA='some key:some value', contentB='some key:1234', value=42, active=false)");
     }
 
     @Test

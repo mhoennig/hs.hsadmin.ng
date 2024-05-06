@@ -71,7 +71,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").stream()
                     .filter(p -> p.getPersonType() == NATURAL_PERSON)
                     .findFirst().orElseThrow();
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").stream()
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").stream()
                     .findFirst().orElseThrow();
 
             // when
@@ -111,7 +111,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                 final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Bert").stream()
                         .filter(p -> p.getPersonType() == NATURAL_PERSON)
                         .findFirst().orElseThrow();
-                final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").stream()
+                final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").stream()
                         .findFirst().orElseThrow();
                 final var newRelation = HsOfficeRelationEntity.builder()
                         .anchor(givenAnchorPerson)
@@ -219,7 +219,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     givenRelation,
                     "hs_office_person#ErbenBesslerMelBessler:ADMIN");
             context("superuser-alex@hostsharing.net");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("sixth contact").stream().findFirst().orElseThrow();
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("sixth contact").stream().findFirst().orElseThrow();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -230,7 +230,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue().getContact().getLabel()).isEqualTo("sixth contact");
+            assertThat(result.returnedValue().getContact().getCaption()).isEqualTo("sixth contact");
             assertThatRelationIsVisibleForUserWithRole(
                     result.returnedValue(),
                     "global#global:ADMIN");
@@ -412,7 +412,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             context("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike(holderPerson).get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike(contact).get(0);
             final var newRelation = HsOfficeRelationEntity.builder()
                     .type(HsOfficeRelationType.REPRESENTATIVE)
                     .anchor(givenAnchorPerson)

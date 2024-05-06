@@ -135,7 +135,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             context("superuser-alex@hostsharing.net");
 
             // when
-            final var result = contactRepo.findContactByOptionalLabelLike(null);
+            final var result = contactRepo.findContactByOptionalCaptionLike(null);
 
             // then
             allTheseContactsAreReturned(result, "first contact", "second contact", "third contact");
@@ -148,15 +148,15 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when:
             context("selfregistered-user-drew@hostsharing.org");
-            final var result = contactRepo.findContactByOptionalLabelLike(null);
+            final var result = contactRepo.findContactByOptionalCaptionLike(null);
 
             // then:
-            exactlyTheseContactsAreReturned(result, givenContact.getLabel());
+            exactlyTheseContactsAreReturned(result, givenContact.getCaption());
         }
     }
 
     @Nested
-    class FindByLabelLike {
+    class FindByCaptionLike {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllContacts() {
@@ -164,7 +164,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             context("superuser-alex@hostsharing.net", null);
 
             // when
-            final var result = contactRepo.findContactByOptionalLabelLike("second");
+            final var result = contactRepo.findContactByOptionalCaptionLike("second");
 
             // then
             exactlyTheseContactsAreReturned(result, "second contact");
@@ -177,10 +177,10 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when:
             context("selfregistered-user-drew@hostsharing.org");
-            final var result = contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
+            final var result = contactRepo.findContactByOptionalCaptionLike(givenContact.getCaption());
 
             // then:
-            exactlyTheseContactsAreReturned(result, givenContact.getLabel());
+            exactlyTheseContactsAreReturned(result, givenContact.getCaption());
         }
     }
 
@@ -203,7 +203,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
+                return contactRepo.findContactByOptionalCaptionLike(givenContact.getCaption());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
@@ -222,7 +222,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", null);
-                return contactRepo.findContactByOptionalLabelLike(givenContact.getLabel());
+                return contactRepo.findContactByOptionalCaptionLike(givenContact.getCaption());
             }).assertSuccessful().returnedValue()).hasSize(0);
         }
 
@@ -287,15 +287,15 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
                         "some-temporary-contact" + random + "@example.com"));
     }
 
-    void exactlyTheseContactsAreReturned(final List<HsOfficeContactEntity> actualResult, final String... contactLabels) {
+    void exactlyTheseContactsAreReturned(final List<HsOfficeContactEntity> actualResult, final String... contactCaptions) {
         assertThat(actualResult)
-                .extracting(HsOfficeContactEntity::getLabel)
-                .containsExactlyInAnyOrder(contactLabels);
+                .extracting(HsOfficeContactEntity::getCaption)
+                .containsExactlyInAnyOrder(contactCaptions);
     }
 
-    void allTheseContactsAreReturned(final List<HsOfficeContactEntity> actualResult, final String... contactLabels) {
+    void allTheseContactsAreReturned(final List<HsOfficeContactEntity> actualResult, final String... contactCaptions) {
         assertThat(actualResult)
-                .extracting(HsOfficeContactEntity::getLabel)
-                .contains(contactLabels);
+                .extracting(HsOfficeContactEntity::getCaption)
+                .contains(contactCaptions);
     }
 }

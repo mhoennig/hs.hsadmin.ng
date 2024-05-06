@@ -82,7 +82,7 @@ execute procedure insertTriggerForHsOfficeContact_tf();
 
 call generateRbacIdentityViewFromProjection('hs_office_contact',
     $idName$
-        label
+        caption
     $idName$);
 --//
 
@@ -92,10 +92,10 @@ call generateRbacIdentityViewFromProjection('hs_office_contact',
 -- ----------------------------------------------------------------------------
 call generateRbacRestrictedView('hs_office_contact',
     $orderBy$
-        label
+        caption
     $orderBy$,
     $updates$
-        label = new.label,
+        caption = new.caption,
         postalAddress = new.postalAddress,
         emailAddresses = new.emailAddresses,
         phoneNumbers = new.phoneNumbers

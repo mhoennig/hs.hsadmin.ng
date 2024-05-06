@@ -36,10 +36,10 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     public ResponseEntity<List<HsOfficeContactResource>> listContacts(
             final String currentUser,
             final String assumedRoles,
-            final String label) {
+            final String caption) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = contactRepo.findContactByOptionalLabelLike(label);
+        final var entities = contactRepo.findContactByOptionalCaptionLike(caption);
 
         final var resources = mapper.mapList(entities, HsOfficeContactResource.class);
         return ResponseEntity.ok(resources);

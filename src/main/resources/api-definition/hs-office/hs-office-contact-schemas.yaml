@@ -9,7 +9,7 @@ components:
                 uuid:
                     type: string
                     format: uuid
-                label:
+                caption:
                     type: string
                 postalAddress:
                     type: string
@@ -21,7 +21,7 @@ components:
         HsOfficeContactInsert:
             type: object
             properties:
-                label:
+                caption:
                     type: string
                 postalAddress:
                     type: string
@@ -30,12 +30,12 @@ components:
                 phoneNumbers:
                     $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
             required:
-                - label
+                - caption
 
         HsOfficeContactPatch:
             type: object
             properties:
-                label:
+                caption:
                     type: string
                     nullable: true
                 postalAddress:

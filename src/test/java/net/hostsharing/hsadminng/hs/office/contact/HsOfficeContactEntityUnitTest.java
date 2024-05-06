@@ -13,9 +13,9 @@ class HsOfficeContactEntityUnitTest {
     }
 
     @Test
-    void toStringReturnsLabel() {
-        final var givenContact = HsOfficeContactEntity.builder().label("given label").build();
-        assertThat("" + givenContact).isEqualTo("contact(label='given label')");
+    void toStringReturnsCaption() {
+        final var givenContact = HsOfficeContactEntity.builder().caption("given caption").build();
+        assertThat("" + givenContact).isEqualTo("contact(caption='given caption')");
     }
 
 }

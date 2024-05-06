@@ -11,7 +11,7 @@
 create or replace procedure createHsOfficeDebitorTestData(
         withDebitorNumberSuffix numeric(5),
         forPartnerPersonName varchar,
-        forBillingContactLabel varchar,
+        forBillingContactCaption varchar,
         withDefaultPrefix varchar
     )
     language plpgsql as $$
@@ -21,7 +21,7 @@ declare
     relatedDebitorRelUuid   uuid;
     relatedBankAccountUuid  uuid;
 begin
-    idName := cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactLabel);
+    idName := cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactCaption);
     currentTask := 'creating debitor test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);

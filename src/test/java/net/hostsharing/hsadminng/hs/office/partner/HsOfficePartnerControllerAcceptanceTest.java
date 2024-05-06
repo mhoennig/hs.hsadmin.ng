@@ -91,7 +91,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define("superuser-alex@hostsharing.net");
             final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
             final var givenPerson = personRepo.findPersonByOptionalNameLike("Third").stream().findFirst().orElseThrow();
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").stream().findFirst().orElseThrow();
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").stream().findFirst().orElseThrow();
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -128,7 +128,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                 "holder": { "tradeName": "Third OHG" },
                                 "type": "PARTNER",
                                 "mark": null,
-                                "contact": { "label": "fourth contact" }
+                                "contact": { "caption": "fourth contact" }
                             },
                             "details": {
                                 "registrationOffice": "Temp Registergericht Aurich",
@@ -188,7 +188,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var mandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -248,7 +248,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                  "anchor": { "tradeName": "Hostsharing eG" },
                                  "holder": { "tradeName": "First GmbH" },
                                  "type": "PARTNER",
-                                 "contact": { "label": "first contact" }
+                                 "contact": { "caption": "first contact" }
                              },
                              "details": {
                                  "registrationOffice": "Hamburg",
@@ -292,7 +292,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     {
                         "partnerRel": {
                             "holder": { "tradeName": "First GmbH" },
-                            "contact": { "label": "first contact" }
+                            "contact": { "caption": "first contact" }
                         }
                     }
                     """)); // @formatter:on
@@ -340,7 +340,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "anchor": { "tradeName": "Hostsharing eG" },
                             "holder": { "tradeName": "Third OHG" },
                             "type": "PARTNER",
-                            "contact": { "label": "third contact" }
+                            "contact": { "caption": "third contact" }
                         },
                         "details": {
                             "registrationOffice": "Temp Registergericht Aurich",
@@ -360,7 +360,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .matches(partner -> {
                         assertThat(partner.getPartnerNumber()).isEqualTo(givenPartner.getPartnerNumber());
                         assertThat(partner.getPartnerRel().getHolder().getTradeName()).isEqualTo("Third OHG");
-                        assertThat(partner.getPartnerRel().getContact().getLabel()).isEqualTo("third contact");
+                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("third contact");
                         assertThat(partner.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Aurich");
                         assertThat(partner.getDetails().getRegistrationNumber()).isEqualTo("222222");
                         assertThat(partner.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
@@ -398,7 +398,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
                         assertThat(partner.getPartnerRel().getHolder().getTradeName()).isEqualTo("Third OHG");
-                        assertThat(partner.getPartnerRel().getContact().getLabel()).isEqualTo("third contact");
+                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo("third contact");
                         return true;
                     });
 
@@ -436,13 +436,13 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
                     .body("details.birthName", is("Maja Schmidt"))
-                    .body("partnerRel.contact.label", is(givenPartner.getPartnerRel().getContact().getLabel()));
+                    .body("partnerRel.contact.caption", is(givenPartner.getPartnerRel().getContact().getCaption()));
             // @formatter:on
 
             // finally, the partner details and only the partner details are actually updated
             assertThat(partnerRepo.findByUuid(givenPartner.getUuid())).isPresent().get()
                     .matches(partner -> {
-                        assertThat(partner.getPartnerRel().getContact().getLabel()).isEqualTo(givenPartner.getPartnerRel().getContact().getLabel());
+                        assertThat(partner.getPartnerRel().getContact().getCaption()).isEqualTo(givenPartner.getPartnerRel().getContact().getCaption());
                         assertThat(partner.getDetails().getRegistrationOffice()).isEqualTo("Temp Registergericht Leer");
                         assertThat(partner.getDetails().getRegistrationNumber()).isEqualTo("333333");
                         assertThat(partner.getDetails().getBirthName()).isEqualTo("Maja Schmidt");
@@ -481,7 +481,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void contactAdminUser_canNotDeleteRelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20014);
-            assertThat(givenPartner.getPartnerRel().getContact().getLabel()).isEqualTo("fourth contact");
+            assertThat(givenPartner.getPartnerRel().getContact().getCaption()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -500,7 +500,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
         void normalUser_canNotDeleteUnrelatedPartner() {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = givenSomeTemporaryPartnerBessler(20015);
-            assertThat(givenPartner.getPartnerRel().getContact().getLabel()).isEqualTo("fourth contact");
+            assertThat(givenPartner.getPartnerRel().getContact().getCaption()).isEqualTo("fourth contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -523,7 +523,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define("superuser-alex@hostsharing.net");
             final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").stream().findFirst().orElseThrow();
             final var givenPerson = personRepo.findPersonByOptionalNameLike(partnerHolderName).stream().findFirst().orElseThrow();
-            final var givenContact = contactRepo.findContactByOptionalLabelLike(contactName).stream().findFirst().orElseThrow();
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike(contactName).stream().findFirst().orElseThrow();
 
             final var partnerRel = new HsOfficeRelationEntity();
             partnerRel.setType(HsOfficeRelationType.PARTNER);

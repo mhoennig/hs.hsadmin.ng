@@ -17,14 +17,14 @@ class HsOfficeSepaMandateEntityUnitTest {
             .debitor(TEST_DEBITOR)
             .reference("some-ref")
             .validity(toPostgresDateRange(GIVEN_VALID_FROM, GIVEN_VALID_TO))
-            .bankAccount(HsOfficeBankAccountEntity.builder().iban("some label").build())
+            .bankAccount(HsOfficeBankAccountEntity.builder().iban("some caption").build())
             .build();
 
     @Test
     void toStringContainsReferenceAndBankAccount() {
         final var result = givenSepaMandate.toString();
 
-        assertThat(result).isEqualTo("SEPA-Mandate(some label, some-ref, [2020-01-01,2031-01-01))");
+        assertThat(result).isEqualTo("SEPA-Mandate(some caption, some-ref, [2020-01-01,2031-01-01))");
     }
 
     @Test
