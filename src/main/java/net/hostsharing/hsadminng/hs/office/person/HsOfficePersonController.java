@@ -33,10 +33,10 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     public ResponseEntity<List<HsOfficePersonResource>> listPersons(
             final String currentUser,
             final String assumedRoles,
-            final String label) {
+            final String caption) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = personRepo.findPersonByOptionalNameLike(label);
+        final var entities = personRepo.findPersonByOptionalNameLike(caption);
 
         final var resources = mapper.mapList(entities, HsOfficePersonResource.class);
         return ResponseEntity.ok(resources);

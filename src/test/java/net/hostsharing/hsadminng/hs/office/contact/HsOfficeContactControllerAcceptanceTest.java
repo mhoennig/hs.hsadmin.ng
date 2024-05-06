@@ -70,18 +70,18 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                         [
-                            { "label": "first contact" },
-                            { "label": "second contact" },
-                            { "label": "third contact" },
-                            { "label": "fourth contact" },
-                            { "label": "fifth contact" },
-                            { "label": "sixth contact" },
-                            { "label": "seventh contact" },
-                            { "label": "eighth contact" },
-                            { "label": "ninth contact" },
-                            { "label": "tenth contact" },
-                            { "label": "eleventh contact" },
-                            { "label": "twelfth contact" }
+                            { "caption": "first contact" },
+                            { "caption": "second contact" },
+                            { "caption": "third contact" },
+                            { "caption": "fourth contact" },
+                            { "caption": "fifth contact" },
+                            { "caption": "sixth contact" },
+                            { "caption": "seventh contact" },
+                            { "caption": "eighth contact" },
+                            { "caption": "ninth contact" },
+                            { "caption": "tenth contact" },
+                            { "caption": "eleventh contact" },
+                            { "caption": "twelfth contact" }
                         ]
                         """
                             ));
@@ -103,7 +103,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "label": "Temp Contact",
+                                   "caption": "Temp Contact",
                                    "emailAddresses": {
                                         "main": "test@example.org"
                                    }
@@ -116,7 +116,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("label", is("Temp Contact"))
+                        .body("caption", is("Temp Contact"))
                         .body("emailAddresses", is(Map.of("main", "test@example.org")))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
@@ -134,7 +134,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryContact() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenContactUuid = contactRepo.findContactByOptionalLabelLike("first").get(0).getUuid();
+            final var givenContactUuid = contactRepo.findContactByOptionalCaptionLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -147,7 +147,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "label": "first contact"
+                        "caption": "first contact"
                     }
                     """)); // @formatter:on
         }
@@ -155,7 +155,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void normalUser_canNotGetUnrelatedContact() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenContactUuid = contactRepo.findContactByOptionalLabelLike("first").get(0).getUuid();
+            final var givenContactUuid = contactRepo.findContactByOptionalCaptionLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -170,7 +170,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         @Test
         void contactAdminUser_canGetRelatedContact() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenContactUuid = contactRepo.findContactByOptionalLabelLike("first").get(0).getUuid();
+            final var givenContactUuid = contactRepo.findContactByOptionalCaptionLike("first").get(0).getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -183,7 +183,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "label": "first contact",
+                        "caption": "first contact",
                         "emailAddresses": {
                             "main": "contact-admin@firstcontact.example.com"
                         },
@@ -210,7 +210,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                        {
-                           "label": "Temp patched contact",
+                           "caption": "Temp patched contact",
                            "emailAddresses": {
                                 "main": "patched@example.org"
                            },
@@ -227,7 +227,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("label", is("Temp patched contact"))
+                    .body("caption", is("Temp patched contact"))
                     .body("emailAddresses", is(Map.of("main", "patched@example.org")))
                     .body("postalAddress", is("Patched Address"))
                     .body("phoneNumbers", is(Map.of("phone_office", "+01 100 123456")));
@@ -237,7 +237,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define("superuser-alex@hostsharing.net");
             assertThat(contactRepo.findByUuid(givenContact.getUuid())).isPresent().get()
                     .matches(person -> {
-                        assertThat(person.getLabel()).isEqualTo("Temp patched contact");
+                        assertThat(person.getCaption()).isEqualTo("Temp patched contact");
                         assertThat(person.getEmailAddresses()).containsExactlyEntriesOf(Map.of("main", "patched@example.org"));
                         assertThat(person.getPostalAddress()).isEqualTo("Patched Address");
                         assertThat(person.getPhoneNumbers()).containsExactlyEntriesOf(Map.of("phone_office", "+01 100 123456"));
@@ -272,7 +272,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("label", is(givenContact.getLabel()))
+                    .body("caption", is(givenContact.getCaption()))
                     .body("emailAddresses", is(Map.of("main", "patched@example.org")))
                     .body("postalAddress", is(givenContact.getPostalAddress()))
                     .body("phoneNumbers", is(Map.of("phone_office", "+01 100 123456")));
@@ -281,7 +281,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             // finally, the contact is actually updated
             assertThat(contactRepo.findByUuid(givenContact.getUuid())).isPresent().get()
                     .matches(person -> {
-                        assertThat(person.getLabel()).isEqualTo(givenContact.getLabel());
+                        assertThat(person.getCaption()).isEqualTo(givenContact.getCaption());
                         assertThat(person.getEmailAddresses()).containsExactlyEntriesOf(Map.of("main", "patched@example.org"));
                         assertThat(person.getPostalAddress()).isEqualTo(givenContact.getPostalAddress());
                         assertThat(person.getPhoneNumbers()).containsExactlyEntriesOf(Map.of("phone_office", "+01 100 123456"));
@@ -354,7 +354,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define(creatingUser);
             final var newContact = HsOfficeContactEntity.builder()
                     .uuid(UUID.randomUUID())
-                    .label("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
+                    .caption("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
                     .emailAddresses(Map.of("main", RandomStringUtils.randomAlphabetic(10) + "@example.org"))
                     .postalAddress("Postal Address " + RandomStringUtils.randomAlphabetic(10))
                     .phoneNumbers(Map.of("phone_office", "+01 200 " + RandomStringUtils.randomNumeric(8)))
@@ -369,7 +369,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     void cleanup() {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
-            em.createQuery("DELETE FROM HsOfficeContactEntity c WHERE c.label LIKE 'Temp %'").executeUpdate();
+            em.createQuery("DELETE FROM HsOfficeContactEntity c WHERE c.caption LIKE 'Temp %'").executeUpdate();
         }).assertSuccessful();
     }
 }

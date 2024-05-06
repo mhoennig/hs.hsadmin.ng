@@ -38,7 +38,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsOfficeContactEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsOfficeContactEntity> toString = stringify(HsOfficeContactEntity.class, "contact")
-            .withProp(Fields.label, HsOfficeContactEntity::getLabel)
+            .withProp(Fields.caption, HsOfficeContactEntity::getCaption)
             .withProp(Fields.emailAddresses, HsOfficeContactEntity::getEmailAddresses);
 
     @Id
@@ -49,8 +49,8 @@ public class HsOfficeContactEntity implements Stringifyable, RbacObject {
     @Version
     private int version;
 
-    @Column(name = "label") // TODO.impl: rename to caption
-    private String label;
+    @Column(name = "caption")
+    private String caption;
 
     @Column(name = "postaladdress")
     private String postalAddress; // multiline free-format text
@@ -96,13 +96,13 @@ public class HsOfficeContactEntity implements Stringifyable, RbacObject {
 
     @Override
     public String toShortString() {
-        return label;
+        return caption;
     }
 
     public static RbacView rbac() {
         return rbacViewFor("contact", HsOfficeContactEntity.class)
-                .withIdentityView(SQL.projection("label"))
-                .withUpdatableColumns("label", "postalAddress", "emailAddresses", "phoneNumbers")
+                .withIdentityView(SQL.projection("caption"))
+                .withUpdatableColumns("caption", "postalAddress", "emailAddresses", "phoneNumbers")
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);
                     with.incomingSuperRole(GLOBAL, ADMIN);

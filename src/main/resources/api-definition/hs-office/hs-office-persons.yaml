@@ -12,7 +12,7 @@ get:
           required: false
           schema:
               type: string
-          description: Prefix of label to filter the results.
+          description: Prefix of caption to filter the results.
     responses:
         "200":
             description: OK

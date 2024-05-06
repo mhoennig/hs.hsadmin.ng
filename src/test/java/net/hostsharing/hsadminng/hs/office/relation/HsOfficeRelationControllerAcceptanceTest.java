@@ -81,34 +81,34 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                             "holder": { "personType": "LEGAL_PERSON", "tradeName": "First GmbH" },
                             "type": "PARTNER",
                             "mark": null,
-                            "contact": { "label": "first contact" }
+                            "contact": { "caption": "first contact" }
                         },
                         {
                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
                             "holder": { "personType": "LEGAL_PERSON", "tradeName": "Fourth eG" },
                             "type": "PARTNER",
-                            "contact": { "label": "fourth contact" }
+                            "contact": { "caption": "fourth contact" }
                         },
                         {
                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
                             "holder": { "personType": "LEGAL_PERSON", "tradeName": "Second e.K.", "givenName": "Peter", "familyName": "Smith" },
                             "type": "PARTNER",
                             "mark": null,
-                            "contact": { "label": "second contact" }
+                            "contact": { "caption": "second contact" }
                         },
                         {
                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
                             "holder": { "personType": "NATURAL_PERSON", "givenName": "Peter", "familyName": "Smith" },
                             "type": "PARTNER",
                             "mark": null,
-                            "contact": { "label": "sixth contact" }
+                            "contact": { "caption": "sixth contact" }
                         },
                         {
                             "anchor": { "personType": "LEGAL_PERSON", "tradeName": "Hostsharing eG" },
                             "holder": { "personType": "INCORPORATED_FIRM", "tradeName": "Third OHG" },
                             "type": "PARTNER",
                             "mark": null,
-                            "contact": { "label": "third contact" }
+                            "contact": { "caption": "third contact" }
                         }
                     ]
                     """));
@@ -125,7 +125,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Paul").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("second").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("second").get(0);
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -156,7 +156,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                         .body("mark", is("operations-discuss"))
                         .body("anchor.tradeName", is("Third OHG"))
                         .body("holder.givenName", is("Paul"))
-                        .body("contact.label", is("second contact"))
+                        .body("contact.caption", is("second contact"))
                         .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -172,7 +172,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPersonUuid = GIVEN_NON_EXISTING_HOLDER_PERSON_UUID;
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Smith").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -204,7 +204,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -286,7 +286,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     {
                         "anchor": { "tradeName": "First GmbH" },
                         "holder": { "familyName": "Firby" },
-                        "contact": { "label": "first contact" }
+                        "contact": { "caption": "first contact" }
                     }
                     """)); // @formatter:on
         }
@@ -310,7 +310,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void contactAdminUser_canGetRelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = findRelation("First", "Firby");
-            assertThat(givenRelation.getContact().getLabel()).isEqualTo("first contact");
+            assertThat(givenRelation.getContact().getCaption()).isEqualTo("first contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -325,7 +325,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     {
                         "anchor": { "tradeName": "First GmbH" },
                         "holder": { "familyName": "Firby" },
-                        "contact": { "label": "first contact" }
+                        "contact": { "caption": "first contact" }
                     }
                     """)); // @formatter:on
         }
@@ -352,8 +352,8 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler();
-            assertThat(givenRelation.getContact().getLabel()).isEqualTo("seventh contact");
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth").get(0);
+            assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             RestAssured // @formatter:off
                 .given()
@@ -374,7 +374,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .body("type", is("REPRESENTATIVE"))
                     .body("anchor.tradeName", is("Erben Bessler"))
                     .body("holder.familyName", is("Winkler"))
-                    .body("contact.label", is("fourth contact"));
+                    .body("contact.caption", is("fourth contact"));
                 // @formatter:on
 
             // finally, the relation is actually updated
@@ -383,7 +383,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .matches(rel -> {
                         assertThat(rel.getAnchor().getTradeName()).contains("Bessler");
                         assertThat(rel.getHolder().getFamilyName()).contains("Winkler");
-                        assertThat(rel.getContact().getLabel()).isEqualTo("fourth contact");
+                        assertThat(rel.getContact().getCaption()).isEqualTo("fourth contact");
                         assertThat(rel.getType()).isEqualTo(HsOfficeRelationType.REPRESENTATIVE);
                         return true;
                     });
@@ -415,7 +415,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void contactAdminUser_canNotDeleteRelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler();
-            assertThat(givenRelation.getContact().getLabel()).isEqualTo("seventh contact");
+            assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -434,7 +434,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         void normalUser_canNotDeleteUnrelatedRelation() {
             context.define("superuser-alex@hostsharing.net");
             final var givenRelation = givenSomeTemporaryRelationBessler();
-            assertThat(givenRelation.getContact().getLabel()).isEqualTo("seventh contact");
+            assertThat(givenRelation.getContact().getCaption()).isEqualTo("seventh contact");
 
             RestAssured // @formatter:off
                 .given()
@@ -455,7 +455,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
             context.define("superuser-alex@hostsharing.net");
             final var givenAnchorPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
             final var givenHolderPerson = personRepo.findPersonByOptionalNameLike("Winkler").get(0);
-            final var givenContact = contactRepo.findContactByOptionalLabelLike("seventh contact").get(0);
+            final var givenContact = contactRepo.findContactByOptionalCaptionLike("seventh contact").get(0);
             final var newRelation = HsOfficeRelationEntity.builder()
                     .type(HsOfficeRelationType.REPRESENTATIVE)
                     .anchor(givenAnchorPerson)

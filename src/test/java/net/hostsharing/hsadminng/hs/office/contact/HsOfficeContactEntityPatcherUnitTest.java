@@ -45,7 +45,7 @@ class HsOfficeContactEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsOfficeContactEntity newInitialEntity() {
         final var entity = new HsOfficeContactEntity();
         entity.setUuid(INITIAL_CONTACT_UUID);
-        entity.setLabel("initial label");
+        entity.setCaption("initial caption");
         entity.putEmailAddresses(Map.ofEntries(
                 entry("main", "initial@example.org"),
                 entry("paul", "paul@example.com"),
@@ -72,10 +72,10 @@ class HsOfficeContactEntityPatcherUnitTest extends PatchUnitTestBase<
     protected Stream<Property> propertyTestDescriptors() {
         return Stream.of(
                 new JsonNullableProperty<>(
-                        "label",
-                        HsOfficeContactPatchResource::setLabel,
-                        "patched label",
-                        HsOfficeContactEntity::setLabel),
+                        "caption",
+                        HsOfficeContactPatchResource::setCaption,
+                        "patched caption",
+                        HsOfficeContactEntity::setCaption),
                 new SimpleProperty<>(
                         "resources",
                         HsOfficeContactPatchResource::setEmailAddresses,

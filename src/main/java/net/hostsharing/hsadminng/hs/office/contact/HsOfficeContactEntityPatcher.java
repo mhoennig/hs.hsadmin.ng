@@ -17,7 +17,7 @@ class HsOfficeContactEntityPatcher implements EntityPatcher<HsOfficeContactPatch
 
     @Override
     public void apply(final HsOfficeContactPatchResource resource) {
-        OptionalFromJson.of(resource.getLabel()).ifPresent(entity::setLabel);
+        OptionalFromJson.of(resource.getCaption()).ifPresent(entity::setCaption);
         OptionalFromJson.of(resource.getPostalAddress()).ifPresent(entity::setPostalAddress);
         Optional.ofNullable(resource.getEmailAddresses())
                 .ifPresent(r -> entity.getEmailAddresses().patch(KeyValueMap.from(resource.getEmailAddresses())));

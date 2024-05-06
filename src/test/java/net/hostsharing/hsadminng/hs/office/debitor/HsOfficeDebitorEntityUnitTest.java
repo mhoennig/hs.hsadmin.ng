@@ -20,7 +20,7 @@ class HsOfficeDebitorEntityUnitTest {
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("some billing trade name")
                     .build())
-            .contact(HsOfficeContactEntity.builder().label("some label").build())
+            .contact(HsOfficeContactEntity.builder().caption("some caption").build())
             .build();
 
     @Test

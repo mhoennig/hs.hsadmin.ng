@@ -26,7 +26,7 @@ public class TestHsOfficePartner {
                                         .tradeName(tradeName)
                                         .build())
                                 .contact(HsOfficeContactEntity.builder()
-                                        .label(tradeName)
+                                        .caption(tradeName)
                                         .build())
                                 .build()
                 )

@@ -109,7 +109,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // when
             attempt(em, () -> {
                 final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
-                final var givenContact = contactRepo.findContactByOptionalLabelLike("fourth contact").get(0);
+                final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
                 final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
 
                 final var newRelation = HsOfficeRelationEntity.builder()
@@ -465,7 +465,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     private HsOfficeRelationEntity givenSomeTemporaryHostsharingPartnerRel(final String person, final String contact) {
         final var givenMandantorPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
         final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike(person).get(0);
-        final var givenContact = contactRepo.findContactByOptionalLabelLike(contact).get(0);
+        final var givenContact = contactRepo.findContactByOptionalCaptionLike(contact).get(0);
 
         final var partnerRel = HsOfficeRelationEntity.builder()
                 .holder(givenPartnerPerson)

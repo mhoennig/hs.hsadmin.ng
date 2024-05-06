@@ -12,7 +12,7 @@ create or replace procedure createHsOfficePartnerTestData(
         mandantTradeName  varchar,
         newPartnerNumber  numeric(5),
         partnerPersonName varchar,
-        contactLabel      varchar )
+        contactCaption      varchar )
     language plpgsql as $$
 declare
     currentTask         varchar;
@@ -22,7 +22,7 @@ declare
     relatedPerson       hs_office_person;
     relatedDetailsUuid  uuid;
 begin
-    idName := cleanIdentifier( partnerPersonName|| '-' || contactLabel);
+    idName := cleanIdentifier( partnerPersonName|| '-' || contactCaption);
     currentTask := 'creating partner test-data ' || idName;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
     execute format('set local hsadminng.currentTask to %L', currentTask);

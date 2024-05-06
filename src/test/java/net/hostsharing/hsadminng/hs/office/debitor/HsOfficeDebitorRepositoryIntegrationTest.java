@@ -84,7 +84,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             context("superuser-alex@hostsharing.net");
             final var count = debitorRepo.count();
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
-            final var givenContact = one(contactRepo.findContactByOptionalLabelLike("first contact"));
+            final var givenContact = one(contactRepo.findContactByOptionalCaptionLike("first contact"));
 
             // when
             final var result = attempt(em, () -> {
@@ -116,7 +116,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // given
             context("superuser-alex@hostsharing.net");
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
-            final var givenContact = one(contactRepo.findContactByOptionalLabelLike("first contact"));
+            final var givenContact = one(contactRepo.findContactByOptionalCaptionLike("first contact"));
 
             // when
             final var result = attempt(em, () -> {
@@ -154,7 +154,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             attempt(em, () -> {
                 final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
                 final var givenDebitorPerson = one(personRepo.findPersonByOptionalNameLike("Fourth eG"));
-                final var givenContact = one(contactRepo.findContactByOptionalLabelLike("fourth contact"));
+                final var givenContact = one(contactRepo.findContactByOptionalCaptionLike("fourth contact"));
                 final var newDebitor = HsOfficeDebitorEntity.builder()
                         .debitorNumberSuffix("22")
                         .debitorRel(HsOfficeRelationEntity.builder()
@@ -320,7 +320,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
             final var givenNewPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First"));
             final var givenNewBillingPerson = one(personRepo.findPersonByOptionalNameLike("Firby"));
-            final var givenNewContact = one(contactRepo.findContactByOptionalLabelLike("sixth contact"));
+            final var givenNewContact = one(contactRepo.findContactByOptionalCaptionLike("sixth contact"));
             final var givenNewBankAccount = one(bankAccountRepo.findByOptionalHolderLike("first"));
             final String givenNewVatId = "NEW-VAT-ID";
             final String givenNewVatCountryCode = "NC";
@@ -603,13 +603,13 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
     private HsOfficeDebitorEntity givenSomeTemporaryDebitor(
             final String partnerName,
-            final String contactLabel,
+            final String contactCaption,
             final String bankAccountHolder,
             final String defaultPrefix) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike(partnerName));
-            final var givenContact = one(contactRepo.findContactByOptionalLabelLike(contactLabel));
+            final var givenContact = one(contactRepo.findContactByOptionalCaptionLike(contactCaption));
             final var givenBankAccount =
                     bankAccountHolder != null ? one(bankAccountRepo.findByOptionalHolderLike(bankAccountHolder)) : null;
             final var newDebitor = HsOfficeDebitorEntity.builder()
