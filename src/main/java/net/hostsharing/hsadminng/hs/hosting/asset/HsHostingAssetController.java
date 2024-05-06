@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import net.hostsharing.hsadminng.hs.hosting.asset.validator.HsHostingAssetValidator;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
 
 import net.hostsharing.hsadminng.context.Context;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -60,7 +62,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entityToSave = mapper.map(body, HsHostingAssetEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var saved = assetRepo.save(entityToSave);
+        final var saved = assetRepo.save(valid(entityToSave));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -118,6 +120,14 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
         final var saved = assetRepo.save(current);
         final var mapped = mapper.map(saved, HsHostingAssetResource.class);
         return ResponseEntity.ok(mapped);
+    }
+
+    private HsHostingAssetEntity valid(final HsHostingAssetEntity entityToSave) {
+        final var violations = HsHostingAssetValidator.forType(entityToSave.getType()).validate(entityToSave);
+        if (!violations.isEmpty()) {
+            throw new ValidationException(violations.toString());
+        }
+        return entityToSave;
     }
 
     @SuppressWarnings("unchecked")

@@ -1,0 +1,26 @@
+get:
+    summary: Returns a list of available asset properties for the given type.
+    description: Returns the list of available properties and their validations for a given asset type.
+    tags:
+        - hs-hosting-asset-props
+    operationId: listAssetTypeProps
+    parameters:
+        - name: assetType
+          in: path
+          required: true
+          schema:
+              $ref: 'hs-hosting-asset-schemas.yaml#/components/schemas/HsHostingAssetType'
+          description: The asset type whose properties are to be returned.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: 'hs-hosting-asset-schemas.yaml#/components/schemas/HsHostingAssetProps'
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

@@ -1,0 +1,19 @@
+get:
+    summary: Returns a list of available asset types.
+    description: Returns the list of asset types to enable an adaptive UI.
+    tags:
+        - hs-hosting-asset-props
+    operationId: listAssetTypes
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            type: string
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

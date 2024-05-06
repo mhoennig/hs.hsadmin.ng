@@ -8,10 +8,18 @@ servers:
 
 paths:
 
-  # Items
+  # Assets
 
   /api/hs/hosting/assets:
     $ref: "hs-hosting-assets.yaml"
 
   /api/hs/hosting/assets/{assetUuid}:
     $ref: "hs-hosting-assets-with-uuid.yaml"
+
+  # Asset-Types
+
+  /api/hs/hosting/asset-types:
+    $ref: "hs-hosting-asset-types.yaml"
+
+  /api/hs/hosting/asset-types/{assetType}:
+    $ref: "hs-hosting-asset-types-props.yaml"

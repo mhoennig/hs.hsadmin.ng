@@ -80,18 +80,85 @@ components:
             # forces generating a java.lang.Object containing a Map, instead of class AssetConfiguration
             anyOf:
                 - type: object
-                  properties:
-                    CPU:
-                        type: integer
-                        minimum: 1
-                        maximum: 16
-                    SSD:
-                        type: integer
-                        minimum: 16
-                        maximum: 4096
-                    HDD:
-                        type: integer
-                        minimum: 16
-                        maximum: 4096
+                    # single source of supported properties just via /api/hs/hosting/asset-types/{assetType}
+                    # TODO.impl: later, we could generate the config types and their properties from the validation config
                   additionalProperties: true
 
+        PropertyDescriptor:
+            type: object
+            properties:
+                "type":
+                    type: string
+                    enum:
+                        - integer
+                        - boolean
+                        - enumeration
+                "propertyName":
+                    type: string
+                    pattern: "^[ a-zA-Z0-9_-]$"
+                "required":
+                    type: boolean
+            required:
+                - type
+                - propertyName
+                - required
+
+        IntegerPropertyDescriptor:
+            allOf:
+                - $ref: '#/components/schemas/PropertyDescriptor'
+                - type: object
+                  properties:
+                    "type":
+                        type: string
+                        enum:
+                            - integer
+                    "unit":
+                        type: string
+                    "min":
+                        type: integer
+                        minimum: 0
+                    "max":
+                        type: integer
+                        minimum: 0
+                    "step":
+                        type: integer
+                        minimum: 1
+                  required:
+                      - "type"
+                      - "propertyName"
+                      - "required"
+
+        BooleanPropertyDescriptor:
+            allOf:
+                - $ref: '#/components/schemas/PropertyDescriptor'
+                - type: object
+                  properties:
+                      "type":
+                          type: string
+                          enum:
+                              - boolean
+                      "falseIf":
+                          type: object
+                          anyOf:
+                              - type: object
+                                additionalProperties: true
+
+        EnumerationPropertyDescriptor:
+            allOf:
+                - $ref: '#/components/schemas/PropertyDescriptor'
+                - type: object
+                  properties:
+                    "type":
+                        type: string
+                        enum:
+                            - enumeration
+                    "values":
+                          type: array
+                          items:
+                              type: string
+
+        HsHostingAssetProps:
+            anyOf:
+                - $ref: '#/components/schemas/IntegerPropertyDescriptor'
+                - $ref: '#/components/schemas/BooleanPropertyDescriptor'
+                - $ref: '#/components/schemas/EnumerationPropertyDescriptor'

@@ -174,7 +174,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "type": "MANAGED_SERVER",
                                 "identifier": "vm1400",
                                 "caption": "some new CloudServer",
-                                "config": { "CPU": 3, "extra": 42 }
+                                "config": { "CPUs": 2, "RAM": 100, "SSD": 300, "Traffic": 250 }
                             }
                             """.formatted(givenBookingItem.getUuid()))
                         .port(port)
@@ -188,7 +188,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "type": "MANAGED_SERVER",
                                 "identifier": "vm1400",
                                 "caption": "some new CloudServer",
-                                "config": { "CPU": 3, "extra": 42 }
+                                "config": { "CPUs": 2, "RAM": 100, "SSD": 300, "Traffic": 250 }
                             }
                             """))
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
@@ -198,6 +198,39 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var newUserUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
             assertThat(newUserUuid).isNotNull();
+        }
+
+        @Test
+        void additionalValidationsArePerformend_whenAddingAsset() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenBookingItem = givenBookingItem("First", "some PrivateCloud");
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "bookingItemUuid": "%s",
+                                "type": "MANAGED_SERVER",
+                                "identifier": "vm1400",
+                                "caption": "some new CloudServer",
+                                "config": { "CPUs": 0, "extra": 42 }
+                            }
+                            """.formatted(givenBookingItem.getUuid()))
+                    .port(port)
+                    .when()
+                    .post("http://localhost/api/hs/hosting/assets")
+                    .then().log().all().assertThat()
+                    .statusCode(400)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
+                            {
+                                "statusPhrase": "Bad Request",
+                                "message": "['extra' is not expected but is '42', 'CPUs' is expected to be >= 1 but is 0, 'RAM' is required but missing, 'SSD' is required but missing, 'Traffic' is required but missing]"
+                            }
+                            """));  // @formatter:on
         }
     }
 

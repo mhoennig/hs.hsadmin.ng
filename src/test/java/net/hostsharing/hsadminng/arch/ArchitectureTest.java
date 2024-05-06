@@ -52,6 +52,7 @@ public class ArchitectureTest {
                     "..hs.office.sepamandate",
                     "..hs.booking.item",
                     "..hs.hosting.asset",
+                    "..hs.hosting.asset.validator",
                     "..errors",
                     "..mapper",
                     "..ping",

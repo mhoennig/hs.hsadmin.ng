@@ -13,18 +13,20 @@ get:
           schema:
               type: string
               format: uuid
+          description: The UUID of the debitor, whose hosting assets are to be listed.
         - name: parentAssetUuid
           in: query
           required: false
           schema:
               type: string
               format: uuid
+          description: The UUID of the parentAsset, whose hosting assets are to be listed.
         - name: type
           in: query
           required: false
           schema:
               $ref: 'hs-hosting-asset-schemas.yaml#/components/schemas/HsHostingAssetType'
-          description: The UUID of the debitor, whose hosting assets are to be listed.
+          description: The type of hosting assets to be listed.
     responses:
         "200":
             description: OK
