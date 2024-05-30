@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.validator.HsHostingAssetValidator;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
 
 import net.hostsharing.hsadminng.context.Context;
@@ -16,11 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.validation.ValidationException;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityValidators.valid;
 
 @RestController
 public class HsHostingAssetController implements HsHostingAssetsApi {
@@ -117,21 +117,17 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         new HsHostingAssetEntityPatcher(current).apply(body);
 
-        final var saved = assetRepo.save(current);
+        final var saved = assetRepo.save(valid(current));
         final var mapped = mapper.map(saved, HsHostingAssetResource.class);
         return ResponseEntity.ok(mapped);
     }
 
-    private HsHostingAssetEntity valid(final HsHostingAssetEntity entityToSave) {
-        final var violations = HsHostingAssetValidator.forType(entityToSave.getType()).validate(entityToSave);
-        if (!violations.isEmpty()) {
-            throw new ValidationException(violations.toString());
-        }
-        return entityToSave;
-    }
-
-    @SuppressWarnings("unchecked")
     final BiConsumer<HsHostingAssetInsertResource, HsHostingAssetEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.putConfig(KeyValueMap.from(resource.getConfig()));
+        if (resource.getParentAssetUuid() != null) {
+            entity.setParentAsset(assetRepo.findByUuid(resource.getParentAssetUuid())
+                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] parentAssetUuid %s not found".formatted(
+                            resource.getParentAssetUuid()))));
+        }
     };
 }

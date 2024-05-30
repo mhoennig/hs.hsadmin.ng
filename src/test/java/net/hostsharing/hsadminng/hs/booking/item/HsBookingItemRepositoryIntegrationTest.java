@@ -167,9 +167,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000212, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsBookingItemEntity(D-1000212, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
-                    "HsBookingItemEntity(D-1000212, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
+                    "HsBookingItemEntity(D-1000212, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
+                    "HsBookingItemEntity(D-1000212, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPUs: 2, HDD: 1024, RAM: 4, Traffic: 42 })",
+                    "HsBookingItemEntity(D-1000212, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
         }
 
         @Test
@@ -184,9 +184,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then:
             exactlyTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000111, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsBookingItemEntity(D-1000111, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPU: 2, HDD: 1024, extra: 42 })",
-                    "HsBookingItemEntity(D-1000111, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10240, SDD: 10240, extra: 42 })");
+                    "HsBookingItemEntity(D-1000111, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
+                    "HsBookingItemEntity(D-1000111, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPUs: 2, HDD: 1024, RAM: 4, Traffic: 42 })",
+                    "HsBookingItemEntity(D-1000111, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
         }
     }
 

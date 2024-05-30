@@ -39,8 +39,6 @@ begin
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentServer;
 
     SELECT * FROM hs_booking_item WHERE uuid = NEW.bookingItemUuid    INTO newBookingItem;
-    assert newBookingItem.uuid is not null, format('newBookingItem must not be null for NEW.bookingItemUuid = %s', NEW.bookingItemUuid);
-
 
     perform createRoleWithGrants(
         hsHostingAssetOWNER(NEW),

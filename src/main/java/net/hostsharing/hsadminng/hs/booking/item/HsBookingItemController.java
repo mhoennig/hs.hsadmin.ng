@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidators.valid;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
@@ -56,7 +57,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         final var entityToSave = mapper.map(body, HsBookingItemEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var saved = bookingItemRepo.save(entityToSave);
+        final var saved = bookingItemRepo.save(valid(entityToSave));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -111,7 +112,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         new HsBookingItemEntityPatcher(current).apply(body);
 
-        final var saved = bookingItemRepo.save(current);
+        final var saved = bookingItemRepo.save(valid(current));
         final var mapped = mapper.map(saved, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }

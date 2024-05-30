@@ -24,12 +24,14 @@ create table if not exists hs_hosting_asset
 (
     uuid                uuid unique references RbacObject (uuid),
     version             int not null default 0,
-    bookingItemUuid     uuid not null references hs_booking_item(uuid),
+    bookingItemUuid     uuid null references hs_booking_item(uuid),
     type                HsHostingAssetType not null,
     parentAssetUuid     uuid null references hs_hosting_asset(uuid),
     identifier          varchar(80) not null,
     caption             varchar(80) not null,
-    config              jsonb not null
+    config              jsonb not null,
+
+    constraint chk_hs_hosting_asset_has_booking_item_or_parent_asset check (bookingItemUuid is not null or parentAssetUuid is not null)
 );
 --//
 

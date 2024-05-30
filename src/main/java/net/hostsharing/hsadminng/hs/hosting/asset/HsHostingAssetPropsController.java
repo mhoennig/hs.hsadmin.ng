@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.validator.HsHostingAssetValidator;
+import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityValidators;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetPropsApi;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
 
     @Override
     public ResponseEntity<List<String>> listAssetTypes() {
-        final var resource = HsHostingAssetValidator.types().stream()
+        final var resource = HsHostingAssetEntityValidators.types().stream()
                 .map(Enum::name)
                 .toList();
         return ResponseEntity.ok(resource);
@@ -25,7 +25,7 @@ public class HsHostingAssetPropsController implements HsHostingAssetPropsApi {
     public ResponseEntity<List<Object>> listAssetTypeProps(
             final HsHostingAssetTypeResource assetType) {
 
-        final var propValidators = HsHostingAssetValidator.forType(HsHostingAssetType.of(assetType));
+        final var propValidators = HsHostingAssetEntityValidators.forType(HsHostingAssetType.of(assetType));
         final List<Map<String, Object>> resource = propValidators.properties();
         return ResponseEntity.ok(toListOfObjects(resource));
     }

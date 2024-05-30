@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.validation.Validatable;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -40,7 +41,6 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inOtherCas
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
@@ -61,7 +61,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsHostingAssetEntity implements Stringifyable, RbacObject {
+public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validatable<HsHostingAssetEntity, HsHostingAssetType> {
 
     private static Stringify<HsHostingAssetEntity> stringify = stringify(HsHostingAssetEntity.class)
             .withProp(HsHostingAssetEntity::getType)
@@ -115,6 +115,16 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     }
 
     @Override
+    public String getPropertiesName() {
+        return "config";
+    }
+
+    @Override
+    public Map<String, Object> getProperties() {
+        return config;
+    }
+
+    @Override
     public String toString() {
         return stringify.apply(this);
     }
@@ -137,7 +147,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
                 .importEntityAlias("bookingItem", HsBookingItemEntity.class, usingDefaultCase(),
                     dependsOnColumn("bookingItemUuid"),
                     directlyFetchedByDependsOnColumn(),
-                    NOT_NULL)
+                    NULLABLE)
 
                 .switchOnColumn("type",
                     inCaseOf(CLOUD_SERVER.name(),

@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.constraints.NotNull;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -25,6 +26,7 @@ public class RbacGrantsDiagramService {
 
     public static void writeToFile(final String title, final String graph, final String fileName) {
 
+        new File("doc/temp").mkdirs();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             writer.write("""
                     ### all grants to %s
@@ -192,8 +194,9 @@ public class RbacGrantsDiagramService {
             return "[" + roleType + "\nref:" + uuid + "]";
         }
         if (refType.equals("perm")) {
-            final var roleType = idName.split(":")[1];
-            return "{{" + roleType + "\nref:" + uuid + "}}";
+            final var parts = idName.split(":");
+            final var permType = parts[2];
+            return "{{" + permType + "\nref:" + uuid + "}}";
         }
         return "";
     }
@@ -205,7 +208,7 @@ public class RbacGrantsDiagramService {
     @NotNull
     private static String cleanId(final String idName) {
         return idName.replaceAll("@.*", "")
-                .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "");
+                .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "").replace(">", ":");
     }
 
 

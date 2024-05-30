@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
@@ -113,7 +115,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                     .when()
-                    .get("http://localhost/api/hs/hosting/assets?type=" + HsHostingAssetType.MANAGED_SERVER)
+                    .get("http://localhost/api/hs/hosting/assets?type=" + MANAGED_SERVER)
                     .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -159,7 +161,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     class AddServer {
 
         @Test
-        void globalAdmin_canAddAsset() {
+        void globalAdmin_canAddBookedAsset() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItem = givenBookingItem("First", "some PrivateCloud");
@@ -173,7 +175,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "bookingItemUuid": "%s",
                                 "type": "MANAGED_SERVER",
                                 "identifier": "vm1400",
-                                "caption": "some new CloudServer",
+                                "caption": "some new ManagedServer",
                                 "config": { "CPUs": 2, "RAM": 100, "SSD": 300, "Traffic": 250 }
                             }
                             """.formatted(givenBookingItem.getUuid()))
@@ -187,11 +189,53 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             {
                                 "type": "MANAGED_SERVER",
                                 "identifier": "vm1400",
-                                "caption": "some new CloudServer",
+                                "caption": "some new ManagedServer",
                                 "config": { "CPUs": 2, "RAM": 100, "SSD": 300, "Traffic": 250 }
                             }
                             """))
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
+                    .extract().header("Location");  // @formatter:on
+
+            // finally, the new asset can be accessed under the generated UUID
+            final var newUserUuid = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
+            assertThat(newUserUuid).isNotNull();
+        }
+
+        @Test
+        void parentAssetAgent_canAddSubAsset() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenParentAsset = givenParentAsset("First", MANAGED_SERVER);
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "person-FirbySusan@example.com")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "parentAssetUuid": "%s",
+                                "type": "MANAGED_WEBSPACE",
+                                "identifier": "fir90",
+                                "caption": "some new ManagedWebspace in client's ManagedServer",
+                                "config": { "SSD": 100, "Traffic": 250 }
+                            }
+                            """.formatted(givenParentAsset.getUuid()))
+                    .port(port)
+                    .when()
+                    .post("http://localhost/api/hs/hosting/assets")
+                    .then().log().all().assertThat()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
+                            {
+                                "type": "MANAGED_WEBSPACE",
+                                "identifier": "fir90",
+                                "caption": "some new ManagedWebspace in client's ManagedServer",
+                                "config": { "SSD": 100, "Traffic": 250 }
+                            }
+                            """))
+                    .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new asset can be accessed under the generated UUID
@@ -215,7 +259,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "bookingItemUuid": "%s",
                                 "type": "MANAGED_SERVER",
                                 "identifier": "vm1400",
-                                "caption": "some new CloudServer",
+                                "caption": "some new ManagedServer",
                                 "config": { "CPUs": 0, "extra": 42 }
                             }
                             """.formatted(givenBookingItem.getUuid()))
@@ -228,14 +272,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .body("", lenientlyEquals("""
                             {
                                 "statusPhrase": "Bad Request",
-                                "message": "['extra' is not expected but is '42', 'CPUs' is expected to be >= 1 but is 0, 'RAM' is required but missing, 'SSD' is required but missing, 'Traffic' is required but missing]"
+                                "message": "['config.extra' is not expected but is set to '42', 'config.CPUs' is expected to be >= 1 but is 0, 'config.RAM' is required but missing, 'config.SSD' is required but missing, 'config.Traffic' is required but missing]"
                             }
                             """));  // @formatter:on
         }
     }
 
     @Nested
-    class GetASset {
+    class GetAsset {
 
         @Test
         void globalAdmin_canGetArbitraryAsset() {
@@ -321,7 +365,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canPatchAllUpdatablePropertiesOfAsset() {
 
-            final var givenAsset = givenSomeTemporaryAssetForDebitorNumber("2001", entry("something", 1));
+            final var givenAsset = givenSomeTemporaryHostingAsset("2001", CLOUD_SERVER,
+                    config("CPUs", 4), config("RAM", 100), config("HDD", 100), config("Traffic", 2000));
 
             RestAssured // @formatter:off
                 .given()
@@ -330,9 +375,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .body("""
                         {
                             "config": {
-                                "CPU": "4",
+                                "CPUs": 2,
                                 "HDD": null,
-                                "SSD": "4096"
+                                "SSD": 250
                             }
                         }
                         """)
@@ -348,9 +393,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             "identifier": "vm2001",
                             "caption": "some test-asset",
                             "config": {
-                                "CPU": "4",
-                                "SSD": "4096",
-                                "something": 1
+                                "CPUs": 2,
+                                "RAM": 100,
+                                "SSD": 250
                             }
                          }
                     """)); // @formatter:on
@@ -359,7 +404,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             assertThat(assetRepo.findByUuid(givenAsset.getUuid())).isPresent().get()
                     .matches(asset -> {
-                        assertThat(asset.toString()).isEqualTo("HsHostingAssetEntity(CLOUD_SERVER, vm2001, some test-asset, D-1000111:some CloudServer, { CPU: 4, SSD: 4096, something: 1 })");
+                        assertThat(asset.toString()).isEqualTo("HsHostingAssetEntity(CLOUD_SERVER, vm2001, some test-asset, D-1000111:some CloudServer, { CPUs: 2, RAM: 100, SSD: 250, Traffic: 2000 })");
                         return true;
                     });
         }
@@ -371,7 +416,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void globalAdmin_canDeleteArbitraryAsset() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenAsset = givenSomeTemporaryAssetForDebitorNumber("2002", entry("something", 1));
+            final var givenAsset = givenSomeTemporaryHostingAsset("2002", CLOUD_SERVER,
+                    config("CPUs", 4), config("RAM", 100), config("HDD", 100), config("Traffic", 2000));
 
             RestAssured // @formatter:off
                 .given()
@@ -389,7 +435,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         @Test
         void normalUser_canNotDeleteUnrelatedAsset() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenAsset = givenSomeTemporaryAssetForDebitorNumber("2003", entry("something", 1));
+            final var givenAsset = givenSomeTemporaryHostingAsset("2003", CLOUD_SERVER,
+                    config("CPUs", 4), config("RAM", 100), config("HDD", 100), config("Traffic", 2000));
 
             RestAssured // @formatter:off
                 .given()
@@ -412,14 +459,22 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                 .findAny().orElseThrow();
     }
 
-    private HsHostingAssetEntity givenSomeTemporaryAssetForDebitorNumber(final String identifierSuffix,
-            final Map.Entry<String, Integer> resources) {
+    HsHostingAssetEntity givenParentAsset(final String debitorName, final HsHostingAssetType assetType) {
+        final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike(debitorName).stream().findAny().orElseThrow();
+        final var givenAsset = assetRepo.findAllByCriteria(givenDebitor.getUuid(), null, assetType).stream().findAny().orElseThrow();
+        return givenAsset;
+    }
+
+    @SafeVarargs
+    private HsHostingAssetEntity givenSomeTemporaryHostingAsset(final String identifierSuffix,
+            final HsHostingAssetType hostingAssetType,
+            final Map.Entry<String, Object>... resources) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var newAsset = HsHostingAssetEntity.builder()
                     .uuid(UUID.randomUUID())
                     .bookingItem(givenBookingItem("First", "some CloudServer"))
-                    .type(HsHostingAssetType.CLOUD_SERVER)
+                    .type(hostingAssetType)
                     .identifier("vm" + identifierSuffix)
                     .caption("some test-asset")
                     .config(Map.ofEntries(resources))
@@ -427,5 +482,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             return assetRepo.save(newAsset);
         }).assertSuccessful().returnedValue();
+    }
+
+    private Map.Entry<String, Object> config(final String key, final Object value) {
+        return entry(key, value);
     }
 }

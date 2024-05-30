@@ -40,7 +40,7 @@ class HsHostingAssetPropsControllerAcceptanceTest {
     }
 
     @Test
-    void globalAdmin_canListPropertiesOfGivenAssetType() {
+    void anyone_canListPropertiesOfGivenAssetType() {
 
         RestAssured // @formatter:off
                 .given()
@@ -52,101 +52,50 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                         [
-                             {
-                                 "type": "integer",
-                                 "propertyName": "CPUs",
-                                 "required": true,
-                                 "unit": null,
-                                 "min": 1,
-                                 "max": 32,
-                                 "step": null
-                             },
-                             {
-                                 "type": "integer",
-                                 "propertyName": "RAM",
-                                 "required": true,
-                                 "unit": "GB",
-                                 "min": 1,
-                                 "max": 128,
-                                 "step": null
-                             },
-                             {
-                                 "type": "integer",
-                                 "propertyName": "SSD",
-                                 "required": true,
-                                 "unit": "GB",
-                                 "min": 25,
-                                 "max": 1000,
-                                 "step": 25
-                             },
-                             {
-                                 "type": "integer",
-                                 "propertyName": "HDD",
-                                 "required": false,
-                                 "unit": "GB",
-                                 "min": 0,
-                                 "max": 4000,
-                                 "step": 250
-                             },
-                             {
-                                 "type": "integer",
-                                 "propertyName": "Traffic",
-                                 "required": true,
-                                 "unit": "GB",
-                                 "min": 250,
-                                 "max": 10000,
-                                 "step": 250
-                             },
-                             {
-                                 "type": "enumeration",
-                                 "propertyName": "SLA-Platform",
-                                 "required": false,
-                                 "values": [
-                                     "BASIC",
-                                     "EXT8H",
-                                     "EXT4H",
-                                     "EXT2H"
-                                 ]
-                             },
-                             {
-                                 "type": "boolean",
-                                 "propertyName": "SLA-EMail",
-                                 "required": false,
-                                 "falseIf": {
-                                     "SLA-Platform": "BASIC"
-                                 }
-                             },
-                             {
-                                 "type": "boolean",
-                                 "propertyName": "SLA-Maria",
-                                 "required": false,
-                                 "falseIf": {
-                                     "SLA-Platform": "BASIC"
-                                 }
-                             },
-                             {
-                                 "type": "boolean",
-                                 "propertyName": "SLA-PgSQL",
-                                 "required": false,
-                                 "falseIf": {
-                                     "SLA-Platform": "BASIC"
-                                 }
-                             },
-                             {
-                                 "type": "boolean",
-                                 "propertyName": "SLA-Office",
-                                 "required": false,
-                                 "falseIf": {
-                                     "SLA-Platform": "BASIC"
-                                 }
-                             },
-                             {
-                                 "type": "boolean",
-                                 "propertyName": "SLA-Web",
-                                 "required": false,
-                                 "falseIf": {
-                                    "SLA-Platform": "BASIC"
-                                }
+                            {
+                                "type": "integer",
+                                "propertyName": "CPUs",
+                                "required": true,
+                                "unit": null,
+                                "min": 1,
+                                "max": 32,
+                                "step": null
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "RAM",
+                                "required": true,
+                                "unit": "GB",
+                                "min": 1,
+                                "max": 128,
+                                "step": null
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "SSD",
+                                "required": true,
+                                "unit": "GB",
+                                "min": 25,
+                                "max": 1000,
+                                "step": 25
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "HDD",
+                                "required": false,
+                                "unit": "GB",
+                                "min": 0,
+                                "max": 4000,
+                                "step": 250
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "Traffic",
+                                "required": true,
+                                "unit": "GB",
+                                "min": 250,
+                                "max": 10000,
+                                "step": 250
                             }
                         ]
                         """));

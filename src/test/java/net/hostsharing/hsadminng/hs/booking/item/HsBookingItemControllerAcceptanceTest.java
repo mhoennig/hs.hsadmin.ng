@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
@@ -69,37 +70,42 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .body("", lenientlyEquals("""
                     [
                         {
-                             "caption": "some ManagedServer",
-                             "validFrom": "2022-10-01",
-                             "validTo": null,
-                             "resources": {
-                                 "CPU": 2,
-                                 "SDD": 512,
-                                 "extra": 42
-                             }
-                         },
-                         {
-                             "caption": "some CloudServer",
-                             "validFrom": "2023-01-15",
-                             "validTo": "2024-04-14",
-                             "resources": {
-                                 "CPU": 2,
-                                 "HDD": 1024,
-                                 "extra": 42
-                             }
-                         },
-                         {
-                             "caption": "some PrivateCloud",
-                             "validFrom": "2024-04-01",
-                             "validTo": null,
-                             "resources": {
-                                 "CPU": 10,
-                                 "HDD": 10240,
-                                 "SDD": 10240,
-                                 "extra": 42
-                             }
-                         }
-                     ]
+                            "type": "MANAGED_SERVER",
+                            "caption": "some ManagedServer",
+                            "validFrom": "2022-10-01",
+                            "validTo": null,
+                            "resources": {
+                                "RAM": 8,
+                                "SDD": 512,
+                                "CPUs": 2,
+                                "Traffic": 42
+                            }
+                        },
+                        {
+                            "type": "CLOUD_SERVER",
+                            "caption": "some CloudServer",
+                            "validFrom": "2023-01-15",
+                            "validTo": "2024-04-14",
+                            "resources": {
+                                "HDD": 1024,
+                                "RAM": 4,
+                                "CPUs": 2,
+                                "Traffic": 42
+                            }
+                        },
+                        {
+                            "type": "PRIVATE_CLOUD",
+                            "caption": "some PrivateCloud",
+                            "validFrom": "2024-04-01",
+                            "validTo": null,
+                            "resources": {
+                                "HDD": 10240,
+                                "SDD": 10240,
+                                "CPUs": 10,
+                                "Traffic": 42
+                            }
+                        }
+                    ]
                     """));
                 // @formatter:on
         }
@@ -123,7 +129,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "debitorUuid": "%s",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
-                                "resources": { "CPU": 12, "extra": 42 },
+                                "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 },
                                 "validFrom": "2022-10-13"
                             }
                             """.formatted(givenDebitor.getUuid()))
@@ -139,7 +145,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "caption": "some new booking",
                                 "validFrom": "2022-10-13",
                                 "validTo": null,
-                                "resources": { "CPU": 12 }
+                                "resources": { "CPUs": 12, "SSD": 100, "Traffic": 250 }
                              }
                             """))
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/booking/items/[^/]*"))
@@ -177,7 +183,12 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "caption": "some CloudServer",
                             "validFrom": "2023-01-15",
                             "validTo": "2024-04-14",
-                            "resources": { CPU: 2, HDD: 1024 }
+                            "resources": {
+                                "HDD": 1024,
+                                "RAM": 4,
+                                "CPUs": 2,
+                                "Traffic": 42
+                            }
                         }
                     """)); // @formatter:on
         }
@@ -222,7 +233,12 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "caption": "some CloudServer",
                             "validFrom": "2023-01-15",
                             "validTo": "2024-04-14",
-                            "resources": { CPU: 2, HDD: 1024 }
+                            "resources": {
+                                "HDD": 1024,
+                                "RAM": 4,
+                                "CPUs": 2,
+                                "Traffic": 42
+                            }
                         }
                     """)); // @formatter:on
         }
@@ -234,7 +250,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void globalAdmin_canPatchAllUpdatablePropertiesOfBookingItem() {
 
-            final var givenBookingItem = givenSomeTemporaryBookingItemForDebitorNumber(1000111, entry("something", 1));
+            final var givenBookingItem = givenSomeBookingItem(1000111, MANAGED_WEBSPACE,
+                    resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
                 .given()
@@ -245,9 +262,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "validFrom": "2020-06-05",
                             "validTo": "2022-12-31",
                             "resources": {
-                                "CPU": "4",
+                                "Traffic": 500,
                                 "HDD": null,
-                                "SSD": "4096"
+                                "SSD": 100
                             }
                         }
                         """)
@@ -263,9 +280,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "validFrom": "2022-11-01",
                             "validTo": "2022-12-31",
                             "resources": {
-                                "CPU": "4",
-                                "SSD": "4096",
-                                "something": 1
+                                "Traffic": 500,
+                                "SSD": 100
                             }
                          }
                     """)); // @formatter:on
@@ -288,7 +304,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void globalAdmin_canDeleteArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenSomeTemporaryBookingItemForDebitorNumber(1000111, entry("something", 1));
+            final var givenBookingItem = givenSomeBookingItem(1000111, MANAGED_WEBSPACE,
+                    resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
                 .given()
@@ -306,7 +323,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void normalUser_canNotDeleteUnrelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenSomeTemporaryBookingItemForDebitorNumber(1000111, entry("something", 1));
+            final var givenBookingItem = givenSomeBookingItem(1000111, MANAGED_WEBSPACE,
+                    resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
                 .given()
@@ -322,15 +340,16 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }
     }
 
-    private HsBookingItemEntity givenSomeTemporaryBookingItemForDebitorNumber(final int debitorNumber,
-            final Map.Entry<String, Integer> resources) {
+    @SafeVarargs
+    private HsBookingItemEntity givenSomeBookingItem(final int debitorNumber,
+            final HsBookingItemType hsBookingItemType, final Map.Entry<String, Object>... resources) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).get(0);
             final var newBookingItem = HsBookingItemEntity.builder()
                     .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
-                    .type(HsBookingItemType.MANAGED_WEBSPACE)
+                    .type(hsBookingItemType)
                     .caption("some test-booking")
                     .resources(Map.ofEntries(resources))
                     .validity(Range.closedOpen(
@@ -339,5 +358,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             return bookingItemRepo.save(newBookingItem);
         }).assertSuccessful().returnedValue();
+    }
+
+    private Map.Entry<String, Object> resource(final String key, final Object value) {
+        return entry(key, value);
     }
 }

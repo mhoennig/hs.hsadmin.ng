@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.validation.Validatable;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -65,7 +66,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsBookingItemEntity implements Stringifyable, RbacObject {
+public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatable<HsBookingItemEntity, HsBookingItemType> {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
             .withProp(HsBookingItemEntity::getDebitor)
@@ -140,6 +141,16 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     public String toShortString() {
         return ofNullable(debitor).map(HsOfficeDebitorEntity::toShortString).orElse("D-???????") +
                 ":" + caption;
+    }
+
+    @Override
+    public String getPropertiesName() {
+        return "resources";
+    }
+
+    @Override
+    public Map<String, Object> getProperties() {
+        return resources;
     }
 
     public static RbacView rbac() {
