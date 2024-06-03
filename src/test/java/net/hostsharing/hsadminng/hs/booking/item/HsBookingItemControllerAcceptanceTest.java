@@ -4,6 +4,9 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
+import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -17,10 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Map.entry;
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +45,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     HsBookingItemRepository bookingItemRepo;
 
     @Autowired
+    HsBookingProjectRepository projectRepo;
+
+    @Autowired
     HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
@@ -56,39 +64,43 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(1000111).get(0);
+            final var givenProject = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+                            .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                            .flatMap(List::stream)
+                            .findFirst()
+                            .orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/hs/booking/items?debitorUuid=" + givenDebitor.getUuid())
+                    .get("http://localhost/api/hs/booking/items?projectUuid=" + givenProject.getUuid())
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     [
                         {
+                            "type": "MANAGED_WEBSPACE",
+                            "caption": "some ManagedWebspace",
+                            "validFrom": "2022-10-01",
+                            "validTo": null,
+                            "resources": {
+                                "SDD": 512,
+                                "Multi": 4,
+                                "Daemons": 2,
+                                "Traffic": 12
+                            }
+                        },
+                        {
                             "type": "MANAGED_SERVER",
-                            "caption": "some ManagedServer",
+                            "caption": "separate ManagedServer",
                             "validFrom": "2022-10-01",
                             "validTo": null,
                             "resources": {
                                 "RAM": 8,
                                 "SDD": 512,
-                                "CPUs": 2,
-                                "Traffic": 42
-                            }
-                        },
-                        {
-                            "type": "CLOUD_SERVER",
-                            "caption": "some CloudServer",
-                            "validFrom": "2023-01-15",
-                            "validTo": "2024-04-14",
-                            "resources": {
-                                "HDD": 1024,
-                                "RAM": 4,
                                 "CPUs": 2,
                                 "Traffic": 42
                             }
@@ -118,7 +130,11 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void globalAdmin_canAddBookingItem() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(1000111).get(0);
+            final var givenProject = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .flatMap(List::stream)
+                    .findFirst()
+                    .orElseThrow();
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -126,13 +142,13 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "debitorUuid": "%s",
+                                "projectUuid": "%s",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 },
                                 "validFrom": "2022-10-13"
                             }
-                            """.formatted(givenDebitor.getUuid()))
+                            """.formatted(givenProject.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/booking/items")
@@ -165,8 +181,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void globalAdmin_canGetArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItemUuid = bookingItemRepo.findAll().stream()
-                            .filter(bi -> bi.getDebitor().getDebitorNumber() == 1000111)
-                            .filter(item -> item.getCaption().equals("some CloudServer"))
+                            .filter(bi -> belongsToDebitorNumber(bi, 1000111))
+                            .filter(item -> item.getCaption().equals("some ManagedWebspace"))
                             .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
@@ -180,14 +196,15 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                         {
-                            "caption": "some CloudServer",
-                            "validFrom": "2023-01-15",
-                            "validTo": "2024-04-14",
-                            "resources": {
-                                "HDD": 1024,
-                                "RAM": 4,
-                                "CPUs": 2,
-                                "Traffic": 42
+                            "type": "MANAGED_WEBSPACE",
+                             "caption": "some ManagedWebspace",
+                             "validFrom": "2022-10-01",
+                             "validTo": null,
+                             "resources": {
+                                 "SDD": 512,
+                                 "Multi": 4,
+                                 "Daemons": 2,
+                                 "Traffic": 12
                             }
                         }
                     """)); // @formatter:on
@@ -197,7 +214,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void normalUser_canNotGetUnrelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItemUuid = bookingItemRepo.findAll().stream()
-                    .filter(bi -> bi.getDebitor().getDebitorNumber() == 1000212)
+                    .filter(bi -> belongsToDebitorNumber(bi, 1000212))
                     .map(HsBookingItemEntity::getUuid)
                     .findAny().orElseThrow();
 
@@ -215,8 +232,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void debitorAgentUser_canGetRelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItemUuid = bookingItemRepo.findAll().stream()
-                    .filter(bi -> bi.getDebitor().getDebitorNumber() == 1000313)
-                    .filter(item -> item.getCaption().equals("some CloudServer"))
+                    .filter(bi -> belongsToDebitorNumber(bi, 1000313))
+                    .filter(item -> item.getCaption().equals("separate ManagedServer"))
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
@@ -230,17 +247,27 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                         {
-                            "caption": "some CloudServer",
-                            "validFrom": "2023-01-15",
-                            "validTo": "2024-04-14",
+                            "type": "MANAGED_SERVER",
+                            "caption": "separate ManagedServer",
+                            "validFrom": "2022-10-01",
+                            "validTo": null,
                             "resources": {
-                                "HDD": 1024,
-                                "RAM": 4,
+                                "RAM": 8,
+                                "SDD": 512,
                                 "CPUs": 2,
                                 "Traffic": 42
                             }
                         }
                     """)); // @formatter:on
+        }
+
+        private static boolean belongsToDebitorNumber(final HsBookingItemEntity bi, final int i) {
+            return ofNullable(bi)
+                    .map(HsBookingItemEntity::getProject)
+                    .map(HsBookingProjectEntity::getDebitor)
+                    .map(HsOfficeDebitorEntity::getDebitorNumber)
+                    .filter(debitorNumber -> debitorNumber == i)
+                    .isPresent();
         }
     }
 
@@ -290,7 +317,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             context.define("superuser-alex@hostsharing.net");
             assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(D-1000111: rel(anchor='LP First GmbH', type='DEBITOR', holder='LP First GmbH'), fir)");
+                        assertThat(mandate.getProject().getDebitor().toString()).isEqualTo("debitor(D-1000111: rel(anchor='LP First GmbH', type='DEBITOR', holder='LP First GmbH'), fir)");
                         assertThat(mandate.getValidFrom()).isEqualTo("2022-11-01");
                         assertThat(mandate.getValidTo()).isEqualTo("2022-12-31");
                         return true;
@@ -345,10 +372,13 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             final HsBookingItemType hsBookingItemType, final Map.Entry<String, Object>... resources) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).get(0);
+            final var givenProject = debitorRepo.findDebitorByDebitorNumber(debitorNumber).stream()
+                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .flatMap(java.util.List::stream)
+                    .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemEntity.builder()
                     .uuid(UUID.randomUUID())
-                    .debitor(givenDebitor)
+                    .project(givenProject)
                     .type(hsBookingItemType)
                     .caption("some test-booking")
                     .resources(Map.ofEntries(resources))

@@ -51,7 +51,7 @@ components:
         HsBookingItemInsert:
             type: object
             properties:
-                debitorUuid:
+                projectUuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -74,7 +74,7 @@ components:
                     $ref: '#/components/schemas/BookingResources'
             required:
                 - caption
-                - debitorUuid
+                - projectUuid
                 - validFrom
                 - resources
             additionalProperties: false

@@ -30,40 +30,46 @@ create or replace procedure buildRbacSystemForHsHostingAsset(
     language plpgsql as $$
 
 declare
-    newParentServer hs_hosting_asset;
     newBookingItem hs_booking_item;
+    newParentAsset hs_hosting_asset;
 
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentServer;
-
     SELECT * FROM hs_booking_item WHERE uuid = NEW.bookingItemUuid    INTO newBookingItem;
+
+    SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentAsset;
 
     perform createRoleWithGrants(
         hsHostingAssetOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[hsBookingItemADMIN(newBookingItem)]
+            incomingSuperRoles => array[
+            	hsBookingItemADMIN(newBookingItem),
+            	hsHostingAssetADMIN(newParentAsset)]
     );
 
     perform createRoleWithGrants(
         hsHostingAssetADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsHostingAssetOWNER(NEW)]
+            incomingSuperRoles => array[
+            	hsBookingItemAGENT(newBookingItem),
+            	hsHostingAssetAGENT(newParentAsset),
+            	hsHostingAssetOWNER(NEW)]
+    );
+
+    perform createRoleWithGrants(
+        hsHostingAssetAGENT(NEW),
+            incomingSuperRoles => array[hsHostingAssetADMIN(NEW)]
     );
 
     perform createRoleWithGrants(
         hsHostingAssetTENANT(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsHostingAssetADMIN(NEW)],
-            outgoingSubRoles => array[hsBookingItemTENANT(newBookingItem)]
+            incomingSuperRoles => array[hsHostingAssetAGENT(NEW)],
+            outgoingSubRoles => array[
+            	hsBookingItemTENANT(newBookingItem),
+            	hsHostingAssetTENANT(newParentAsset)]
     );
-
-    IF NEW.type = 'CLOUD_SERVER' THEN
-    ELSIF NEW.type = 'MANAGED_SERVER' THEN
-    ELSIF NEW.type = 'MANAGED_WEBSPACE' THEN
-    ELSE
-    END IF;
 
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -91,6 +97,49 @@ execute procedure insertTriggerForHsHostingAsset_tf();
 -- ============================================================================
 --changeset hs-hosting-asset-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
+
+-- granting INSERT permission to global ----------------------------
+
+/*
+    Grants INSERT INTO hs_hosting_asset permissions to specified role of pre-existing global rows.
+ */
+do language plpgsql $$
+    declare
+        row global;
+    begin
+        call defineContext('create INSERT INTO hs_hosting_asset permissions for pre-exising global rows');
+
+        FOR row IN SELECT * FROM global
+            -- unconditional for all rows in that table
+            LOOP
+                call grantPermissionToRole(
+                        createPermission(row.uuid, 'INSERT', 'hs_hosting_asset'),
+                        globalADMIN());
+            END LOOP;
+    end;
+$$;
+
+/**
+    Grants hs_hosting_asset INSERT permission to specified role of new global rows.
+*/
+create or replace function new_hs_hosting_asset_grants_insert_to_global_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    -- unconditional for all rows in that table
+        call grantPermissionToRole(
+            createPermission(NEW.uuid, 'INSERT', 'hs_hosting_asset'),
+            globalADMIN());
+    -- end.
+    return NEW;
+end; $$;
+
+-- z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger z_new_hs_hosting_asset_grants_insert_to_global_tg
+    after insert on global
+    for each row
+execute procedure new_hs_hosting_asset_grants_insert_to_global_tf();
 
 -- granting INSERT permission to hs_booking_item ----------------------------
 
@@ -176,17 +225,21 @@ create or replace function hs_hosting_asset_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
+    -- check INSERT INSERT if global ADMIN
+    if isGlobalAdmin() then
+        return NEW;
+    end if;
     -- check INSERT permission via direct foreign key: NEW.bookingItemUuid
-    if NEW.type in ('MANAGED_SERVER', 'CLOUD_SERVER', 'MANAGED_WEBSPACE') and hasInsertPermission(NEW.bookingItemUuid, 'hs_hosting_asset') then
+    if hasInsertPermission(NEW.bookingItemUuid, 'hs_hosting_asset') then
         return NEW;
     end if;
     -- check INSERT permission via direct foreign key: NEW.parentAssetUuid
-    if NEW.type in ('MANAGED_WEBSPACE') and hasInsertPermission(NEW.parentAssetUuid, 'hs_hosting_asset') then
+    if hasInsertPermission(NEW.parentAssetUuid, 'hs_hosting_asset') then
         return NEW;
     end if;
 
-    raise exception '[403] insert into hs_hosting_asset not allowed for current subjects % (%)',
-            currentSubjects(), currentSubjectsUuids();
+    raise exception '[403] insert into hs_hosting_asset values(%) not allowed for current subjects % (%)',
+            NEW, currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger hs_hosting_asset_insert_permission_check_tg
@@ -200,11 +253,9 @@ create trigger hs_hosting_asset_insert_permission_check_tg
 --changeset hs-hosting-asset-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromQuery('hs_hosting_asset',
+call generateRbacIdentityViewFromProjection('hs_hosting_asset',
     $idName$
-        SELECT asset.uuid as uuid, bookingItemIV.idName || '-' || cleanIdentifier(asset.identifier) as idName
-            FROM hs_hosting_asset asset
-            JOIN hs_booking_item_iv bookingItemIV ON bookingItemIV.uuid = asset.bookingItemUuid
+        identifier
     $idName$);
 --//
 

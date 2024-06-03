@@ -7,13 +7,13 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
 
 @UtilityClass
 public class TestHsBookingItem {
 
     public static final HsBookingItemEntity TEST_BOOKING_ITEM = HsBookingItemEntity.builder()
-            .debitor(TEST_DEBITOR)
+            .project(TEST_PROJECT)
             .caption("test booking item")
             .resources(Map.ofEntries(
                     entry("someThing", 1),

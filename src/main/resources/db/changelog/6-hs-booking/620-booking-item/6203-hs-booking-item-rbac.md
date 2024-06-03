@@ -29,35 +29,34 @@ subgraph bookingItem["`**bookingItem**`"]
     end
 end
 
-subgraph debitorRel["`**debitorRel**`"]
+subgraph project["`**project**`"]
     direction TB
-    style debitorRel fill:#99bcdb,stroke:#274d6e,stroke-width:8px
+    style project fill:#99bcdb,stroke:#274d6e,stroke-width:8px
 
-    subgraph debitorRel:roles[ ]
-        style debitorRel:roles fill:#99bcdb,stroke:white
+    subgraph project:roles[ ]
+        style project:roles fill:#99bcdb,stroke:white
 
-        role:debitorRel:OWNER[[debitorRel:OWNER]]
-        role:debitorRel:ADMIN[[debitorRel:ADMIN]]
-        role:debitorRel:AGENT[[debitorRel:AGENT]]
-        role:debitorRel:TENANT[[debitorRel:TENANT]]
+        role:project:OWNER[[project:OWNER]]
+        role:project:ADMIN[[project:ADMIN]]
+        role:project:AGENT[[project:AGENT]]
+        role:project:TENANT[[project:TENANT]]
     end
 end
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:debitorRel:OWNER
-role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
-role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
-role:debitorRel:AGENT -.-> role:debitorRel:TENANT
-role:debitorRel:AGENT ==> role:bookingItem:OWNER
+role:project:OWNER -.-> role:project:ADMIN
+role:project:ADMIN -.-> role:project:AGENT
+role:project:AGENT -.-> role:project:TENANT
+role:project:AGENT ==> role:bookingItem:OWNER
 role:bookingItem:OWNER ==> role:bookingItem:ADMIN
-role:debitorRel:AGENT ==> role:bookingItem:ADMIN
 role:bookingItem:ADMIN ==> role:bookingItem:AGENT
 role:bookingItem:AGENT ==> role:bookingItem:TENANT
-role:bookingItem:TENANT ==> role:debitorRel:TENANT
+role:bookingItem:TENANT ==> role:project:TENANT
 
 %% granting permissions to roles
-role:debitorRel:ADMIN ==> perm:bookingItem:INSERT
+role:global:ADMIN ==> perm:bookingItem:INSERT
 role:global:ADMIN ==> perm:bookingItem:DELETE
+role:project:ADMIN ==> perm:bookingItem:INSERT
 role:bookingItem:ADMIN ==> perm:bookingItem:UPDATE
 role:bookingItem:TENANT ==> perm:bookingItem:SELECT
 

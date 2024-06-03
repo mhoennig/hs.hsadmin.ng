@@ -1,0 +1,83 @@
+get:
+    tags:
+        - hs-booking-projects
+    description: 'Fetch a single booking project its uuid, if visible for the current subject.'
+    operationId: getBookingProjectByUuid
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: bookingProjectUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the booking project to fetch.
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-booking-project-schemas.yaml#/components/schemas/HsBookingProject'
+
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+
+patch:
+    tags:
+        - hs-booking-projects
+    description: 'Updates a single booking project identified by its uuid, if permitted for the current subject.'
+    operationId: patchBookingProject
+    parameters:
+        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        -   name: bookingProjectUuid
+            in: path
+            required: true
+            schema:
+                type: string
+                format: uuid
+    requestBody:
+        content:
+            'application/json':
+                schema:
+                    $ref: 'hs-booking-project-schemas.yaml#/components/schemas/HsBookingProjectPatch'
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'hs-booking-project-schemas.yaml#/components/schemas/HsBookingProject'
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+
+delete:
+    tags:
+        - hs-booking-projects
+    description: 'Delete a single booking project identified by its uuid, if permitted for the current subject.'
+    operationId: deleteBookingIemByUuid
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: bookingProjectUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+          description: UUID of the booking project to delete.
+    responses:
+        "204":
+            description: No Content
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+        "404":
+            $ref: 'error-responses.yaml#/components/responses/NotFound'

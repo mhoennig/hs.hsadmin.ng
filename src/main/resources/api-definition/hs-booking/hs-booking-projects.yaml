@@ -1,19 +1,19 @@
 get:
-    summary: Returns a list of all booking items for a specified project.
-    description: Returns the list of all booking items for a specified project which are visible to the current user or any of it's assumed roles.
+    summary: Returns a list of all booking projects for a specified debitor.
+    description: Returns the list of all booking projects for a specified debitor which are visible to the current user or any of it's assumed roles.
     tags:
-        - hs-booking-items
-    operationId: listBookingItemsByProjectUuid
+        - hs-booking-projects
+    operationId: listBookingProjectsByDebitorUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentUser'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
-        - name: projectUuid
+        - name: debitorUuid
           in: query
           required: true
           schema:
               type: string
               format: uuid
-          description: The UUID of the project, whose booking items are to be listed.
+          description: The UUID of the debitor, whose booking projects are to be listed.
     responses:
         "200":
             description: OK
@@ -22,34 +22,34 @@ get:
                     schema:
                         type: array
                         items:
-                            $ref: 'hs-booking-item-schemas.yaml#/components/schemas/HsBookingItem'
+                            $ref: 'hs-booking-project-schemas.yaml#/components/schemas/HsBookingProject'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":
             $ref: 'error-responses.yaml#/components/responses/Forbidden'
 
 post:
-    summary: Adds a new booking item.
+    summary: Adds a new project as a container for booking items.
     tags:
-        - hs-booking-items
-    operationId: addBookingItem
+        - hs-booking-projects
+    operationId: addBookingProject
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentUser'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
-        description: A JSON object describing the new booking item.
+        description: A JSON object describing the new booking project.
         required: true
         content:
             application/json:
                 schema:
-                    $ref: 'hs-booking-item-schemas.yaml#/components/schemas/HsBookingItemInsert'
+                    $ref: 'hs-booking-project-schemas.yaml#/components/schemas/HsBookingProjectInsert'
     responses:
         "201":
             description: Created
             content:
                 'application/json':
                     schema:
-                        $ref: 'hs-booking-item-schemas.yaml#/components/schemas/HsBookingItem'
+                        $ref: 'hs-booking-project-schemas.yaml#/components/schemas/HsBookingProject'
         "401":
             $ref: 'error-responses.yaml#/components/responses/Unauthorized'
         "403":

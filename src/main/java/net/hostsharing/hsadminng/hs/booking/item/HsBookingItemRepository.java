@@ -11,7 +11,7 @@ public interface HsBookingItemRepository extends Repository<HsBookingItemEntity,
     List<HsBookingItemEntity> findAll();
     Optional<HsBookingItemEntity> findByUuid(final UUID bookingItemUuid);
 
-    List<HsBookingItemEntity> findAllByDebitorUuid(final UUID bookingItemUuid);
+    List<HsBookingItemEntity> findAllByProjectUuid(final UUID projectItemUuid);
 
     HsBookingItemEntity save(HsBookingItemEntity current);
 

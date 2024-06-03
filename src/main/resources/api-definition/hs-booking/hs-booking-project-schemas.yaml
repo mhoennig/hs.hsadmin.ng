@@ -1,0 +1,40 @@
+
+components:
+
+    schemas:
+
+        HsBookingProject:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                caption:
+                    type: string
+            required:
+                - uuid
+                - caption
+
+        HsBookingProjectPatch:
+            type: object
+            properties:
+                caption:
+                    type: string
+                    nullable: true
+
+        HsBookingProjectInsert:
+            type: object
+            properties:
+                debitorUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                caption:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+            required:
+                - debitorUuid
+                - caption
+            additionalProperties: false

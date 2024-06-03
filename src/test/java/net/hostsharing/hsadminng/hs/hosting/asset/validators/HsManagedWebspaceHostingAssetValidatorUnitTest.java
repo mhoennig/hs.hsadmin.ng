@@ -2,7 +2,6 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -12,12 +11,12 @@ import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
 
 class HsManagedWebspaceHostingAssetValidatorUnitTest {
 
     final HsBookingItemEntity managedServerBookingItem = HsBookingItemEntity.builder()
-            .debitor(HsOfficeDebitorEntity.builder().defaultPrefix("abc").build()
-            )
+            .project(TEST_PROJECT)
             .build();
     final HsHostingAssetEntity mangedServerAssetEntity = HsHostingAssetEntity.builder()
             .type(MANAGED_SERVER)

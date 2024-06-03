@@ -33,14 +33,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inOtherCases;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
@@ -79,11 +76,11 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
     @Version
     private int version;
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JoinColumn(name = "bookingitemuuid")
     private HsBookingItemEntity bookingItem;
 
-    @ManyToOne(optional = true)
+    @ManyToOne
     @JoinColumn(name = "parentassetuuid")
     private HsHostingAssetEntity parentAsset;
 
@@ -136,47 +133,39 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
 
     public static RbacView rbac() {
         return rbacViewFor("asset", HsHostingAssetEntity.class)
-                .withIdentityView(SQL.query("""
-                        SELECT asset.uuid as uuid, bookingItemIV.idName || '-' || cleanIdentifier(asset.identifier) as idName
-                            FROM hs_hosting_asset asset
-                            JOIN hs_booking_item_iv bookingItemIV ON bookingItemIV.uuid = asset.bookingItemUuid
-                        """))
+                .withIdentityView(SQL.projection("identifier"))
                 .withRestrictedViewOrderBy(SQL.expression("identifier"))
                 .withUpdatableColumns("version", "caption", "config")
+                .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
 
                 .importEntityAlias("bookingItem", HsBookingItemEntity.class, usingDefaultCase(),
                     dependsOnColumn("bookingItemUuid"),
                     directlyFetchedByDependsOnColumn(),
                     NULLABLE)
+                .toRole("bookingItem", AGENT).grantPermission(INSERT)
 
-                .switchOnColumn("type",
-                    inCaseOf(CLOUD_SERVER.name(),
-                        then -> then.toRole("bookingItem", AGENT).grantPermission(INSERT)),
-                    inCaseOf(MANAGED_SERVER.name(),
-                        then -> then.toRole("bookingItem", AGENT).grantPermission(INSERT)),
-                    inCaseOf(MANAGED_WEBSPACE.name(), then ->
-                        then.importEntityAlias("parentServer", HsHostingAssetEntity.class, usingCase(MANAGED_SERVER),
-                                dependsOnColumn("parentAssetUuid"),
-                                directlyFetchedByDependsOnColumn(),
-                                NULLABLE)
-                            .toRole("parentServer", ADMIN).grantPermission(INSERT)
-                            .toRole("bookingItem", AGENT).grantPermission(INSERT)
-                    ),
-                    inOtherCases(then -> {})
-                )
+                .importEntityAlias("parentAsset", HsHostingAssetEntity.class, usingCase(MANAGED_SERVER),
+                        dependsOnColumn("parentAssetUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
+                .toRole("parentAsset", ADMIN).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
                     with.incomingSuperRole("bookingItem", ADMIN);
+                    with.incomingSuperRole("parentAsset", ADMIN);
                     with.permission(DELETE);
                 })
                 .createSubRole(ADMIN, (with) -> {
+                    with.incomingSuperRole("bookingItem", AGENT);
+                    with.incomingSuperRole("parentAsset", AGENT);
                     with.permission(UPDATE);
                 })
+                .createSubRole(AGENT)
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("bookingItem", TENANT);
+                    with.outgoingSubRole("parentAsset", TENANT);
                     with.permission(SELECT);
                 })
-
                 .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentServer", "global");
     }
 

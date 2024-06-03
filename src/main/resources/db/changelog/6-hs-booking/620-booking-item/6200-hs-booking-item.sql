@@ -17,11 +17,15 @@ create table if not exists hs_booking_item
 (
     uuid                uuid unique references RbacObject (uuid),
     version             int not null default 0,
-    debitorUuid         uuid not null references hs_office_debitor(uuid),
+    projectUuid         uuid null references hs_booking_project(uuid),
     type                HsBookingItemType not null,
+    parentItemUuid      uuid null references hs_booking_item(uuid) initially deferred,
     validity            daterange not null,
     caption             varchar(80) not null,
-    resources           jsonb not null
+    resources           jsonb not null,
+
+    constraint chk_hs_booking_item_has_project_or_parent_asset
+        check (projectUuid is not null or parentItemUuid is not null)
 );
 --//
 

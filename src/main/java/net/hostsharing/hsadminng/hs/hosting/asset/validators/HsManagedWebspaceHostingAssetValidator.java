@@ -26,7 +26,7 @@ class HsManagedWebspaceHostingAssetValidator extends HsEntityValidator<HsHosting
     }
 
     private static void validateIdentifierPattern(final List<String> result, final HsHostingAssetEntity assetEntity) {
-        final var expectedIdentifierPattern = "^" + assetEntity.getParentAsset().getBookingItem().getDebitor().getDefaultPrefix() + "[0-9][0-9]$";
+        final var expectedIdentifierPattern = "^" + assetEntity.getParentAsset().getBookingItem().getProject().getDebitor().getDefaultPrefix() + "[0-9][0-9]$";
         if ( !assetEntity.getIdentifier().matches(expectedIdentifierPattern)) {
             result.add("'identifier' expected to match '"+expectedIdentifierPattern+"', but is '" + assetEntity.getIdentifier() + "'");
         }

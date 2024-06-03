@@ -150,7 +150,7 @@ public class InsertTriggerGenerator {
                 returns trigger
                 language plpgsql as $$
             begin
-                raise exception '[403] insert into ${rawSubTable} not allowed regardless of current subject, no insert permissions grated at all';
+                raise exception '[403] insert into ${rawSubTable} values(%) not allowed regardless of current subject, no insert permissions granted at all', NEW;
             end; $$;
                        
             create trigger ${rawSubTable}_insert_permission_check_tg
@@ -254,8 +254,8 @@ public class InsertTriggerGenerator {
     private void generateInsertPermissionsChecksFooter(final StringWriter plPgSql) {
         plPgSql.writeLn();
         plPgSql.writeLn("""
-                raise exception '[403] insert into ${rawSubTable} not allowed for current subjects % (%)',
-                        currentSubjects(), currentSubjectsUuids();
+                raise exception '[403] insert into ${rawSubTable} values(%) not allowed for current subjects % (%)',
+                        NEW, currentSubjects(), currentSubjectsUuids();
             end; $$;
             
             create trigger ${rawSubTable}_insert_permission_check_tg

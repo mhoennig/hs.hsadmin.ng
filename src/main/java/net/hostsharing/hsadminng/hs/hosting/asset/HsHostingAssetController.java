@@ -78,14 +78,14 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     public ResponseEntity<HsHostingAssetResource> getAssetByUuid(
             final String currentUser,
             final String assumedRoles,
-            final UUID serverUuid) {
+            final UUID assetUuid) {
 
         context.define(currentUser, assumedRoles);
 
-        final var result = assetRepo.findByUuid(serverUuid);
+        final var result = assetRepo.findByUuid(assetUuid);
         return result
-                .map(serverEntity -> ResponseEntity.ok(
-                        mapper.map(serverEntity, HsHostingAssetResource.class)))
+                .map(assetEntity -> ResponseEntity.ok(
+                        mapper.map(assetEntity, HsHostingAssetResource.class)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -94,10 +94,10 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     public ResponseEntity<Void> deleteAssetUuid(
             final String currentUser,
             final String assumedRoles,
-            final UUID serverUuid) {
+            final UUID assetUuid) {
         context.define(currentUser, assumedRoles);
 
-        final var result = assetRepo.deleteByUuid(serverUuid);
+        final var result = assetRepo.deleteByUuid(assetUuid);
         return result == 0
                 ? ResponseEntity.notFound().build()
                 : ResponseEntity.noContent().build();
@@ -108,12 +108,12 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     public ResponseEntity<HsHostingAssetResource> patchAsset(
             final String currentUser,
             final String assumedRoles,
-            final UUID serverUuid,
+            final UUID assetUuid,
             final HsHostingAssetPatchResource body) {
 
         context.define(currentUser, assumedRoles);
 
-        final var current = assetRepo.findByUuid(serverUuid).orElseThrow();
+        final var current = assetRepo.findByUuid(assetUuid).orElseThrow();
 
         new HsHostingAssetEntityPatcher(current).apply(body);
 

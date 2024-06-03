@@ -3,29 +3,29 @@
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-OBJECT:1 endDelimiter:--//
+--changeset hs-booking-project-rbac-OBJECT:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_booking_item');
+call generateRelatedRbacObject('hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset hs-booking-project-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsBookingItem', 'hs_booking_item');
+call generateRbacRoleDescriptors('hsBookingProject', 'hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-insert-trigger:1 endDelimiter:--//
+--changeset hs-booking-project-rbac-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsBookingItem(
-    NEW hs_booking_item
+create or replace procedure buildRbacSystemForHsBookingProject(
+    NEW hs_booking_project
 )
     language plpgsql as $$
 
@@ -48,27 +48,25 @@ begin
 
 
     perform createRoleWithGrants(
-        hsBookingItemOWNER(NEW),
+        hsBookingProjectOWNER(NEW),
             incomingSuperRoles => array[hsOfficeRelationAGENT(newDebitorRel)]
     );
 
     perform createRoleWithGrants(
-        hsBookingItemADMIN(NEW),
+        hsBookingProjectADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[
-            	hsBookingItemOWNER(NEW),
-            	hsOfficeRelationAGENT(newDebitorRel)]
+            incomingSuperRoles => array[hsBookingProjectOWNER(NEW)]
     );
 
     perform createRoleWithGrants(
-        hsBookingItemAGENT(NEW),
-            incomingSuperRoles => array[hsBookingItemADMIN(NEW)]
+        hsBookingProjectAGENT(NEW),
+            incomingSuperRoles => array[hsBookingProjectADMIN(NEW)]
     );
 
     perform createRoleWithGrants(
-        hsBookingItemTENANT(NEW),
+        hsBookingProjectTENANT(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsBookingItemAGENT(NEW)],
+            incomingSuperRoles => array[hsBookingProjectAGENT(NEW)],
             outgoingSubRoles => array[hsOfficeRelationTENANT(newDebitorRel)]
     );
 
@@ -78,81 +76,81 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_booking_item row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_booking_project row.
  */
 
-create or replace function insertTriggerForHsBookingItem_tf()
+create or replace function insertTriggerForHsBookingProject_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsBookingItem(NEW);
+    call buildRbacSystemForHsBookingProject(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsBookingItem_tg
-    after insert on hs_booking_item
+create trigger insertTriggerForHsBookingProject_tg
+    after insert on hs_booking_project
     for each row
-execute procedure insertTriggerForHsBookingItem_tf();
+execute procedure insertTriggerForHsBookingProject_tf();
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset hs-booking-project-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to hs_office_relation ----------------------------
 
 /*
-    Grants INSERT INTO hs_booking_item permissions to specified role of pre-existing hs_office_relation rows.
+    Grants INSERT INTO hs_booking_project permissions to specified role of pre-existing hs_office_relation rows.
  */
 do language plpgsql $$
     declare
         row hs_office_relation;
     begin
-        call defineContext('create INSERT INTO hs_booking_item permissions for pre-exising hs_office_relation rows');
+        call defineContext('create INSERT INTO hs_booking_project permissions for pre-exising hs_office_relation rows');
 
         FOR row IN SELECT * FROM hs_office_relation
             WHERE type = 'DEBITOR'
             LOOP
                 call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
+                        createPermission(row.uuid, 'INSERT', 'hs_booking_project'),
                         hsOfficeRelationADMIN(row));
             END LOOP;
     end;
 $$;
 
 /**
-    Grants hs_booking_item INSERT permission to specified role of new hs_office_relation rows.
+    Grants hs_booking_project INSERT permission to specified role of new hs_office_relation rows.
 */
-create or replace function new_hs_booking_item_grants_insert_to_hs_office_relation_tf()
+create or replace function new_hs_booking_project_grants_insert_to_hs_office_relation_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if NEW.type = 'DEBITOR' then
         call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
+            createPermission(NEW.uuid, 'INSERT', 'hs_booking_project'),
             hsOfficeRelationADMIN(NEW));
     end if;
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_booking_item_grants_insert_to_hs_office_relation_tg
+create trigger z_new_hs_booking_project_grants_insert_to_hs_office_relation_tg
     after insert on hs_office_relation
     for each row
-execute procedure new_hs_booking_item_grants_insert_to_hs_office_relation_tf();
+execute procedure new_hs_booking_project_grants_insert_to_hs_office_relation_tf();
 
 
 -- ============================================================================
---changeset hs_booking_item-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset hs_booking_project-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user respectively the assumed roles are allowed to insert a row to hs_booking_item.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_booking_project.
 */
-create or replace function hs_booking_item_insert_permission_check_tf()
+create or replace function hs_booking_project_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
 declare
@@ -164,47 +162,45 @@ begin
         JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
     );
-    assert superObjectUuid is not null, 'object uuid fetched depending on hs_booking_item.debitorUuid must not be null, also check fetchSql in RBAC DSL';
-    if hasInsertPermission(superObjectUuid, 'hs_booking_item') then
+    assert superObjectUuid is not null, 'object uuid fetched depending on hs_booking_project.debitorUuid must not be null, also check fetchSql in RBAC DSL';
+    if hasInsertPermission(superObjectUuid, 'hs_booking_project') then
         return NEW;
     end if;
 
-    raise exception '[403] insert into hs_booking_item not allowed for current subjects % (%)',
-            currentSubjects(), currentSubjectsUuids();
+    raise exception '[403] insert into hs_booking_project values(%) not allowed for current subjects % (%)',
+            NEW, currentSubjects(), currentSubjectsUuids();
 end; $$;
 
-create trigger hs_booking_item_insert_permission_check_tg
-    before insert on hs_booking_item
+create trigger hs_booking_project_insert_permission_check_tg
+    before insert on hs_booking_project
     for each row
-        execute procedure hs_booking_item_insert_permission_check_tf();
+        execute procedure hs_booking_project_insert_permission_check_tf();
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset hs-booking-project-rbac-IDENTITY-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromQuery('hs_booking_item',
+call generateRbacIdentityViewFromQuery('hs_booking_project',
     $idName$
-        SELECT bookingItem.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingItem.caption) as idName
-            FROM hs_booking_item bookingItem
-            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingItem.debitorUuid
+        SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingProject.caption) as idName
+            FROM hs_booking_project bookingProject
+            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
     $idName$);
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset hs-booking-project-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_booking_item',
+call generateRbacRestrictedView('hs_booking_project',
     $orderBy$
-        validity
+        caption
     $orderBy$,
     $updates$
         version = new.version,
-        caption = new.caption,
-        validity = new.validity,
-        resources = new.resources
+        caption = new.caption
     $updates$);
 --//
 

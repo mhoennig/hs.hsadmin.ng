@@ -37,7 +37,7 @@ class HsHostingAssetEntityUnitTest {
         final var result = givenServer.toString();
 
         assertThat(result).isEqualTo(
-                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1000100:test booking item, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1000100:test project:test booking item, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
     }
 
     @Test

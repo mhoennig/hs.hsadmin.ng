@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static net.hostsharing.hsadminng.mapper.PatchMap.patchMap;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -70,7 +70,7 @@ class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsBookingItemEntity newInitialEntity() {
         final var entity = new HsBookingItemEntity();
         entity.setUuid(INITIAL_BOOKING_ITEM_UUID);
-        entity.setDebitor(TEST_DEBITOR);
+        entity.setProject(TEST_PROJECT);
         entity.getResources().putAll(KeyValueMap.from(INITIAL_RESOURCES));
         entity.setCaption(INITIAL_CAPTION);
         entity.setValidity(Range.closedInfinite(GIVEN_VALID_FROM));

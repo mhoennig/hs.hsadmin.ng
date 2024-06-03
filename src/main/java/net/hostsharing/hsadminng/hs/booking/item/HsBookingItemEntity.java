@@ -9,8 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import net.hostsharing.hsadminng.hs.validation.Validatable;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
@@ -38,14 +37,12 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.lowerInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.upperInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
@@ -55,7 +52,6 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -69,7 +65,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatable<HsBookingItemEntity, HsBookingItemType> {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
-            .withProp(HsBookingItemEntity::getDebitor)
+            .withProp(HsBookingItemEntity::getProject)
             .withProp(HsBookingItemEntity::getType)
             .withProp(e -> e.getValidity().asString())
             .withProp(HsBookingItemEntity::getCaption)
@@ -83,9 +79,13 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
     @Version
     private int version;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "debitoruuid")
-    private HsOfficeDebitorEntity debitor;
+    @ManyToOne
+    @JoinColumn(name = "projectuuid")
+    private HsBookingProjectEntity project;
+
+    @ManyToOne
+    @JoinColumn(name = "parentitemuuid")
+    private HsBookingItemEntity parentItem;
 
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
@@ -139,8 +139,15 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
 
     @Override
     public String toShortString() {
-        return ofNullable(debitor).map(HsOfficeDebitorEntity::toShortString).orElse("D-???????") +
+        return ofNullable(relatedProject()).map(HsBookingProjectEntity::toShortString).orElse("D-???????-?") +
                 ":" + caption;
+    }
+
+    private HsBookingProjectEntity relatedProject() {
+        if (project != null) {
+            return project;
+        }
+        return parentItem == null ? null : parentItem.relatedProject();
     }
 
     @Override
@@ -155,48 +162,42 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
 
     public static RbacView rbac() {
         return rbacViewFor("bookingItem", HsBookingItemEntity.class)
-                .withIdentityView(SQL.query("""
-                        SELECT bookingItem.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingItem.caption) as idName
-                            FROM hs_booking_item bookingItem
-                            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingItem.debitorUuid
-                        """))
+                .withIdentityView(SQL.projection("caption"))
                 .withRestrictedViewOrderBy(SQL.expression("validity"))
                 .withUpdatableColumns("version", "caption", "validity", "resources")
-
-                .importEntityAlias("debitor", HsOfficeDebitorEntity.class, usingDefaultCase(),
-                        dependsOnColumn("debitorUuid"),
-                        directlyFetchedByDependsOnColumn(),
-                        NOT_NULL)
-
-                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),
-                        dependsOnColumn("debitorUuid"),
-                        fetchedBySql("""
-                                SELECT ${columns}
-                                    FROM hs_office_relation debitorRel
-                                    JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
-                                    WHERE debitor.uuid = ${REF}.debitorUuid
-                                """),
-                        NOT_NULL)
-                .toRole("debitorRel", ADMIN).grantPermission(INSERT)
+                .toRole("global", ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
                 .toRole("global", ADMIN).grantPermission(DELETE)
 
+                .importEntityAlias("project", HsBookingProjectEntity.class, usingDefaultCase(),
+                        dependsOnColumn("projectUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
+                .toRole("project", ADMIN).grantPermission(INSERT)
+
+                .importEntityAlias("parentItem", HsBookingItemEntity.class, usingDefaultCase(),
+                        dependsOnColumn("parentItemUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
+                .toRole("parentItem", ADMIN).grantPermission(INSERT)
+
                 .createRole(OWNER, (with) -> {
-                    with.incomingSuperRole("debitorRel", AGENT);
+                    with.incomingSuperRole("project", AGENT);
+                    with.incomingSuperRole("parentItem", AGENT);
                 })
                 .createSubRole(ADMIN, (with) -> {
-                    with.incomingSuperRole("debitorRel", AGENT);
                     with.permission(UPDATE);
                 })
                 .createSubRole(AGENT)
                 .createSubRole(TENANT, (with) -> {
-                    with.outgoingSubRole("debitorRel", TENANT);
+                    with.outgoingSubRole("project", TENANT);
+                    with.outgoingSubRole("parentItem", TENANT);
                     with.permission(SELECT);
                 })
 
-                .limitDiagramTo("bookingItem", "debitorRel", "global");
+                .limitDiagramTo("bookingItem", "project", "global");
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("6-hs-booking/601-booking-item/6013-hs-booking-item-rbac");
+        rbac().generateWithBaseFileName("6-hs-booking/620-booking-item/6203-hs-booking-item-rbac");
     }
 }

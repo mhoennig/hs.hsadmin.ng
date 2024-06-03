@@ -8,6 +8,15 @@ servers:
 
 paths:
 
+  # Projects
+
+  /api/hs/booking/projects:
+    $ref: "hs-booking-projects.yaml"
+
+  /api/hs/booking/projects/{bookingProjectUuid}:
+    $ref: "hs-booking-projects-with-uuid.yaml"
+
+
   # Items
 
   /api/hs/booking/items:

@@ -20,5 +20,6 @@ public class TestHsOfficeDebitor {
                     .contact(TEST_CONTACT)
                     .build())
             .partner(TEST_PARTNER)
+            .defaultPrefix("abc")
             .build();
 }

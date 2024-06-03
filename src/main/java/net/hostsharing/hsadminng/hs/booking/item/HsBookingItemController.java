@@ -34,13 +34,13 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsBookingItemResource>> listBookingItemsByDebitorUuid(
+    public ResponseEntity<List<HsBookingItemResource>> listBookingItemsByProjectUuid(
             final String currentUser,
             final String assumedRoles,
-            final UUID debitorUuid) {
+            final UUID projectUuid) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = bookingItemRepo.findAllByDebitorUuid(debitorUuid);
+        final var entities = bookingItemRepo.findAllByProjectUuid(projectUuid);
 
         final var resources = mapper.mapList(entities, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);

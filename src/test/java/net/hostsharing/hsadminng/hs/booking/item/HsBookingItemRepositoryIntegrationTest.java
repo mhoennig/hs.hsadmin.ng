@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.booking.item;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
@@ -41,6 +42,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     HsBookingItemRepository bookingItemRepo;
 
     @Autowired
+    HsBookingProjectRepository projectRepo;
+
+    @Autowired
     HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
@@ -67,11 +71,12 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             context("superuser-alex@hostsharing.net");
             final var count = bookingItemRepo.count();
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+            final var givenProject = projectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
 
             // when
             final var result = attempt(em, () -> {
                 final var newBookingItem = HsBookingItemEntity.builder()
-                        .debitor(givenDebitor)
+                        .project(givenProject)
                         .type(HsBookingItemType.CLOUD_SERVER)
                         .caption("some new booking item")
                         .validity(Range.closedOpen(
@@ -99,8 +104,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // when
             attempt(em, () -> {
                 final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+                final var givenProject = projectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
                 final var newBookingItem = HsBookingItemEntity.builder()
-                        .debitor(givenDebitor)
+                        .project(givenProject)
                         .type(MANAGED_WEBSPACE)
                         .caption("some new booking item")
                         .validity(Range.closedOpen(
@@ -113,35 +119,34 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_booking_item#D-1000111-somenewbookingitem:ADMIN",
-                    "hs_booking_item#D-1000111-somenewbookingitem:AGENT",
-                    "hs_booking_item#D-1000111-somenewbookingitem:OWNER",
-                    "hs_booking_item#D-1000111-somenewbookingitem:TENANT"));
+                    "hs_booking_item#somenewbookingitem:ADMIN",
+                    "hs_booking_item#somenewbookingitem:AGENT",
+                    "hs_booking_item#somenewbookingitem:OWNER",
+                    "hs_booking_item#somenewbookingitem:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
                             // global-admin
-                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:DELETE to role:global#global:ADMIN by system and assume }",
+                            "{ grant perm:hs_booking_item#somenewbookingitem:INSERT>hs_booking_item to role:hs_booking_item#somenewbookingitem:ADMIN by system and assume }",
+                            "{ grant perm:hs_booking_item#somenewbookingitem:DELETE to role:global#global:ADMIN by system and assume }",
 
                             // owner
-                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:OWNER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
+                            "{ grant role:hs_booking_item#somenewbookingitem:OWNER to role:hs_booking_project#D-1000111-D-1000111defaultproject:AGENT by system and assume }",
 
                             // admin
-                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:UPDATE to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
-                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN to role:hs_booking_item#D-1000111-somenewbookingitem:OWNER by system and assume }",
-                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:INSERT>hs_hosting_asset to role:hs_booking_item#D-1000111-somenewbookingitem:AGENT by system and assume }",
+                            "{ grant perm:hs_booking_item#somenewbookingitem:UPDATE to role:hs_booking_item#somenewbookingitem:ADMIN by system and assume }",
+                            "{ grant role:hs_booking_item#somenewbookingitem:ADMIN to role:hs_booking_item#somenewbookingitem:OWNER by system and assume }",
+                            "{ grant perm:hs_booking_item#somenewbookingitem:INSERT>hs_hosting_asset to role:hs_booking_item#somenewbookingitem:AGENT by system and assume }",
 
                             // agent
-                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
-                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:AGENT to role:hs_booking_item#D-1000111-somenewbookingitem:ADMIN by system and assume }",
+                            "{ grant role:hs_booking_item#somenewbookingitem:AGENT to role:hs_booking_item#somenewbookingitem:ADMIN by system and assume }",
 
                             // tenant
-                            "{ grant role:hs_booking_item#D-1000111-somenewbookingitem:TENANT to role:hs_booking_item#D-1000111-somenewbookingitem:AGENT by system and assume }",
-                            "{ grant perm:hs_booking_item#D-1000111-somenewbookingitem:SELECT to role:hs_booking_item#D-1000111-somenewbookingitem:TENANT by system and assume }",
-                            "{ grant role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:TENANT to role:hs_booking_item#D-1000111-somenewbookingitem:TENANT by system and assume }",
-
+                            "{ grant role:hs_booking_item#somenewbookingitem:TENANT to role:hs_booking_item#somenewbookingitem:AGENT by system and assume }",
+                            "{ grant perm:hs_booking_item#somenewbookingitem:SELECT to role:hs_booking_item#somenewbookingitem:TENANT by system and assume }",
+                            "{ grant role:hs_booking_project#D-1000111-D-1000111defaultproject:TENANT to role:hs_booking_item#somenewbookingitem:TENANT by system and assume }",
                             null));
         }
 
@@ -158,35 +163,40 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         public void globalAdmin_withoutAssumedRole_canViewAllBookingItemsOfArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var debitorUuid = debitorRepo.findDebitorByDebitorNumber(1000212).stream()
+            final var projectUuid = debitorRepo.findDebitorByDebitorNumber(1000212).stream()
+                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .flatMap(List::stream)
                     .findAny().orElseThrow().getUuid();
 
             // when
-            final var result = bookingItemRepo.findAllByDebitorUuid(debitorUuid);
+            final var result = bookingItemRepo.findAllByProjectUuid(projectUuid);
 
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000212, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
-                    "HsBookingItemEntity(D-1000212, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPUs: 2, HDD: 1024, RAM: 4, Traffic: 42 })",
-                    "HsBookingItemEntity(D-1000212, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), some ManagedWebspace, { Daemons: 2, Multi: 4, SDD: 512, Traffic: 12 })",
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
         }
 
         @Test
         public void normalUser_canViewOnlyRelatedBookingItems() {
             // given:
             context("person-FirbySusan@example.com");
-            final var debitorUuid = debitorRepo.findDebitorByDebitorNumber(1000111).stream().findAny().orElseThrow().getUuid();
+            final var projectUuid = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .flatMap(List::stream)
+                    .findAny().orElseThrow().getUuid();
 
             // when:
-            final var result = bookingItemRepo.findAllByDebitorUuid(debitorUuid);
+            final var result = bookingItemRepo.findAllByProjectUuid(projectUuid);
 
             // then:
             exactlyTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000111, MANAGED_SERVER, [2022-10-01,), some ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
-                    "HsBookingItemEntity(D-1000111, CLOUD_SERVER, [2023-01-15,2024-04-15), some CloudServer, { CPUs: 2, HDD: 1024, RAM: 4, Traffic: 42 })",
-                    "HsBookingItemEntity(D-1000111, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_WEBSPACE, [2022-10-01,), some ManagedWebspace, { Daemons: 2, Multi: 4, SDD: 512, Traffic: 12 })",
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
         }
     }
 
@@ -196,7 +206,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void hostsharingAdmin_canUpdateArbitraryBookingItem() {
             // given
-            final var givenBookingItemUuid = givenSomeTemporaryBookingItem(1000111).getUuid();
+            final var givenBookingItemUuid = givenSomeTemporaryBookingItem("D-1000111 default project").getUuid();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -232,7 +242,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         public void globalAdmin_withoutAssumedRole_canDeleteAnyBookingItem() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenBookingItem = givenSomeTemporaryBookingItem(1000111);
+            final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -252,7 +262,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         public void nonGlobalAdmin_canNotDeleteTheirRelatedBookingItem() {
             // given
             context("superuser-alex@hostsharing.net", null);
-            final var givenBookingItem = givenSomeTemporaryBookingItem(1000111);
+            final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -278,7 +288,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
-            final var givenBookingItem = givenSomeTemporaryBookingItem(1000111);
+            final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -313,12 +323,14 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                 "[creating booking-item test-data 1000313, hs_booking_item, INSERT]");
     }
 
-    private HsBookingItemEntity givenSomeTemporaryBookingItem(final int debitorNumber) {
+    private HsBookingItemEntity givenSomeTemporaryBookingItem(final String projectCaption) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).get(0);
+            final var givenProject = projectRepo.findAll().stream()
+                    .filter(p -> p.getCaption().equals(projectCaption))
+                    .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemEntity.builder()
-                    .debitor(givenDebitor)
+                    .project(givenProject)
                     .type(MANAGED_SERVER)
                     .caption("some temp booking item")
                     .validity(Range.closedOpen(

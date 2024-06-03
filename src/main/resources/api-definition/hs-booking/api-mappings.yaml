@@ -13,5 +13,7 @@ map:
         - type: string:uuid => java.util.UUID
 
     paths:
+        /api/hs/booking/projects/{bookingProjectUuid}:
+            null: org.openapitools.jackson.nullable.JsonNullable
         /api/hs/booking/items/{bookingItemUuid}:
             null: org.openapitools.jackson.nullable.JsonNullable

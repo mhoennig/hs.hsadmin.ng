@@ -181,7 +181,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                 .containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
                     "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:INSERT>sepamandate to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
-                    "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:INSERT>hs_booking_item to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
+                    "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:INSERT>hs_booking_project to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
 
                     // owner
                     "{ grant perm:debitor#D-1000122:DELETE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
