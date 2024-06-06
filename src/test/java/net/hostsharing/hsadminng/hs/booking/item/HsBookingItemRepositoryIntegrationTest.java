@@ -174,8 +174,8 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
                     "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), some ManagedWebspace, { Daemons: 2, Multi: 4, SDD: 512, Traffic: 12 })",
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
                     "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
         }
 
@@ -326,8 +326,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
     private HsBookingItemEntity givenSomeTemporaryBookingItem(final String projectCaption) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenProject = projectRepo.findAll().stream()
-                    .filter(p -> p.getCaption().equals(projectCaption))
+            final var givenProject = projectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemEntity.builder()
                     .project(givenProject)

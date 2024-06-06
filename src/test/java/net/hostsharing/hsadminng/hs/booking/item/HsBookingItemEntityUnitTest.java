@@ -29,14 +29,14 @@ class HsBookingItemEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
         final var result = givenBookingItem.toString();
 
-        assertThat(result).isEqualTo("HsBookingItemEntity(D-1000100:test project, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+        assertThat(result).isEqualTo("HsBookingItemEntity(D-1234500:test project, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
     }
 
     @Test
     void toShortStringContainsOnlyMemberNumberAndCaption() {
         final var result = givenBookingItem.toShortString();
 
-        assertThat(result).isEqualTo("D-1000100:test project:some caption");
+        assertThat(result).isEqualTo("D-1234500:test project:some caption");
     }
 
     @Test

@@ -33,9 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
@@ -65,6 +63,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
             .withProp(HsHostingAssetEntity::getIdentifier)
             .withProp(HsHostingAssetEntity::getCaption)
             .withProp(HsHostingAssetEntity::getParentAsset)
+            .withProp(HsHostingAssetEntity::getAssignedToAsset)
             .withProp(HsHostingAssetEntity::getBookingItem)
             .withProp(HsHostingAssetEntity::getConfig)
             .quotedValues(false);
@@ -83,6 +82,10 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
     @ManyToOne
     @JoinColumn(name = "parentassetuuid")
     private HsHostingAssetEntity parentAsset;
+
+    @ManyToOne
+    @JoinColumn(name = "assignedtoassetuuid")
+    private HsHostingAssetEntity assignedToAsset;
 
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
@@ -144,11 +147,16 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
                     NULLABLE)
                 .toRole("bookingItem", AGENT).grantPermission(INSERT)
 
-                .importEntityAlias("parentAsset", HsHostingAssetEntity.class, usingCase(MANAGED_SERVER),
+                .importEntityAlias("parentAsset", HsHostingAssetEntity.class, usingDefaultCase(),
                         dependsOnColumn("parentAssetUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
                 .toRole("parentAsset", ADMIN).grantPermission(INSERT)
+
+                .importEntityAlias("assignedToAsset", HsHostingAssetEntity.class, usingDefaultCase(),
+                        dependsOnColumn("assignedToAssetUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
 
                 .createRole(OWNER, (with) -> {
                     with.incomingSuperRole("bookingItem", ADMIN);
@@ -160,13 +168,15 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
                     with.incomingSuperRole("parentAsset", AGENT);
                     with.permission(UPDATE);
                 })
-                .createSubRole(AGENT)
+                .createSubRole(AGENT, (with) -> {
+                    with.outgoingSubRole("assignedToAsset", TENANT);
+                })
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("bookingItem", TENANT);
                     with.outgoingSubRole("parentAsset", TENANT);
                     with.permission(SELECT);
                 })
-                .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentServer", "global");
+                .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentAsset", "assignedToAsset", "global");
     }
 
     public static void main(String[] args) throws IOException {

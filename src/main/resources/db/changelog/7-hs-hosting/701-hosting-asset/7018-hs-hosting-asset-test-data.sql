@@ -16,7 +16,11 @@ declare
     relatedDebitor                  hs_office_debitor;
     relatedPrivateCloudBookingItem  hs_booking_item;
     relatedManagedServerBookingItem hs_booking_item;
+    debitorNumberSuffix             varchar;
+    defaultPrefix                   varchar;
     managedServerUuid               uuid;
+    managedWebspaceUuid             uuid;
+    webUnixUserUuid                 uuid;
 begin
     currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
@@ -45,12 +49,18 @@ begin
     assert relatedManagedServerBookingItem.uuid is not null, 'relatedManagedServerBookingItem for "' || givenProjectCaption|| '" must not be null';
 
     select uuid_generate_v4() into managedServerUuid;
+    select uuid_generate_v4() into managedWebspaceUuid;
+    select uuid_generate_v4() into webUnixUserUuid;
+    debitorNumberSuffix := relatedDebitor.debitorNumberSuffix;
+    defaultPrefix := relatedDebitor.defaultPrefix;
 
     insert into hs_hosting_asset
-           (uuid,               bookingitemuuid,                      type,               parentAssetUuid,   identifier,                                    caption,                config)
-    values (managedServerUuid,  relatedPrivateCloudBookingItem.uuid,  'MANAGED_SERVER',   null,             'vm10' || relatedDebitor.debitorNumberSuffix,   'some ManagedServer',   '{ "CPU": 2, "SDD": 512, "extra": 42 }'::jsonb),
-           (uuid_generate_v4(), relatedPrivateCloudBookingItem.uuid,  'CLOUD_SERVER',     null,              'vm20' || relatedDebitor.debitorNumberSuffix,  'another CloudServer',  '{ "CPU": 2, "HDD": 1024, "extra": 42 }'::jsonb),
-           (uuid_generate_v4(), relatedManagedServerBookingItem.uuid, 'MANAGED_WEBSPACE', managedServerUuid, relatedDebitor.defaultPrefix || '01',          'some Webspace',        '{ "RAM": 1, "SDD": 512, "HDD": 2048, "extra": 42 }'::jsonb);
+           (uuid,                bookingitemuuid,                      type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                      caption,                     config)
+    values (managedServerUuid,   relatedPrivateCloudBookingItem.uuid,  'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,   'some ManagedServer',        '{ "extra": 42 }'::jsonb),
+           (uuid_generate_v4(),  relatedPrivateCloudBookingItem.uuid,  'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,   'another CloudServer',       '{ "extra": 42 }'::jsonb),
+           (managedWebspaceUuid, relatedManagedServerBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',           'some Webspace',             '{ "extra": 42 }'::jsonb),
+           (webUnixUserUuid,     null,                                 'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024", "extra": 42 }'::jsonb),
+           (uuid_generate_v4(),  null,                                 'DOMAIN_HTTP_SETUP', managedWebspaceUuid, webUnixUserUuid,       defaultPrefix || '.example.org', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*", "extra": 42 }'::jsonb);
 end; $$;
 --//
 

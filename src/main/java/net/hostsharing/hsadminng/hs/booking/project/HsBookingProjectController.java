@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingProjectsApi;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectPatchResource;
@@ -12,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 @RestController
 public class HsBookingProjectController implements HsBookingProjectsApi {
@@ -26,6 +29,9 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
     @Autowired
     private HsBookingProjectRepository bookingProjectRepo;
+
+    @Autowired
+    private HsBookingDebitorRepository debitorRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -50,7 +56,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsBookingProjectEntity.class);
+        final var entityToSave = mapper.map(body, HsBookingProjectEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = bookingProjectRepo.save(entityToSave);
 
@@ -111,4 +117,12 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
         final var mapped = mapper.map(saved, HsBookingProjectResource.class);
         return ResponseEntity.ok(mapped);
     }
+
+    final BiConsumer<HsBookingProjectInsertResource, HsBookingProjectEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+        if (resource.getDebitorUuid() != null) {
+            entity.setDebitor(debitorRepo.findByUuid(resource.getDebitorUuid())
+                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] debitorUuid %s not found".formatted(
+                            resource.getDebitorUuid()))));
+        }
+    };
 }

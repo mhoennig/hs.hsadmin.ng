@@ -6,15 +6,9 @@ import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 
 import java.util.List;
 
-import static net.hostsharing.hsadminng.hs.validation.IntegerPropertyValidator.integerProperty;
 
 class HsManagedWebspaceHostingAssetValidator extends HsEntityValidator<HsHostingAssetEntity, HsHostingAssetType> {
     public HsManagedWebspaceHostingAssetValidator() {
-        super(
-            integerProperty("SSD").unit("GB").min(1).max(100).step(1).required(),
-            integerProperty("HDD").unit("GB").min(0).max(250).step(10).optional(),
-            integerProperty("Traffic").unit("GB").min(10).max(1000).step(10).required()
-        );
     }
 
     @Override

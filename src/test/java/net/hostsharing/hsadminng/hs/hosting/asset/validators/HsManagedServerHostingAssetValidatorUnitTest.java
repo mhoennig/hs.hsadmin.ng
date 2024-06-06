@@ -18,10 +18,9 @@ class HsManagedServerHostingAssetValidatorUnitTest {
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_SERVER)
                 .config(Map.ofEntries(
-                        entry("RAM", 2000),
-                        entry("SSD", 256),
-                        entry("Traffic", "250"),
-                        entry("SLA-Platform", "xxx")
+                        entry("monit_max_hdd_usage", "90"),
+                        entry("monit_max_cpu_usage", 2),
+                        entry("monit_max_ram_usage", 101)
                 ))
                 .build();
         final var validator = forType(mangedWebspaceHostingAssetEntity.getType());
@@ -31,10 +30,9 @@ class HsManagedServerHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'config.SLA-Platform' is not expected but is set to 'xxx'",
-                "'config.CPUs' is required but missing",
-                "'config.RAM' is expected to be <= 128 but is 2000",
-                "'config.SSD' is expected to be multiple of 25 but is 256",
-                "'config.Traffic' is expected to be of type class java.lang.Integer, but is of type 'String'");
+                "'config.monit_max_ssd_usage' is required but missing",
+                "'config.monit_max_hdd_usage' is expected to be of type class java.lang.Integer, but is of type 'String'",
+                "'config.monit_max_cpu_usage' is expected to be >= 10 but is 2",
+                "'config.monit_max_ram_usage' is expected to be <= 100 but is 101");
     }
 }

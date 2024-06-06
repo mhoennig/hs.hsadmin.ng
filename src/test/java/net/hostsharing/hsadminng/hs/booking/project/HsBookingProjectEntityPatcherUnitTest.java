@@ -13,7 +13,7 @@ import jakarta.persistence.EntityManager;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.office.debitor.TestHsOfficeDebitor.TEST_DEBITOR;
+import static net.hostsharing.hsadminng.hs.booking.debitor.TestHsBookingDebitor.TEST_BOOKING_DEBITOR;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,7 +46,7 @@ class HsBookingProjectEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsBookingProjectEntity newInitialEntity() {
         final var entity = new HsBookingProjectEntity();
         entity.setUuid(INITIAL_BOOKING_PROJECT_UUID);
-        entity.setDebitor(TEST_DEBITOR);
+        entity.setDebitor(TEST_BOOKING_DEBITOR);
         entity.setCaption(INITIAL_CAPTION);
         return entity;
     }

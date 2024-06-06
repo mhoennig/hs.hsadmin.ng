@@ -745,7 +745,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var count = em.createQuery(
-                            "DELETE FROM HsOfficeDebitorEntity d WHERE d.debitorNumberSuffix >= " + LOWEST_TEMP_DEBITOR_SUFFIX)
+                            "DELETE FROM HsBookingDebitorEntity d WHERE d.debitorNumberSuffix >= " + LOWEST_TEMP_DEBITOR_SUFFIX)
                     .executeUpdate();
             System.out.printf("deleted %d entities%n", count);
         });

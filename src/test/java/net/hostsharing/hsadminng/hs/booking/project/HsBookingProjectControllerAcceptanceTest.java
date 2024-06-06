@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.booking.project;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
@@ -15,10 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.util.Map;
 import java.util.UUID;
 
-import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
@@ -40,7 +38,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
     HsBookingProjectRepository projectRepo;
 
     @Autowired
-    HsOfficeDebitorRepository debitorRepo;
+    HsBookingDebitorRepository debitorRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -56,7 +54,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+            final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).stream()
                             .findFirst()
                             .orElseThrow();
 
@@ -87,7 +85,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         void globalAdmin_canAddBookingProject() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+            final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).stream()
                     .findFirst()
                     .orElseThrow();
 
@@ -128,8 +126,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_canGetArbitraryBookingProject() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingProjectUuid = bookingProjectRepo.findAll().stream()
-                            .filter(project -> project.getDebitor().getDebitorNumber() == 1000111)
+            final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000111 default project").stream()
                             .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
@@ -151,8 +148,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void normalUser_canNotGetUnrelatedBookingProject() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingProjectUuid = bookingProjectRepo.findAll().stream()
-                    .filter(project -> project.getDebitor().getDebitorNumber() == 1000212)
+            final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000212 default project").stream()
                     .map(HsBookingProjectEntity::getUuid)
                     .findAny().orElseThrow();
 
@@ -169,8 +165,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void debitorAgentUser_canGetRelatedBookingProject() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingProjectUuid = bookingProjectRepo.findAll().stream()
-                    .filter(project -> project.getDebitor().getDebitorNumber() == 1000313)
+            final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000313 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
@@ -223,7 +218,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
             context.define("superuser-alex@hostsharing.net");
             assertThat(bookingProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getDebitor().toString()).isEqualTo("debitor(D-1000111: rel(anchor='LP First GmbH', type='DEBITOR', holder='LP First GmbH'), fir)");
+                        assertThat(mandate.getDebitor().toString()).isEqualTo("booking-debitor(D-1000111: fir)");
                         return true;
                     });
         }
@@ -272,7 +267,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
     private HsBookingProjectEntity givenSomeBookingProject(final int debitorNumber, final String caption) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).stream().findAny().orElseThrow();
+            final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).stream().findAny().orElseThrow();
             final var newBookingProject = HsBookingProjectEntity.builder()
                     .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
@@ -281,9 +276,5 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
             return bookingProjectRepo.save(newBookingProject);
         }).assertSuccessful().returnedValue();
-    }
-
-    private Map.Entry<String, Object> resource(final String key, final Object value) {
-        return entry(key, value);
     }
 }

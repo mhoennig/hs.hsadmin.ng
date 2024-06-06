@@ -10,8 +10,9 @@ import java.util.UUID;
 
 public interface HsHostingAssetRepository extends Repository<HsHostingAssetEntity, UUID> {
 
-    List<HsHostingAssetEntity> findAll();
     Optional<HsHostingAssetEntity> findByUuid(final UUID serverUuid);
+
+    List<HsHostingAssetEntity> findByIdentifier(String assetIdentifier);
 
     @Query("""
         SELECT asset FROM HsHostingAssetEntity asset

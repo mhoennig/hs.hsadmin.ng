@@ -54,48 +54,57 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                         [
                             {
                                 "type": "integer",
-                                "propertyName": "CPUs",
-                                "required": true,
+                                "propertyName": "monit_min_free_ssd",
+                                "required": false,
                                 "unit": null,
                                 "min": 1,
-                                "max": 32,
-                                "step": null
-                            },
-                            {
-                                "type": "integer",
-                                "propertyName": "RAM",
-                                "required": true,
-                                "unit": "GB",
-                                "min": 1,
-                                "max": 128,
-                                "step": null
-                            },
-                            {
-                                "type": "integer",
-                                "propertyName": "SSD",
-                                "required": true,
-                                "unit": "GB",
-                                "min": 25,
                                 "max": 1000,
-                                "step": 25
+                                "step": null
                             },
                             {
                                 "type": "integer",
-                                "propertyName": "HDD",
+                                "propertyName": "monit_min_free_hdd",
                                 "required": false,
-                                "unit": "GB",
-                                "min": 0,
+                                "unit": null,
+                                "min": 1,
                                 "max": 4000,
-                                "step": 250
+                                "step": null
                             },
                             {
                                 "type": "integer",
-                                "propertyName": "Traffic",
+                                "propertyName": "monit_max_ssd_usage",
                                 "required": true,
-                                "unit": "GB",
-                                "min": 250,
-                                "max": 10000,
-                                "step": 250
+                                "unit": "%",
+                                "min": 10,
+                                "max": 100,
+                                "step": null
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "monit_max_hdd_usage",
+                                "required": false,
+                                "unit": "%",
+                                "min": 10,
+                                "max": 100,
+                                "step": null
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "monit_max_cpu_usage",
+                                "required": true,
+                                "unit": "%",
+                                "min": 10,
+                                "max": 100,
+                                "step": null
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "monit_max_ram_usage",
+                                "required": true,
+                                "unit": "%",
+                                "min": 10,
+                                "max": 100,
+                                "step": null
                             }
                         ]
                         """));

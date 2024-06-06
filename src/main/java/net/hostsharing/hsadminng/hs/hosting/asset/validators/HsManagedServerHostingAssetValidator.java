@@ -10,11 +10,13 @@ class HsManagedServerHostingAssetValidator extends HsEntityValidator<HsHostingAs
 
     public HsManagedServerHostingAssetValidator() {
         super(
-                integerProperty("CPUs").min(1).max(32).required(),
-                integerProperty("RAM").unit("GB").min(1).max(128).required(),
-                integerProperty("SSD").unit("GB").min(25).max(1000).step(25).required(),
-                integerProperty("HDD").unit("GB").min(0).max(4000).step(250).optional(),
-                integerProperty("Traffic").unit("GB").min(250).max(10000).step(250).required()
+                integerProperty("monit_min_free_ssd").min(1).max(1000).optional(),
+                integerProperty("monit_min_free_hdd").min(1).max(4000).optional(),
+                integerProperty("monit_max_ssd_usage").unit("%").min(10).max(100).required(),
+                integerProperty("monit_max_hdd_usage").unit("%").min(10).max(100).optional(),
+                integerProperty("monit_max_cpu_usage").unit("%").min(10).max(100).required(),
+                integerProperty("monit_max_ram_usage").unit("%").min(10).max(100).required()
+                // TODO: stringProperty("monit_alarm_email").unit("GB").optional()
         );
     }
 }

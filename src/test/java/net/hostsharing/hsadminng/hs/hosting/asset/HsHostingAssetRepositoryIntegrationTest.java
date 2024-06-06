@@ -4,7 +4,6 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.test.Array;
@@ -47,9 +46,6 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
     @Autowired
     HsBookingProjectRepository projectRepo;
-
-    @Autowired
-    HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -143,7 +139,6 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant role:hs_hosting_asset#vm9000:AGENT to role:hs_hosting_asset#vm9000:ADMIN by system and assume }",
 
                             // tenant
-                            "{ grant perm:hs_hosting_asset#vm9000:SELECT to role:hs_hosting_asset#vm9000:TENANT by system and assume }",
                             "{ grant role:hs_booking_item#somePrivateCloud:TENANT to role:hs_hosting_asset#vm9000:TENANT by system and assume }",
 
                             null));
@@ -169,17 +164,16 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedServer, { extra: 42 })",
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedServer, { extra: 42 })",
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedServer, { extra: 42 })");
         }
 
         @Test
         public void normalUser_canViewOnlyRelatedAsset() {
             // given:
             context("person-FirbySusan@example.com");
-            final var projectUuid = projectRepo.findAll().stream()
-                    .filter(p -> p.getCaption().equals("D-1000111 default project"))
+            final var projectUuid = projectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
             // when:
@@ -188,9 +182,9 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then:
             exactlyTheseAssetsAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:D-1000111 default project:some PrivateCloud, { CPU: 2, SDD: 512, extra: 42 })",
-                    "HsHostingAssetEntity(CLOUD_SERVER, vm2011, another CloudServer, D-1000111:D-1000111 default project:some PrivateCloud, { CPU: 2, HDD: 1024, extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedServer, { extra: 42 })",
+                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:D-1000111 default project:some PrivateCloud, { extra: 42 })",
+                    "HsHostingAssetEntity(CLOUD_SERVER, vm2011, another CloudServer, D-1000111:D-1000111 default project:some PrivateCloud, { extra: 42 })");
         }
 
         @Test
@@ -206,7 +200,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedServer, { HDD: 2048, RAM: 1, SDD: 512, extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedServer, { extra: 42 })");
         }
 
     }
@@ -373,8 +367,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     HsBookingItemEntity givenBookingItem(final String projectCaption, final String bookingItemCaption) {
-        final var givenProject = projectRepo.findAll().stream()
-                .filter(p -> p.getCaption().equals(projectCaption))
+        final var givenProject = projectRepo.findByCaption(projectCaption).stream()
                 .findAny().orElseThrow();
         return bookingItemRepo.findAllByProjectUuid(givenProject.getUuid()).stream()
                 .filter(i -> i.getCaption().equals(bookingItemCaption))
@@ -382,8 +375,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     HsHostingAssetEntity givenManagedServer(final String projectCaption, final HsHostingAssetType type) {
-        final var givenProject = projectRepo.findAll().stream()
-                .filter(p -> p.getCaption().equals(projectCaption))
+        final var givenProject = projectRepo.findByCaption(projectCaption).stream()
                 .findAny().orElseThrow();
         return assetRepo.findAllByCriteria(givenProject.getUuid(), null, type).stream()
                 .findAny().orElseThrow();

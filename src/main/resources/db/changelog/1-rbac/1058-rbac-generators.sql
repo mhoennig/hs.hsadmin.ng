@@ -118,10 +118,13 @@ begin
     sql = format($sql$
         create or replace function %1$sUuidByIdName(givenIdName varchar)
             returns uuid
-            language sql
-            strict as $f$
-        select uuid from %1$s_iv iv where iv.idName = givenIdName;
-        $f$;
+            language plpgsql as $f$
+        declare
+            singleMatch uuid;
+        begin
+            select uuid into strict singleMatch from %1$s_iv iv where iv.idName = givenIdName;
+            return singleMatch;
+        end; $f$;
         $sql$, targetTable);
     execute sql;
 

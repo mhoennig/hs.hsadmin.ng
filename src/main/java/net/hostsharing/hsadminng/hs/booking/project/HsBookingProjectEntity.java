@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
 import lombok.*;
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
@@ -49,7 +50,7 @@ public class HsBookingProjectEntity implements Stringifyable, RbacObject {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "debitoruuid")
-    private HsOfficeDebitorEntity debitor;
+    private HsBookingDebitorEntity debitor;
 
     @Column(name = "caption")
     private String caption;
@@ -61,7 +62,7 @@ public class HsBookingProjectEntity implements Stringifyable, RbacObject {
 
     @Override
     public String toShortString() {
-        return ofNullable(debitor).map(HsOfficeDebitorEntity::toShortString).orElse("D-???????") +
+        return ofNullable(debitor).map(HsBookingDebitorEntity::toShortString).orElse("D-???????") +
                 ":" + caption;
     }
 
@@ -108,6 +109,6 @@ public class HsBookingProjectEntity implements Stringifyable, RbacObject {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("6-hs-booking/610-booking-project/6103-hs-booking-project-rbac");
+        rbac().generateWithBaseFileName("6-hs-booking/620-booking-project/6203-hs-booking-project-rbac");
     }
 }

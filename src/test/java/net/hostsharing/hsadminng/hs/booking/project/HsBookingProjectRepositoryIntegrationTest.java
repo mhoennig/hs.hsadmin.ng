@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.test.Array;
@@ -38,7 +38,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
     HsBookingProjectRepository projectRepo;
 
     @Autowired
-    HsOfficeDebitorRepository debitorRepo;
+    HsBookingDebitorRepository debitorRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -63,7 +63,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             // given
             context("superuser-alex@hostsharing.net");
             final var count = bookingProjectRepo.count();
-            final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+            final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).get(0);
 
             // when
             final var result = attempt(em, () -> {
@@ -92,7 +92,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
             // when
             attempt(em, () -> {
-                final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
+                final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).get(0);
                 final var newBookingProject = HsBookingProjectEntity.builder()
                         .debitor(givenDebitor)
                         .caption("some new booking project")
@@ -148,7 +148,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         public void globalAdmin_withoutAssumedRole_canViewAllBookingProjectsOfArbitraryDebitor() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var debitorUuid = debitorRepo.findDebitorByDebitorNumber(1000212).stream()
+            final var debitorUuid = debitorRepo.findByDebitorNumber(1000212).stream()
                     .findAny().orElseThrow().getUuid();
 
             // when
@@ -164,7 +164,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         public void normalUser_canViewOnlyRelatedBookingProjects() {
             // given:
             context("person-FirbySusan@example.com");
-            final var debitorUuid = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+            final var debitorUuid = debitorRepo.findByDebitorNumber(1000111).stream()
                     .findAny().orElseThrow().getUuid();
 
             // when:
@@ -298,7 +298,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
     private HsBookingProjectEntity givenSomeTemporaryBookingProject(final int debitorNumber) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenDebitor = debitorRepo.findDebitorByDebitorNumber(debitorNumber).get(0);
+            final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).get(0);
             final var newBookingProject = HsBookingProjectEntity.builder()
                     .debitor(givenDebitor)
                     .caption("some temp project")
@@ -312,7 +312,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             final List<HsBookingProjectEntity> actualResult,
             final String... bookingProjectNames) {
         assertThat(actualResult)
-                .extracting(bookingProjectEntity -> bookingProjectEntity.toString())
+                .extracting(HsBookingProjectEntity::toString)
                 .containsExactlyInAnyOrder(bookingProjectNames);
     }
 
@@ -320,7 +320,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             final List<HsBookingProjectEntity> actualResult,
             final String... bookingProjectNames) {
         assertThat(actualResult)
-                .extracting(bookingProjectEntity -> bookingProjectEntity.toString())
+                .extracting(HsBookingProjectEntity::toString)
                 .contains(bookingProjectNames);
     }
 }

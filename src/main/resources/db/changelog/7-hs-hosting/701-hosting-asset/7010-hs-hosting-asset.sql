@@ -9,7 +9,9 @@ create type HsHostingAssetType as enum (
     'MANAGED_SERVER',
     'MANAGED_WEBSPACE',
     'UNIX_USER',
-    'DOMAIN_SETUP',
+    'DOMAIN_DNS_SETUP',
+    'DOMAIN_HTTP_SETUP',
+    'DOMAIN_EMAIL_SETUP',
     'EMAIL_ALIAS',
     'EMAIL_ADDRESS',
     'PGSQL_USER',
@@ -27,6 +29,7 @@ create table if not exists hs_hosting_asset
     bookingItemUuid     uuid null references hs_booking_item(uuid),
     type                HsHostingAssetType not null,
     parentAssetUuid     uuid null references hs_hosting_asset(uuid) initially deferred,
+    assignedToAssetUuid uuid null references hs_hosting_asset(uuid) initially deferred,
     identifier          varchar(80) not null,
     caption             varchar(80),
     config              jsonb not null,
@@ -59,9 +62,11 @@ begin
         when 'MANAGED_SERVER' then null
         when 'MANAGED_WEBSPACE' then 'MANAGED_SERVER'
         when 'UNIX_USER' then 'MANAGED_WEBSPACE'
-        when 'DOMAIN_SETUP' then 'UNIX_USER'
+        when 'DOMAIN_DNS_SETUP' then 'MANAGED_WEBSPACE'
+        when 'DOMAIN_HTTP_SETUP' then 'MANAGED_WEBSPACE'
+        when 'DOMAIN_EMAIL_SETUP' then 'MANAGED_WEBSPACE'
         when 'EMAIL_ALIAS' then 'MANAGED_WEBSPACE'
-        when 'EMAIL_ADDRESS' then 'DOMAIN_SETUP'
+        when 'EMAIL_ADDRESS' then 'DOMAIN_EMAIL_SETUP'
         when 'PGSQL_USER' then 'MANAGED_WEBSPACE'
         when 'PGSQL_DATABASE' then 'MANAGED_WEBSPACE'
         when 'MARIADB_USER' then 'MANAGED_WEBSPACE'

@@ -18,10 +18,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
         final var cloudServerHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(CLOUD_SERVER)
                 .config(Map.ofEntries(
-                        entry("RAM", 2000),
-                        entry("SSD", 256),
-                        entry("Traffic", "250"),
-                        entry("SLA-Platform", "xxx")
+                        entry("RAM", 2000)
                 ))
                 .build();
         final var validator = forType(cloudServerHostingAssetEntity.getType());
@@ -31,12 +28,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
         final var result = validator.validate(cloudServerHostingAssetEntity);
 
         // then
-        assertThat(result).containsExactlyInAnyOrder(
-                "'config.SLA-Platform' is not expected but is set to 'xxx'",
-                "'config.CPUs' is required but missing",
-                "'config.RAM' is expected to be <= 128 but is 2000",
-                "'config.SSD' is expected to be multiple of 25 but is 256",
-                "'config.Traffic' is expected to be of type class java.lang.Integer, but is of type 'String'");
+        assertThat(result).containsExactly("'config.RAM' is not expected but is set to '2000'");
     }
 
     @Test
@@ -45,11 +37,6 @@ class HsCloudServerHostingAssetValidatorUnitTest {
         final var validator = forType(CLOUD_SERVER);
 
         // then
-        assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
-                "{type=integer, propertyName=CPUs, required=true, unit=null, min=1, max=32, step=null}",
-                "{type=integer, propertyName=RAM, required=true, unit=GB, min=1, max=128, step=null}",
-                "{type=integer, propertyName=SSD, required=true, unit=GB, min=25, max=1000, step=25}",
-                "{type=integer, propertyName=HDD, required=false, unit=GB, min=0, max=4000, step=250}",
-                "{type=integer, propertyName=Traffic, required=true, unit=GB, min=250, max=10000, step=250}");
+        assertThat(validator.properties()).map(Map::toString).isEmpty();
     }
 }

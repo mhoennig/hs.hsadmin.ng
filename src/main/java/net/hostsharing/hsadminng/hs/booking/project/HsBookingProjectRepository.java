@@ -8,8 +8,8 @@ import java.util.UUID;
 
 public interface HsBookingProjectRepository extends Repository<HsBookingProjectEntity, UUID> {
 
-    List<HsBookingProjectEntity> findAll();
     Optional<HsBookingProjectEntity> findByUuid(final UUID bookingProjectUuid);
+    List<HsBookingProjectEntity> findByCaption(final String projectCaption);
 
     List<HsBookingProjectEntity> findAllByDebitorUuid(final UUID bookingProjectUuid);
 

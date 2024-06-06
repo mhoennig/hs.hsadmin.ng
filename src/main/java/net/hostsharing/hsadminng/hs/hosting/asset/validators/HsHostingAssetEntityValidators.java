@@ -20,7 +20,7 @@ public class HsHostingAssetEntityValidators {
 
     private static final Map<Enum<HsHostingAssetType>, HsEntityValidator<HsHostingAssetEntity, HsHostingAssetType>> validators = new HashMap<>();
     static {
-        register(CLOUD_SERVER, new HsCloudServerHostingAssetValidator());
+        register(CLOUD_SERVER, new HsEntityValidator<>());
         register(MANAGED_SERVER, new HsManagedServerHostingAssetValidator());
         register(MANAGED_WEBSPACE, new HsManagedWebspaceHostingAssetValidator());
     }

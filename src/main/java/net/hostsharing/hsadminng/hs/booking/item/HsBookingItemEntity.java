@@ -160,6 +160,10 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
         return resources;
     }
 
+    public HsBookingProjectEntity getRelatedProject() {
+        return project != null ? project : parentItem.getRelatedProject();
+    }
+
     public static RbacView rbac() {
         return rbacViewFor("bookingItem", HsBookingItemEntity.class)
                 .withIdentityView(SQL.projection("caption"))
@@ -198,6 +202,6 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("6-hs-booking/620-booking-item/6203-hs-booking-item-rbac");
+        rbac().generateWithBaseFileName("6-hs-booking/630-booking-item/6303-hs-booking-item-rbac");
     }
 }

@@ -31,12 +31,15 @@ create or replace procedure buildRbacSystemForHsHostingAsset(
 
 declare
     newBookingItem hs_booking_item;
+    newAssignedToAsset hs_hosting_asset;
     newParentAsset hs_hosting_asset;
 
 begin
     call enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_booking_item WHERE uuid = NEW.bookingItemUuid    INTO newBookingItem;
+
+    SELECT * FROM hs_hosting_asset WHERE uuid = NEW.assignedToAssetUuid    INTO newAssignedToAsset;
 
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentAsset;
 
@@ -59,13 +62,15 @@ begin
 
     perform createRoleWithGrants(
         hsHostingAssetAGENT(NEW),
-            incomingSuperRoles => array[hsHostingAssetADMIN(NEW)]
+            incomingSuperRoles => array[hsHostingAssetADMIN(NEW)],
+            outgoingSubRoles => array[hsHostingAssetTENANT(newAssignedToAsset)]
     );
 
     perform createRoleWithGrants(
         hsHostingAssetTENANT(NEW),
-            permissions => array['SELECT'],
-            incomingSuperRoles => array[hsHostingAssetAGENT(NEW)],
+            incomingSuperRoles => array[
+            	hsHostingAssetAGENT(NEW),
+            	hsHostingAssetTENANT(newAssignedToAsset)],
             outgoingSubRoles => array[
             	hsBookingItemTENANT(newBookingItem),
             	hsHostingAssetTENANT(newParentAsset)]
@@ -197,11 +202,11 @@ create or replace function new_hs_hosting_asset_grants_insert_to_hs_hosting_asse
     language plpgsql
     strict as $$
 begin
-    if NEW.type = 'MANAGED_SERVER' then
+    -- unconditional for all rows in that table
         call grantPermissionToRole(
             createPermission(NEW.uuid, 'INSERT', 'hs_hosting_asset'),
             hsHostingAssetADMIN(NEW));
-    end if;
+    -- end.
     return NEW;
 end; $$;
 

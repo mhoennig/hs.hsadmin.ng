@@ -6,7 +6,6 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -17,8 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +49,6 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
     @Autowired
     JpaAttempt jpaAttempt;
-
-    @PersistenceContext
-    EntityManager em;
 
     @Nested
     class ListBookingItems {
@@ -180,10 +174,10 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void globalAdmin_canGetArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findAll().stream()
-                            .filter(bi -> belongsToDebitorNumber(bi, 1000111))
-                            .filter(item -> item.getCaption().equals("some ManagedWebspace"))
-                            .findAny().orElseThrow().getUuid();
+            final var givenBookingItemUuid = bookingItemRepo.findByCaption("some ManagedWebspace").stream()
+                            .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "fir"))
+                            .map(HsBookingItemEntity::getUuid)
+                            .findAny().orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
@@ -213,8 +207,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void normalUser_canNotGetUnrelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findAll().stream()
-                    .filter(bi -> belongsToDebitorNumber(bi, 1000212))
+            final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedServer").stream()
+                    .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "sec"))
                     .map(HsBookingItemEntity::getUuid)
                     .findAny().orElseThrow();
 
@@ -229,16 +223,18 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }
 
         @Test
-        void debitorAgentUser_canGetRelatedBookingItem() {
+        // TODO.impl: For unknown reason, this test fails in about 50%, not finding the uuid (404), maybe no SELECT permission?
+        void projectAdmin_canGetRelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findAll().stream()
-                    .filter(bi -> belongsToDebitorNumber(bi, 1000313))
-                    .filter(item -> item.getCaption().equals("separate ManagedServer"))
-                    .findAny().orElseThrow().getUuid();
+            final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedServer").stream()
+                    .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "thi"))
+                    .map(HsBookingItemEntity::getUuid)
+                    .findAny().orElseThrow();
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "person-TuckerJack@example.com")
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -261,12 +257,11 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     """)); // @formatter:on
         }
 
-        private static boolean belongsToDebitorNumber(final HsBookingItemEntity bi, final int i) {
+        private static boolean belongsToDebitorWithDefaultPrefix(final HsBookingItemEntity bi, final String defaultPrefix) {
             return ofNullable(bi)
                     .map(HsBookingItemEntity::getProject)
                     .map(HsBookingProjectEntity::getDebitor)
-                    .map(HsOfficeDebitorEntity::getDebitorNumber)
-                    .filter(debitorNumber -> debitorNumber == i)
+                    .map(bd -> bd.getDefaultPrefix().equals(defaultPrefix))
                     .isPresent();
         }
     }
@@ -317,7 +312,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             context.define("superuser-alex@hostsharing.net");
             assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent().get()
                     .matches(mandate -> {
-                        assertThat(mandate.getProject().getDebitor().toString()).isEqualTo("debitor(D-1000111: rel(anchor='LP First GmbH', type='DEBITOR', holder='LP First GmbH'), fir)");
+                        assertThat(mandate.getProject().getDebitor().toString()).isEqualTo("booking-debitor(D-1000111: fir)");
                         assertThat(mandate.getValidFrom()).isEqualTo("2022-11-01");
                         assertThat(mandate.getValidTo()).isEqualTo("2022-12-31");
                         return true;
