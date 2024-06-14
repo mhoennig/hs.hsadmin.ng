@@ -11,16 +11,18 @@
 create or replace procedure createHsHostingAssetTestData(givenProjectCaption varchar)
     language plpgsql as $$
 declare
-    currentTask                     varchar;
-    relatedProject                  hs_booking_project;
-    relatedDebitor                  hs_office_debitor;
-    relatedPrivateCloudBookingItem  hs_booking_item;
-    relatedManagedServerBookingItem hs_booking_item;
-    debitorNumberSuffix             varchar;
-    defaultPrefix                   varchar;
-    managedServerUuid               uuid;
-    managedWebspaceUuid             uuid;
-    webUnixUserUuid                 uuid;
+    currentTask                         varchar;
+    relatedProject                      hs_booking_project;
+    relatedDebitor                      hs_office_debitor;
+    relatedPrivateCloudBookingItem      hs_booking_item;
+    relatedManagedServerBookingItem     hs_booking_item;
+    relatedCloudServerBookingItem       hs_booking_item;
+    relatedManagedWebspaceBookingItem   hs_booking_item;
+    debitorNumberSuffix                 varchar;
+    defaultPrefix                       varchar;
+    managedServerUuid                   uuid;
+    managedWebspaceUuid                 uuid;
+    webUnixUserUuid                     uuid;
 begin
     currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
@@ -38,7 +40,7 @@ begin
 
     select item.* into relatedPrivateCloudBookingItem
         from hs_booking_item item
-        where item.projectUuid = relatedProject.uuid
+       where item.projectUuid = relatedProject.uuid
           and item.type = 'PRIVATE_CLOUD';
     assert relatedPrivateCloudBookingItem.uuid is not null, 'relatedPrivateCloudBookingItem for "' || givenProjectCaption|| '" must not be null';
 
@@ -48,6 +50,18 @@ begin
             and item.type = 'MANAGED_SERVER';
     assert relatedManagedServerBookingItem.uuid is not null, 'relatedManagedServerBookingItem for "' || givenProjectCaption|| '" must not be null';
 
+    select item.* into relatedCloudServerBookingItem
+          from hs_booking_item item
+          where item.parentItemuuid = relatedPrivateCloudBookingItem.uuid
+            and item.type = 'CLOUD_SERVER';
+    assert relatedCloudServerBookingItem.uuid is not null, 'relatedCloudServerBookingItem for "' || givenProjectCaption|| '" must not be null';
+
+    select item.* into relatedManagedWebspaceBookingItem
+          from hs_booking_item item
+          where item.projectUuid = relatedProject.uuid
+            and item.type = 'MANAGED_WEBSPACE';
+    assert relatedManagedWebspaceBookingItem.uuid is not null, 'relatedManagedWebspaceBookingItem for "' || givenProjectCaption|| '" must not be null';
+
     select uuid_generate_v4() into managedServerUuid;
     select uuid_generate_v4() into managedWebspaceUuid;
     select uuid_generate_v4() into webUnixUserUuid;
@@ -55,12 +69,12 @@ begin
     defaultPrefix := relatedDebitor.defaultPrefix;
 
     insert into hs_hosting_asset
-           (uuid,                bookingitemuuid,                      type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                      caption,                     config)
-    values (managedServerUuid,   relatedPrivateCloudBookingItem.uuid,  'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,   'some ManagedServer',        '{ "extra": 42 }'::jsonb),
-           (uuid_generate_v4(),  relatedPrivateCloudBookingItem.uuid,  'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,   'another CloudServer',       '{ "extra": 42 }'::jsonb),
-           (managedWebspaceUuid, relatedManagedServerBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',           'some Webspace',             '{ "extra": 42 }'::jsonb),
-           (webUnixUserUuid,     null,                                 'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024", "extra": 42 }'::jsonb),
-           (uuid_generate_v4(),  null,                                 'DOMAIN_HTTP_SETUP', managedWebspaceUuid, webUnixUserUuid,       defaultPrefix || '.example.org', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*", "extra": 42 }'::jsonb);
+           (uuid,                bookingitemuuid,                        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                      caption,                     config)
+    values (managedServerUuid,   relatedManagedServerBookingItem.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,   'some ManagedServer',        '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
+           (uuid_generate_v4(),  relatedCloudServerBookingItem.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,   'another CloudServer',       '{}'::jsonb),
+           (managedWebspaceUuid, relatedManagedWebspaceBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',           'some Webspace',             '{}'::jsonb),
+           (webUnixUserUuid,     null,                                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
+           (uuid_generate_v4(),  null,                                   'DOMAIN_HTTP_SETUP', managedWebspaceUuid, webUnixUserUuid,       defaultPrefix || '.example.org', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb);
 end; $$;
 --//
 

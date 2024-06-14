@@ -9,7 +9,7 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.LocalDateTime;
 
 @Getter
-class CustomErrorResponse {
+public class CustomErrorResponse {
 
     static ResponseEntity<CustomErrorResponse> errorResponse(
             final WebRequest request,

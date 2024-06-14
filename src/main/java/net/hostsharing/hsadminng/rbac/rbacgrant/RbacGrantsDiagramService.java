@@ -62,6 +62,8 @@ public class RbacGrantsDiagramService {
     @PersistenceContext
     private EntityManager em;
 
+    private Map<UUID, List<RawRbacGrantEntity>> descendantsByUuid = new HashMap<>();
+
     public String allGrantsToCurrentUser(final EnumSet<Include> includes) {
         final var graph = new LimitedHashSet<RawRbacGrantEntity>();
         for ( UUID subjectUuid: context.currentSubjectsUuids() ) {
@@ -102,7 +104,7 @@ public class RbacGrantsDiagramService {
     }
 
     private void traverseGrantsFrom(final Set<RawRbacGrantEntity> graph, final UUID refUuid, final EnumSet<Include> option) {
-        final var grants = rawGrantRepo.findByDescendantUuid(refUuid);
+        final var grants = findDescendantsByUuid(refUuid);
         grants.forEach(g -> {
             if (!option.contains(USERS) && g.getAscendantIdName().startsWith("user:")) {
                 return;
@@ -112,6 +114,11 @@ public class RbacGrantsDiagramService {
                 traverseGrantsFrom(graph, g.getAscendingUuid(), option);
             }
         });
+    }
+
+    private List<RawRbacGrantEntity> findDescendantsByUuid(final UUID refUuid) {
+        // TODO.impl: if that UUID already got processed, do we need to return anything at all?
+        return descendantsByUuid.computeIfAbsent(refUuid, uuid -> rawGrantRepo.findByDescendantUuid(uuid));
     }
 
     private String toMermaidFlowchart(final HashSet<RawRbacGrantEntity> graph, final EnumSet<Include> includes) {

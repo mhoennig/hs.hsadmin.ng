@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.coopassets;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopAssetsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
+import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,14 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static java.lang.String.join;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.*;
 
 @RestController
@@ -97,9 +96,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         validateDebitTransaction(requestBody, violations);
         validateCreditTransaction(requestBody, violations);
         validateAssetValue(requestBody, violations);
-        if (violations.size() > 0) {
-            throw new ValidationException("[" + join(", ", violations) + "]");
-        }
+        MultiValidationException.throwInvalid(violations);
     }
 
     private static void validateDebitTransaction(

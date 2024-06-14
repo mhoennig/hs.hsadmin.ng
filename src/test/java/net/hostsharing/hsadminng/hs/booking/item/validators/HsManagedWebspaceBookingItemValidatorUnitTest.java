@@ -1,54 +1,66 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
-import static net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidators.forType;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsManagedWebspaceBookingItemValidatorUnitTest {
+
+    final HsBookingDebitorEntity debitor = HsBookingDebitorEntity.builder()
+            .debitorNumber(12345)
+            .build();
+    final HsBookingProjectEntity project = HsBookingProjectEntity.builder()
+            .debitor(debitor)
+            .caption("Test-Project")
+            .build();
 
     @Test
     void validatesProperties() {
         // given
         final var mangedServerBookingItemEntity = HsBookingItemEntity.builder()
                 .type(MANAGED_WEBSPACE)
+                .project(project)
+                .caption("Test Managed-Webspace")
                 .resources(Map.ofEntries(
                         entry("CPUs", 2),
                         entry("RAM", 25),
-                        entry("SSD", 25),
                         entry("Traffic", 250),
                         entry("SLA-EMail", true)
                 ))
                 .build();
-        final var validator = forType(mangedServerBookingItemEntity.getType());
 
         // when
-        final var result = validator.validate(mangedServerBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(mangedServerBookingItemEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'resources.CPUs' is not expected but is set to '2'",
-                "'resources.SLA-EMail' is not expected but is set to 'true'",
-                "'resources.RAM' is not expected but is set to '25'");
+                "'D-12345:Test-Project:Test Managed-Webspace.resources.CPUs' is not expected but is set to '2'",
+                "'D-12345:Test-Project:Test Managed-Webspace.resources.RAM' is not expected but is set to '25'",
+                "'D-12345:Test-Project:Test Managed-Webspace.resources.SSD' is required but missing",
+                "'D-12345:Test-Project:Test Managed-Webspace.resources.SLA-EMail' is not expected but is set to 'true'"
+                );
     }
 
     @Test
     void containsAllValidations() {
         // when
-        final var validator = forType(MANAGED_WEBSPACE);
+        final var validator = HsBookingItemEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
-            "{type=integer, propertyName=SSD, required=true, unit=GB, min=1, max=100, step=1}",
-            "{type=integer, propertyName=HDD, required=false, unit=GB, min=0, max=250, step=10}",
-            "{type=integer, propertyName=Traffic, required=true, unit=GB, min=10, max=1000, step=10}",
-            "{type=enumeration, propertyName=SLA-Platform, required=false, values=[BASIC, EXT24H]}",
-            "{type=integer, propertyName=Daemons, required=false, unit=null, min=0, max=10, step=null}",
-            "{type=boolean, propertyName=Online Office Server, required=false, falseIf=null}");
+                "{type=integer, propertyName=SSD, unit=GB, min=1, max=100, step=1, required=true, isTotalsValidator=false}",
+                "{type=integer, propertyName=HDD, unit=GB, min=0, max=250, step=10, required=false, isTotalsValidator=false}",
+                "{type=integer, propertyName=Traffic, unit=GB, min=10, max=1000, step=10, required=true, isTotalsValidator=false}",
+                "{type=integer, propertyName=Multi, min=1, max=100, step=1, required=false, defaultValue=1, isTotalsValidator=false}",
+                "{type=integer, propertyName=Daemons, min=0, max=10, required=false, defaultValue=0, isTotalsValidator=false}",
+                "{type=boolean, propertyName=Online Office Server, required=false, isTotalsValidator=false}",
+                "{type=enumeration, propertyName=SLA-Platform, values=[BASIC, EXT24H], required=false, defaultValue=BASIC, isTotalsValidator=false}");
     }
 }

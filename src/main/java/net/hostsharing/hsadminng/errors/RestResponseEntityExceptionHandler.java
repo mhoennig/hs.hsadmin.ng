@@ -73,9 +73,10 @@ public class RestResponseEntityExceptionHandler
     }
 
     @ExceptionHandler({ Iban4jException.class, ValidationException.class })
-    protected ResponseEntity<CustomErrorResponse> handleIbanAndBicExceptions(
+    protected ResponseEntity<CustomErrorResponse> handleValidationExceptions(
             final Throwable exc, final WebRequest request) {
-        final var message = line(NestedExceptionUtils.getMostSpecificCause(exc).getMessage(), 0);
+        final String fullMessage = NestedExceptionUtils.getMostSpecificCause(exc).getMessage();
+        final var message = exc instanceof MultiValidationException ? fullMessage : line(fullMessage, 0);
         return errorResponse(request, HttpStatus.BAD_REQUEST, message);
     }
 

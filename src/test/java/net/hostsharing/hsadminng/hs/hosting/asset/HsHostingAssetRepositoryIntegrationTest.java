@@ -3,10 +3,11 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +31,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANA
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
-import static net.hostsharing.hsadminng.rbac.test.Array.fromFormatted;
+import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,12 +71,13 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // given
             context("superuser-alex@hostsharing.net");
             final var count = assetRepo.count();
-            final var givenManagedServer = givenManagedServer("D-1000111 default project", MANAGED_SERVER);
+            final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
+            final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
 
             // when
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetEntity.builder()
-                        .bookingItem(givenManagedServer.getBookingItem())
+                        .bookingItem(newWebspaceBookingItem)
                         .parentAsset(givenManagedServer)
                         .caption("some new managed webspace")
                         .type(MANAGED_WEBSPACE)
@@ -95,18 +97,19 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         public void createsAndGrantsRoles() {
             // given
             context("superuser-alex@hostsharing.net");
+            final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
+            final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
+            em.flush();
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
-                    .toList();
-            final var givenBookingItem = givenBookingItem("D-1000111 default project", "some PrivateCloud");
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetEntity.builder()
-                        .bookingItem(givenBookingItem)
-                        .type(HsHostingAssetType.MANAGED_SERVER)
-                        .identifier("vm9000")
+                        .bookingItem(newWebspaceBookingItem)
+                        .parentAsset(givenManagedServer)
+                        .type(HsHostingAssetType.MANAGED_WEBSPACE)
+                        .identifier("fir00")
                         .caption("some new managed webspace")
                         .build();
                 return toCleanup(assetRepo.save(newAsset));
@@ -117,29 +120,33 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_hosting_asset#vm9000:OWNER",
-                    "hs_hosting_asset#vm9000:ADMIN",
-                    "hs_hosting_asset#vm9000:AGENT",
-                    "hs_hosting_asset#vm9000:TENANT"));
+                    "hs_hosting_asset#fir00:ADMIN",
+                    "hs_hosting_asset#fir00:AGENT",
+                    "hs_hosting_asset#fir00:OWNER",
+                    "hs_hosting_asset#fir00:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
                             // owner
-                            "{ grant role:hs_hosting_asset#vm9000:OWNER to role:hs_booking_item#somePrivateCloud:ADMIN by system and assume }",
-                            "{ grant perm:hs_hosting_asset#vm9000:DELETE to role:hs_hosting_asset#vm9000:OWNER by system and assume }",
-                            "{ grant role:hs_hosting_asset#vm9000:ADMIN to role:hs_hosting_asset#vm9000:OWNER by system and assume }",
+                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_booking_item#fir01:ADMIN by system and assume }",
+                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_hosting_asset#vm1011:ADMIN by system and assume }",
+                            "{ grant perm:hs_hosting_asset#fir00:DELETE to role:hs_hosting_asset#fir00:OWNER by system and assume }",
 
                             // admin
-                            "{ grant perm:hs_hosting_asset#vm9000:INSERT>hs_hosting_asset to role:hs_hosting_asset#vm9000:ADMIN by system and assume }",
-                            "{ grant perm:hs_hosting_asset#vm9000:UPDATE to role:hs_hosting_asset#vm9000:ADMIN by system and assume }",
-                            "{ grant role:hs_hosting_asset#vm9000:ADMIN to role:hs_booking_item#somePrivateCloud:AGENT by system and assume }",
-                            "{ grant role:hs_hosting_asset#vm9000:TENANT to role:hs_hosting_asset#vm9000:AGENT by system and assume }",
-                            "{ grant role:hs_hosting_asset#vm9000:AGENT to role:hs_hosting_asset#vm9000:ADMIN by system and assume }",
+                            "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_hosting_asset#fir00:OWNER by system and assume }",
+                            "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_booking_item#fir01:AGENT by system and assume }",
+                            "{ grant perm:hs_hosting_asset#fir00:INSERT>hs_hosting_asset to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
+                            "{ grant perm:hs_hosting_asset#fir00:UPDATE to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
+
+                            // agent
+                            "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_hosting_asset#vm1011:AGENT by system and assume }",
+                            "{ grant role:hs_hosting_asset#fir00:AGENT to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
 
                             // tenant
-                            "{ grant role:hs_booking_item#somePrivateCloud:TENANT to role:hs_hosting_asset#vm9000:TENANT by system and assume }",
+                            "{ grant role:hs_booking_item#fir01:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
+                            "{ grant role:hs_hosting_asset#fir00:TENANT to role:hs_hosting_asset#fir00:AGENT by system and assume }",
+                            "{ grant role:hs_hosting_asset#vm1011:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
 
                             null));
         }
@@ -164,9 +171,9 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedServer, { extra: 42 })",
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedServer, { extra: 42 })",
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedServer, { extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)",
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedWebspace)",
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedWebspace)");
         }
 
         @Test
@@ -182,9 +189,8 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then:
             exactlyTheseAssetsAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedServer, { extra: 42 })",
-                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:D-1000111 default project:some PrivateCloud, { extra: 42 })",
-                    "HsHostingAssetEntity(CLOUD_SERVER, vm2011, another CloudServer, D-1000111:D-1000111 default project:some PrivateCloud, { extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedWebspace)",
+                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:D-1000111 default project:separate ManagedServer, { monit_max_cpu_usage: 90, monit_max_ram_usage: 80, monit_max_ssd_usage: 70 })");
         }
 
         @Test
@@ -200,7 +206,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             allTheseServersAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, thi01, some Webspace, MANAGED_SERVER:vm1013, D-1000313:D-1000313 default project:separate ManagedServer, { extra: 42 })");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)");
         }
 
     }
@@ -351,7 +357,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     private HsHostingAssetEntity givenSomeTemporaryAsset(final String projectCaption, final String identifier) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenBookingItem("D-1000111 default project", "some PrivateCloud");
+            final var givenBookingItem = givenBookingItem("D-1000111 default project", "test CloudServer");
             final var newAsset = HsHostingAssetEntity.builder()
                     .bookingItem(givenBookingItem)
                     .type(CLOUD_SERVER)
@@ -367,18 +373,28 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     HsBookingItemEntity givenBookingItem(final String projectCaption, final String bookingItemCaption) {
-        final var givenProject = projectRepo.findByCaption(projectCaption).stream()
-                .findAny().orElseThrow();
-        return bookingItemRepo.findAllByProjectUuid(givenProject.getUuid()).stream()
-                .filter(i -> i.getCaption().equals(bookingItemCaption))
+        return bookingItemRepo.findByCaption(bookingItemCaption).stream()
+                .filter(i -> i.getRelatedProject().getCaption().equals(projectCaption))
                 .findAny().orElseThrow();
     }
 
-    HsHostingAssetEntity givenManagedServer(final String projectCaption, final HsHostingAssetType type) {
+    HsHostingAssetEntity givenHostingAsset(final String projectCaption, final HsHostingAssetType type) {
         final var givenProject = projectRepo.findByCaption(projectCaption).stream()
                 .findAny().orElseThrow();
         return assetRepo.findAllByCriteria(givenProject.getUuid(), null, type).stream()
                 .findAny().orElseThrow();
+    }
+
+    HsBookingItemEntity newBookingItem(
+            final HsBookingItemEntity parentBookingItem,
+            final HsBookingItemType type,
+            final String caption) {
+        final var newBookingItem = HsBookingItemEntity.builder()
+                .parentItem(parentBookingItem)
+                .type(type)
+                .caption(caption)
+                .build();
+        return toCleanup(bookingItemRepo.save(newBookingItem));
     }
 
     void exactlyTheseAssetsAreReturned(

@@ -1,12 +1,8 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
-import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
+import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
 
-import static net.hostsharing.hsadminng.hs.validation.IntegerPropertyValidator.integerProperty;
-
-class HsManagedServerHostingAssetValidator extends HsEntityValidator<HsHostingAssetEntity, HsHostingAssetType> {
+class HsManagedServerHostingAssetValidator extends HsHostingAssetEntityValidator {
 
     public HsManagedServerHostingAssetValidator() {
         super(

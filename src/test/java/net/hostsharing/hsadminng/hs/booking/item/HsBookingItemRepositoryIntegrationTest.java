@@ -6,7 +6,7 @@ import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +30,7 @@ import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGE
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
-import static net.hostsharing.hsadminng.rbac.test.Array.fromFormatted;
+import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -174,9 +174,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), some ManagedWebspace, { Daemons: 2, Multi: 4, SDD: 512, Traffic: 12 })",
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SSD: 500, Traffic: 500 })",
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
         }
 
         @Test
@@ -194,9 +194,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then:
             exactlyTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SDD: 512, Traffic: 42 })",
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_WEBSPACE, [2022-10-01,), some ManagedWebspace, { Daemons: 2, Multi: 4, SDD: 512, Traffic: 12 })",
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10240, SDD: 10240, Traffic: 42 })");
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SSD: 500, Traffic: 500 })",
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
         }
     }
 

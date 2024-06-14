@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.rbac.test;
+package net.hostsharing.hsadminng.mapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,4 +37,10 @@ public class Array {
         return resultList.toArray(String[]::new);
     }
 
+    public static String[] join(final String[]... parts) {
+        final String[] joined =  Arrays.stream(parts)
+                .flatMap(Arrays::stream)
+                .toArray(String[]::new);
+        return joined;
+    }
 }

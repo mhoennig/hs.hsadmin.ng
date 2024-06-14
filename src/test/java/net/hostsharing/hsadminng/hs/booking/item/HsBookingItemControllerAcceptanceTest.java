@@ -77,14 +77,14 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     [
                         {
                             "type": "MANAGED_WEBSPACE",
-                            "caption": "some ManagedWebspace",
+                            "caption": "separate ManagedWebspace",
                             "validFrom": "2022-10-01",
                             "validTo": null,
                             "resources": {
-                                "SDD": 512,
-                                "Multi": 4,
-                                "Daemons": 2,
-                                "Traffic": 12
+                                "SSD": 100,
+                                "Multi": 1,
+                                "Daemons": 0,
+                                "Traffic": 50
                             }
                         },
                         {
@@ -94,9 +94,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "validTo": null,
                             "resources": {
                                 "RAM": 8,
-                                "SDD": 512,
+                                "SSD": 500,
                                 "CPUs": 2,
-                                "Traffic": 42
+                                "Traffic": 500
                             }
                         },
                         {
@@ -105,10 +105,11 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "validFrom": "2024-04-01",
                             "validTo": null,
                             "resources": {
-                                "HDD": 10240,
-                                "SDD": 10240,
+                                "HDD": 10000,
+                                "RAM": 32,
+                                "SSD": 4000,
                                 "CPUs": 10,
-                                "Traffic": 42
+                                "Traffic": 2000
                             }
                         }
                     ]
@@ -174,7 +175,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void globalAdmin_canGetArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findByCaption("some ManagedWebspace").stream()
+            final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedWebspace").stream()
                             .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "fir"))
                             .map(HsBookingItemEntity::getUuid)
                             .findAny().orElseThrow();
@@ -191,14 +192,14 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .body("", lenientlyEquals("""
                         {
                             "type": "MANAGED_WEBSPACE",
-                             "caption": "some ManagedWebspace",
+                             "caption": "separate ManagedWebspace",
                              "validFrom": "2022-10-01",
                              "validTo": null,
                              "resources": {
-                                 "SDD": 512,
-                                 "Multi": 4,
-                                 "Daemons": 2,
-                                 "Traffic": 12
+                                 "SSD": 100,
+                                 "Multi": 1,
+                                 "Daemons": 0,
+                                 "Traffic": 50
                             }
                         }
                     """)); // @formatter:on
@@ -227,14 +228,16 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void projectAdmin_canGetRelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedServer").stream()
-                    .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "thi"))
+                    .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "sec"))
                     .map(HsBookingItemEntity::getUuid)
                     .findAny().orElseThrow();
+
+            generateRbacDiagramForObjectPermission(givenBookingItemUuid, "SELECT", "select");
 
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:ADMIN")
+                    .header("assumed-roles", "hs_booking_project#D-1000212-D-1000212defaultproject:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -249,9 +252,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "validTo": null,
                             "resources": {
                                 "RAM": 8,
-                                "SDD": 512,
+                                "SSD": 500,
                                 "CPUs": 2,
-                                "Traffic": 42
+                                "Traffic": 500
                             }
                         }
                     """)); // @formatter:on
@@ -261,7 +264,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             return ofNullable(bi)
                     .map(HsBookingItemEntity::getProject)
                     .map(HsBookingProjectEntity::getDebitor)
-                    .map(bd -> bd.getDefaultPrefix().equals(defaultPrefix))
+                    .filter(bd -> bd.getDefaultPrefix().equals(defaultPrefix))
                     .isPresent();
         }
     }

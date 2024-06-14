@@ -44,11 +44,11 @@ class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final  Map<String, Object> PATCH_RESOURCES = patchMap(
             entry("CPU", 2),
             entry("HDD", null),
-            entry("SDD", 256)
+            entry("SSD", 256)
     );
     private static final  Map<String, Object> PATCHED_RESOURCES = patchMap(
             entry("CPU", 2),
-            entry("SDD", 256),
+            entry("SSD", 256),
             entry("MEM", 64)
     );
 

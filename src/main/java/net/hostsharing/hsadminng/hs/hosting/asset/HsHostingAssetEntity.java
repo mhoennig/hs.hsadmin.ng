@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.validation.Validatable;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -17,6 +16,7 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -25,11 +25,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,7 +58,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validatable<HsHostingAssetEntity, HsHostingAssetType> {
+public class HsHostingAssetEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsHostingAssetEntity> stringify = stringify(HsHostingAssetEntity.class)
             .withProp(HsHostingAssetEntity::getType)
@@ -91,6 +93,10 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
     @Enumerated(EnumType.STRING)
     private HsHostingAssetType type;
 
+    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true)
+    @JoinColumn(name="parentassetuuid", referencedColumnName="uuid")
+    private List<HsHostingAssetEntity> subHostingAssets;
+
     @Column(name = "identifier")
     private String identifier; // vm1234, xyz00, example.org, xyz00_abc
 
@@ -112,16 +118,6 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Validata
 
     public void putConfig(Map<String, Object> newConfg) {
         PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config).assign(newConfg);
-    }
-
-    @Override
-    public String getPropertiesName() {
-        return "config";
-    }
-
-    @Override
-    public Map<String, Object> getProperties() {
-        return config;
     }
 
     @Override

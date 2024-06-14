@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityValidators.valid;
+import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityValidatorRegistry.validated;
 
 @RestController
 public class HsHostingAssetController implements HsHostingAssetsApi {
@@ -62,7 +62,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entityToSave = mapper.map(body, HsHostingAssetEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var saved = assetRepo.save(valid(entityToSave));
+        final var saved = validated(assetRepo.save(entityToSave));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -117,7 +117,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         new HsHostingAssetEntityPatcher(current).apply(body);
 
-        final var saved = assetRepo.save(valid(current));
+        final var saved = validated(assetRepo.save(current));
         final var mapped = mapper.map(saved, HsHostingAssetResource.class);
         return ResponseEntity.ok(mapped);
     }

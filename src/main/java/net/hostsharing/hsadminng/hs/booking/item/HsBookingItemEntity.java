@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
-import net.hostsharing.hsadminng.hs.validation.Validatable;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -19,6 +19,7 @@ import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,12 +28,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,7 +65,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatable<HsBookingItemEntity, HsBookingItemType> {
+public class HsBookingItemEntity implements Stringifyable, RbacObject {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
             .withProp(HsBookingItemEntity::getProject)
@@ -104,6 +107,14 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
     @Type(JsonType.class)
     @Column(columnDefinition = "resources")
     private Map<String, Object> resources = new HashMap<>();
+
+    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true)
+    @JoinColumn(name="parentitemuuid", referencedColumnName="uuid")
+    private List<HsBookingItemEntity> subBookingItems;
+
+    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true)
+    @JoinColumn(name="bookingitemuuid", referencedColumnName="uuid")
+    private List<HsHostingAssetEntity> subHostingAssets;
 
     @Transient
     private PatchableMapWrapper<Object> resourcesWrapper;
@@ -148,16 +159,6 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Validatab
             return project;
         }
         return parentItem == null ? null : parentItem.relatedProject();
-    }
-
-    @Override
-    public String getPropertiesName() {
-        return "resources";
-    }
-
-    @Override
-    public Map<String, Object> getProperties() {
-        return resources;
     }
 
     public HsBookingProjectEntity getRelatedProject() {

@@ -187,7 +187,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
         final var givenWebRequest = mock(WebRequest.class);
 
         // when
-        final var errorResponse = exceptionHandler.handleIbanAndBicExceptions(givenException, givenWebRequest);
+        final var errorResponse = exceptionHandler.handleValidationExceptions(givenException, givenWebRequest);
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);

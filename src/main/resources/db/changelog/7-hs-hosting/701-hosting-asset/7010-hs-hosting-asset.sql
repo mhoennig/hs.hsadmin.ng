@@ -75,10 +75,10 @@ begin
     end);
 
     if expectedParentType is not null and actualParentType is null then
-        raise exception '[400] % must have % as parent, but got <NULL>',
+        raise exception '[400] HostingAsset % must have % as parent, but got <NULL>',
             NEW.type, expectedParentType;
     elsif expectedParentType is not null and actualParentType <> expectedParentType then
-        raise exception '[400] % must have % as parent, but got %s',
+        raise exception '[400] HostingAsset % must have % as parent, but got %s',
             NEW.type, expectedParentType, actualParentType;
     end if;
     return NEW;
@@ -100,27 +100,23 @@ create or replace function hs_hosting_asset_booking_item_hierarchy_check_tf()
     language plpgsql as $$
 declare
     actualBookingItemType       HsBookingItemType;
-    expectedBookingItemTypes    HsBookingItemType[];
+    expectedBookingItemType     HsBookingItemType;
 begin
     actualBookingItemType := (select type
                                  from hs_booking_item
                                  where NEW.bookingItemUuid = uuid);
 
     if NEW.type = 'CLOUD_SERVER' then
-        expectedBookingItemTypes := ARRAY['PRIVATE_CLOUD', 'CLOUD_SERVER'];
+        expectedBookingItemType := 'CLOUD_SERVER';
     elsif NEW.type = 'MANAGED_SERVER' then
-        expectedBookingItemTypes := ARRAY['PRIVATE_CLOUD', 'MANAGED_SERVER'];
+        expectedBookingItemType := 'MANAGED_SERVER';
     elsif NEW.type = 'MANAGED_WEBSPACE' then
-        if NEW.parentAssetUuid is null then
-            expectedBookingItemTypes := ARRAY['MANAGED_WEBSPACE'];
-        else
-            expectedBookingItemTypes := ARRAY['PRIVATE_CLOUD', 'MANAGED_SERVER'];
-        end if;
+        expectedBookingItemType := 'MANAGED_WEBSPACE';
     end if;
 
-    if not actualBookingItemType = any(expectedBookingItemTypes) then
-        raise exception '[400] % % must have any of % as booking-item, but got %',
-            NEW.type, NEW.identifier, expectedBookingItemTypes, actualBookingItemType;
+    if not actualBookingItemType = expectedBookingItemType then
+        raise exception '[400] HostingAsset % % must have % as booking-item, but got %',
+            NEW.type, NEW.identifier, expectedBookingItemType, actualBookingItemType;
     end if;
     return NEW;
 end; $$;

@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.rbacuser;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

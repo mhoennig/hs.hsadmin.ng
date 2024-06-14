@@ -33,7 +33,8 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                         [
                             "MANAGED_SERVER",
                             "MANAGED_WEBSPACE",
-                            "CLOUD_SERVER"
+                            "CLOUD_SERVER",
+                            "UNIX_USER"
                         ]
                         """));
         // @formatter:on
@@ -55,56 +56,54 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                             {
                                 "type": "integer",
                                 "propertyName": "monit_min_free_ssd",
-                                "required": false,
-                                "unit": null,
                                 "min": 1,
                                 "max": 1000,
-                                "step": null
+                                "required": false,
+                                "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_min_free_hdd",
-                                "required": false,
-                                "unit": null,
                                 "min": 1,
                                 "max": 4000,
-                                "step": null
+                                "required": false,
+                                "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_max_ssd_usage",
-                                "required": true,
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "step": null
+                                "required": true,
+                                "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_max_hdd_usage",
-                                "required": false,
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "step": null
+                                "required": false,
+                                "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_max_cpu_usage",
-                                "required": true,
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "step": null
+                                "required": true,
+                                "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_max_ram_usage",
-                                "required": true,
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "step": null
+                                "required": true,
+                                "isTotalsValidator": false
                             }
                         ]
                         """));

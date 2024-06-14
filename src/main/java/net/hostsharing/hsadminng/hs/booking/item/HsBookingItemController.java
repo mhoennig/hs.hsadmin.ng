@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingItemsA
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemPatchResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemResource;
+import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidators.valid;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
@@ -31,6 +33,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Autowired
     private HsBookingItemRepository bookingItemRepo;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Override
     @Transactional(readOnly = true)
@@ -57,7 +62,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         final var entityToSave = mapper.map(body, HsBookingItemEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var saved = bookingItemRepo.save(valid(entityToSave));
+        final var saved = HsBookingItemEntityValidatorRegistry.validated(bookingItemRepo.save(entityToSave));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -78,6 +83,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
         context.define(currentUser, assumedRoles);
 
         final var result = bookingItemRepo.findByUuid(bookingItemUuid);
+        result.ifPresent(entity -> em.detach(entity)); // prevent further LAZY-loading
         return result
                 .map(bookingItemEntity -> ResponseEntity.ok(
                         mapper.map(bookingItemEntity, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER)))
@@ -112,7 +118,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         new HsBookingItemEntityPatcher(current).apply(body);
 
-        final var saved = bookingItemRepo.save(valid(current));
+        final var saved = bookingItemRepo.save(HsBookingItemEntityValidatorRegistry.validated(current));
         final var mapped = mapper.map(saved, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }

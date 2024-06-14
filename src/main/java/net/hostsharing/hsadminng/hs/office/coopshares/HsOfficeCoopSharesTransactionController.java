@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopSharesApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionResource;
+import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,14 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.validation.ValidationException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static java.lang.String.join;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.CANCELLATION;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopSharesTransactionTypeResource.SUBSCRIPTION;
 
@@ -99,9 +98,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         validateSubscriptionTransaction(requestBody, violations);
         validateCancellationTransaction(requestBody, violations);
         validateshareCount(requestBody, violations);
-        if (violations.size() > 0) {
-            throw new ValidationException("[" + join(", ", violations) + "]");
-        }
+        MultiValidationException.throwInvalid(violations);
     }
 
     private static void validateSubscriptionTransaction(

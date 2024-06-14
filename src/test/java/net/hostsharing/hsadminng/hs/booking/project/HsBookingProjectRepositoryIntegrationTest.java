@@ -4,7 +4,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
-import net.hostsharing.hsadminng.rbac.test.Array;
+import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
@@ -23,7 +23,7 @@ import java.util.List;
 
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
-import static net.hostsharing.hsadminng.rbac.test.Array.fromFormatted;
+import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 

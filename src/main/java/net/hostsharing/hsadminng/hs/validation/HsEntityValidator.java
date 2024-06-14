@@ -1,49 +1,76 @@
 package net.hostsharing.hsadminng.hs.validation;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static java.util.Arrays.stream;
+import static java.util.Collections.emptyList;
 
-public class HsEntityValidator<E extends Validatable<E, T>, T extends Enum<T>> {
+public abstract class HsEntityValidator<E> {
 
-    public final HsPropertyValidator<?>[] propertyValidators;
+    public final ValidatableProperty<?>[] propertyValidators;
 
-    public HsEntityValidator(final HsPropertyValidator<?>... validators) {
+    public HsEntityValidator(final ValidatableProperty<?>... validators) {
         propertyValidators = validators;
     }
 
-    public List<String> validate(final E assetEntity) {
+    protected static List<String> enrich(final String prefix, final List<String> messages) {
+        return messages.stream()
+                // TODO:refa: this is a bit hacky, I need to find the right place to add the prefix
+                .map(message -> message.startsWith("'") ? message : ("'" + prefix + "." + message))
+                .toList();
+    }
+
+    protected static String prefix(final String... parts) {
+        return String.join(".", parts);
+    }
+
+    public abstract List<String> validate(final E entity);
+
+    public final List<Map<String, Object>> properties() {
+        return Arrays.stream(propertyValidators)
+                .map(ValidatableProperty::toOrderedMap)
+                .toList();
+    }
+
+    protected ArrayList<String> validateProperties(final Map<String, Object> properties) {
         final var result = new ArrayList<String>();
-        assetEntity.getProperties().keySet().forEach( givenPropName -> {
+        properties.keySet().forEach( givenPropName -> {
             if (stream(propertyValidators).map(pv -> pv.propertyName).noneMatch(propName -> propName.equals(givenPropName))) {
-                result.add("'"+assetEntity.getPropertiesName()+"." + givenPropName + "' is not expected but is set to '" +assetEntity.getProperties().get(givenPropName) + "'");
+                result.add(givenPropName + "' is not expected but is set to '" + properties.get(givenPropName) + "'");
             }
         });
         stream(propertyValidators).forEach(pv -> {
-          result.addAll(pv.validate(assetEntity.getPropertiesName(), assetEntity.getProperties()));
+            result.addAll(pv.validate(properties));
         });
         return result;
     }
 
-    public List<Map<String, Object>> properties() {
-        final var mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        return Arrays.stream(propertyValidators)
-                .map(propertyValidator -> propertyValidator.toMap(mapper))
-                .map(HsEntityValidator::asKeyValueMap)
-                .toList();
+    @SafeVarargs
+    protected static List<String> sequentiallyValidate(final Supplier<List<String>>... validators) {
+        return new ArrayList<>(stream(validators)
+                .map(Supplier::get)
+                .filter(violations -> !violations.isEmpty())
+                .findFirst()
+                .orElse(emptyList()));
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static Map<String, Object> asKeyValueMap(final Map map) {
-        return (Map<String, Object>) map;
+    protected static Integer getNonNullIntegerValue(final ValidatableProperty<?> prop, final Map<String, Object> propValues) {
+        final var value = prop.getValue(propValues);
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        throw new IllegalArgumentException(prop.propertyName + " Integer value expected, but got " + value);
     }
 
+    protected static Integer toNonNullInteger(final Object value) {
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        throw new IllegalArgumentException("Integer value expected, but got " + value);
+    }
 }

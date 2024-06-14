@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
@@ -20,8 +21,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
@@ -77,25 +79,19 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             "type": "MANAGED_WEBSPACE",
                             "identifier": "sec01",
                              "caption": "some Webspace",
-                            "config": {
-                                "extra": 42
-                            }
+                            "config": {}
                         },
                         {
                             "type": "MANAGED_WEBSPACE",
                             "identifier": "fir01",
                             "caption": "some Webspace",
-                            "config": {
-                                "extra": 42
-                            }
+                            "config": {}
                         },
                         {
                             "type": "MANAGED_WEBSPACE",
                             "identifier": "thi01",
                             "caption": "some Webspace",
-                            "config": {
-                                "extra": 42
-                            }
+                            "config": {}
                         }
                     ]
                     """));
@@ -110,41 +106,47 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
-                    .port(port)
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .port(port)
                     .when()
-                    .get("http://localhost/api/hs/hosting/assets?type=" + MANAGED_SERVER)
+                    .   get("http://localhost/api/hs/hosting/assets?type=" + MANAGED_SERVER)
                     .then().log().all().assertThat()
-                    .statusCode(200)
-                    .contentType("application/json")
-                    .body("", lenientlyEquals("""
-                    [
-                        {
-                            "type": "MANAGED_SERVER",
-                            "identifier": "vm1011",
-                            "caption": "some ManagedServer",
-                            "config": {
-                                "extra": 42
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                        [
+                            {
+                                "type": "MANAGED_SERVER",
+                                "identifier": "vm1011",
+                                "caption": "some ManagedServer",
+                                "config": {
+                                    "monit_max_cpu_usage": 90,
+                                    "monit_max_ram_usage": 80,
+                                    "monit_max_ssd_usage": 70
+                                }
+                            },
+                            {
+                                "type": "MANAGED_SERVER",
+                                "identifier": "vm1012",
+                                "caption": "some ManagedServer",
+                                "config": {
+                                    "monit_max_cpu_usage": 90,
+                                    "monit_max_ram_usage": 80,
+                                    "monit_max_ssd_usage": 70
+                                }
+                            },
+                            {
+                                "type": "MANAGED_SERVER",
+                                "identifier": "vm1013",
+                                "caption": "some ManagedServer",
+                                "config": {
+                                    "monit_max_cpu_usage": 90,
+                                    "monit_max_ram_usage": 80,
+                                    "monit_max_ssd_usage": 70
+                                }
                             }
-                        },
-                        {
-                            "type": "MANAGED_SERVER",
-                            "identifier": "vm1012",
-                            "caption": "some ManagedServer",
-                            "config": {
-                                "extra": 42
-                            }
-                        },
-                        {
-                            "type": "MANAGED_SERVER",
-                            "identifier": "vm1013",
-                            "caption": "some ManagedServer",
-                            "config": {
-                                "extra": 42
-                            }
-                        }
-                    ]
-                    """));
+                        ]
+                        """));
             // @formatter:on
         }
     }
@@ -156,7 +158,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void globalAdmin_canAddBookedAsset() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenBookingItem("D-1000111 default project", "some PrivateCloud");
+            final var givenBookingItem = newBookingItem("D-1000111 default project",
+                    HsBookingItemType.MANAGED_WEBSPACE, "separate ManagedWebspace BI",
+                    Map.ofEntries(
+                            entry("SSD", 50),
+                            entry("Traffic", 50)
+                    )
+            );
+            final var givenParentAsset = givenParentAsset(MANAGED_SERVER, "vm1011");
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -165,12 +174,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .body("""
                             {
                                 "bookingItemUuid": "%s",
-                                "type": "MANAGED_SERVER",
-                                "identifier": "vm1400",
-                                "caption": "some new ManagedServer",
-                                "config": { "monit_max_ssd_usage": 80, "monit_max_cpu_usage": 90, "monit_max_ram_usage": 70 }
+                                "type": "MANAGED_WEBSPACE",
+                                "identifier": "fir10",
+                                "parentAssetUuid": "%s",
+                                "caption": "some separate ManagedWebspace HA",
+                                "config": {}
                             }
-                            """.formatted(givenBookingItem.getUuid()))
+                            """.formatted(givenBookingItem.getUuid(), givenParentAsset.getUuid()))
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/hosting/assets")
@@ -179,19 +189,20 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("", lenientlyEquals("""
                             {
-                                "type": "MANAGED_SERVER",
-                                "identifier": "vm1400",
-                                "caption": "some new ManagedServer",
-                                "config": { "monit_max_ssd_usage": 80, "monit_max_cpu_usage": 90, "monit_max_ram_usage": 70 }
+                                "type": "MANAGED_WEBSPACE",
+                                "identifier": "fir10",
+                                "caption": "some separate ManagedWebspace HA",
+                                "config": {}
                             }
                             """))
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new asset can be accessed under the generated UUID
-            final var newUserUuid = UUID.fromString(
+            final var newWebspace = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isNotNull();
+            assertThat(newWebspace).isNotNull();
+            toCleanup(HsHostingAssetEntity.class, newWebspace);
         }
 
         @Test
@@ -240,7 +251,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        void additionalValidationsArePerformend_whenAddingAsset() {
+        void propertyValidationsArePerformend_whenAddingAsset() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItem = givenBookingItem("D-1000111 default project", "some PrivateCloud");
@@ -267,9 +278,66 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .body("", lenientlyEquals("""
                             {
                                 "statusPhrase": "Bad Request",
-                                "message": "['config.extra' is not expected but is set to '42', 'config.monit_max_ssd_usage' is expected to be >= 10 but is 0, 'config.monit_max_cpu_usage' is expected to be <= 100 but is 101, 'config.monit_max_ram_usage' is required but missing]"
+                                "message": "[
+                                          <<<'MANAGED_SERVER:vm1400.config.extra' is not expected but is set to '42',
+                                          <<<'MANAGED_SERVER:vm1400.config.monit_max_ssd_usage' is expected to be >= 10 but is 0,
+                                          <<<'MANAGED_SERVER:vm1400.config.monit_max_cpu_usage' is expected to be <= 100 but is 101,
+                                          <<<'MANAGED_SERVER:vm1400.config.monit_max_ram_usage' is required but missing
+                                          <<<]"
                             }
-                            """));  // @formatter:on
+                            """.replaceAll(" +<<<", "")));  // @formatter:on
+        }
+
+
+        @Test
+        void totalsLimitValidationsArePerformend_whenAddingAsset() {
+
+            context.define("superuser-alex@hostsharing.net");
+            final var givenHostingAsset = givenHostingAsset(MANAGED_WEBSPACE, "fir01");
+            assertThat(givenHostingAsset.getBookingItem().getResources().get("Multi"))
+                    .as("precondition failed")
+                    .isEqualTo(1);
+
+            jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net");
+                for (int n = 0; n < 25; ++n ) {
+                    toCleanup(assetRepo.save(
+                            HsHostingAssetEntity.builder()
+                                    .type(UNIX_USER)
+                                    .parentAsset(givenHostingAsset)
+                                    .identifier("fir01-%2d".formatted(n))
+                                    .caption("Test UnixUser fir01-%2d".formatted(n))
+                                    .build()));
+                }
+            }).assertSuccessful();
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                    {
+                                        "parentAssetUuid": "%s",
+                                        "type": "UNIX_USER",
+                                        "identifier": "fir01-extra",
+                                        "caption": "some extra UnixUser",
+                                        "config": { }
+                                    }
+                                    """.formatted(givenHostingAsset.getUuid()))
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/hosting/assets")
+                    .then().log().all().assertThat()
+                        .statusCode(400)
+                        .contentType(ContentType.JSON)
+                        .body("", lenientlyEquals("""
+                                    {
+                                        "statusPhrase": "Bad Request",
+                                        "message": "[
+                                                 <<<'D-1000111:D-1000111 default project:separate ManagedWebspace.resources.Multi=1 allows at maximum 25 unix users, but 26 found
+                                                 <<<]"
+                                    }
+                                    """.replaceAll(" +<<<", "")));  // @formatter:on
         }
     }
 
@@ -295,9 +363,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .body("", lenientlyEquals("""
                         {
                             "caption": "some ManagedServer",
-                            "config": {
-                                 "extra": 42
-                             }
+                            "config": {}
                         }
                     """)); // @formatter:on
         }
@@ -340,9 +406,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         {
                             "identifier": "vm1013",
                             "caption": "some ManagedServer",
-                            "config": {
-                                "extra": 42
-                            }
+                            "config": {}
                         }
                     """)); // @formatter:on
         }
@@ -441,6 +505,29 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             // then the given asset is still there
             assertThat(assetRepo.findByUuid(givenAsset.getUuid())).isNotEmpty();
         }
+    }
+
+    HsHostingAssetEntity givenHostingAsset(final HsHostingAssetType type, final String identifier) {
+        return assetRepo.findByIdentifier(identifier).stream()
+                .filter(ha -> ha.getType()==type)
+                .findAny().orElseThrow();
+    }
+
+    HsBookingItemEntity newBookingItem(
+            final String projectCaption,
+            final HsBookingItemType type, final String bookingItemCaption, final Map<String, Object> resources) {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            final var project = projectRepo.findByCaption(projectCaption).stream()
+                    .findAny().orElseThrow();
+            final var bookingItem = HsBookingItemEntity.builder()
+                    .project(project)
+                    .type(type)
+                    .caption(bookingItemCaption)
+                    .resources(resources)
+                    .build();
+            return toCleanup(bookingItemRepo.save(bookingItem));
+        }).assertSuccessful().returnedValue();
     }
 
     HsBookingItemEntity givenBookingItem(final String projectCaption, final String bookingItemCaption) {
