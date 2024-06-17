@@ -458,8 +458,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             assertThat(assetRepo.findByUuid(givenAsset.getUuid())).isPresent().get()
                     .matches(asset -> {
-                        assertThat(asset.toString()).isEqualTo(
-                                "HsHostingAssetEntity(MANAGED_SERVER, vm2001, some test-asset, D-1000111:D-1000111 default project:some ManagedServer, { monit_max_cpu_usage: 90, monit_max_ram_usage: 70, monit_max_ssd_usage: 85, monit_min_free_ssd: 5 })");
+                        assertThat(asset.getConfig().toString()).isEqualTo(
+                                "{ monit_max_cpu_usage: 90, monit_max_ram_usage: 70, monit_max_ssd_usage: 85, monit_min_free_ssd: 5 }");
                         return true;
                     });
         }

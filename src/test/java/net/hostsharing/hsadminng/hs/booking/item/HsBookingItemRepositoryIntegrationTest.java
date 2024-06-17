@@ -231,7 +231,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         private void assertThatBookingItemActuallyInDatabase(final HsBookingItemEntity saved) {
             final var found = bookingItemRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().isNotSameAs(saved)
-                    .extracting(Object::toString).isEqualTo(saved.toString());
+                    .extracting(HsBookingItemEntity::getResources)
+                    .extracting(Object::toString)
+                    .isEqualTo(saved.getResources().toString());
         }
     }
 

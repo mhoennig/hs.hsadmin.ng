@@ -63,7 +63,6 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return merged;
     }
 
-    // remove HsOfficeCoopAssetsTransactionRawEntity, which is not needed anymore after this change
     public UUID toCleanup(final Class<? extends RbacObject> entityClass, final UUID uuidToCleanup) {
         out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup + ")");
         entitiesToCleanup.put(uuidToCleanup, entityClass);
@@ -176,7 +175,8 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     }
 
     private void cleanupTemporaryTestData() {
-        jpaAttempt.transacted(() -> {
+        // For better performance in a single transaction ...
+        final var exception = jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
             entitiesToCleanup.reversed().forEach((uuid, entityClass) -> {
                 final var rvTableName = entityClass.getAnnotation(Table.class).name();
@@ -188,7 +188,12 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
                         .setParameter("uuid", uuid).executeUpdate();
                 out.println("DELETING temporary " + entityClass.getSimpleName() + "#" + uuid + " deleted " + deletedRows + " rows");
             });
-        }).assertSuccessful();
+        }).caughtException();
+
+        // ... and in case of foreign key violations, we rely on the RbacObject cleanup.
+        if (exception != null) {
+            System.err.println(exception);
+        }
     }
 
     private long assertNoNewRbacObjectsRolesAndGrantsLeaked() {
@@ -214,24 +219,24 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     }
 
     private void deleteLeakedRbacObjects() {
-        jpaAttempt.transacted(() -> rbacObjectRepo.findAll()).returnedValue().stream()
-                .filter(o -> o.serialId > latestIntialTestDataSerialId)
-                .sorted(comparing(o -> o.serialId))
-                .forEach(o -> {
-                    final var exception = jpaAttempt.transacted(() -> {
-                        context.define("superuser-alex@hostsharing.net", null);
+        rbacObjectRepo.findAll().stream()
+            .filter(o -> o.serialId > latestIntialTestDataSerialId)
+            .sorted(comparing(o -> o.serialId))
+            .forEach(o -> {
+                final var exception = jpaAttempt.transacted(() -> {
+                    context.define("superuser-alex@hostsharing.net", null);
 
-                        em.createNativeQuery("DELETE FROM " + o.objectTable + " WHERE uuid=:uuid")
-                                .setParameter("uuid", o.uuid)
-                                .executeUpdate();
+                    em.createNativeQuery("DELETE FROM " + o.objectTable + " WHERE uuid=:uuid")
+                            .setParameter("uuid", o.uuid)
+                            .executeUpdate();
 
-                        out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " SUCCEEDED");
-                    }).caughtException();
+                    out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " SUCCEEDED");
+                }).caughtException();
 
-                    if (exception != null) {
-                        out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " FAILED " + exception);
-                    }
-                });
+                if (exception != null) {
+                    out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " FAILED " + exception);
+                }
+            });
     }
 
     private void assertEqual(final Set<String> before, final Set<String> after) {

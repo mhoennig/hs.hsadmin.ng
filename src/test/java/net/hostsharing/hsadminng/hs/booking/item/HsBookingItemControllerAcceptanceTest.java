@@ -4,13 +4,17 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.junit.jupiter.api.ClassOrderer;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestClassOrder;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -33,6 +37,7 @@ import static org.hamcrest.Matchers.matchesRegex;
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
 @Transactional
+@TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
 class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
@@ -51,6 +56,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     JpaAttempt jpaAttempt;
 
     @Nested
+    @Order(2)
     class ListBookingItems {
 
         @Test
@@ -119,6 +125,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     }
 
     @Nested
+    @Order(3)
     class AddBookingItem {
 
         @Test
@@ -170,13 +177,16 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     }
 
     @Nested
+    @Order(1)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class GetBookingItem {
 
         @Test
+        @Order(1)
         void globalAdmin_canGetArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedWebspace").stream()
-                            .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "fir"))
+                            .filter(bi -> belongsToProject(bi, "D-1000111 default project"))
                             .map(HsBookingItemEntity::getUuid)
                             .findAny().orElseThrow();
 
@@ -206,10 +216,11 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }
 
         @Test
+        @Order(2)
         void normalUser_canNotGetUnrelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedServer").stream()
-                    .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "sec"))
+                    .filter(bi -> belongsToProject(bi, "D-1000212 default project"))
                     .map(HsBookingItemEntity::getUuid)
                     .findAny().orElseThrow();
 
@@ -224,23 +235,21 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         }
 
         @Test
-        // TODO.impl: For unknown reason, this test fails in about 50%, not finding the uuid (404), maybe no SELECT permission?
+        @Order(3)
+        // TODO.impl: For unknown reason this test fails in about 50%, not finding the uuid (404).
         void projectAdmin_canGetRelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedServer").stream()
-                    .filter(bi -> belongsToDebitorWithDefaultPrefix(bi, "sec"))
-                    .map(HsBookingItemEntity::getUuid)
+            final var givenBookingItem = bookingItemRepo.findByCaption("separate ManagedServer").stream()
+                    .filter(bi -> belongsToProject(bi, "D-1000313 default project"))
                     .findAny().orElseThrow();
-
-            generateRbacDiagramForObjectPermission(givenBookingItemUuid, "SELECT", "select");
 
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_booking_project#D-1000212-D-1000212defaultproject:ADMIN")
+                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:ADMIN")
                     .port(port)
                 .when()
-                    .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
+                    .get("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -260,22 +269,22 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     """)); // @formatter:on
         }
 
-        private static boolean belongsToDebitorWithDefaultPrefix(final HsBookingItemEntity bi, final String defaultPrefix) {
+        private static boolean belongsToProject(final HsBookingItemEntity bi, final String projectCaption) {
             return ofNullable(bi)
                     .map(HsBookingItemEntity::getProject)
-                    .map(HsBookingProjectEntity::getDebitor)
-                    .filter(bd -> bd.getDefaultPrefix().equals(defaultPrefix))
+                    .filter(bp -> bp.getCaption().equals(projectCaption))
                     .isPresent();
         }
     }
 
     @Nested
+    @Order(4)
     class PatchBookingItem {
 
         @Test
         void globalAdmin_canPatchAllUpdatablePropertiesOfBookingItem() {
 
-            final var givenBookingItem = givenSomeBookingItem(1000111, MANAGED_WEBSPACE,
+            final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project", MANAGED_WEBSPACE,
                     resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
@@ -324,12 +333,13 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     }
 
     @Nested
+    @Order(5)
     class DeleteBookingItem {
 
         @Test
         void globalAdmin_canDeleteArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenSomeBookingItem(1000111, MANAGED_WEBSPACE,
+            final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project", MANAGED_WEBSPACE,
                     resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
@@ -348,7 +358,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Test
         void normalUser_canNotDeleteUnrelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenSomeBookingItem(1000111, MANAGED_WEBSPACE,
+            final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project", MANAGED_WEBSPACE,
                     resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
 
             RestAssured // @formatter:off
@@ -366,13 +376,11 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     }
 
     @SafeVarargs
-    private HsBookingItemEntity givenSomeBookingItem(final int debitorNumber,
+    private HsBookingItemEntity givenSomeNewBookingItem(final String projectCaption,
             final HsBookingItemType hsBookingItemType, final Map.Entry<String, Object>... resources) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenProject = debitorRepo.findDebitorByDebitorNumber(debitorNumber).stream()
-                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
-                    .flatMap(java.util.List::stream)
+            final var givenProject = projectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
             final var newBookingItem = HsBookingItemEntity.builder()
                     .uuid(UUID.randomUUID())

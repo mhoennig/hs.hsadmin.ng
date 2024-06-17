@@ -21,6 +21,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -77,15 +78,15 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     @Version
     private int version;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bookingitemuuid")
     private HsBookingItemEntity bookingItem;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid")
     private HsHostingAssetEntity parentAsset;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignedtoassetuuid")
     private HsHostingAssetEntity assignedToAsset;
 
@@ -93,12 +94,12 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     @Enumerated(EnumType.STRING)
     private HsHostingAssetType type;
 
-    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name="parentassetuuid", referencedColumnName="uuid")
     private List<HsHostingAssetEntity> subHostingAssets;
 
     @Column(name = "identifier")
-    private String identifier; // vm1234, xyz00, example.org, xyz00_abc
+    private String identifier; // e.g. vm1234, xyz00, example.org, xyz00_abc
 
     @Column(name = "caption")
     private String caption;

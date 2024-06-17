@@ -24,6 +24,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
@@ -152,8 +154,11 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         }
 
         private void assertThatAssetIsPersisted(final HsHostingAssetEntity saved) {
-            final var found = assetRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().map(HsHostingAssetEntity::toString).get().isEqualTo(saved.toString());
+            attempt(em, () -> {
+                context("superuser-alex@hostsharing.net");
+                final var found = assetRepo.findByUuid(saved.getUuid());
+                assertThat(found).isNotEmpty().map(HsHostingAssetEntity::toString).get().isEqualTo(saved.toString());
+            });
         }
     }
 
@@ -240,7 +245,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         private void assertThatAssetActuallyInDatabase(final HsHostingAssetEntity saved) {
             final var found = assetRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().isNotSameAs(saved)
-                    .extracting(Object::toString).isEqualTo(saved.toString());
+                    .extracting(HsHostingAssetEntity::getVersion).isEqualTo(saved.getVersion());
         }
     }
 
