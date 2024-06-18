@@ -7,6 +7,7 @@ import org.apache.commons.lang3.function.TriFunction;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_EMAIL_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_DATABASE;
@@ -38,10 +39,11 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
 
     private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> unixUsers() {
         return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
-            final var unixUserCount = entity.getSubHostingAssets().stream()
-                    .flatMap(ha -> ha.getSubHostingAssets().stream())
-                    .filter(ha -> ha.getType() == UNIX_USER)
-                    .count();
+            final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
+                    .map(ha -> ha.getSubHostingAssets().stream()
+                            .filter(subAsset -> subAsset.getType() == UNIX_USER)
+                        .count())
+                .orElse(0L);
             final long limitingValue = prop.getValue(entity.getResources());
             if (unixUserCount > factor*limitingValue) {
                 return List.of(prop.propertyName() + "=" + limitingValue + " allows at maximum " + limitingValue*factor + " unix users, but " + unixUserCount + " found");
@@ -52,13 +54,14 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
 
     private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> databaseUsers() {
         return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
-            final var unixUserCount = entity.getSubHostingAssets().stream()
-                    .flatMap(ha -> ha.getSubHostingAssets().stream())
-                    .filter(bi -> bi.getType() == PGSQL_USER || bi.getType() == MARIADB_USER )
-                    .count();
+            final var dbUserCount = ofNullable(entity.getRelatedHostingAsset())
+                    .map(ha -> ha.getSubHostingAssets().stream()
+                            .filter(bi -> bi.getType() == PGSQL_USER || bi.getType() == MARIADB_USER )
+                            .count())
+                    .orElse(0L);
             final long limitingValue = prop.getValue(entity.getResources());
-            if (unixUserCount > factor*limitingValue) {
-                return List.of(prop.propertyName() + "=" + limitingValue + " allows at maximum " + limitingValue*factor + " database users, but " + unixUserCount + " found");
+            if (dbUserCount > factor*limitingValue) {
+                return List.of(prop.propertyName() + "=" + limitingValue + " allows at maximum " + limitingValue*factor + " database users, but " + dbUserCount + " found");
             }
             return emptyList();
         };
@@ -66,12 +69,13 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
 
     private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> databases() {
         return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
-            final var unixUserCount = entity.getSubHostingAssets().stream()
-                    .flatMap(ha -> ha.getSubHostingAssets().stream())
-                    .filter(bi -> bi.getType()==PGSQL_USER || bi.getType()==MARIADB_USER )
-                    .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
-                            .filter(ha -> ha.getType()==PGSQL_DATABASE || ha.getType()==MARIADB_DATABASE))
-                    .count();
+            final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
+                    .map(ha -> ha.getSubHostingAssets().stream()
+                        .filter(bi -> bi.getType()==PGSQL_USER || bi.getType()==MARIADB_USER )
+                        .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
+                            .filter(subAsset -> subAsset.getType()==PGSQL_DATABASE || subAsset.getType()==MARIADB_DATABASE))
+                        .count())
+                    .orElse(0L);
             final long limitingValue = prop.getValue(entity.getResources());
             if (unixUserCount > factor*limitingValue) {
                 return List.of(prop.propertyName() + "=" + limitingValue + " allows at maximum " + limitingValue*factor + " databases, but " + unixUserCount + " found");
@@ -82,12 +86,13 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
 
     private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> eMailAddresses() {
         return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
-            final var unixUserCount = entity.getSubHostingAssets().stream()
-                    .flatMap(ha -> ha.getSubHostingAssets().stream())
-                    .filter(bi -> bi.getType() == DOMAIN_EMAIL_SETUP)
-                    .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
-                            .filter(ha -> ha.getType()==EMAIL_ADDRESS))
-                    .count();
+            final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
+                    .map(ha -> ha.getSubHostingAssets().stream()
+                        .filter(bi -> bi.getType() == DOMAIN_EMAIL_SETUP)
+                        .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
+                            .filter(subAsset -> subAsset.getType()==EMAIL_ADDRESS))
+                        .count())
+                    .orElse(0L);
             final long limitingValue = prop.getValue(entity.getResources());
             if (unixUserCount > factor*limitingValue) {
                 return List.of(prop.propertyName() + "=" + limitingValue + " allows at maximum " + limitingValue*factor + " databases, but " + unixUserCount + " found");

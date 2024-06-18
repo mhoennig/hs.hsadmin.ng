@@ -139,27 +139,26 @@ class HsManagedServerBookingItemValidatorUnitTest {
                         entry("Traffic", 1000),
                         entry("Multi", 1)
                 ))
-                .subHostingAssets(of(
-                        HsHostingAssetEntity.builder()
-                                .type(HsHostingAssetType.MANAGED_WEBSPACE)
-                                .identifier("abc00")
-                                .subHostingAssets(concat(
-                                        generate(26, HsHostingAssetType.UNIX_USER, "xyz00-%c%c"),
-                                        generateDbUsersWithDatabases(3, HsHostingAssetType.PGSQL_USER,
-                                                "xyz00_%c%c",
-                                                1, HsHostingAssetType.PGSQL_DATABASE
-                                        ),
-                                        generateDbUsersWithDatabases(3, HsHostingAssetType.MARIADB_USER,
-                                                "xyz00_%c%c",
-                                                2, HsHostingAssetType.MARIADB_DATABASE
-                                        ),
-                                        generateDomainEmailSetupsWithEMailAddresses(26, HsHostingAssetType.DOMAIN_EMAIL_SETUP,
-                                                "%c%c.example.com",
-                                                10, HsHostingAssetType.EMAIL_ADDRESS
-                                        )
-                                    ))
-                                .build()
-                ))
+                .relatedHostingAsset(HsHostingAssetEntity.builder()
+                        .type(HsHostingAssetType.MANAGED_WEBSPACE)
+                        .identifier("abc00")
+                        .subHostingAssets(concat(
+                                generate(26, HsHostingAssetType.UNIX_USER, "xyz00-%c%c"),
+                                generateDbUsersWithDatabases(3, HsHostingAssetType.PGSQL_USER,
+                                        "xyz00_%c%c",
+                                        1, HsHostingAssetType.PGSQL_DATABASE
+                                ),
+                                generateDbUsersWithDatabases(3, HsHostingAssetType.MARIADB_USER,
+                                        "xyz00_%c%c",
+                                        2, HsHostingAssetType.MARIADB_DATABASE
+                                ),
+                                generateDomainEmailSetupsWithEMailAddresses(26, HsHostingAssetType.DOMAIN_EMAIL_SETUP,
+                                        "%c%c.example.com",
+                                        10, HsHostingAssetType.EMAIL_ADDRESS
+                                )
+                            ))
+                        .build()
+                )
                 .build();
 
         // when

@@ -177,6 +177,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
                     "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SSD: 500, Traffic: 500 })",
                     "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
+             assertThat(result.stream().filter(bi -> bi.getRelatedHostingAsset()!=null).findAny())
+                     .as("at least one relatedProject expected, but none found => fetching relatedProject does not work")
+                     .isNotEmpty();
         }
 
         @Test

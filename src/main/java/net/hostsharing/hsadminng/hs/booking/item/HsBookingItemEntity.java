@@ -17,6 +17,8 @@ import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.CascadeType;
@@ -30,6 +32,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
@@ -113,9 +116,8 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     @JoinColumn(name="parentitemuuid", referencedColumnName="uuid")
     private List<HsBookingItemEntity> subBookingItems;
 
-    @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true)
-    @JoinColumn(name="bookingitemuuid", referencedColumnName="uuid")
-    private List<HsHostingAssetEntity> subHostingAssets;
+    @OneToOne(mappedBy="bookingItem")
+    private HsHostingAssetEntity relatedHostingAsset;
 
     @Transient
     private PatchableMapWrapper<Object> resourcesWrapper;
