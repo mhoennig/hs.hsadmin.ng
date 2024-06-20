@@ -17,8 +17,6 @@ import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.CascadeType;
@@ -101,7 +99,7 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     @Builder.Default
     @Type(PostgreSQLRangeType.class)
     @Column(name = "validity", columnDefinition = "daterange")
-    private Range<LocalDate> validity = Range.emptyRange(LocalDate.class);
+    private Range<LocalDate> validity = Range.closedInfinite(LocalDate.now());
 
     @Column(name = "caption")
     private String caption;

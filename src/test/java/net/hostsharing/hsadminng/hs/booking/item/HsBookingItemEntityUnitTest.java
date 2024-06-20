@@ -1,8 +1,12 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Map;
 
 import static java.util.Map.entry;
@@ -14,6 +18,8 @@ class HsBookingItemEntityUnitTest {
     public static final LocalDate GIVEN_VALID_FROM = LocalDate.parse("2020-01-01");
     public static final LocalDate GIVEN_VALID_TO = LocalDate.parse("2030-12-31");
 
+    private MockedStatic<LocalDate> localDateMockedStatic = Mockito.mockStatic(LocalDate.class, Mockito.CALLS_REAL_METHODS);
+
     final HsBookingItemEntity givenBookingItem = HsBookingItemEntity.builder()
             .project(TEST_PROJECT)
             .type(HsBookingItemType.CLOUD_SERVER)
@@ -24,6 +30,24 @@ class HsBookingItemEntityUnitTest {
                     entry("HDD-storage", 2048)))
             .validity(toPostgresDateRange(GIVEN_VALID_FROM, GIVEN_VALID_TO))
             .build();
+
+    @AfterEach
+    void tearDown() {
+        localDateMockedStatic.close();
+    }
+
+    @Test
+    void validityStartsToday() {
+        // given
+        final var fakedToday = LocalDate.of(2024, Month.MAY, 1);
+        localDateMockedStatic.when(LocalDate::now).thenReturn(fakedToday);
+
+        // when
+        final var newBookingItem = HsBookingItemEntity.builder().build();
+
+        // then
+        assertThat(newBookingItem.getValidity().toString()).isEqualTo("Range{lower=2024-05-01, upper=null, mask=82, clazz=class java.time.LocalDate}");
+    }
 
     @Test
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {

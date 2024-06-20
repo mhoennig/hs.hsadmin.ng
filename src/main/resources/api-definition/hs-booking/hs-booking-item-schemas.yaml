@@ -62,10 +62,6 @@ components:
                     minLength: 3
                     maxLength: 80
                     nullable: false
-                validFrom:
-                    type: string
-                    format: date
-                    nullable: false
                 validTo:
                     type: string
                     format: date

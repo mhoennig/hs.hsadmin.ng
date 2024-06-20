@@ -144,13 +144,16 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "projectUuid": "%s",
+                                "projectUuid": "{projectUuid}",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
-                                "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 },
-                                "validFrom": "2022-10-13"
+                                "validTo": "{validTo}",
+                                "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
                             }
-                            """.formatted(givenProject.getUuid()))
+                            """
+                                .replace("{projectUuid}", givenProject.getUuid().toString())
+                                .replace("{validTo}", LocalDate.now().plusMonths(1).toString())
+                        )
                         .port(port)
                     .when()
                         .post("http://localhost/api/hs/booking/items")
@@ -161,11 +164,14 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             {
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
-                                "validFrom": "2022-10-13",
-                                "validTo": null,
+                                "validFrom": "{today}",
+                                "validTo": "{todayPlus1Month}",
                                 "resources": { "CPUs": 12, "SSD": 100, "Traffic": 250 }
                              }
-                            """))
+                            """
+                                .replace("{today}", LocalDate.now().toString())
+                                .replace("{todayPlus1Month}", LocalDate.now().plusMonths(1).toString()))
+                        )
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/booking/items/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
@@ -236,7 +242,6 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
         @Test
         @Order(3)
-        // TODO.impl: For unknown reason this test fails in about 50%, not finding the uuid (404).
         void projectAdmin_canGetRelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingItem = bookingItemRepo.findByCaption("separate ManagedServer").stream()

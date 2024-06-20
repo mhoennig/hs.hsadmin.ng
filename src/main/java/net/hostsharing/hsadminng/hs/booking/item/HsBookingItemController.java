@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -130,9 +131,8 @@ public class HsBookingItemController implements HsBookingItemsApi {
         }
     };
 
-    @SuppressWarnings("unchecked")
     final BiConsumer<HsBookingItemInsertResource, HsBookingItemEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        entity.setValidity(toPostgresDateRange(resource.getValidFrom(), resource.getValidTo()));
+        entity.setValidity(toPostgresDateRange(LocalDate.now(), resource.getValidTo()));
         entity.putResources(KeyValueMap.from(resource.getResources()));
     };
 }
