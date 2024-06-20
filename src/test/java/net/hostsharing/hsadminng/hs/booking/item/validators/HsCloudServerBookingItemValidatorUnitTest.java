@@ -55,9 +55,10 @@ class HsCloudServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
+                "{type=boolean, propertyName=active, required=false, defaultValue=true, isTotalsValidator=false}",
                 "{type=integer, propertyName=CPUs, min=1, max=32, required=true, isTotalsValidator=false}",
                 "{type=integer, propertyName=RAM, unit=GB, min=1, max=128, required=true, isTotalsValidator=false}",
-                "{type=integer, propertyName=SSD, unit=GB, min=25, max=1000, step=25, required=true, isTotalsValidator=false}",
+                "{type=integer, propertyName=SSD, unit=GB, min=0, max=1000, step=25, required=true, isTotalsValidator=false}",
                 "{type=integer, propertyName=HDD, unit=GB, min=0, max=4000, step=250, required=false, defaultValue=0, isTotalsValidator=false}",
                 "{type=integer, propertyName=Traffic, unit=GB, min=250, max=10000, step=250, required=true, isTotalsValidator=false}",
                 "{type=enumeration, propertyName=SLA-Infrastructure, values=[BASIC, EXT8H, EXT4H, EXT2H], required=false, isTotalsValidator=false}");
@@ -109,10 +110,10 @@ class HsCloudServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'D-12345:Test-Project:Test Cloud.resources.CPUs' maximum total is 4, but actual total CPUs 5",
-                "'D-12345:Test-Project:Test Cloud.resources.RAM' maximum total is 20 GB, but actual total RAM 30 GB",
-                "'D-12345:Test-Project:Test Cloud.resources.SSD' maximum total is 100 GB, but actual total SSD 150 GB",
-                "'D-12345:Test-Project:Test Cloud.resources.Traffic' maximum total is 5000 GB, but actual total Traffic 5500 GB"
+                "'D-12345:Test-Project:Test Cloud.resources.CPUs' maximum total is 4, but actual total CPUs is 5",
+                "'D-12345:Test-Project:Test Cloud.resources.RAM' maximum total is 20 GB, but actual total RAM is 30 GB",
+                "'D-12345:Test-Project:Test Cloud.resources.SSD' maximum total is 100 GB, but actual total SSD is 150 GB",
+                "'D-12345:Test-Project:Test Cloud.resources.Traffic' maximum total is 5000 GB, but actual total Traffic is 5500 GB"
         );
     }
 }

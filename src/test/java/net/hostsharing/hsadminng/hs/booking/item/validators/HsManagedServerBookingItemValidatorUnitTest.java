@@ -120,10 +120,10 @@ class HsManagedServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'D-12345:Test-Project:null.resources.CPUs' maximum total is 4, but actual total CPUs 5",
-                "'D-12345:Test-Project:null.resources.RAM' maximum total is 20 GB, but actual total RAM 30 GB",
-                "'D-12345:Test-Project:null.resources.SSD' maximum total is 100 GB, but actual total SSD 150 GB",
-                "'D-12345:Test-Project:null.resources.Traffic' maximum total is 5000 GB, but actual total Traffic 5500 GB"
+                "'D-12345:Test-Project:null.resources.CPUs' maximum total is 4, but actual total CPUs is 5",
+                "'D-12345:Test-Project:null.resources.RAM' maximum total is 20 GB, but actual total RAM is 30 GB",
+                "'D-12345:Test-Project:null.resources.SSD' maximum total is 100 GB, but actual total SSD is 150 GB",
+                "'D-12345:Test-Project:null.resources.Traffic' maximum total is 5000 GB, but actual total Traffic is 5500 GB"
         );
     }
 

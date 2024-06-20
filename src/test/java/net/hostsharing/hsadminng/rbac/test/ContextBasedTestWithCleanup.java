@@ -14,9 +14,12 @@ import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import jakarta.persistence.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static java.lang.System.out;
 import static java.util.Comparator.comparing;
@@ -28,8 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
     private static final boolean DETAILED_BUT_SLOW_CHECK = true;
+
     @PersistenceContext
     protected EntityManager em;
+
+    @Autowired
+    private PlatformTransactionManager tm;
 
     @Autowired
     RbacGrantRepository rbacGrantRepo;
@@ -166,12 +173,16 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
     @AfterEach
     void cleanupAndCheckCleanup(final TestInfo testInfo) {
-        out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".cleanupAndCheckCleanup");
-        cleanupTemporaryTestData();
-        deleteLeakedRbacObjects();
-        long rbacObjectCount = assertNoNewRbacObjectsRolesAndGrantsLeaked();
+        // If the whole test method has its own transaction, cleanup makes no sense.
+        // If that transaction even failed, cleaunup would cause an exception.
+        if (!tm.getTransaction(null).isRollbackOnly()) {
+            out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".cleanupAndCheckCleanup");
+            cleanupTemporaryTestData();
+            repeatUntilTrue(3, this::deleteLeakedRbacObjects);
 
-        out.println("TOTAL OBJECT COUNT (after): " + rbacObjectCount);
+            long rbacObjectCount = assertNoNewRbacObjectsRolesAndGrantsLeaked();
+            out.println("TOTAL OBJECT COUNT (after): " + rbacObjectCount);
+        }
     }
 
     private void cleanupTemporaryTestData() {
@@ -218,7 +229,8 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         }).assertSuccessful().returnedValue();
     }
 
-    private void deleteLeakedRbacObjects() {
+    private boolean deleteLeakedRbacObjects() {
+        final var deletionSuccessful = new AtomicBoolean(true);
         rbacObjectRepo.findAll().stream()
             .filter(o -> o.serialId > latestIntialTestDataSerialId)
             .sorted(comparing(o -> o.serialId))
@@ -235,8 +247,10 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
                 if (exception != null) {
                     out.println("DELETING leaked " + o.objectTable + "#" + o.uuid + " FAILED " + exception);
+                    deletionSuccessful.set(false);
                 }
             });
+        return deletionSuccessful.get();
     }
 
     private void assertEqual(final Set<String> before, final Set<String> after) {
@@ -296,6 +310,15 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
                 diagramService.allGrantsFrom(targetObject, rbacOp, RbacGrantsDiagramService.Include.ALL),
                 "doc/temp/" + name + ".md"
         );
+    }
+
+    public static boolean repeatUntilTrue(int maxAttempts, Supplier<Boolean> method) {
+        for (int attempts = 0; attempts < maxAttempts; attempts++) {
+            if (method.get()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

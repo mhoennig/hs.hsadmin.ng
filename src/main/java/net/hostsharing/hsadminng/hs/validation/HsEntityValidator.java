@@ -16,6 +16,7 @@ public abstract class HsEntityValidator<E> {
 
     public HsEntityValidator(final ValidatableProperty<?>... validators) {
         propertyValidators = validators;
+        stream(propertyValidators).forEach(p -> p.deferredInit(propertyValidators));
     }
 
     protected static List<String> enrich(final String prefix, final List<String> messages) {
@@ -59,18 +60,24 @@ public abstract class HsEntityValidator<E> {
                 .orElse(emptyList()));
     }
 
-    protected static Integer getNonNullIntegerValue(final ValidatableProperty<?> prop, final Map<String, Object> propValues) {
+    protected static Integer getIntegerValueWithDefault0(final ValidatableProperty<?> prop, final Map<String, Object> propValues) {
         final var value = prop.getValue(propValues);
         if (value instanceof Integer) {
             return (Integer) value;
         }
+        if (value == null) {
+            return 0;
+        }
         throw new IllegalArgumentException(prop.propertyName + " Integer value expected, but got " + value);
     }
 
-    protected static Integer toNonNullInteger(final Object value) {
+    protected static Integer toIntegerWithDefault0(final Object value) {
         if (value instanceof Integer) {
             return (Integer) value;
         }
-        throw new IllegalArgumentException("Integer value expected, but got " + value);
+        if (value == null) {
+            return 0;
+        }
+        throw new IllegalArgumentException("Integer value (or null) expected, but got " + value);
     }
 }

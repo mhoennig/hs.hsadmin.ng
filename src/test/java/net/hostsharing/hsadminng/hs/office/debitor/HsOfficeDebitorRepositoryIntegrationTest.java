@@ -109,9 +109,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             assertThat(debitorRepo.count()).isEqualTo(count + 1);
         }
 
+        @Transactional
         @ParameterizedTest
         @ValueSource(strings = {"", "a", "ab", "a12", "123", "12a"})
-        @Transactional
         public void canNotCreateNewDebitorWithInvalidDefaultPrefix(final String givenPrefix) {
             // given
             context("superuser-alex@hostsharing.net");

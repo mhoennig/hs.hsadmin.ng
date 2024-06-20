@@ -19,6 +19,7 @@ import java.util.function.Function;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 
 @RequiredArgsConstructor
 public abstract class ValidatableProperty<T> {
@@ -31,6 +32,7 @@ public abstract class ValidatableProperty<T> {
     private final String[] keyOrder;
     private Boolean required;
     private T defaultValue;
+    protected Function<ValidatableProperty<?>[], T[]> deferredInit;
     private boolean isTotalsValidator = false;
     @JsonIgnore
     private List<Function<HsBookingItemEntity, List<String>>> asTotalLimitValidators; // TODO.impl: move to BookingItemIntegerProperty
@@ -57,8 +59,35 @@ public abstract class ValidatableProperty<T> {
         return this;
     }
 
+    public void deferredInit(final ValidatableProperty<?>[] allProperties) {
+    }
+
     public ValidatableProperty<T> asTotalLimit() {
         isTotalsValidator = true;
+        return this;
+    }
+
+    public ValidatableProperty<T> asTotalLimitFor(final String propertyName, final String propertyValue) {
+        if (asTotalLimitValidators == null) {
+            asTotalLimitValidators = new ArrayList<>();
+        }
+        final TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> validator =
+                (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
+
+            final var total = entity.getSubBookingItems().stream()
+                    .map(server -> server.getResources().get(propertyName))
+                    .filter(propertyValue::equals)
+                    .count();
+
+            final long limitingValue = ofNullable(prop.getValue(entity.getResources())).orElse(0);
+            if (total > factor*limitingValue) {
+                return List.of(
+                    prop.propertyName() + " maximum total is " + (factor*limitingValue) + ", but actual total for " + propertyName + "=" + propertyValue + " is " + total
+                );
+            }
+            return emptyList();
+        };
+        asTotalLimitValidators.add((final HsBookingItemEntity entity) -> validator.apply(entity, (IntegerProperty)this,  1));
         return this;
     }
 

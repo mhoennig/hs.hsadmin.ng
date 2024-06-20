@@ -10,8 +10,11 @@ import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestClassOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -28,11 +31,12 @@ import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesRegex;
 
+@Transactional
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = { HsadminNgApplication.class, JpaAttempt.class }
 )
-@Transactional
+@TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
 class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort
@@ -54,6 +58,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     JpaAttempt jpaAttempt;
 
     @Nested
+    @Order(2)
     class ListAssets {
 
         @Test
@@ -152,6 +157,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
+    @Order(3)
     class AddAsset {
 
         @Test
@@ -231,17 +237,17 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .when()
                         .post("http://localhost/api/hs/hosting/assets")
                     .then().log().all().assertThat()
-                    .statusCode(201)
-                    .contentType(ContentType.JSON)
-                    .body("", lenientlyEquals("""
-                            {
-                                "type": "MANAGED_WEBSPACE",
-                                "identifier": "fir90",
-                                "caption": "some new ManagedWebspace in client's ManagedServer",
-                                "config": {}
-                            }
-                            """))
-                    .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("", lenientlyEquals("""
+                                {
+                                    "type": "MANAGED_WEBSPACE",
+                                    "identifier": "fir90",
+                                    "caption": "some new ManagedWebspace in client's ManagedServer",
+                                    "config": {}
+                                }
+                                """))
+                        .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new asset can be accessed under the generated UUID
@@ -258,34 +264,33 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             RestAssured // @formatter:off
                     .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
-                    .contentType(ContentType.JSON)
-                    .body("""
-                            {
-                                "bookingItemUuid": "%s",
-                                "type": "MANAGED_SERVER",
-                                "identifier": "vm1400",
-                                "caption": "some new ManagedServer",
-                                "config": {  "monit_max_ssd_usage": 0, "monit_max_cpu_usage": 101, "extra": 42 }
-                            }
-                            """.formatted(givenBookingItem.getUuid()))
-                    .port(port)
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "bookingItemUuid": "%s",
+                                    "type": "MANAGED_SERVER",
+                                    "identifier": "vm1400",
+                                    "caption": "some new ManagedServer",
+                                    "config": {  "monit_max_ssd_usage": 0, "monit_max_cpu_usage": 101, "extra": 42 }
+                                }
+                                """.formatted(givenBookingItem.getUuid()))
+                        .port(port)
                     .when()
-                    .post("http://localhost/api/hs/hosting/assets")
+                        .post("http://localhost/api/hs/hosting/assets")
                     .then().log().all().assertThat()
-                    .statusCode(400)
-                    .contentType(ContentType.JSON)
-                    .body("", lenientlyEquals("""
-                            {
-                                "statusPhrase": "Bad Request",
-                                "message": "[
-                                          <<<'MANAGED_SERVER:vm1400.config.extra' is not expected but is set to '42',
-                                          <<<'MANAGED_SERVER:vm1400.config.monit_max_ssd_usage' is expected to be >= 10 but is 0,
-                                          <<<'MANAGED_SERVER:vm1400.config.monit_max_cpu_usage' is expected to be <= 100 but is 101,
-                                          <<<'MANAGED_SERVER:vm1400.config.monit_max_ram_usage' is required but missing
-                                          <<<]"
-                            }
-                            """.replaceAll(" +<<<", "")));  // @formatter:on
+                        .statusCode(400)
+                        .contentType(ContentType.JSON)
+                        .body("", lenientlyEquals("""
+                                {
+                                    "statusPhrase": "Bad Request",
+                                    "message": "[
+                                              <<<'MANAGED_SERVER:vm1400.config.extra' is not expected but is set to '42',
+                                              <<<'MANAGED_SERVER:vm1400.config.monit_max_cpu_usage' is expected to be <= 100 but is 101,
+                                              <<<'MANAGED_SERVER:vm1400.config.monit_max_ssd_usage' is expected to be >= 10 but is 0
+                                              <<<]"
+                                }
+                                """.replaceAll(" +<<<", "")));  // @formatter:on
         }
 
 
@@ -333,15 +338,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .body("", lenientlyEquals("""
                                     {
                                         "statusPhrase": "Bad Request",
-                                        "message": "[
-                                                 <<<'D-1000111:D-1000111 default project:separate ManagedWebspace.resources.Multi=1 allows at maximum 25 unix users, but 26 found
-                                                 <<<]"
+                                        "message": "['D-1000111:D-1000111 default project:separate ManagedWebspace.resources.Multi=1 allows at maximum 25 unix users, but 26 found]"
                                     }
                                     """.replaceAll(" +<<<", "")));  // @formatter:on
         }
     }
 
     @Nested
+    @Order(1)
     class GetAsset {
 
         @Test
@@ -413,6 +417,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
+    @Order(4)
     class PatchAsset {
 
         @Test
@@ -466,6 +471,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     }
 
     @Nested
+    @Order(5)
     class DeleteAsset {
 
         @Test

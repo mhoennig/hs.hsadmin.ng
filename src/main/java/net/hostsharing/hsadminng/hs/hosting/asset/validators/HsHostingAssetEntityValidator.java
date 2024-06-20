@@ -65,11 +65,11 @@ public class HsHostingAssetEntityValidator extends HsEntityValidator<HsHostingAs
         final var totalValue = ofNullable(hostingAsset.getSubHostingAssets()).orElse(emptyList())
                 .stream()
                 .map(subItem -> propDef.getValue(subItem.getConfig()))
-                .map(HsEntityValidator::toNonNullInteger)
+                .map(HsEntityValidator::toIntegerWithDefault0)
                 .reduce(0, Integer::sum);
-        final var maxValue = getNonNullIntegerValue(propDef, hostingAsset.getConfig());
+        final var maxValue = getIntegerValueWithDefault0(propDef, hostingAsset.getConfig());
         return totalValue > maxValue
-                ? "%s' maximum total is %d%s, but actual total is %s %d%s".formatted(
+                ? "%s' maximum total is %d%s, but actual total %s is %d%s".formatted(
                 propName, maxValue, propUnit, propName, totalValue, propUnit)
                 : null;
     }

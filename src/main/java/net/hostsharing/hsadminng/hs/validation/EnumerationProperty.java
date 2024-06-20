@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
+import static java.util.Arrays.stream;
+
 @Setter
 public class EnumerationProperty extends ValidatableProperty<String> {
 
@@ -30,9 +32,27 @@ public class EnumerationProperty extends ValidatableProperty<String> {
         return this;
     }
 
+    public void deferredInit(final ValidatableProperty<?>[] allProperties) {
+        if (deferredInit != null) {
+            if (this.values != null) {
+                throw new IllegalStateException("property " + toString() + " already has values");
+            }
+            this.values = deferredInit.apply(allProperties);
+        }
+    }
+
+    public ValidatableProperty<String> valuesFromProperties(final String propertyNamePrefix) {
+        this.deferredInit = (ValidatableProperty<?>[] allProperties) -> stream(allProperties)
+                .map(ValidatableProperty::propertyName)
+                .filter(name -> name.startsWith(propertyNamePrefix))
+                .map(name -> name.substring(propertyNamePrefix.length()))
+                .toArray(String[]::new);
+        return this;
+    }
+
     @Override
     protected void validate(final ArrayList<String> result, final String propValue, final Map<String, Object> props) {
-        if (Arrays.stream(values).noneMatch(v -> v.equals(propValue))) {
+        if (stream(values).noneMatch(v -> v.equals(propValue))) {
             result.add(propertyName + "' is expected to be one of " + Arrays.toString(values) + " but is '" + propValue + "'");
         }
     }

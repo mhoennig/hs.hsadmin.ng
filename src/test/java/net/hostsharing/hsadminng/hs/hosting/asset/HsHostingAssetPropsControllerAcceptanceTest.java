@@ -55,18 +55,22 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                         [
                             {
                                 "type": "integer",
-                                "propertyName": "monit_min_free_ssd",
-                                "min": 1,
-                                "max": 1000,
+                                "propertyName": "monit_max_cpu_usage",
+                                "unit": "%",
+                                "min": 10,
+                                "max": 100,
                                 "required": false,
+                                "defaultValue": 92,
                                 "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
-                                "propertyName": "monit_min_free_hdd",
-                                "min": 1,
-                                "max": 4000,
+                                "propertyName": "monit_max_ram_usage",
+                                "unit": "%",
+                                "min": 10,
+                                "max": 100,
                                 "required": false,
+                                "defaultValue": 92,
                                 "isTotalsValidator": false
                             },
                             {
@@ -75,7 +79,17 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "required": true,
+                                "required": false,
+                                "defaultValue": 98,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "integer",
+                                "propertyName": "monit_min_free_ssd",
+                                "min": 1,
+                                "max": 1000,
+                                "required": false,
+                                "defaultValue": 5,
                                 "isTotalsValidator": false
                             },
                             {
@@ -85,29 +99,157 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                 "min": 10,
                                 "max": 100,
                                 "required": false,
+                                "defaultValue": 95,
                                 "isTotalsValidator": false
                             },
                             {
                                 "type": "integer",
-                                "propertyName": "monit_max_cpu_usage",
-                                "unit": "%",
-                                "min": 10,
-                                "max": 100,
-                                "required": true,
+                                "propertyName": "monit_min_free_hdd",
+                                "min": 1,
+                                "max": 4000,
+                                "required": false,
+                                "defaultValue": 10,
                                 "isTotalsValidator": false
                             },
                             {
-                                "type": "integer",
-                                "propertyName": "monit_max_ram_usage",
-                                "unit": "%",
-                                "min": 10,
-                                "max": 100,
-                                "required": true,
+                                "type": "boolean",
+                                "propertyName": "software-pgsql",
+                                "required": false,
+                                "defaultValue": true,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-mariadb",
+                                "required": false,
+                                "defaultValue": true,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "enumeration",
+                                "propertyName": "php-default",
+                                "values": [
+                                    "5.6",
+                                    "7.0",
+                                    "7.1",
+                                    "7.2",
+                                    "7.3",
+                                    "7.4",
+                                    "8.0",
+                                    "8.1",
+                                    "8.2"
+                                ],
+                                "required": false,
+                                "defaultValue": "8.2",
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-5.6",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-7.0",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-7.1",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-7.2",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-7.3",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-7.4",
+                                "required": false,
+                                "defaultValue": true,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-8.0",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-8.1",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-php-8.2",
+                                "required": false,
+                                "defaultValue": true,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-postfix-tls-1.0",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-dovecot-tls-1.0",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-clamav",
+                                "required": false,
+                                "defaultValue": true,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-collabora",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-libreoffice",
+                                "required": false,
+                                "defaultValue": false,
+                                "isTotalsValidator": false
+                            },
+                            {
+                                "type": "boolean",
+                                "propertyName": "software-imagemagick-ghostscript",
+                                "required": false,
+                                "defaultValue": false,
                                 "isTotalsValidator": false
                             }
                         ]
                         """));
         // @formatter:on
     }
-
 }

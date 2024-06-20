@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.booking.item.validators;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import net.hostsharing.hsadminng.hs.validation.ValidatableProperty;
+import org.apache.commons.lang3.BooleanUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -59,19 +60,24 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
         final var totalValue = ofNullable(bookingItem.getSubBookingItems()).orElse(emptyList())
                 .stream()
                 .map(subItem -> propDef.getValue(subItem.getResources()))
-                .map(HsBookingItemEntityValidator::toNonNullInteger)
+                .map(HsBookingItemEntityValidator::convertBooleanToInteger)
+                .map(HsBookingItemEntityValidator::toIntegerWithDefault0)
                 .reduce(0, Integer::sum);
-        final var maxValue = getNonNullIntegerValue(propDef, bookingItem.getResources());
+        final var maxValue = getIntegerValueWithDefault0(propDef, bookingItem.getResources());
         if (propDef.thresholdPercentage() != null ) {
             return totalValue > (maxValue * propDef.thresholdPercentage() / 100)
-                    ? "%s' maximum total is %d%s, but actual total %s %d%s, which exceeds threshold of %d%%"
+                    ? "%s' maximum total is %d%s, but actual total %s is %d%s, which exceeds threshold of %d%%"
                         .formatted(propName, maxValue, propUnit, propName, totalValue, propUnit, propDef.thresholdPercentage())
                     : null;
         } else {
             return totalValue > maxValue
-                    ? "%s' maximum total is %d%s, but actual total %s %d%s"
+                    ? "%s' maximum total is %d%s, but actual total %s is %d%s"
                     .formatted(propName, maxValue, propUnit, propName, totalValue, propUnit)
                     : null;
         }
+    }
+
+    private static Object convertBooleanToInteger(final Object value) {
+        return value instanceof Boolean ? BooleanUtils.toInteger((Boolean)value) : value;
     }
 }

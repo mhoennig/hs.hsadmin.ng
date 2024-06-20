@@ -27,6 +27,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
@@ -78,7 +79,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     @Version
     private int version;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bookingitemuuid")
     private HsBookingItemEntity bookingItem;
 
@@ -142,7 +143,6 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
                     dependsOnColumn("bookingItemUuid"),
                     directlyFetchedByDependsOnColumn(),
                     NULLABLE)
-                .toRole("bookingItem", AGENT).grantPermission(INSERT)
 
                 .importEntityAlias("parentAsset", HsHostingAssetEntity.class, usingDefaultCase(),
                         dependsOnColumn("parentAssetUuid"),

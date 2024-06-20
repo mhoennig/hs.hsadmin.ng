@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
 
 import net.hostsharing.hsadminng.context.Context;
@@ -33,6 +34,9 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @Autowired
     private HsHostingAssetRepository assetRepo;
+
+    @Autowired
+    private HsBookingItemRepository bookingItemRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -124,6 +128,11 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     final BiConsumer<HsHostingAssetInsertResource, HsHostingAssetEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.putConfig(KeyValueMap.from(resource.getConfig()));
+        if (resource.getBookingItemUuid() != null) {
+            entity.setBookingItem(bookingItemRepo.findByUuid(resource.getBookingItemUuid())
+                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] bookingItemUuid %s not found".formatted(
+                            resource.getBookingItemUuid()))));
+        }
         if (resource.getParentAssetUuid() != null) {
             entity.setParentAsset(assetRepo.findByUuid(resource.getParentAssetUuid())
                     .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] parentAssetUuid %s not found".formatted(
