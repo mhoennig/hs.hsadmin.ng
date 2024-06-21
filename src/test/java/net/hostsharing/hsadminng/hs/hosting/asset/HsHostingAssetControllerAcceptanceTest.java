@@ -7,6 +7,8 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -53,6 +55,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     @Autowired
     HsOfficeDebitorRepository debitorRepo;
+
+    @Autowired
+    HsOfficeContactRepository contactRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -425,6 +430,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             final var givenAsset = givenSomeTemporaryHostingAsset("2001", MANAGED_SERVER,
                     config("monit_max_ssd_usage", 80), config("monit_max_hdd_usage", 90), config("monit_max_cpu_usage", 90), config("monit_max_ram_usage", 70));
+            final var alarmContactUuid = givenContact().getUuid();
 
             RestAssured // @formatter:off
                 .given()
@@ -432,13 +438,14 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .contentType(ContentType.JSON)
                     .body("""
                         {
+                            "alarmContactUuid": "%s",
                             "config": {
                                 "monit_max_ssd_usage": 85,
                                 "monit_max_hdd_usage": null,
                                 "monit_min_free_ssd": 5
                             }
                         }
-                        """)
+                        """.formatted(alarmContactUuid))
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/hosting/assets/" + givenAsset.getUuid())
@@ -450,6 +457,11 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             "type": "MANAGED_SERVER",
                             "identifier": "vm2001",
                             "caption": "some test-asset",
+                            "alarmContact": {
+                                "uuid": "%s",
+                                "caption": "second contact",
+                                "emailAddresses": { "main": "contact-admin@secondcontact.example.com" }
+                            },
                             "config": {
                                 "monit_max_cpu_usage": 90,
                                 "monit_max_ram_usage": 70,
@@ -457,17 +469,27 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "monit_min_free_ssd": 5
                             }
                          }
-                    """)); // @formatter:on
+                    """.formatted(alarmContactUuid)));
+                // @formatter:on
 
             // finally, the asset is actually updated
             context.define("superuser-alex@hostsharing.net");
             assertThat(assetRepo.findByUuid(givenAsset.getUuid())).isPresent().get()
                     .matches(asset -> {
+                        assertThat(asset.getAlarmContact().toString()).isEqualTo(
+                                "contact(caption='second contact', emailAddresses='{ main: contact-admin@secondcontact.example.com }')");
                         assertThat(asset.getConfig().toString()).isEqualTo(
                                 "{ monit_max_cpu_usage: 90, monit_max_ram_usage: 70, monit_max_ssd_usage: 85, monit_min_free_ssd: 5 }");
                         return true;
                     });
         }
+    }
+
+    private HsOfficeContactEntity givenContact() {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            return contactRepo.findContactByOptionalCaptionLike("second").stream().findFirst().orElseThrow();
+        }).returnedValue();
     }
 
     @Nested

@@ -32,6 +32,8 @@ components:
                     type: string
                 caption:
                     type: string
+                alarmContact:
+                    $ref: '../hs-office/hs-office-contact-schemas.yaml#/components/schemas/HsOfficeContact'
                 config:
                     $ref: '#/components/schemas/HsHostingAssetConfiguration'
             required:
@@ -45,6 +47,10 @@ components:
             properties:
                 caption:
                     type: string
+                    nullable: true
+                alarmContactUuid:
+                    type: string
+                    format: uuid
                     nullable: true
                 config:
                     $ref: '#/components/schemas/HsHostingAssetConfiguration'
@@ -72,6 +78,10 @@ components:
                     minLength: 3
                     maxLength: 80
                     nullable: false
+                alarmContactUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
                 config:
                     $ref: '#/components/schemas/HsHostingAssetConfiguration'
             required:

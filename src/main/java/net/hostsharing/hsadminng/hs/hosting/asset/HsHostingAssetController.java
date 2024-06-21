@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -25,6 +27,9 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAss
 
 @RestController
 public class HsHostingAssetController implements HsHostingAssetsApi {
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     private Context context;
@@ -119,7 +124,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var current = assetRepo.findByUuid(assetUuid).orElseThrow();
 
-        new HsHostingAssetEntityPatcher(current).apply(body);
+        new HsHostingAssetEntityPatcher(em, current).apply(body);
 
         final var saved = validated(assetRepo.save(current));
         final var mapped = mapper.map(saved, HsHostingAssetResource.class);

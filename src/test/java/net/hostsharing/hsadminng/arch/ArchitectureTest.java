@@ -150,7 +150,8 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.booking.(*)..",
-                    "..hs.hosting.(*).."
+                    "..hs.hosting.(*)..",
+                    "..hs.validation" // TODO.impl: Some Validators need to be refactored to booking package.
             );
 
     @ArchTest
@@ -195,7 +196,9 @@ public class ArchitectureTest {
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
-                    "..hs.office.migration..");
+                    "..hs.office.migration..",
+                    "..hs.hosting.asset.."
+                    );
 
     @ArchTest
     @SuppressWarnings("unused")

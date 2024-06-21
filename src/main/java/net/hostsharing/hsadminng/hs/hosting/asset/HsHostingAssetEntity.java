@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -48,6 +49,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.REFERRER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
@@ -95,6 +97,10 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     @Enumerated(EnumType.STRING)
     private HsHostingAssetType type;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alarmcontactuuid")
+    private HsOfficeContactEntity alarmContact;
+
     @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name="parentassetuuid", referencedColumnName="uuid")
     private List<HsHostingAssetEntity> subHostingAssets;
@@ -136,7 +142,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
         return rbacViewFor("asset", HsHostingAssetEntity.class)
                 .withIdentityView(SQL.projection("identifier"))
                 .withRestrictedViewOrderBy(SQL.expression("identifier"))
-                .withUpdatableColumns("version", "caption", "config")
+                .withUpdatableColumns("version", "caption", "config", "assignedToAssetUuid", "alarmContactUuid")
                 .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
 
                 .importEntityAlias("bookingItem", HsBookingItemEntity.class, usingDefaultCase(),
@@ -155,6 +161,11 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
 
+                .importEntityAlias("alarmContact", HsOfficeContactEntity.class, usingDefaultCase(),
+                        dependsOnColumn("alarmContactUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
+
                 .createRole(OWNER, (with) -> {
                     with.incomingSuperRole("bookingItem", ADMIN);
                     with.incomingSuperRole("parentAsset", ADMIN);
@@ -167,13 +178,15 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
                 })
                 .createSubRole(AGENT, (with) -> {
                     with.outgoingSubRole("assignedToAsset", TENANT);
+                    with.outgoingSubRole("alarmContact", REFERRER);
                 })
                 .createSubRole(TENANT, (with) -> {
                     with.outgoingSubRole("bookingItem", TENANT);
                     with.outgoingSubRole("parentAsset", TENANT);
+                    with.incomingSuperRole("alarmContact", ADMIN);
                     with.permission(SELECT);
                 })
-                .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentAsset", "assignedToAsset", "global");
+                .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentAsset", "assignedToAsset", "alarmContact", "global");
     }
 
     public static void main(String[] args) throws IOException {

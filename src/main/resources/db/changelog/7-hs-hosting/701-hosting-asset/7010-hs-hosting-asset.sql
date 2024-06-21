@@ -33,6 +33,7 @@ create table if not exists hs_hosting_asset
     identifier          varchar(80) not null,
     caption             varchar(80),
     config              jsonb not null,
+    alarmContactUuid    uuid null references hs_office_contact(uuid) initially deferred,
 
     constraint chk_hs_hosting_asset_has_booking_item_or_parent_asset
         check (bookingItemUuid is not null or parentAssetUuid is not null)

@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +31,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
         > {
 
     private static final UUID INITIAL_BOOKING_ITEM_UUID = UUID.randomUUID();
+    private static final UUID PATCHED_CONTACT_UUID = UUID.randomUUID();
 
     private static final Map<String, Object> INITIAL_CONFIG = patchMap(
             entry("CPU", 1),
@@ -47,6 +48,9 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
             entry("SSD", 256),
             entry("MEM", 64)
     );
+    final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
+            .uuid(UUID.randomUUID())
+            .build();
 
     private static final String INITIAL_CAPTION = "initial caption";
     private static final String PATCHED_CAPTION = "patched caption";
@@ -56,10 +60,10 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeDebitorEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeDebitorEntity.builder().uuid(invocation.getArgument(1)).build());
         lenient().when(em.getReference(eq(HsHostingAssetEntity.class), any())).thenAnswer(invocation ->
                 HsHostingAssetEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
@@ -69,6 +73,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
         entity.setBookingItem(TEST_BOOKING_ITEM);
         entity.getConfig().putAll(KeyValueMap.from(INITIAL_CONFIG));
         entity.setCaption(INITIAL_CAPTION);
+        entity.setAlarmContact(givenInitialContact);
         return entity;
     }
 
@@ -79,7 +84,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @Override
     protected HsHostingAssetEntityPatcher createPatcher(final HsHostingAssetEntity server) {
-        return new HsHostingAssetEntityPatcher(server);
+        return new HsHostingAssetEntityPatcher(em, server);
     }
 
     @Override
@@ -96,7 +101,17 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
                         PATCH_CONFIG,
                         HsHostingAssetEntity::putConfig,
                         PATCHED_CONFIG)
-                        .notNullable()
+                        .notNullable(),
+                new JsonNullableProperty<>(
+                        "alarmContact",
+                        HsHostingAssetPatchResource::setAlarmContactUuid,
+                        PATCHED_CONTACT_UUID,
+                        HsHostingAssetEntity::setAlarmContact,
+                        newContact(PATCHED_CONTACT_UUID))
         );
+    }
+
+    static HsOfficeContactEntity newContact(final UUID uuid) {
+        return HsOfficeContactEntity.builder().uuid(uuid).build();
     }
 }

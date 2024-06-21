@@ -147,6 +147,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant role:hs_booking_item#fir01:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
                             "{ grant role:hs_hosting_asset#fir00:TENANT to role:hs_hosting_asset#fir00:AGENT by system and assume }",
                             "{ grant role:hs_hosting_asset#vm1011:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
+                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
 
                             null));
         }

@@ -97,9 +97,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // given
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
-            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
-                    .toList();
+            final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
             attempt(em, () -> {
@@ -124,7 +122,6 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     "hs_booking_item#somenewbookingitem:OWNER",
                     "hs_booking_item#somenewbookingitem:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
@@ -138,7 +135,6 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                             // admin
                             "{ grant perm:hs_booking_item#somenewbookingitem:UPDATE to role:hs_booking_item#somenewbookingitem:ADMIN by system and assume }",
                             "{ grant role:hs_booking_item#somenewbookingitem:ADMIN to role:hs_booking_item#somenewbookingitem:OWNER by system and assume }",
-                            "{ grant perm:hs_booking_item#somenewbookingitem:INSERT>hs_hosting_asset to role:hs_booking_item#somenewbookingitem:AGENT by system and assume }",
 
                             // agent
                             "{ grant role:hs_booking_item#somenewbookingitem:AGENT to role:hs_booking_item#somenewbookingitem:ADMIN by system and assume }",

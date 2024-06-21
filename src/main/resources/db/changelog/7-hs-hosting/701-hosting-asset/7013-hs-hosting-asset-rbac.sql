@@ -32,6 +32,7 @@ create or replace procedure buildRbacSystemForHsHostingAsset(
 declare
     newBookingItem hs_booking_item;
     newAssignedToAsset hs_hosting_asset;
+    newAlarmContact hs_office_contact;
     newParentAsset hs_hosting_asset;
 
 begin
@@ -40,6 +41,8 @@ begin
     SELECT * FROM hs_booking_item WHERE uuid = NEW.bookingItemUuid    INTO newBookingItem;
 
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.assignedToAssetUuid    INTO newAssignedToAsset;
+
+    SELECT * FROM hs_office_contact WHERE uuid = NEW.alarmContactUuid    INTO newAlarmContact;
 
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentAsset;
 
@@ -63,14 +66,17 @@ begin
     perform createRoleWithGrants(
         hsHostingAssetAGENT(NEW),
             incomingSuperRoles => array[hsHostingAssetADMIN(NEW)],
-            outgoingSubRoles => array[hsHostingAssetTENANT(newAssignedToAsset)]
+            outgoingSubRoles => array[
+            	hsHostingAssetTENANT(newAssignedToAsset),
+            	hsOfficeContactREFERRER(newAlarmContact)]
     );
 
     perform createRoleWithGrants(
         hsHostingAssetTENANT(NEW),
+            permissions => array['SELECT'],
             incomingSuperRoles => array[
             	hsHostingAssetAGENT(NEW),
-            	hsHostingAssetTENANT(newAssignedToAsset)],
+            	hsOfficeContactADMIN(newAlarmContact)],
             outgoingSubRoles => array[
             	hsBookingItemTENANT(newBookingItem),
             	hsHostingAssetTENANT(newParentAsset)]
@@ -96,6 +102,48 @@ create trigger insertTriggerForHsHostingAsset_tg
     after insert on hs_hosting_asset
     for each row
 execute procedure insertTriggerForHsHostingAsset_tf();
+--//
+
+
+-- ============================================================================
+--changeset hs-hosting-asset-rbac-update-trigger:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+/*
+    Called from the AFTER UPDATE TRIGGER to re-wire the grants.
+ */
+
+create or replace procedure updateRbacRulesForHsHostingAsset(
+    OLD hs_hosting_asset,
+    NEW hs_hosting_asset
+)
+    language plpgsql as $$
+begin
+
+    if NEW.assignedToAssetUuid is distinct from OLD.assignedToAssetUuid
+    or NEW.alarmContactUuid is distinct from OLD.alarmContactUuid then
+        delete from rbacgrants g where g.grantedbytriggerof = OLD.uuid;
+        call buildRbacSystemForHsHostingAsset(NEW);
+    end if;
+end; $$;
+
+/*
+    AFTER INSERT TRIGGER to re-wire the grant structure for a new hs_hosting_asset row.
+ */
+
+create or replace function updateTriggerForHsHostingAsset_tf()
+    returns trigger
+    language plpgsql
+    strict as $$
+begin
+    call updateRbacRulesForHsHostingAsset(OLD, NEW);
+    return NEW;
+end; $$;
+
+create trigger updateTriggerForHsHostingAsset_tg
+    after update on hs_hosting_asset
+    for each row
+execute procedure updateTriggerForHsHostingAsset_tf();
 --//
 
 
@@ -146,49 +194,6 @@ create trigger z_new_hs_hosting_asset_grants_insert_to_global_tg
     for each row
 execute procedure new_hs_hosting_asset_grants_insert_to_global_tf();
 
--- granting INSERT permission to hs_booking_item ----------------------------
-
-/*
-    Grants INSERT INTO hs_hosting_asset permissions to specified role of pre-existing hs_booking_item rows.
- */
-do language plpgsql $$
-    declare
-        row hs_booking_item;
-    begin
-        call defineContext('create INSERT INTO hs_hosting_asset permissions for pre-exising hs_booking_item rows');
-
-        FOR row IN SELECT * FROM hs_booking_item
-            -- unconditional for all rows in that table
-            LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_hosting_asset'),
-                        hsBookingItemAGENT(row));
-            END LOOP;
-    end;
-$$;
-
-/**
-    Grants hs_hosting_asset INSERT permission to specified role of new hs_booking_item rows.
-*/
-create or replace function new_hs_hosting_asset_grants_insert_to_hs_booking_item_tf()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_hosting_asset'),
-            hsBookingItemAGENT(NEW));
-    -- end.
-    return NEW;
-end; $$;
-
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_hosting_asset_grants_insert_to_hs_booking_item_tg
-    after insert on hs_booking_item
-    for each row
-execute procedure new_hs_hosting_asset_grants_insert_to_hs_booking_item_tf();
-
 -- granting INSERT permission to hs_hosting_asset ----------------------------
 
 -- Granting INSERT INTO hs_hosting_asset permissions to specified role of pre-existing hs_hosting_asset rows slipped,
@@ -234,10 +239,6 @@ begin
     if isGlobalAdmin() then
         return NEW;
     end if;
-    -- check INSERT permission via direct foreign key: NEW.bookingItemUuid
-    if hasInsertPermission(NEW.bookingItemUuid, 'hs_hosting_asset') then
-        return NEW;
-    end if;
     -- check INSERT permission via direct foreign key: NEW.parentAssetUuid
     if hasInsertPermission(NEW.parentAssetUuid, 'hs_hosting_asset') then
         return NEW;
@@ -275,7 +276,9 @@ call generateRbacRestrictedView('hs_hosting_asset',
     $updates$
         version = new.version,
         caption = new.caption,
-        config = new.config
+        config = new.config,
+        assignedToAssetUuid = new.assignedToAssetUuid,
+        alarmContactUuid = new.alarmContactUuid
     $updates$);
 --//
 
