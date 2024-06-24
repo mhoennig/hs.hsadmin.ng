@@ -5,13 +5,13 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsHostingAssetEntityUnitTest {
 
     final HsHostingAssetEntity givenParentAsset = HsHostingAssetEntity.builder()
-            .bookingItem(TEST_BOOKING_ITEM)
+            .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
             .type(HsHostingAssetType.MANAGED_SERVER)
             .identifier("vm1234")
             .caption("some managed asset")
@@ -21,7 +21,7 @@ class HsHostingAssetEntityUnitTest {
                     entry("HDD-storage", 2048)))
             .build();
     final HsHostingAssetEntity givenWebspace = HsHostingAssetEntity.builder()
-            .bookingItem(TEST_BOOKING_ITEM)
+            .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
             .type(HsHostingAssetType.MANAGED_WEBSPACE)
             .parentAsset(givenParentAsset)
             .identifier("xyz00")
@@ -58,7 +58,7 @@ class HsHostingAssetEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
 
         assertThat(givenWebspace.toString()).isEqualTo(
-                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1234500:test project:test booking item, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1234500:test project:test cloud server booking item, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
 
         assertThat(givenUnixUser.toString()).isEqualTo(
                 "HsHostingAssetEntity(UNIX_USER, xyz00-web, some unix-user, MANAGED_WEBSPACE:xyz00, { HDD-hard-quota: 512, HDD-soft-quota: 256, SSD-hard-quota: 256, SSD-soft-quota: 128 })");

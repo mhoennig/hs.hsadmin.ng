@@ -34,6 +34,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
+import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -60,8 +61,8 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetche
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
-@Builder
 @Entity
+@Builder(toBuilder = true)
 @Table(name = "hs_booking_item_rv")
 @Getter
 @Setter
@@ -92,6 +93,7 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
     @JoinColumn(name = "parentitemuuid")
     private HsBookingItemEntity parentItem;
 
+    @NotNull
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
     private HsBookingItemType type;

@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -220,9 +221,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void parentAssetAgent_canAddSubAsset() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenParentAsset = givenParentAsset(MANAGED_SERVER, "vm1011");
-
-            context.define("person-FirbySusan@example.com");
+            final var givenParentAsset = givenParentAsset(MANAGED_WEBSPACE, "fir01");
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -232,9 +231,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .body("""
                                 {
                                     "parentAssetUuid": "%s",
-                                    "type": "MANAGED_WEBSPACE",
-                                    "identifier": "fir90",
-                                    "caption": "some new ManagedWebspace in client's ManagedServer",
+                                    "type": "UNIX_USER",
+                                    "identifier": "fir01-temp",
+                                    "caption": "some new UnixUser in client's ManagedWebspace",
                                     "config": {}
                                 }
                                 """.formatted(givenParentAsset.getUuid()))
@@ -246,9 +245,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("", lenientlyEquals("""
                                 {
-                                    "type": "MANAGED_WEBSPACE",
-                                    "identifier": "fir90",
-                                    "caption": "some new ManagedWebspace in client's ManagedServer",
+                                    "type": "UNIX_USER",
+                                    "identifier": "fir01-temp",
+                                    "caption": "some new UnixUser in client's ManagedWebspace",
                                     "config": {}
                                 }
                                 """))
@@ -265,7 +264,9 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void propertyValidationsArePerformend_whenAddingAsset() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = givenBookingItem("D-1000111 default project", "some PrivateCloud");
+            final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project",
+                    HsBookingItemType.MANAGED_SERVER,
+                    "some PrivateCloud");
 
             RestAssured // @formatter:off
                     .given()
@@ -558,10 +559,22 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }).assertSuccessful().returnedValue();
     }
 
-    HsBookingItemEntity givenBookingItem(final String projectCaption, final String bookingItemCaption) {
-        return bookingItemRepo.findByCaption(bookingItemCaption).stream()
-                .filter(bi -> bi.getRelatedProject().getCaption().contains(projectCaption))
-                .findAny().orElseThrow();
+    HsBookingItemEntity givenSomeNewBookingItem(final String projectCaption, final HsBookingItemType bookingItemType, final String bookingItemCaption) {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net");
+            final var project = projectRepo.findByCaption(projectCaption).getFirst();
+            final var resources = switch (bookingItemType) {
+                case MANAGED_SERVER -> Map.<String, Object>ofEntries(entry("CPUs", 1), entry("RAM", 20), entry("SSD", 25), entry("Traffic", 250));
+                default -> new HashMap<String, Object>();
+            };
+            final var newBookingItem = HsBookingItemEntity.builder()
+                    .project(project)
+                    .type(bookingItemType)
+                    .caption(bookingItemCaption)
+                    .resources(resources)
+                    .build();
+            return toCleanup(bookingItemRepo.save(newBookingItem));
+        }).assertSuccessful().returnedValue();
     }
 
     HsHostingAssetEntity givenParentAsset(final HsHostingAssetType assetType, final String assetIdentifier) {
@@ -574,16 +587,23 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     @SafeVarargs
     private HsHostingAssetEntity givenSomeTemporaryHostingAsset(final String identifierSuffix,
             final HsHostingAssetType hostingAssetType,
-            final Map.Entry<String, Object>... resources) {
+            final Map.Entry<String, Object>... config) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
+            final var bookingItemType = switch (hostingAssetType) {
+                case CLOUD_SERVER -> HsBookingItemType.CLOUD_SERVER;
+                case MANAGED_SERVER -> HsBookingItemType.MANAGED_SERVER;
+                case MANAGED_WEBSPACE -> HsBookingItemType.MANAGED_WEBSPACE;
+                default -> null;
+            };
+            final var newBookingItem = givenSomeNewBookingItem("D-1000111 default project", bookingItemType, "temp ManagedServer");
             final var newAsset = HsHostingAssetEntity.builder()
                     .uuid(UUID.randomUUID())
-                    .bookingItem(givenBookingItem("D-1000111 default project", "some ManagedServer"))
+                    .bookingItem(newBookingItem)
                     .type(hostingAssetType)
                     .identifier("vm" + identifierSuffix)
                     .caption("some test-asset")
-                    .config(Map.ofEntries(resources))
+                    .config(Map.ofEntries(config))
                     .build();
 
             return assetRepo.save(newAsset);

@@ -90,6 +90,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsHostingAssetEntity::getUuid).isNotNull();
             assertThatAssetIsPersisted(result.returnedValue());
+            assertThat(result.returnedValue().isLoaded()).isFalse();
             assertThat(assetRepo.count()).isEqualTo(count + 1);
         }
 
@@ -413,5 +414,6 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         assertThat(actualResult)
                 .extracting(HsHostingAssetEntity::toString)
                 .contains(serverNames);
+        actualResult.forEach(loadedEntity -> assertThat(loadedEntity.isLoaded()).isTrue());
     }
 }

@@ -12,13 +12,21 @@ import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.
 @UtilityClass
 public class TestHsBookingItem {
 
-    public static final HsBookingItemEntity TEST_BOOKING_ITEM = HsBookingItemEntity.builder()
+    public static final HsBookingItemEntity TEST_MANAGED_SERVER_BOOKING_ITEM = HsBookingItemEntity.builder()
             .project(TEST_PROJECT)
-            .caption("test booking item")
+            .type(HsBookingItemType.MANAGED_SERVER)
+            .caption("test project booking item")
             .resources(Map.ofEntries(
                     entry("someThing", 1),
                     entry("anotherThing", "blue")
             ))
+            .validity(Range.closedInfinite(LocalDate.of(2020, 1, 15)))
+            .build();
+
+    public static final HsBookingItemEntity TEST_CLOUD_SERVER_BOOKING_ITEM = HsBookingItemEntity.builder()
+            .project(TEST_PROJECT)
+            .type(HsBookingItemType.CLOUD_SERVER)
+            .caption("test cloud server booking item")
             .validity(Range.closedInfinite(LocalDate.of(2020, 1, 15)))
             .build();
 }

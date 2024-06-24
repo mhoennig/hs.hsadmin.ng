@@ -29,6 +29,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
@@ -120,12 +121,20 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     @Transient
     private PatchableMapWrapper<Object> configWrapper;
 
+    @Transient
+    private boolean isLoaded = false;
+
+    @PostLoad
+    public void markAsLoaded() {
+        this.isLoaded = true;
+    }
+
     public PatchableMapWrapper<Object> getConfig() {
         return PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config );
     }
 
-    public void putConfig(Map<String, Object> newConfg) {
-        PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config).assign(newConfg);
+    public void putConfig(Map<String, Object> newConfig) {
+        PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config).assign(newConfig);
     }
 
     @Override

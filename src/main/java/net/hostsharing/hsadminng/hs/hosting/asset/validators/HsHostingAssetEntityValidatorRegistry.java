@@ -14,10 +14,11 @@ public class HsHostingAssetEntityValidatorRegistry {
 
     private static final Map<Enum<HsHostingAssetType>, HsEntityValidator<HsHostingAssetEntity>> validators = new HashMap<>();
     static {
-        register(CLOUD_SERVER, new HsHostingAssetEntityValidator());
+        // HOWTO: add (register) new HsHostingAssetType-specific validators
+        register(CLOUD_SERVER, new HsCloudServerHostingAssetValidator());
         register(MANAGED_SERVER, new HsManagedServerHostingAssetValidator());
         register(MANAGED_WEBSPACE, new HsManagedWebspaceHostingAssetValidator());
-        register(UNIX_USER, new HsHostingAssetEntityValidator());
+        register(UNIX_USER, new HsUnixUserHostingAssetValidator());
     }
 
     private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {

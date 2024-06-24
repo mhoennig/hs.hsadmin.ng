@@ -1,5 +1,10 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+
+import java.util.regex.Pattern;
+
 import static net.hostsharing.hsadminng.hs.validation.BooleanProperty.booleanProperty;
 import static net.hostsharing.hsadminng.hs.validation.EnumerationProperty.enumerationProperty;
 import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
@@ -8,6 +13,11 @@ class HsManagedServerHostingAssetValidator extends HsHostingAssetEntityValidator
 
     public HsManagedServerHostingAssetValidator() {
         super(
+                BookingItem.mustBeOfType(HsBookingItemType.MANAGED_SERVER),
+                ParentAsset.mustBeNull(), // until we introduce a hosting asset for 'HOST'
+                AssignedToAsset.mustBeNull(),
+                AlarmContact.isOptional(), // hostmaster alert address is implicitly added
+
                 // monitoring
                 integerProperty("monit_max_cpu_usage").unit("%").min(10).max(100).withDefault(92),
                 integerProperty("monit_max_ram_usage").unit("%").min(10).max(100).withDefault(92),
@@ -15,7 +25,6 @@ class HsManagedServerHostingAssetValidator extends HsHostingAssetEntityValidator
                 integerProperty("monit_min_free_ssd").min(1).max(1000).withDefault(5),
                 integerProperty("monit_max_hdd_usage").unit("%").min(10).max(100).withDefault(95),
                 integerProperty("monit_min_free_hdd").min(1).max(4000).withDefault(10),
-                // stringProperty("monit_alarm_email").unit("GB").optional() TODO.impl: via Contact?
 
                 // other settings
                 // booleanProperty("fastcgi_small").withDefault(false), TODO.spec: clarify Salt-Grains
@@ -44,5 +53,10 @@ class HsManagedServerHostingAssetValidator extends HsHostingAssetEntityValidator
                 booleanProperty("software-libreoffice").withDefault(false),
                 booleanProperty("software-imagemagick-ghostscript").withDefault(false)
         );
+    }
+
+    @Override
+    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+        return Pattern.compile("^vm[0-9][0-9][0-9][0-9]$");
     }
 }

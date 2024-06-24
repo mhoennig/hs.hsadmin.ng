@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static net.hostsharing.hsadminng.mapper.PatchMap.patchMap;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -70,7 +70,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
     protected HsHostingAssetEntity newInitialEntity() {
         final var entity = new HsHostingAssetEntity();
         entity.setUuid(INITIAL_BOOKING_ITEM_UUID);
-        entity.setBookingItem(TEST_BOOKING_ITEM);
+        entity.setBookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM);
         entity.getConfig().putAll(KeyValueMap.from(INITIAL_CONFIG));
         entity.setCaption(INITIAL_CAPTION);
         entity.setAlarmContact(givenInitialContact);
