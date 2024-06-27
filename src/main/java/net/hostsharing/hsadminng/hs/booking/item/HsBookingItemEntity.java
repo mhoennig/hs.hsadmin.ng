@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.lowerInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
@@ -68,7 +70,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsBookingItemEntity implements Stringifyable, RbacObject {
+public class HsBookingItemEntity implements Stringifyable, RbacObject, PropertiesProvider {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
             .withProp(HsBookingItemEntity::getProject)
@@ -144,6 +146,23 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject {
 
     public LocalDate getValidTo() {
         return upperInclusiveFromPostgresDateRange(getValidity());
+    }
+
+    @Override
+    public Map<String, Object> directProps() {
+        return resources;
+    }
+
+    @Override
+    public Object getContextValue(final String propName) {
+        final var v = resources.get(propName);
+        if (v!= null) {
+            return v;
+        }
+        if (parentItem!=null) {
+            return parentItem.getResources().get(propName);
+        }
+        return emptyMap();
     }
 
     @Override

@@ -47,7 +47,7 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
     @Override
     public List<String> validate(final HsHostingAssetEntity assetEntity) {
         return sequentiallyValidate(
-                () -> validateEntityReferences(assetEntity),
+                () -> validateEntityReferencesAndProperties(assetEntity),
                 () -> validateIdentifierPattern(assetEntity), // might need proper parentAsset or billingItem
                 () -> optionallyValidate(assetEntity.getBookingItem()),
                 () -> optionallyValidate(assetEntity.getParentAsset()),
@@ -55,7 +55,7 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
         );
     }
 
-    private List<String> validateEntityReferences(final HsHostingAssetEntity assetEntity) {
+    private List<String> validateEntityReferencesAndProperties(final HsHostingAssetEntity assetEntity) {
         return Stream.of(
                     validateReferencedEntity(assetEntity, "bookingItem", bookingItemValidation::validate),
                     validateReferencedEntity(assetEntity, "parentAsset", parentAssetValidation::validate),
@@ -76,7 +76,7 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
     }
 
     private List<String> validateProperties(final HsHostingAssetEntity assetEntity) {
-        return enrich(prefix(assetEntity.toShortString(), "config"), validateProperties(assetEntity.getConfig()));
+        return enrich(prefix(assetEntity.toShortString(), "config"), super.validateProperties(assetEntity));
     }
 
     private static List<String> optionallyValidate(final HsHostingAssetEntity assetEntity) {

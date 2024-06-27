@@ -3,9 +3,8 @@ package net.hostsharing.hsadminng.hs.validation;
 import lombok.Setter;
 import net.hostsharing.hsadminng.mapper.Array;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 
 import static java.util.Arrays.stream;
 
@@ -33,25 +32,25 @@ public class EnumerationProperty extends ValidatableProperty<String> {
     }
 
     public void deferredInit(final ValidatableProperty<?>[] allProperties) {
-        if (deferredInit != null) {
+        if (hasDeferredInit()) {
             if (this.values != null) {
-                throw new IllegalStateException("property " + toString() + " already has values");
+                throw new IllegalStateException("property " + this + " already has values");
             }
-            this.values = deferredInit.apply(allProperties);
+            this.values = doDeferredInit(allProperties);
         }
     }
 
     public ValidatableProperty<String> valuesFromProperties(final String propertyNamePrefix) {
-        this.deferredInit = (ValidatableProperty<?>[] allProperties) -> stream(allProperties)
+        this.setDeferredInit( (ValidatableProperty<?>[] allProperties) -> stream(allProperties)
                 .map(ValidatableProperty::propertyName)
                 .filter(name -> name.startsWith(propertyNamePrefix))
                 .map(name -> name.substring(propertyNamePrefix.length()))
-                .toArray(String[]::new);
+                .toArray(String[]::new));
         return this;
     }
 
     @Override
-    protected void validate(final ArrayList<String> result, final String propValue, final Map<String, Object> props) {
+    protected void validate(final List<String> result, final String propValue, final PropertiesProvider propProvider) {
         if (stream(values).noneMatch(v -> v.equals(propValue))) {
             result.add(propertyName + "' is expected to be one of " + Arrays.toString(values) + " but is '" + propValue + "'");
         }

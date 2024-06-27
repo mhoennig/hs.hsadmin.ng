@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.mapper;
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,5 +43,9 @@ public class Array {
                 .flatMap(Arrays::stream)
                 .toArray(String[]::new);
         return joined;
+    }
+
+    public static <T> T[] emptyArray() {
+        return of();
     }
 }

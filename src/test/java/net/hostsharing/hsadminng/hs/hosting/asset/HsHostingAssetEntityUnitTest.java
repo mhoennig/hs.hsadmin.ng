@@ -57,14 +57,14 @@ class HsHostingAssetEntityUnitTest {
     @Test
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
 
-        assertThat(givenWebspace.toString()).isEqualTo(
-                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1234500:test project:test cloud server booking item, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+        assertThat(givenWebspace.toString()).isEqualToIgnoringWhitespace(
+                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1234500:test project:test cloud server booking item, { \"CPUs\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
 
-        assertThat(givenUnixUser.toString()).isEqualTo(
-                "HsHostingAssetEntity(UNIX_USER, xyz00-web, some unix-user, MANAGED_WEBSPACE:xyz00, { HDD-hard-quota: 512, HDD-soft-quota: 256, SSD-hard-quota: 256, SSD-soft-quota: 128 })");
+        assertThat(givenUnixUser.toString()).isEqualToIgnoringWhitespace(
+                "HsHostingAssetEntity(UNIX_USER, xyz00-web, some unix-user, MANAGED_WEBSPACE:xyz00, { \"HDD-hard-quota\": 512, \"HDD-soft-quota\": 256, \"SSD-hard-quota\": 256, \"SSD-soft-quota\": 128 })");
 
-        assertThat(givenDomainHttpSetup.toString()).isEqualTo(
-                "HsHostingAssetEntity(DOMAIN_HTTP_SETUP, example.org, some domain setup, MANAGED_WEBSPACE:xyz00, UNIX_USER:xyz00-web, { option-htdocsfallback: true, use-fcgiphpbin: /usr/lib/cgi-bin/php, validsubdomainnames: * })");
+        assertThat(givenDomainHttpSetup.toString()).isEqualToIgnoringWhitespace(
+                "HsHostingAssetEntity(DOMAIN_HTTP_SETUP, example.org, some domain setup, MANAGED_WEBSPACE:xyz00, UNIX_USER:xyz00-web, { \"option-htdocsfallback\": true, \"use-fcgiphpbin\": \"/usr/lib/cgi-bin/php\", \"validsubdomainnames\": \"*\" })");
     }
 
     @Test

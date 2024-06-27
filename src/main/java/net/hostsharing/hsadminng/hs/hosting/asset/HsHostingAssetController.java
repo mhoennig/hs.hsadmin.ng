@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
+import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
 
 import net.hostsharing.hsadminng.context.Context;
@@ -78,7 +79,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                         .path("/api/hs/hosting/assets/{id}")
                         .buildAndExpand(saved.getUuid())
                         .toUri();
-        final var mapped = mapper.map(saved, HsHostingAssetResource.class);
+        final var mapped = mapper.map(saved, HsHostingAssetResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -94,7 +95,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
         final var result = assetRepo.findByUuid(assetUuid);
         return result
                 .map(assetEntity -> ResponseEntity.ok(
-                        mapper.map(assetEntity, HsHostingAssetResource.class)))
+                        mapper.map(assetEntity, HsHostingAssetResource.class, ENTITY_TO_RESOURCE_POSTMAPPER)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -126,8 +127,17 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         new HsHostingAssetEntityPatcher(em, current).apply(body);
 
+//      TODO.refa: draft for an alternative API
+//      validate(current) // self-validation, hashing passwords etc.
+//          .then(HsHostingAssetEntityValidatorRegistry::prepareForSave) // hashing passwords etc.
+//          .then(assetRepo::save)
+//          .then(HsHostingAssetEntityValidatorRegistry::validateInContext)
+//          // In this last step we need the entity and the mapped resource instance,
+//          // which is exactly what a postmapper takes as arguments.
+//          .then(this::mapToResource) using postProcessProperties to remove write-only + add read-only properties
+
         final var saved = validated(assetRepo.save(current));
-        final var mapped = mapper.map(saved, HsHostingAssetResource.class);
+        final var mapped = mapper.map(saved, HsHostingAssetResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
@@ -144,4 +154,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                             resource.getParentAssetUuid()))));
         }
     };
+
+    final BiConsumer<HsHostingAssetEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER
+            = HsHostingAssetEntityValidatorRegistry::postprocessProperties;
 }

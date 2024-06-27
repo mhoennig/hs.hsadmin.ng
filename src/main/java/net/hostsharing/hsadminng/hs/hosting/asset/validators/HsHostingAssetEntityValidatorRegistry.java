@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
+import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
 
@@ -40,12 +41,27 @@ public class HsHostingAssetEntityValidatorRegistry {
     }
 
     public static List<String> doValidate(final HsHostingAssetEntity hostingAsset) {
-        return HsHostingAssetEntityValidatorRegistry.forType(hostingAsset.getType()).validate(hostingAsset);
+        final var validator = HsHostingAssetEntityValidatorRegistry.forType(hostingAsset.getType());
+        return validator.validate(hostingAsset);
     }
 
     public static HsHostingAssetEntity validated(final HsHostingAssetEntity entityToSave) {
         MultiValidationException.throwInvalid(doValidate(entityToSave));
         return entityToSave;
+    }
+
+    public static void postprocessProperties(final HsHostingAssetEntity entity, final HsHostingAssetResource resource) {
+        final var validator = HsHostingAssetEntityValidatorRegistry.forType(entity.getType());
+        final var config = validator.postProcess(entity, asMap(resource));
+        resource.setConfig(config);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asMap(final HsHostingAssetResource resource) {
+        if (resource.getConfig() instanceof Map map) {
+            return map;
+        }
+        throw new IllegalArgumentException("expected a Map, but got a " + resource.getConfig().getClass());
     }
 
 }

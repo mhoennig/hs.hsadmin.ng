@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.validation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -10,7 +11,8 @@ import java.util.function.Supplier;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 
-public abstract class HsEntityValidator<E> {
+// TODO.refa: rename to HsEntityProcessor, also subclasses
+public abstract class HsEntityValidator<E extends PropertiesProvider> {
 
     public final ValidatableProperty<?>[] propertyValidators;
 
@@ -38,16 +40,22 @@ public abstract class HsEntityValidator<E> {
                 .toList();
     }
 
-    protected ArrayList<String> validateProperties(final Map<String, Object> properties) {
+    protected ArrayList<String> validateProperties(final PropertiesProvider propsProvider) {
         final var result = new ArrayList<String>();
+
+        // verify that all actually given properties are specified
+        final var properties = propsProvider.directProps();
         properties.keySet().forEach( givenPropName -> {
             if (stream(propertyValidators).map(pv -> pv.propertyName).noneMatch(propName -> propName.equals(givenPropName))) {
                 result.add(givenPropName + "' is not expected but is set to '" + properties.get(givenPropName) + "'");
             }
         });
+
+        // run all property validators
         stream(propertyValidators).forEach(pv -> {
-            result.addAll(pv.validate(properties));
+            result.addAll(pv.validate(propsProvider));
         });
+
         return result;
     }
 
@@ -79,5 +87,18 @@ public abstract class HsEntityValidator<E> {
             return 0;
         }
         throw new IllegalArgumentException("Integer value (or null) expected, but got " + value);
+    }
+
+    public Map<String, Object> postProcess(final E entity, final Map<String, Object> config) {
+        final var copy = new HashMap<>(config);
+        stream(propertyValidators).forEach(p -> {
+            if ( p.isWriteOnly()) {
+                copy.remove(p.propertyName);
+            }
+            if (p.isComputed()) {
+                copy.put(p.propertyName, p.compute(entity));
+            }
+        });
+        return copy;
     }
 }

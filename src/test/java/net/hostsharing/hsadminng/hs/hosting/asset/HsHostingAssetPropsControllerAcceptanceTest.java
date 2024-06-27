@@ -59,9 +59,7 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "required": false,
-                                "defaultValue": 92,
-                                "isTotalsValidator": false
+                                "defaultValue": 92
                             },
                             {
                                 "type": "integer",
@@ -69,9 +67,7 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "required": false,
-                                "defaultValue": 92,
-                                "isTotalsValidator": false
+                                "defaultValue": 92
                             },
                             {
                                 "type": "integer",
@@ -79,18 +75,14 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "required": false,
-                                "defaultValue": 98,
-                                "isTotalsValidator": false
+                                "defaultValue": 98
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_min_free_ssd",
                                 "min": 1,
                                 "max": 1000,
-                                "required": false,
-                                "defaultValue": 5,
-                                "isTotalsValidator": false
+                                "defaultValue": 5
                             },
                             {
                                 "type": "integer",
@@ -98,32 +90,24 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                 "unit": "%",
                                 "min": 10,
                                 "max": 100,
-                                "required": false,
-                                "defaultValue": 95,
-                                "isTotalsValidator": false
+                                "defaultValue": 95
                             },
                             {
                                 "type": "integer",
                                 "propertyName": "monit_min_free_hdd",
                                 "min": 1,
                                 "max": 4000,
-                                "required": false,
-                                "defaultValue": 10,
-                                "isTotalsValidator": false
+                                "defaultValue": 10
                             },
                             {
                                 "type": "boolean",
                                 "propertyName": "software-pgsql",
-                                "required": false,
-                                "defaultValue": true,
-                                "isTotalsValidator": false
+                                "defaultValue": true
                             },
                             {
                                 "type": "boolean",
                                 "propertyName": "software-mariadb",
-                                "required": false,
-                                "defaultValue": true,
-                                "isTotalsValidator": false
+                                "defaultValue": true
                             },
                             {
                                 "type": "enumeration",
@@ -139,114 +123,70 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                                     "8.1",
                                     "8.2"
                                 ],
-                                "required": false,
-                                "defaultValue": "8.2",
-                                "isTotalsValidator": false
+                                "defaultValue": "8.2"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-5.6",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-5.6"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-7.0",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-7.0"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-7.1",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-7.1"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-7.2",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-7.2"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-7.3",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-7.3"
                             },
                             {
                                 "type": "boolean",
                                 "propertyName": "software-php-7.4",
-                                "required": false,
-                                "defaultValue": true,
-                                "isTotalsValidator": false
+                                "defaultValue": true
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-8.0",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-8.0"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-php-8.1",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-php-8.1"
                             },
                             {
                                 "type": "boolean",
                                 "propertyName": "software-php-8.2",
-                                "required": false,
-                                "defaultValue": true,
-                                "isTotalsValidator": false
+                                "defaultValue": true
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-postfix-tls-1.0",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-postfix-tls-1.0"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-dovecot-tls-1.0",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-dovecot-tls-1.0"
                             },
                             {
                                 "type": "boolean",
                                 "propertyName": "software-clamav",
-                                "required": false,
-                                "defaultValue": true,
-                                "isTotalsValidator": false
+                                "defaultValue": true
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-collabora",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-collabora"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-libreoffice",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-libreoffice"
                             },
                             {
                                 "type": "boolean",
-                                "propertyName": "software-imagemagick-ghostscript",
-                                "required": false,
-                                "defaultValue": false,
-                                "isTotalsValidator": false
+                                "propertyName": "software-imagemagick-ghostscript"
                             }
                         ]
                         """));

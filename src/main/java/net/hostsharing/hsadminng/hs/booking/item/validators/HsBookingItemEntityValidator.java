@@ -29,7 +29,7 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
     }
 
     private List<String> validateProperties(final HsBookingItemEntity bookingItem) {
-        return enrich(prefix(bookingItem.toShortString(), "resources"), validateProperties(bookingItem.getResources()));
+        return enrich(prefix(bookingItem.toShortString(), "resources"), super.validateProperties(bookingItem));
     }
 
     private static List<String> optionallyValidate(final HsBookingItemEntity bookingItem) {

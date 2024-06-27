@@ -37,8 +37,8 @@ class HsManagedServerHostingAssetValidatorUnitTest {
         assertThat(result).containsExactlyInAnyOrder(
                 "'MANAGED_SERVER:vm1234.parentAsset' must be null but is set to D-???????-?:null",
                 "'MANAGED_SERVER:vm1234.assignedToAsset' must be null but is set to D-???????-?:null",
-                "'MANAGED_SERVER:vm1234.config.monit_max_cpu_usage' is expected to be >= 10 but is 2",
-                "'MANAGED_SERVER:vm1234.config.monit_max_ram_usage' is expected to be <= 100 but is 101",
+                "'MANAGED_SERVER:vm1234.config.monit_max_cpu_usage' is expected to be at least 10 but is 2",
+                "'MANAGED_SERVER:vm1234.config.monit_max_ram_usage' is expected to be at most 100 but is 101",
                 "'MANAGED_SERVER:vm1234.config.monit_max_hdd_usage' is expected to be of type class java.lang.Integer, but is of type 'String'");
     }
 

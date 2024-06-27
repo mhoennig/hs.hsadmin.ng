@@ -53,13 +53,20 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
     }
 
     public String toString() {
-        return "{ "
+        return "{\n"
                 + (
                     keySet().stream().sorted()
-                            .map(k -> k + ": " + get(k)))
-                            .collect(joining(", ")
+                            .map(k -> "    \"" + k + "\": " + optionallyQuoted(get(k))))
+                            .collect(joining(",\n")
                 )
-                + " }";
+                + "\n}\n";
+    }
+
+    private Object optionallyQuoted(final Object value) {
+        if ( value instanceof Number || value instanceof Boolean ) {
+            return value;
+        }
+        return "\"" + value + "\"";
     }
 
     // --- below just delegating methods --------------------------------

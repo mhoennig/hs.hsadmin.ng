@@ -4,7 +4,7 @@ import lombok.Setter;
 import net.hostsharing.hsadminng.mapper.Array;
 
 import java.util.AbstractMap;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -29,9 +29,9 @@ public class BooleanProperty extends ValidatableProperty<Boolean> {
     }
 
     @Override
-    protected void validate(final ArrayList<String> result, final Boolean propValue, final Map<String, Object> props) {
+    protected void validate(final List<String> result, final Boolean propValue, final PropertiesProvider propProvider) {
         if (falseIf != null && propValue) {
-            final Object referencedValue = props.get(falseIf.getKey());
+            final Object referencedValue = propProvider.directProps().get(falseIf.getKey());
             if (Objects.equals(referencedValue, falseIf.getValue())) {
                 result.add(propertyName + "' is expected to be false because " +
                         falseIf.getKey() + "=" + referencedValue + " but is " + propValue);

@@ -53,7 +53,7 @@ class HsBookingItemEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
         final var result = givenBookingItem.toString();
 
-        assertThat(result).isEqualTo("HsBookingItemEntity(D-1234500:test project, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { CPUs: 2, HDD-storage: 2048, SSD-storage: 512 })");
+        assertThat(result).isEqualToIgnoringWhitespace("HsBookingItemEntity(D-1234500:test project, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { \"CPUs\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
     }
 
     @Test

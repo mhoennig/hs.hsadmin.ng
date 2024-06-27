@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.util.Collections.emptyMap;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
@@ -63,7 +65,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsHostingAssetEntity implements Stringifyable, RbacObject {
+public class HsHostingAssetEntity implements Stringifyable, RbacObject, PropertiesProvider {
 
     private static Stringify<HsHostingAssetEntity> stringify = stringify(HsHostingAssetEntity.class)
             .withProp(HsHostingAssetEntity::getType)
@@ -122,7 +124,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     private PatchableMapWrapper<Object> configWrapper;
 
     @Transient
-    private boolean isLoaded = false;
+    private boolean isLoaded;
 
     @PostLoad
     public void markAsLoaded() {
@@ -136,6 +138,28 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject {
     public void putConfig(Map<String, Object> newConfig) {
         PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config).assign(newConfig);
     }
+
+    @Override
+    public Map<String, Object> directProps() {
+        return config;
+    }
+
+    @Override
+    public Object getContextValue(final String propName) {
+        final var v = config.get(propName);
+        if (v!= null) {
+            return v;
+        }
+
+        if (bookingItem!=null) {
+            return bookingItem.getResources().get(propName);
+        }
+        if (parentAsset!=null && parentAsset.getBookingItem()!=null) {
+            return parentAsset.getBookingItem().getResources().get(propName);
+        }
+        return emptyMap();
+    }
+
 
     @Override
     public String toString() {

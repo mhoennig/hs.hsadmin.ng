@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.validation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.experimental.Accessors;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
@@ -21,19 +23,37 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
+@Getter
 @RequiredArgsConstructor
 public abstract class ValidatableProperty<T> {
 
     protected static final String[] KEY_ORDER_HEAD = Array.of("propertyName");
-    protected static final String[] KEY_ORDER_TAIL = Array.of("required", "defaultValue", "isTotalsValidator", "thresholdPercentage");
+    protected static final String[] KEY_ORDER_TAIL = Array.of("required", "defaultValue", "readOnly", "writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
 
     final Class<T> type;
     final String propertyName;
+
+    @JsonIgnore
     private final String[] keyOrder;
+
     private Boolean required;
     private T defaultValue;
-    protected Function<ValidatableProperty<?>[], T[]> deferredInit;
+
+    @JsonIgnore
+    private Function<PropertiesProvider, T> computedBy;
+
+    @Accessors(makeFinal = true, chain = true, fluent = false)
+    private boolean computed; // used in descriptor, because computedBy cannot be rendered to a text string
+
+    @Accessors(makeFinal = true, chain = true, fluent = false)
+    private boolean readOnly;
+
+    @Accessors(makeFinal = true, chain = true, fluent = false)
+    private boolean writeOnly;
+
+    private Function<ValidatableProperty<?>[], T[]> deferredInit;
     private boolean isTotalsValidator = false;
+
     @JsonIgnore
     private List<Function<HsBookingItemEntity, List<String>>> asTotalLimitValidators; // TODO.impl: move to BookingItemIntegerProperty
 
@@ -41,6 +61,30 @@ public abstract class ValidatableProperty<T> {
 
     public String unit() {
         return null;
+    }
+
+    protected void setDeferredInit(final Function<ValidatableProperty<?>[], T[]> function) {
+        this.deferredInit = function;
+    }
+
+    public boolean hasDeferredInit() {
+        return deferredInit != null;
+    }
+
+    public T[] doDeferredInit(final ValidatableProperty<?>[] allProperties) {
+        return deferredInit.apply(allProperties);
+    }
+
+    public ValidatableProperty<T> writeOnly() {
+        this.writeOnly = true;
+        optional();
+        return this;
+    }
+
+    public ValidatableProperty<T> readOnly() {
+        this.readOnly = true;
+        optional();
+        return this;
     }
 
     public ValidatableProperty<T> required() {
@@ -116,8 +160,9 @@ public abstract class ValidatableProperty<T> {
         return this;
     }
 
-    public final List<String> validate(final Map<String, Object> props) {
+    public final List<String> validate(final PropertiesProvider propsProvider) {
         final var result = new ArrayList<String>();
+        final var props = propsProvider.directProps();
         final var propValue = props.get(propertyName);
         if (propValue == null) {
             if (required) {
@@ -127,7 +172,7 @@ public abstract class ValidatableProperty<T> {
         if (propValue != null){
             if ( type.isInstance(propValue)) {
                 //noinspection unchecked
-                validate(result, (T) propValue, props);
+                validate(result, (T) propValue, propsProvider);
             } else {
                 result.add(propertyName + "' is expected to be of type " + type + ", " +
                         "but is of type '" + propValue.getClass().getSimpleName() + "'");
@@ -136,7 +181,7 @@ public abstract class ValidatableProperty<T> {
         return result;
     }
 
-    protected abstract void validate(final ArrayList<String> result, final T propValue, final Map<String, Object> props);
+    protected abstract void validate(final List<String> result, final T propValue, final PropertiesProvider propProvider);
 
     public void verifyConsistency(final Map.Entry<? extends Enum<?>, ?> typeDef) {
         if (required == null ) {
@@ -158,26 +203,32 @@ public abstract class ValidatableProperty<T> {
             // Add entries according to the given order
             for (String key : keyOrder) {
                 final Optional<Object> propValue = getPropertyValue(key);
-                propValue.ifPresent(o -> sortedMap.put(key, o));
+                propValue.filter(ValidatableProperty::isToBeRendered).ifPresent(o -> sortedMap.put(key, o));
             }
 
             return sortedMap;
     }
 
+    private static boolean isToBeRendered(final Object v) {
+        return !(v instanceof Boolean b) || b;
+    }
+
     @SneakyThrows
     private Optional<Object> getPropertyValue(final String key) {
+        return getPropertyValue(getClass(), key);
+    }
+
+    @SneakyThrows
+    private Optional<Object> getPropertyValue(final Class<?> clazz, final String key) {
         try {
-            final var field = getClass().getDeclaredField(key);
+            final var field = clazz.getDeclaredField(key);
             field.setAccessible(true);
             return Optional.ofNullable(arrayToList(field.get(this)));
-        } catch (final NoSuchFieldException e1) {
-            try {
-                final var field = getClass().getSuperclass().getDeclaredField(key);
-                field.setAccessible(true);
-                return Optional.ofNullable(arrayToList(field.get(this)));
-            } catch (final NoSuchFieldException e2) {
-                return Optional.empty();
+        } catch (final NoSuchFieldException exc) {
+            if (clazz.getSuperclass() != null) {
+                return getPropertyValue(clazz.getSuperclass(), key);
             }
+            throw exc;
         }
     }
 
@@ -197,5 +248,15 @@ public abstract class ValidatableProperty<T> {
                 .filter(Objects::nonNull)
                 .flatMap(Collection::stream)
                 .toList();
+    }
+
+    public ValidatableProperty<T> computedBy(final Function<PropertiesProvider, T> compute) {
+        this.computedBy = compute;
+        this.computed = true;
+        return this;
+    }
+
+    public <E extends PropertiesProvider> T compute(final E entity) {
+        return computedBy.apply(entity);
     }
 }

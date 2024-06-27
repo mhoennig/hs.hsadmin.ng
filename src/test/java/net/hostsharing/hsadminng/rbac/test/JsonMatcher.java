@@ -9,13 +9,15 @@ import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+
 public class JsonMatcher extends BaseMatcher<CharSequence> {
 
-    private final String expected;
+    private final String expectedJson;
     private JSONCompareMode compareMode;
 
-    public JsonMatcher(final String expected, final JSONCompareMode compareMode) {
-        this.expected = expected;
+    public JsonMatcher(final String expectedJson, final JSONCompareMode compareMode) {
+        this.expectedJson = expectedJson;
         this.compareMode = compareMode;
     }
 
@@ -47,8 +49,8 @@ public class JsonMatcher extends BaseMatcher<CharSequence> {
             return false;
         }
         try {
-            final var actualJson = new ObjectMapper().writeValueAsString(actual);
-            JSONAssert.assertEquals(expected, actualJson, compareMode);
+            final var actualJson = new ObjectMapper().enable(INDENT_OUTPUT).writeValueAsString(actual);
+            JSONAssert.assertEquals(expectedJson, actualJson, compareMode);
             return true;
         } catch (final JSONException | JsonProcessingException e) {
             throw new AssertionError(e);
@@ -59,5 +61,4 @@ public class JsonMatcher extends BaseMatcher<CharSequence> {
     public void describeTo(final Description description) {
         description.appendText("leniently matches JSON");
     }
-
 }
