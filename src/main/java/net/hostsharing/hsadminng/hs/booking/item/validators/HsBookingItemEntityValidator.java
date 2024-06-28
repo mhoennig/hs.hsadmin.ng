@@ -16,7 +16,7 @@ import static java.util.Optional.ofNullable;
 
 public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingItemEntity> {
 
-    public HsBookingItemEntityValidator(final ValidatableProperty<?>... properties) {
+    public HsBookingItemEntityValidator(final ValidatableProperty<?, ?>... properties) {
         super(properties);
     }
 
@@ -54,7 +54,7 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
     // TODO.refa: convert into generic shape like multi-options validator
     private static String validateMaxTotalValue(
             final HsBookingItemEntity bookingItem,
-            final ValidatableProperty<?> propDef) {
+            final ValidatableProperty<?, ?> propDef) {
         final var propName = propDef.propertyName();
         final var propUnit = ofNullable(propDef.unit()).map(u -> " " + u).orElse("");
         final var totalValue = ofNullable(bookingItem.getSubBookingItems()).orElse(emptyList())

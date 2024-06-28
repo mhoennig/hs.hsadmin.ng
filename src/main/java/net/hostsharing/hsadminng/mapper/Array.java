@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Arrays.asList;
+
 /**
  * Java has List.of(...), Set.of(...) and Map.of(...) all with varargs parameter,
  * but no Array.of(...). Here it is.
@@ -47,5 +49,18 @@ public class Array {
 
     public static <T> T[] emptyArray() {
         return of();
+    }
+
+    public static <T> T[] insertAfterEntry(final T[] array, final T entryToFind, final T newEntry) {
+        final var arrayList = new ArrayList<>(asList(array));
+        final var index = arrayList.indexOf(entryToFind);
+        if (index < 0) {
+            throw new IllegalArgumentException("entry "+ entryToFind + " not found in " + Arrays.toString(array));
+        }
+        arrayList.add(index + 1, newEntry);
+
+        @SuppressWarnings("unchecked")
+        final var extendedArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length);
+        return arrayList.toArray(extendedArray);
     }
 }

@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import net.hostsharing.hsadminng.hash.HashProcessor;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
@@ -30,7 +31,7 @@ class HsUnixUserHostingAssetValidator extends HsHostingAssetEntityValidator {
                         .withDefault("/bin/false"),
                 stringProperty("homedir").readOnly().computedBy(HsUnixUserHostingAssetValidator::computeHomedir),
                 stringProperty("totpKey").matchesRegEx("^0x([0-9A-Fa-f]{2})+$").minLength(20).maxLength(256).undisclosed().writeOnly().optional(),
-                passwordProperty("password").minLength(8).maxLength(40).writeOnly());
+                passwordProperty("password").minLength(8).maxLength(40).hashedUsing(HashProcessor.Algorithm.SHA512).writeOnly());
     }
 
     @Override

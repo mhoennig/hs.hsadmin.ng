@@ -25,7 +25,7 @@ import static java.util.Optional.ofNullable;
 
 @Getter
 @RequiredArgsConstructor
-public abstract class ValidatableProperty<T> {
+public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T> {
 
     protected static final String[] KEY_ORDER_HEAD = Array.of("propertyName");
     protected static final String[] KEY_ORDER_TAIL = Array.of("required", "defaultValue", "readOnly", "writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
@@ -51,7 +51,7 @@ public abstract class ValidatableProperty<T> {
     @Accessors(makeFinal = true, chain = true, fluent = false)
     private boolean writeOnly;
 
-    private Function<ValidatableProperty<?>[], T[]> deferredInit;
+    private Function<ValidatableProperty<?, ?>[], T[]> deferredInit;
     private boolean isTotalsValidator = false;
 
     @JsonIgnore
@@ -59,11 +59,16 @@ public abstract class ValidatableProperty<T> {
 
     private Integer thresholdPercentage; // TODO.impl: move to IntegerProperty
 
+    public final P self() {
+        //noinspection unchecked
+        return (P) this;
+    }
+
     public String unit() {
         return null;
     }
 
-    protected void setDeferredInit(final Function<ValidatableProperty<?>[], T[]> function) {
+protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> function) {
         this.deferredInit = function;
     }
 
@@ -71,47 +76,47 @@ public abstract class ValidatableProperty<T> {
         return deferredInit != null;
     }
 
-    public T[] doDeferredInit(final ValidatableProperty<?>[] allProperties) {
+    public T[] doDeferredInit(final ValidatableProperty<?, ?>[] allProperties) {
         return deferredInit.apply(allProperties);
     }
 
-    public ValidatableProperty<T> writeOnly() {
+    public P writeOnly() {
         this.writeOnly = true;
         optional();
-        return this;
+        return self();
     }
 
-    public ValidatableProperty<T> readOnly() {
+    public P readOnly() {
         this.readOnly = true;
         optional();
-        return this;
+        return self();
     }
 
-    public ValidatableProperty<T> required() {
+    public P required() {
         required = TRUE;
-        return this;
+        return self();
     }
 
-    public ValidatableProperty<T> optional() {
+    public ValidatableProperty<P, T> optional() {
         required = FALSE;
         return this;
     }
 
-    public ValidatableProperty<T> withDefault(final T value) {
+    public P withDefault(final T value) {
         defaultValue = value;
         required = FALSE;
-        return this;
+        return self();
     }
 
-    public void deferredInit(final ValidatableProperty<?>[] allProperties) {
+    public void deferredInit(final ValidatableProperty<?, ?>[] allProperties) {
     }
 
-    public ValidatableProperty<T> asTotalLimit() {
+    public P asTotalLimit() {
         isTotalsValidator = true;
-        return this;
+        return self();
     }
 
-    public ValidatableProperty<T> asTotalLimitFor(final String propertyName, final String propertyValue) {
+    public P asTotalLimitFor(final String propertyName, final String propertyValue) {
         if (asTotalLimitValidators == null) {
             asTotalLimitValidators = new ArrayList<>();
         }
@@ -132,7 +137,7 @@ public abstract class ValidatableProperty<T> {
             return emptyList();
         };
         asTotalLimitValidators.add((final HsBookingItemEntity entity) -> validator.apply(entity, (IntegerProperty)this,  1));
-        return this;
+        return self();
     }
 
     public String propertyName() {
@@ -147,7 +152,7 @@ public abstract class ValidatableProperty<T> {
         return thresholdPercentage;
     }
 
-    public ValidatableProperty<T> eachComprising(final int factor, final TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> validator) {
+    public ValidatableProperty<P, T> eachComprising(final int factor, final TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> validator) {
         if (asTotalLimitValidators == null) {
             asTotalLimitValidators = new ArrayList<>();
         }
@@ -155,9 +160,9 @@ public abstract class ValidatableProperty<T> {
         return this;
     }
 
-    public ValidatableProperty<?> withThreshold(final Integer percentage) {
+    public P withThreshold(final Integer percentage) {
         this.thresholdPercentage = percentage;
-        return this;
+        return self();
     }
 
     public final List<String> validate(final PropertiesProvider propsProvider) {
@@ -250,10 +255,10 @@ public abstract class ValidatableProperty<T> {
                 .toList();
     }
 
-    public ValidatableProperty<T> computedBy(final Function<PropertiesProvider, T> compute) {
+    public P computedBy(final Function<PropertiesProvider, T> compute) {
         this.computedBy = compute;
         this.computed = true;
-        return this;
+        return self();
     }
 
     public <E extends PropertiesProvider> T compute(final E entity) {

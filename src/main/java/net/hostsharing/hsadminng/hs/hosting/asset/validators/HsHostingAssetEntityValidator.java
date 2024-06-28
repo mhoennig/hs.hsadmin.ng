@@ -24,7 +24,7 @@ import static java.util.Optional.ofNullable;
 
 public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<HsHostingAssetEntity> {
 
-    static final ValidatableProperty<?>[] NO_EXTRA_PROPERTIES = new ValidatableProperty<?>[0];
+    static final ValidatableProperty<?, ?>[] NO_EXTRA_PROPERTIES = new ValidatableProperty<?, ?>[0];
 
     private final HsHostingAssetEntityValidator.BookingItem bookingItemValidation;
     private final HsHostingAssetEntityValidator.ParentAsset parentAssetValidation;
@@ -36,7 +36,7 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
             @NotNull final ParentAsset parentAssetValidation,
             @NotNull final AssignedToAsset assignedToAssetValidation,
             @NotNull final AlarmContact alarmContactValidation,
-            final ValidatableProperty<?>... properties) {
+            final ValidatableProperty<?, ?>... properties) {
         super(properties);
         this.bookingItemValidation = bookingItemValidation;
         this.parentAssetValidation = parentAssetValidation;
@@ -105,7 +105,7 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
     // TODO.test: check, if there are any hosting assets which need this validation at all
     private String validateMaxTotalValue(
             final HsHostingAssetEntity hostingAsset,
-            final ValidatableProperty<?> propDef) {
+            final ValidatableProperty<?, ?> propDef) {
         final var propName = propDef.propertyName();
         final var propUnit = ofNullable(propDef.unit()).map(u -> " " + u).orElse("");
         final var totalValue = ofNullable(hostingAsset.getSubHostingAssets()).orElse(emptyList())

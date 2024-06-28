@@ -6,13 +6,18 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import static net.hostsharing.hsadminng.hash.HashProcessor.Algorithm.SHA512;
+import static net.hostsharing.hsadminng.hash.HashProcessor.hashAlgorithm;
 import static net.hostsharing.hsadminng.hs.validation.PasswordProperty.passwordProperty;
+import static net.hostsharing.hsadminng.mapper.PatchableMapWrapper.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PasswordPropertyUnitTest {
 
-    private final ValidatableProperty<String> passwordProp = passwordProperty("password").minLength(8).maxLength(40).writeOnly();
+    private final ValidatableProperty<PasswordProperty, String> passwordProp =
+            passwordProperty("password").minLength(8).maxLength(40).hashedUsing(SHA512).writeOnly();
     private final List<String> violations = new ArrayList<>();
 
     @ParameterizedTest
@@ -88,5 +93,28 @@ class PasswordPropertyUnitTest {
         assertThat(violations)
                 .contains("password' must not contain colon (':')")
                 .doesNotContain(givenPassword);
+    }
+
+    @Test
+    void shouldComputeHash() {
+
+        // when
+        final var result = passwordProp.compute(new PropertiesProvider() {
+
+            @Override
+            public Map<String, Object> directProps() {
+                return Map.ofEntries(
+                        entry(passwordProp.propertyName, "some password")
+                );
+            }
+
+            @Override
+            public Object getContextValue(final String propName) {
+                return null;
+            }
+        });
+
+        // then
+        hashAlgorithm(SHA512).withHash(result).verify("some password"); // throws exception if wrong
     }
 }

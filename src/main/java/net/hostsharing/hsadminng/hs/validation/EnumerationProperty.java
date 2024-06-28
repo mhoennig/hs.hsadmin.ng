@@ -9,7 +9,7 @@ import java.util.List;
 import static java.util.Arrays.stream;
 
 @Setter
-public class EnumerationProperty extends ValidatableProperty<String> {
+public class EnumerationProperty extends ValidatableProperty<EnumerationProperty, String> {
 
     private static final String[] KEY_ORDER = Array.join(
             ValidatableProperty.KEY_ORDER_HEAD,
@@ -26,12 +26,12 @@ public class EnumerationProperty extends ValidatableProperty<String> {
         return new EnumerationProperty(propertyName);
     }
 
-    public ValidatableProperty<String> values(final String... values) {
+    public EnumerationProperty values(final String... values) {
         this.values = values;
         return this;
     }
 
-    public void deferredInit(final ValidatableProperty<?>[] allProperties) {
+    public void deferredInit(final ValidatableProperty<?, ?>[] allProperties) {
         if (hasDeferredInit()) {
             if (this.values != null) {
                 throw new IllegalStateException("property " + this + " already has values");
@@ -40,8 +40,8 @@ public class EnumerationProperty extends ValidatableProperty<String> {
         }
     }
 
-    public ValidatableProperty<String> valuesFromProperties(final String propertyNamePrefix) {
-        this.setDeferredInit( (ValidatableProperty<?>[] allProperties) -> stream(allProperties)
+    public EnumerationProperty valuesFromProperties(final String propertyNamePrefix) {
+        this.setDeferredInit( (ValidatableProperty<?, ?>[] allProperties) -> stream(allProperties)
                 .map(ValidatableProperty::propertyName)
                 .filter(name -> name.startsWith(propertyNamePrefix))
                 .map(name -> name.substring(propertyNamePrefix.length()))

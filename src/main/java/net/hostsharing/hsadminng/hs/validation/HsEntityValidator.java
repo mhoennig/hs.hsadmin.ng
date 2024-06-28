@@ -14,9 +14,9 @@ import static java.util.Collections.emptyList;
 // TODO.refa: rename to HsEntityProcessor, also subclasses
 public abstract class HsEntityValidator<E extends PropertiesProvider> {
 
-    public final ValidatableProperty<?>[] propertyValidators;
+    public final ValidatableProperty<?, ?>[] propertyValidators;
 
-    public HsEntityValidator(final ValidatableProperty<?>... validators) {
+    public HsEntityValidator(final ValidatableProperty<?, ?>... validators) {
         propertyValidators = validators;
         stream(propertyValidators).forEach(p -> p.deferredInit(propertyValidators));
     }
@@ -68,7 +68,7 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
                 .orElse(emptyList()));
     }
 
-    protected static Integer getIntegerValueWithDefault0(final ValidatableProperty<?> prop, final Map<String, Object> propValues) {
+    protected static Integer getIntegerValueWithDefault0(final ValidatableProperty<?, ?> prop, final Map<String, Object> propValues) {
         final var value = prop.getValue(propValues);
         if (value instanceof Integer) {
             return (Integer) value;
@@ -92,10 +92,10 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
     public Map<String, Object> postProcess(final E entity, final Map<String, Object> config) {
         final var copy = new HashMap<>(config);
         stream(propertyValidators).forEach(p -> {
+            // FIXME: maybe move to ValidatableProperty.postProcess(...)?
             if ( p.isWriteOnly()) {
                 copy.remove(p.propertyName);
-            }
-            if (p.isComputed()) {
+            } else if (p.isComputed()) {
                 copy.put(p.propertyName, p.compute(entity));
             }
         });

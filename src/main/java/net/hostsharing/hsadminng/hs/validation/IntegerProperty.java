@@ -7,7 +7,7 @@ import org.apache.commons.lang3.Validate;
 import java.util.List;
 
 @Setter
-public class IntegerProperty extends ValidatableProperty<Integer> {
+public class IntegerProperty extends ValidatableProperty<IntegerProperty, Integer> {
 
     private final static String[] KEY_ORDER = Array.join(
             ValidatableProperty.KEY_ORDER_HEAD,
@@ -30,7 +30,7 @@ public class IntegerProperty extends ValidatableProperty<Integer> {
     }
 
     @Override
-    public void deferredInit(final ValidatableProperty<?>[] allProperties) {
+    public void deferredInit(final ValidatableProperty<?, ?>[] allProperties) {
         Validate.isTrue(min == null || minFrom == null, "min and minFrom are exclusive, but both are given");
         Validate.isTrue(max == null || maxFrom == null, "max and maxFrom are exclusive, but both are given");
     }

@@ -6,10 +6,11 @@ import net.hostsharing.hsadminng.mapper.Array;
 import java.util.List;
 import java.util.regex.Pattern;
 
-@Setter
-public class StringProperty extends ValidatableProperty<String> {
 
-    private static final String[] KEY_ORDER = Array.join(
+@Setter
+public class StringProperty<P extends StringProperty<P>> extends ValidatableProperty<P, String> {
+
+    protected static final String[] KEY_ORDER = Array.join(
             ValidatableProperty.KEY_ORDER_HEAD,
             Array.of("matchesRegEx", "minLength", "maxLength"),
             ValidatableProperty.KEY_ORDER_TAIL,
@@ -23,23 +24,27 @@ public class StringProperty extends ValidatableProperty<String> {
         super(String.class, propertyName, KEY_ORDER);
     }
 
-    public static StringProperty stringProperty(final String propertyName) {
-        return new StringProperty(propertyName);
+    protected StringProperty(final String propertyName, final String[] keyOrder) {
+        super(String.class, propertyName, keyOrder);
     }
 
-    public StringProperty minLength(final int minLength) {
+    public static StringProperty<?> stringProperty(final String propertyName) {
+        return new StringProperty<>(propertyName);
+    }
+
+    public P minLength(final int minLength) {
         this.minLength = minLength;
-        return this;
+        return self();
     }
 
-    public StringProperty maxLength(final int maxLength) {
+    public P maxLength(final int maxLength) {
         this.maxLength = maxLength;
-        return this;
+        return self();
     }
 
-    public StringProperty matchesRegEx(final String regExPattern) {
+    public P matchesRegEx(final String regExPattern) {
         this.matchesRegEx = Pattern.compile(regExPattern);
-        return this;
+        return self();
     }
 
     /**
@@ -47,9 +52,9 @@ public class StringProperty extends ValidatableProperty<String> {
      *
      * @return this;
      */
-    public StringProperty undisclosed() {
+    public P undisclosed() {
         this.undisclosed = true;
-        return this;
+        return self();
     }
 
     @Override

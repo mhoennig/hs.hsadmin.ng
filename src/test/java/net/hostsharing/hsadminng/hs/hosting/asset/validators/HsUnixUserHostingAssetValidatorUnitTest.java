@@ -125,7 +125,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 "{type=enumeration, propertyName=shell, values=[/bin/false, /bin/bash, /bin/csh, /bin/dash, /usr/bin/tcsh, /usr/bin/zsh, /usr/bin/passwd], defaultValue=/bin/false}",
                 "{type=string, propertyName=homedir, readOnly=true, computed=true}",
                 "{type=string, propertyName=totpKey, matchesRegEx=^0x([0-9A-Fa-f]{2})+$, minLength=20, maxLength=256, writeOnly=true, undisclosed=true}",
-                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, undisclosed=true}"
+                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, hashedUsing=SHA512, undisclosed=true}"
         );
     }
 }
