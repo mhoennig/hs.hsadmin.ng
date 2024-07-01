@@ -1,13 +1,13 @@
 package net.hostsharing.hsadminng.hs.validation;
 
-import net.hostsharing.hsadminng.hash.HashProcessor.Algorithm;
+import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.Algorithm;
 import lombok.Setter;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.hash.HashProcessor.hashAlgorithm;
+import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.hash;
 import static net.hostsharing.hsadminng.mapper.Array.insertAfterEntry;
 
 @Setter
@@ -34,10 +34,9 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
 
     public PasswordProperty hashedUsing(final Algorithm algorithm) {
         this.hashedUsing = algorithm;
-        // FIXME: computedBy is too late, we need preprocess
         computedBy((entity)
                 -> ofNullable(entity.getDirectValue(propertyName, String.class))
-                    .map(password -> hashAlgorithm(algorithm).withRandomSalt().generate(password))
+                    .map(password -> hash(password).using(algorithm).withRandomSalt().generate())
                     .orElse(null));
         return self();
     }

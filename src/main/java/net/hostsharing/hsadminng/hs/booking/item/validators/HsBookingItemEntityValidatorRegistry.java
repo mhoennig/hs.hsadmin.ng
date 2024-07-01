@@ -45,11 +45,13 @@ public class HsBookingItemEntityValidatorRegistry {
     }
 
     public static List<String> doValidate(final HsBookingItemEntity bookingItem) {
-        return HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validate(bookingItem);
+        return HsEntityValidator.sequentiallyValidate(
+                () -> HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateEntity(bookingItem),
+                () -> HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateContext(bookingItem));
     }
 
     public static HsBookingItemEntity validated(final HsBookingItemEntity entityToSave) {
-        MultiValidationException.throwInvalid(doValidate(entityToSave));
+        MultiValidationException.throwIfNotEmpty(doValidate(entityToSave));
         return entityToSave;
     }
 }

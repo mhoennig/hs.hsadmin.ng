@@ -45,10 +45,16 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
     }
 
     @Override
-    public List<String> validate(final HsHostingAssetEntity assetEntity) {
+    public List<String> validateEntity(final HsHostingAssetEntity assetEntity) {
         return sequentiallyValidate(
                 () -> validateEntityReferencesAndProperties(assetEntity),
-                () -> validateIdentifierPattern(assetEntity), // might need proper parentAsset or billingItem
+                () -> validateIdentifierPattern(assetEntity)
+        );
+    }
+
+    @Override
+    public List<String> validateContext(final HsHostingAssetEntity assetEntity) {
+        return sequentiallyValidate(
                 () -> optionallyValidate(assetEntity.getBookingItem()),
                 () -> optionallyValidate(assetEntity.getParentAsset()),
                 () -> validateAgainstSubEntities(assetEntity)
@@ -82,14 +88,14 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
     private static List<String> optionallyValidate(final HsHostingAssetEntity assetEntity) {
         return assetEntity != null
                 ? enrich(prefix(assetEntity.toShortString(), "parentAsset"),
-                        HsHostingAssetEntityValidatorRegistry.forType(assetEntity.getType()).validate(assetEntity))
+                        HsHostingAssetEntityValidatorRegistry.forType(assetEntity.getType()).validateContext(assetEntity))
                 : emptyList();
     }
 
     private static List<String> optionallyValidate(final HsBookingItemEntity bookingItem) {
         return bookingItem != null
                 ? enrich(prefix(bookingItem.toShortString(), "bookingItem"),
-                    HsBookingItemEntityValidatorRegistry.doValidate(bookingItem))
+                    HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateContext(bookingItem))
                 : emptyList();
     }
 

@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static net.hostsharing.hsadminng.hash.HashProcessor.Algorithm.SHA512;
-import static net.hostsharing.hsadminng.hash.HashProcessor.hashAlgorithm;
+import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.Algorithm.SHA512;
+import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.hash;
 import static net.hostsharing.hsadminng.hs.validation.PasswordProperty.passwordProperty;
 import static net.hostsharing.hsadminng.mapper.PatchableMapWrapper.entry;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -115,6 +115,6 @@ class PasswordPropertyUnitTest {
         });
 
         // then
-        hashAlgorithm(SHA512).withHash(result).verify("some password"); // throws exception if wrong
+        hash("some password").using(SHA512).withRandomSalt().generate(); // throws exception if wrong
     }
 }

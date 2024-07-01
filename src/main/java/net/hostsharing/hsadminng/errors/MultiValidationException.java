@@ -15,7 +15,7 @@ public class MultiValidationException extends ValidationException {
         );
     }
 
-    public static void throwInvalid(final List<String> violations) {
+    public static void throwIfNotEmpty(final List<String> violations) {
         if (!violations.isEmpty()) {
             throw new MultiValidationException(violations);
         }

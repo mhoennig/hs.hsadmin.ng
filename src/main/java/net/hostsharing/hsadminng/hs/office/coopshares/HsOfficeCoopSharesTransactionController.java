@@ -98,7 +98,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
         validateSubscriptionTransaction(requestBody, violations);
         validateCancellationTransaction(requestBody, violations);
         validateshareCount(requestBody, violations);
-        MultiValidationException.throwInvalid(violations);
+        MultiValidationException.throwIfNotEmpty(violations);
     }
 
     private static void validateSubscriptionTransaction(

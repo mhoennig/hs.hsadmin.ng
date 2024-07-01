@@ -16,6 +16,12 @@ public class TestHsBookingItem {
             .project(TEST_PROJECT)
             .type(HsBookingItemType.CLOUD_SERVER)
             .caption("test cloud server booking item")
+            .resources(Map.ofEntries(
+                    entry("CPUs", 2),
+                    entry("RAM", 4),
+                    entry("SSD", 50),
+                    entry("Traffic", 250)
+            ))
             .validity(Range.closedInfinite(LocalDate.of(2020, 1, 15)))
             .build();
 

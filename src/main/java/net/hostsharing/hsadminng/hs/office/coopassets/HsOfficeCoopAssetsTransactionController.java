@@ -96,7 +96,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         validateDebitTransaction(requestBody, violations);
         validateCreditTransaction(requestBody, violations);
         validateAssetValue(requestBody, violations);
-        MultiValidationException.throwInvalid(violations);
+        MultiValidationException.throwIfNotEmpty(violations);
     }
 
     private static void validateDebitTransaction(

@@ -63,17 +63,17 @@ class HsManagedServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
-                "{type=integer, propertyName=CPUs, min=1, max=32, required=true, isTotalsValidator=false}",
-                "{type=integer, propertyName=RAM, unit=GB, min=1, max=128, required=true, isTotalsValidator=false}",
+                "{type=integer, propertyName=CPUs, min=1, max=32, required=true}",
+                "{type=integer, propertyName=RAM, unit=GB, min=1, max=128, required=true}",
                 "{type=integer, propertyName=SSD, unit=GB, min=25, max=1000, step=25, required=true, isTotalsValidator=true, thresholdPercentage=200}",
-                "{type=integer, propertyName=HDD, unit=GB, min=0, max=4000, step=250, required=false, defaultValue=0, isTotalsValidator=true, thresholdPercentage=200}",
+                "{type=integer, propertyName=HDD, unit=GB, min=0, max=4000, step=250, defaultValue=0, isTotalsValidator=true, thresholdPercentage=200}",
                 "{type=integer, propertyName=Traffic, unit=GB, min=250, max=10000, step=250, required=true, isTotalsValidator=true, thresholdPercentage=200}",
-                "{type=enumeration, propertyName=SLA-Platform, values=[BASIC, EXT8H, EXT4H, EXT2H], required=false, defaultValue=BASIC, isTotalsValidator=false}",
-                "{type=boolean, propertyName=SLA-EMail, required=false, defaultValue=false, isTotalsValidator=false}",
-                "{type=boolean, propertyName=SLA-Maria, required=false, isTotalsValidator=false}",
-                "{type=boolean, propertyName=SLA-PgSQL, required=false, isTotalsValidator=false}",
-                "{type=boolean, propertyName=SLA-Office, required=false, isTotalsValidator=false}",
-                "{type=boolean, propertyName=SLA-Web, required=false, isTotalsValidator=false}");
+                "{type=enumeration, propertyName=SLA-Platform, values=[BASIC, EXT8H, EXT4H, EXT2H], defaultValue=BASIC}",
+                "{type=boolean, propertyName=SLA-EMail}", // TODO.impl: falseIf-validation is missing in output
+                "{type=boolean, propertyName=SLA-Maria}",
+                "{type=boolean, propertyName=SLA-PgSQL}",
+                "{type=boolean, propertyName=SLA-Office}",
+                "{type=boolean, propertyName=SLA-Web}");
     }
 
     @Test

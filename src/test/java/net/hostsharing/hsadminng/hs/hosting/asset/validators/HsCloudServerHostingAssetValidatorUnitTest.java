@@ -29,7 +29,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
 
 
         // when
-        final var result = validator.validate(cloudServerHostingAssetEntity);
+        final var result = validator.validateEntity(cloudServerHostingAssetEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
@@ -49,7 +49,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
 
 
         // when
-        final var result = validator.validate(cloudServerHostingAssetEntity);
+        final var result = validator.validateEntity(cloudServerHostingAssetEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
@@ -76,7 +76,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
-        final var result = validator.validate(mangedServerHostingAssetEntity);
+        final var result = validator.validateEntity(mangedServerHostingAssetEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
@@ -96,7 +96,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
-        final var result = validator.validate(mangedServerHostingAssetEntity);
+        final var result = validator.validateEntity(mangedServerHostingAssetEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(

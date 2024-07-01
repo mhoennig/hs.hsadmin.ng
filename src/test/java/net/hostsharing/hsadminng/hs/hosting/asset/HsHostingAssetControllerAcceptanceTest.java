@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
@@ -523,6 +524,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             .identifier("fir01-temp")
                             .caption("some test-unix-user")
                             .build());
+            LinuxEtcShadowHashGenerator.nextSalt("Jr5w/Y8zo8pCkqg7");
 
             RestAssured // @formatter:off
                     .given()
@@ -575,7 +577,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         assertThat(asset.getCaption()).isEqualTo("some patched test-unix-user");
                         assertThat(asset.getConfig().toString()).isEqualTo("""
                                {
-                                   "password": "Ein Passwort mit 4 Zeichengruppen!",
+                                   "password": "$6$Jr5w/Y8zo8pCkqg7$/rePRbvey3R6Sz/02YTlTQcRt5qdBPTj2h5.hz.rB8NfIoND8pFOjeB7orYcPs9JNf3JDxPP2V.6MQlE5BwAY/",
                                    "shell": "/bin/bash",
                                    "totpKey": "0x1234567890abcdef0123456789abcdef"
                                }

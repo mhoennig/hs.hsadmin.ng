@@ -32,7 +32,8 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
         return String.join(".", parts);
     }
 
-    public abstract List<String> validate(final E entity);
+    public abstract List<String> validateEntity(final E entity);
+    public abstract List<String> validateContext(final E entity);
 
     public final List<Map<String, Object>> properties() {
         return Arrays.stream(propertyValidators)
@@ -60,7 +61,7 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
     }
 
     @SafeVarargs
-    protected static List<String> sequentiallyValidate(final Supplier<List<String>>... validators) {
+    public static List<String> sequentiallyValidate(final Supplier<List<String>>... validators) {
         return new ArrayList<>(stream(validators)
                 .map(Supplier::get)
                 .filter(violations -> !violations.isEmpty())
@@ -89,13 +90,20 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
         throw new IllegalArgumentException("Integer value (or null) expected, but got " + value);
     }
 
-    public Map<String, Object> postProcess(final E entity, final Map<String, Object> config) {
+    public void prepareProperties(final E entity) {
+        stream(propertyValidators).forEach(p -> {
+            if ( p.isWriteOnly() && p.isComputed()) {
+                entity.directProps().put(p.propertyName, p.compute(entity));
+            }
+        });
+    }
+
+    public Map<String, Object> revampProperties(final E entity, final Map<String, Object> config) {
         final var copy = new HashMap<>(config);
         stream(propertyValidators).forEach(p -> {
-            // FIXME: maybe move to ValidatableProperty.postProcess(...)?
-            if ( p.isWriteOnly()) {
+            if (p.isWriteOnly()) {
                 copy.remove(p.propertyName);
-            } else if (p.isComputed()) {
+            } else if (p.isReadOnly() && p.isComputed()) {
                 copy.put(p.propertyName, p.compute(entity));
             }
         });

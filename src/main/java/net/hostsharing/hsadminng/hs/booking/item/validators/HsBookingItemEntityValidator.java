@@ -20,22 +20,23 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
         super(properties);
     }
 
-    public List<String> validate(final HsBookingItemEntity bookingItem) {
+    @Override
+    public List<String> validateEntity(final HsBookingItemEntity bookingItem) {
+        return enrich(prefix(bookingItem.toShortString(), "resources"), super.validateProperties(bookingItem));
+    }
+
+    @Override
+    public List<String> validateContext(final HsBookingItemEntity bookingItem) {
         return sequentiallyValidate(
-                () -> validateProperties(bookingItem),
                 () -> optionallyValidate(bookingItem.getParentItem()),
                 () -> validateAgainstSubEntities(bookingItem)
         );
     }
 
-    private List<String> validateProperties(final HsBookingItemEntity bookingItem) {
-        return enrich(prefix(bookingItem.toShortString(), "resources"), super.validateProperties(bookingItem));
-    }
-
     private static List<String> optionallyValidate(final HsBookingItemEntity bookingItem) {
            return bookingItem != null
                    ? enrich(prefix(bookingItem.toShortString(), ""),
-                        HsBookingItemEntityValidatorRegistry.doValidate(bookingItem))
+                        HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateContext(bookingItem))
                    : emptyList();
     }
 

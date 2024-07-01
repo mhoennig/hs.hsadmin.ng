@@ -55,12 +55,12 @@ class HsManagedWebspaceBookingItemValidatorUnitTest {
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
-                "{type=integer, propertyName=SSD, unit=GB, min=1, max=100, step=1, required=true, isTotalsValidator=false}",
-                "{type=integer, propertyName=HDD, unit=GB, min=0, max=250, step=10, required=false, isTotalsValidator=false}",
-                "{type=integer, propertyName=Traffic, unit=GB, min=10, max=1000, step=10, required=true, isTotalsValidator=false}",
-                "{type=integer, propertyName=Multi, min=1, max=100, step=1, required=false, defaultValue=1, isTotalsValidator=false}",
-                "{type=integer, propertyName=Daemons, min=0, max=10, required=false, defaultValue=0, isTotalsValidator=false}",
-                "{type=boolean, propertyName=Online Office Server, required=false, isTotalsValidator=false}",
-                "{type=enumeration, propertyName=SLA-Platform, values=[BASIC, EXT24H], required=false, defaultValue=BASIC, isTotalsValidator=false}");
+                "{type=integer, propertyName=SSD, unit=GB, min=1, max=100, step=1, required=true}",
+                "{type=integer, propertyName=HDD, unit=GB, min=0, max=250, step=10}",
+                "{type=integer, propertyName=Traffic, unit=GB, min=10, max=1000, step=10, required=true}",
+                "{type=integer, propertyName=Multi, min=1, max=100, step=1, defaultValue=1}",
+                "{type=integer, propertyName=Daemons, min=0, max=10, defaultValue=0}",
+                "{type=boolean, propertyName=Online Office Server}",
+                "{type=enumeration, propertyName=SLA-Platform, values=[BASIC, EXT24H], defaultValue=BASIC}");
     }
 }

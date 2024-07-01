@@ -4,7 +4,6 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
-import net.hostsharing.hsadminng.errors.MultiValidationException;
 
 import java.util.*;
 
@@ -38,22 +37,6 @@ public class HsHostingAssetEntityValidatorRegistry {
 
     public static Set<Enum<HsHostingAssetType>> types() {
         return validators.keySet();
-    }
-
-    public static List<String> doValidate(final HsHostingAssetEntity hostingAsset) {
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(hostingAsset.getType());
-        return validator.validate(hostingAsset);
-    }
-
-    public static HsHostingAssetEntity validated(final HsHostingAssetEntity entityToSave) {
-        MultiValidationException.throwInvalid(doValidate(entityToSave));
-        return entityToSave;
-    }
-
-    public static void postprocessProperties(final HsHostingAssetEntity entity, final HsHostingAssetResource resource) {
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(entity.getType());
-        final var config = validator.postProcess(entity, asMap(resource));
-        resource.setConfig(config);
     }
 
     @SuppressWarnings("unchecked")

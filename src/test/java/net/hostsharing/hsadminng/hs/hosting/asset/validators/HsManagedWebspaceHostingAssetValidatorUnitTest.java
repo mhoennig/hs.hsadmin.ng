@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
@@ -70,7 +71,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validate(mangedWebspaceHostingAssetEntity);
+        final var result = validator.validateContext(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).isEmpty();
@@ -88,7 +89,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validate(mangedWebspaceHostingAssetEntity);
+        final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).containsExactly("'identifier' expected to match '^abc[0-9][0-9]$', but is 'xyz00'");
@@ -109,7 +110,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validate(mangedWebspaceHostingAssetEntity);
+        final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).containsExactly("'MANAGED_WEBSPACE:abc00.config.unknown' is not expected but is set to 'some value'");
@@ -131,7 +132,10 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validate(mangedWebspaceHostingAssetEntity);
+        final var result = Stream.concat(
+                        validator.validateEntity(mangedWebspaceHostingAssetEntity).stream(),
+                        validator.validateContext(mangedWebspaceHostingAssetEntity).stream())
+                .toList();
 
         // then
         assertThat(result).isEmpty();
@@ -154,7 +158,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .build();
 
         // when
-        final var result = validator.validate(mangedWebspaceHostingAssetEntity);
+        final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
 
         // then
         assertThat(result).containsExactly(
