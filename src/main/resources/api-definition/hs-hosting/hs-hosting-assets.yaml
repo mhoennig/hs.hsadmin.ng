@@ -7,13 +7,13 @@ get:
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentUser'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
-        - name: debitorUuid
+        - name: projectUuid
           in: query
           required: false
           schema:
               type: string
               format: uuid
-          description: The UUID of the debitor, whose hosting assets are to be listed.
+          description: The UUID of the project, whose hosting assets are to be listed.
         - name: parentAssetUuid
           in: query
           required: false

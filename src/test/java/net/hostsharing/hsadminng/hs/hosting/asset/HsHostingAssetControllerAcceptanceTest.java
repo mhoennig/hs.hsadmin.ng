@@ -91,20 +91,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     [
                         {
                             "type": "MANAGED_WEBSPACE",
-                            "identifier": "sec01",
-                             "caption": "some Webspace",
-                            "config": {}
-                        },
-                        {
-                            "type": "MANAGED_WEBSPACE",
                             "identifier": "fir01",
-                            "caption": "some Webspace",
-                            "config": {}
-                        },
-                        {
-                            "type": "MANAGED_WEBSPACE",
-                            "identifier": "thi01",
-                            "caption": "some Webspace",
+                             "caption": "some Webspace",
                             "config": {}
                         }
                     ]

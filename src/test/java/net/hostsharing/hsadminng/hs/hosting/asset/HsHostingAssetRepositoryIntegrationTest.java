@@ -174,7 +174,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var result = assetRepo.findAllByCriteria(null, null, MANAGED_WEBSPACE);
 
             // then
-            allTheseServersAreReturned(
+            exactlyTheseAssetsAreReturned(
                     result,
                     "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)",
                     "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedWebspace)",
@@ -202,18 +202,19 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         public void normalUser_canFilterAssetsRelatedToParentAsset() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var parentAssetUuid = assetRepo.findAllByCriteria(null, null, MANAGED_SERVER).stream()
+            final var parentAssetUuid = assetRepo.findByIdentifier("vm1012").stream()
+                    .filter(ha -> ha.getType() == MANAGED_SERVER)
                     .findAny().orElseThrow().getUuid();
 
             // when
+            context("superuser-alex@hostsharing.net", "hs_hosting_asset#vm1012:AGENT");
             final var result = assetRepo.findAllByCriteria(null, parentAssetUuid, null);
 
             // then
-            allTheseServersAreReturned(
+            exactlyTheseAssetsAreReturned(
                     result,
                     "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)");
         }
-
     }
 
     @Nested
@@ -410,12 +411,5 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                 .extracting(input -> input.replaceAll("\\s+", " "))
                 .extracting(input -> input.replaceAll("\"", ""))
                 .containsExactlyInAnyOrder(serverNames);
-    }
-
-    void allTheseServersAreReturned(final List<HsHostingAssetEntity> actualResult, final String... serverNames) {
-        assertThat(actualResult)
-                .extracting(HsHostingAssetEntity::toString)
-                .contains(serverNames);
-        actualResult.forEach(loadedEntity -> assertThat(loadedEntity.isLoaded()).isTrue());
     }
 }
