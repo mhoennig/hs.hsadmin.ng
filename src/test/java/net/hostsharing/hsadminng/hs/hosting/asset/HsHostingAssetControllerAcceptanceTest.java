@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ALIAS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
@@ -101,7 +102,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        void globalAdmin_canViewAllAssetsByType() {
+        void webspaceAgent_canViewAllAssetsByType() {
 
             // given
             context("superuser-alex@hostsharing.net");
@@ -109,42 +110,25 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                     .given()
                         .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("assumed-roles", "hs_hosting_asset#fir01:AGENT")
                         .port(port)
                     .when()
-                    .   get("http://localhost/api/hs/hosting/assets?type=" + MANAGED_SERVER)
+                    .   get("http://localhost/api/hs/hosting/assets?type=" + EMAIL_ALIAS)
                     .then().log().all().assertThat()
                         .statusCode(200)
                         .contentType("application/json")
                         .body("", lenientlyEquals("""
                         [
                             {
-                                "type": "MANAGED_SERVER",
-                                "identifier": "vm1011",
-                                "caption": "some ManagedServer",
+                                "type": "EMAIL_ALIAS",
+                                "identifier": "fir01-web",
+                                "caption": "some E-Mail-Alias",
+                                "alarmContact": null,
                                 "config": {
-                                    "monit_max_cpu_usage": 90,
-                                    "monit_max_ram_usage": 80,
-                                    "monit_max_ssd_usage": 70
-                                }
-                            },
-                            {
-                                "type": "MANAGED_SERVER",
-                                "identifier": "vm1012",
-                                "caption": "some ManagedServer",
-                                "config": {
-                                    "monit_max_cpu_usage": 90,
-                                    "monit_max_ram_usage": 80,
-                                    "monit_max_ssd_usage": 70
-                                }
-                            },
-                            {
-                                "type": "MANAGED_SERVER",
-                                "identifier": "vm1013",
-                                "caption": "some ManagedServer",
-                                "config": {
-                                    "monit_max_cpu_usage": 90,
-                                    "monit_max_ram_usage": 80,
-                                    "monit_max_ssd_usage": 70
+                                    "target": [
+                                        "office@example.org",
+                                        "archive@example.com"
+                                    ]
                                 }
                             }
                         ]

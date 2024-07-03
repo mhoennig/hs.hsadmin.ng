@@ -8,12 +8,12 @@ import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.hash;
-import static net.hostsharing.hsadminng.mapper.Array.insertAfterEntry;
+import static net.hostsharing.hsadminng.mapper.Array.insertNewEntriesAfterExistingEntry;
 
 @Setter
 public class PasswordProperty extends StringProperty<PasswordProperty> {
 
-    private static final String[] KEY_ORDER = insertAfterEntry(StringProperty.KEY_ORDER, "computed", "hashedUsing");
+    private static final String[] KEY_ORDER = insertNewEntriesAfterExistingEntry(StringProperty.KEY_ORDER, "computed", "hashedUsing");
 
     private Algorithm hashedUsing;
 

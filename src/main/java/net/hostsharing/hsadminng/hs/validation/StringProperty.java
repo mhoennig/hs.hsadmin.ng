@@ -3,9 +3,12 @@ package net.hostsharing.hsadminng.hs.validation;
 import lombok.Setter;
 import net.hostsharing.hsadminng.mapper.Array;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Arrays.stream;
 
 @Setter
 public class StringProperty<P extends StringProperty<P>> extends ValidatableProperty<P, String> {
@@ -15,7 +18,7 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
             Array.of("matchesRegEx", "minLength", "maxLength"),
             ValidatableProperty.KEY_ORDER_TAIL,
             Array.of("undisclosed"));
-    private Pattern matchesRegEx;
+    private Pattern[] matchesRegEx;
     private Integer minLength;
     private Integer maxLength;
     private boolean undisclosed;
@@ -42,8 +45,8 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
         return self();
     }
 
-    public P matchesRegEx(final String regExPattern) {
-        this.matchesRegEx = Pattern.compile(regExPattern);
+    public P matchesRegEx(final String... regExPattern) {
+        this.matchesRegEx = stream(regExPattern).map(Pattern::compile).toArray(Pattern[]::new);
         return self();
     }
 
@@ -65,8 +68,9 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
         if (maxLength != null && propValue.length()>maxLength) {
             result.add(propertyName + "' length is expected to be at max " + maxLength + " but length of " + display(propValue) + " is " + propValue.length());
         }
-        if (matchesRegEx != null && !matchesRegEx.matcher(propValue).matches()) {
-            result.add(propertyName + "' is expected to be match " + matchesRegEx + " but " + display(propValue) + " does not match");
+        if (matchesRegEx != null &&
+                stream(matchesRegEx).map(p -> p.matcher(propValue)).noneMatch(Matcher::matches)) {
+            result.add(propertyName + "' is expected to match any of " + Arrays.toString(matchesRegEx) + " but " + display(propValue) + " does not match any");
         }
         if (isReadOnly() && propValue != null) {
             result.add(propertyName + "' is readonly but given as " + display(propValue));

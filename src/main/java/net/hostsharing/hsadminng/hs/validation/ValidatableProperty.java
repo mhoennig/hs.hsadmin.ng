@@ -1,15 +1,16 @@
 package net.hostsharing.hsadminng.hs.validation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.experimental.Accessors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.ObjectUtils.isArray;
 
 @Getter
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
 
     protected static final String[] KEY_ORDER_HEAD = Array.of("propertyName");
     protected static final String[] KEY_ORDER_TAIL = Array.of("required", "defaultValue", "readOnly", "writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
+    protected static final String[] KEY_ORDER = Array.join(KEY_ORDER_HEAD, KEY_ORDER_TAIL);
 
     final Class<T> type;
     final String propertyName;
@@ -238,8 +241,8 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
     }
 
     private Object arrayToList(final Object value) {
-        if ( value instanceof String[]) {
-            return List.of((String[])value);
+        if (isArray(value)) {
+            return Arrays.stream((Object[])value).map(Object::toString).toList();
         }
         return value;
     }
@@ -263,5 +266,10 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
 
     public <E extends PropertiesProvider> T compute(final E entity) {
         return computedBy.apply(entity);
+    }
+
+    @Override
+    public String toString() {
+        return toOrderedMap().toString();
     }
 }

@@ -110,7 +110,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 "'UNIX_USER:abc00-temp.config.HDD soft quota' is expected to be at most 100 but is 200",
                 "'UNIX_USER:abc00-temp.config.shell' is expected to be one of [/bin/false, /bin/bash, /bin/csh, /bin/dash, /usr/bin/tcsh, /usr/bin/zsh, /usr/bin/passwd] but is '/is/invalid'",
                 "'UNIX_USER:abc00-temp.config.homedir' is readonly but given as '/is/read-only'",
-                "'UNIX_USER:abc00-temp.config.totpKey' is expected to be match ^0x([0-9A-Fa-f]{2})+$ but provided value does not match",
+                "'UNIX_USER:abc00-temp.config.totpKey' is expected to match any of [^0x([0-9A-Fa-f]{2})+$] but provided value does not match any",
                 "'UNIX_USER:abc00-temp.config.password' length is expected to be at min 8 but length of provided value is 5",
                 "'UNIX_USER:abc00-temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
         );
@@ -168,7 +168,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 "{type=integer, propertyName=HDD soft quota, unit=GB, maxFrom=HDD hard quota}",
                 "{type=enumeration, propertyName=shell, values=[/bin/false, /bin/bash, /bin/csh, /bin/dash, /usr/bin/tcsh, /usr/bin/zsh, /usr/bin/passwd], defaultValue=/bin/false}",
                 "{type=string, propertyName=homedir, readOnly=true, computed=true}",
-                "{type=string, propertyName=totpKey, matchesRegEx=^0x([0-9A-Fa-f]{2})+$, minLength=20, maxLength=256, writeOnly=true, undisclosed=true}",
+                "{type=string, propertyName=totpKey, matchesRegEx=[^0x([0-9A-Fa-f]{2})+$], minLength=20, maxLength=256, writeOnly=true, undisclosed=true}",
                 "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=SHA512, undisclosed=true}"
         );
     }

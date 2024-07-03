@@ -159,6 +159,6 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @SuppressWarnings("unchecked")
     final BiConsumer<HsHostingAssetEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
-            -> HsHostingAssetEntityValidatorRegistry.forType(entity.getType())
-                .revampProperties(entity, (Map<String, Object>) resource.getConfig());
+            -> resource.setConfig(HsHostingAssetEntityValidatorRegistry.forType(entity.getType())
+                .revampProperties(entity, (Map<String, Object>) resource.getConfig()));
 }

@@ -51,13 +51,16 @@ public class Array {
         return of();
     }
 
-    public static <T> T[] insertAfterEntry(final T[] array, final T entryToFind, final T newEntry) {
+    @SafeVarargs
+    public static <T> T[] insertNewEntriesAfterExistingEntry(final T[] array, final T entryToFind, final T... newEntries) {
         final var arrayList = new ArrayList<>(asList(array));
         final var index = arrayList.indexOf(entryToFind);
         if (index < 0) {
             throw new IllegalArgumentException("entry "+ entryToFind + " not found in " + Arrays.toString(array));
         }
-        arrayList.add(index + 1, newEntry);
+        for (int n = 0; n < newEntries.length; ++n) {
+            arrayList.add(index +n + 1, newEntries[n]);
+        }
 
         @SuppressWarnings("unchecked")
         final var extendedArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length);
