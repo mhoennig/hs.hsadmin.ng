@@ -185,6 +185,67 @@ public class HsHostingAssetControllerRestTest {
                             }
                         }
                     ]
+                """),
+        DOMAIN_SETUP(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.DOMAIN_SETUP)
+                                .identifier("example.org")
+                                .caption("some fake Domain-Setup")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "DOMAIN_SETUP",
+                            "identifier": "example.org",
+                            "caption": "some fake Domain-Setup",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        DOMAIN_DNS_SETUP(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.DOMAIN_DNS_SETUP)
+                                .identifier("example.org")
+                                .caption("some fake Domain-DNS-Setup")
+                                .config(Map.ofEntries(
+                                        entry("auto-WILDCARD-MX-RR", false),
+                                        entry("auto-WILDCARD-A-RR", false),
+                                        entry("auto-WILDCARD-AAAA-RR", false),
+                                        entry("auto-WILDCARD-DKIM-RR", false),
+                                        entry("auto-WILDCARD-SPF-RR", false),
+                                        entry("user-RR", Array.of(
+                                                "www            IN          CNAME example.com. ; www.example.com is an alias for example.com",
+                                                "test1          IN 1h30m    CNAME example.com.",
+                                                "test2 1h30m    IN          CNAME example.com.",
+                                                "ns             IN          A     192.0.2.2; IPv4 address for ns.example.com")
+                                        )
+                                ))
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "DOMAIN_DNS_SETUP",
+                            "identifier": "example.org",
+                            "caption": "some fake Domain-DNS-Setup",
+                            "alarmContact": null,
+                            "config": {
+                                "auto-WILDCARD-AAAA-RR": false,
+                                "auto-WILDCARD-MX-RR": false,
+                                "auto-WILDCARD-SPF-RR": false,
+                                "auto-WILDCARD-DKIM-RR": false,
+                                "auto-WILDCARD-A-RR": false,
+                                "user-RR": [
+                                    "www            IN          CNAME example.com. ; www.example.com is an alias for example.com",
+                                    "test1          IN 1h30m    CNAME example.com.",
+                                    "test2 1h30m    IN          CNAME example.com.",
+                                    "ns             IN          A     192.0.2.2; IPv4 address for ns.example.com"
+                                ]
+                            }
+                        }
+                    ]
                 """);
 
         final HsHostingAssetType assetType;

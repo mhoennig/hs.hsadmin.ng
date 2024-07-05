@@ -20,6 +20,8 @@ public class HsHostingAssetEntityValidatorRegistry {
         register(MANAGED_WEBSPACE, new HsManagedWebspaceHostingAssetValidator());
         register(UNIX_USER, new HsUnixUserHostingAssetValidator());
         register(EMAIL_ALIAS, new HsEMailAliasHostingAssetValidator());
+        register(DOMAIN_SETUP, new HsDomainSetupHostingAssetValidator());
+        register(DOMAIN_DNS_SETUP, new HsDomainDnsSetupHostingAssetValidator());
     }
 
     private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {

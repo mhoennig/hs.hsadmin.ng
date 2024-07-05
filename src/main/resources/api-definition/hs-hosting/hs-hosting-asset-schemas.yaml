@@ -10,6 +10,7 @@ components:
                 - MANAGED_SERVER
                 - MANAGED_WEBSPACE
                 - UNIX_USER
+                - DOMAIN_SETUP
                 - DOMAIN_DNS_SETUP
                 - DOMAIN_HTTP_SETUP
                 - DOMAIN_EMAIL_SETUP

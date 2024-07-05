@@ -9,6 +9,7 @@ create type HsHostingAssetType as enum (
     'MANAGED_SERVER',
     'MANAGED_WEBSPACE',
     'UNIX_USER',
+    'DOMAIN_SETUP',
     'DOMAIN_DNS_SETUP',
     'DOMAIN_HTTP_SETUP',
     'DOMAIN_EMAIL_SETUP',
@@ -36,7 +37,7 @@ create table if not exists hs_hosting_asset
     alarmContactUuid    uuid null references hs_office_contact(uuid) initially deferred,
 
     constraint chk_hs_hosting_asset_has_booking_item_or_parent_asset
-        check (bookingItemUuid is not null or parentAssetUuid is not null)
+        check (bookingItemUuid is not null or parentAssetUuid is not null or type='DOMAIN_SETUP')
 );
 --//
 
@@ -63,9 +64,10 @@ begin
         when 'MANAGED_SERVER' then null
         when 'MANAGED_WEBSPACE' then 'MANAGED_SERVER'
         when 'UNIX_USER' then 'MANAGED_WEBSPACE'
-        when 'DOMAIN_DNS_SETUP' then 'MANAGED_WEBSPACE'
-        when 'DOMAIN_HTTP_SETUP' then 'MANAGED_WEBSPACE'
-        when 'DOMAIN_EMAIL_SETUP' then 'MANAGED_WEBSPACE'
+        when 'DOMAIN_SETUP' then null
+        when 'DOMAIN_DNS_SETUP' then 'DOMAIN_SETUP'
+        when 'DOMAIN_HTTP_SETUP' then 'DOMAIN_SETUP'
+        when 'DOMAIN_EMAIL_SETUP' then 'DOMAIN_SETUP'
         when 'EMAIL_ALIAS' then 'MANAGED_WEBSPACE'
         when 'EMAIL_ADDRESS' then 'DOMAIN_EMAIL_SETUP'
         when 'PGSQL_USER' then 'MANAGED_WEBSPACE'

@@ -36,9 +36,9 @@ subgraph asset["`**asset**`"]
         style asset:permissions fill:#dd4901,stroke:white
 
         perm:asset:INSERT{{asset:INSERT}}
+        perm:asset:SELECT{{asset:SELECT}}
         perm:asset:DELETE{{asset:DELETE}}
         perm:asset:UPDATE{{asset:UPDATE}}
-        perm:asset:SELECT{{asset:SELECT}}
     end
 end
 
@@ -103,6 +103,8 @@ role:alarmContact:ADMIN ==> role:asset:TENANT
 %% granting permissions to roles
 role:global:ADMIN ==> perm:asset:INSERT
 role:parentAsset:ADMIN ==> perm:asset:INSERT
+role:global:GUEST ==> perm:asset:INSERT
+role:global:ADMIN ==> perm:asset:SELECT
 role:asset:OWNER ==> perm:asset:DELETE
 role:asset:ADMIN ==> perm:asset:UPDATE
 role:asset:TENANT ==> perm:asset:SELECT

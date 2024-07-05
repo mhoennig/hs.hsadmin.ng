@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
@@ -129,6 +130,9 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
+                            // global-admin
+                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:global#global:ADMIN by system and assume }", // workaround
+
                             // owner
                             "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_booking_item#fir01:ADMIN by system and assume }",
                             "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_hosting_asset#vm1011:ADMIN by system and assume }",
@@ -137,7 +141,6 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             // admin
                             "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_hosting_asset#fir00:OWNER by system and assume }",
                             "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_booking_item#fir01:AGENT by system and assume }",
-                            "{ grant perm:hs_hosting_asset#fir00:INSERT>hs_hosting_asset to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
                             "{ grant perm:hs_hosting_asset#fir00:UPDATE to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
 
                             // agent
@@ -148,17 +151,44 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant role:hs_booking_item#fir01:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
                             "{ grant role:hs_hosting_asset#fir00:TENANT to role:hs_hosting_asset#fir00:AGENT by system and assume }",
                             "{ grant role:hs_hosting_asset#vm1011:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
-                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
+                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:hs_hosting_asset#fir00:TENANT by system and assume }", // workaround
 
                             null));
         }
 
+        @Test
+        public void anyUser_canCreateNewDomainSetupAsset() {
+            // given
+            context("superuser-alex@hostsharing.net");
+            final var assetCount = assetRepo.count();
+
+            // when
+            context("person-SmithPeter@example.com");
+            final var result = attempt(em, () -> {
+                final var newAsset = HsHostingAssetEntity.builder()
+                        .caption("some new domain setup")
+                        .type(DOMAIN_SETUP)
+                        .identifier("example.org")
+                        .build();
+                return toCleanup(assetRepo.save(newAsset));
+            });
+
+            // then
+            result.assertSuccessful();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsHostingAssetEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue().isLoaded()).isFalse();
+            context("superuser-alex@hostsharing.net");
+            assertThatAssetIsPersisted(result.returnedValue());
+            assertThat(assetRepo.count()).isEqualTo(assetCount + 1);
+        }
+
         private void assertThatAssetIsPersisted(final HsHostingAssetEntity saved) {
+            final var context =
             attempt(em, () -> {
-                context("superuser-alex@hostsharing.net");
                 final var found = assetRepo.findByUuid(saved.getUuid());
                 assertThat(found).isNotEmpty().map(HsHostingAssetEntity::toString).get().isEqualTo(saved.toString());
             });
+
         }
     }
 

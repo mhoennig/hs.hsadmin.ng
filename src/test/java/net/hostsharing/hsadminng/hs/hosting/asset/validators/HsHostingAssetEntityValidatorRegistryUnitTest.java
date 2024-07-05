@@ -33,7 +33,9 @@ class HsHostingAssetEntityValidatorRegistryUnitTest {
                 HsHostingAssetType.MANAGED_SERVER,
                 HsHostingAssetType.MANAGED_WEBSPACE,
                 HsHostingAssetType.UNIX_USER,
-                HsHostingAssetType.EMAIL_ALIAS
+                HsHostingAssetType.EMAIL_ALIAS,
+                HsHostingAssetType.DOMAIN_SETUP,
+                HsHostingAssetType.DOMAIN_DNS_SETUP
         );
     }
 }

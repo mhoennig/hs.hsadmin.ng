@@ -35,7 +35,9 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                             "MANAGED_WEBSPACE",
                             "CLOUD_SERVER",
                             "UNIX_USER",
-                            "EMAIL_ALIAS"
+                            "EMAIL_ALIAS",
+                            "DOMAIN_SETUP",
+                            "DOMAIN_DNS_SETUP"
                         ]
                         """));
         // @formatter:on

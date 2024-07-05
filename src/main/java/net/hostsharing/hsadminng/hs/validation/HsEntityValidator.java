@@ -6,7 +6,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
@@ -39,6 +41,19 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
         return Arrays.stream(propertyValidators)
                 .map(ValidatableProperty::toOrderedMap)
                 .toList();
+    }
+
+    public final Map<String, Map<String, Object>> propertiesMap() {
+        return Arrays.stream(propertyValidators)
+                .map(ValidatableProperty::toOrderedMap)
+                .collect(Collectors.toMap(p -> p.get("propertyName").toString(), p -> p));
+    }
+
+    /**
+        Gets called before any validations take place.
+        Allows to initialize fields and properties to default values.
+     */
+    public void preprocessEntity(final E entity) {
     }
 
     protected ArrayList<String> validateProperties(final PropertiesProvider propsProvider) {
@@ -108,5 +123,21 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
             }
         });
         return copy;
+    }
+
+    protected String getPropertyValue(final PropertiesProvider entity, final String propertyName) {
+        final var rawValue = entity.getDirectValue(propertyName, Object.class);
+        if (rawValue != null) {
+            return rawValue.toString();
+        }
+        return Objects.toString(propertiesMap().get(propertyName).get("defaultValue"));
+    }
+
+    protected String getPropertyValues(final PropertiesProvider entity, final String propertyName) {
+        final var rawValue = entity.getDirectValue(propertyName, Object[].class);
+        if (rawValue != null) {
+            return stream(rawValue).map(Object::toString).collect(Collectors.joining("\n"));
+        }
+        return "";
     }
 }

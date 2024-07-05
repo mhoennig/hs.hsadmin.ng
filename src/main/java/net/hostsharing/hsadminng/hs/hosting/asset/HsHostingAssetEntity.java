@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Collections.emptyMap;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
@@ -51,6 +52,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.GUEST;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.REFERRER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
@@ -199,6 +201,13 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
 
+                .switchOnColumn("type",
+                        inCaseOf("DOMAIN_SETUP", then -> {
+                            then.toRole(GLOBAL, GUEST).grantPermission(INSERT);
+                            then.toRole(GLOBAL, ADMIN).grantPermission(SELECT); // TODO.spec: replace by a proper solution
+                        })
+                )
+
                 .createRole(OWNER, (with) -> {
                     with.incomingSuperRole("bookingItem", ADMIN);
                     with.incomingSuperRole("parentAsset", ADMIN);
@@ -219,6 +228,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
                     with.incomingSuperRole("alarmContact", ADMIN);
                     with.permission(SELECT);
                 })
+
                 .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentAsset", "assignedToAsset", "alarmContact", "global");
     }
 

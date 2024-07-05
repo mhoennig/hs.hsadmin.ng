@@ -73,6 +73,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
         final var entity = mapper.map(body, HsHostingAssetEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var mapped = new HsHostingAssetEntityProcessor(entity)
+                .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
                 .saveUsing(assetRepo::save)
@@ -133,6 +134,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
         new HsHostingAssetEntityPatcher(em, entity).apply(body);
 
         final var mapped = new HsHostingAssetEntityProcessor(entity)
+                .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
                 .saveUsing(assetRepo::save)

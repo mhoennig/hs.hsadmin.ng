@@ -6,9 +6,10 @@ public enum HsHostingAssetType {
     MANAGED_SERVER, // named e.g. vm1234
     MANAGED_WEBSPACE(MANAGED_SERVER), // named eg. xyz00
     UNIX_USER(MANAGED_WEBSPACE), // named e.g. xyz00-abc
-    DOMAIN_DNS_SETUP(MANAGED_WEBSPACE), // named e.g. example.org
-    DOMAIN_HTTP_SETUP(MANAGED_WEBSPACE), // named e.g. example.org
-    DOMAIN_EMAIL_SETUP(MANAGED_WEBSPACE), // named e.g. example.org
+    DOMAIN_SETUP, // named e.g. example.org
+    DOMAIN_DNS_SETUP(DOMAIN_SETUP), // named e.g. example.org
+    DOMAIN_HTTP_SETUP(DOMAIN_SETUP), // named e.g. example.org
+    DOMAIN_EMAIL_SETUP(DOMAIN_SETUP), // named e.g. example.org
 
     // TODO.spec: SECURE_MX
     EMAIL_ALIAS(MANAGED_WEBSPACE), // named e.g. xyz00-abc

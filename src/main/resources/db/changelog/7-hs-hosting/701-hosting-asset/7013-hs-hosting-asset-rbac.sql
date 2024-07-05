@@ -82,6 +82,13 @@ begin
             	hsHostingAssetTENANT(newParentAsset)]
     );
 
+    IF NEW.type = 'DOMAIN_SETUP' THEN
+    END IF;
+
+
+
+    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), globalAdmin());
+
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
@@ -144,114 +151,6 @@ create trigger updateTriggerForHsHostingAsset_tg
     after update on hs_hosting_asset
     for each row
 execute procedure updateTriggerForHsHostingAsset_tf();
---//
-
-
--- ============================================================================
---changeset hs-hosting-asset-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
--- granting INSERT permission to global ----------------------------
-
-/*
-    Grants INSERT INTO hs_hosting_asset permissions to specified role of pre-existing global rows.
- */
-do language plpgsql $$
-    declare
-        row global;
-    begin
-        call defineContext('create INSERT INTO hs_hosting_asset permissions for pre-exising global rows');
-
-        FOR row IN SELECT * FROM global
-            -- unconditional for all rows in that table
-            LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_hosting_asset'),
-                        globalADMIN());
-            END LOOP;
-    end;
-$$;
-
-/**
-    Grants hs_hosting_asset INSERT permission to specified role of new global rows.
-*/
-create or replace function new_hs_hosting_asset_grants_insert_to_global_tf()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_hosting_asset'),
-            globalADMIN());
-    -- end.
-    return NEW;
-end; $$;
-
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_hosting_asset_grants_insert_to_global_tg
-    after insert on global
-    for each row
-execute procedure new_hs_hosting_asset_grants_insert_to_global_tf();
-
--- granting INSERT permission to hs_hosting_asset ----------------------------
-
--- Granting INSERT INTO hs_hosting_asset permissions to specified role of pre-existing hs_hosting_asset rows slipped,
--- because there cannot yet be any pre-existing rows in the same table yet.
-
-/**
-    Grants hs_hosting_asset INSERT permission to specified role of new hs_hosting_asset rows.
-*/
-create or replace function new_hs_hosting_asset_grants_insert_to_hs_hosting_asset_tf()
-    returns trigger
-    language plpgsql
-    strict as $$
-begin
-    -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_hosting_asset'),
-            hsHostingAssetADMIN(NEW));
-    -- end.
-    return NEW;
-end; $$;
-
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_hosting_asset_grants_insert_to_hs_hosting_asset_tg
-    after insert on hs_hosting_asset
-    for each row
-execute procedure new_hs_hosting_asset_grants_insert_to_hs_hosting_asset_tf();
-
-
--- ============================================================================
---changeset hs_hosting_asset-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
--- ----------------------------------------------------------------------------
-
-/**
-    Checks if the user respectively the assumed roles are allowed to insert a row to hs_hosting_asset.
-*/
-create or replace function hs_hosting_asset_insert_permission_check_tf()
-    returns trigger
-    language plpgsql as $$
-declare
-    superObjectUuid uuid;
-begin
-    -- check INSERT INSERT if global ADMIN
-    if isGlobalAdmin() then
-        return NEW;
-    end if;
-    -- check INSERT permission via direct foreign key: NEW.parentAssetUuid
-    if hasInsertPermission(NEW.parentAssetUuid, 'hs_hosting_asset') then
-        return NEW;
-    end if;
-
-    raise exception '[403] insert into hs_hosting_asset values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
-end; $$;
-
-create trigger hs_hosting_asset_insert_permission_check_tg
-    before insert on hs_hosting_asset
-    for each row
-        execute procedure hs_hosting_asset_insert_permission_check_tf();
 --//
 
 

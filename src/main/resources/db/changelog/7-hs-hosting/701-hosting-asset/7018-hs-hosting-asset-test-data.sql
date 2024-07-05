@@ -23,6 +23,7 @@ declare
     managedServerUuid                   uuid;
     managedWebspaceUuid                 uuid;
     webUnixUserUuid                     uuid;
+    domainSetupUuid                     uuid;
 begin
     currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
@@ -65,6 +66,7 @@ begin
     select uuid_generate_v4() into managedServerUuid;
     select uuid_generate_v4() into managedWebspaceUuid;
     select uuid_generate_v4() into webUnixUserUuid;
+    select uuid_generate_v4() into domainSetupUuid;
     debitorNumberSuffix := relatedDebitor.debitorNumberSuffix;
     defaultPrefix := relatedDebitor.defaultPrefix;
 
@@ -75,7 +77,9 @@ begin
            (managedWebspaceUuid, relatedManagedWebspaceBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',           'some Webspace',             '{}'::jsonb),
            (uuid_generate_v4(),  null,                                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some E-Mail-Alias',         '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
            (webUnixUserUuid,     null,                                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'DOMAIN_HTTP_SETUP', managedWebspaceUuid, webUnixUserUuid,       defaultPrefix || '.example.org', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb);
+           (domainSetupUuid,     null,                                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org', 'some Domain-Setup',         '{}'::jsonb),
+           (uuid_generate_v4(),  null,                                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org', 'some Domain-DNS-Setup',     '{}'::jsonb),
+           (uuid_generate_v4(),  null,                                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb);
 end; $$;
 --//
 
