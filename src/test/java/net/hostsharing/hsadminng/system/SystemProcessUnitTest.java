@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.condition.OS.LINUX;
 
-class SystemProcessTest {
+class SystemProcessUnitTest {
 
     @Test
     @EnabledOnOs(LINUX)

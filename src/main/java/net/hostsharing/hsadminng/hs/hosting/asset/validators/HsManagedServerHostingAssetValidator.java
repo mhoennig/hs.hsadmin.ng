@@ -1,10 +1,10 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 
 import java.util.regex.Pattern;
 
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.validation.BooleanProperty.booleanProperty;
 import static net.hostsharing.hsadminng.hs.validation.EnumerationProperty.enumerationProperty;
 import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
@@ -13,9 +13,7 @@ class HsManagedServerHostingAssetValidator extends HsHostingAssetEntityValidator
 
     public HsManagedServerHostingAssetValidator() {
         super(
-                BookingItem.mustBeOfType(HsBookingItemType.MANAGED_SERVER),
-                ParentAsset.mustBeNull(), // until we introduce a hosting asset for 'HOST'
-                AssignedToAsset.mustBeNull(),
+                MANAGED_SERVER,
                 AlarmContact.isOptional(), // hostmaster alert address is implicitly added
 
                 // monitoring

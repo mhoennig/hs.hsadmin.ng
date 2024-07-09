@@ -33,7 +33,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'CLOUD_SERVER:vm1234.bookingItem' must not be null but is null",
+                "'CLOUD_SERVER:vm1234.bookingItem' must be of type CLOUD_SERVER but is null",
                 "'CLOUD_SERVER:vm1234.config.RAM' is not expected but is set to '2000'");
     }
 
@@ -84,14 +84,14 @@ class HsCloudServerHostingAssetValidatorUnitTest {
     }
 
     @Test
-    void validatesParentAndAssignedToAssetMustNotBeSet() {
+    void rejectsInvalidReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(CLOUD_SERVER)
-                .identifier("xyz00")
-                .parentAsset(HsHostingAssetEntity.builder().build())
-                .assignedToAsset(HsHostingAssetEntity.builder().build())
+                .identifier("vm1234")
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
+                .assignedToAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
                 .build();
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
@@ -100,7 +100,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'CLOUD_SERVER:xyz00.parentAsset' must be null but is set to D-???????-?:null",
-                "'CLOUD_SERVER:xyz00.assignedToAsset' must be null but is set to D-???????-?:null");
+                "'CLOUD_SERVER:vm1234.parentAsset' must be null but is of type MANAGED_SERVER",
+                "'CLOUD_SERVER:vm1234.assignedToAsset' must be null but is of type CLOUD_SERVER");
     }
 }

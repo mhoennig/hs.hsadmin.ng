@@ -40,8 +40,10 @@ public class ArchitectureTest {
                     "..test.pac",
                     "..test.dom",
                     "..context",
+                    "..hash",
                     "..generated..",
                     "..persistence..",
+                    "..system..",
                     "..validation..",
                     "..hs.office.bankaccount",
                     "..hs.office.contact",
@@ -112,8 +114,22 @@ public class ArchitectureTest {
 
     @ArchTest
     @SuppressWarnings("unused")
+    public static final ArchRule hashPackageRule = classes()
+            .that().resideInAPackage("..hash..")
+            .should().onlyDependOnClassesThat()
+            .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
+
+    @ArchTest
+    @SuppressWarnings("unused")
     public static final ArchRule errorsPackageRule = classes()
             .that().resideInAPackage("..errors..")
+            .should().onlyDependOnClassesThat()
+            .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
+
+    @ArchTest
+    @SuppressWarnings("unused")
+    public static final ArchRule systemPackageRule = classes()
+            .that().resideInAPackage("..system..")
             .should().onlyDependOnClassesThat()
             .resideOutsideOfPackage(NET_HOSTSHARING_HSADMINNG);
 

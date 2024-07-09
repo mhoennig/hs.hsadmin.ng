@@ -1,17 +1,16 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 
 import java.util.regex.Pattern;
+
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 
 class HsCloudServerHostingAssetValidator extends HsHostingAssetEntityValidator {
 
     HsCloudServerHostingAssetValidator() {
         super(
-                BookingItem.mustBeOfType(HsBookingItemType.CLOUD_SERVER),
-                ParentAsset.mustBeNull(),
-                AssignedToAsset.mustBeNull(),
+                CLOUD_SERVER,
                 AlarmContact.isOptional(),
                 NO_EXTRA_PROPERTIES);
     }

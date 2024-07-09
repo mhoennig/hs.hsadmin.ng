@@ -31,7 +31,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
         return HsHostingAssetEntity.builder()
                 .type(DOMAIN_DNS_SETUP)
                 .parentAsset(validDomainSetupEntity)
-                .identifier("example.org")
+                .identifier("example.org|DNS")
                 .config(Map.ofEntries(
                         entry("user-RR", Array.of(
                                 "@     1814400  IN  XXX     example.org. root.example.org ( 1234 10800 900 604800 86400 )",
@@ -74,19 +74,20 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     void preprocessesTakesIdentifierFromParent() {
         // given
         final var givenEntity = validEntityBuilder().build();
+        assertThat(givenEntity.getParentAsset().getIdentifier()).as("preconditon failed").isEqualTo("example.org");
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         validator.preprocessEntity(givenEntity);
 
         // then
-        assertThat(givenEntity.getIdentifier()).isEqualTo(givenEntity.getParentAsset().getIdentifier());
+        assertThat(givenEntity.getIdentifier()).isEqualTo("example.org|DNS");
     }
 
     @Test
     void rejectsInvalidIdentifier() {
         // given
-        final var givenEntity = validEntityBuilder().identifier("wrong.org").build();
+        final var givenEntity = validEntityBuilder().identifier("example.org").build();
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
@@ -94,14 +95,14 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^example.org$', but is 'wrong.org'"
+                "'identifier' expected to match '^example.org\\Q|DNS\\E$', but is 'example.org'"
         );
     }
 
     @Test
     void acceptsValidIdentifier() {
         // given
-        final var givenEntity = validEntityBuilder().identifier(validDomainSetupEntity.getIdentifier()).build();
+        final var givenEntity = validEntityBuilder().identifier(validDomainSetupEntity.getIdentifier()+"|DNS").build();
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
@@ -112,12 +113,12 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     }
 
     @Test
-    void validatesReferencedEntities() {
+    void rejectsInvalidReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
-                .parentAsset(HsHostingAssetEntity.builder().build())
-                .assignedToAsset(HsHostingAssetEntity.builder().build())
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(null)
+                .assignedToAsset(HsHostingAssetEntity.builder().type(DOMAIN_SETUP).build())
                 .build();
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
@@ -126,9 +127,9 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_DNS_SETUP:example.org.bookingItem' must be null but is set to D-???????-?:null",
-                "'DOMAIN_DNS_SETUP:example.org.parentAsset' must be of type DOMAIN_SETUP but is of type null",
-                "'DOMAIN_DNS_SETUP:example.org.assignedToAsset' must be null but is set to D-???????-?:null");
+                "'DOMAIN_DNS_SETUP:example.org|DNS.bookingItem' must be null but is of type CLOUD_SERVER",
+                "'DOMAIN_DNS_SETUP:example.org|DNS.parentAsset' must be of type DOMAIN_SETUP but is null",
+                "'DOMAIN_DNS_SETUP:example.org|DNS.assignedToAsset' must be null but is of type DOMAIN_SETUP");
     }
 
     @Test
@@ -162,9 +163,9 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_DNS_SETUP:example.org.config.TTL' is expected to be of type class java.lang.Integer, but is of type 'String'",
-                "'DOMAIN_DNS_SETUP:example.org.config.user-RR' is expected to match any of [([a-z0-9\\.-]+|@)\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*IN\\s+[A-Z]+\\s+[^;].*(;.*)*, ([a-z0-9\\.-]+|@)\\s+IN\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*[A-Z]+\\s+[^;].*(;.*)*] but '@     1814400  IN  1814400 BAD1  TTL only allowed once' does not match any",
-                "'DOMAIN_DNS_SETUP:example.org.config.user-RR' is expected to match any of [([a-z0-9\\.-]+|@)\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*IN\\s+[A-Z]+\\s+[^;].*(;.*)*, ([a-z0-9\\.-]+|@)\\s+IN\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*[A-Z]+\\s+[^;].*(;.*)*] but 'www                        BAD1  Record-Class missing / not enough columns' does not match any");
+                "'DOMAIN_DNS_SETUP:example.org|DNS.config.TTL' is expected to be of type class java.lang.Integer, but is of type 'String'",
+                "'DOMAIN_DNS_SETUP:example.org|DNS.config.user-RR' is expected to match any of [([a-z0-9\\.-]+|@)\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*IN\\s+[A-Z]+\\s+[^;].*(;.*)*, ([a-z0-9\\.-]+|@)\\s+IN\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*[A-Z]+\\s+[^;].*(;.*)*] but '@     1814400  IN  1814400 BAD1  TTL only allowed once' does not match any",
+                "'DOMAIN_DNS_SETUP:example.org|DNS.config.user-RR' is expected to match any of [([a-z0-9\\.-]+|@)\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*IN\\s+[A-Z]+\\s+[^;].*(;.*)*, ([a-z0-9\\.-]+|@)\\s+IN\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*[A-Z]+\\s+[^;].*(;.*)*] but 'www                        BAD1  Record-Class missing / not enough columns' does not match any");
     }
 
     @Test

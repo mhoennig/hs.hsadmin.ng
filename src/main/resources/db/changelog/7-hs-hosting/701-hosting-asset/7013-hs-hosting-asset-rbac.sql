@@ -50,8 +50,10 @@ begin
         hsHostingAssetOWNER(NEW),
             permissions => array['DELETE'],
             incomingSuperRoles => array[
+            	globalADMIN(unassumed()),
             	hsBookingItemADMIN(newBookingItem),
-            	hsHostingAssetADMIN(newParentAsset)]
+            	hsHostingAssetADMIN(newParentAsset)],
+            userUuids => array[currentUserUuid()]
     );
 
     perform createRoleWithGrants(
@@ -84,10 +86,6 @@ begin
 
     IF NEW.type = 'DOMAIN_SETUP' THEN
     END IF;
-
-
-
-    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), globalAdmin());
 
     call leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;

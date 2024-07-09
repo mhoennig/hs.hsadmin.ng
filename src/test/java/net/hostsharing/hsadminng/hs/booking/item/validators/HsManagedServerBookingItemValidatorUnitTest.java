@@ -152,7 +152,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
                                         "xyz00_%c%c",
                                         2, HsHostingAssetType.MARIADB_DATABASE
                                 ),
-                                generateDomainEmailSetupsWithEMailAddresses(26, HsHostingAssetType.DOMAIN_EMAIL_SETUP,
+                                generateDomainEmailSetupsWithEMailAddresses(26, HsHostingAssetType.DOMAIN_EMAIL_MAILBOX_SETUP,
                                         "%c%c.example.com",
                                         10, HsHostingAssetType.EMAIL_ADDRESS
                                 )

@@ -131,9 +131,10 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             initialGrantNames,
 
                             // global-admin
-                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:global#global:ADMIN by system and assume }", // workaround
+                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:global#global:ADMIN by system }", // workaround
 
                             // owner
+                            "{ grant role:hs_hosting_asset#fir00:OWNER to user:superuser-alex@hostsharing.net by hs_hosting_asset#fir00:OWNER and assume }",
                             "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_booking_item#fir01:ADMIN by system and assume }",
                             "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_hosting_asset#vm1011:ADMIN by system and assume }",
                             "{ grant perm:hs_hosting_asset#fir00:DELETE to role:hs_hosting_asset#fir00:OWNER by system and assume }",
@@ -158,37 +159,38 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
         @Test
         public void anyUser_canCreateNewDomainSetupAsset() {
-            // given
-            context("superuser-alex@hostsharing.net");
-            final var assetCount = assetRepo.count();
-
             // when
             context("person-SmithPeter@example.com");
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetEntity.builder()
-                        .caption("some new domain setup")
                         .type(DOMAIN_SETUP)
-                        .identifier("example.org")
+                        .identifier("example.net")
+                        .caption("some new domain setup")
                         .build();
-                return toCleanup(assetRepo.save(newAsset));
+                return assetRepo.save(newAsset);
             });
 
             // then
+            // ... the domain setup was created and returned
             result.assertSuccessful();
             assertThat(result.returnedValue()).isNotNull().extracting(HsHostingAssetEntity::getUuid).isNotNull();
             assertThat(result.returnedValue().isLoaded()).isFalse();
-            context("superuser-alex@hostsharing.net");
+
+            // ... the creating user can read the new domain setup
+            context("person-SmithPeter@example.com");
             assertThatAssetIsPersisted(result.returnedValue());
-            assertThat(assetRepo.count()).isEqualTo(assetCount + 1);
+
+            // ... a global admin can see the new domain setup as well if the domain OWNER role is assumed
+            context("superuser-alex@hostsharing.net", "hs_hosting_asset#example.net:OWNER"); // only works with the assumed role
+            assertThatAssetIsPersisted(result.returnedValue());
         }
 
         private void assertThatAssetIsPersisted(final HsHostingAssetEntity saved) {
-            final var context =
+            em.clear();
             attempt(em, () -> {
                 final var found = assetRepo.findByUuid(saved.getUuid());
-                assertThat(found).isNotEmpty().map(HsHostingAssetEntity::toString).get().isEqualTo(saved.toString());
+                assertThat(found).isNotEmpty().map(HsHostingAssetEntity::toString).contains(saved.toString());
             });
-
         }
     }
 

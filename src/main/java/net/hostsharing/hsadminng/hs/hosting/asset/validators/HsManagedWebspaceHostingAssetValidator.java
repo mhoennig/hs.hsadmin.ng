@@ -1,16 +1,15 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 
 import java.util.regex.Pattern;
 
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
+
 class HsManagedWebspaceHostingAssetValidator extends HsHostingAssetEntityValidator {
     public HsManagedWebspaceHostingAssetValidator() {
-        super(BookingItem.mustBeOfType(HsBookingItemType.MANAGED_WEBSPACE),
-                ParentAsset.mustBeOfType(HsHostingAssetType.MANAGED_SERVER), // the (shared or private) ManagedServer
-                AssignedToAsset.mustBeNull(),
+        super(
+                MANAGED_WEBSPACE,
                 AlarmContact.isOptional(), // hostmaster alert address is implicitly added
                 NO_EXTRA_PROPERTIES);
     }

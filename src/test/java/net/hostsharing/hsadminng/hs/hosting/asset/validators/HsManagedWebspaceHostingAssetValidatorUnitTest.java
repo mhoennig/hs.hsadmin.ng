@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
@@ -142,7 +143,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     }
 
     @Test
-    void validatesEntityReferences() {
+    void rejectsInvalidEntityReferences() {
         // given
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
@@ -153,7 +154,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                         .resources(Map.ofEntries(entry("SSD", 25), entry("Traffic", 250)))
                         .build())
                 .parentAsset(cloudServerAssetEntity)
-                .assignedToAsset(HsHostingAssetEntity.builder().build())
+                .assignedToAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
                 .identifier("abc00")
                 .build();
 
@@ -163,7 +164,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
         // then
         assertThat(result).containsExactly(
                 "'MANAGED_WEBSPACE:abc00.bookingItem' must be of type MANAGED_WEBSPACE but is of type MANAGED_SERVER",
-                "'MANAGED_WEBSPACE:abc00.parentAsset' must be of type MANAGED_SERVER but is of type CLOUD_SERVER",
-                "'MANAGED_WEBSPACE:abc00.assignedToAsset' must be null but is set to D-???????-?:some ManagedServer");
+                "'MANAGED_WEBSPACE:abc00.parentAsset' must be null or of type MANAGED_SERVER but is of type CLOUD_SERVER",
+                "'MANAGED_WEBSPACE:abc00.assignedToAsset' must be null but is of type CLOUD_SERVER");
     }
 }

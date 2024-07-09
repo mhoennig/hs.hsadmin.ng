@@ -36,9 +36,9 @@ subgraph asset["`**asset**`"]
         style asset:permissions fill:#dd4901,stroke:white
 
         perm:asset:INSERT{{asset:INSERT}}
-        perm:asset:SELECT{{asset:SELECT}}
         perm:asset:DELETE{{asset:DELETE}}
         perm:asset:UPDATE{{asset:UPDATE}}
+        perm:asset:SELECT{{asset:SELECT}}
     end
 end
 
@@ -80,6 +80,9 @@ subgraph parentAsset["`**parentAsset**`"]
     end
 end
 
+%% granting roles to users
+user:creator ==> role:asset:OWNER
+
 %% granting roles to roles
 role:bookingItem:OWNER -.-> role:bookingItem:ADMIN
 role:bookingItem:ADMIN -.-> role:bookingItem:AGENT
@@ -87,6 +90,7 @@ role:bookingItem:AGENT -.-> role:bookingItem:TENANT
 role:global:ADMIN -.-> role:alarmContact:OWNER
 role:alarmContact:OWNER -.-> role:alarmContact:ADMIN
 role:alarmContact:ADMIN -.-> role:alarmContact:REFERRER
+role:global:ADMIN ==>|XX| role:asset:OWNER
 role:bookingItem:ADMIN ==> role:asset:OWNER
 role:parentAsset:ADMIN ==> role:asset:OWNER
 role:asset:OWNER ==> role:asset:ADMIN
@@ -104,7 +108,6 @@ role:alarmContact:ADMIN ==> role:asset:TENANT
 role:global:ADMIN ==> perm:asset:INSERT
 role:parentAsset:ADMIN ==> perm:asset:INSERT
 role:global:GUEST ==> perm:asset:INSERT
-role:global:ADMIN ==> perm:asset:SELECT
 role:asset:OWNER ==> perm:asset:DELETE
 role:asset:ADMIN ==> perm:asset:UPDATE
 role:asset:TENANT ==> perm:asset:SELECT

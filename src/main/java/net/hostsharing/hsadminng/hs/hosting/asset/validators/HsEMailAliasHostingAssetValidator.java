@@ -15,9 +15,7 @@ class HsEMailAliasHostingAssetValidator extends HsHostingAssetEntityValidator {
     public static final int EMAIL_ADDRESS_MAX_LENGTH = 320; // according to RFC 5321 and RFC 5322
 
     HsEMailAliasHostingAssetValidator() {
-        super(  BookingItem.mustBeNull(),
-                ParentAsset.mustBeOfType(HsHostingAssetType.MANAGED_WEBSPACE),
-                AssignedToAsset.mustBeNull(),
+        super(  HsHostingAssetType.EMAIL_ALIAS,
                 AlarmContact.isOptional(),
 
                 arrayOf(

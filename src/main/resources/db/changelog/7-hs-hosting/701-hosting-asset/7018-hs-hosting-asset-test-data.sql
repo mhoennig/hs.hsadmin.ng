@@ -71,15 +71,15 @@ begin
     defaultPrefix := relatedDebitor.defaultPrefix;
 
     insert into hs_hosting_asset
-           (uuid,                bookingitemuuid,                        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                      caption,                     config)
-    values (managedServerUuid,   relatedManagedServerBookingItem.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,   'some ManagedServer',        '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
-           (uuid_generate_v4(),  relatedCloudServerBookingItem.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,   'another CloudServer',       '{}'::jsonb),
-           (managedWebspaceUuid, relatedManagedWebspaceBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',           'some Webspace',             '{}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some E-Mail-Alias',         '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
-           (webUnixUserUuid,     null,                                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',       'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
-           (domainSetupUuid,     null,                                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org', 'some Domain-Setup',         '{}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org', 'some Domain-DNS-Setup',     '{}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb);
+           (uuid,                bookingitemuuid,                        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                           caption,                     config)
+    values (managedServerUuid,   relatedManagedServerBookingItem.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,        'some ManagedServer',        '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
+           (uuid_generate_v4(),  relatedCloudServerBookingItem.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,        'another CloudServer',       '{}'::jsonb),
+           (managedWebspaceUuid, relatedManagedWebspaceBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',                'some Webspace',             '{}'::jsonb),
+           (uuid_generate_v4(),  null,                                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',            'some E-Mail-Alias',         '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
+           (webUnixUserUuid,     null,                                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',            'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
+           (domainSetupUuid,     null,                                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',      'some Domain-Setup',         '{}'::jsonb),
+           (uuid_generate_v4(),  null,                                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org|DNS',  'some Domain-DNS-Setup',     '{}'::jsonb),
+           (uuid_generate_v4(),  null,                                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org|HTTP', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb);
 end; $$;
 --//
 

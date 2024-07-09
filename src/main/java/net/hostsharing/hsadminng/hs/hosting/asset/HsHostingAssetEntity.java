@@ -50,6 +50,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.GUEST;
@@ -204,11 +205,12 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
                 .switchOnColumn("type",
                         inCaseOf("DOMAIN_SETUP", then -> {
                             then.toRole(GLOBAL, GUEST).grantPermission(INSERT);
-                            then.toRole(GLOBAL, ADMIN).grantPermission(SELECT); // TODO.spec: replace by a proper solution
                         })
                 )
 
                 .createRole(OWNER, (with) -> {
+                    with.owningUser(CREATOR);
+                    with.incomingSuperRole(GLOBAL, ADMIN).unassumed(); // TODO.spec: replace by a better solution
                     with.incomingSuperRole("bookingItem", ADMIN);
                     with.incomingSuperRole("parentAsset", ADMIN);
                     with.permission(DELETE);

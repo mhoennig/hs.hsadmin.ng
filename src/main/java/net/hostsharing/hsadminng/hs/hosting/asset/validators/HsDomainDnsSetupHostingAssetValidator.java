@@ -2,7 +2,6 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.system.SystemProcess;
 
 import java.util.List;
@@ -10,6 +9,7 @@ import java.util.regex.Pattern;
 
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_DNS_SETUP;
 import static net.hostsharing.hsadminng.hs.validation.ArrayProperty.arrayOf;
 import static net.hostsharing.hsadminng.hs.validation.BooleanProperty.booleanProperty;
 import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
@@ -30,11 +30,11 @@ class HsDomainDnsSetupHostingAssetValidator extends HsHostingAssetEntityValidato
 
     static final String RR_REGEX_IN_TTL =
             RR_REGEX_NAME  + RR_REGEX_IN + RR_REGEX_TTL + RR_RECORD_TYPE + RR_RECORD_DATA + RR_COMMENT;
+    public static final String IDENTIFIER_SUFFIX = "|DNS";
 
     HsDomainDnsSetupHostingAssetValidator() {
-        super(  BookingItem.mustBeNull(),
-                ParentAsset.mustBeOfType(HsHostingAssetType.DOMAIN_SETUP),
-                AssignedToAsset.mustBeNull(),
+        super(
+                DOMAIN_DNS_SETUP,
                 AlarmContact.isOptional(),
 
                 integerProperty("TTL").min(0).withDefault(21600),
@@ -60,14 +60,14 @@ class HsDomainDnsSetupHostingAssetValidator extends HsHostingAssetEntityValidato
 
     @Override
     protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
-        return  Pattern.compile("^" + assetEntity.getParentAsset().getIdentifier() + "$");
+        return  Pattern.compile("^" + assetEntity.getParentAsset().getIdentifier() + Pattern.quote(IDENTIFIER_SUFFIX) + "$");
     }
 
     @Override
     public void preprocessEntity(final HsHostingAssetEntity entity) {
         super.preprocessEntity(entity);
         if (entity.getIdentifier() == null) {
-            ofNullable(entity.getParentAsset()).ifPresent(pa -> entity.setIdentifier(pa.getIdentifier()));
+            ofNullable(entity.getParentAsset()).ifPresent(pa -> entity.setIdentifier(pa.getIdentifier() + IDENTIFIER_SUFFIX));
         }
     }
 
@@ -77,7 +77,7 @@ class HsDomainDnsSetupHostingAssetValidator extends HsHostingAssetEntityValidato
         final var result = super.validateContext(assetEntity);
 
         // TODO.spec: define which checks should get raised to error level
-        final var namedCheckZone = new SystemProcess("named-checkzone", assetEntity.getIdentifier());
+        final var namedCheckZone = new SystemProcess("named-checkzone", fqdn(assetEntity));
         if (namedCheckZone.execute(toZonefileString(assetEntity)) != 0) {
             // yes, named-checkzone writes error messages to stdout
             stream(namedCheckZone.getStdOut().split("\n"))
@@ -99,8 +99,12 @@ class HsDomainDnsSetupHostingAssetValidator extends HsHostingAssetEntityValidato
   
               {userRRs}
               """
-                    .replace("{domain}", assetEntity.getIdentifier())
+                    .replace("{domain}", fqdn(assetEntity))
                     .replace("{ttl}", getPropertyValue(assetEntity, "TTL"))
                     .replace("{userRRs}", getPropertyValues(assetEntity, "user-RR") );
+    }
+
+    private String fqdn(final HsHostingAssetEntity assetEntity) {
+        return assetEntity.getIdentifier().substring(0, assetEntity.getIdentifier().length()-IDENTIFIER_SUFFIX.length());
     }
 }

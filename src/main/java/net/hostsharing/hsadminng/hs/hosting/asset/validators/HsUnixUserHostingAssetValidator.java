@@ -17,9 +17,8 @@ class HsUnixUserHostingAssetValidator extends HsHostingAssetEntityValidator {
     private static final int DASH_LENGTH = "-".length();
 
     HsUnixUserHostingAssetValidator() {
-        super(  BookingItem.mustBeNull(),
-                ParentAsset.mustBeOfType(HsHostingAssetType.MANAGED_WEBSPACE),
-                AssignedToAsset.mustBeNull(),
+        super(
+                HsHostingAssetType.UNIX_USER,
                 AlarmContact.isOptional(),
 
                 integerProperty("SSD hard quota").unit("GB").maxFrom("SSD").optional(),

@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsDomainSetupHostingAssetValidatorUnitTest {
@@ -93,8 +94,8 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     void validatesReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
-                .parentAsset(HsHostingAssetEntity.builder().build())
-                .assignedToAsset(HsHostingAssetEntity.builder().build())
+                .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
                 .build();
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
@@ -104,8 +105,8 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_SETUP:example.org.bookingItem' must be null but is set to D-???????-?:null",
-                "'DOMAIN_SETUP:example.org.parentAsset' must be null but is set to D-???????-?:null",
-                "'DOMAIN_SETUP:example.org.assignedToAsset' must be null but is set to D-???????-?:null");
+                "'DOMAIN_SETUP:example.org.bookingItem' must be null but is of type CLOUD_SERVER",
+                "'DOMAIN_SETUP:example.org.parentAsset' must be null or of type DOMAIN_SETUP but is of type CLOUD_SERVER",
+                "'DOMAIN_SETUP:example.org.assignedToAsset' must be null but is of type MANAGED_SERVER");
     }
 }

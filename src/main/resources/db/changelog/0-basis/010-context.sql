@@ -149,7 +149,7 @@ create or replace function cleanIdentifier(rawIdentifier varchar)
 declare
     cleanIdentifier varchar;
 begin
-    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._]+', '', 'g');
+    cleanIdentifier := regexp_replace(rawIdentifier, '[^A-Za-z0-9\-._|]+', '', 'g');
     return cleanIdentifier;
 end; $$;
 

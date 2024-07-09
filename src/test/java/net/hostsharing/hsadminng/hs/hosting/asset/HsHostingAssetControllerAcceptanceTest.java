@@ -236,6 +236,47 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
+        void globalAdmin_canAddTopLevelAsset() {
+
+            context.define("superuser-alex@hostsharing.net");
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "type": "DOMAIN_SETUP",
+                                "identifier": "example.com",
+                                "caption": "some unrelated domain-setup",
+                                "config": {}
+                            }
+                            """)
+                    .port(port)
+                    .when()
+                    .post("http://localhost/api/hs/hosting/assets")
+                    .then().log().all().assertThat()
+                    .statusCode(201)
+                    .contentType(ContentType.JSON)
+                    .body("", lenientlyEquals("""
+                            {
+                                "type": "DOMAIN_SETUP",
+                                "identifier": "example.com",
+                                "caption": "some unrelated domain-setup",
+                                "config": {}
+                            }
+                            """))
+                    .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
+                    .extract().header("Location");  // @formatter:on
+
+            // finally, the new asset can be accessed under the generated UUID
+            final var newWebspace = UUID.fromString(
+                    location.substring(location.lastIndexOf('/') + 1));
+            assertThat(newWebspace).isNotNull();
+            toCleanup(HsHostingAssetEntity.class, newWebspace);
+        }
+
+        @Test
         void propertyValidationsArePerformend_whenAddingAsset() {
 
             context.define("superuser-alex@hostsharing.net");

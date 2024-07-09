@@ -107,8 +107,8 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'EMAIL_ALIAS:abc00-office.bookingItem' must be null but is set to D-1234500:test project:test project booking item",
+                "'EMAIL_ALIAS:abc00-office.bookingItem' must be null but is of type MANAGED_SERVER",
                 "'EMAIL_ALIAS:abc00-office.parentAsset' must be of type MANAGED_WEBSPACE but is of type MANAGED_SERVER",
-                "'EMAIL_ALIAS:abc00-office.assignedToAsset' must be null but is set to D-1234500:test project:test project booking item");
+                "'EMAIL_ALIAS:abc00-office.assignedToAsset' must be null but is of type MANAGED_SERVER");
     }
 }

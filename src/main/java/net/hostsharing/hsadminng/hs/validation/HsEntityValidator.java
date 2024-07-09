@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.validation;
 
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,7 +19,7 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
 
     public final ValidatableProperty<?, ?>[] propertyValidators;
 
-    public HsEntityValidator(final ValidatableProperty<?, ?>... validators) {
+    public <T extends Enum <T>> HsEntityValidator(final ValidatableProperty<?, ?>... validators) {
         propertyValidators = validators;
         stream(propertyValidators).forEach(p -> p.deferredInit(propertyValidators));
     }

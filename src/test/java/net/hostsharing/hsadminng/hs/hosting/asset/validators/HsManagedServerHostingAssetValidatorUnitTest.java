@@ -10,6 +10,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
 import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,8 +23,8 @@ class HsManagedServerHostingAssetValidatorUnitTest {
                 .type(MANAGED_SERVER)
                 .identifier("vm1234")
                 .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
-                .parentAsset(HsHostingAssetEntity.builder().build())
-                .assignedToAsset(HsHostingAssetEntity.builder().build())
+                .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
                 .config(Map.ofEntries(
                         entry("monit_max_hdd_usage", "90"),
                         entry("monit_max_cpu_usage", 2),
@@ -37,8 +38,8 @@ class HsManagedServerHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'MANAGED_SERVER:vm1234.parentAsset' must be null but is set to D-1234500:test project:test project booking item",
-                "'MANAGED_SERVER:vm1234.assignedToAsset' must be null but is set to D-1234500:test project:test project booking item",
+                "'MANAGED_SERVER:vm1234.parentAsset' must be null but is of type CLOUD_SERVER",
+                "'MANAGED_SERVER:vm1234.assignedToAsset' must be null but is of type CLOUD_SERVER",
                 "'MANAGED_SERVER:vm1234.config.monit_max_cpu_usage' is expected to be at least 10 but is 2",
                 "'MANAGED_SERVER:vm1234.config.monit_max_ram_usage' is expected to be at most 100 but is 101",
                 "'MANAGED_SERVER:vm1234.config.monit_max_hdd_usage' is expected to be of type class java.lang.Integer, but is of type 'String'");
@@ -63,14 +64,14 @@ class HsManagedServerHostingAssetValidatorUnitTest {
     }
 
     @Test
-    void validatesParentAndAssignedToAssetMustNotBeSet() {
+    void rejectsInvalidReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_SERVER)
                 .identifier("xyz00")
-                .parentAsset(HsHostingAssetEntity.builder().build())
-                .assignedToAsset(HsHostingAssetEntity.builder().build())
                 .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
+                .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
                 .build();
         final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
@@ -80,7 +81,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
         // then
         assertThat(result).containsExactlyInAnyOrder(
                 "'MANAGED_SERVER:xyz00.bookingItem' must be of type MANAGED_SERVER but is of type CLOUD_SERVER",
-                "'MANAGED_SERVER:xyz00.parentAsset' must be null but is set to D-1234500:test project:test cloud server booking item",
-                "'MANAGED_SERVER:xyz00.assignedToAsset' must be null but is set to D-1234500:test project:test cloud server booking item");
+                "'MANAGED_SERVER:xyz00.parentAsset' must be null but is of type CLOUD_SERVER",
+                "'MANAGED_SERVER:xyz00.assignedToAsset' must be null but is of type MANAGED_SERVER");
     }
 }

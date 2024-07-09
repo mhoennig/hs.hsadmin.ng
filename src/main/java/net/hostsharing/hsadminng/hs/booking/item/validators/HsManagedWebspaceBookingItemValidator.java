@@ -8,7 +8,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_EMAIL_SETUP;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_EMAIL_MAILBOX_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_DATABASE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_USER;
@@ -88,7 +88,7 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
             final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
                     .map(ha -> ha.getSubHostingAssets().stream()
-                        .filter(bi -> bi.getType() == DOMAIN_EMAIL_SETUP)
+                        .filter(bi -> bi.getType() == DOMAIN_EMAIL_MAILBOX_SETUP)
                         .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
                             .filter(subAsset -> subAsset.getType()==EMAIL_ADDRESS))
                         .count())
