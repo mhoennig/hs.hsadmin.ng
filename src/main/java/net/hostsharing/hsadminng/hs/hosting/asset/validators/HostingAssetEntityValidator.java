@@ -21,16 +21,16 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
-public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<HsHostingAssetEntity> {
+public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHostingAssetEntity> {
 
     static final ValidatableProperty<?, ?>[] NO_EXTRA_PROPERTIES = new ValidatableProperty<?, ?>[0];
 
     private final ReferenceValidator<HsBookingItemEntity, HsBookingItemType> bookingItemReferenceValidation;
     private final ReferenceValidator<HsHostingAssetEntity, HsHostingAssetType> parentAssetReferenceValidation;
     private final ReferenceValidator<HsHostingAssetEntity, HsHostingAssetType> assignedToAssetReferenceValidation;
-    private final HsHostingAssetEntityValidator.AlarmContact alarmContactValidation;
+    private final HostingAssetEntityValidator.AlarmContact alarmContactValidation;
 
-    HsHostingAssetEntityValidator(
+    HostingAssetEntityValidator(
             final HsHostingAssetType assetType,
             final AlarmContact alarmContactValidation,
             final ValidatableProperty<?, ?>... properties) {
@@ -98,7 +98,7 @@ public abstract class HsHostingAssetEntityValidator extends HsEntityValidator<Hs
         return assetEntity != null
                 ? enrich(
                     prefix(assetEntity.toShortString(), "parentAsset"),
-                    HsHostingAssetEntityValidatorRegistry.forType(assetEntity.getType()).validateContext(assetEntity))
+                    HostingAssetEntityValidatorRegistry.forType(assetEntity.getType()).validateContext(assetEntity))
                 : emptyList();
     }
 

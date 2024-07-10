@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
 
-class HsDomainSetupHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsDomainSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
-    public static final String DOMAIN_NAME_REGEX = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";
+    public static final String FQDN_REGEX = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";
 
     private final Pattern identifierPattern;
 
@@ -18,7 +18,7 @@ class HsDomainSetupHostingAssetValidator extends HsHostingAssetEntityValidator {
                 AlarmContact.isOptional(),
 
                 NO_EXTRA_PROPERTIES);
-        this.identifierPattern = Pattern.compile(DOMAIN_NAME_REGEX);
+        this.identifierPattern = Pattern.compile(FQDN_REGEX);
     }
 
     @Override

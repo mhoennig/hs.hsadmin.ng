@@ -12,7 +12,7 @@ import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerPro
 import static net.hostsharing.hsadminng.hs.validation.PasswordProperty.passwordProperty;
 import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringProperty;
 
-class HsUnixUserHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsUnixUserHostingAssetValidator extends HostingAssetEntityValidator {
 
     private static final int DASH_LENGTH = "-".length();
 

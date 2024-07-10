@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
-import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityProcessor;
-import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsHostingAssetEntityValidatorRegistry;
+import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
+import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
 
 import net.hostsharing.hsadminng.context.Context;
@@ -72,7 +72,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entity = mapper.map(body, HsHostingAssetEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var mapped = new HsHostingAssetEntityProcessor(entity)
+        final var mapped = new HostingAssetEntitySaveProcessor(entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -133,7 +133,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         new HsHostingAssetEntityPatcher(em, entity).apply(body);
 
-        final var mapped = new HsHostingAssetEntityProcessor(entity)
+        final var mapped = new HostingAssetEntitySaveProcessor(entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -161,6 +161,6 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
     @SuppressWarnings("unchecked")
     final BiConsumer<HsHostingAssetEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
-            -> resource.setConfig(HsHostingAssetEntityValidatorRegistry.forType(entity.getType())
+            -> resource.setConfig(HostingAssetEntityValidatorRegistry.forType(entity.getType())
                 .revampProperties(entity, (Map<String, Object>) resource.getConfig()));
 }

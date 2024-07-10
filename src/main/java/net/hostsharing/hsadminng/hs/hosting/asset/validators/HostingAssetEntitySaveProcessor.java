@@ -11,27 +11,27 @@ import java.util.function.Function;
 /**
  * Wraps the steps of the pararation, validation, mapping and revamp around saving of a HsHostingAssetEntity into a readable API.
  */
-public class HsHostingAssetEntityProcessor {
+public class HostingAssetEntitySaveProcessor {
 
     private final HsEntityValidator<HsHostingAssetEntity> validator;
     private String expectedStep = "preprocessEntity";
     private HsHostingAssetEntity entity;
     private HsHostingAssetResource resource;
 
-    public HsHostingAssetEntityProcessor(final HsHostingAssetEntity entity) {
+    public HostingAssetEntitySaveProcessor(final HsHostingAssetEntity entity) {
         this.entity = entity;
-        this.validator = HsHostingAssetEntityValidatorRegistry.forType(entity.getType());
+        this.validator = HostingAssetEntityValidatorRegistry.forType(entity.getType());
     }
 
     /// initial step allowing to set default values before any validations
-    public HsHostingAssetEntityProcessor preprocessEntity() {
+    public HostingAssetEntitySaveProcessor preprocessEntity() {
         step("preprocessEntity", "validateEntity");
         validator.preprocessEntity(entity);
         return this;
     }
 
     /// validates the entity itself including its properties
-    public HsHostingAssetEntityProcessor validateEntity() {
+    public HostingAssetEntitySaveProcessor validateEntity() {
         step("validateEntity", "prepareForSave");
         MultiValidationException.throwIfNotEmpty(validator.validateEntity(entity));
         return this;
@@ -39,27 +39,27 @@ public class HsHostingAssetEntityProcessor {
 
     /// hashing passwords etc.
     @SuppressWarnings("unchecked")
-    public  HsHostingAssetEntityProcessor prepareForSave() {
+    public HostingAssetEntitySaveProcessor prepareForSave() {
         step("prepareForSave", "saveUsing");
         validator.prepareProperties(entity);
         return this;
     }
 
-    public HsHostingAssetEntityProcessor saveUsing(final Function<HsHostingAssetEntity, HsHostingAssetEntity> saveFunction) {
+    public HostingAssetEntitySaveProcessor saveUsing(final Function<HsHostingAssetEntity, HsHostingAssetEntity> saveFunction) {
         step("saveUsing", "validateContext");
         entity = saveFunction.apply(entity);
         return this;
     }
 
     /// validates the entity within it's parent and child hierarchy (e.g. totals validators and other limits)
-    public HsHostingAssetEntityProcessor validateContext() {
+    public HostingAssetEntitySaveProcessor validateContext() {
         step("validateContext", "mapUsing");
         MultiValidationException.throwIfNotEmpty(validator.validateContext(entity));
         return this;
     }
 
     /// maps entity to JSON resource representation
-    public HsHostingAssetEntityProcessor mapUsing(
+    public HostingAssetEntitySaveProcessor mapUsing(
             final Function<HsHostingAssetEntity, HsHostingAssetResource> mapFunction) {
         step("mapUsing", "revampProperties");
         resource = mapFunction.apply(entity);

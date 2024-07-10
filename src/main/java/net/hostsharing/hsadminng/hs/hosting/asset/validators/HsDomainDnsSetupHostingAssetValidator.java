@@ -15,7 +15,7 @@ import static net.hostsharing.hsadminng.hs.validation.BooleanProperty.booleanPro
 import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
 import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringProperty;
 
-class HsDomainDnsSetupHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
     // according to  RFC 1035 (section 5) and RFC 1034
     static final String RR_REGEX_NAME = "([a-z0-9\\.-]+|@)\\s+";

@@ -46,7 +46,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     @Test
     void containsExpectedProperties() {
         // when
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(DOMAIN_DNS_SETUP);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(DOMAIN_DNS_SETUP);
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
@@ -75,7 +75,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
         // given
         final var givenEntity = validEntityBuilder().build();
         assertThat(givenEntity.getParentAsset().getIdentifier()).as("preconditon failed").isEqualTo("example.org");
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         validator.preprocessEntity(givenEntity);
@@ -88,7 +88,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     void rejectsInvalidIdentifier() {
         // given
         final var givenEntity = validEntityBuilder().identifier("example.org").build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var result = validator.validateEntity(givenEntity);
@@ -103,7 +103,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     void acceptsValidIdentifier() {
         // given
         final var givenEntity = validEntityBuilder().identifier(validDomainSetupEntity.getIdentifier()+"|DNS").build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var result = validator.validateEntity(givenEntity);
@@ -120,7 +120,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
                 .parentAsset(null)
                 .assignedToAsset(HsHostingAssetEntity.builder().type(DOMAIN_SETUP).build())
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);
@@ -136,7 +136,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     void acceptsValidEntity() {
         // given
         final var givenEntity = validEntityBuilder().build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var errors = validator.validateEntity(givenEntity);
@@ -146,7 +146,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     }
 
     @Test
-    void recectsInvalidProperties() {
+    void rejectsInvalidProperties() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
                 .config(Map.ofEntries(
@@ -156,14 +156,14 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
                                 "www                        BAD1  Record-Class missing / not enough columns"))
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_DNS_SETUP:example.org|DNS.config.TTL' is expected to be of type class java.lang.Integer, but is of type 'String'",
+                "'DOMAIN_DNS_SETUP:example.org|DNS.config.TTL' is expected to be of type Integer, but is of type String",
                 "'DOMAIN_DNS_SETUP:example.org|DNS.config.user-RR' is expected to match any of [([a-z0-9\\.-]+|@)\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*IN\\s+[A-Z]+\\s+[^;].*(;.*)*, ([a-z0-9\\.-]+|@)\\s+IN\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*[A-Z]+\\s+[^;].*(;.*)*] but '@     1814400  IN  1814400 BAD1  TTL only allowed once' does not match any",
                 "'DOMAIN_DNS_SETUP:example.org|DNS.config.user-RR' is expected to match any of [([a-z0-9\\.-]+|@)\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*IN\\s+[A-Z]+\\s+[^;].*(;.*)*, ([a-z0-9\\.-]+|@)\\s+IN\\s+(([1-9][0-9]*[mMhHdDwW]{0,1})+\\s+)*[A-Z]+\\s+[^;].*(;.*)*] but 'www                        BAD1  Record-Class missing / not enough columns' does not match any");
     }
@@ -200,7 +200,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     void generatesZonefile() {
         // given
         final var givenEntity = validEntityBuilder().build();
-        final var validator = (HsDomainDnsSetupHostingAssetValidator) HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = (HsDomainDnsSetupHostingAssetValidator) HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var zonefile = validator.toZonefileString(givenEntity);
@@ -231,7 +231,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
                         ))
                     ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var errors = validator.validateContext(givenEntity);

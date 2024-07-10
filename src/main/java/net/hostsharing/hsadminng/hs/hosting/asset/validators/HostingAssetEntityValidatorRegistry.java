@@ -10,7 +10,7 @@ import java.util.*;
 import static java.util.Arrays.stream;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.*;
 
-public class HsHostingAssetEntityValidatorRegistry {
+public class HostingAssetEntityValidatorRegistry {
 
     private static final Map<Enum<HsHostingAssetType>, HsEntityValidator<HsHostingAssetEntity>> validators = new HashMap<>();
     static {
@@ -22,6 +22,7 @@ public class HsHostingAssetEntityValidatorRegistry {
         register(EMAIL_ALIAS, new HsEMailAliasHostingAssetValidator());
         register(DOMAIN_SETUP, new HsDomainSetupHostingAssetValidator());
         register(DOMAIN_DNS_SETUP, new HsDomainDnsSetupHostingAssetValidator());
+        register(DOMAIN_HTTP_SETUP, new HsDomainHttpSetupHostingAssetValidator());
     }
 
     private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {

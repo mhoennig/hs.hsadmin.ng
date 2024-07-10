@@ -42,7 +42,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     void rejectsInvalidIdentifier(final InvalidDomainNameIdentifier testCase) {
         // given
         final var givenEntity = validEntityBuilder().identifier(testCase.domainName).build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var result = validator.validateEntity(givenEntity);
@@ -72,7 +72,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     void acceptsValidIdentifier(final ValidDomainNameIdentifier testCase) {
         // given
         final var givenEntity = validEntityBuilder().identifier(testCase.domainName).build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
 
         // when
         final var result = validator.validateEntity(givenEntity);
@@ -84,7 +84,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     @Test
     void containsNoProperties() {
         // when
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(CLOUD_SERVER);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(CLOUD_SERVER);
 
         // then
         assertThat(validator.properties()).map(Map::toString).isEmpty();
@@ -98,7 +98,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
                 .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);

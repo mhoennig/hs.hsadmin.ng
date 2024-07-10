@@ -59,7 +59,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void acceptsAlienIdentifierPrefixForPreExistingEntity() {
         // given
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemEntity.builder()
@@ -81,7 +81,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void validatesIdentifierAndReferencedEntities() {
         // given
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
@@ -99,7 +99,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void validatesUnknownProperties() {
         // given
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
@@ -120,7 +120,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void validatesValidEntity() {
         // given
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemEntity.builder()
@@ -145,7 +145,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     @Test
     void rejectsInvalidEntityReferences() {
         // given
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
         final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemEntity.builder()

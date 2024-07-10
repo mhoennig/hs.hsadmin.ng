@@ -31,7 +31,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
                         entry("monit_max_ram_usage", 101)
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedWebspaceHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedWebspaceHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedWebspaceHostingAssetEntity);
@@ -42,7 +42,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
                 "'MANAGED_SERVER:vm1234.assignedToAsset' must be null but is of type CLOUD_SERVER",
                 "'MANAGED_SERVER:vm1234.config.monit_max_cpu_usage' is expected to be at least 10 but is 2",
                 "'MANAGED_SERVER:vm1234.config.monit_max_ram_usage' is expected to be at most 100 but is 101",
-                "'MANAGED_SERVER:vm1234.config.monit_max_hdd_usage' is expected to be of type class java.lang.Integer, but is of type 'String'");
+                "'MANAGED_SERVER:vm1234.config.monit_max_hdd_usage' is expected to be of type Integer, but is of type String");
     }
 
     @Test
@@ -53,7 +53,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
                 .identifier("xyz00")
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.MANAGED_SERVER).build())
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);
@@ -73,7 +73,7 @@ class HsManagedServerHostingAssetValidatorUnitTest {
                 .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
                 .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);

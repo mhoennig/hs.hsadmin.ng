@@ -18,7 +18,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     @Test
     void containsAllValidations() {
         // when
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(EMAIL_ALIAS);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(EMAIL_ALIAS);
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
@@ -36,7 +36,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
                         entry("target", Array.of("xyz00", "xyz00-abc", "office@example.com"))
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(emailAliasHostingAssetEntity);
@@ -56,7 +56,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
                         entry("target", Array.of("xyz00", "xyz00-abc", "garbage", "office@example.com"))
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(emailAliasHostingAssetEntity);
@@ -77,7 +77,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
                         entry("target", Array.of("office@example.com"))
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(emailAliasHostingAssetEntity);
@@ -100,7 +100,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
                         entry("target", Array.of("office@example.com"))
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(emailAliasHostingAssetEntity);

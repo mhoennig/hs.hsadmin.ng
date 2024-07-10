@@ -9,7 +9,7 @@ import static net.hostsharing.hsadminng.hs.validation.BooleanProperty.booleanPro
 import static net.hostsharing.hsadminng.hs.validation.EnumerationProperty.enumerationProperty;
 import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
 
-class HsManagedServerHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsManagedServerHostingAssetValidator extends HostingAssetEntityValidator {
 
     public HsManagedServerHostingAssetValidator() {
         super(

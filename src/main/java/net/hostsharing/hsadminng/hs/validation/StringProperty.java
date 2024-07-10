@@ -15,9 +15,10 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
 
     protected static final String[] KEY_ORDER = Array.join(
             ValidatableProperty.KEY_ORDER_HEAD,
-            Array.of("matchesRegEx", "minLength", "maxLength"),
+            Array.of("matchesRegEx", "minLength", "maxLength", "provided"),
             ValidatableProperty.KEY_ORDER_TAIL,
             Array.of("undisclosed"));
+    private String[] provided;
     private Pattern[] matchesRegEx;
     private Integer minLength;
     private Integer maxLength;
@@ -50,6 +51,12 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
         return self();
     }
 
+    /// predifined values, similar to fixed values in a combobox
+    public P provided(final String... provided) {
+        this.provided = provided;
+        return self();
+    }
+
     /**
      * The property value is not disclosed in error messages.
      *
@@ -70,7 +77,7 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
         }
         if (matchesRegEx != null &&
                 stream(matchesRegEx).map(p -> p.matcher(propValue)).noneMatch(Matcher::matches)) {
-            result.add(propertyName + "' is expected to match any of " + Arrays.toString(matchesRegEx) + " but " + display(propValue) + " does not match any");
+            result.add(propertyName + "' is expected to match any of " + Arrays.toString(matchesRegEx) + " but " + display(propValue) + " does not match" + (matchesRegEx.length>1?" any":""));
         }
         if (isReadOnly() && propValue != null) {
             result.add(propertyName + "' is readonly but given as " + display(propValue));

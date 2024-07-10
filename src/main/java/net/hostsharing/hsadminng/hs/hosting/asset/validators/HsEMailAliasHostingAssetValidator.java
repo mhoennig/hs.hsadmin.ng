@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import static net.hostsharing.hsadminng.hs.validation.ArrayProperty.arrayOf;
 import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringProperty;
 
-class HsEMailAliasHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsEMailAliasHostingAssetValidator extends HostingAssetEntityValidator {
 
     private static final String UNIX_USER_REGEX = "^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9]+)?$"; // also accepts legacy pac-names
     private static final String EMAIL_ADDRESS_REGEX = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$"; // RFC 5322

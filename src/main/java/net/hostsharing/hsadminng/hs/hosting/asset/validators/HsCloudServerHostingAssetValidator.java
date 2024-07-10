@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 
-class HsCloudServerHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsCloudServerHostingAssetValidator extends HostingAssetEntityValidator {
 
     HsCloudServerHostingAssetValidator() {
         super(

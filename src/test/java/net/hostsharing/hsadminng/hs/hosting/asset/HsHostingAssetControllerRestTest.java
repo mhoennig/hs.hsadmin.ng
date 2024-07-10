@@ -246,6 +246,59 @@ public class HsHostingAssetControllerRestTest {
                             }
                         }
                     ]
+                """),
+        DOMAIN_HTTP_SETUP(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.DOMAIN_HTTP_SETUP)
+                                .identifier("example.org")
+                                .caption("some fake Domain-HTTP-Setup")
+                                .config(Map.ofEntries(
+                                        entry("htdocsfallback", false),
+                                        entry("indexes", false),
+                                        entry("cgi", false),
+                                        entry("passenger", false),
+                                        entry("passenger-errorpage", true),
+                                        entry("fastcgi", false),
+                                        entry("autoconfig", false),
+                                        entry("greylisting", false),
+                                        entry("includes", false),
+                                        entry("letsencrypt", false),
+                                        entry("multiviews", false),
+                                        entry("fcgi-php-bin", "/usr/lib/cgi-bin/php8"),
+                                        entry("passenger-nodejs", "/usr/bin/node-js7"),
+                                        entry("passenger-python", "/usr/bin/python6"),
+                                        entry("passenger-ruby", "/usr/bin/ruby5"),
+                                        entry("subdomains", Array.of("www", "test1", "test2"))
+                                ))
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "DOMAIN_HTTP_SETUP",
+                            "identifier": "example.org",
+                            "caption": "some fake Domain-HTTP-Setup",
+                            "alarmContact": null,
+                            "config": {
+                                "autoconfig": false,
+                                "cgi": false,
+                                "fastcgi": false,
+                                "greylisting": false,
+                                "htdocsfallback": false,
+                                "includes": false,
+                                "indexes": false,
+                                "letsencrypt": false,
+                                "multiviews": false,
+                                "passenger": false,
+                                "passenger-errorpage": true,
+                                "passenger-nodejs": "/usr/bin/node-js7",
+                                "passenger-python": "/usr/bin/python6",
+                                "passenger-ruby": "/usr/bin/ruby5",
+                                "fcgi-php-bin": "/usr/lib/cgi-bin/php8",
+                                "subdomains": ["www","test1","test2"]
+                            }
+                        }
+                    ]
                 """);
 
         final HsHostingAssetType assetType;

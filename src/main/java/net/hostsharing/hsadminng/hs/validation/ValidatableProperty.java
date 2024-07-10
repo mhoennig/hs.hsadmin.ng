@@ -182,8 +182,8 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
                 //noinspection unchecked
                 validate(result, (T) propValue, propsProvider);
             } else {
-                result.add(propertyName + "' is expected to be of type " + type + ", " +
-                        "but is of type '" + propValue.getClass().getSimpleName() + "'");
+                result.add(propertyName + "' is expected to be of type " + type.getSimpleName() + ", " +
+                        "but is of type " + propValue.getClass().getSimpleName() + "");
             }
         }
         return result;

@@ -6,13 +6,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-class HsHostingAssetEntityValidatorRegistryUnitTest {
+class HostingAssetEntityValidatorRegistryUnitTest {
 
     @Test
     void forTypeWithUnknownTypeThrowsException() {
         // when
         final var thrown = catchThrowable(() -> {
-            HsHostingAssetEntityValidatorRegistry.forType(null);
+            HostingAssetEntityValidatorRegistry.forType(null);
         });
 
         // then
@@ -22,7 +22,7 @@ class HsHostingAssetEntityValidatorRegistryUnitTest {
     @Test
     void typesReturnsAllImplementedTypes() {
         // when
-        final var types = HsHostingAssetEntityValidatorRegistry.types();
+        final var types = HostingAssetEntityValidatorRegistry.types();
 
         // then
         // TODO.test: when all types are implemented, replace with set of all types:
@@ -35,7 +35,8 @@ class HsHostingAssetEntityValidatorRegistryUnitTest {
                 HsHostingAssetType.UNIX_USER,
                 HsHostingAssetType.EMAIL_ALIAS,
                 HsHostingAssetType.DOMAIN_SETUP,
-                HsHostingAssetType.DOMAIN_DNS_SETUP
+                HsHostingAssetType.DOMAIN_DNS_SETUP,
+                HsHostingAssetType.DOMAIN_HTTP_SETUP
         );
     }
 }

@@ -47,7 +47,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     void preparesUnixUser() {
         // given
         final var unixUserHostingAsset =  GIVEN_VALID_UNIX_USER_HOSTING_ASSET;
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
         LinuxEtcShadowHashGenerator.nextSalt("Ly3LbsArtL5u4EVt");
@@ -66,7 +66,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     void validatesValidUnixUser() {
         // given
         final var unixUserHostingAsset =  GIVEN_VALID_UNIX_USER_HOSTING_ASSET;
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
         final var result = Stream.concat(
@@ -97,7 +97,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                         entry("password", "short")
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
         final var result = validator.validateEntity(unixUserHostingAsset);
@@ -110,7 +110,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 "'UNIX_USER:abc00-temp.config.HDD soft quota' is expected to be at most 100 but is 200",
                 "'UNIX_USER:abc00-temp.config.shell' is expected to be one of [/bin/false, /bin/bash, /bin/csh, /bin/dash, /usr/bin/tcsh, /usr/bin/zsh, /usr/bin/passwd] but is '/is/invalid'",
                 "'UNIX_USER:abc00-temp.config.homedir' is readonly but given as '/is/read-only'",
-                "'UNIX_USER:abc00-temp.config.totpKey' is expected to match any of [^0x([0-9A-Fa-f]{2})+$] but provided value does not match any",
+                "'UNIX_USER:abc00-temp.config.totpKey' is expected to match any of [^0x([0-9A-Fa-f]{2})+$] but provided value does not match",
                 "'UNIX_USER:abc00-temp.config.password' length is expected to be at min 8 but length of provided value is 5",
                 "'UNIX_USER:abc00-temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
         );
@@ -124,7 +124,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_WEBSPACE).identifier("abc00").build())
                 .identifier("xyz99-temp")
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
         final var result = validator.validateEntity(unixUserHostingAsset);
@@ -138,7 +138,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     void revampsUnixUser() {
         // given
         final var unixUserHostingAsset =  GIVEN_VALID_UNIX_USER_HOSTING_ASSET;
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
         LinuxEtcShadowHashGenerator.nextSalt("Ly3LbsArtL5u4EVt");
@@ -155,7 +155,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     @Test
     void describesItsProperties() {
         // given
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(UNIX_USER);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(UNIX_USER);
 
         // when
         final var props = validator.properties();

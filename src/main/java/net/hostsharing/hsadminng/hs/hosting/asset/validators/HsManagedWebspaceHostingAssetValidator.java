@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 
-class HsManagedWebspaceHostingAssetValidator extends HsHostingAssetEntityValidator {
+class HsManagedWebspaceHostingAssetValidator extends HostingAssetEntityValidator {
     public HsManagedWebspaceHostingAssetValidator() {
         super(
                 MANAGED_WEBSPACE,

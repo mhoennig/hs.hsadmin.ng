@@ -25,7 +25,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
                         entry("RAM", 2000)
                 ))
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(cloudServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(cloudServerHostingAssetEntity.getType());
 
 
         // when
@@ -45,7 +45,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
                 .identifier("xyz99")
                 .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(cloudServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(cloudServerHostingAssetEntity.getType());
 
 
         // when
@@ -59,7 +59,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
     @Test
     void containsAllValidations() {
         // when
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(CLOUD_SERVER);
+        final var validator = HostingAssetEntityValidatorRegistry.forType(CLOUD_SERVER);
 
         // then
         assertThat(validator.properties()).map(Map::toString).isEmpty();
@@ -73,7 +73,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
                 .identifier("xyz00")
                 .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);
@@ -93,7 +93,7 @@ class HsCloudServerHostingAssetValidatorUnitTest {
                 .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
                 .assignedToAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
                 .build();
-        final var validator = HsHostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
         // when
         final var result = validator.validateEntity(mangedServerHostingAssetEntity);
