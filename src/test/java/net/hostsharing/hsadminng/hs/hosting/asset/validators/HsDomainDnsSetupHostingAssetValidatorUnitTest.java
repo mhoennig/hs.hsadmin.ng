@@ -12,6 +12,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_DNS_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
+import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator.RR_COMMENT;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator.RR_RECORD_DATA;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator.RR_RECORD_TYPE;
@@ -23,14 +24,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
     static final HsHostingAssetEntity validDomainSetupEntity = HsHostingAssetEntity.builder()
-                .type(DOMAIN_SETUP)
-                .identifier("example.org")
-                .build();
+            .type(DOMAIN_SETUP)
+            .identifier("example.org")
+            .build();
 
     static HsHostingAssetEntityBuilder validEntityBuilder() {
         return HsHostingAssetEntity.builder()
                 .type(DOMAIN_DNS_SETUP)
                 .parentAsset(validDomainSetupEntity)
+                .assignedToAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
                 .identifier("example.org|DNS")
                 .config(Map.ofEntries(
                         entry("user-RR", Array.of(
@@ -95,7 +97,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^example.org\\Q|DNS\\E$', but is 'example.org'"
+                "'identifier' expected to match '^\\Qexample.org|DNS\\E$', but is 'example.org'"
         );
     }
 
@@ -129,7 +131,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
         assertThat(result).containsExactlyInAnyOrder(
                 "'DOMAIN_DNS_SETUP:example.org|DNS.bookingItem' must be null but is of type CLOUD_SERVER",
                 "'DOMAIN_DNS_SETUP:example.org|DNS.parentAsset' must be of type DOMAIN_SETUP but is null",
-                "'DOMAIN_DNS_SETUP:example.org|DNS.assignedToAsset' must be null but is of type DOMAIN_SETUP");
+                "'DOMAIN_DNS_SETUP:example.org|DNS.assignedToAsset' must be of type MANAGED_WEBSPACE but is of type DOMAIN_SETUP");
     }
 
     @Test

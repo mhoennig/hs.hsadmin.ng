@@ -25,8 +25,6 @@ class HsHostingAssetTypeUnitTest {
                     entity BI_CLOUD_SERVER
                     entity BI_MANAGED_SERVER
                     entity BI_MANAGED_WEBSPACE
-                    entity BI_DOMAIN_DNS_SETUP
-                    entity BI_DOMAIN_EMAIL_SUBMISSION_SETUP
                 }
 
                 package Hosting #feb28c{
@@ -34,8 +32,8 @@ class HsHostingAssetTypeUnitTest {
                         entity HA_DOMAIN_SETUP
                         entity HA_DOMAIN_DNS_SETUP
                         entity HA_DOMAIN_HTTP_SETUP
-                        entity HA_DOMAIN_EMAIL_SUBMISSION_SETUP
-                        entity HA_DOMAIN_EMAIL_MAILBOX_SETUP
+                        entity HA_DOMAIN_SMTP_SETUP
+                        entity HA_DOMAIN_MBOX_SETUP
                         entity HA_EMAIL_ADDRESS
                     }
                 
@@ -62,16 +60,17 @@ class HsHostingAssetTypeUnitTest {
                 HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE
                 HA_MANAGED_WEBSPACE o..> HA_MANAGED_SERVER
                 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
+                HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
                 HA_DOMAIN_SETUP o..> HA_DOMAIN_SETUP
                 HA_DOMAIN_DNS_SETUP *==> HA_DOMAIN_SETUP
+                HA_DOMAIN_DNS_SETUP o..> HA_MANAGED_WEBSPACE
                 HA_DOMAIN_HTTP_SETUP *==> HA_DOMAIN_SETUP
                 HA_DOMAIN_HTTP_SETUP o..> HA_UNIX_USER
-                HA_DOMAIN_EMAIL_SUBMISSION_SETUP *==> HA_DOMAIN_SETUP
-                HA_DOMAIN_EMAIL_SUBMISSION_SETUP o..> HA_MANAGED_WEBSPACE
-                HA_DOMAIN_EMAIL_MAILBOX_SETUP *==> HA_DOMAIN_SETUP
-                HA_DOMAIN_EMAIL_MAILBOX_SETUP o..> HA_MANAGED_WEBSPACE
-                HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
-                HA_EMAIL_ADDRESS *==> HA_DOMAIN_EMAIL_MAILBOX_SETUP
+                HA_DOMAIN_SMTP_SETUP *==> HA_DOMAIN_SETUP
+                HA_DOMAIN_SMTP_SETUP o..> HA_MANAGED_WEBSPACE
+                HA_DOMAIN_MBOX_SETUP *==> HA_DOMAIN_SETUP
+                HA_DOMAIN_MBOX_SETUP o..> HA_MANAGED_WEBSPACE
+                HA_EMAIL_ADDRESS *==> HA_DOMAIN_MBOX_SETUP
                 HA_IP_NUMBER o..> HA_CLOUD_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_WEBSPACE
@@ -96,8 +95,6 @@ class HsHostingAssetTypeUnitTest {
                     entity BI_CLOUD_SERVER
                     entity BI_MANAGED_SERVER
                     entity BI_MANAGED_WEBSPACE
-                    entity BI_DOMAIN_DNS_SETUP
-                    entity BI_DOMAIN_EMAIL_SUBMISSION_SETUP
                 }
 
                 package Hosting #feb28c{
@@ -160,8 +157,6 @@ class HsHostingAssetTypeUnitTest {
                     entity BI_CLOUD_SERVER
                     entity BI_MANAGED_SERVER
                     entity BI_MANAGED_WEBSPACE
-                    entity BI_DOMAIN_DNS_SETUP
-                    entity BI_DOMAIN_EMAIL_SUBMISSION_SETUP
                 }
 
                 package Hosting #feb28c{

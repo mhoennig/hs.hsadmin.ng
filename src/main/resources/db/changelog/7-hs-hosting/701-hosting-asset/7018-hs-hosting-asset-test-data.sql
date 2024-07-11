@@ -14,16 +14,17 @@ declare
     currentTask                         varchar;
     relatedProject                      hs_booking_project;
     relatedDebitor                      hs_office_debitor;
-    relatedPrivateCloudBookingItem      hs_booking_item;
-    relatedManagedServerBookingItem     hs_booking_item;
-    relatedCloudServerBookingItem       hs_booking_item;
-    relatedManagedWebspaceBookingItem   hs_booking_item;
+    privateCloudBI                      hs_booking_item;
+    managedServerBI                     hs_booking_item;
+    cloudServerBI                       hs_booking_item;
+    managedWebspaceBI                   hs_booking_item;
     debitorNumberSuffix                 varchar;
     defaultPrefix                       varchar;
     managedServerUuid                   uuid;
     managedWebspaceUuid                 uuid;
     webUnixUserUuid                     uuid;
     domainSetupUuid                     uuid;
+    domainMBoxSetupUuid                 uuid;
 begin
     currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
@@ -39,47 +40,51 @@ begin
                      where debitor.uuid = relatedProject.debitorUuid;
     assert relatedDebitor.uuid is not null, 'relatedDebitor for "' || givenProjectCaption || '" must not be null';
 
-    select item.* into relatedPrivateCloudBookingItem
+    select item.* into privateCloudBI
         from hs_booking_item item
        where item.projectUuid = relatedProject.uuid
           and item.type = 'PRIVATE_CLOUD';
-    assert relatedPrivateCloudBookingItem.uuid is not null, 'relatedPrivateCloudBookingItem for "' || givenProjectCaption|| '" must not be null';
+    assert privateCloudBI.uuid is not null, 'relatedPrivateCloudBookingItem for "' || givenProjectCaption|| '" must not be null';
 
-    select item.* into relatedManagedServerBookingItem
+    select item.* into managedServerBI
           from hs_booking_item item
           where item.projectUuid = relatedProject.uuid
             and item.type = 'MANAGED_SERVER';
-    assert relatedManagedServerBookingItem.uuid is not null, 'relatedManagedServerBookingItem for "' || givenProjectCaption|| '" must not be null';
+    assert managedServerBI.uuid is not null, 'relatedManagedServerBookingItem for "' || givenProjectCaption|| '" must not be null';
 
-    select item.* into relatedCloudServerBookingItem
+    select item.* into cloudServerBI
           from hs_booking_item item
-          where item.parentItemuuid = relatedPrivateCloudBookingItem.uuid
+          where item.parentItemuuid = privateCloudBI.uuid
             and item.type = 'CLOUD_SERVER';
-    assert relatedCloudServerBookingItem.uuid is not null, 'relatedCloudServerBookingItem for "' || givenProjectCaption|| '" must not be null';
+    assert cloudServerBI.uuid is not null, 'relatedCloudServerBookingItem for "' || givenProjectCaption|| '" must not be null';
 
-    select item.* into relatedManagedWebspaceBookingItem
+    select item.* into managedWebspaceBI
           from hs_booking_item item
           where item.projectUuid = relatedProject.uuid
             and item.type = 'MANAGED_WEBSPACE';
-    assert relatedManagedWebspaceBookingItem.uuid is not null, 'relatedManagedWebspaceBookingItem for "' || givenProjectCaption|| '" must not be null';
+    assert managedWebspaceBI.uuid is not null, 'relatedManagedWebspaceBookingItem for "' || givenProjectCaption|| '" must not be null';
 
     select uuid_generate_v4() into managedServerUuid;
     select uuid_generate_v4() into managedWebspaceUuid;
     select uuid_generate_v4() into webUnixUserUuid;
     select uuid_generate_v4() into domainSetupUuid;
+    select uuid_generate_v4() into domainMBoxSetupUuid;
     debitorNumberSuffix := relatedDebitor.debitorNumberSuffix;
     defaultPrefix := relatedDebitor.defaultPrefix;
 
     insert into hs_hosting_asset
-           (uuid,                bookingitemuuid,                        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                           caption,                     config)
-    values (managedServerUuid,   relatedManagedServerBookingItem.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,        'some ManagedServer',        '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
-           (uuid_generate_v4(),  relatedCloudServerBookingItem.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,        'another CloudServer',       '{}'::jsonb),
-           (managedWebspaceUuid, relatedManagedWebspaceBookingItem.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',                'some Webspace',             '{}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',            'some E-Mail-Alias',         '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
-           (webUnixUserUuid,     null,                                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',            'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
-           (domainSetupUuid,     null,                                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',      'some Domain-Setup',         '{}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org|DNS',  'some Domain-DNS-Setup',     '{}'::jsonb),
-           (uuid_generate_v4(),  null,                                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org|HTTP', 'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb);
+           (uuid,                   bookingitemuuid,        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                                    caption,                     config)
+           values (managedServerUuid,      managedServerBI.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,                 'some ManagedServer',        '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
+                  (uuid_generate_v4(),     cloudServerBI.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,                 'another CloudServer',       '{}'::jsonb),
+                  (managedWebspaceUuid,    managedWebspaceBI.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',                         'some Webspace',             '{}'::jsonb),
+                  (uuid_generate_v4(),     null,                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',                     'some E-Mail-Alias',         '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
+                  (webUnixUserUuid,        null,                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',                     'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
+                  (domainSetupUuid,        null,                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',               'some Domain-Setup',         '{}'::jsonb),
+                  (uuid_generate_v4(),     null,                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org|DNS',           'some Domain-DNS-Setup',     '{}'::jsonb),
+                  (uuid_generate_v4(),     null,                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org|HTTP',          'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb),
+                  (uuid_generate_v4(),     null,                   'DOMAIN_SMTP_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',           'some Domain-SMPT-Setup',    '{}'::jsonb),
+                  (domainMBoxSetupUuid,    null,                   'DOMAIN_MBOX_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',           'some Domain-MBOX-Setup',    '{}'::jsonb),
+                  (uuid_generate_v4(),    null,                    'EMAIL_ADDRESS',     domainMBoxSetupUuid, null,                  'test@' || defaultPrefix || '.example.org',    'some E-Mail-Address',       '{}'::jsonb);
 end; $$;
 --//
 

@@ -12,7 +12,8 @@ create type HsHostingAssetType as enum (
     'DOMAIN_SETUP',
     'DOMAIN_DNS_SETUP',
     'DOMAIN_HTTP_SETUP',
-    'DOMAIN_EMAIL_SETUP',
+    'DOMAIN_SMTP_SETUP',
+    'DOMAIN_MBOX_SETUP',
     'EMAIL_ALIAS',
     'EMAIL_ADDRESS',
     'PGSQL_USER',
@@ -64,12 +65,13 @@ begin
         when 'MANAGED_SERVER' then null
         when 'MANAGED_WEBSPACE' then 'MANAGED_SERVER'
         when 'UNIX_USER' then 'MANAGED_WEBSPACE'
+        when 'EMAIL_ALIAS' then 'MANAGED_WEBSPACE'
         when 'DOMAIN_SETUP' then null
         when 'DOMAIN_DNS_SETUP' then 'DOMAIN_SETUP'
         when 'DOMAIN_HTTP_SETUP' then 'DOMAIN_SETUP'
-        when 'DOMAIN_EMAIL_SETUP' then 'DOMAIN_SETUP'
-        when 'EMAIL_ALIAS' then 'MANAGED_WEBSPACE'
-        when 'EMAIL_ADDRESS' then 'DOMAIN_EMAIL_SETUP'
+        when 'DOMAIN_SMTP_SETUP' then 'DOMAIN_SETUP'
+        when 'DOMAIN_MBOX_SETUP' then 'DOMAIN_SETUP'
+        when 'EMAIL_ADDRESS' then 'DOMAIN_MBOX_SETUP'
         when 'PGSQL_USER' then 'MANAGED_WEBSPACE'
         when 'PGSQL_DATABASE' then 'MANAGED_WEBSPACE'
         when 'MARIADB_USER' then 'MANAGED_WEBSPACE'

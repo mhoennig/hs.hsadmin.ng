@@ -60,7 +60,7 @@ class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator 
 
     @Override
     protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
-        return  Pattern.compile("^" + assetEntity.getParentAsset().getIdentifier() + Pattern.quote(IDENTIFIER_SUFFIX) + "$");
+        return  Pattern.compile("^" + Pattern.quote(assetEntity.getParentAsset().getIdentifier() + IDENTIFIER_SUFFIX) + "$");
     }
 
     @Override

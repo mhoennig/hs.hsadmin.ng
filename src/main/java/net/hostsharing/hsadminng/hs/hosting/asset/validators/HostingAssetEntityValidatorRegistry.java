@@ -23,6 +23,9 @@ public class HostingAssetEntityValidatorRegistry {
         register(DOMAIN_SETUP, new HsDomainSetupHostingAssetValidator());
         register(DOMAIN_DNS_SETUP, new HsDomainDnsSetupHostingAssetValidator());
         register(DOMAIN_HTTP_SETUP, new HsDomainHttpSetupHostingAssetValidator());
+        register(DOMAIN_SMTP_SETUP, new HsDomainSmtpSetupHostingAssetValidator());
+        register(DOMAIN_MBOX_SETUP, new HsDomainMboxSetupHostingAssetValidator());
+        register(EMAIL_ADDRESS, new HsEMailAddressHostingAssetValidator());
     }
 
     private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {

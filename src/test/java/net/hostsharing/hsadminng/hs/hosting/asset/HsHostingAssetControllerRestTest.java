@@ -251,7 +251,7 @@ public class HsHostingAssetControllerRestTest {
                 List.of(
                         HsHostingAssetEntity.builder()
                                 .type(HsHostingAssetType.DOMAIN_HTTP_SETUP)
-                                .identifier("example.org")
+                                .identifier("example.org|HTTP")
                                 .caption("some fake Domain-HTTP-Setup")
                                 .config(Map.ofEntries(
                                         entry("htdocsfallback", false),
@@ -276,7 +276,7 @@ public class HsHostingAssetControllerRestTest {
                     [
                         {
                             "type": "DOMAIN_HTTP_SETUP",
-                            "identifier": "example.org",
+                            "identifier": "example.org|HTTP",
                             "caption": "some fake Domain-HTTP-Setup",
                             "alarmContact": null,
                             "config": {
@@ -296,6 +296,70 @@ public class HsHostingAssetControllerRestTest {
                                 "passenger-ruby": "/usr/bin/ruby5",
                                 "fcgi-php-bin": "/usr/lib/cgi-bin/php8",
                                 "subdomains": ["www","test1","test2"]
+                            }
+                        }
+                    ]
+                """),
+        DOMAIN_SMTP_SETUP(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.DOMAIN_SMTP_SETUP)
+                                .identifier("example.org|SMTP")
+                                .caption("some fake Domain-SMTP-Setup")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "DOMAIN_SMTP_SETUP",
+                            "identifier": "example.org|SMTP",
+                            "caption": "some fake Domain-SMTP-Setup",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        DOMAIN_MBOX_SETUP(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.DOMAIN_MBOX_SETUP)
+                                .identifier("example.org|MBOX")
+                                .caption("some fake Domain-MBOX-Setup")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "DOMAIN_MBOX_SETUP",
+                            "identifier": "example.org|MBOX",
+                            "caption": "some fake Domain-MBOX-Setup",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        EMAIL_ADDRESS(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.EMAIL_ADDRESS)
+                                .parentAsset(HsHostingAssetEntity.builder()
+                                        .type(HsHostingAssetType.DOMAIN_MBOX_SETUP)
+                                        .identifier("example.org|MBOX")
+                                        .caption("some fake Domain-MBOX-Setup")
+                                        .build())
+                                .identifier("office@example.org")
+                                .caption("some fake EMail-Address")
+                                .config(Map.ofEntries(
+                                        entry("target", Array.of("xyz00", "xyz00-abc", "office@example.com"))
+                                ))
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "EMAIL_ADDRESS",
+                            "identifier": "office@example.org",
+                            "caption": "some fake EMail-Address",
+                            "alarmContact": null,
+                            "config": {
+                                "target": ["xyz00","xyz00-abc","office@example.com"]
                             }
                         }
                     ]

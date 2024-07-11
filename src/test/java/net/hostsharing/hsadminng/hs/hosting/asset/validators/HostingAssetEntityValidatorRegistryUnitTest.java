@@ -36,7 +36,10 @@ class HostingAssetEntityValidatorRegistryUnitTest {
                 HsHostingAssetType.EMAIL_ALIAS,
                 HsHostingAssetType.DOMAIN_SETUP,
                 HsHostingAssetType.DOMAIN_DNS_SETUP,
-                HsHostingAssetType.DOMAIN_HTTP_SETUP
+                HsHostingAssetType.DOMAIN_HTTP_SETUP,
+                HsHostingAssetType.DOMAIN_SMTP_SETUP,
+                HsHostingAssetType.DOMAIN_MBOX_SETUP,
+                HsHostingAssetType.EMAIL_ADDRESS
         );
     }
 }

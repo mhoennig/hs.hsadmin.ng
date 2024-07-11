@@ -13,7 +13,8 @@ components:
                 - DOMAIN_SETUP
                 - DOMAIN_DNS_SETUP
                 - DOMAIN_HTTP_SETUP
-                - DOMAIN_EMAIL_SETUP
+                - DOMAIN_SMTP_SETUP
+                - DOMAIN_MBOX_SETUP
                 - EMAIL_ALIAS
                 - EMAIL_ADDRESS
                 - PGSQL_USER

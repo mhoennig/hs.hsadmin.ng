@@ -38,7 +38,10 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                             "EMAIL_ALIAS",
                             "DOMAIN_SETUP",
                             "DOMAIN_DNS_SETUP",
-                            "DOMAIN_HTTP_SETUP"
+                            "DOMAIN_HTTP_SETUP",
+                            "DOMAIN_SMTP_SETUP",
+                            "DOMAIN_MBOX_SETUP",
+                            "EMAIL_ADDRESS"
                         ]
                         """));
         // @formatter:on

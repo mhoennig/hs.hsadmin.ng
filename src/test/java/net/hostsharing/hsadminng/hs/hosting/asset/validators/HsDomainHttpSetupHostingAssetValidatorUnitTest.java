@@ -87,7 +87,7 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^example.org\\Q|HTTP\\E$', but is 'example.org'"
+                "'identifier' expected to match '^\\Qexample.org|HTTP\\E$', but is 'example.org'"
         );
     }
 

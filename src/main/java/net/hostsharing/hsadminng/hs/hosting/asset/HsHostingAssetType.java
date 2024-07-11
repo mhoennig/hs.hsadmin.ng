@@ -45,6 +45,10 @@ public enum HsHostingAssetType implements Node {
             inGroup("Webspace"),
             requiredParent(MANAGED_WEBSPACE)),
 
+    EMAIL_ALIAS( // named e.g. xyz00-abc
+            inGroup("Webspace"),
+            requiredParent(MANAGED_WEBSPACE)),
+
     DOMAIN_SETUP( // named e.g. example.org
             inGroup("Domain"),
             optionalParent(SAME_TYPE)
@@ -52,32 +56,29 @@ public enum HsHostingAssetType implements Node {
 
     DOMAIN_DNS_SETUP( // named e.g. example.org
             inGroup("Domain"),
-            requiredParent(DOMAIN_SETUP)),
+            requiredParent(DOMAIN_SETUP),
+            assignedTo(MANAGED_WEBSPACE)),
 
     DOMAIN_HTTP_SETUP( // named e.g. example.org
             inGroup("Domain"),
             requiredParent(DOMAIN_SETUP),
             assignedTo(UNIX_USER)),
 
-    DOMAIN_EMAIL_SUBMISSION_SETUP( // named e.g. example.org
+    DOMAIN_SMTP_SETUP( // named e.g. example.org
             inGroup("Domain"),
             requiredParent(DOMAIN_SETUP),
             assignedTo(MANAGED_WEBSPACE)),
 
-    DOMAIN_EMAIL_MAILBOX_SETUP( // named e.g. example.org
+    DOMAIN_MBOX_SETUP( // named e.g. example.org
             inGroup("Domain"),
             requiredParent(DOMAIN_SETUP),
             assignedTo(MANAGED_WEBSPACE)),
 
     // TODO.spec: SECURE_MX
 
-    EMAIL_ALIAS( // named e.g. xyz00-abc
-            inGroup("Webspace"),
-            requiredParent(MANAGED_WEBSPACE)),
-
     EMAIL_ADDRESS( // named e.g. sample@example.org
             inGroup("Domain"),
-            requiredParent(DOMAIN_EMAIL_MAILBOX_SETUP)),
+            requiredParent(DOMAIN_MBOX_SETUP)),
 
     PGSQL_INSTANCE( // TODO.spec: identifier to be specified
             inGroup("PostgreSQL"),

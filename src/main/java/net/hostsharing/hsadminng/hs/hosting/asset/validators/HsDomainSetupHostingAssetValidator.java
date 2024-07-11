@@ -43,7 +43,6 @@ class HsDomainSetupHostingAssetValidator extends HostingAssetEntityValidator {
         //  - user has Admin/Agent-role for all its sub-domains and the direct parent-Domain which are set up at at Hostsharing
         //  - domain has DNS zone with TXT record approval
         //  - parent-domain has DNS zone with TXT record approval
-        //  - dom
         //
         // TXT-Record check:
         // new InitialDirContext().getAttributes("dns:_netblocks.google.com", new String[] { "TXT"}).get("TXT").getAll();
