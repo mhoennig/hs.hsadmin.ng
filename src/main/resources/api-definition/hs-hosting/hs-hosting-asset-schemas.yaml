@@ -19,6 +19,7 @@ components:
                 - EMAIL_ADDRESS
                 - PGSQL_USER
                 - PGSQL_DATABASE
+                - MARIADB_INSTANCE
                 - MARIADB_USER
                 - MARIADB_DATABASE
 

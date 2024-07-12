@@ -1,13 +1,13 @@
 package net.hostsharing.hsadminng.hs.validation;
 
-import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.Algorithm;
+import net.hostsharing.hsadminng.hash.HashGenerator;
+import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
 import lombok.Setter;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.hash;
 import static net.hostsharing.hsadminng.mapper.Array.insertNewEntriesAfterExistingEntry;
 
 @Setter
@@ -36,7 +36,7 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
         this.hashedUsing = algorithm;
         computedBy((entity)
                 -> ofNullable(entity.getDirectValue(propertyName, String.class))
-                    .map(password -> hash(password).using(algorithm).withRandomSalt().generate())
+                    .map(password -> HashGenerator.using(algorithm).withRandomSalt().hash(password))
                     .orElse(null));
         return self();
     }

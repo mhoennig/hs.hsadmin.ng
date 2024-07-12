@@ -245,7 +245,8 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             exactlyTheseAssetsAreReturned(
                     result,
-                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)");
+                    "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)",
+                    "HsHostingAssetEntity(MARIADB_INSTANCE, vm1012.MariaDB.default, some default MariaDB instance, MANAGED_SERVER:vm1012)");
         }
     }
 

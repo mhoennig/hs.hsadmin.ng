@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.validation;
 
+import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -8,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.Algorithm.SHA512;
-import static net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator.hash;
+import static net.hostsharing.hsadminng.hash.HashGenerator.Algorithm.LINUX_SHA512;
 import static net.hostsharing.hsadminng.hs.validation.PasswordProperty.passwordProperty;
 import static net.hostsharing.hsadminng.mapper.PatchableMapWrapper.entry;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PasswordPropertyUnitTest {
 
     private final ValidatableProperty<PasswordProperty, String> passwordProp =
-            passwordProperty("password").minLength(8).maxLength(40).hashedUsing(SHA512).writeOnly();
+            passwordProperty("password").minLength(8).maxLength(40).hashedUsing(LINUX_SHA512).writeOnly();
     private final List<String> violations = new ArrayList<>();
 
     @ParameterizedTest
@@ -115,6 +115,6 @@ class PasswordPropertyUnitTest {
         });
 
         // then
-        hash("some password").using(SHA512).withRandomSalt().generate(); // throws exception if wrong
+        LinuxEtcShadowHashGenerator.verify(result, "some password"); // throws exception if wrong
     }
 }

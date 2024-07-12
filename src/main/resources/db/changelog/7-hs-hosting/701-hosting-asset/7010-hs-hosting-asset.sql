@@ -18,6 +18,7 @@ create type HsHostingAssetType as enum (
     'EMAIL_ADDRESS',
     'PGSQL_USER',
     'PGSQL_DATABASE',
+    'MARIADB_INSTANCE',
     'MARIADB_USER',
     'MARIADB_DATABASE'
 );
@@ -74,8 +75,9 @@ begin
         when 'EMAIL_ADDRESS' then 'DOMAIN_MBOX_SETUP'
         when 'PGSQL_USER' then 'MANAGED_WEBSPACE'
         when 'PGSQL_DATABASE' then 'MANAGED_WEBSPACE'
-        when 'MARIADB_USER' then 'MANAGED_WEBSPACE'
-        when 'MARIADB_DATABASE' then 'MANAGED_WEBSPACE'
+        when 'MARIADB_INSTANCE' then 'MANAGED_SERVER'
+        when 'MARIADB_USER' then 'MARIADB_INSTANCE'
+        when 'MARIADB_DATABASE' then 'MARIADB_INSTANCE'
         else raiseException(format('[400] unknown asset type %s', NEW.type::text))
     end);
 

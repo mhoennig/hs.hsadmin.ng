@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator;
+import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
@@ -30,7 +30,8 @@ class HsUnixUserHostingAssetValidator extends HostingAssetEntityValidator {
                         .withDefault("/bin/false"),
                 stringProperty("homedir").readOnly().computedBy(HsUnixUserHostingAssetValidator::computeHomedir),
                 stringProperty("totpKey").matchesRegEx("^0x([0-9A-Fa-f]{2})+$").minLength(20).maxLength(256).undisclosed().writeOnly().optional(),
-                passwordProperty("password").minLength(8).maxLength(40).hashedUsing(LinuxEtcShadowHashGenerator.Algorithm.SHA512).writeOnly());
+                passwordProperty("password").minLength(8).maxLength(40).hashedUsing(HashGenerator.Algorithm.LINUX_SHA512).writeOnly());
+                // TODO.spec: public SSH keys?
     }
 
     @Override

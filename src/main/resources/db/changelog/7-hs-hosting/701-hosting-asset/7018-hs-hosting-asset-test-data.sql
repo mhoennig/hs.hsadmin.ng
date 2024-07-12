@@ -25,6 +25,8 @@ declare
     webUnixUserUuid                     uuid;
     domainSetupUuid                     uuid;
     domainMBoxSetupUuid                 uuid;
+    mariaDbInstanceUuid                 uuid;
+    mariaDbUserUuid                     uuid;
 begin
     currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
@@ -69,22 +71,28 @@ begin
     select uuid_generate_v4() into webUnixUserUuid;
     select uuid_generate_v4() into domainSetupUuid;
     select uuid_generate_v4() into domainMBoxSetupUuid;
+    select uuid_generate_v4() into mariaDbInstanceUuid;
+    select uuid_generate_v4() into mariaDbUserUuid;
     debitorNumberSuffix := relatedDebitor.debitorNumberSuffix;
     defaultPrefix := relatedDebitor.defaultPrefix;
 
     insert into hs_hosting_asset
-           (uuid,                   bookingitemuuid,        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                                    caption,                     config)
-           values (managedServerUuid,      managedServerBI.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,                 'some ManagedServer',        '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
-                  (uuid_generate_v4(),     cloudServerBI.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,                 'another CloudServer',       '{}'::jsonb),
-                  (managedWebspaceUuid,    managedWebspaceBI.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',                         'some Webspace',             '{}'::jsonb),
-                  (uuid_generate_v4(),     null,                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',                     'some E-Mail-Alias',         '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
-                  (webUnixUserUuid,        null,                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',                     'some UnixUser for Website', '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
-                  (domainSetupUuid,        null,                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',               'some Domain-Setup',         '{}'::jsonb),
-                  (uuid_generate_v4(),     null,                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org|DNS',           'some Domain-DNS-Setup',     '{}'::jsonb),
-                  (uuid_generate_v4(),     null,                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org|HTTP',          'some Domain-HTTP-Setup',    '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb),
-                  (uuid_generate_v4(),     null,                   'DOMAIN_SMTP_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',           'some Domain-SMPT-Setup',    '{}'::jsonb),
-                  (domainMBoxSetupUuid,    null,                   'DOMAIN_MBOX_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',           'some Domain-MBOX-Setup',    '{}'::jsonb),
-                  (uuid_generate_v4(),    null,                    'EMAIL_ADDRESS',     domainMBoxSetupUuid, null,                  'test@' || defaultPrefix || '.example.org',    'some E-Mail-Address',       '{}'::jsonb);
+       (uuid,                   bookingitemuuid,        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                                         caption,                        config)
+       values
+       (managedServerUuid,      managedServerBI.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,                       'some ManagedServer',           '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
+       (uuid_generate_v4(),     cloudServerBI.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,                       'another CloudServer',          '{}'::jsonb),
+       (managedWebspaceUuid,    managedWebspaceBI.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',                               'some Webspace',                '{}'::jsonb),
+       (mariaDbInstanceUuid,    null,                   'MARIADB_INSTANCE',  managedServerUuid,   null,                  'vm10' || debitorNumberSuffix || '.MariaDB.default', 'some default MariaDB instance','{}'::jsonb),
+       (mariaDbUserUuid,        null,                   'MARIADB_USER',      mariaDbInstanceUuid, managedWebspaceUuid,   defaultPrefix || '01_web',                           'some default MariaDB user',    '{ "password": "<TODO:replace-by-encrypted-mariadb-password"}'::jsonb ),
+       (uuid_generate_v4(),     null,                   'MARIADB_DATABASE',  mariaDbInstanceUuid, mariaDbUserUuid,       defaultPrefix || '01_web',                           'some default MariaDB database','{ "encryption": "utf8", "collation": "utf8"}'::jsonb ),
+       (uuid_generate_v4(),     null,                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',                           'some E-Mail-Alias',            '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
+       (webUnixUserUuid,        null,                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',                           'some UnixUser for Website',    '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
+       (domainSetupUuid,        null,                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',                     'some Domain-Setup',            '{}'::jsonb),
+       (uuid_generate_v4(),     null,                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org|DNS',                 'some Domain-DNS-Setup',        '{}'::jsonb),
+       (uuid_generate_v4(),     null,                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org|HTTP',                'some Domain-HTTP-Setup',       '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb),
+       (uuid_generate_v4(),     null,                   'DOMAIN_SMTP_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',                 'some Domain-SMPT-Setup',       '{}'::jsonb),
+       (domainMBoxSetupUuid,    null,                   'DOMAIN_MBOX_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',                 'some Domain-MBOX-Setup',       '{}'::jsonb),
+       (uuid_generate_v4(),     null,                   'EMAIL_ADDRESS',     domainMBoxSetupUuid, null,                  'test@' || defaultPrefix || '.example.org',          'some E-Mail-Address',          '{}'::jsonb);
 end; $$;
 --//
 

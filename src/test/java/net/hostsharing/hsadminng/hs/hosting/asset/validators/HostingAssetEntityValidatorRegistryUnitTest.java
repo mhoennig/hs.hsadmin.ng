@@ -39,7 +39,10 @@ class HostingAssetEntityValidatorRegistryUnitTest {
                 HsHostingAssetType.DOMAIN_HTTP_SETUP,
                 HsHostingAssetType.DOMAIN_SMTP_SETUP,
                 HsHostingAssetType.DOMAIN_MBOX_SETUP,
-                HsHostingAssetType.EMAIL_ADDRESS
+                HsHostingAssetType.EMAIL_ADDRESS,
+                HsHostingAssetType.MARIADB_INSTANCE,
+                HsHostingAssetType.MARIADB_USER,
+                HsHostingAssetType.MARIADB_DATABASE
         );
     }
 }

@@ -41,7 +41,10 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                             "DOMAIN_HTTP_SETUP",
                             "DOMAIN_SMTP_SETUP",
                             "DOMAIN_MBOX_SETUP",
-                            "EMAIL_ADDRESS"
+                            "EMAIL_ADDRESS",
+                            "MARIADB_INSTANCE",
+                            "MARIADB_USER",
+                            "MARIADB_DATABASE"
                         ]
                         """));
         // @formatter:on

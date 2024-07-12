@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator;
+import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
         final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
-        LinuxEtcShadowHashGenerator.nextSalt("Ly3LbsArtL5u4EVt");
+        HashGenerator.nextSalt("Ly3LbsArtL5u4EVt");
         validator.prepareProperties(unixUserHostingAsset);
 
         // then
@@ -141,7 +141,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
         final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
 
         // when
-        LinuxEtcShadowHashGenerator.nextSalt("Ly3LbsArtL5u4EVt");
+        HashGenerator.nextSalt("Ly3LbsArtL5u4EVt");
         final var result = validator.revampProperties(unixUserHostingAsset, unixUserHostingAsset.getConfig());
 
         // then
@@ -169,7 +169,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 "{type=enumeration, propertyName=shell, values=[/bin/false, /bin/bash, /bin/csh, /bin/dash, /usr/bin/tcsh, /usr/bin/zsh, /usr/bin/passwd], defaultValue=/bin/false}",
                 "{type=string, propertyName=homedir, readOnly=true, computed=true}",
                 "{type=string, propertyName=totpKey, matchesRegEx=[^0x([0-9A-Fa-f]{2})+$], minLength=20, maxLength=256, writeOnly=true, undisclosed=true}",
-                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=SHA512, undisclosed=true}"
+                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=LINUX_SHA512, undisclosed=true}"
         );
     }
 }

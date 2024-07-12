@@ -30,6 +30,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
 import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.TEST_CONTACT;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
@@ -360,6 +361,68 @@ public class HsHostingAssetControllerRestTest {
                             "alarmContact": null,
                             "config": {
                                 "target": ["xyz00","xyz00-abc","office@example.com"]
+                            }
+                        }
+                    ]
+                """),
+        MARIADB_INSTANCE(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.MARIADB_INSTANCE)
+                                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .identifier("vm1234|MariaDB.default")
+                                .caption("some fake MariaDB instance")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "MARIADB_INSTANCE",
+                            "identifier": "vm1234|MariaDB.default",
+                            "caption": "some fake MariaDB instance",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        MARIADB_USER(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.MARIADB_USER)
+                                .identifier("xyz00_temp")
+                                .caption("some fake MariaDB user")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "MARIADB_USER",
+                            "identifier": "xyz00_temp",
+                            "caption": "some fake MariaDB user",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        MARIADB_DATABASE(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.MARIADB_DATABASE)
+                                .identifier("xyz00_temp")
+                                .caption("some fake MariaDB database")
+                                .config(Map.ofEntries(
+                                        entry("encoding", "latin1"),
+                                        entry("collation", "latin2")
+                                ))
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "MARIADB_DATABASE",
+                            "identifier": "xyz00_temp",
+                            "caption": "some fake MariaDB database",
+                            "alarmContact": null,
+                            "config": {
+                                "encoding": "latin1",
+                                "collation": "latin2"
                             }
                         }
                     ]

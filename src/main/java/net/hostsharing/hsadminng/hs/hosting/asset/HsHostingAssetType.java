@@ -100,13 +100,13 @@ public enum HsHostingAssetType implements Node {
 
     MARIADB_USER( // named e.g. xyz00_abc
             inGroup("MariaDB"),
-            requiredParent(MARIADB_INSTANCE),
-            assignedTo(MANAGED_WEBSPACE)),
+            requiredParent(MANAGED_WEBSPACE), // thus, the MANAGED_WEBSPACE:Agent becomes RBAC owner
+            assignedTo(MARIADB_INSTANCE)), // keep in mind: no RBAC grants implied
 
     MARIADB_DATABASE( // named e.g. xyz00_abc
             inGroup("MariaDB"),
-            requiredParent(MANAGED_WEBSPACE), // TODO.spec: or MARIADB_USER?
-            assignedTo(MARIADB_INSTANCE)), // TODO.spec: or swapping parent+assignedTo?
+            requiredParent(MARIADB_USER), // thus, the MARIADB_USER:Agent becomes RBAC owner
+            assignedTo(MARIADB_INSTANCE)), // keep in mind: no RBAC grants implied
 
     IP_NUMBER(
             inGroup("Server"),

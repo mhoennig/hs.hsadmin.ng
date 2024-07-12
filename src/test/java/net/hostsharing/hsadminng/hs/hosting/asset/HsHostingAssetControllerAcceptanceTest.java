@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator;
+import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
@@ -537,7 +537,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                             .identifier("fir01-temp")
                             .caption("some test-unix-user")
                             .build());
-            LinuxEtcShadowHashGenerator.nextSalt("Jr5w/Y8zo8pCkqg7");
+            HashGenerator.nextSalt("Jr5w/Y8zo8pCkqg7");
 
             RestAssured // @formatter:off
                     .given()

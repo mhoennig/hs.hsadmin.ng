@@ -1,5 +1,6 @@
 ## HostingAsset Type Structure
 
+
 ### Domain
 
 ```plantuml
@@ -11,29 +12,27 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
-    entity BI_DOMAIN_DNS_SETUP
-    entity BI_DOMAIN_SMTP_SETUP
 }
 
 package Hosting #feb28c{
     package Domain #99bcdb {
-        entity HA_DOMAIN_SETUP        
-        entity HA_DOMAIN_DNS_SETUP        
-        entity HA_DOMAIN_HTTP_SETUP        
-        entity HA_DOMAIN_SMTP_SETUP        
-        entity HA_DOMAIN_MBOX_SETUP        
+        entity HA_DOMAIN_SETUP
+        entity HA_DOMAIN_DNS_SETUP
+        entity HA_DOMAIN_HTTP_SETUP
+        entity HA_DOMAIN_SMTP_SETUP
+        entity HA_DOMAIN_MBOX_SETUP
         entity HA_EMAIL_ADDRESS
     }
 
     package Server #99bcdb {
-        entity HA_CLOUD_SERVER        
-        entity HA_MANAGED_SERVER        
+        entity HA_CLOUD_SERVER
+        entity HA_MANAGED_SERVER
         entity HA_IP_NUMBER
     }
 
     package Webspace #99bcdb {
-        entity HA_MANAGED_WEBSPACE        
-        entity HA_UNIX_USER        
+        entity HA_MANAGED_WEBSPACE
+        entity HA_UNIX_USER
         entity HA_EMAIL_ALIAS
     }
 
@@ -43,20 +42,21 @@ BI_CLOUD_SERVER *--> BI_PRIVATE_CLOUD
 BI_MANAGED_SERVER *--> BI_PRIVATE_CLOUD
 BI_MANAGED_WEBSPACE *--> BI_MANAGED_SERVER
 
-HA_CLOUD_SERVER ==* BI_CLOUD_SERVER
-HA_MANAGED_SERVER ==* BI_MANAGED_SERVER
-HA_MANAGED_WEBSPACE ==* BI_MANAGED_WEBSPACE
+HA_CLOUD_SERVER *==> BI_CLOUD_SERVER
+HA_MANAGED_SERVER *==> BI_MANAGED_SERVER
+HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE
 HA_MANAGED_WEBSPACE o..> HA_MANAGED_SERVER
 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
+HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
 HA_DOMAIN_SETUP o..> HA_DOMAIN_SETUP
 HA_DOMAIN_DNS_SETUP *==> HA_DOMAIN_SETUP
+HA_DOMAIN_DNS_SETUP o..> HA_MANAGED_WEBSPACE
 HA_DOMAIN_HTTP_SETUP *==> HA_DOMAIN_SETUP
 HA_DOMAIN_HTTP_SETUP o..> HA_UNIX_USER
 HA_DOMAIN_SMTP_SETUP *==> HA_DOMAIN_SETUP
 HA_DOMAIN_SMTP_SETUP o..> HA_MANAGED_WEBSPACE
 HA_DOMAIN_MBOX_SETUP *==> HA_DOMAIN_SETUP
 HA_DOMAIN_MBOX_SETUP o..> HA_MANAGED_WEBSPACE
-HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
 HA_EMAIL_ADDRESS *==> HA_DOMAIN_MBOX_SETUP
 HA_IP_NUMBER o..> HA_CLOUD_SERVER
 HA_IP_NUMBER o..> HA_MANAGED_SERVER
@@ -70,6 +70,7 @@ package Legend #white {
 }
 Booking -down[hidden]->Legend
 ```
+
 ### MariaDB
 
 ```plantuml
@@ -81,26 +82,24 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
-    entity BI_DOMAIN_DNS_SETUP
-    entity BI_DOMAIN_SMTP_SETUP
 }
 
 package Hosting #feb28c{
     package MariaDB #99bcdb {
-        entity HA_MARIADB_INSTANCE        
-        entity HA_MARIADB_USER        
+        entity HA_MARIADB_INSTANCE
+        entity HA_MARIADB_USER
         entity HA_MARIADB_DATABASE
     }
 
     package Server #99bcdb {
-        entity HA_CLOUD_SERVER        
-        entity HA_MANAGED_SERVER        
+        entity HA_CLOUD_SERVER
+        entity HA_MANAGED_SERVER
         entity HA_IP_NUMBER
     }
 
     package Webspace #99bcdb {
-        entity HA_MANAGED_WEBSPACE        
-        entity HA_UNIX_USER        
+        entity HA_MANAGED_WEBSPACE
+        entity HA_UNIX_USER
         entity HA_EMAIL_ALIAS
     }
 
@@ -110,16 +109,16 @@ BI_CLOUD_SERVER *--> BI_PRIVATE_CLOUD
 BI_MANAGED_SERVER *--> BI_PRIVATE_CLOUD
 BI_MANAGED_WEBSPACE *--> BI_MANAGED_SERVER
 
-HA_CLOUD_SERVER ==* BI_CLOUD_SERVER
-HA_MANAGED_SERVER ==* BI_MANAGED_SERVER
-HA_MANAGED_WEBSPACE ==* BI_MANAGED_WEBSPACE
+HA_CLOUD_SERVER *==> BI_CLOUD_SERVER
+HA_MANAGED_SERVER *==> BI_MANAGED_SERVER
+HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE
 HA_MANAGED_WEBSPACE o..> HA_MANAGED_SERVER
 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
 HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
 HA_MARIADB_INSTANCE *==> HA_MANAGED_SERVER
-HA_MARIADB_USER *==> HA_MARIADB_INSTANCE
-HA_MARIADB_USER o..> HA_MANAGED_WEBSPACE
-HA_MARIADB_DATABASE *==> HA_MANAGED_WEBSPACE
+HA_MARIADB_USER *==> HA_MANAGED_WEBSPACE
+HA_MARIADB_USER o..> HA_MARIADB_INSTANCE
+HA_MARIADB_DATABASE *==> HA_MARIADB_USER
 HA_MARIADB_DATABASE o..> HA_MARIADB_INSTANCE
 HA_IP_NUMBER o..> HA_CLOUD_SERVER
 HA_IP_NUMBER o..> HA_MANAGED_SERVER
@@ -133,6 +132,7 @@ package Legend #white {
 }
 Booking -down[hidden]->Legend
 ```
+
 ### PostgreSQL
 
 ```plantuml
@@ -144,26 +144,24 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
-    entity BI_DOMAIN_DNS_SETUP
-    entity BI_DOMAIN_SMTP_SETUP
 }
 
 package Hosting #feb28c{
     package PostgreSQL #99bcdb {
-        entity HA_PGSQL_INSTANCE        
-        entity HA_PGSQL_USER        
+        entity HA_PGSQL_INSTANCE
+        entity HA_PGSQL_USER
         entity HA_PGSQL_DATABASE
     }
 
     package Server #99bcdb {
-        entity HA_CLOUD_SERVER        
-        entity HA_MANAGED_SERVER        
+        entity HA_CLOUD_SERVER
+        entity HA_MANAGED_SERVER
         entity HA_IP_NUMBER
     }
 
     package Webspace #99bcdb {
-        entity HA_MANAGED_WEBSPACE        
-        entity HA_UNIX_USER        
+        entity HA_MANAGED_WEBSPACE
+        entity HA_UNIX_USER
         entity HA_EMAIL_ALIAS
     }
 
@@ -173,9 +171,9 @@ BI_CLOUD_SERVER *--> BI_PRIVATE_CLOUD
 BI_MANAGED_SERVER *--> BI_PRIVATE_CLOUD
 BI_MANAGED_WEBSPACE *--> BI_MANAGED_SERVER
 
-HA_CLOUD_SERVER ==* BI_CLOUD_SERVER
-HA_MANAGED_SERVER ==* BI_MANAGED_SERVER
-HA_MANAGED_WEBSPACE ==* BI_MANAGED_WEBSPACE
+HA_CLOUD_SERVER *==> BI_CLOUD_SERVER
+HA_MANAGED_SERVER *==> BI_MANAGED_SERVER
+HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE
 HA_MANAGED_WEBSPACE o..> HA_MANAGED_SERVER
 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
 HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
@@ -196,4 +194,5 @@ package Legend #white {
 }
 Booking -down[hidden]->Legend
 ```
-    This code generated was by HsHostingAssetType.main, do not amend manually.
+
+This code generated was by HsHostingAssetType.main, do not amend manually.

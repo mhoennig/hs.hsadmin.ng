@@ -36,13 +36,13 @@ class HsHostingAssetTypeUnitTest {
                         entity HA_DOMAIN_MBOX_SETUP
                         entity HA_EMAIL_ADDRESS
                     }
-                
+
                     package Server #99bcdb {
                         entity HA_CLOUD_SERVER
                         entity HA_MANAGED_SERVER
                         entity HA_IP_NUMBER
                     }
-                
+
                     package Webspace #99bcdb {
                         entity HA_MANAGED_WEBSPACE
                         entity HA_UNIX_USER
@@ -129,9 +129,9 @@ class HsHostingAssetTypeUnitTest {
                 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
                 HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
                 HA_MARIADB_INSTANCE *==> HA_MANAGED_SERVER
-                HA_MARIADB_USER *==> HA_MARIADB_INSTANCE
-                HA_MARIADB_USER o..> HA_MANAGED_WEBSPACE
-                HA_MARIADB_DATABASE *==> HA_MANAGED_WEBSPACE
+                HA_MARIADB_USER *==> HA_MANAGED_WEBSPACE
+                HA_MARIADB_USER o..> HA_MARIADB_INSTANCE
+                HA_MARIADB_DATABASE *==> HA_MARIADB_USER
                 HA_MARIADB_DATABASE o..> HA_MARIADB_INSTANCE
                 HA_IP_NUMBER o..> HA_CLOUD_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_SERVER
@@ -145,7 +145,7 @@ class HsHostingAssetTypeUnitTest {
                 }
                 Booking -down[hidden]->Legend
                 ```
-                
+
                 ### PostgreSQL
 
                 ```plantuml
