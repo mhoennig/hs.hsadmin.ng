@@ -31,7 +31,8 @@ public final class HashGenerator {
     public enum Algorithm {
         LINUX_SHA512(LinuxEtcShadowHashGenerator::hash, "6"),
         LINUX_YESCRYPT(LinuxEtcShadowHashGenerator::hash, "y"),
-        MYSQL_NATIVE(MySQLNativePasswordHashGenerator::hash, "*");
+        MYSQL_NATIVE(MySQLNativePasswordHashGenerator::hash, "*"),
+        SCRAM_SHA256(PostgreSQLScramSHA256::hash, "SCRAM-SHA-256");
 
         final BiFunction<HashGenerator, String, String> implementation;
         final String prefix;

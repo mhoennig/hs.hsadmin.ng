@@ -29,6 +29,9 @@ public class HostingAssetEntityValidatorRegistry {
         register(MARIADB_INSTANCE, new HsMariaDbInstanceHostingAssetValidator());
         register(MARIADB_USER, new HsMariaDbUserHostingAssetValidator());
         register(MARIADB_DATABASE, new HsMariaDbDatabaseHostingAssetValidator());
+        register(PGSQL_INSTANCE, new HsPostgreSqlDbInstanceHostingAssetValidator());
+        register(PGSQL_USER, new HsPostgreSqlUserHostingAssetValidator());
+        register(PGSQL_DATABASE, new HsPostgreSqlDatabaseHostingAssetValidator());
     }
 
     private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {

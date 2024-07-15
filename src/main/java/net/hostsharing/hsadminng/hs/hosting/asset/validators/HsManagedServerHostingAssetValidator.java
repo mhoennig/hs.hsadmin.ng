@@ -14,7 +14,7 @@ class HsManagedServerHostingAssetValidator extends HostingAssetEntityValidator {
     public HsManagedServerHostingAssetValidator() {
         super(
                 MANAGED_SERVER,
-                AlarmContact.isOptional(), // hostmaster alert address is implicitly added
+                AlarmContact.isOptional(),
 
                 // monitoring
                 integerProperty("monit_max_cpu_usage").unit("%").min(10).max(100).withDefault(92),

@@ -32,7 +32,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
 
     HostingAssetEntityValidator(
             final HsHostingAssetType assetType,
-            final AlarmContact alarmContactValidation,
+            final AlarmContact alarmContactValidation, // hostmaster alert address is implicitly added where needed
             final ValidatableProperty<?, ?>... properties) {
         super(properties);
         this.bookingItemReferenceValidation = new ReferenceValidator<>(
@@ -213,6 +213,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
             super(policy, HsHostingAssetEntity::getAlarmContact);
         }
 
+        // hostmaster alert address is implicitly added where neccessary
         static AlarmContact isOptional() {
             return new AlarmContact(HsHostingAssetType.RelationPolicy.OPTIONAL);
         }

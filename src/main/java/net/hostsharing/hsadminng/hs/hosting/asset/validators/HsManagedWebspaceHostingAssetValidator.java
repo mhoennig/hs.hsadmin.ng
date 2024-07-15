@@ -10,7 +10,7 @@ class HsManagedWebspaceHostingAssetValidator extends HostingAssetEntityValidator
     public HsManagedWebspaceHostingAssetValidator() {
         super(
                 MANAGED_WEBSPACE,
-                AlarmContact.isOptional(), // hostmaster alert address is implicitly added
+                AlarmContact.isOptional(),
                 NO_EXTRA_PROPERTIES);
     }
 

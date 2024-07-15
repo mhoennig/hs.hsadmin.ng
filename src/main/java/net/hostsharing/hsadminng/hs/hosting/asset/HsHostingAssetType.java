@@ -82,17 +82,16 @@ public enum HsHostingAssetType implements Node {
 
     PGSQL_INSTANCE( // TODO.spec: identifier to be specified
             inGroup("PostgreSQL"),
-            requiredParent(MANAGED_SERVER)),
+            requiredParent(MANAGED_SERVER)), // TODO.spec: or MANAGED_WEBSPACE?
 
     PGSQL_USER( // named e.g. xyz00_abc
             inGroup("PostgreSQL"),
-            requiredParent(PGSQL_INSTANCE),
-            assignedTo(MANAGED_WEBSPACE)),
+            requiredParent(MANAGED_WEBSPACE), // thus, the MANAGED_WEBSPACE:Agent becomes RBAC owner
+            assignedTo(PGSQL_INSTANCE)), // keep in mind: no RBAC grants implied
 
     PGSQL_DATABASE( // named e.g. xyz00_abc
             inGroup("PostgreSQL"),
-            requiredParent(MANAGED_WEBSPACE), // TODO.spec: or PGSQL_USER?
-            assignedTo(PGSQL_INSTANCE)), // TODO.spec: or swapping parent+assignedTo?
+            requiredParent(PGSQL_USER)), // thus, the PGSQL_USER_USER:Agent becomes RBAC owner
 
     MARIADB_INSTANCE( // TODO.spec: identifier to be specified
             inGroup("MariaDB"),
@@ -101,12 +100,11 @@ public enum HsHostingAssetType implements Node {
     MARIADB_USER( // named e.g. xyz00_abc
             inGroup("MariaDB"),
             requiredParent(MANAGED_WEBSPACE), // thus, the MANAGED_WEBSPACE:Agent becomes RBAC owner
-            assignedTo(MARIADB_INSTANCE)), // keep in mind: no RBAC grants implied
+            assignedTo(MARIADB_INSTANCE)),
 
     MARIADB_DATABASE( // named e.g. xyz00_abc
             inGroup("MariaDB"),
-            requiredParent(MARIADB_USER), // thus, the MARIADB_USER:Agent becomes RBAC owner
-            assignedTo(MARIADB_INSTANCE)), // keep in mind: no RBAC grants implied
+            requiredParent(MARIADB_USER)), // thus, the MARIADB_USER:Agent becomes RBAC owner
 
     IP_NUMBER(
             inGroup("Server"),

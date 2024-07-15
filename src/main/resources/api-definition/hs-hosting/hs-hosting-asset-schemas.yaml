@@ -17,6 +17,7 @@ components:
                 - DOMAIN_MBOX_SETUP
                 - EMAIL_ALIAS
                 - EMAIL_ADDRESS
+                - PGSQL_INSTANCE
                 - PGSQL_USER
                 - PGSQL_DATABASE
                 - MARIADB_INSTANCE

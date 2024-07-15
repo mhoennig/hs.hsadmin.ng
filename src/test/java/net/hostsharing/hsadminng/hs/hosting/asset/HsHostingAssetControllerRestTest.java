@@ -426,6 +426,68 @@ public class HsHostingAssetControllerRestTest {
                             }
                         }
                     ]
+                """),
+        PGSQL_INSTANCE(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.PGSQL_INSTANCE)
+                                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .identifier("vm1234|PgSql.default")
+                                .caption("some fake PgSql instance")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "PGSQL_INSTANCE",
+                            "identifier": "vm1234|PgSql.default",
+                            "caption": "some fake PgSql instance",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        PGSQL_USER(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.PGSQL_USER)
+                                .identifier("xyz00_temp")
+                                .caption("some fake PgSql user")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "PGSQL_USER",
+                            "identifier": "xyz00_temp",
+                            "caption": "some fake PgSql user",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        PGSQL_DATABASE(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.PGSQL_DATABASE)
+                                .identifier("xyz00_temp")
+                                .caption("some fake PgSql database")
+                                .config(Map.ofEntries(
+                                        entry("encoding", "latin1"),
+                                        entry("collation", "latin2")
+                                ))
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "PGSQL_DATABASE",
+                            "identifier": "xyz00_temp",
+                            "caption": "some fake PgSql database",
+                            "alarmContact": null,
+                            "config": {
+                                "encoding": "latin1",
+                                "collation": "latin2"
+                            }
+                        }
+                    ]
                 """);
 
         final HsHostingAssetType assetType;

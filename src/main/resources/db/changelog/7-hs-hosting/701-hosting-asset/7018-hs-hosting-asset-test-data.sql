@@ -27,6 +27,8 @@ declare
     domainMBoxSetupUuid                 uuid;
     mariaDbInstanceUuid                 uuid;
     mariaDbUserUuid                     uuid;
+    pgSqlInstanceUuid                   uuid;
+    PgSqlUserUuid                       uuid;
 begin
     currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
     call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
@@ -73,6 +75,8 @@ begin
     select uuid_generate_v4() into domainMBoxSetupUuid;
     select uuid_generate_v4() into mariaDbInstanceUuid;
     select uuid_generate_v4() into mariaDbUserUuid;
+    select uuid_generate_v4() into pgSqlInstanceUuid;
+    select uuid_generate_v4() into pgSqlUserUuid;
     debitorNumberSuffix := relatedDebitor.debitorNumberSuffix;
     defaultPrefix := relatedDebitor.defaultPrefix;
 
@@ -83,8 +87,11 @@ begin
        (uuid_generate_v4(),     cloudServerBI.uuid,     'CLOUD_SERVER',      null,                null,                  'vm20' || debitorNumberSuffix,                       'another CloudServer',          '{}'::jsonb),
        (managedWebspaceUuid,    managedWebspaceBI.uuid, 'MANAGED_WEBSPACE',  managedServerUuid,   null,                  defaultPrefix || '01',                               'some Webspace',                '{}'::jsonb),
        (mariaDbInstanceUuid,    null,                   'MARIADB_INSTANCE',  managedServerUuid,   null,                  'vm10' || debitorNumberSuffix || '.MariaDB.default', 'some default MariaDB instance','{}'::jsonb),
-       (mariaDbUserUuid,        null,                   'MARIADB_USER',      mariaDbInstanceUuid, managedWebspaceUuid,   defaultPrefix || '01_web',                           'some default MariaDB user',    '{ "password": "<TODO:replace-by-encrypted-mariadb-password"}'::jsonb ),
-       (uuid_generate_v4(),     null,                   'MARIADB_DATABASE',  mariaDbInstanceUuid, mariaDbUserUuid,       defaultPrefix || '01_web',                           'some default MariaDB database','{ "encryption": "utf8", "collation": "utf8"}'::jsonb ),
+       (mariaDbUserUuid,        null,                   'MARIADB_USER',      managedWebspaceUuid, mariaDbInstanceUuid,   defaultPrefix || '01_web',                           'some default MariaDB user',    '{ "password": "<TODO:replace-by-encrypted-mariadb-password"}'::jsonb ),
+       (uuid_generate_v4(),     null,                   'MARIADB_DATABASE',  mariaDbUserUuid,     mariaDbInstanceUuid,   defaultPrefix || '01_web',                           'some default MariaDB database','{ "encryption": "utf8", "collation": "utf8"}'::jsonb ),
+       (pgSqlInstanceUuid,      null,                   'PGSQL_INSTANCE',    managedServerUuid,   null,                  'vm10' || debitorNumberSuffix || '.Postgresql.default', 'some default Postgresql instance','{}'::jsonb),
+       (PgSqlUserUuid,          null,                   'PGSQL_USER',        managedWebspaceUuid, pgSqlInstanceUuid,     defaultPrefix || '01_web',                           'some default Postgresql user',    '{ "password": "<TODO:replace-by-encrypted-postgresql-password"}'::jsonb ),
+       (uuid_generate_v4(),     null,                   'PGSQL_DATABASE',    pgSqlUserUuid,       pgSqlInstanceUuid,     defaultPrefix || '01_web',                           'some default Postgresql database','{ "encryption": "utf8", "collation": "utf8"}'::jsonb ),
        (uuid_generate_v4(),     null,                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',                           'some E-Mail-Alias',            '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
        (webUnixUserUuid,        null,                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',                           'some UnixUser for Website',    '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
        (domainSetupUuid,        null,                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',                     'some Domain-Setup',            '{}'::jsonb),

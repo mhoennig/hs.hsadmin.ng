@@ -132,7 +132,6 @@ class HsHostingAssetTypeUnitTest {
                 HA_MARIADB_USER *==> HA_MANAGED_WEBSPACE
                 HA_MARIADB_USER o..> HA_MARIADB_INSTANCE
                 HA_MARIADB_DATABASE *==> HA_MARIADB_USER
-                HA_MARIADB_DATABASE o..> HA_MARIADB_INSTANCE
                 HA_IP_NUMBER o..> HA_CLOUD_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_WEBSPACE
@@ -191,10 +190,9 @@ class HsHostingAssetTypeUnitTest {
                 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
                 HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
                 HA_PGSQL_INSTANCE *==> HA_MANAGED_SERVER
-                HA_PGSQL_USER *==> HA_PGSQL_INSTANCE
-                HA_PGSQL_USER o..> HA_MANAGED_WEBSPACE
-                HA_PGSQL_DATABASE *==> HA_MANAGED_WEBSPACE
-                HA_PGSQL_DATABASE o..> HA_PGSQL_INSTANCE
+                HA_PGSQL_USER *==> HA_MANAGED_WEBSPACE
+                HA_PGSQL_USER o..> HA_PGSQL_INSTANCE
+                HA_PGSQL_DATABASE *==> HA_PGSQL_USER
                 HA_IP_NUMBER o..> HA_CLOUD_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_SERVER
                 HA_IP_NUMBER o..> HA_MANAGED_WEBSPACE

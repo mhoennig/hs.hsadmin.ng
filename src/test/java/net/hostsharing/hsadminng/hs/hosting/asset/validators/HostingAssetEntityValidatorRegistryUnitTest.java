@@ -42,7 +42,10 @@ class HostingAssetEntityValidatorRegistryUnitTest {
                 HsHostingAssetType.EMAIL_ADDRESS,
                 HsHostingAssetType.MARIADB_INSTANCE,
                 HsHostingAssetType.MARIADB_USER,
-                HsHostingAssetType.MARIADB_DATABASE
+                HsHostingAssetType.MARIADB_DATABASE,
+                HsHostingAssetType.PGSQL_INSTANCE,
+                HsHostingAssetType.PGSQL_USER,
+                HsHostingAssetType.PGSQL_DATABASE
         );
     }
 }

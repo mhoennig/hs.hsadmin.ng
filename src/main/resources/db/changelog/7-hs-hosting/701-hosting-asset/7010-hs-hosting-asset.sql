@@ -16,6 +16,7 @@ create type HsHostingAssetType as enum (
     'DOMAIN_MBOX_SETUP',
     'EMAIL_ALIAS',
     'EMAIL_ADDRESS',
+    'PGSQL_INSTANCE',
     'PGSQL_USER',
     'PGSQL_DATABASE',
     'MARIADB_INSTANCE',
@@ -48,6 +49,9 @@ create table if not exists hs_hosting_asset
 --changeset hosting-asset-TYPE-HIERARCHY-CHECK:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
+-- TODO.impl: this could be generated from HsHostingAssetType
+--  also including a check for assignedToAssetUuud
+
 create or replace function hs_hosting_asset_type_hierarchy_check_tf()
     returns trigger
     language plpgsql as $$
@@ -73,11 +77,14 @@ begin
         when 'DOMAIN_SMTP_SETUP' then 'DOMAIN_SETUP'
         when 'DOMAIN_MBOX_SETUP' then 'DOMAIN_SETUP'
         when 'EMAIL_ADDRESS' then 'DOMAIN_MBOX_SETUP'
+
+        when 'PGSQL_INSTANCE' then 'MANAGED_SERVER'
         when 'PGSQL_USER' then 'MANAGED_WEBSPACE'
-        when 'PGSQL_DATABASE' then 'MANAGED_WEBSPACE'
+        when 'PGSQL_DATABASE' then 'PGSQL_USER'
+
         when 'MARIADB_INSTANCE' then 'MANAGED_SERVER'
-        when 'MARIADB_USER' then 'MARIADB_INSTANCE'
-        when 'MARIADB_DATABASE' then 'MARIADB_INSTANCE'
+        when 'MARIADB_USER' then 'MANAGED_WEBSPACE'
+        when 'MARIADB_DATABASE' then 'MARIADB_USER'
         else raiseException(format('[400] unknown asset type %s', NEW.type::text))
     end);
 

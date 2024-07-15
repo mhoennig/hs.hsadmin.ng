@@ -4,17 +4,20 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 
 import java.util.regex.Pattern;
 
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_DATABASE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_DATABASE;
 import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringProperty;
 
-class HsMariaDbDatabaseHostingAssetValidator extends HostingAssetEntityValidator {
+class HsPostgreSqlDatabaseHostingAssetValidator extends HostingAssetEntityValidator {
 
-    public HsMariaDbDatabaseHostingAssetValidator() {
+    public HsPostgreSqlDatabaseHostingAssetValidator() {
         super(
-                MARIADB_DATABASE,
+                PGSQL_DATABASE,
                 AlarmContact.isOptional(),
 
-                stringProperty("encoding").matchesRegEx("[a-z0-9_]+").maxLength(24).provided("latin1", "utf8").withDefault("utf8"));
+                stringProperty("encoding").matchesRegEx("[A-Z0-9_]+").maxLength(24).provided("LATIN1", "UTF8").withDefault("UTF8")
+
+                // TODO.spec: PostgreSQL extensions in instance and here? also decide which. Free selection or booleans/checkboxes?
+        );
     }
 
     @Override

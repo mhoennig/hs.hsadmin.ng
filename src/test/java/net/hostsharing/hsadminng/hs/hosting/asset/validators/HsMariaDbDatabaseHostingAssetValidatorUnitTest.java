@@ -40,7 +40,6 @@ class HsMariaDbDatabaseHostingAssetValidatorUnitTest {
         return HsHostingAssetEntity.builder()
                 .type(MARIADB_DATABASE)
                 .parentAsset(GIVEN_MARIADB_USER)
-                .assignedToAsset(GIVEN_MARIADB_INSTANCE)
                 .identifier("xyz00_temp")
                 .caption("some valid test MariaDB-Database")
                 .config(new HashMap<>(ofEntries(
@@ -112,6 +111,6 @@ class HsMariaDbDatabaseHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^xyz00$|^xyz00_[a-z0-9]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^xyz00$|^xyz00_[a-z0-9_]+$', but is 'xyz99-temp'");
     }
 }

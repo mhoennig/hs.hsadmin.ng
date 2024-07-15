@@ -44,7 +44,10 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                             "EMAIL_ADDRESS",
                             "MARIADB_INSTANCE",
                             "MARIADB_USER",
-                            "MARIADB_DATABASE"
+                            "MARIADB_DATABASE",
+                            "PGSQL_INSTANCE",
+                            "PGSQL_USER",
+                            "PGSQL_DATABASE"
                         ]
                         """));
         // @formatter:on

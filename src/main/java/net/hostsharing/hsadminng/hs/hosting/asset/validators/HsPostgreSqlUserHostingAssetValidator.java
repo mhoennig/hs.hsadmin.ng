@@ -5,14 +5,14 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 
 import java.util.regex.Pattern;
 
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_USER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_USER;
 import static net.hostsharing.hsadminng.hs.validation.PasswordProperty.passwordProperty;
 
-class HsMariaDbUserHostingAssetValidator extends HostingAssetEntityValidator {
+class HsPostgreSqlUserHostingAssetValidator extends HostingAssetEntityValidator {
 
-    public HsMariaDbUserHostingAssetValidator() {
+    public HsPostgreSqlUserHostingAssetValidator() {
         super(
-                MARIADB_USER,
+                PGSQL_USER,
                 AlarmContact.isOptional(),
 
                 // TODO.impl: we need to be able to suppress updating of fields etc., something like this:
@@ -22,7 +22,7 @@ class HsMariaDbUserHostingAssetValidator extends HostingAssetEntityValidator {
                 //      referenceProperty(assignedToAsset).isWriteOnce(),
                 // );
 
-                passwordProperty("password").minLength(8).maxLength(40).hashedUsing(HashGenerator.Algorithm.MYSQL_NATIVE).writeOnly());
+                passwordProperty("password").minLength(8).maxLength(40).hashedUsing(HashGenerator.Algorithm.SCRAM_SHA256).writeOnly());
     }
 
     @Override

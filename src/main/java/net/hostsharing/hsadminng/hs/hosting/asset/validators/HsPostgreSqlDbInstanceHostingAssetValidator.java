@@ -5,16 +5,18 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_INSTANCE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_DATABASE;
 
-class HsMariaDbInstanceHostingAssetValidator extends HostingAssetEntityValidator {
+class HsPostgreSqlDbInstanceHostingAssetValidator extends HostingAssetEntityValidator {
 
-    final static String DEFAULT_INSTANCE_IDENTIFIER_SUFFIX = "|MariaDB.default"; // TODO.spec: specify instance naming
+    final static String DEFAULT_INSTANCE_IDENTIFIER_SUFFIX = "|PgSql.default"; // TODO.spec: specify instance naming
 
-    public HsMariaDbInstanceHostingAssetValidator() {
+    public HsPostgreSqlDbInstanceHostingAssetValidator() {
         super(
-                MARIADB_INSTANCE,
+                PGSQL_DATABASE,
                 AlarmContact.isOptional(),
+
+                // TODO.spec: PostgreSQL extensions in database and here? also decide which. Free selection or booleans/checkboxes?
                 NO_EXTRA_PROPERTIES); // TODO.spec: specify instance properties, e.g. installed extensions
     }
 

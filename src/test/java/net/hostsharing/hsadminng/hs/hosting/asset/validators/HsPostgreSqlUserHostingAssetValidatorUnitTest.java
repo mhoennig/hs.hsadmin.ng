@@ -1,36 +1,39 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
+import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
 import static java.util.Map.ofEntries;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_INSTANCE;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_USER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_INSTANCE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_USER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HsMariaDbUserHostingAssetValidatorUnitTest {
+class HsPostgreSqlUserHostingAssetValidatorUnitTest {
 
-    private static final HsHostingAssetEntity GIVEN_MARIADB_INSTANCE = HsHostingAssetEntity.builder()
-            .type(MARIADB_INSTANCE)
+    private static final HsHostingAssetEntity GIVEN_PGSQL_INSTANCE = HsHostingAssetEntity.builder()
+            .type(PGSQL_INSTANCE)
             .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
-            .identifier("vm1234|MariaDB.default")
-            .caption("some valid test MariaDB-Instance")
+            .identifier("vm1234|PgSql.default")
+            .caption("some valid test PgSql-Instance")
             .build();
 
     private static HsHostingAssetEntityBuilder givenValidMariaDbUserBuilder() {
         return HsHostingAssetEntity.builder()
-                .type(MARIADB_USER)
+                .type(PGSQL_USER)
                 .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
-                .assignedToAsset(GIVEN_MARIADB_INSTANCE)
+                .assignedToAsset(GIVEN_PGSQL_INSTANCE)
                 .identifier("xyz00_temp")
-                .caption("some valid test MariaDB-User")
+                .caption("some valid test PgSql-User")
                 .config(new HashMap<>(ofEntries(
                         entry("password", "Test1234")
                 )));
@@ -46,7 +49,7 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(props).extracting(Object::toString).containsExactlyInAnyOrder(
-                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=MYSQL_NATIVE, undisclosed=true}"
+                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=SCRAM_SHA256, undisclosed=true}"
         );
     }
 
@@ -57,12 +60,12 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
         final var validator = HostingAssetEntityValidatorRegistry.forType(givenMariaDbUserHostingAsset.getType());
 
         // when
-        // HashGenerator.nextSalt("Ly3LbsArtL5u4EVt"); // not needed for mysql_native_password
+        HashGenerator.nextSalt(new String(Base64.getDecoder().decode("L1QxSVNyTU81b3NZS1djNg=="), Charset.forName("latin1")));
         validator.prepareProperties(givenMariaDbUserHostingAsset);
 
         // then
         assertThat(givenMariaDbUserHostingAsset.getConfig()).containsExactlyInAnyOrderEntriesOf(ofEntries(
-                entry("password", "*14F1A8C42F8B6D4662BB3ED290FD37BF135FE45C")
+                entry("password", "SCRAM-SHA-256$4096:L1QxSVNyTU81b3NZS1djNg==$bB4PEqHpnkoB9FwYfOjh+8yJvLsCnrwxom3TGK0CVJM=:ACRgTfhJwIZLrzhVRbJ3Qif5YhErYWAfkBThvtouW+8=")
         ));
     }
 
@@ -98,9 +101,9 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'MARIADB_USER:xyz00_temp.config.unknown' is not expected but is set to '100'",
-                "'MARIADB_USER:xyz00_temp.config.password' length is expected to be at min 8 but length of provided value is 5",
-                "'MARIADB_USER:xyz00_temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
+                "'PGSQL_USER:xyz00_temp.config.unknown' is not expected but is set to '100'",
+                "'PGSQL_USER:xyz00_temp.config.password' length is expected to be at min 8 but length of provided value is 5",
+                "'PGSQL_USER:xyz00_temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
         );
     }
 
