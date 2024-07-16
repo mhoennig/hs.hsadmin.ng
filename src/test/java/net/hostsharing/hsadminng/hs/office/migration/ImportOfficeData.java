@@ -92,13 +92,7 @@ import static org.assertj.core.api.Fail.fail;
     -- maybe something like that is needed for the 2nd user
     -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to hsh99_restricted;
 
- * Then copy this to a file named .environment (excluded from git) and fill in your specific values:
-
-   export HSADMINNG_POSTGRES_JDBC_URL=jdbc:postgresql://localhost:6432/hsh99_hsadminng
-   export HSADMINNG_POSTGRES_ADMIN_USERNAME=hsh99_admin
-   export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
-   export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=hsh99_restricted
-   export HSADMINNG_SUPERUSER=some-precreated-superuser@example.org
+ * Then copy the file .tc-environment to a file named .environment (excluded from git) and fill in your specific values.
 
  * To finally import the office data, run:
  *
@@ -131,8 +125,20 @@ public class ImportOfficeData extends ContextBasedTest {
 
     // at least as the number of lines in business-partners.csv from test-data, but less than real data partner count
     public static final int MAX_NUMBER_OF_TEST_DATA_PARTNERS = 100;
+    public static final String MIGRATION_DATA_PATH = ofNullable(System.getenv("HSADMINNG_MIGRATION_DATA_PATH")).orElse("migration") + "/";
 
     static int relationId = 2000000;
+
+    private static final List<Integer> IGNORE_BUSINESS_PARTNERS = Arrays.asList(
+        512167, // 11139, partner without contractual contact
+        512170, // 11142, partner without contractual contact
+        -1
+    );
+
+    private static final List<Integer> IGNORE_CONTACTS = Arrays.asList(
+        90547, // Kontakt hat keine Rolle
+        -1
+    );
 
     @Value("${spring.datasource.url}")
     private String jdbcUrl;
@@ -171,7 +177,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Order(1010)
     void importBusinessPartners() {
 
-        try (Reader reader = resourceReader("migration/business-partners.csv")) {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "business-partners.csv")) {
             final var lines = readAllLines(reader);
             importBusinessPartners(justHeader(lines), withoutHeader(lines));
         } catch (Exception e) {
@@ -217,7 +223,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Order(1020)
     void importContacts() {
 
-        try (Reader reader = resourceReader("migration/contacts.csv")) {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "contacts.csv")) {
             final var lines = readAllLines(reader);
             importContacts(justHeader(lines), withoutHeader(lines));
         } catch (Exception e) {
@@ -241,16 +247,16 @@ public class ImportOfficeData extends ContextBasedTest {
                 """);
         assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
                 {
-                    1101=contact(caption='Herr Michael Mellies ', emailAddresses='{ main: mih@example.org }'),
-                    1200=contact(caption='JM e.K.', emailAddresses='{ main: jm-ex-partner@example.org }'),
-                    1201=contact(caption='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='{ main: jm-billing@example.org }'),
-                    1202=contact(caption='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='{ main: am-operation@example.org }'),
-                    1203=contact(caption='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='{ main: pm-partner@example.org }'),
-                    1204=contact(caption='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='{ main: tm-vip@example.org }'),
-                    1301=contact(caption='Petra Schmidt , Test PS', emailAddresses='{ main: ps@example.com }'),
-                    1401=contact(caption='Frau Frauke Fanninga ', emailAddresses='{ main: ff@example.org }'),
-                    1501=contact(caption='Frau Cecilia Camus ', emailAddresses='{ main: cc@example.org }')
-                }
+                    1101=contact(caption='Herr Michael Mellies ', emailAddresses='{ "main": "mih@example.org"}'),
+                    1200=contact(caption='JM e.K.', emailAddresses='{ "main": "jm-ex-partner@example.org"}'),
+                    1201=contact(caption='Frau Dr. Jenny Meyer-Billing , JM GmbH', emailAddresses='{ "main": "jm-billing@example.org"}'),
+                    1202=contact(caption='Herr Andrew Meyer-Operation , JM GmbH', emailAddresses='{ "main": "am-operation@example.org"}'),
+                    1203=contact(caption='Herr Philip Meyer-Contract , JM GmbH', emailAddresses='{ "main": "pm-partner@example.org"}'),
+                    1204=contact(caption='Frau Tammy Meyer-VIP , JM GmbH', emailAddresses='{ "main": "tm-vip@example.org"}'),
+                    1301=contact(caption='Petra Schmidt , Test PS', emailAddresses='{ "main": "ps@example.com"}'),
+                    1401=contact(caption='Frau Frauke Fanninga ', emailAddresses='{ "main": "ff@example.org"}'),
+                    1501=contact(caption='Frau Cecilia Camus ', emailAddresses='{ "main": "cc@example.org"}')
+                 }
                 """);
         assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
                 {
@@ -317,7 +323,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Order(1030)
     void importSepaMandates() {
 
-        try (Reader reader = resourceReader("migration/sepa-mandates.csv")) {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "sepa-mandates.csv")) {
             final var lines = readAllLines(reader);
             importSepaMandates(justHeader(lines), withoutHeader(lines));
         } catch (Exception e) {
@@ -349,7 +355,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Test
     @Order(1040)
     void importCoopShares() {
-        try (Reader reader = resourceReader("migration/share-transactions.csv")) {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "share-transactions.csv")) {
             final var lines = readAllLines(reader);
             importCoopShares(justHeader(lines), withoutHeader(lines));
         } catch (Exception e) {
@@ -376,7 +382,7 @@ public class ImportOfficeData extends ContextBasedTest {
     @Order(1050)
     void importCoopAssets() {
 
-        try (Reader reader = resourceReader("migration/asset-transactions.csv")) {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "asset-transactions.csv")) {
             final var lines = readAllLines(reader);
             importCoopAssets(justHeader(lines), withoutHeader(lines));
         } catch (Exception e) {
@@ -737,6 +743,10 @@ public class ImportOfficeData extends ContextBasedTest {
                 .map(this::trimAll)
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
+                    if (this.IGNORE_BUSINESS_PARTNERS.contains(rec.getInteger("bp_id"))) {
+                        return;
+                    }
+
                     final var person = HsOfficePersonEntity.builder().build();
 
                     final var partnerRel = addRelation(
@@ -838,6 +848,11 @@ public class ImportOfficeData extends ContextBasedTest {
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
                     final var bpId = rec.getInteger("bp_id");
+
+                    if (this.IGNORE_BUSINESS_PARTNERS.contains(bpId)) {
+                        return;
+                    }
+
                     final var member = ofNullable(memberships.get(bpId))
                             .orElseGet(() -> createOnDemandMembership(bpId));
 
@@ -908,6 +923,10 @@ public class ImportOfficeData extends ContextBasedTest {
                 .forEach(rec -> {
                     final var debitor = debitors.get(rec.getInteger("bp_id"));
 
+                    if (this.IGNORE_BUSINESS_PARTNERS.contains(rec.getInteger("bp_id"))) {
+                        return;
+                    }
+
                     final var sepaMandate = HsOfficeSepaMandateEntity.builder()
                             .debitor(debitor)
                             .bankAccount(HsOfficeBankAccountEntity.builder()
@@ -938,6 +957,13 @@ public class ImportOfficeData extends ContextBasedTest {
                 .forEach(rec -> {
                     final var contactId = rec.getInteger("contact_id");
                     final var bpId = rec.getInteger("bp_id");
+
+                    if (this.IGNORE_CONTACTS.contains(contactId)) {
+                        return;
+                    }
+                    if (this.IGNORE_BUSINESS_PARTNERS.contains(bpId)) {
+                        return;
+                    }
 
                     if (rec.getString("roles").isBlank()) {
                         fail("empty roles assignment not allowed for contact_id: " + contactId);
@@ -1109,6 +1135,7 @@ public class ImportOfficeData extends ContextBasedTest {
         return "{\n" +
                 map.keySet().stream()
                         .map(id -> "   " + id + "=" + map.get(id).toString())
+                        .map(e -> e.replaceAll("\n    ", " ").replace("\n", ""))
                         .collect(Collectors.joining(",\n")) +
                 "\n}\n";
     }
@@ -1194,13 +1221,6 @@ public class ImportOfficeData extends ContextBasedTest {
 
     private Reader resourceReader(@NotNull final String resourcePath) {
         return new InputStreamReader(requireNonNull(getClass().getClassLoader().getResourceAsStream(resourcePath)));
-    }
-
-    private Reader fileReader(@NotNull final Path filePath) throws IOException {
-        //        Path path = Paths.get(
-        //                ClassLoader.getSystemResource("csv/twoColumn.csv").toURI())
-        //    );
-        return Files.newBufferedReader(filePath);
     }
 
     private static String[] justHeader(final List<String[]> lines) {

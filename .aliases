@@ -1,9 +1,6 @@
-# For using the alias import-office-tables, # copy these exports to .environment (ignored by git) 
-# and amend them according to your external DB:
-export HSADMINNG_POSTGRES_JDBC_URL=jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers
-export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
-export HSADMINNG_POSTGRES_ADMIN_PASSWORD=
-export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+# For using the alias import-office-tables,
+# copy the file .tc-environment to .environment (ignored by git)
+# and amend them according to your external DB.
 
 gradleWrapper () {
     if [ ! -f gradlew ]; then
@@ -46,11 +43,7 @@ postgresAutodoc () {
 alias postgres-autodoc=postgresAutodoc
 
 function importOfficeData() {
-	export HSADMINNG_POSTGRES_JDBC_URL=jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers
-	export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
-	export HSADMINNG_POSTGRES_ADMIN_PASSWORD=password
-	export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
-	export HSADMINNG_SUPERUSER=superuser-alex@hostsharing.net
+	source .tc-environment
 	
 	if [ -f .environment ]; then
 		source .environment

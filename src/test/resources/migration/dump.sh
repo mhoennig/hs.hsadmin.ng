@@ -6,6 +6,10 @@ dbname="hsh02_hsdb"
 username="hsh02_hsdb_readonly"
 
 target="/tmp"
+if [ ! -z $DEST ];
+then
+    target=$DEST
+fi
 
 dump() {
     sql="copy ($1) to stdout with csv header delimiter ';' quote '\"'"
@@ -41,3 +45,59 @@ dump "select member_share_id, bp_id, date, action, quantity, comment
      WHERE bp_id NOT IN (511912)
       order by member_share_id" \
      "share-transactions.csv"
+
+dump "select inet_addr_id, inet_addr, description
+      from inet_addr
+      order by inet_addr_id" \
+     "inet_addr.csv"
+
+dump "select hive_id, hive_name, inet_addr_id, description
+      from hive
+      order by hive_id" \
+     "hive.csv"
+
+dump "select packet_id, basepacket_code, packet_name, bp_id, hive_id, created, cancelled, cur_inet_addr_id, old_inet_addr_id, free
+      from packet
+      left join basepacket using (basepacket_id)
+      order by packet_id" \
+     "packet.csv"
+
+dump "select packet_component_id, packet_id, quantity, basecomponent_code, created, cancelled
+      from packet_component
+      left join basecomponent using (basecomponent_id)
+      order by packet_component_id" \
+     "packet_component.csv"
+
+dump "select unixuser_id, name, comment, shell, homedir, locked, packet_id, userid, quota_softlimit, quota_hardlimit, storage_softlimit, storage_hardlimit
+      from unixuser
+      order by unixuser_id" \
+     "unixuser.csv"
+
+# weil das fehlt, muss group by komplett gesetzt werden: alter table domain add constraint PK_domain primary key (domain_id);
+dump "select domain_id, domain_name, domain_since, domain_dns_master, domain_owner, valid_subdomain_names, passenger_python, passenger_nodejs, passenger_ruby, fcgi_php_bin, array_to_string(array_agg(domain_option_name), ',') as domainoptions
+      from domain
+      left join domain__domain_option using(domain_id)
+      left join domain_option using (domain_option_id)
+      group by domain.domain_id, domain.domain_name, domain_since, domain_dns_master, domain_owner, valid_subdomain_names, passenger_python, passenger_nodejs, passenger_ruby, fcgi_php_bin
+      order by domain.domain_id" \
+     "domain.csv"
+
+dump "select emailaddr_id, domain_id, localpart, subdomain, target
+      from emailaddr
+      order by emailaddr_id" \
+     "emailaddr.csv"
+
+dump "select emailalias_id, pac_id, name, target
+      from emailalias
+      order by emailalias_id" \
+     "emailalias.csv"
+
+dump "select dbuser_id, engine, packet_id, name
+      from database_user
+      order by dbuser_id" \
+     "database_user.csv"
+
+dump "select database_id, engine, packet_id, name, owner, encoding
+      from database
+      order by database_id" \
+     "database.csv"

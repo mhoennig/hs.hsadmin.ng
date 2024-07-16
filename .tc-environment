@@ -1,0 +1,5 @@
+export HSADMINNG_POSTGRES_JDBC_URL=jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers
+export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
+export HSADMINNG_POSTGRES_ADMIN_PASSWORD=
+export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+export HSADMINNG_MIGRATION_DATA_PATH=migration
