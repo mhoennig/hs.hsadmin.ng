@@ -31,7 +31,7 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
             .type(PGSQL_USER)
             .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
             .assignedToAsset(GIVEN_PGSQL_INSTANCE)
-            .identifier("xyz00_temp")
+            .identifier("xyz00_user")
             .caption("some valid test PgSql-User")
             .config(new HashMap<>(ofEntries(
                     entry("password", "Hallo Datenbank, lass mich rein!")
@@ -42,7 +42,7 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
         return HsHostingAssetEntity.builder()
                 .type(PGSQL_DATABASE)
                 .parentAsset(GIVEN_PGSQL_USER)
-                .identifier("xyz00_temp")
+                .identifier("xyz00_db")
                 .caption("some valid test PgSql-Database")
                 .config(new HashMap<>(ofEntries(
                         entry("encoding", "LATIN1")
@@ -94,8 +94,9 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'PGSQL_DATABASE:xyz00_temp.config.unknown' is not expected but is set to 'wrong'",
-                "'PGSQL_DATABASE:xyz00_temp.config.encoding' is expected to be of type String, but is of type Integer"
+                "'PGSQL_DATABASE:xyz00_db.bookingItem' must be null but is of type CLOUD_SERVER",
+                "'PGSQL_DATABASE:xyz00_db.parentAsset' must be of type PGSQL_USER but is of type PGSQL_INSTANCE",
+                "'PGSQL_DATABASE:xyz00_db.assignedToAsset' must be null but is of type PGSQL_INSTANCE"
         );
     }
 
@@ -115,8 +116,8 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'PGSQL_DATABASE:xyz00_temp.config.unknown' is not expected but is set to 'wrong'",
-                "'PGSQL_DATABASE:xyz00_temp.config.encoding' is expected to be of type String, but is of type Integer"
+                "'PGSQL_DATABASE:xyz00_db.config.unknown' is not expected but is set to 'wrong'",
+                "'PGSQL_DATABASE:xyz00_db.config.encoding' is expected to be of type String, but is of type Integer"
         );
     }
 

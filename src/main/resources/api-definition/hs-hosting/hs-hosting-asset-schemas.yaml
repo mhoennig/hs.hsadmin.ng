@@ -23,6 +23,8 @@ components:
                 - MARIADB_INSTANCE
                 - MARIADB_USER
                 - MARIADB_DATABASE
+                - IPV4_NUMBER
+                - IPV6_NUMBER
 
         HsHostingAsset:
             type: object

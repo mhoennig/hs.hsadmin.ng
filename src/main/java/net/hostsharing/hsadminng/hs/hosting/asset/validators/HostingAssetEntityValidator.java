@@ -12,9 +12,11 @@ import net.hostsharing.hsadminng.hs.validation.ValidatableProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
@@ -37,17 +39,17 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
         super(properties);
         this.bookingItemReferenceValidation = new ReferenceValidator<>(
                 assetType.bookingItemPolicy(),
-                assetType.bookingItemType(),
+                assetType.bookingItemTypes(),
                 HsHostingAssetEntity::getBookingItem,
                 HsBookingItemEntity::getType);
         this.parentAssetReferenceValidation = new ReferenceValidator<>(
                 assetType.parentAssetPolicy(),
-                assetType.parentAssetType(),
+                assetType.parentAssetTypes(),
                 HsHostingAssetEntity::getParentAsset,
                 HsHostingAssetEntity::getType);
         this.assignedToAssetReferenceValidation = new ReferenceValidator<>(
                 assetType.assignedToAssetPolicy(),
-                assetType.assignedToAssetType(),
+                assetType.assignedToAssetTypes(),
                 HsHostingAssetEntity::getAssignedToAsset,
                 HsHostingAssetEntity::getType);
         this.alarmContactValidation = alarmContactValidation;
@@ -154,17 +156,17 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
     static class ReferenceValidator<S, T> {
 
         private final HsHostingAssetType.RelationPolicy policy;
-        private final T referencedEntityType;
+        private final Set<T> referencedEntityTypes;
         private final Function<HsHostingAssetEntity, S> referencedEntityGetter;
         private final Function<S, T> referencedEntityTypeGetter;
 
         public ReferenceValidator(
                 final HsHostingAssetType.RelationPolicy policy,
-                final T subEntityType,
+                final Set<T> referencedEntityTypes,
                 final Function<HsHostingAssetEntity, S> referencedEntityGetter,
                 final Function<S, T> referencedEntityTypeGetter) {
             this.policy = policy;
-            this.referencedEntityType = subEntityType;
+            this.referencedEntityTypes = referencedEntityTypes;
             this.referencedEntityGetter = referencedEntityGetter;
             this.referencedEntityTypeGetter = referencedEntityTypeGetter;
         }
@@ -173,7 +175,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
                 final HsHostingAssetType.RelationPolicy policy,
                 final Function<HsHostingAssetEntity, S> referencedEntityGetter) {
             this.policy = policy;
-            this.referencedEntityType = null;
+            this.referencedEntityTypes = Set.of();
             this.referencedEntityGetter = referencedEntityGetter;
             this.referencedEntityTypeGetter = e -> null;
         }
@@ -185,15 +187,15 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
 
             switch (policy) {
             case REQUIRED:
-                if (actualEntityType != referencedEntityType) {
+                if (!referencedEntityTypes.contains(actualEntityType)) {
                     return List.of(actualEntityType == null
-                            ? referenceFieldName + "' must be of type " + referencedEntityType + " but is null"
-                            : referenceFieldName + "' must be of type " + referencedEntityType + " but is of type " + actualEntityType);
+                            ? referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is null"
+                            : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + actualEntityType);
                 }
                 break;
             case OPTIONAL:
-                if (actualEntityType != null && actualEntityType != referencedEntityType) {
-                    return List.of(referenceFieldName + "' must be null or of type " + referencedEntityType + " but is of type "
+                if (actualEntityType != null && !referencedEntityTypes.contains(actualEntityType)) {
+                    return List.of(referenceFieldName + "' must be null or of type " + toDisplay(referencedEntityTypes) + " but is of type "
                             + actualEntityType);
                 }
                 break;
@@ -204,6 +206,10 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
                 break;
             }
             return emptyList();
+        }
+
+        private String toDisplay(final Set<T> referencedEntityTypes) {
+            return referencedEntityTypes.stream().sorted().map(Object::toString).collect(Collectors.joining(" or "));
         }
     }
 

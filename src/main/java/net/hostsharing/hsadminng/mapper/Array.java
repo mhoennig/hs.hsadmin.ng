@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.mapper;
 
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,6 +50,11 @@ public class Array {
 
     public static <T> T[] emptyArray() {
         return of();
+    }
+
+    public static <T> T[] emptyArray(final Class<T> elementClass) {
+        //noinspection unchecked
+        return (T[]) java.lang.reflect.Array.newInstance(elementClass, 0);
     }
 
     @SafeVarargs

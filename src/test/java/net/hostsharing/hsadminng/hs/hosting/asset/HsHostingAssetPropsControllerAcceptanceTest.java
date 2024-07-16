@@ -47,7 +47,9 @@ class HsHostingAssetPropsControllerAcceptanceTest {
                             "MARIADB_DATABASE",
                             "PGSQL_INSTANCE",
                             "PGSQL_USER",
-                            "PGSQL_DATABASE"
+                            "PGSQL_DATABASE",
+                            "IPV4_NUMBER",
+                            "IPV6_NUMBER"
                         ]
                         """));
         // @formatter:on

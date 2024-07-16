@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,11 @@ import java.util.function.Function;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
-import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.*;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.assignedTo;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.optionalParent;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.optionallyAssignedTo;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.requiredParent;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.requires;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.OPTIONAL;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.REQUIRED;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationType.ASSIGNED_TO_ASSET;
@@ -106,11 +111,14 @@ public enum HsHostingAssetType implements Node {
             inGroup("MariaDB"),
             requiredParent(MARIADB_USER)), // thus, the MARIADB_USER:Agent becomes RBAC owner
 
-    IP_NUMBER(
+    IPV4_NUMBER(
             inGroup("Server"),
-            assignedTo(CLOUD_SERVER),
-            assignedTo(MANAGED_SERVER),
-            assignedTo(MANAGED_WEBSPACE)
+            optionallyAssignedTo(CLOUD_SERVER).or(MANAGED_SERVER).or(MANAGED_WEBSPACE)
+    ),
+
+    IPV6_NUMBER(
+            inGroup("Server"),
+            optionallyAssignedTo(CLOUD_SERVER).or(MANAGED_SERVER).or(MANAGED_WEBSPACE)
     );
 
     private final String groupName;
@@ -144,44 +152,50 @@ public enum HsHostingAssetType implements Node {
                 .orElse(RelationPolicy.FORBIDDEN);
     }
 
-    public HsBookingItemType bookingItemType() {
+    public Set<HsBookingItemType> bookingItemTypes() {
         return stream(relations)
                 .filter(r -> r.relationType == BOOKING_ITEM)
-                .map(r -> HsBookingItemType.valueOf(r.relatedType(this).toString()))
                 .reduce(HsHostingAssetType::onlyASingleElementExpectedException)
-                .orElse(null);
+                .map(r -> r.relatedTypes(this))
+                .stream().flatMap(Set::stream)
+                .map(r -> (HsBookingItemType) r)
+                .collect(toSet());
     }
 
     public RelationPolicy parentAssetPolicy() {
         return stream(relations)
                 .filter(r -> r.relationType == PARENT_ASSET)
-                .map(r -> r.relationPolicy)
                 .reduce(HsHostingAssetType::onlyASingleElementExpectedException)
+                .map(r -> r.relationPolicy)
                 .orElse(RelationPolicy.FORBIDDEN);
     }
 
-    public HsHostingAssetType parentAssetType() {
+    public Set<HsHostingAssetType> parentAssetTypes() {
         return stream(relations)
                 .filter(r -> r.relationType == PARENT_ASSET)
-                .map(r -> HsHostingAssetType.valueOf(r.relatedType(this).toString()))
                 .reduce(HsHostingAssetType::onlyASingleElementExpectedException)
-                .orElse(null);
+                .map(r -> r.relatedTypes(this))
+                .stream().flatMap(Set::stream)
+                .map(r -> (HsHostingAssetType) r)
+                .collect(toSet());
     }
 
     public RelationPolicy assignedToAssetPolicy() {
         return stream(relations)
                 .filter(r -> r.relationType == ASSIGNED_TO_ASSET)
-                .map(r -> r.relationPolicy)
                 .reduce(HsHostingAssetType::onlyASingleElementExpectedException)
+                .map(r -> r.relationPolicy)
                 .orElse(RelationPolicy.FORBIDDEN);
     }
 
-    public HsHostingAssetType assignedToAssetType() {
+    public Set<HsHostingAssetType> assignedToAssetTypes() {
         return stream(relations)
                 .filter(r -> r.relationType == ASSIGNED_TO_ASSET)
-                .map(r -> HsHostingAssetType.valueOf(r.relatedType(this).toString()))
                 .reduce(HsHostingAssetType::onlyASingleElementExpectedException)
-                .orElse(null);
+                .map(r -> r.relatedTypes(this))
+                .stream().flatMap(Set::stream)
+                .map(r -> (HsHostingAssetType) r)
+                .collect(toSet());
     }
 
     private static <X> X onlyASingleElementExpectedException(Object a, Object b) {
@@ -189,10 +203,20 @@ public enum HsHostingAssetType implements Node {
     }
 
     @Override
-    public List<String> edges() {
+    public List<String> edges(final Set<String> inGroups) {
         return stream(relations)
-                .map(r -> nodeName() + r.edge + r.relatedType(this).nodeName())
+                .map(r -> r.relatedTypes(this).stream()
+                        .filter(x -> x.belongsToAny(inGroups))
+                        .map(x -> nodeName() + r.edge + x.nodeName())
+                        .toList())
+                .flatMap(List::stream)
+                .sorted()
                 .toList();
+    }
+
+    @Override
+    public boolean belongsToAny(final Set<String> groups) {
+        return groups.contains(this.groupName);
     }
 
     @Override
@@ -220,12 +244,12 @@ public enum HsHostingAssetType implements Node {
                 .map(t -> "entity " + t.nodeName())
                 .collect(joining("\n"));
         final String bookingItemEdges = stream(HsBookingItemType.values())
-                .map(HsBookingItemType::edges)
+                .map(t -> t.edges(includedHostingGroups))
                 .flatMap(Collection::stream)
                 .collect(joining("\n"));
         final String hostingAssetEdges = stream(HsHostingAssetType.values())
-                .filter(t ->  t.isInGroups(includedHostingGroups))
-                .map(HsHostingAssetType::edges)
+                .filter(t -> t.isInGroups(includedHostingGroups))
+                .map(t -> t.edges(includedHostingGroups))
                 .flatMap(Collection::stream)
                 .collect(joining("\n"));
         return """
@@ -239,7 +263,7 @@ public enum HsHostingAssetType implements Node {
                 package Booking #feb28c {
                 %{bookingNodes}
                 }
-                
+                                
                 package Hosting #feb28c{
                 %{hostingGroups}
                 }
@@ -257,12 +281,12 @@ public enum HsHostingAssetType implements Node {
                 Booking -down[hidden]->Legend
                 ```
                 """
-                    .replace("%{caption}", caption)
-                    .replace("%{bookingNodes}", bookingNodes)
-                    .replace("%{hostingGroups}", hostingGroups)
-                    .replace("%{hostingAssetNodeStyles}", hostingAssetNodes)
-                    .replace("%{bookingItemEdges}", bookingItemEdges)
-                    .replace("%{hostingAssetEdges}", hostingAssetEdges);
+                .replace("%{caption}", caption)
+                .replace("%{bookingNodes}", bookingNodes)
+                .replace("%{hostingGroups}", hostingGroups)
+                .replace("%{hostingAssetNodeStyles}", hostingAssetNodes)
+                .replace("%{bookingItemEdges}", bookingItemEdges)
+                .replace("%{hostingAssetEdges}", hostingAssetEdges);
     }
 
     private boolean isInGroups(final Set<String> assetGroups) {
@@ -291,15 +315,17 @@ public enum HsHostingAssetType implements Node {
                 .map(t -> t.groupName)
                 .collect(toSet()));
 
-        markdown.append(renderAsPlantUML("Domain", Set.of("Domain", "Webspace", "Server")))
-                .append(renderAsPlantUML("MariaDB", Set.of("MariaDB", "Webspace", "Server")))
-                .append(renderAsPlantUML("PostgreSQL", Set.of("PostgreSQL", "Webspace", "Server")));
+        markdown
+                .append(renderAsPlantUML("Server+Webspace", Set.of("Server", "Webspace")))
+                .append(renderAsPlantUML("Domain", Set.of("Domain", "Webspace")))
+                .append(renderAsPlantUML("MariaDB", Set.of("MariaDB", "Webspace")))
+                .append(renderAsPlantUML("PostgreSQL", Set.of("PostgreSQL", "Webspace")));
 
         markdown.append("""
 
                 This code generated was by %{this}.main, do not amend manually.
                 """
-                        .replace("%{this}", HsHostingAssetType.class.getSimpleName()));
+                .replace("%{this}", HsHostingAssetType.class.getSimpleName()));
 
         return markdown.toString();
     }
@@ -317,8 +343,8 @@ public enum HsHostingAssetType implements Node {
 
     public enum RelationType {
         BOOKING_ITEM,
-                PARENT_ASSET,
-                ASSIGNED_TO_ASSET
+        PARENT_ASSET,
+        ASSIGNED_TO_ASSET
     }
 }
 
@@ -328,27 +354,78 @@ class EntityTypeRelation<E, T extends Node> {
     final HsHostingAssetType.RelationPolicy relationPolicy;
     final HsHostingAssetType.RelationType relationType;
     final Function<HsHostingAssetEntity, E> getter;
-    private final T relatedType;
+    private final List<T> acceptedRelatedTypes;
     final String edge;
 
-    public T relatedType(final HsHostingAssetType referringType) {
+    private EntityTypeRelation(
+            final HsHostingAssetType.RelationPolicy relationPolicy,
+            final HsHostingAssetType.RelationType relationType,
+            final Function<HsHostingAssetEntity, E> getter,
+            final T acceptedRelatedType,
+            final String edge
+    ) {
+        this(relationPolicy, relationType, getter, modifiyableListOf(acceptedRelatedType), edge);
+    }
+
+    public <R extends Node> Set<R> relatedTypes(final HsHostingAssetType referringType) {
+        final Set<Node> result = acceptedRelatedTypes.stream()
+                .map(t -> t == HsHostingAssetType.SAME_TYPE ? referringType : t)
+                .collect(toSet());
         //noinspection unchecked
-        return relatedType == HsHostingAssetType.SAME_TYPE ? (T) referringType : relatedType;
+        return (Set<R>) result;
     }
 
     static EntityTypeRelation<HsBookingItemEntity, HsBookingItemType> requires(final HsBookingItemType bookingItemType) {
-        return new EntityTypeRelation<>(REQUIRED, BOOKING_ITEM, HsHostingAssetEntity::getBookingItem, bookingItemType, " *==> ");
+        return new EntityTypeRelation<>(
+                REQUIRED,
+                BOOKING_ITEM,
+                HsHostingAssetEntity::getBookingItem,
+                bookingItemType,
+                " *==> ");
     }
 
     static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> optionalParent(final HsHostingAssetType hostingAssetType) {
-        return new EntityTypeRelation<>(OPTIONAL, PARENT_ASSET, HsHostingAssetEntity::getParentAsset, hostingAssetType, " o..> ");
+        return new EntityTypeRelation<>(
+                OPTIONAL,
+                PARENT_ASSET,
+                HsHostingAssetEntity::getParentAsset,
+                hostingAssetType,
+                " o..> ");
     }
 
     static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> requiredParent(final HsHostingAssetType hostingAssetType) {
-        return new EntityTypeRelation<>(REQUIRED, PARENT_ASSET, HsHostingAssetEntity::getParentAsset, hostingAssetType, " *==> ");
+        return new EntityTypeRelation<>(
+                REQUIRED,
+                PARENT_ASSET,
+                HsHostingAssetEntity::getParentAsset,
+                hostingAssetType,
+                " *==> ");
     }
 
     static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> assignedTo(final HsHostingAssetType hostingAssetType) {
-        return new EntityTypeRelation<>(REQUIRED, ASSIGNED_TO_ASSET, HsHostingAssetEntity::getAssignedToAsset, hostingAssetType, " o..> ");
+        return new EntityTypeRelation<>(
+                REQUIRED,
+                ASSIGNED_TO_ASSET,
+                HsHostingAssetEntity::getAssignedToAsset,
+                hostingAssetType,
+                " o--> ");
+    }
+
+    EntityTypeRelation<E, T> or(final T alternativeHostingAssetType) {
+        acceptedRelatedTypes.add(alternativeHostingAssetType);
+        return this;
+    }
+
+    static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> optionallyAssignedTo(final HsHostingAssetType hostingAssetType) {
+        return new EntityTypeRelation<>(
+                OPTIONAL,
+                ASSIGNED_TO_ASSET,
+                HsHostingAssetEntity::getAssignedToAsset,
+                hostingAssetType,
+                " o..> ");
+    }
+
+    private static <T extends Node> ArrayList<T> modifiyableListOf(final T acceptedRelatedType) {
+        return new ArrayList<>(List.of(acceptedRelatedType));
     }
 }

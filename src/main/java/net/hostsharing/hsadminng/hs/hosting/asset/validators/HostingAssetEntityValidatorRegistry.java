@@ -32,6 +32,8 @@ public class HostingAssetEntityValidatorRegistry {
         register(PGSQL_INSTANCE, new HsPostgreSqlDbInstanceHostingAssetValidator());
         register(PGSQL_USER, new HsPostgreSqlUserHostingAssetValidator());
         register(PGSQL_DATABASE, new HsPostgreSqlDatabaseHostingAssetValidator());
+        register(IPV4_NUMBER, new HsIPv4NumberHostingAssetValidator());
+        register(IPV6_NUMBER, new HsIPv6NumberHostingAssetValidator());
     }
 
     private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {

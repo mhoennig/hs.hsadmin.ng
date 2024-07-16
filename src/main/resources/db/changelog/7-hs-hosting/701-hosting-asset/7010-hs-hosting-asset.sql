@@ -21,7 +21,9 @@ create type HsHostingAssetType as enum (
     'PGSQL_DATABASE',
     'MARIADB_INSTANCE',
     'MARIADB_USER',
-    'MARIADB_DATABASE'
+    'MARIADB_DATABASE',
+    'IPV4_NUMBER',
+    'IPV6_NUMBER'
 );
 
 CREATE CAST (character varying as HsHostingAssetType) WITH INOUT AS IMPLICIT;
@@ -85,6 +87,10 @@ begin
         when 'MARIADB_INSTANCE' then 'MANAGED_SERVER'
         when 'MARIADB_USER' then 'MANAGED_WEBSPACE'
         when 'MARIADB_DATABASE' then 'MARIADB_USER'
+
+        when 'IPV4_NUMBER' then null
+        when 'IPV6_NUMBER' then null
+
         else raiseException(format('[400] unknown asset type %s', NEW.type::text))
     end);
 

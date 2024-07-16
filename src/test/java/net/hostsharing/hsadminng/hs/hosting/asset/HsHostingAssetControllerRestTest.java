@@ -488,6 +488,44 @@ public class HsHostingAssetControllerRestTest {
                             }
                         }
                     ]
+                """),
+        IPV4_NUMBER(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.IPV4_NUMBER)
+                                .assignedToAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .identifier("11.12.13.14")
+                                .caption("some fake IPv4 number")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "IPV4_NUMBER",
+                            "identifier": "11.12.13.14",
+                            "caption": "some fake IPv4 number",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
+                """),
+        IPV6_NUMBER(
+                List.of(
+                        HsHostingAssetEntity.builder()
+                                .type(HsHostingAssetType.IPV6_NUMBER)
+                                .assignedToAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .identifier("2001:db8:3333:4444:5555:6666:7777:8888")
+                                .caption("some fake IPv6 number")
+                                .build()),
+                """
+                    [
+                        {
+                            "type": "IPV6_NUMBER",
+                            "identifier": "2001:db8:3333:4444:5555:6666:7777:8888",
+                            "caption": "some fake IPv6 number",
+                            "alarmContact": null,
+                            "config": {}
+                        }
+                    ]
                 """);
 
         final HsHostingAssetType assetType;

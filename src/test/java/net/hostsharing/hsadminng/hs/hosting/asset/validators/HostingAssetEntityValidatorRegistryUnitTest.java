@@ -45,7 +45,9 @@ class HostingAssetEntityValidatorRegistryUnitTest {
                 HsHostingAssetType.MARIADB_DATABASE,
                 HsHostingAssetType.PGSQL_INSTANCE,
                 HsHostingAssetType.PGSQL_USER,
-                HsHostingAssetType.PGSQL_DATABASE
+                HsHostingAssetType.PGSQL_DATABASE,
+                HsHostingAssetType.IPV4_NUMBER,
+                HsHostingAssetType.IPV6_NUMBER
         );
     }
 }
