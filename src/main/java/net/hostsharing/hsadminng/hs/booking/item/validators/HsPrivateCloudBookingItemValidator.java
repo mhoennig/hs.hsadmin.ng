@@ -7,15 +7,16 @@ class HsPrivateCloudBookingItemValidator extends HsBookingItemEntityValidator {
     HsPrivateCloudBookingItemValidator() {
         super(
             // @formatter:off
-            integerProperty("CPUs")                     .min(  1).max(  128).required().asTotalLimit(),
+            integerProperty("CPU")                     .min(  1).max(  128).required().asTotalLimit(),
             integerProperty("RAM").unit("GB")           .min(  1).max(  512).required().asTotalLimit(),
-            integerProperty("SSD").unit("GB")           .min( 25).max( 4000).step(25).required().asTotalLimit(),
-            integerProperty("HDD").unit("GB")           .min(  0).max(16000).step(250).withDefault(0).asTotalLimit(),
-            integerProperty("Traffic").unit("GB")       .min(250).max(40000).step(250).required().asTotalLimit(),
+            integerProperty("SSD").unit("GB")           .min( 25).max( 4000).step(25).requiresAtLeastOneOf("SSD", "HDD").asTotalLimit(),
+            integerProperty("HDD").unit("GB")           .min(250).max(16000).step(250).requiresAtLeastOneOf("SSD", "HDD").asTotalLimit(),
+            integerProperty("Traffic").unit("GB")       .min(250).max(64000).step(250).requiresAtMaxOneOf("Bandwidth", "Traffic").asTotalLimit(),
+            integerProperty("Bandwidth").unit("GB")     .min(250).max(64000).step(250).requiresAtMaxOneOf("Bandwidth", "Traffic").asTotalLimit(), // TODO.spec
 
 //          Alternatively we could specify it similarly to "Multi" option but exclusively counting:
 //          integerProperty("Resource-Points")          .min(4).max(100).required()
-//                  .each("CPUs").countsAs(64)
+//                  .each("CPU").countsAs(64)
 //                  .each("RAM").countsAs(64)
 //                  .each("SSD").countsAs(18)
 //                  .each("HDD").countsAs(2)

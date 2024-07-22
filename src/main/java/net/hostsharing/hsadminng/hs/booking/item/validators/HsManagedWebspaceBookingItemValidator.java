@@ -23,16 +23,17 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
 
     public HsManagedWebspaceBookingItemValidator() {
         super(
-            integerProperty("SSD").unit("GB").min(1).max(100).step(1).required(),
-            integerProperty("HDD").unit("GB").min(0).max(250).step(10).optional(),
-            integerProperty("Traffic").unit("GB").min(10).max(1000).step(10).required(),
+            integerProperty("SSD").unit("GB").min(1).max(2000).step(1).required(),
+            integerProperty("HDD").unit("GB").min(0).max(10000).step(10).optional(),
+            integerProperty("Traffic").unit("GB").min(10).max(64000).step(10).requiresAtMaxOneOf("Bandwidth", "Traffic"),
+            integerProperty("Bandwidth").unit("GB").min(10).max(1000).step(10).requiresAtMaxOneOf("Bandwidth", "Traffic"), // TODO.spec
             integerProperty("Multi").min(1).max(100).step(1).withDefault(1)
                     .eachComprising( 25, unixUsers())
                     .eachComprising(  5, databaseUsers())
                     .eachComprising(  5, databases())
                     .eachComprising(250, eMailAddresses()),
-            integerProperty("Daemons").min(0).max(10).withDefault(0),
-            booleanProperty("Online Office Server").optional(),
+            integerProperty("Daemons").min(0).max(16).withDefault(0),
+            booleanProperty("Online Office Server").optional(), // TODO.impl: shorten to "Office"
             enumerationProperty("SLA-Platform").values("BASIC", "EXT24H").withDefault("BASIC")
         );
     }

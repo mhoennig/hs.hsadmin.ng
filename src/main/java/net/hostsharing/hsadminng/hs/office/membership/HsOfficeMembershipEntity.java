@@ -68,7 +68,7 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
 
     private static Stringify<HsOfficeMembershipEntity> stringify = stringify(HsOfficeMembershipEntity.class)
             .withProp(e -> MEMBER_NUMBER_TAG + e.getMemberNumber())
-            .withProp(e -> e.getPartner().toShortString())
+            .withProp(HsOfficeMembershipEntity::getPartner)
             .withProp(e -> e.getValidity().asString())
             .withProp(HsOfficeMembershipEntity::getStatus)
             .quotedValues(false);

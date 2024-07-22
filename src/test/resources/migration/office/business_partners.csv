@@ -1,0 +1,10 @@
+bp_id;member_id;member_code;member_since;member_until;member_role;author_contract;nondisc_contract;free;exempt_vat;indicator_vat;uid_vat
+100;10003;hsh00-mim;2000-12-06;;Aufsichtsrat;;2001-04-24;0;0;GROSS;DE217249198
+132;10152;hsh00-rar;2003-07-12;;;;;0;0;GROSS;DE 236 109 136
+213;10000;hsh00-hsh;;;Hostsharing eG;;;1;0;GROSS;
+541;11018;hsh00-wws;2021-05-17;;;;;0;0;GROSS;
+542;11019;hsh00-dph;2021-05-25;;;;;0;0;GROSS;
+120;10020;hsh00-xyz;2000-12-06;2015-12-31;;;;false;false;GROSS;
+122;11022;hsh00-xxx;2021-04-01;;;;;true;true;GROSS;
+190;19090;hsh00-yyy;;;;;;true;true;GROSS;
+199;19999;hsh00-zzz;;;;;;false;false;GROSS;

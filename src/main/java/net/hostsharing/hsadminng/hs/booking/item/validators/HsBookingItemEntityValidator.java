@@ -22,6 +22,10 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
 
     @Override
     public List<String> validateEntity(final HsBookingItemEntity bookingItem) {
+        // TODO.impl: HsBookingItemType could do this similar to HsHostingAssetType
+        if ( bookingItem.getParentItem() == null && bookingItem.getProject() == null) {
+            return List.of(bookingItem + ".'parentItem' or .'project' expected to be set, but both are null");
+        }
         return enrich(prefix(bookingItem.toShortString(), "resources"), super.validateProperties(bookingItem));
     }
 

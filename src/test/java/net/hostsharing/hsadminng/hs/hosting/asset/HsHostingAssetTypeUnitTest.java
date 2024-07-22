@@ -12,9 +12,9 @@ class HsHostingAssetTypeUnitTest {
 
         assertThat(result).isEqualTo("""
                 ## HostingAsset Type Structure
-
-
-                ### Webspace+Server
+                
+                
+                ### Server+Webspace
                 
                 ```plantuml
                 @startuml
@@ -35,6 +35,12 @@ class HsHostingAssetTypeUnitTest {
                         entity HA_IPV6_NUMBER
                     }
                 
+                    package Webspace #99bcdb {
+                        entity HA_MANAGED_WEBSPACE
+                        entity HA_UNIX_USER
+                        entity HA_EMAIL_ALIAS
+                    }
+                
                 }
                 
                 BI_CLOUD_SERVER *--> BI_PRIVATE_CLOUD
@@ -43,10 +49,16 @@ class HsHostingAssetTypeUnitTest {
                 
                 HA_CLOUD_SERVER *==> BI_CLOUD_SERVER
                 HA_MANAGED_SERVER *==> BI_MANAGED_SERVER
+                HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE
+                HA_MANAGED_WEBSPACE o..> HA_MANAGED_SERVER
+                HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
+                HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
                 HA_IPV4_NUMBER o..> HA_CLOUD_SERVER
                 HA_IPV4_NUMBER o..> HA_MANAGED_SERVER
+                HA_IPV4_NUMBER o..> HA_MANAGED_WEBSPACE
                 HA_IPV6_NUMBER o..> HA_CLOUD_SERVER
                 HA_IPV6_NUMBER o..> HA_MANAGED_SERVER
+                HA_IPV6_NUMBER o..> HA_MANAGED_WEBSPACE
                 
                 package Legend #white {
                     SUB_ENTITY1 *--> REQUIRED_PARENT_ENTITY

@@ -25,7 +25,7 @@ class HsBookingItemEntityUnitTest {
             .type(HsBookingItemType.CLOUD_SERVER)
             .caption("some caption")
             .resources(Map.ofEntries(
-                    entry("CPUs", 2),
+                    entry("CPU", 2),
                     entry("SSD-storage", 512),
                     entry("HDD-storage", 2048)))
             .validity(toPostgresDateRange(GIVEN_VALID_FROM, GIVEN_VALID_TO))
@@ -53,7 +53,7 @@ class HsBookingItemEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
         final var result = givenBookingItem.toString();
 
-        assertThat(result).isEqualToIgnoringWhitespace("HsBookingItemEntity(D-1234500:test project, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { \"CPUs\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
+        assertThat(result).isEqualToIgnoringWhitespace("HsBookingItemEntity(D-1234500:test project, CLOUD_SERVER, [2020-01-01,2031-01-01), some caption, { \"CPU\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
     }
 
     @Test

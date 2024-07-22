@@ -702,7 +702,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net");
             final var project = projectRepo.findByCaption(projectCaption).getFirst();
             final var resources = switch (bookingItemType) {
-                case MANAGED_SERVER -> Map.<String, Object>ofEntries(entry("CPUs", 1),
+                case MANAGED_SERVER -> Map.<String, Object>ofEntries(entry("CPU", 1),
                         entry("RAM", 20),
                         entry("SSD", 25),
                         entry("Traffic", 250));

@@ -22,7 +22,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
             .type(HsBookingItemType.MANAGED_SERVER)
             .caption("Test Managed-Server")
             .resources(Map.ofEntries(
-                    entry("CPUs", 2),
+                    entry("CPU", 2),
                     entry("RAM", 25),
                     entry("SSD", 25),
                     entry("Traffic", 250),
@@ -125,6 +125,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .type(MANAGED_WEBSPACE)
                 .bookingItem(HsBookingItemEntity.builder()
                         .type(HsBookingItemType.MANAGED_WEBSPACE)
+                        .project(TEST_PROJECT)
                         .caption("some ManagedWebspace")
                         .resources(Map.ofEntries(entry("SSD", 25), entry("Traffic", 250)))
                         .build())

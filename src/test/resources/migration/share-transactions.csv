@@ -1,5 +1,0 @@
-member_share_id;bp_id;	date;		action;		quantity;	comment
-33443;		17;	2000-12-06;	SUBSCRIPTION;	20;		initial share subscription
-33451;		20;	2000-12-06;	SUBSCRIPTION;	2;		initial share subscription
-33701;		17;	2005-01-10;	SUBSCRIPTION;	40;		increase
-33810;		20;	2016-12-31;	UNSUBSCRIPTION;	22;		membership ended

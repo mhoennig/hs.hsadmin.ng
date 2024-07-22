@@ -318,7 +318,7 @@ jacocoTestCoverageVerification {
 
 tasks.register('importOfficeData', Test) {
     useJUnitPlatform {
-        includeTags 'import'
+        includeTags 'importOfficeData'
     }
 
     group 'verification'
@@ -327,6 +327,16 @@ tasks.register('importOfficeData', Test) {
     mustRunAfter spotlessJava
 }
 
+tasks.register('importHostingAssets', Test) {
+    useJUnitPlatform {
+        includeTags 'importHostingAssets'
+    }
+
+    group 'verification'
+    description 'run the import jobs as tests'
+
+    mustRunAfter spotlessJava
+}
 
 // pitest mutation testing
 pitest {

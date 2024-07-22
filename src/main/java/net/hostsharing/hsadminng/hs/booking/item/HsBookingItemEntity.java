@@ -184,7 +184,9 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject, Propertie
     }
 
     public HsBookingProjectEntity getRelatedProject() {
-        return project != null ? project : parentItem.getRelatedProject();
+        return project != null ? project
+                : parentItem != null ? parentItem.getRelatedProject()
+                : null; // can be the case for technical assets like IP-numbers
     }
 
     public static RbacView rbac() {

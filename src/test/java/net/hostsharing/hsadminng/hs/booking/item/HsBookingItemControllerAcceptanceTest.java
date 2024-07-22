@@ -101,7 +101,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "resources": {
                                 "RAM": 8,
                                 "SSD": 500,
-                                "CPUs": 2,
+                                "CPU": 2,
                                 "Traffic": 500
                             }
                         },
@@ -114,7 +114,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "HDD": 10000,
                                 "RAM": 32,
                                 "SSD": 4000,
-                                "CPUs": 10,
+                                "CPU": 10,
                                 "Traffic": 2000
                             }
                         }
@@ -148,7 +148,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validTo": "{validTo}",
-                                "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
+                                "resources": { "CPU": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
                             }
                             """
                                 .replace("{projectUuid}", givenProject.getUuid().toString())
@@ -166,7 +166,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                 "caption": "some new booking",
                                 "validFrom": "{today}",
                                 "validTo": "{todayPlus1Month}",
-                                "resources": { "CPUs": 12, "SSD": 100, "Traffic": 250 }
+                                "resources": { "CPU": 12, "SSD": 100, "Traffic": 250 }
                              }
                             """
                                 .replace("{today}", LocalDate.now().toString())
@@ -267,7 +267,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             "resources": {
                                 "RAM": 8,
                                 "SSD": 500,
-                                "CPUs": 2,
+                                "CPU": 2,
                                 "Traffic": 500
                             }
                         }

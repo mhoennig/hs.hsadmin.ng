@@ -1,4 +1,4 @@
-# For using the alias import-office-tables,
+# For using the alias gw-importOfficeData or gw-importHostingAssets,
 # copy the file .tc-environment to .environment (ignored by git)
 # and amend them according to your external DB.
 
@@ -42,19 +42,29 @@ postgresAutodoc () {
 }
 alias postgres-autodoc=postgresAutodoc
 
-function importOfficeData() {
-	source .tc-environment
-	
-	if [ -f .environment ]; then
-		source .environment
-	fi
+function importLegacyData() {
+    export target=$1
+    if [ -z "$target" ]; then
+        echo "importLegacyData needs target argument, but none was given" >&2
+    else
+        source .tc-environment
 
-    echo "using environment (with ending ';' for use in IntelliJ IDEA):"
-    set | grep ^HSADMINNG_ | sed 's/$/;/'
+        if [ -f .environment ]; then
+            source .environment
+        fi
 
-	./gradlew importOfficeData --rerun
+        echo "using environment (with ending ';' for use in IntelliJ IDEA):"
+        echo "--- BEGIN: ---"
+        set | grep ^HSADMINNG_ | sed 's/$/;/'
+        echo "---- END. ----"
+        echo
+
+        echo ./gradlew $target --rerun
+        ./gradlew $target --rerun
+    fi
 }
-alias gw-importOfficeData=importOfficeData
+alias gw-importOfficeData='importLegacyData importOfficeData'
+alias gw-importHostingAssets='importLegacyData importHostingAssets'
 
 alias podman-start='systemctl --user enable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'
 alias podman-stop='systemctl --user disable --now podman.socket && systemctl --user status podman.socket && ls -la /run/user/$UID/podman/podman.sock'

@@ -1,4 +1,0 @@
-sepa_mandat_id;	bp_id;	bank_customer;	bank_name;	bank_iban;		bank_bic;	mandat_ref;	mandat_signed;	mandat_since;	mandat_until;	mandat_used
-234234;		17;	Michael Mellies;	ING Bank AG;	DE37500105177419788228;	INGDDEFFXXX;	MH12345;	2004-06-12;	2004-06-15;	;	2022-10-20
-235600;		20;	JM e.K.;	Targobank AG;	DE02300209000106531065;	CMCIDEDD;	JM33344;	2004-01-15;	2004-01-20;2005-06-27	;2016-01-18
-235662;		20;	JM GmbH;	ING Bank AG;	DE49500105174516484892;	INGDDEFFXXX;	JM33344;	2005-06-28;	2005-07-01;	;	2016-01-18

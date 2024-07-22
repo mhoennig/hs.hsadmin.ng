@@ -263,7 +263,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 final var foundAsset = em.find(HsHostingAssetEntity.class, givenAssetUuid);
-                foundAsset.getConfig().put("CPUs", 2);
+                foundAsset.getConfig().put("CPU", 2);
                 foundAsset.getConfig().remove("SSD-storage");
                 foundAsset.getConfig().put("HSD-storage", 2048);
                 return toCleanup(assetRepo.save(foundAsset));
@@ -404,7 +404,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     .identifier(identifier)
                     .caption("some temp cloud asset")
                     .config(Map.ofEntries(
-                            entry("CPUs", 1),
+                            entry("CPU", 1),
                             entry("SSD-storage", 256)))
                     .build();
 

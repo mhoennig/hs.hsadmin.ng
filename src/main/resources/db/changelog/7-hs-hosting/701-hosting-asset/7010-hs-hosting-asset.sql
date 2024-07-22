@@ -42,7 +42,7 @@ create table if not exists hs_hosting_asset
     alarmContactUuid    uuid null references hs_office_contact(uuid) initially deferred,
 
     constraint chk_hs_hosting_asset_has_booking_item_or_parent_asset
-        check (bookingItemUuid is not null or parentAssetUuid is not null or type='DOMAIN_SETUP')
+        check (bookingItemUuid is not null or parentAssetUuid is not null or type in ('DOMAIN_SETUP', 'IPV4_NUMBER', 'IPV6_NUMBER'))
 );
 --//
 

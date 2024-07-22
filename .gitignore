@@ -136,4 +136,9 @@ Desktop.ini
 # ESLint
 ######################
 .eslintcache
+
+######################
+# Project Related
+######################
 /.environment*
+/src/test/resources/migration-prod/*

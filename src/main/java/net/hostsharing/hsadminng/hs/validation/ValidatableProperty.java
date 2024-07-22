@@ -13,10 +13,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
@@ -30,7 +32,7 @@ import static org.apache.commons.lang3.ObjectUtils.isArray;
 public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T> {
 
     protected static final String[] KEY_ORDER_HEAD = Array.of("propertyName");
-    protected static final String[] KEY_ORDER_TAIL = Array.of("required", "defaultValue", "readOnly", "writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
+    protected static final String[] KEY_ORDER_TAIL = Array.of("required", "requiresAtLeastOneOf", "requiresAtMaxOneOf", "defaultValue", "readOnly", "writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
     protected static final String[] KEY_ORDER = Array.join(KEY_ORDER_HEAD, KEY_ORDER_TAIL);
 
     final Class<T> type;
@@ -40,6 +42,8 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
     private final String[] keyOrder;
 
     private Boolean required;
+    private Set<String> requiresAtLeastOneOf;
+    private Set<String> requiresAtMaxOneOf;
     private T defaultValue;
 
     @JsonIgnore
@@ -100,9 +104,19 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
         return self();
     }
 
-    public ValidatableProperty<P, T> optional() {
+    public P optional() {
         required = FALSE;
-        return this;
+        return self();
+    }
+
+    public P requiresAtLeastOneOf(final String... propNames) {
+        requiresAtLeastOneOf = new LinkedHashSet<>(List.of(propNames));
+        return self();
+    }
+
+    public P requiresAtMaxOneOf(final String... propNames) {
+        requiresAtMaxOneOf = new LinkedHashSet<>(List.of(propNames));
+        return self();
     }
 
     public P withDefault(final T value) {
@@ -172,28 +186,57 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
         final var result = new ArrayList<String>();
         final var props = propsProvider.directProps();
         final var propValue = props.get(propertyName);
+
         if (propValue == null) {
-            if (required) {
+            if (required == TRUE) {
                 result.add(propertyName + "' is required but missing");
             }
+            validateRequiresAtLeastOneOf(result, propsProvider);
         }
         if (propValue != null){
+            validateRequiresAtMaxOneOf(result, propsProvider);
+
             if ( type.isInstance(propValue)) {
                 //noinspection unchecked
                 validate(result, (T) propValue, propsProvider);
             } else {
                 result.add(propertyName + "' is expected to be of type " + type.getSimpleName() + ", " +
-                        "but is of type " + propValue.getClass().getSimpleName() + "");
+                        "but is of type " + propValue.getClass().getSimpleName());
             }
         }
         return result;
     }
 
+    private void validateRequiresAtLeastOneOf(final ArrayList<String> result, final PropertiesProvider propsProvider) {
+        if (requiresAtLeastOneOf != null ) {
+            final var allPropNames = propsProvider.directProps().keySet();
+            final var entriesWithValue = allPropNames.stream()
+                    .filter(name -> requiresAtLeastOneOf.contains(name))
+                    .count();
+            if (entriesWithValue == 0) {
+                result.add(propertyName + "' is required once in group " + requiresAtLeastOneOf + " but missing");
+            }
+        }
+    }
+
+    private void validateRequiresAtMaxOneOf(final ArrayList<String> result, final PropertiesProvider propsProvider) {
+        if (requiresAtMaxOneOf != null) {
+            final var allPropNames = propsProvider.directProps().keySet();
+            final var entriesWithValue = allPropNames.stream()
+                    .filter(name -> requiresAtMaxOneOf.contains(name))
+                    .count();
+            if (entriesWithValue > 1) {
+                result.add(propertyName + "' is required at max once in group " + requiresAtMaxOneOf
+                        + " but multiple properties are set");
+            }
+        }
+    }
+
     protected abstract void validate(final List<String> result, final T propValue, final PropertiesProvider propProvider);
 
     public void verifyConsistency(final Map.Entry<? extends Enum<?>, ?> typeDef) {
-        if (required == null ) {
-            throw new IllegalStateException(typeDef.getKey() + "[" + propertyName + "] not fully initialized, please call either .required() or .optional()" );
+        if (required == null && requiresAtLeastOneOf == null && requiresAtMaxOneOf == null) {
+            throw new IllegalStateException(typeDef.getKey() + "[" + propertyName + "] not fully initialized, please call either .required(), .optional(), .withDefault(...), .requiresAtLeastOneOf(...) or .requiresAtMaxOneOf(...)" );
         }
     }
 

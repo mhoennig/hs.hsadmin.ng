@@ -171,8 +171,8 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             allTheseBookingItemsAreReturned(
                     result,
                     "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 } )",
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SSD: 500, Traffic: 500 } )",
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 } )");
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPU: 2, RAM: 8, SSD: 500, Traffic: 500 } )",
+                    "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 } )");
              assertThat(result.stream().filter(bi -> bi.getRelatedHostingAsset()!=null).findAny())
                      .as("at least one relatedProject expected, but none found => fetching relatedProject does not work")
                      .isNotEmpty();
@@ -194,8 +194,8 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             exactlyTheseBookingItemsAreReturned(
                     result,
                     "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 } )",
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPUs: 2, RAM: 8, SSD: 500, Traffic: 500 } )",
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPUs: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 } )");
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPU: 2, RAM: 8, SSD: 500, Traffic: 500 } )",
+                    "HsBookingItemEntity(D-1000111:D-1000111 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 } )");
         }
     }
 
@@ -211,7 +211,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 final var foundBookingItem = em.find(HsBookingItemEntity.class, givenBookingItemUuid);
-                foundBookingItem.getResources().put("CPUs", 2);
+                foundBookingItem.getResources().put("CPU", 2);
                 foundBookingItem.getResources().remove("SSD-storage");
                 foundBookingItem.getResources().put("HSD-storage", 2048);
                 foundBookingItem.setValidity(Range.closedOpen(
@@ -336,7 +336,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     .validity(Range.closedOpen(
                             LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                     .resources(Map.ofEntries(
-                            entry("CPUs", 1),
+                            entry("CPU", 1),
                             entry("SSD-storage", 256)))
                     .build();
 

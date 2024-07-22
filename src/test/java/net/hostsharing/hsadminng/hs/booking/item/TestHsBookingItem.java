@@ -17,7 +17,7 @@ public class TestHsBookingItem {
             .type(HsBookingItemType.CLOUD_SERVER)
             .caption("test cloud server booking item")
             .resources(Map.ofEntries(
-                    entry("CPUs", 2),
+                    entry("CPU", 2),
                     entry("RAM", 4),
                     entry("SSD", 50),
                     entry("Traffic", 250)
@@ -30,7 +30,7 @@ public class TestHsBookingItem {
             .type(HsBookingItemType.MANAGED_SERVER)
             .caption("test project booking item")
             .resources(Map.ofEntries(
-                    entry("CPUs", 2),
+                    entry("CPU", 2),
                     entry("RAM", 4),
                     entry("SSD", 50),
                     entry("Traffic", 250)

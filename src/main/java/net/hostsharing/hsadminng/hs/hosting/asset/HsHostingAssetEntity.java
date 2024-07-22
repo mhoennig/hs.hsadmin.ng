@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Collections.emptyMap;
@@ -108,7 +110,7 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
     private HsOfficeContactEntity alarmContact;
 
     @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name="parentassetuuid", referencedColumnName="uuid")
+    @JoinColumn(name = "parentassetuuid", referencedColumnName = "uuid")
     private List<HsHostingAssetEntity> subHostingAssets;
 
     @Column(name = "identifier")
@@ -134,12 +136,20 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
         this.isLoaded = true;
     }
 
+    public HsBookingProjectEntity getRelatedProject() {
+        return Optional.ofNullable(bookingItem)
+                .map(HsBookingItemEntity::getRelatedProject)
+                .orElseGet(() -> Optional.ofNullable(parentAsset)
+                        .map(HsHostingAssetEntity::getRelatedProject)
+                        .orElse(null));
+    }
+
     public PatchableMapWrapper<Object> getConfig() {
-        return PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config );
+        return PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper;}, config);
     }
 
     public void putConfig(Map<String, Object> newConfig) {
-        PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper; }, config).assign(newConfig);
+        PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper;}, config).assign(newConfig);
     }
 
     @Override
@@ -150,19 +160,18 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
     @Override
     public Object getContextValue(final String propName) {
         final var v = config.get(propName);
-        if (v!= null) {
+        if (v != null) {
             return v;
         }
 
-        if (bookingItem!=null) {
+        if (bookingItem != null) {
             return bookingItem.getResources().get(propName);
         }
-        if (parentAsset!=null && parentAsset.getBookingItem()!=null) {
+        if (parentAsset != null && parentAsset.getBookingItem() != null) {
             return parentAsset.getBookingItem().getResources().get(propName);
         }
         return emptyMap();
     }
-
 
     @Override
     public String toString() {
@@ -182,9 +191,9 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
                 .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
 
                 .importEntityAlias("bookingItem", HsBookingItemEntity.class, usingDefaultCase(),
-                    dependsOnColumn("bookingItemUuid"),
-                    directlyFetchedByDependsOnColumn(),
-                    NULLABLE)
+                        dependsOnColumn("bookingItemUuid"),
+                        directlyFetchedByDependsOnColumn(),
+                        NULLABLE)
 
                 .importEntityAlias("parentAsset", HsHostingAssetEntity.class, usingDefaultCase(),
                         dependsOnColumn("parentAssetUuid"),
@@ -202,7 +211,8 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
 
-                .switchOnColumn("type",
+                .switchOnColumn(
+                        "type",
                         inCaseOf("DOMAIN_SETUP", then -> {
                             then.toRole(GLOBAL, GUEST).grantPermission(INSERT);
                         })
@@ -231,7 +241,14 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject, Properti
                     with.permission(SELECT);
                 })
 
-                .limitDiagramTo("asset", "bookingItem", "bookingItem.debitorRel", "parentAsset", "assignedToAsset", "alarmContact", "global");
+                .limitDiagramTo(
+                        "asset",
+                        "bookingItem",
+                        "bookingItem.debitorRel",
+                        "parentAsset",
+                        "assignedToAsset",
+                        "alarmContact",
+                        "global");
     }
 
     public static void main(String[] args) throws IOException {

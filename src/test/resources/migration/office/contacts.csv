@@ -1,0 +1,35 @@
+contact_id;	bp_id;	salut;	first_name;	last_name;	title;	firma;	co;	street;	zipcode;	city;	country;	phone_private;	phone_office;	phone_mobile;	fax;	email;	roles
+
+# Hostsharing, the mandate itself
+212;	213;	Firma;	Hostmaster;	Hostsharing;	;	Hostsharing e.G.;	;	;	;	;	Germany;	;	;	;	;	hostmaster@hostsharing.net;	billing,operation,contractual,partner
+
+# some natural persons
+100;	100;	Herr;	Michael;	Mellis;	;	Michael Mellis;	;	Dr. Bolte Str. 50;	26524;	Hage;	Germany;	;	+49 4931/1234567;	+49/1522123455;	+49 40 912345-9;	michael@Mellis.example.org;	billing,operation,contractual,partner,subscriber:members-announce,subscriber:operations-announce,subscriber:operations-discussion,subscriber:members-discussion,subscriber:generalversammlung
+132;	132;	Herr;	Ragnar;	Richter;	;	Ragnar IT-Beratung;	;	Vioktoriastraße 114;	70197;	Stuttgart;	Germany;	+49 711 987654-1;	+49 711 987654-2;	;	+49 711 87654-3;	hostsharing@ragnar-richter.de;	billing,operation,partner,subscriber:operations-announce,subscriber:operations-discussion
+
+# eine juristische Person mit drei separaten Ansprechpartnern, vip-contact und ex-partner
+1200;	120;	;	;	;	;	JM e.K.;	;	Wiesenweg 15;	12335;	Berlin;	DE;	+49 30 6666666;	+49 30 5555555;	;	+49 30 6666666;	jm-ex-partner@example.org;	ex-partner
+1201;	120;	Frau;	Jenny;	Meyer-Billing;	Dr.;	JM GmbH;	;	Waldweg 5;	11001;	Berlin;	DE;	+49 30 7777777;	+49 30 1111111;	;	+49 30 2222222;	jm-billing@example.org;	billing
+1202;	120;	Herr;	Andrew;	Meyer-Operation;	;	JM GmbH;	;	Waldweg 5;	11001;	Berlin;	DE;	+49 30 6666666;	+49 30 3333333;	;	+49 30 4444444;	am-operation@example.org;	operation,vip-contact,subscriber:operations-announce
+1203;	120;	Herr;	Philip;	Meyer-Contract;	;	JM GmbH;	;	Waldweg 5;	11001;	Berlin;	DE;	+49 30 6666666;	+49 30 5555555;	;	+49 30 6666666;	pm-partner@example.org;	partner,contractual,subscriber:members-announce,subscriber:customers-announce
+1204;	120;	Frau;	Tammy;	Meyer-VIP;	;	JM GmbH;	;	Waldweg 5;	11001;	Berlin;	DE;	+49 30 999999;	+49 30 999999;	;	+49 30 6666666;	tm-vip@example.org;	vip-contact
+
+# eine juristische Person mit nur einem Ansprechpartner und explizitem contractual
+1301;	122;	;	Petra;	Schmidt;	;	Test PS;	;	;	;	;	;	;	;	;	;	ps@example.com;	partner,billing,contractual,operation
+
+# eine natürliche Person, die nur Subscriber ist
+1401;	120;	Frau;	Frauke;	Fanninga;	;	;	;	Am Walde 1;	29456;	Hitzacker;	DE;	;	;	;	;	ff@example.org;	subscriber:operations-announce
+
+# eine natürliche Person als Partner
+1501;	190;	Frau;	Cecilia;	Camus;	;	;	;	Rue d'Avignion 60;	45000;	Orléans;	FR;	;	;	;	;	cc@example.org;	partner,contractual,billing,operation
+
+# some more contacts of realistic business partners
+
+90436;	541;	Frau;	Christiane;	Milberg;	;	Wasserwerk Südholstein;	;	Am Wasserwerk 1-3;	25491;	Hetlingen;	Germany;	;	;	+49 4103 12345-1;	;	rechnung@ww-sholst.example.org;	billing,partner,subscriber:members-discussion,contractual,subscriber:members-announce,subscriber:generalversammlung
+90437;	542;	Herr;	Richard;	Wiese;	;	Das Perfekte Haus;	;	Kennedyplatz 11;	45279;	Essen;	Germany;	;	;	+49-172-12345;	;	admin@das-perfekte-haus.example.org;	operation,partner,subscriber:members-discussion,contractual,subscriber:operations-announce,subscriber:operations-discussion,subscriber:members-announce,subscriber:generalversammlung
+90438;	541;	Herr;	Karim;	Metzger;	;	Wasswerwerk Südholstein;	;	Am Wasserwerk 1-3;	25491;	Hetlingen;	Germany;	;	+49 4103 12345-2;	;	;	karim.metzger@ww-sholst.example.org;	operation,subscriber:operations-announce,subscriber:operations-discussion
+90590;	542;	Herr;	Inhaber R.;	Wiese;	;	Das Perfekte Haus;	Client-ID 515217;	Essen, Kastanienallee 81;	30127;	Hannover;	Germany;	;	;	;	;	515217@kkemail.example.org;	billing
+90629;	132;	;	Ragnar;	Richter;	;	;	;	;	;	;	;	;	;	;	;	mail@ragnar-richter..example.org;	contractual,subscriber:members-announce,subscriber:members-discussion,subscriber:generalversammlung
+90677;	132;	;	Eike;	Henning;	;	;	;	;	;	;	;	;	;	;	;	hostsharing@eike-henning..example.org;	operation,subscriber:operations-announce,subscriber:operations-discussion
+90698;	132;	;	Jan;	Henning;	;	;	;	;	;	;	;	;	01577 12345678;	;	;	mail@jan-henning.example.org;	operation
+

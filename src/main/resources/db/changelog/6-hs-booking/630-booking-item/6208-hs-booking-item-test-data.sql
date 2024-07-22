@@ -33,11 +33,11 @@ begin
     managedServerUuid := uuid_generate_v4();
     insert
         into hs_booking_item (uuid, projectuuid,            type,               parentitemuuid,     caption,                    validity,                           resources)
-        values (privateCloudUuid,   relatedProject.uuid,    'PRIVATE_CLOUD',    null,               'some PrivateCloud',        daterange('20240401', null, '[]'),  '{ "CPUs": 10, "RAM": 32, "SSD": 4000, "HDD": 10000, "Traffic": 2000 }'::jsonb),
-               (uuid_generate_v4(), null,                   'MANAGED_SERVER',   privateCloudUuid,   'some ManagedServer',       daterange('20230115', '20240415',   '[)'), '{ "CPUs": 2, "RAM": 4, "SSD": 500, "Traffic": 500 }'::jsonb),
-               (uuid_generate_v4(), null,                   'CLOUD_SERVER',     privateCloudUuid,   'test CloudServer',         daterange('20230115', '20240415',   '[)'), '{ "CPUs": 2, "RAM": 4, "SSD": 750, "Traffic": 500 }'::jsonb),
-               (uuid_generate_v4(), null,                   'CLOUD_SERVER',     privateCloudUuid,   'prod CloudServer',         daterange('20230115', '20240415',   '[)'), '{ "CPUs": 4, "RAM": 16, "SSD": 1000, "Traffic": 500 }'::jsonb),
-               (managedServerUuid,  relatedProject.uuid,    'MANAGED_SERVER',   null,               'separate ManagedServer',   daterange('20221001', null, '[]'),  '{ "CPUs": 2, "RAM": 8, "SSD": 500, "Traffic": 500 }'::jsonb),
+        values (privateCloudUuid,   relatedProject.uuid,    'PRIVATE_CLOUD',    null,               'some PrivateCloud',        daterange('20240401', null, '[]'),  '{ "CPU": 10, "RAM": 32, "SSD": 4000, "HDD": 10000, "Traffic": 2000 }'::jsonb),
+               (uuid_generate_v4(), null,                   'MANAGED_SERVER',   privateCloudUuid,   'some ManagedServer',       daterange('20230115', '20240415',   '[)'), '{ "CPU": 2, "RAM": 4, "SSD": 500, "Traffic": 500 }'::jsonb),
+               (uuid_generate_v4(), null,                   'CLOUD_SERVER',     privateCloudUuid,   'test CloudServer',         daterange('20230115', '20240415',   '[)'), '{ "CPU": 2, "RAM": 4, "SSD": 750, "Traffic": 500 }'::jsonb),
+               (uuid_generate_v4(), null,                   'CLOUD_SERVER',     privateCloudUuid,   'prod CloudServer',         daterange('20230115', '20240415',   '[)'), '{ "CPU": 4, "RAM": 16, "SSD": 1000, "Traffic": 500 }'::jsonb),
+               (managedServerUuid,  relatedProject.uuid,    'MANAGED_SERVER',   null,               'separate ManagedServer',   daterange('20221001', null, '[]'),  '{ "CPU": 2, "RAM": 8, "SSD": 500, "Traffic": 500 }'::jsonb),
                (uuid_generate_v4(), null,                   'MANAGED_WEBSPACE', managedServerUuid,  'some ManagedWebspace',     daterange('20221001', null, '[]'),  '{ "SSD": 50, "Traffic": 20, "Daemons": 2, "Multi": 4 }'::jsonb),
                (uuid_generate_v4(), relatedProject.uuid,    'MANAGED_WEBSPACE', null,               'separate ManagedWebspace', daterange('20221001', null, '[]'),  '{ "SSD": 100, "Traffic": 50, "Daemons": 0, "Multi": 1 }'::jsonb);
 end; $$;

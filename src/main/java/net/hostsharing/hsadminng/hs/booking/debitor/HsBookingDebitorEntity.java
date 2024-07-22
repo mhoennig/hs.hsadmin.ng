@@ -18,7 +18,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 // a partial HsOfficeDebitorEntity to reduce the number of SQL queries to load the entity
 @Entity
-@Table(name = "hs_booking_debitor_rv")
+@Table(name = "hs_booking_debitor_xv")
 @Getter
 @Builder
 @NoArgsConstructor

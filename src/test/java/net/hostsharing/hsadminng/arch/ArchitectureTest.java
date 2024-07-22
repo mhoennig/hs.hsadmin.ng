@@ -51,7 +51,7 @@ public class ArchitectureTest {
                     "..hs.office.coopshares",
                     "..hs.office.debitor",
                     "..hs.office.membership",
-                    "..hs.office.migration",
+                    "..hs.migration",
                     "..hs.office.partner",
                     "..hs.office.person",
                     "..hs.office.relation",
@@ -156,6 +156,7 @@ public class ArchitectureTest {
                     "..hs.office.(*)..",
                     "..hs.booking.(*)..",
                     "..hs.hosting.(*)..",
+                    "..hs.migration",
                     "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
             );
 
@@ -167,7 +168,8 @@ public class ArchitectureTest {
             .resideInAnyPackage(
                     "..hs.booking.(*)..",
                     "..hs.hosting.(*)..",
-                    "..hs.validation" // TODO.impl: Some Validators need to be refactored to booking package.
+                    "..hs.validation", // TODO.impl: Some Validators need to be refactored to booking package.
+                    "..hs.migration.."
             );
 
     @ArchTest
@@ -177,7 +179,8 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.hosting.(*)..",
-                    "..hs.booking.(*).." // TODO.impl: fix this cyclic dependency
+                    "..hs.booking.(*)..", // TODO.impl: fix this cyclic dependency
+                    "..hs.migration.."
             );
 
     @ArchTest
@@ -189,7 +192,7 @@ public class ArchitectureTest {
                     "..hs.office.bankaccount..",
                     "..hs.office.sepamandate..",
                     "..hs.office.debitor..",
-                    "..hs.office.migration..");
+                    "..hs.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -199,7 +202,7 @@ public class ArchitectureTest {
             .resideInAnyPackage(
                     "..hs.office.sepamandate..",
                     "..hs.office.debitor..",
-                    "..hs.office.migration..");
+                    "..hs.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -212,7 +215,7 @@ public class ArchitectureTest {
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
-                    "..hs.office.migration..",
+                    "..hs.migration..",
                     "..hs.hosting.asset.."
                     );
 
@@ -227,7 +230,7 @@ public class ArchitectureTest {
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
-                    "..hs.office.migration..")
+                    "..hs.migration..")
             .orShould().haveNameNotMatching(".*Test$");
 
 
@@ -239,7 +242,7 @@ public class ArchitectureTest {
             .resideInAnyPackage(
                     "..hs.office.relation..",
                     "..hs.office.partner..",
-                    "..hs.office.migration..")
+                    "..hs.migration..")
             .orShould().haveNameNotMatching(".*Test$");
 
     @ArchTest
@@ -251,7 +254,7 @@ public class ArchitectureTest {
                     "..hs.office.partner..",
                     "..hs.office.debitor..",
                     "..hs.office.membership..",
-                    "..hs.office.migration..")
+                    "..hs.migration..")
             .orShould().haveNameNotMatching(".*Test$");
 
     @ArchTest
@@ -263,7 +266,7 @@ public class ArchitectureTest {
                     "..hs.office.membership..",
                     "..hs.office.coopassets..",
                     "..hs.office.coopshares..",
-                    "..hs.office.migration..");
+                    "..hs.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -272,7 +275,7 @@ public class ArchitectureTest {
         .should().onlyBeAccessed().byClassesThat()
         .resideInAnyPackage(
                 "..hs.office.coopassets..",
-                "..hs.office.migration..");
+                "..hs.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
@@ -281,14 +284,14 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.office.coopshares..",
-                    "..hs.office.migration..");
+                    "..hs.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule hsOfficeMigrationPackageRule = classes()
-            .that().resideInAPackage("..hs.office.migration..")
+            .that().resideInAPackage("..hs.migration..")
             .should().onlyBeAccessed().byClassesThat()
-            .resideInAnyPackage("..hs.office.migration..");
+            .resideInAnyPackage("..hs.migration..");
 
     @ArchTest
     @SuppressWarnings("unused")

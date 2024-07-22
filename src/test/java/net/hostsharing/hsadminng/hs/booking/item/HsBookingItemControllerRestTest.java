@@ -92,7 +92,7 @@ class HsBookingItemControllerRestTest {
                                 "caption": "some new booking",
                                 "validTo": "{validTo}",
                                 "garbage": "should not be accepted",
-                                "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
+                                "resources": { "CPU": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
                             }
                             """
                                     .replace("{projectUuid}", givenProjectUuid.toString())
@@ -108,7 +108,7 @@ class HsBookingItemControllerRestTest {
                                 "caption": "some new booking",
                                 "validFrom": "{today}",
                                 "validTo": "{todayPlus1Month}",
-                                "resources": { "CPUs": 12, "SSD": 100, "Traffic": 250 }
+                                "resources": { "CPU": 12, "SSD": 100, "Traffic": 250 }
                              }
                             """
                                     .replace("{today}", LocalDate.now().toString())
@@ -141,7 +141,7 @@ class HsBookingItemControllerRestTest {
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validFrom": "{validFrom}",
-                                "resources": { "CPUs": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
+                                "resources": { "CPU": 12, "RAM": 4, "SSD": 100, "Traffic": 250 }
                             }
                             """
                                     .replace("{projectUuid}", givenProjectUuid.toString())
@@ -159,7 +159,7 @@ class HsBookingItemControllerRestTest {
                                 "caption": "some new booking",
                                 "validFrom": "{today}",
                                 "validTo": null,
-                                "resources": { "CPUs": 12, "SSD": 100, "Traffic": 250 }
+                                "resources": { "CPU": 12, "SSD": 100, "Traffic": 250 }
                              }
                             """
                             .replace("{today}", LocalDate.now().toString())

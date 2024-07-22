@@ -16,7 +16,7 @@ class HsHostingAssetEntityUnitTest {
             .identifier("vm1234")
             .caption("some managed asset")
             .config(Map.ofEntries(
-                    entry("CPUs", 2),
+                    entry("CPU", 2),
                     entry("SSD-storage", 512),
                     entry("HDD-storage", 2048)))
             .build();
@@ -27,7 +27,7 @@ class HsHostingAssetEntityUnitTest {
             .identifier("xyz00")
             .caption("some managed webspace")
             .config(Map.ofEntries(
-                    entry("CPUs", 2),
+                    entry("CPU", 2),
                     entry("SSD-storage", 512),
                     entry("HDD-storage", 2048)))
             .build();
@@ -58,7 +58,7 @@ class HsHostingAssetEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
 
         assertThat(givenWebspace.toString()).isEqualToIgnoringWhitespace(
-                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1234500:test project:test cloud server booking item, { \"CPUs\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
+                "HsHostingAssetEntity(MANAGED_WEBSPACE, xyz00, some managed webspace, MANAGED_SERVER:vm1234, D-1234500:test project:test cloud server booking item, { \"CPU\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
 
         assertThat(givenUnixUser.toString()).isEqualToIgnoringWhitespace(
                 "HsHostingAssetEntity(UNIX_USER, xyz00-web, some unix-user, MANAGED_WEBSPACE:xyz00, { \"HDD-hard-quota\": 512, \"HDD-soft-quota\": 256, \"SSD-hard-quota\": 256, \"SSD-soft-quota\": 128 })");

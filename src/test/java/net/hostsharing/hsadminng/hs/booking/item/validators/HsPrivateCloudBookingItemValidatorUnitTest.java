@@ -11,6 +11,7 @@ import static java.util.Map.ofEntries;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.PRIVATE_CLOUD;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsPrivateCloudBookingItemValidatorUnitTest {
@@ -28,9 +29,10 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
         // given
         final var privateCloudBookingItemEntity = HsBookingItemEntity.builder()
                 .type(PRIVATE_CLOUD)
+                .project(TEST_PROJECT)
                 .caption("myPC")
                 .resources(ofEntries(
-                        entry("CPUs", 4),
+                        entry("CPU", 4),
                         entry("RAM", 20),
                         entry("SSD", 100),
                         entry("Traffic", 5000),
@@ -42,7 +44,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                                 .type(MANAGED_SERVER)
                                 .caption("myMS-1")
                                 .resources(ofEntries(
-                                        entry("CPUs", 2),
+                                        entry("CPU", 2),
                                         entry("RAM", 10),
                                         entry("SSD", 50),
                                         entry("Traffic", 2500),
@@ -54,7 +56,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                                 .type(CLOUD_SERVER)
                                 .caption("myMS-2")
                                 .resources(ofEntries(
-                                        entry("CPUs", 2),
+                                        entry("CPU", 2),
                                         entry("RAM", 10),
                                         entry("SSD", 50),
                                         entry("Traffic", 2500),
@@ -80,7 +82,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                 .type(PRIVATE_CLOUD)
                 .caption("myPC")
                 .resources(ofEntries(
-                        entry("CPUs", 4),
+                        entry("CPU", 4),
                         entry("RAM", 20),
                         entry("SSD", 100),
                         entry("Traffic", 5000),
@@ -92,7 +94,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                                 .type(MANAGED_SERVER)
                                 .caption("myMS-1")
                                 .resources(ofEntries(
-                                        entry("CPUs", 3),
+                                        entry("CPU", 3),
                                         entry("RAM", 20),
                                         entry("SSD", 100),
                                         entry("Traffic", 3000),
@@ -104,7 +106,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                                 .type(CLOUD_SERVER)
                                 .caption("myMS-2")
                                 .resources(ofEntries(
-                                        entry("CPUs", 2),
+                                        entry("CPU", 2),
                                         entry("RAM", 10),
                                         entry("SSD", 50),
                                         entry("Traffic", 2500),
@@ -124,7 +126,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'D-12345:Test-Project:myPC.resources.CPUs' maximum total is 4, but actual total CPUs is 5",
+                "'D-12345:Test-Project:myPC.resources.CPU' maximum total is 4, but actual total CPU is 5",
                 "'D-12345:Test-Project:myPC.resources.RAM' maximum total is 20 GB, but actual total RAM is 30 GB",
                 "'D-12345:Test-Project:myPC.resources.SSD' maximum total is 100 GB, but actual total SSD is 150 GB",
                 "'D-12345:Test-Project:myPC.resources.Traffic' maximum total is 5000 GB, but actual total Traffic is 5500 GB",

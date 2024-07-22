@@ -11,11 +11,12 @@ class HsCloudServerBookingItemValidator extends HsBookingItemEntityValidator {
             // @formatter:off
             booleanProperty("active")                                       .withDefault(true),
 
-            integerProperty("CPUs")                 .min(  1)   .max(   32) .required(),
-            integerProperty("RAM").unit("GB")       .min(  1)   .max(  128) .required(),
-            integerProperty("SSD").unit("GB")       .min(  0)   .max( 1000) .step(25).required(), // (1)
-            integerProperty("HDD").unit("GB")       .min(  0)   .max( 4000) .step(250).withDefault(0),
-            integerProperty("Traffic").unit("GB")   .min(250)   .max(10000) .step(250).required(),
+            integerProperty("CPU")                  .min(  1)   .max(   32) .required(),
+            integerProperty("RAM").unit("GB")       .min(  1)   .max( 8192) .required(),
+            integerProperty("SSD").unit("GB")       .min( 25)   .max( 1000) .step(25).requiresAtLeastOneOf("SDD", "HDD"),
+            integerProperty("HDD").unit("GB")       .min(250)   .max( 4000) .step(250).requiresAtLeastOneOf("SSD", "HDD"),
+            integerProperty("Traffic").unit("GB")   .min(250)   .max(10000) .step(250).requiresAtMaxOneOf("Bandwidth", "Traffic"),
+            integerProperty("Bandwidth").unit("GB") .min(250)   .max(10000) .step(250).requiresAtMaxOneOf("Bandwidth", "Traffic"), // TODO.spec
 
             enumerationProperty("SLA-Infrastructure").values("BASIC", "EXT8H", "EXT4H", "EXT2H").optional()
             // @formatter:on

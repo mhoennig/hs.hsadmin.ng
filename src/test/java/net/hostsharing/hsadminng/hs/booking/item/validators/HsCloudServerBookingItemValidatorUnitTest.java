@@ -33,7 +33,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test-Server")
                 .resources(Map.ofEntries(
-                        entry("CPUs", 2),
+                        entry("CPU", 2),
                         entry("RAM", 25),
                         entry("SSD", 25),
                         entry("Traffic", 250),
@@ -56,11 +56,12 @@ class HsCloudServerBookingItemValidatorUnitTest {
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
                 "{type=boolean, propertyName=active, defaultValue=true}",
-                "{type=integer, propertyName=CPUs, min=1, max=32, required=true}",
-                "{type=integer, propertyName=RAM, unit=GB, min=1, max=128, required=true}",
-                "{type=integer, propertyName=SSD, unit=GB, min=0, max=1000, step=25, required=true}",
-                "{type=integer, propertyName=HDD, unit=GB, min=0, max=4000, step=250, defaultValue=0}",
-                "{type=integer, propertyName=Traffic, unit=GB, min=250, max=10000, step=250, required=true}",
+                "{type=integer, propertyName=CPU, min=1, max=32, required=true}",
+                "{type=integer, propertyName=RAM, unit=GB, min=1, max=8192, required=true}",
+                "{type=integer, propertyName=SSD, unit=GB, min=25, max=1000, step=25, requiresAtLeastOneOf=[SDD, HDD]}",
+                "{type=integer, propertyName=HDD, unit=GB, min=250, max=4000, step=250, requiresAtLeastOneOf=[SSD, HDD]}",
+                "{type=integer, propertyName=Traffic, unit=GB, min=250, max=10000, step=250, requiresAtMaxOneOf=[Bandwidth, Traffic]}",
+                "{type=integer, propertyName=Bandwidth, unit=GB, min=250, max=10000, step=250, requiresAtMaxOneOf=[Bandwidth, Traffic]}",
                 "{type=enumeration, propertyName=SLA-Infrastructure, values=[BASIC, EXT8H, EXT4H, EXT2H]}");
     }
 
@@ -71,7 +72,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                 .type(CLOUD_SERVER)
                 .caption("Test Cloud-Server")
                 .resources(ofEntries(
-                        entry("CPUs", 2),
+                        entry("CPU", 2),
                         entry("RAM", 10),
                         entry("SSD", 50),
                         entry("Traffic", 2500)
@@ -81,7 +82,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                 .type(MANAGED_SERVER)
                 .caption("Test Managed-Server")
                 .resources(ofEntries(
-                        entry("CPUs", 3),
+                        entry("CPU", 3),
                         entry("RAM", 20),
                         entry("SSD", 100),
                         entry("Traffic", 3000)
@@ -92,7 +93,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test Cloud")
                 .resources(ofEntries(
-                        entry("CPUs", 4),
+                        entry("CPU", 4),
                         entry("RAM", 20),
                         entry("SSD", 100),
                         entry("Traffic", 5000)
@@ -110,7 +111,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'D-12345:Test-Project:Test Cloud.resources.CPUs' maximum total is 4, but actual total CPUs is 5",
+                "'D-12345:Test-Project:Test Cloud.resources.CPU' maximum total is 4, but actual total CPU is 5",
                 "'D-12345:Test-Project:Test Cloud.resources.RAM' maximum total is 20 GB, but actual total RAM is 30 GB",
                 "'D-12345:Test-Project:Test Cloud.resources.SSD' maximum total is 100 GB, but actual total SSD is 150 GB",
                 "'D-12345:Test-Project:Test Cloud.resources.Traffic' maximum total is 5000 GB, but actual total Traffic is 5500 GB"

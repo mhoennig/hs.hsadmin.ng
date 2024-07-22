@@ -18,7 +18,7 @@ class HsManagedWebspaceHostingAssetValidator extends HostingAssetEntityValidator
     protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
         final var prefixPattern =
                 !assetEntity.isLoaded()
-                        ? assetEntity.getParentAsset().getBookingItem().getProject().getDebitor().getDefaultPrefix()
+                        ? assetEntity.getRelatedProject().getDebitor().getDefaultPrefix()
                         : "[a-z][a-z0-9][a-z0-9]";
         return Pattern.compile("^" + prefixPattern + "[0-9][0-9]$");
     }

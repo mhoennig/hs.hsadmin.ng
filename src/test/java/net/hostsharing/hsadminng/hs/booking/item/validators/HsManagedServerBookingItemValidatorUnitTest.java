@@ -40,7 +40,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
                 .type(MANAGED_SERVER)
                 .project(project)
                 .resources(Map.ofEntries(
-                        entry("CPUs", 2),
+                        entry("CPU", 2),
                         entry("RAM", 25),
                         entry("SSD", 25),
                         entry("Traffic", 250),
@@ -63,11 +63,12 @@ class HsManagedServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
-                "{type=integer, propertyName=CPUs, min=1, max=32, required=true}",
+                "{type=integer, propertyName=CPU, min=1, max=32, required=true}",
                 "{type=integer, propertyName=RAM, unit=GB, min=1, max=128, required=true}",
-                "{type=integer, propertyName=SSD, unit=GB, min=25, max=1000, step=25, required=true, isTotalsValidator=true, thresholdPercentage=200}",
-                "{type=integer, propertyName=HDD, unit=GB, min=0, max=4000, step=250, defaultValue=0, isTotalsValidator=true, thresholdPercentage=200}",
-                "{type=integer, propertyName=Traffic, unit=GB, min=250, max=10000, step=250, required=true, isTotalsValidator=true, thresholdPercentage=200}",
+                "{type=integer, propertyName=SSD, unit=GB, min=25, max=2000, step=25, requiresAtLeastOneOf=[SSD, HDD], isTotalsValidator=true, thresholdPercentage=200}",
+                "{type=integer, propertyName=HDD, unit=GB, min=250, max=10000, step=250, requiresAtLeastOneOf=[SSD, HDD], isTotalsValidator=true, thresholdPercentage=200}",
+                "{type=integer, propertyName=Traffic, unit=GB, min=250, max=64000, step=250, requiresAtMaxOneOf=[Bandwidth, Traffic], isTotalsValidator=true, thresholdPercentage=200}",
+                "{type=integer, propertyName=Bandwidth, unit=GB, min=250, max=64000, step=250, requiresAtMaxOneOf=[Bandwidth, Traffic], isTotalsValidator=true, thresholdPercentage=200}",
                 "{type=enumeration, propertyName=SLA-Platform, values=[BASIC, EXT8H, EXT4H, EXT2H], defaultValue=BASIC}",
                 "{type=boolean, propertyName=SLA-EMail}", // TODO.impl: falseIf-validation is missing in output
                 "{type=boolean, propertyName=SLA-Maria}",
@@ -82,7 +83,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
         final var subCloudServerBookingItemEntity = HsBookingItemEntity.builder()
                 .type(CLOUD_SERVER)
                 .resources(ofEntries(
-                        entry("CPUs", 2),
+                        entry("CPU", 2),
                         entry("RAM", 10),
                         entry("SSD", 50),
                         entry("Traffic", 2500)
@@ -91,7 +92,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
         final HsBookingItemEntity subManagedServerBookingItemEntity = HsBookingItemEntity.builder()
                 .type(MANAGED_SERVER)
                 .resources(ofEntries(
-                        entry("CPUs", 3),
+                        entry("CPU", 3),
                         entry("RAM", 20),
                         entry("SSD", 100),
                         entry("Traffic", 3000)
@@ -101,7 +102,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
                 .type(PRIVATE_CLOUD)
                 .project(project)
                 .resources(ofEntries(
-                        entry("CPUs", 4),
+                        entry("CPU", 4),
                         entry("RAM", 20),
                         entry("SSD", 100),
                         entry("Traffic", 5000)
@@ -120,7 +121,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'D-12345:Test-Project:null.resources.CPUs' maximum total is 4, but actual total CPUs is 5",
+                "'D-12345:Test-Project:null.resources.CPU' maximum total is 4, but actual total CPU is 5",
                 "'D-12345:Test-Project:null.resources.RAM' maximum total is 20 GB, but actual total RAM is 30 GB",
                 "'D-12345:Test-Project:null.resources.SSD' maximum total is 100 GB, but actual total SSD is 150 GB",
                 "'D-12345:Test-Project:null.resources.Traffic' maximum total is 5000 GB, but actual total Traffic is 5500 GB"

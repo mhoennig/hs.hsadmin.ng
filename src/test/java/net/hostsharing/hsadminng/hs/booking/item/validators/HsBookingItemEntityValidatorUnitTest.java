@@ -38,7 +38,7 @@ class HsBookingItemEntityValidatorUnitTest {
         // then
         assertThat(result).isInstanceOf(ValidationException.class)
                 .hasMessageContaining(
-                        "'D-12345:test project:Test-Server.resources.CPUs' is required but missing",
+                        "'D-12345:test project:Test-Server.resources.CPU' is required but missing",
                         "'D-12345:test project:Test-Server.resources.RAM' is required but missing",
                         "'D-12345:test project:Test-Server.resources.SSD' is required but missing",
                         "'D-12345:test project:Test-Server.resources.Traffic' is required but missing");
