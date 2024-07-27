@@ -40,7 +40,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Partner")
-public class HsOfficePartnerEntity implements Stringifyable, RbacObject {
+public class HsOfficePartnerEntity implements Stringifyable, RbacObject<HsOfficePartnerEntity> {
 
     public static final String PARTNER_NUMBER_TAG = "P-";
 
@@ -66,14 +66,22 @@ public class HsOfficePartnerEntity implements Stringifyable, RbacObject {
     @Column(name = "partnernumber", columnDefinition = "numeric(5) not null")
     private Integer partnerNumber;
 
-    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false)
+    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "partnerreluuid", nullable = false)
     private HsOfficeRelationEntity partnerRel;
 
-    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = true)
+    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "detailsuuid")
     @NotFound(action = NotFoundAction.IGNORE)
     private HsOfficePartnerDetailsEntity details;
+
+    @Override
+    public HsOfficePartnerEntity load() {
+        RbacObject.super.load();
+        partnerRel.load();
+        details.load();
+        return this;
+    }
 
     public String getTaggedPartnerNumber() {
         return PARTNER_NUMBER_TAG + partnerNumber;

@@ -21,6 +21,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -61,7 +62,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Membership")
-public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
+public class HsOfficeMembershipEntity implements RbacObject<HsOfficeMembershipEntity>, Stringifyable {
 
     public static final String MEMBER_NUMBER_TAG = "M-";
     public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
@@ -80,7 +81,7 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
     @Version
     private int version;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partneruuid")
     private HsOfficePartnerEntity partner;
 
@@ -98,6 +99,13 @@ public class HsOfficeMembershipEntity implements RbacObject, Stringifyable {
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private HsOfficeMembershipStatus status;
+
+    @Override
+    public HsOfficeMembershipEntity load() {
+        RbacObject.super.load();
+        partner.load();
+        return this;
+    }
 
     public void setValidFrom(final LocalDate validFrom) {
         setValidity(toPostgresDateRange(validFrom, getValidTo()));

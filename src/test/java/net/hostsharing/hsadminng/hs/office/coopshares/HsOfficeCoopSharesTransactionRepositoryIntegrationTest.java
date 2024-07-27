@@ -61,7 +61,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             // given
             context("superuser-alex@hostsharing.net");
             final var count = coopSharesTransactionRepo.count();
-            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
+            final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101).load();
 
             // when
             final var result = attempt(em, () -> {
@@ -118,7 +118,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
 
         private void assertThatCoopSharesTransactionIsPersisted(final HsOfficeCoopSharesTransactionEntity saved) {
             final var found = coopSharesTransactionRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(HsOfficeCoopSharesTransactionEntity::toString).isEqualTo(saved.toString());
         }
     }
 

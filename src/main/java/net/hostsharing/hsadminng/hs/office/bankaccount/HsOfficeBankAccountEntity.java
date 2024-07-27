@@ -27,7 +27,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("BankAccount")
-public class HsOfficeBankAccountEntity implements RbacObject, Stringifyable {
+public class HsOfficeBankAccountEntity implements RbacObject<HsOfficeBankAccountEntity>, Stringifyable {
 
     private static Stringify<HsOfficeBankAccountEntity> toString = stringify(HsOfficeBankAccountEntity.class, "bankAccount")
             .withIdProp(HsOfficeBankAccountEntity::getIban)

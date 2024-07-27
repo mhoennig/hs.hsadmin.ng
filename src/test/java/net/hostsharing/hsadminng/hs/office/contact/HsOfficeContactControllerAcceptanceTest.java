@@ -309,7 +309,10 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(204); // @formatter:on
 
             // then the given contact is gone
-            assertThat(contactRepo.findByUuid(givenContact.getUuid())).isEmpty();
+            jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", null);
+                assertThat(contactRepo.findByUuid(givenContact.getUuid())).isEmpty();
+            }).assertSuccessful();
         }
 
         @Test
@@ -326,7 +329,10 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .statusCode(204); // @formatter:on
 
             // then the given contact is still there
-            assertThat(contactRepo.findByUuid(givenContact.getUuid())).isEmpty();
+            jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", null);
+                assertThat(contactRepo.findByUuid(givenContact.getUuid())).isEmpty();
+            }).assertSuccessful();
         }
 
         @Test

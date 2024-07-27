@@ -90,7 +90,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
 
         private void assertThatCustomerIsPersisted(final TestCustomerEntity saved) {
             final var found = testCustomerRepository.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 

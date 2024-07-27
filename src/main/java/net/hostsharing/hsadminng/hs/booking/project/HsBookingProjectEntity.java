@@ -34,7 +34,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsBookingProjectEntity implements Stringifyable, RbacObject {
+public class HsBookingProjectEntity implements Stringifyable, RbacObject<HsBookingProjectEntity> {
 
     private static Stringify<HsBookingProjectEntity> stringify = stringify(HsBookingProjectEntity.class)
             .withProp(HsBookingProjectEntity::getDebitor)

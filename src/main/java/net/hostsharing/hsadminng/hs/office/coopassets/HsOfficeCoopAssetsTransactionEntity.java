@@ -41,7 +41,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("CoopAssetsTransaction")
-public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacObject {
+public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacObject<HsOfficeCoopAssetsTransactionEntity> {
 
     private static Stringify<HsOfficeCoopAssetsTransactionEntity> stringify = stringify(HsOfficeCoopAssetsTransactionEntity.class)
             .withIdProp(HsOfficeCoopAssetsTransactionEntity::getTaggedMemberNumber)
@@ -104,6 +104,13 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
 
     @OneToOne(mappedBy = "adjustedAssetTx")
     private HsOfficeCoopAssetsTransactionEntity adjustmentAssetTx;
+
+    @Override
+    public HsOfficeCoopAssetsTransactionEntity load() {
+        RbacObject.super.load();
+        membership.load();
+        return this;
+    }
 
     public String getTaggedMemberNumber() {
         return ofNullable(membership).map(HsOfficeMembershipEntity::toShortString).orElse("M-???????");

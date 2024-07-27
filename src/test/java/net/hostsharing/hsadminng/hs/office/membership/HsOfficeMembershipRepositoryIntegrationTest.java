@@ -75,7 +75,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                         .validity(Range.closedInfinite(LocalDate.parse("2020-01-01")))
                         .membershipFeeBillable(true)
                         .build();
-                return toCleanup(membershipRepo.save(newMembership));
+                return toCleanup(membershipRepo.save(newMembership).load());
             });
 
             // then
@@ -143,7 +143,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
         private void assertThatMembershipIsPersisted(final HsOfficeMembershipEntity saved) {
             final var found = membershipRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString()) ;
         }
     }
 
@@ -203,7 +203,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         public void globalAdmin_canUpdateValidityOfArbitraryMembership() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenMembership = givenSomeTemporaryMembership("First", "11");
+            final var givenMembership =  givenSomeTemporaryMembership("First", "11");
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             final var newValidityEnd = LocalDate.now();
 
@@ -214,13 +214,12 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                 givenMembership.setValidity(Range.closedOpen(
                         givenMembership.getValidity().lower(), newValidityEnd));
                 givenMembership.setStatus(HsOfficeMembershipStatus.CANCELLED);
-                return toCleanup(membershipRepo.save(givenMembership));
+                final HsOfficeMembershipEntity entity = membershipRepo.save(givenMembership);
+                return toCleanup(entity.load());
             });
 
             // then
             result.assertSuccessful();
-
-            membershipRepo.deleteByUuid(givenMembership.getUuid());
         }
 
         @Test
@@ -363,7 +362,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                     .membershipFeeBillable(true)
                     .build();
 
-            return toCleanup(membershipRepo.save(newMembership));
+            return toCleanup(membershipRepo.save(newMembership).load());
         }).assertSuccessful().returnedValue();
     }
 

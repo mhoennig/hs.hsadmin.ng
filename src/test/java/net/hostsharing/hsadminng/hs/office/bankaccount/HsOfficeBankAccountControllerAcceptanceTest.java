@@ -287,7 +287,10 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                     .statusCode(204); // @formatter:on
 
             // then the given bankaccount is still there
-            assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isEmpty();
+            jpaAttempt.transacted(() -> {
+                context("superuser-alex@hostsharing.net", null);
+                assertThat(bankAccountRepo.findByUuid(givenBankAccount.getUuid())).isEmpty();
+            }).assertSuccessful();
         }
 
         @Test

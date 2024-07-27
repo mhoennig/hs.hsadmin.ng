@@ -70,7 +70,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsHostingAssetEntity implements Stringifyable, RbacObject, PropertiesProvider {
+public class HsHostingAssetEntity implements Stringifyable, RbacObject<HsHostingAssetEntity>, PropertiesProvider {
 
     private static Stringify<HsHostingAssetEntity> stringify = stringify(HsHostingAssetEntity.class)
             .withProp(HsHostingAssetEntity::getType)

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres-with-contrib:15.5-bookworm
+    container_name: custom-postgres
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - /home/mi/Projekte/Hostsharing/hsadmin-ng/etc/postgresql-log-slow-queries.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5432:5432"
+    command:
+      - bash
+      - -c
+      - >
+        apt-get update &&
+        apt-get install -y postgresql-contrib &&
+        docker-entrypoint.sh postgres -c config_file=/etc/postgresql/postgresql.conf

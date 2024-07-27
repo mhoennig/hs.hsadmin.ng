@@ -180,7 +180,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
 
         private void assertThatPartnerIsPersisted(final HsOfficePartnerEntity saved) {
             final var found = partnerRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 
@@ -473,7 +473,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                 .anchor(givenMandantorPerson)
                 .contact(givenContact)
                 .build();
-        relationRepo.save(partnerRel);
+        relationRepo.save(partnerRel).load();
         return partnerRel;
     }
 

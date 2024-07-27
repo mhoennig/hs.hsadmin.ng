@@ -372,6 +372,9 @@ create table RbacPermission
     op          RbacOp not null,
     opTableName varchar(60)
 );
+-- TODO.perf: check if these indexes are really useful
+create index on RbacPermission (objectUuid, op);
+create index on RbacPermission (opTableName, op);
 
 ALTER TABLE RbacPermission
     ADD CONSTRAINT RbacPermission_uc UNIQUE NULLS NOT DISTINCT (objectUuid, op, opTableName);
@@ -495,78 +498,68 @@ create index on RbacGrants (ascendantUuid);
 create index on RbacGrants (descendantUuid);
 
 call create_journal('RbacGrants');
-
 create or replace function findGrantees(grantedId uuid)
     returns setof RbacReference
     returns null on null input
     language sql as $$
-select reference.*
-    from (with recursive grants as (select descendantUuid,
-                                           ascendantUuid
-                                        from RbacGrants
-                                        where descendantUuid = grantedId
-                                    union all
-                                    select "grant".descendantUuid,
-                                           "grant".ascendantUuid
-                                        from RbacGrants "grant"
-                                                 inner join grants recur on recur.ascendantUuid = "grant".descendantUuid)
-          select ascendantUuid
-              from grants) as grantee
-             join RbacReference reference on reference.uuid = grantee.ascendantUuid;
+with recursive grants as (
+    select descendantUuid, ascendantUuid
+        from RbacGrants
+        where descendantUuid = grantedId
+    union all
+    select g.descendantUuid, g.ascendantUuid
+        from RbacGrants g
+                 inner join grants on grants.ascendantUuid = g.descendantUuid
+)
+select ref.*
+    from grants
+             join RbacReference ref on ref.uuid = grants.ascendantUuid;
+$$;
+
+create or replace function isGranted(granteeIds uuid[], grantedId uuid)
+    returns bool
+    returns null on null input
+    language sql as $$
+with recursive grants as (
+    select descendantUuid, ascendantUuid
+        from RbacGrants
+        where descendantUuid = grantedId
+    union all
+    select "grant".descendantUuid, "grant".ascendantUuid
+        from RbacGrants "grant"
+                 inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
+)
+select exists (
+    select true
+        from grants
+        where ascendantUuid = any(granteeIds)
+) or grantedId = any(granteeIds);
 $$;
 
 create or replace function isGranted(granteeId uuid, grantedId uuid)
     returns bool
     returns null on null input
     language sql as $$
-select granteeId = grantedId or granteeId in (with recursive grants as (select descendantUuid, ascendantUuid
-                                                                            from RbacGrants
-                                                                            where descendantUuid = grantedId
-                                                                        union all
-                                                                        select "grant".descendantUuid, "grant".ascendantUuid
-                                                                            from RbacGrants "grant"
-                                                                                     inner join grants recur on recur.ascendantUuid = "grant".descendantUuid)
-                                              select ascendantUuid
-                                                  from grants);
+select * from isGranted(array[granteeId], grantedId);
 $$;
-
-create or replace function isGranted(granteeIds uuid[], grantedId uuid)
-    returns bool
-    returns null on null input
-    language plpgsql as $$
-declare
-    granteeId uuid;
-begin
-    -- TODO.perf: needs optimization
-    foreach granteeId in array granteeIds
-        loop
-            if isGranted(granteeId, grantedId) then
-                return true;
-            end if;
-        end loop;
-    return false;
-end; $$;
-
 create or replace function isPermissionGrantedToSubject(permissionId uuid, subjectId uuid)
     returns BOOL
     stable -- leakproof
     language sql as $$
+with recursive grants as (
+    select descendantUuid, ascendantUuid
+        from RbacGrants
+        where descendantUuid = permissionId
+    union all
+    select g.descendantUuid, g.ascendantUuid
+        from RbacGrants g
+                 inner join grants on grants.ascendantUuid = g.descendantUuid
+)
 select exists(
-           select *
-               from RbacUser
-               where uuid in (with recursive grants as (select descendantUuid,
-                                                               ascendantUuid
-                                                            from RbacGrants g
-                                                            where g.descendantUuid = permissionId
-                                                        union all
-                                                        select g.descendantUuid,
-                                                               g.ascendantUuid
-                                                            from RbacGrants g
-                                                                     inner join grants recur on recur.ascendantUuid = g.descendantUuid)
-                              select ascendantUuid
-                                  from grants
-                                  where ascendantUuid = subjectId)
-           );
+    select true
+        from grants
+        where ascendantUuid = subjectId
+);
 $$;
 
 create or replace function hasInsertPermission(objectUuid uuid, tableName text )
@@ -708,14 +701,14 @@ begin
 end; $$;
 
 -- ============================================================================
---changeset rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS:1 endDelimiter:--//
+--changeset rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS:1 runOnChange=true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
 
  */
 create or replace function queryAccessibleObjectUuidsOfSubjectIds(
     requiredOp RbacOp,
-    forObjectTable varchar, -- reduces the result set, but is not really faster when used in restricted view
+    forObjectTable varchar,
     subjectIds uuid[],
     maxObjects integer = 8000)
     returns setof uuid
@@ -724,23 +717,29 @@ create or replace function queryAccessibleObjectUuidsOfSubjectIds(
 declare
     foundRows bigint;
 begin
-    return query select distinct perm.objectUuid
-                     from (with recursive grants as (select descendantUuid, ascendantUuid, 1 as level
-                                                         from RbacGrants
-                                                         where assumed
-                                                           and ascendantUuid = any (subjectIds)
-                                                     union
-                                                     distinct
-                                                     select "grant".descendantUuid, "grant".ascendantUuid, level + 1 as level
-                                                         from RbacGrants "grant"
-                                                                  inner join grants recur on recur.descendantUuid = "grant".ascendantUuid
-                                                         where assumed)
-                           select descendantUuid
-                               from grants) as granted
-                              join RbacPermission perm
-                                   on granted.descendantUuid = perm.uuid and (requiredOp = 'SELECT' or perm.op = requiredOp)
-                              join RbacObject obj on obj.uuid = perm.objectUuid and obj.objectTable = forObjectTable
-                     limit maxObjects + 1;
+    return query
+        WITH RECURSIVE grants AS (
+            SELECT descendantUuid, ascendantUuid, 1 AS level
+                FROM RbacGrants
+                WHERE assumed
+                  AND ascendantUuid = any(subjectIds)
+            UNION ALL
+            SELECT g.descendantUuid, g.ascendantUuid, grants.level + 1 AS level
+                FROM RbacGrants g
+                         INNER JOIN grants ON grants.descendantUuid = g.ascendantUuid
+                WHERE g.assumed
+        ),
+       granted AS (
+           SELECT DISTINCT descendantUuid
+               FROM grants
+       )
+        SELECT DISTINCT perm.objectUuid
+            FROM granted
+                     JOIN RbacPermission perm ON granted.descendantUuid = perm.uuid
+                     JOIN RbacObject obj ON obj.uuid = perm.objectUuid
+            WHERE (requiredOp = 'SELECT' OR perm.op = requiredOp)
+              AND obj.objectTable = forObjectTable
+            LIMIT maxObjects+1;
 
     foundRows = lastRowCount();
     if foundRows > maxObjects then
@@ -751,7 +750,6 @@ begin
     end if;
 end;
 $$;
-
 --//
 
 -- ============================================================================
@@ -764,24 +762,23 @@ create or replace function queryPermissionsGrantedToSubjectId(subjectId uuid)
     returns setof RbacPermission
     strict
     language sql as $$
-    -- @formatter:off
-select *
-    from RbacPermission
-    where uuid in (
-            with recursive grants as (
-                select distinct descendantUuid, ascendantUuid
-                    from RbacGrants
-                    where ascendantUuid = subjectId
-                union all
-                select "grant".descendantUuid, "grant".ascendantUuid
-                    from RbacGrants "grant"
-                    inner join grants recur on recur.descendantUuid = "grant".ascendantUuid
-            )
-            select descendantUuid
-                from grants
-        );
--- @formatter:on
+with recursive grants as (
+    select descendantUuid, ascendantUuid
+        from RbacGrants
+        where ascendantUuid = subjectId
+    union all
+    select g.descendantUuid, g.ascendantUuid
+        from RbacGrants g
+                 inner join grants on grants.descendantUuid = g.ascendantUuid
+)
+select perm.*
+    from RbacPermission perm
+    where perm.uuid in (
+        select descendantUuid
+            from grants
+    );
 $$;
+
 --//
 
 -- ============================================================================

@@ -122,7 +122,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
 
         private void assertThatContactIsPersisted(final HsOfficeContactEntity saved) {
             final var found = contactRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 

@@ -123,7 +123,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
         private void assertThatBankAccountIsPersisted(final HsOfficeBankAccountEntity saved) {
             final var found = bankAccountRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 

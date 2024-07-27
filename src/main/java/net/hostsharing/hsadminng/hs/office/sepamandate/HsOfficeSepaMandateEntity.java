@@ -40,7 +40,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("SEPA-Mandate")
-public class HsOfficeSepaMandateEntity implements Stringifyable, RbacObject {
+public class HsOfficeSepaMandateEntity implements Stringifyable, RbacObject<HsOfficeSepaMandateEntity> {
 
     private static Stringify<HsOfficeSepaMandateEntity> stringify = stringify(HsOfficeSepaMandateEntity.class)
             .withProp(e -> e.getBankAccount().getIban())

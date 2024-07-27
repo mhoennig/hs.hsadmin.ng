@@ -124,7 +124,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
         private void assertThatPersonIsPersisted(final HsOfficePersonEntity saved) {
             final var found = personRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 

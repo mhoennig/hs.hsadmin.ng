@@ -609,22 +609,24 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                 "defaultPrefix": "for"
                             }
                             """
-                            .replace("${debitorNumberSuffix}", givenDebitor.getDebitorNumberSuffix().toString()))
+                            .replace("${debitorNumberSuffix}", givenDebitor.getDebitorNumberSuffix()))
                     );
                 // @formatter:on
 
             // finally, the debitor is actually updated
-            context.define("superuser-alex@hostsharing.net");
-            assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent().get()
-                    .matches(debitor -> {
-                        assertThat(debitor.getDebitorRel().getHolder().getTradeName())
-                                .isEqualTo(givenDebitor.getDebitorRel().getHolder().getTradeName());
-                        assertThat(debitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
-                        assertThat(debitor.getVatId()).isEqualTo("VAT222222");
-                        assertThat(debitor.getVatCountryCode()).isEqualTo("AA");
-                        assertThat(debitor.isVatBusiness()).isEqualTo(true);
-                        return true;
-                    });
+            jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net");
+                assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent().get()
+                        .matches(debitor -> {
+                            assertThat(debitor.getDebitorRel().getHolder().getTradeName())
+                                    .isEqualTo(givenDebitor.getDebitorRel().getHolder().getTradeName());
+                            assertThat(debitor.getDebitorRel().getContact().getCaption()).isEqualTo("fourth contact");
+                            assertThat(debitor.getVatId()).isEqualTo("VAT222222");
+                            assertThat(debitor.getVatCountryCode()).isEqualTo("AA");
+                            assertThat(debitor.isVatBusiness()).isEqualTo(true);
+                            return true;
+                        });
+            }).assertSuccessful();
         }
 
         @Test
@@ -718,7 +720,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     private HsOfficeDebitorEntity givenSomeTemporaryDebitor() {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0);
+            final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0).load();
             final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(nextDebitorSuffix())
@@ -735,7 +737,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .vatReverseCharge(false)
                     .build();
 
-            return debitorRepo.save(newDebitor);
+            return debitorRepo.save(newDebitor).load();
         }).assertSuccessful().returnedValue();
     }
 

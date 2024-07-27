@@ -21,6 +21,7 @@ import org.hibernate.annotations.NotFoundAction;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -57,7 +58,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("Debitor")
-public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
+public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>, Stringifyable {
 
     public static final String DEBITOR_NUMBER_TAG = "D-";
     public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
@@ -77,7 +78,7 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
     @Version
     private int version;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinFormula(
         referencedColumnName = "uuid",
         value = """
@@ -91,14 +92,14 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
                 WHERE pRel.holderUuid = dRel.anchorUuid
             )
             """)
-    @NotFound(action = NotFoundAction.IGNORE)
+    @NotFound(action = NotFoundAction.IGNORE) // TODO.impl: map a simplified raw-PartnerEntity, just for the partner-number
     private HsOfficePartnerEntity partner;
 
     @Column(name = "debitornumbersuffix", length = 2)
     @Pattern(regexp = TWO_DECIMAL_DIGITS)
     private String debitorNumberSuffix;
 
-    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false)
+    @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "debitorreluuid", nullable = false)
     private HsOfficeRelationEntity debitorRel;
 
@@ -117,12 +118,26 @@ public class HsOfficeDebitorEntity implements RbacObject, Stringifyable {
     @Column(name = "vatreversecharge")
     private boolean vatReverseCharge;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "refundbankaccountuuid")
+    @NotFound(action = NotFoundAction.IGNORE)
     private HsOfficeBankAccountEntity refundBankAccount;
 
     @Column(name = "defaultprefix", columnDefinition = "char(3) not null")
     private String defaultPrefix;
+
+    @Override
+    public HsOfficeDebitorEntity load() {
+        RbacObject.super.load();
+        if (partner != null) {
+            partner.load();
+        }
+        debitorRel.load();
+        if (refundBankAccount != null) {
+            refundBankAccount.load();
+        }
+        return this;
+    }
 
     private String getDebitorNumberString() {
         return ofNullable(partner)

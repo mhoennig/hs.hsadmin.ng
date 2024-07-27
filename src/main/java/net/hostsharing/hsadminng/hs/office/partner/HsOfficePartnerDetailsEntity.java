@@ -26,7 +26,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @DisplayName("PartnerDetails")
-public class HsOfficePartnerDetailsEntity implements RbacObject, Stringifyable {
+public class HsOfficePartnerDetailsEntity implements RbacObject<HsOfficePartnerDetailsEntity>, Stringifyable {
 
     private static Stringify<HsOfficePartnerDetailsEntity> stringify = stringify(
             HsOfficePartnerDetailsEntity.class,

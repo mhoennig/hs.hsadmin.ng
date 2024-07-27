@@ -35,7 +35,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("Contact")
-public class HsOfficeContactEntity implements Stringifyable, RbacObject {
+public class HsOfficeContactEntity implements Stringifyable, RbacObject<HsOfficeContactEntity> {
 
     private static Stringify<HsOfficeContactEntity> toString = stringify(HsOfficeContactEntity.class, "contact")
             .withProp(Fields.caption, HsOfficeContactEntity::getCaption)

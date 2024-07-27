@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,12 +82,14 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // given
             context("superuser-alex@hostsharing.net");
             final var count = debitorRepo.count();
+            final var givenPartner = partnerRepo.findPartnerByPartnerNumber(10001);
             final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First GmbH"));
             final var givenContact = one(contactRepo.findContactByOptionalCaptionLike("first contact"));
 
             // when
             final var result = attempt(em, () -> {
                 final var newDebitor = HsOfficeDebitorEntity.builder()
+                        .partner(givenPartner)
                         .debitorNumberSuffix("21")
                         .debitorRel(HsOfficeRelationEntity.builder()
                                 .type(HsOfficeRelationType.DEBITOR)
@@ -99,7 +100,8 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                         .defaultPrefix("abc")
                         .billable(false)
                         .build();
-                return toCleanup(debitorRepo.save(newDebitor));
+                final HsOfficeDebitorEntity entity = debitorRepo.save(newDebitor);
+                return toCleanup(entity.load());
             });
 
             // then
@@ -339,14 +341,13 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                 givenDebitor.setVatId(givenNewVatId);
                 givenDebitor.setVatCountryCode(givenNewVatCountryCode);
                 givenDebitor.setVatBusiness(givenNewVatBusiness);
-                return toCleanup(debitorRepo.save(givenDebitor));
+                final HsOfficeDebitorEntity entity = debitorRepo.save(givenDebitor);
+                return toCleanup(entity.load());
             });
 
             // then
             result.assertSuccessful();
-            assertThatDebitorIsVisibleForUserWithRole(
-                    result.returnedValue(),
-                    "global#global:ADMIN", true);
+            assertThatDebitorIsVisibleForUserWithRole(result.returnedValue(), "global#global:ADMIN", true);
 
             // ... partner role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
@@ -388,7 +389,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 givenDebitor.setRefundBankAccount(givenNewBankAccount);
-                return toCleanup(debitorRepo.save(givenDebitor));
+                return toCleanup(debitorRepo.save(givenDebitor).load());
             });
 
             // then
@@ -417,7 +418,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 givenDebitor.setRefundBankAccount(null);
-                return toCleanup(debitorRepo.save(givenDebitor));
+                return toCleanup(debitorRepo.save(givenDebitor).load());
             });
 
             // then
@@ -460,22 +461,21 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             context("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "ninth", "Fourth", "nin");
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
-            assertThatDebitorIsVisibleForUserWithRole(
-                    givenDebitor,
-                    "hs_office_contact#ninthcontact:ADMIN", false);
+            assertThatDebitorIsVisibleForUserWithRole(givenDebitor, "hs_office_contact#ninthcontact:ADMIN", false);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact:ADMIN");
                 givenDebitor.setVatId("NEW-VAT-ID");
-                return toCleanup(debitorRepo.save(givenDebitor));
+                final HsOfficeDebitorEntity entity = debitorRepo.save(givenDebitor);
+                return toCleanup(entity.load());
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(
-                    JpaObjectRetrievalFailureException.class,
-                    // this technical error message gets translated to a [403] error at the controller level
-                    "Unable to find net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity with id ");
+                    JpaSystemException.class,
+                    "ERROR: [403]",
+                    "is not allowed to update hs_office_debitor uuid");
         }
 
         private void assertThatDebitorActuallyInDatabase(final HsOfficeDebitorEntity saved, final boolean withPartner) {
@@ -608,11 +608,13 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final String defaultPrefix) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenPartnerPerson = one(personRepo.findPersonByOptionalNameLike(partnerName));
+            final var givenPartner = one(partnerRepo.findPartnerByOptionalNameLike(partnerName));
+            final var givenPartnerPerson = givenPartner.getPartnerRel().getHolder();
             final var givenContact = one(contactRepo.findContactByOptionalCaptionLike(contactCaption));
             final var givenBankAccount =
                     bankAccountHolder != null ? one(bankAccountRepo.findByOptionalHolderLike(bankAccountHolder)) : null;
             final var newDebitor = HsOfficeDebitorEntity.builder()
+                    .partner(givenPartner)
                     .debitorNumberSuffix("20")
                     .debitorRel(HsOfficeRelationEntity.builder()
                             .type(HsOfficeRelationType.DEBITOR)
@@ -625,7 +627,8 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     .billable(true)
                     .build();
 
-            return toCleanup(debitorRepo.save(newDebitor));
+            final HsOfficeDebitorEntity entity = debitorRepo.save(newDebitor);
+            return toCleanup(entity.load());
         }).assertSuccessful().returnedValue();
     }
 

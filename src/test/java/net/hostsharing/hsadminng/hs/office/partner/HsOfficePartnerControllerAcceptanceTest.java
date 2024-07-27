@@ -548,7 +548,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             .build())
                     .build();
 
-            return partnerRepo.save(newPartner);
+            return partnerRepo.save(newPartner).load();
         }).assertSuccessful().returnedValue();
     }
 

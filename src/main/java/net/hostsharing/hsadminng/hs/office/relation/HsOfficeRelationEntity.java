@@ -56,15 +56,15 @@ public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
     @Version
     private int version;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "anchoruuid")
     private HsOfficePersonEntity anchor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "holderuuid")
     private HsOfficePersonEntity holder;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contactuuid")
     private HsOfficeContactEntity contact;
 
@@ -74,6 +74,15 @@ public class HsOfficeRelationEntity implements RbacObject, Stringifyable {
 
     @Column(name = "mark")
     private String mark;
+
+    @Override
+    public HsOfficeRelationEntity load() {
+        RbacObject.super.load();
+        anchor.load();
+        holder.load();
+        contact.load();
+        return this;
+    }
 
     @Override
     public String toString() {

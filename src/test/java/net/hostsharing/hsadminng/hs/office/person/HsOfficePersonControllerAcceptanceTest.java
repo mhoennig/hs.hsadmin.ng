@@ -298,7 +298,10 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .statusCode(204); // @formatter:on
 
             // then the given person is still there
-            assertThat(personRepo.findByUuid(givenPerson.getUuid())).isEmpty();
+            jpaAttempt.transacted(() -> {
+                context.define("superuser-alex@hostsharing.net");
+                assertThat(personRepo.findByUuid(givenPerson.getUuid())).isEmpty();
+            }).assertSuccessful();
         }
 
         @Test
@@ -332,7 +335,7 @@ class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .givenName("Temp Given Name " + RandomStringUtils.randomAlphabetic(10))
                     .build();
 
-            return personRepo.save(newPerson);
+            return personRepo.save(newPerson).load();
         }).assertSuccessful().returnedValue();
     }
 

@@ -158,7 +158,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
         private void assertThatRelationIsPersisted(final HsOfficeRelationEntity saved) {
             final var found = relationRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 
@@ -225,7 +225,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 givenRelation.setContact(givenContact);
-                return toCleanup(relationRepo.save(givenRelation));
+                return toCleanup(relationRepo.save(givenRelation).load());
             });
 
             // then
@@ -295,7 +295,8 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             final var found = relationRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get()
                     .isNotSameAs(saved)
-                    .usingRecursiveComparison().ignoringFields("version").isEqualTo(saved);
+                    .extracting(HsOfficeRelationEntity::toString)
+                    .isEqualTo(saved.toString());
         }
 
         private void assertThatRelationIsVisibleForUserWithRole(

@@ -175,16 +175,38 @@ begin
         Creates a restricted view based on the 'SELECT' permission of the current subject.
     */
     sql := format($sql$
-        set session session authorization default;
-        create view %1$s_rv as
-            with accessibleObjects as (
-                select queryAccessibleObjectUuidsOfSubjectIds('SELECT', '%1$s', currentSubjectsUuids())
+        create or replace view %1$s_rv as
+            with accessible_%1$s_uuids as (
+
+                with recursive grants as (
+                    select descendantUuid, ascendantUuid, 1 as level
+                        from RbacGrants
+                        where assumed
+                          and ascendantUuid = any (currentSubjectsuUids())
+                    union all
+                    select g.descendantUuid, g.ascendantUuid, level + 1 as level
+                        from RbacGrants g
+                                 inner join grants on grants.descendantUuid = g.ascendantUuid
+                        where g.assumed
+                ),
+                granted as (
+                   select distinct descendantUuid
+                       from grants
+                )
+                select distinct perm.objectUuid as objectUuid
+                    from granted
+                             join RbacPermission perm on granted.descendantUuid = perm.uuid
+                             join RbacObject obj on obj.uuid = perm.objectUuid
+                    where perm.op = 'SELECT'
+                      and obj.objectTable = '%1$s'
+                    limit 8001
             )
             select target.*
                 from %1$s as target
-                where target.uuid in (select * from accessibleObjects)
+                where target.uuid in (select * from accessible_%1$s_uuids)
                 order by %2$s;
-            grant all privileges on %1$s_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+
+        grant all privileges on %1$s_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
         $sql$, targetTable, orderBy);
     execute sql;
 

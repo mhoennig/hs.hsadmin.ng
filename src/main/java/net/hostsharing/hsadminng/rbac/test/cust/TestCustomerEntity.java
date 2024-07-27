@@ -24,7 +24,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestCustomerEntity implements RbacObject {
+public class TestCustomerEntity implements RbacObject<TestCustomerEntity> {
 
     @Id
     @GeneratedValue

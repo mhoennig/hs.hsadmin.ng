@@ -30,7 +30,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @AllArgsConstructor
 @FieldNameConstants
 @DisplayName("Person")
-public class HsOfficePersonEntity implements RbacObject, Stringifyable {
+public class HsOfficePersonEntity implements RbacObject<HsOfficePersonEntity>, Stringifyable {
 
     private static Stringify<HsOfficePersonEntity> toString = stringify(HsOfficePersonEntity.class, "person")
             .withProp(Fields.personType, HsOfficePersonEntity::getPersonType)

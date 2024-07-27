@@ -152,7 +152,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
         private void assertThatSepaMandateIsPersisted(final HsOfficeSepaMandateEntity saved) {
             final var found = sepaMandateRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().usingRecursiveComparison().isEqualTo(saved);
+            assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
     }
 
@@ -250,7 +250,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 assertThat(sepaMandateRepo.findByUuid(givenSepaMandate.getUuid())).isNotEmpty().get()
-                        .usingRecursiveComparison().isEqualTo(givenSepaMandate);
+                        .extracting(Object::toString).isEqualTo(givenSepaMandate.toString());
             }).assertSuccessful();
         }
 
