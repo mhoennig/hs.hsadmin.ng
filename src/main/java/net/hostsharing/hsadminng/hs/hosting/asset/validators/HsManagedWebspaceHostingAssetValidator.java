@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 
 import java.util.regex.Pattern;
 
@@ -11,11 +11,11 @@ class HsManagedWebspaceHostingAssetValidator extends HostingAssetEntityValidator
         super(
                 MANAGED_WEBSPACE,
                 AlarmContact.isOptional(),
-                NO_EXTRA_PROPERTIES);
+                NO_EXTRA_PROPERTIES); // TODO.impl: groupid missing, should be equal to main user
     }
 
     @Override
-    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+    protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         final var prefixPattern =
                 !assetEntity.isLoaded()
                         ? assetEntity.getRelatedProject().getDebitor().getDefaultPrefix()

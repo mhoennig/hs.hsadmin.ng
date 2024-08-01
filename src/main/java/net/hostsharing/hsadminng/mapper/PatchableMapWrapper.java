@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.mapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -56,15 +57,18 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         return "{\n"
                 + (
                     keySet().stream().sorted()
-                            .map(k -> "    \"" + k + "\": " + optionallyQuoted(get(k))))
+                            .map(k -> "    \"" + k + "\": " + formatted(get(k))))
                             .collect(joining(",\n")
                 )
                 + "\n}\n";
     }
 
-    private Object optionallyQuoted(final Object value) {
-        if ( value instanceof Number || value instanceof Boolean ) {
+    private Object formatted(final Object value) {
+        if ( value == null || value instanceof Number || value instanceof Boolean ) {
             return value;
+        }
+        if ( value.getClass().isArray() ) {
+            return "\"" + Arrays.toString( (Object[]) value) + "\"";
         }
         return "\"" + value + "\"";
     }

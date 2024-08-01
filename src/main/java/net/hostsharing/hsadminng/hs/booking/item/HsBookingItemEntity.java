@@ -32,6 +32,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
@@ -123,6 +124,14 @@ public class HsBookingItemEntity implements Stringifyable, RbacObject<HsBookingI
 
     @Transient
     private PatchableMapWrapper<Object> resourcesWrapper;
+
+    @Transient
+    private boolean isLoaded;
+
+    @PostLoad
+    public void markAsLoaded() {
+        this.isLoaded = true;
+    }
 
     public PatchableMapWrapper<Object> getResources() {
         return PatchableMapWrapper.of(resourcesWrapper, (newWrapper) -> {resourcesWrapper = newWrapper; }, resources );

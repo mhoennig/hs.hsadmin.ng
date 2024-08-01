@@ -4,6 +4,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.EntityManager;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
@@ -23,6 +24,8 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
             .identifier("vm1234|MariaDB.default")
             .caption("some valid test MariaDB-Instance")
             .build();
+
+    private EntityManager em = null; // not actually needed in these test cases
 
     private static HsHostingAssetEntityBuilder givenValidMariaDbUserBuilder() {
         return HsHostingAssetEntity.builder()
@@ -46,7 +49,7 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(props).extracting(Object::toString).containsExactlyInAnyOrder(
-                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=MYSQL_NATIVE, undisclosed=true}"
+                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=IN_PREP, hashedUsing=MYSQL_NATIVE, undisclosed=true}"
         );
     }
 
@@ -58,7 +61,7 @@ class HsMariaDbUserHostingAssetValidatorUnitTest {
 
         // when
         // HashGenerator.nextSalt("Ly3LbsArtL5u4EVt"); // not needed for mysql_native_password
-        validator.prepareProperties(givenMariaDbUserHostingAsset);
+        validator.prepareProperties(em, givenMariaDbUserHostingAsset);
 
         // then
         assertThat(givenMariaDbUserHostingAsset.getConfig()).containsExactlyInAnyOrderEntriesOf(ofEntries(

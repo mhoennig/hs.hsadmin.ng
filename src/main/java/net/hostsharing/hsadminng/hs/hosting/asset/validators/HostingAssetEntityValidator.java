@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
@@ -23,13 +23,13 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
-public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHostingAssetEntity> {
+public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHostingAsset> {
 
     static final ValidatableProperty<?, ?>[] NO_EXTRA_PROPERTIES = new ValidatableProperty<?, ?>[0];
 
     private final ReferenceValidator<HsBookingItemEntity, HsBookingItemType> bookingItemReferenceValidation;
-    private final ReferenceValidator<HsHostingAssetEntity, HsHostingAssetType> parentAssetReferenceValidation;
-    private final ReferenceValidator<HsHostingAssetEntity, HsHostingAssetType> assignedToAssetReferenceValidation;
+    private final ReferenceValidator<HsHostingAsset, HsHostingAssetType> parentAssetReferenceValidation;
+    private final ReferenceValidator<HsHostingAsset, HsHostingAssetType> assignedToAssetReferenceValidation;
     private final HostingAssetEntityValidator.AlarmContact alarmContactValidation;
 
     HostingAssetEntityValidator(
@@ -40,23 +40,23 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
         this.bookingItemReferenceValidation = new ReferenceValidator<>(
                 assetType.bookingItemPolicy(),
                 assetType.bookingItemTypes(),
-                HsHostingAssetEntity::getBookingItem,
+                HsHostingAsset::getBookingItem,
                 HsBookingItemEntity::getType);
         this.parentAssetReferenceValidation = new ReferenceValidator<>(
                 assetType.parentAssetPolicy(),
                 assetType.parentAssetTypes(),
-                HsHostingAssetEntity::getParentAsset,
-                HsHostingAssetEntity::getType);
+                HsHostingAsset::getParentAsset,
+                HsHostingAsset::getType);
         this.assignedToAssetReferenceValidation = new ReferenceValidator<>(
                 assetType.assignedToAssetPolicy(),
                 assetType.assignedToAssetTypes(),
-                HsHostingAssetEntity::getAssignedToAsset,
-                HsHostingAssetEntity::getType);
+                HsHostingAsset::getAssignedToAsset,
+                HsHostingAsset::getType);
         this.alarmContactValidation = alarmContactValidation;
     }
 
     @Override
-    public List<String> validateEntity(final HsHostingAssetEntity assetEntity) {
+    public List<String> validateEntity(final HsHostingAsset assetEntity) {
         return sequentiallyValidate(
                 () -> validateEntityReferencesAndProperties(assetEntity),
                 () -> validateIdentifierPattern(assetEntity)
@@ -64,7 +64,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
     }
 
     @Override
-    public List<String> validateContext(final HsHostingAssetEntity assetEntity) {
+    public List<String> validateContext(final HsHostingAsset assetEntity) {
         return sequentiallyValidate(
                 () -> optionallyValidate(assetEntity.getBookingItem()),
                 () -> optionallyValidate(assetEntity.getParentAsset()),
@@ -72,7 +72,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
         );
     }
 
-    private List<String> validateEntityReferencesAndProperties(final HsHostingAssetEntity assetEntity) {
+    private List<String> validateEntityReferencesAndProperties(final HsHostingAsset assetEntity) {
         return Stream.of(
                         validateReferencedEntity(assetEntity, "bookingItem", bookingItemReferenceValidation::validate),
                         validateReferencedEntity(assetEntity, "parentAsset", parentAssetReferenceValidation::validate),
@@ -86,17 +86,17 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
     }
 
     private List<String> validateReferencedEntity(
-            final HsHostingAssetEntity assetEntity,
+            final HsHostingAsset assetEntity,
             final String referenceFieldName,
-            final BiFunction<HsHostingAssetEntity, String, List<String>> validator) {
+            final BiFunction<HsHostingAsset, String, List<String>> validator) {
         return enrich(prefix(assetEntity.toShortString()), validator.apply(assetEntity, referenceFieldName));
     }
 
-    private List<String> validateProperties(final HsHostingAssetEntity assetEntity) {
+    private List<String> validateProperties(final HsHostingAsset assetEntity) {
         return enrich(prefix(assetEntity.toShortString(), "config"), super.validateProperties(assetEntity));
     }
 
-    private static List<String> optionallyValidate(final HsHostingAssetEntity assetEntity) {
+    private static List<String> optionallyValidate(final HsHostingAsset assetEntity) {
         return assetEntity != null
                 ? enrich(
                     prefix(assetEntity.toShortString(), "parentAsset"),
@@ -112,7 +112,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
                 : emptyList();
     }
 
-    protected List<String> validateAgainstSubEntities(final HsHostingAssetEntity assetEntity) {
+    protected List<String> validateAgainstSubEntities(final HsHostingAsset assetEntity) {
         return enrich(
                 prefix(assetEntity.toShortString(), "config"),
                 stream(propertyValidators)
@@ -124,7 +124,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
 
     // TODO.test: check, if there are any hosting assets which need this validation at all
     private String validateMaxTotalValue(
-            final HsHostingAssetEntity hostingAsset,
+            final HsHostingAsset hostingAsset,
             final ValidatableProperty<?, ?> propDef) {
         final var propName = propDef.propertyName();
         final var propUnit = ofNullable(propDef.unit()).map(u -> " " + u).orElse("");
@@ -140,7 +140,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
                 : null;
     }
 
-    private List<String> validateIdentifierPattern(final HsHostingAssetEntity assetEntity) {
+    private List<String> validateIdentifierPattern(final HsHostingAsset assetEntity) {
         final var expectedIdentifierPattern = identifierPattern(assetEntity);
         if (assetEntity.getIdentifier() == null ||
                 !expectedIdentifierPattern.matcher(assetEntity.getIdentifier()).matches()) {
@@ -151,19 +151,19 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
         return Collections.emptyList();
     }
 
-    protected abstract Pattern identifierPattern(HsHostingAssetEntity assetEntity);
+    protected abstract Pattern identifierPattern(HsHostingAsset assetEntity);
 
     static class ReferenceValidator<S, T> {
 
         private final HsHostingAssetType.RelationPolicy policy;
         private final Set<T> referencedEntityTypes;
-        private final Function<HsHostingAssetEntity, S> referencedEntityGetter;
+        private final Function<HsHostingAsset, S> referencedEntityGetter;
         private final Function<S, T> referencedEntityTypeGetter;
 
         public ReferenceValidator(
                 final HsHostingAssetType.RelationPolicy policy,
                 final Set<T> referencedEntityTypes,
-                final Function<HsHostingAssetEntity, S> referencedEntityGetter,
+                final Function<HsHostingAsset, S> referencedEntityGetter,
                 final Function<S, T> referencedEntityTypeGetter) {
             this.policy = policy;
             this.referencedEntityTypes = referencedEntityTypes;
@@ -173,14 +173,14 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
 
         public ReferenceValidator(
                 final HsHostingAssetType.RelationPolicy policy,
-                final Function<HsHostingAssetEntity, S> referencedEntityGetter) {
+                final Function<HsHostingAsset, S> referencedEntityGetter) {
             this.policy = policy;
             this.referencedEntityTypes = Set.of();
             this.referencedEntityGetter = referencedEntityGetter;
             this.referencedEntityTypeGetter = e -> null;
         }
 
-        List<String> validate(final HsHostingAssetEntity assetEntity, final String referenceFieldName) {
+        List<String> validate(final HsHostingAsset assetEntity, final String referenceFieldName) {
 
             final var actualEntity = referencedEntityGetter.apply(assetEntity);
             final var actualEntityType = actualEntity != null ? referencedEntityTypeGetter.apply(actualEntity) : null;
@@ -216,7 +216,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
     static class AlarmContact extends ReferenceValidator<HsOfficeContactEntity, Enum<?>> {
 
         AlarmContact(final HsHostingAssetType.RelationPolicy policy) {
-            super(policy, HsHostingAssetEntity::getAlarmContact);
+            super(policy, HsHostingAsset::getAlarmContact);
         }
 
         // hostmaster alert address is implicitly added where neccessary

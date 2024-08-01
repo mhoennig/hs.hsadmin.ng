@@ -39,7 +39,7 @@ class HsEMailAddressHostingAssetValidatorUnitTest {
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
                 "{type=string, propertyName=local-part, matchesRegEx=[^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$], required=true}",
                 "{type=string, propertyName=sub-domain, matchesRegEx=[^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$]}",
-                "{type=string[], propertyName=target, elementsOf={type=string, propertyName=target, matchesRegEx=[^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9]+)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$], maxLength=320}, required=true, minLength=1}");
+                "{type=string[], propertyName=target, elementsOf={type=string, propertyName=target, matchesRegEx=[^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\._-]*)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$], maxLength=320}, required=true, minLength=1}");
     }
 
     @Test
@@ -73,7 +73,7 @@ class HsEMailAddressHostingAssetValidatorUnitTest {
         assertThat(result).containsExactlyInAnyOrder(
                 "'EMAIL_ADDRESS:test@example.org.config.local-part' is expected to match any of [^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$] but 'no@allowed' does not match",
                 "'EMAIL_ADDRESS:test@example.org.config.sub-domain' is expected to match any of [^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$] but 'no@allowedeither' does not match",
-                "'EMAIL_ADDRESS:test@example.org.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9]+)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$] but 'garbage' does not match any");
+                "'EMAIL_ADDRESS:test@example.org.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\._-]*)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$] but 'garbage' does not match any");
     }
 
     @Test

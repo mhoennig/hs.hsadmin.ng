@@ -1,13 +1,16 @@
 # RBAC Performance Analysis
 
-This describes the analysis of the legacy-data-import which took way too long, which turned out to be a problem in the RBAC-access-rights-check.
+This describes the analysis of the legacy-data-import which took way too long, which turned out to be a problem in the RBAC-access-rights-check as well as `EntityManager.persist` creating too many SQL queries.
 
 
 ## Our Performance-Problem
 
-During the legacy data import for hosting assets we noticed massive performance problems. The import of about 2200 hosting-assets (IP-numbers, managed-webspaces, managed- and cloud-servers) as well as the creation of booking-items and booking-projects as well as necessary office-data entities (persons, contacts, partners, debitors, relations) **took 10-25 minutes**.
+During the legacy data import for hosting assets we noticed massive performance problems. The import of about 2200 hosting-assets (IP-numbers, managed-webspaces, managed- and cloud-servers) as well as the creation of booking-items and booking-projects as well as necessary office-data entities (persons, contacts, partners, debitors, relations) **took 25 minutes**.
 
-We could not find a pattern, why the import mostly took about 25 minutes, but sometimes took *just* 10 minutes. The impression that it had to do with too many other parallel processes, e.g. browser with BBB or IntelliJ IDEA was proved wrong, but stopping all unnecessary processes and performing the import again.
+Importing hosting assets up to UnixUsers and EmailAddresses even **took about 100 minutes**.
+
+(The office data import sometimes, but rarely, took only 10min.
+We could not find a pattern, why that was the case. The impression that it had to do with too many other parallel processes, e.g. browser with BBB or IntelliJ IDEA was proved wrong, but stopping all unnecessary processes and performing the import again.)
 
 
 ## Preparation
@@ -111,7 +114,23 @@ time gw-importHostingAssets
 
 ### Fetch the Query Statistics
 
-And afterward we can query the statistics in PostgreSQL:
+And afterward we can query the statistics in PostgreSQL, e.g.:
+
+```SQL
+WITH statements AS (
+    SELECT * FROM pg_stat_statements pss
+)
+SELECT calls,
+    total_exec_time::int/(60*1000) as total_exec_time_mins,
+    mean_exec_time::int as mean_exec_time_millis, 
+    query
+FROM statements
+WHERE calls > 100 AND shared_blks_hit > 0
+ORDER BY total_exec_time_mins DESC
+LIMIT 16;
+```
+
+### Reset the Query Statistics
 
 ```SQL
 SELECT pg_stat_statements_reset();
@@ -272,6 +291,7 @@ The slowest query now was fetching Relations joined with Contact, Anchor-Person 
 
 We changed these mappings from `EAGER` (default) to `LAZY` to `@ManyToOne(fetch = FetchType.LAZY)` and got this result:
 
+:::small
 | query                                                                                                                                                                                                                                                                                                                                                                                                 | calls | total (min) | mean (ms) |
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------|-------------|----------|
 | select hope1_0.uuid,hope1_0.familyname,hope1_0.givenname,hope1_0.persontype,hope1_0.salutation,hope1_0.title,hope1_0.tradename,hope1_0.version from public.hs_office_person_rv hope1_0 where hope1_0.uuid=$1                                                                                                                                                                                          | 1015 | 4           | 238 |
@@ -292,10 +312,69 @@ We changed these mappings from `EAGER` (default) to `LAZY` to `@ManyToOne(fetch 
 
 Now, finally, the total runtime of the import was down to 12 minutes. This is repeatable, where originally, the import took about 25mins in most cases and just rarely -  and for unknown reasons - 10min.
 
+### Importing UnixUser and EmailAlias Assets
+
+But once UnixUser and EmailAlias assets got added to the import, the total time went up to about 110min. 
+
+This was not acceptable, especially not, considering that domains, email-addresses and database-assets are almost 10 times that number and thus the import would go up to over 1100min which is 20 hours.
+
+In a first step, a `HsHostingAssetRawEntity` was created, mapped to the raw table (hs_hosting_asset) not to the RBAC-view (hs_hosting_asset_rv). Unfortunately we did not keep measurements, but that was only part of the problem anyway. 
+
+The main problem was, that there is something strange with persisting (`EntityManager.persist`) for EmailAlias assets. Where importing UnixUsers was mostly slow due to RBAC SELECT-permission checks, persisting EmailAliases suddenly created about a million (in numbers 1.000.000) SQL UPDATE statements after the INSERT, all with the same data, just increased version number (used for optimistic locking). We were not able to figure out why this happened.
+
+Keep in mind, it's the same table with the same RBAC-triggers, just a different value in the type column.
+
+Once `EntityManager.persist` was replaced by an explicit SQL INSERT - just for `HsHostingAssetRawEntity`, the total time was down to 17min. Thus importing the UnixUsers and EmailAliases took just 5min, which is an acceptable result. The total import of all HostingAssets is now estimated to about 1 hour (on my developer laptop).
+
+Now, the longest running queries are these:
+
+| No.| calls   | total_m | mean_ms | query                                                                                                                                                                                                                                                                                                                                                                                          |
+|---:|---------|--------:|--------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  1 | 13.093  |       4 |      21 | insert into hs_hosting_asset( uuid, type, bookingitemuuid, parentassetuuid, assignedtoassetuuid, alarmcontactuuid, identifier, caption, config, version) values ( $1, $2, $3, $4, $5, $6, $7, $8, cast($9 as jsonb), $10)                                                                                                                                                                      |
+|  2 | 517     |       4 |     502 | select hore1_0.uuid,hore1_0.anchoruuid,hore1_0.contactuuid,hore1_0.holderuuid,hore1_0.mark,hore1_0.type,hore1_0.version from public.hs_office_relation_rv hore1_0 where hore1_0.uuid=$1                                                                                                                                                                                                        |
+|  3 | 13.144  |       4 |      21 | call buildRbacSystemForHsHostingAsset(NEW)                                                                                                                                                                                                                                                                                                                                                     |
+|  4 | 96.632  |       3 |       2 | call grantRoleToRole(roleUuid, superRoleUuid, superRoleDesc.assumed)                                                                                                                                                                                                                                                                                                                           |
+|  5 | 120.815 |       3 |       2 | select * from isGranted(array[granteeId], grantedId)                                                                                                                                                                                                                                                                                                                                           |
+|  6 | 123.740 |       3 |       2 | with recursive grants as ( select descendantUuid, ascendantUuid from RbacGrants where descendantUuid = grantedId union all select "grant".descendantUuid, "grant".ascendantUuid from RbacGrants "grant" inner join grants recur on recur.ascendantUuid = "grant".descendantUuid ) select exists ( select $3 from grants where ascendantUuid = any(granteeIds) ) or grantedId = any(granteeIds) |
+|  7 | 497     |       2 |     259 | select hoce1_0.uuid,hoce1_0.caption,hoce1_0.emailaddresses,hoce1_0.phonenumbers,hoce1_0.postaladdress,hoce1_0.version from public.hs_office_contact_rv hoce1_0 where hoce1_0.uuid=$1                                                                                                                                                                                                           |
+|  8 | 497     |       2 |     255 | select hope1_0.uuid,hope1_0.familyname,hope1_0.givenname,hope1_0.persontype,hope1_0.salutation,hope1_0.title,hope1_0.tradename,hope1_0.version from public.hs_office_person_rv hope1_0 where hope1_0.uuid=$1                                                                                                                                                                                   |
+|  9 | 13.144  |       1 |       8 | SELECT createRoleWithGrants( hsHostingAssetTENANT(NEW), permissions => array[$7], incomingSuperRoles => array[ hsHostingAssetAGENT(NEW), hsOfficeContactADMIN(newAlarmContact)], outgoingSubRoles => array[ hsBookingItemTENANT(newBookingItem), hsHostingAssetTENANT(newParentAsset)] ) |
+| 10 |  13.144 |       1 |       5 |  SELECT createRoleWithGrants( hsHostingAssetADMIN(NEW), permissions => array[$7], incomingSuperRoles => array[ hsBookingItemAGENT(newBookingItem), hsHostingAssetAGENT(newParentAsset), hsHostingAssetOWNER(NEW)] ) |
+
+That the `INSERT into hs_hosting_asset` (No. 1) takes up the most time, seems to be normal, and 21ms for each call is also fine.
+
+It seems that the trigger effects (eg. No. 3 and No. 4) are included in the measure for the causing INSERT, otherwise summing up the totals would exceed the actual total time of the whole import. And it was to be expected that building the RBAC rules for new business objects takes most of the time.
+
+In production, the `SELECT ... FROM hs_office_relation_rv` (No. 2) with about 0.5 seconds could still be a problem. But once we apply the improvements from the hosting asset area also to the office area, this should not be a problem for the import anymore.
+
+ 
+## Further Options To Explore
+
+1. Instead of separate SQL INSERT statements, we could try bulk INSERT.
+2. We could use the SQL INSERT method for all entity-classes, or at least for all which have high row counts.
+3. For the production code, we could use raw-entities for referenced entities, here usually RBAC SELECT permission is given anyway.
+ 
+
 ## Summary
 
-That the import runtime is down to about 12min is repeatable, where originally, the import took about 25mins in most cases and just rarely - and for unknown reasons - just 10min.
+### What we did Achieve?
+
+In a first step, the total import runtime for office entities was reduced from about 25min to about 10min.
+
+In a second step, we reduced the import of booking- and hosting-assets from about 100min (not counting the required office entities) to 5min.
+
+### What Helped?
 
 Merging the recursive CTE query to determine the RBAC SELECT-permission, made it more clear which business-queries take the time.
 
-Avoiding EAGER-loading where not neccessary, reduced the total runtime of the import to about the half.
+Avoiding EAGER-loading where not necessary, reduced the total runtime of the import to about the half.
+
+The major improvement came from using direct INSERT statements, which then also bypassed the RBAC SELECT permission checks.
+
+### What Still Has To Be Done?
+
+Where this performance analysis was mostly helping the performance of the legacy data import, we still need measures and improvements for the productive code.
+
+For sure, using more LAZY-loading also helps in the production code. For some more ideas see section _Further Options To Explore_. 
+
+

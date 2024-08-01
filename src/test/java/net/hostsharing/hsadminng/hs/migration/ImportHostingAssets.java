@@ -6,7 +6,6 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -23,18 +22,23 @@ import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static java.util.Arrays.stream;
+import static java.util.Map.entry;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ALIAS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.IPV4_NUMBER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -91,13 +95,15 @@ public class ImportHostingAssets extends ImportOfficeData {
     static final Integer IP_NUMBER_ID_OFFSET = 1000000;
     static final Integer HIVE_ID_OFFSET = 2000000;
     static final Integer PACKET_ID_OFFSET = 3000000;
+    static final Integer UNIXUSER_ID_OFFSET = 4000000;
+    static final Integer EMAILALIAS_ID_OFFSET = 5000000;
 
-    record Hive(int hive_id, String hive_name, int inet_addr_id, AtomicReference<HsHostingAssetEntity> serverRef) {}
+    record Hive(int hive_id, String hive_name, int inet_addr_id, AtomicReference<HsHostingAssetRawEntity> serverRef) {}
 
     static Map<Integer, HsBookingProjectEntity> bookingProjects = new WriteOnceMap<>();
     static Map<Integer, HsBookingItemEntity> bookingItems = new WriteOnceMap<>();
     static Map<Integer, Hive> hives = new WriteOnceMap<>();
-    static Map<Integer, HsHostingAssetEntity> hostingAssets = new WriteOnceMap<>(); // TODO.impl: separate maps for each type?
+    static Map<Integer, HsHostingAssetRawEntity> hostingAssets = new WriteOnceMap<>(); // TODO.impl: separate maps for each type?
 
     @Test
     @Order(11010)
@@ -126,14 +132,13 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyIpNumbers() {
         assumeThatWeAreImportingControlledTestData();
 
-        // no contacts yet => mostly null values
         assertThat(firstOfEachType(5, IPV4_NUMBER)).isEqualToIgnoringWhitespace("""
                 {
-                   1000363=HsHostingAssetEntity(IPV4_NUMBER, 83.223.95.34),
-                   1000381=HsHostingAssetEntity(IPV4_NUMBER, 83.223.95.52),
-                   1000402=HsHostingAssetEntity(IPV4_NUMBER, 83.223.95.73),
-                   1000433=HsHostingAssetEntity(IPV4_NUMBER, 83.223.95.104),
-                   1000457=HsHostingAssetEntity(IPV4_NUMBER, 83.223.95.128)
+                   1000363=HsHostingAssetRawEntity(IPV4_NUMBER, 83.223.95.34),
+                   1000381=HsHostingAssetRawEntity(IPV4_NUMBER, 83.223.95.52),
+                   1000402=HsHostingAssetRawEntity(IPV4_NUMBER, 83.223.95.73),
+                   1000433=HsHostingAssetRawEntity(IPV4_NUMBER, 83.223.95.104),
+                   1000457=HsHostingAssetRawEntity(IPV4_NUMBER, 83.223.95.128)
                 }
                 """);
     }
@@ -154,7 +159,6 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyHives() {
         assumeThatWeAreImportingControlledTestData();
 
-        // no contacts yet => mostly null values
         assertThat(toFormattedString(first(5, hives))).isEqualToIgnoringWhitespace("""
                 {
                    2000001=Hive[hive_id=1, hive_name=h00, inet_addr_id=358, serverRef=null],
@@ -184,13 +188,13 @@ public class ImportHostingAssets extends ImportOfficeData {
 
         assertThat(firstOfEachType(3, CLOUD_SERVER, MANAGED_SERVER, MANAGED_WEBSPACE)).isEqualToIgnoringWhitespace("""
                 {
-                   3000630=HsHostingAssetEntity(MANAGED_WEBSPACE,   hsh00, HA hsh00,  MANAGED_SERVER:vm1050,    D-1000000:hsh default project:BI hsh00),
-                   3000968=HsHostingAssetEntity(MANAGED_SERVER,    vm1061, HA vm1061,                           D-1015200:rar default project:BI vm1061),
-                   3000978=HsHostingAssetEntity(MANAGED_SERVER,    vm1050, HA vm1050,                           D-1000000:hsh default project:BI vm1050),
-                   3001061=HsHostingAssetEntity(MANAGED_SERVER,    vm1068, HA vm1068,                           D-1000300:mim default project:BI vm1068),
-                   3001094=HsHostingAssetEntity(MANAGED_WEBSPACE,   lug00, HA lug00,  MANAGED_SERVER:vm1068,    D-1000300:mim default project:BI lug00),
-                   3001112=HsHostingAssetEntity(MANAGED_WEBSPACE,   mim00, HA mim00,  MANAGED_SERVER:vm1068,    D-1000300:mim default project:BI mim00),
-                   3023611=HsHostingAssetEntity(CLOUD_SERVER,      vm2097, HA vm2097,                           D-1101800:wws default project:BI vm2097)
+                   3000630=HsHostingAssetRawEntity(MANAGED_WEBSPACE,   hsh00, HA hsh00,  MANAGED_SERVER:vm1050,    D-1000000:hsh default project:BI hsh00),
+                   3000968=HsHostingAssetRawEntity(MANAGED_SERVER,    vm1061, HA vm1061,                           D-1015200:rar default project:BI vm1061),
+                   3000978=HsHostingAssetRawEntity(MANAGED_SERVER,    vm1050, HA vm1050,                           D-1000000:hsh default project:BI vm1050),
+                   3001061=HsHostingAssetRawEntity(MANAGED_SERVER,    vm1068, HA vm1068,                           D-1000300:mim default project:BI vm1068),
+                   3001094=HsHostingAssetRawEntity(MANAGED_WEBSPACE,   lug00, HA lug00,  MANAGED_SERVER:vm1068,    D-1000300:mim default project:BI lug00),
+                   3001112=HsHostingAssetRawEntity(MANAGED_WEBSPACE,   mim00, HA mim00,  MANAGED_SERVER:vm1068,    D-1000300:mim default project:BI mim00),
+                   3023611=HsHostingAssetRawEntity(CLOUD_SERVER,      vm2097, HA vm2097,                           D-1101800:wws default project:BI vm2097)
                 }
                 """);
         assertThat(firstOfEachType(
@@ -226,19 +230,18 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyPacketComponents() {
         assumeThatWeAreImportingControlledTestData();
 
-        // no contacts yet => mostly null values
         assertThat(firstOfEachType(5, CLOUD_SERVER, MANAGED_SERVER, MANAGED_WEBSPACE))
                 .isEqualToIgnoringWhitespace("""
                         {
-                           3000630=HsHostingAssetEntity(MANAGED_WEBSPACE, hsh00, HA hsh00, MANAGED_SERVER:vm1050, D-1000000:hsh default project:BI hsh00),
-                           3000968=HsHostingAssetEntity(MANAGED_SERVER, vm1061, HA vm1061, D-1015200:rar default project:BI vm1061),
-                           3000978=HsHostingAssetEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
-                           3001061=HsHostingAssetEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
-                           3001094=HsHostingAssetEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
-                           3001112=HsHostingAssetEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
-                           3001447=HsHostingAssetEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093),
-                           3019959=HsHostingAssetEntity(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00),
-                           3023611=HsHostingAssetEntity(CLOUD_SERVER, vm2097, HA vm2097, D-1101800:wws default project:BI vm2097)
+                           3000630=HsHostingAssetRawEntity(MANAGED_WEBSPACE, hsh00, HA hsh00, MANAGED_SERVER:vm1050, D-1000000:hsh default project:BI hsh00),
+                           3000968=HsHostingAssetRawEntity(MANAGED_SERVER, vm1061, HA vm1061, D-1015200:rar default project:BI vm1061),
+                           3000978=HsHostingAssetRawEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
+                           3001061=HsHostingAssetRawEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
+                           3001094=HsHostingAssetRawEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
+                           3001112=HsHostingAssetRawEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
+                           3001447=HsHostingAssetRawEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093),
+                           3019959=HsHostingAssetRawEntity(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00),
+                           3023611=HsHostingAssetRawEntity(CLOUD_SERVER, vm2097, HA vm2097, D-1101800:wws default project:BI vm2097)
                         }
                         """);
         assertThat(firstOfEachType(
@@ -262,58 +265,247 @@ public class ImportHostingAssets extends ImportOfficeData {
     }
 
     @Test
-    @Order(11400)
+    @Order(14010)
+    void importUnixUsers() {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/hosting/unixuser.csv")) {
+            final var lines = readAllLines(reader);
+            importUnixUsers(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(14019)
+    void verifyUnixUsers() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEachType(15, UNIX_USER)).isEqualToIgnoringWhitespace("""
+                {
+                   4005803=HsHostingAssetRawEntity(UNIX_USER, lug00, LUGs, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102090}),
+                   4005805=HsHostingAssetRawEntity(UNIX_USER, lug00-wla.1, Paul Klemm, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102091}),
+                   4005809=HsHostingAssetRawEntity(UNIX_USER, lug00-wla.2, Walter Müller, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 8, "SSD soft quota": 4, "locked": false, "shell": "/bin/bash", "userid": 102093}),
+                   4005811=HsHostingAssetRawEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102094}),
+                   4005813=HsHostingAssetRawEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102095}),
+                   4005835=HsHostingAssetRawEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "shell": "/usr/bin/passwd", "userid": 102106}),
+                   4005964=HsHostingAssetRawEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102147}),
+                   4005966=HsHostingAssetRawEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "shell": "/bin/bash", "userid": 102148}),
+                   4005990=HsHostingAssetRawEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102160}),
+                   4100705=HsHostingAssetRawEntity(UNIX_USER, hsh00-mim, Michael Mellis, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/false", "userid": 10003}),
+                   4100824=HsHostingAssetRawEntity(UNIX_USER, hsh00, Hostsharing Paket, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 10000}),
+                   4167846=HsHostingAssetRawEntity(UNIX_USER, hsh00-dph, hsh00-uph, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/false", "userid": 110568}),
+                   4169546=HsHostingAssetRawEntity(UNIX_USER, dph00, Reinhard Wiese, MANAGED_WEBSPACE:dph00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110593}),
+                   4169596=HsHostingAssetRawEntity(UNIX_USER, dph00-uph, Domain admin, MANAGED_WEBSPACE:dph00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110594})
+                }
+                """);
+    }
+
+    @Test
+    @Order(14020)
+    void importEmailAliases() {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/hosting/emailalias.csv")) {
+            final var lines = readAllLines(reader);
+            importEmailAliases(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(14029)
+    void verifyEmailAliases() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEachType(15, EMAIL_ALIAS)).isEqualToIgnoringWhitespace("""
+                {
+                   5002403=HsHostingAssetRawEntity(EMAIL_ALIAS, lug00, lug00, MANAGED_WEBSPACE:lug00, { "target": "[michael.mellis@example.com]"}),
+                   5002405=HsHostingAssetRawEntity(EMAIL_ALIAS, lug00-wla-listar, lug00-wla-listar, MANAGED_WEBSPACE:lug00, { "target": "[|/home/pacs/lug00/users/in/mailinglist/listar]"}),
+                   5002429=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00, mim00, MANAGED_WEBSPACE:mim00, { "target": "[mim12-mi@mim12.hostsharing.net]"}),
+                   5002431=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-abruf, mim00-abruf, MANAGED_WEBSPACE:mim00, { "target": "[michael.mellis@hostsharing.net]"}),
+                   5002449=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-hhfx, mim00-hhfx, MANAGED_WEBSPACE:mim00, { "target": "[mim00-hhfx, |/usr/bin/formail -I 'Reply-To: hamburger-fx@example.net' | /usr/lib/sendmail mim00-hhfx-l]"}),
+                   5002451=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-hhfx-l, mim00-hhfx-l, MANAGED_WEBSPACE:mim00, { "target": "[:include:/home/pacs/mim00/etc/hhfx.list]"}),
+                   5002452=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-empty, mim00-empty, MANAGED_WEBSPACE:mim00, { "target": "[]"}),
+                   5002453=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-0_entries, mim00-0_entries, MANAGED_WEBSPACE:mim00, { "target": "[]"}),
+                   5002454=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-dev.null, mim00-dev.null, MANAGED_WEBSPACE:mim00, { "target": "[/dev/null]"}),
+                   5002455=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-1_with_space, mim00-1_with_space, MANAGED_WEBSPACE:mim00, { "target": "[|/home/pacs/mim00/install/corpslistar/listar]"}),
+                   5002456=HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-1_with_single_quotes, mim00-1_with_single_quotes, MANAGED_WEBSPACE:mim00, { "target": "[|/home/pacs/rir00/mailinglist/ecartis -r kybs06-intern]"})
+                }
+                """);
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    @Test
+    @Order(18010)
     void validateBookingItems() {
         bookingItems.forEach((id, bi) -> {
             try {
                 HsBookingItemEntityValidatorRegistry.validated(bi);
             } catch (final Exception exc) {
-                System.err.println("validation failed for id:" + id + "( " + bi + "): " + exc.getMessage());
+                errors.add("validation failed for id:" + id + "( " + bi + "): " + exc.getMessage());
             }
         });
     }
 
     @Test
-    @Order(11410)
+    @Order(18020)
     void validateHostingAssets() {
         hostingAssets.forEach((id, ha) -> {
             try {
-                new HostingAssetEntitySaveProcessor(ha)
+                new HostingAssetEntitySaveProcessor(em, ha)
                         .preprocessEntity()
-                        .validateEntity();
+                        .validateEntity()
+                        .prepareForSave();
             } catch (final Exception exc) {
-                System.err.println("validation failed for id:" + id + "( " + ha + "): " + exc.getMessage());
+                errors.add("validation failed for id:" + id + "( " + ha + "): " + exc.getMessage());
             }
         });
     }
+
+    @Test
+    @Order(18999)
+    @ContinueOnFailure
+    void logValidationErrors() {
+        this.logErrors();
+    }
+
+    // --------------------------------------------------------------------------------------------
 
     @Test
     @Order(19000)
     @Commit
-    void persistHostingAssetEntities() {
+    void persistBookingProjects() {
 
-        System.out.println("PERSISTING hosting-assets to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        System.out.println("PERSISTING booking-projects to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             bookingProjects.forEach(this::persist);
         }).assertSuccessful();
+    }
+
+    @Test
+    @Order(19010)
+    @Commit
+    void persistBookingItems() {
+
+        System.out.println("PERSISTING booking-items to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             bookingItems.forEach(this::persistRecursively);
         }).assertSuccessful();
+    }
+
+    @Test
+    @Order(19120)
+    @Commit
+    void persistCloudServers() {
+
+        System.out.println("PERSISTING cloud-servers to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
 
         persistHostingAssetsOfType(CLOUD_SERVER);
+    }
+
+    @Test
+    @Order(19130)
+    @Commit
+    void persistManagedServers() {
+        System.out.println("PERSISTING managed-servers to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
         persistHostingAssetsOfType(MANAGED_SERVER);
+    }
+
+    @Test
+    @Order(19140)
+    @Commit
+    void persistManagedWebspaces() {
+        System.out.println("PERSISTING managed-webspaces to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
         persistHostingAssetsOfType(MANAGED_WEBSPACE);
+    }
+
+    @Test
+    @Order(19150)
+    @Commit
+    void persistIPNumbers() {
+        System.out.println("PERSISTING ip-numbers to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
         persistHostingAssetsOfType(IPV4_NUMBER);
     }
 
     @Test
+    @Order(19160)
+    @Commit
+    void persistUnixUsers() {
+        System.out.println("PERSISTING unix-users to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        persistHostingAssetsOfType(UNIX_USER);
+    }
+
+    @Test
+    @Order(19170)
+    @Commit
+    void persistEmailAliases() {
+        System.out.println("PERSISTING email-aliases to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        persistHostingAssetsOfType(EMAIL_ALIAS);
+    }
+
+    @Test
+    @Order(19900)
+    void verifyPersistedUnixUsersWithUserId() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEachType(15, UNIX_USER)).isEqualToIgnoringWhitespace("""
+                {
+                   4005803=HsHostingAssetRawEntity(UNIX_USER, lug00, LUGs, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102090}),
+                   4005805=HsHostingAssetRawEntity(UNIX_USER, lug00-wla.1, Paul Klemm, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102091}),
+                   4005809=HsHostingAssetRawEntity(UNIX_USER, lug00-wla.2, Walter Müller, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 8, "SSD soft quota": 4, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102093}),
+                   4005811=HsHostingAssetRawEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102094}),
+                   4005813=HsHostingAssetRawEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102095}),
+                   4005835=HsHostingAssetRawEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102106}),
+                   4005964=HsHostingAssetRawEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102147}),
+                   4005966=HsHostingAssetRawEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102148}),
+                   4005990=HsHostingAssetRawEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102160}),
+                   4100705=HsHostingAssetRawEntity(UNIX_USER, hsh00-mim, Michael Mellis, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/false", "userid": 10003}),
+                   4100824=HsHostingAssetRawEntity(UNIX_USER, hsh00, Hostsharing Paket, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 10000}),
+                   4167846=HsHostingAssetRawEntity(UNIX_USER, hsh00-dph, hsh00-uph, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/false", "userid": 110568}),
+                   4169546=HsHostingAssetRawEntity(UNIX_USER, dph00, Reinhard Wiese, MANAGED_WEBSPACE:dph00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 110593}),
+                   4169596=HsHostingAssetRawEntity(UNIX_USER, dph00-uph, Domain admin, MANAGED_WEBSPACE:dph00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 110594})
+                }
+                """);
+    }
+
+    @Test
+    @Order(19910)
+    void verifyBookingItemsAreActuallyPersisted() {
+        final var biCount = (Integer) em.createNativeQuery("SELECT count(*) FROM hs_booking_item", Integer.class).getSingleResult();
+        assertThat(biCount).isGreaterThan(isImportingControlledTestData() ? 5 : 500);
+    }
+
+    @Test
+    @Order(19920)
+    void verifyHostingAssetsAreActuallyPersisted() {
+        final var haCount = (Integer) em.createNativeQuery("SELECT count(*) FROM hs_hosting_asset", Integer.class).getSingleResult();
+        assertThat(haCount).isGreaterThan(isImportingControlledTestData() ? 20 : 10000);
+    }
+
+    // ============================================================================================
+
+    @Test
     @Order(99999)
     void logErrors() {
-        super.logErrors();
+        if (isImportingControlledTestData()) {
+            super.expectErrors("""
+                        validation failed for id:5002452( HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-empty, mim00-empty, MANAGED_WEBSPACE:mim00, {
+                            "target": "[]"
+                        }
+                        )): ['EMAIL_ALIAS:mim00-empty.config.target' length is expected to be at min 1 but length of [[]] is 0]""",
+                    """
+                    validation failed for id:5002453( HsHostingAssetRawEntity(EMAIL_ALIAS, mim00-0_entries, mim00-0_entries, MANAGED_WEBSPACE:mim00, {
+                        "target": "[]"
+                    }
+                    )): ['EMAIL_ALIAS:mim00-0_entries.config.target' length is expected to be at min 1 but length of [[]] is 0]"""
+                    );
+        } else {
+            super.logErrors();
+        }
     }
 
     private void persistRecursively(final Integer key, final HsBookingItemEntity bi) {
@@ -323,19 +515,21 @@ public class ImportHostingAssets extends ImportOfficeData {
         persist(key, HsBookingItemEntityValidatorRegistry.validated(bi));
     }
 
+    // ============================================================================================
+
     private void persistHostingAssetsOfType(final HsHostingAssetType hsHostingAssetType) {
         jpaAttempt.transacted(() -> {
-            context(rbacSuperuser);
             hostingAssets.forEach((key, ha) -> {
-                    if (ha.getType() == hsHostingAssetType) {
-                        new HostingAssetEntitySaveProcessor(ha)
-                                .preprocessEntity()
-                                .validateEntity()
-                                .prepareForSave()
-                                .saveUsing(entity -> persist(key, entity))
-                                .validateContext();
+                        context(rbacSuperuser);
+                        if (ha.getType() == hsHostingAssetType) {
+                            new HostingAssetEntitySaveProcessor(em, ha)
+                                    .preprocessEntity()
+                                    .validateEntityIgnoring("'EMAIL_ALIAS:.*\\.config\\.target' .*")
+                                    .prepareForSave()
+                                    .saveUsing(entity -> persist(key, entity))
+                                    .validateContext();
+                        }
                     }
-                }
             );
         }).assertSuccessful();
     }
@@ -346,7 +540,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                 .map(this::trimAll)
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
-                    final var ipNumber = HsHostingAssetEntity.builder()
+                    final var ipNumber = HsHostingAssetRawEntity.builder()
                             .type(IPV4_NUMBER)
                             .identifier(rec.getString("inet_addr"))
                             .caption(rec.getString("description"))
@@ -402,12 +596,17 @@ public class ImportHostingAssets extends ImportOfficeData {
                     bookingItems.put(PACKET_ID_OFFSET + packet_id, bookingItem);
                     final var haType = determineHaType(basepacket_code);
 
-                    logError(() -> assertThat(!free || haType == MANAGED_WEBSPACE || bookingItem.getRelatedProject().getDebitor().getDefaultPrefix().equals("hsh"))
-                            .as("packet.free only supported for Hostsharing-Assets and ManagedWebspace in customer-ManagedServer, but is set for " + packet_name)
+                    logError(() -> assertThat(!free || haType == MANAGED_WEBSPACE || bookingItem.getRelatedProject()
+                            .getDebitor()
+                            .getDefaultPrefix()
+                            .equals("hsh"))
+                            .as("packet.free only supported for Hostsharing-Assets and ManagedWebspace in customer-ManagedServer, but is set for "
+                                    + packet_name)
                             .isTrue());
 
-                    final var asset = HsHostingAssetEntity.builder()
-                            .isLoaded(haType == MANAGED_WEBSPACE) // this turns off identifier validation to accept former default prefixes
+                    final var asset = HsHostingAssetRawEntity.builder()
+                            // this turns off identifier validation to accept former default prefixes
+                            .isLoaded(haType == MANAGED_WEBSPACE)
                             .type(haType)
                             .identifier(packet_name)
                             .bookingItem(bookingItem)
@@ -461,9 +660,9 @@ public class ImportHostingAssets extends ImportOfficeData {
                         case "DAEMON" -> "Daemons";
                         case "MULTI" -> "Multi";
                         case "CPU" -> "CPU";
-                        case "RAM" -> returning("RAM", convert = v -> v/1024);
-                        case "QUOTA" -> returning("SSD", convert = v -> v/1024);
-                        case "STORAGE" -> returning("HDD", convert = v -> v/1024);
+                        case "RAM" -> returning("RAM", convert = v -> v / 1024);
+                        case "QUOTA" -> returning("SSD", convert = v -> v / 1024);
+                        case "STORAGE" -> returning("HDD", convert = v -> v / 1024);
                         case "TRAFFIC" -> "Traffic";
                         case "OFFICE" -> returning("Online Office Server", convert = v -> v == 1);
 
@@ -526,7 +725,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             case "SLAPLAT8H" -> "EXT8H";
                             default -> throw new IllegalArgumentException("unknown basecomponent_code: " + basecomponent_code);
                         };
-                        if ( ofNullable(asset.getBookingItem().getResources().get(name)).map("BASIC"::equals).orElse(true) ) {
+                        if (ofNullable(asset.getBookingItem().getResources().get(name)).map("BASIC"::equals).orElse(true)) {
                             asset.getBookingItem().getResources().put(name, slaValue);
                         }
                     } else if (name.startsWith("SLA")) {
@@ -537,7 +736,90 @@ public class ImportHostingAssets extends ImportOfficeData {
                 });
     }
 
-    <V> V returning(final V value, final Object... assignments) {
+    private void importUnixUsers(final String[] header, final List<String[]> records) {
+        final var columns = new Columns(header);
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var unixuser_id = rec.getInteger("unixuser_id");
+                    final var packet_id = rec.getInteger("packet_id");
+                    final var unixUserAsset = HsHostingAssetRawEntity.builder()
+                            .type(UNIX_USER)
+                            .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
+                            .identifier(rec.getString("name"))
+                            .caption(rec.getString("comment"))
+                            .isLoaded(true) // avoid overwriting imported userids with generated ids
+                            .config(new HashMap<>(Map.ofEntries(
+                                    entry("shell", rec.getString("shell")),
+                                    // entry("homedir", rec.getString("homedir")), do not import, it's calculated
+                                    entry("locked", rec.getBoolean("locked")),
+                                    entry("userid", rec.getInteger("userid")),
+                                    entry("SSD soft quota", rec.getInteger("quota_softlimit")),
+                                    entry("SSD hard quota", rec.getInteger("quota_hardlimit")),
+                                    entry("HDD soft quota", rec.getInteger("storage_softlimit")),
+                                    entry("HDD hard quota", rec.getInteger("storage_hardlimit"))
+                            )))
+                            .build();
+
+                    // TODO.spec: crop SSD+HDD limits if > booked
+                    if (unixUserAsset.getDirectValue("SSD hard quota", Integer.class, 0)
+                            > 1024*unixUserAsset.getContextValue("SSD", Integer.class, 0)) {
+                        unixUserAsset.getConfig().put("SSD hard quota", unixUserAsset.getContextValue("SSD", Integer.class, 0)*1024);
+                    }
+                    if (unixUserAsset.getDirectValue("HDD hard quota", Integer.class, 0)
+                            > 1024*unixUserAsset.getContextValue("HDD", Integer.class, 0)) {
+                        unixUserAsset.getConfig().put("HDD hard quota", unixUserAsset.getContextValue("HDD", Integer.class, 0)*1024);
+                    }
+
+                    // TODO.spec: does `softlimit<hardlimit?` even make sense? Fix it in this or the other direction?
+                    if (unixUserAsset.getDirectValue("SSD soft quota", Integer.class, 0)
+                            > unixUserAsset.getDirectValue("SSD hard quota", Integer.class, 0)) {
+                        unixUserAsset.getConfig().put("SSD soft quota", unixUserAsset.getConfig().get("SSD hard quota"));
+                    }
+                    if (unixUserAsset.getDirectValue("HDD soft quota", Integer.class, 0)
+                            > unixUserAsset.getDirectValue("HDD hard quota", Integer.class, 0)) {
+                        unixUserAsset.getConfig().put("HDD soft quota", unixUserAsset.getConfig().get("HDD hard quota"));
+                    }
+
+                    // TODO.spec: remove HDD limits if no HDD storage is booked
+                    if (unixUserAsset.getContextValue("HDD", Integer.class, 0) == 0) {
+                        unixUserAsset.getConfig().remove("HDD hard quota");
+                        unixUserAsset.getConfig().remove("HDD soft quota");
+                    }
+
+                    hostingAssets.put(UNIXUSER_ID_OFFSET + unixuser_id, unixUserAsset);
+                });
+    }
+
+    private void importEmailAliases(final String[] header, final List<String[]> records) {
+        final var columns = new Columns(header);
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var unixuser_id = rec.getInteger("emailalias_id");
+                    final var packet_id = rec.getInteger("pac_id");
+                    final var targets = parseCsvLine(rec.getString("target"));
+                    final var unixUserAsset = HsHostingAssetRawEntity.builder()
+                            .type(EMAIL_ALIAS)
+                            .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
+                            .identifier(rec.getString("name"))
+                            .caption(rec.getString("name"))
+                            .config(Map.ofEntries(
+                                    entry("target", targets)
+                            ))
+                            .build();
+                    hostingAssets.put(EMAILALIAS_ID_OFFSET + unixuser_id, unixUserAsset);
+                });
+    }
+
+    // ============================================================================================
+
+    <V> V returning(
+            final V value,
+            @SuppressWarnings("unused") final Object... assignments // DSL-hack: just used for side effects on caller-side
+    ) {
         return value;
     }
 
@@ -561,7 +843,7 @@ public class ImportHostingAssets extends ImportOfficeData {
         };
     }
 
-    private static HsHostingAssetEntity ipNumber(final Integer inet_addr_id) {
+    private static HsHostingAssetRawEntity ipNumber(final Integer inet_addr_id) {
         return inet_addr_id != null ? hostingAssets.get(IP_NUMBER_ID_OFFSET + inet_addr_id) : null;
     }
 
@@ -569,7 +851,7 @@ public class ImportHostingAssets extends ImportOfficeData {
         return hive_id != null ? hives.get(HIVE_ID_OFFSET + hive_id) : null;
     }
 
-    private static HsHostingAssetEntity pac(final Integer packet_id) {
+    private static HsHostingAssetRawEntity pac(final Integer packet_id) {
         return packet_id != null ? hostingAssets.get(PACKET_ID_OFFSET + packet_id) : null;
     }
 
@@ -582,7 +864,11 @@ public class ImportHostingAssets extends ImportOfficeData {
                                 .filter(hae -> hae.getValue().getType() == t)
                                 .limit(maxCount)
                 )
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, ImportHostingAssets::uniqueKeys, TreeMap::new)));
+    }
+
+    protected static <V> V uniqueKeys(final V v1, final V v2) {
+        throw new RuntimeException(String.format("Duplicate key for values %s and %s", v1, v2));
     }
 
     private String firstOfEachType(

@@ -22,18 +22,24 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
 
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
-                "{type=string[], propertyName=target, elementsOf={type=string, propertyName=target, matchesRegEx=[^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9]+)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$], maxLength=320}, required=true, minLength=1}");
+                "{type=string[], propertyName=target, elementsOf={type=string, propertyName=target, matchesRegEx=[^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\._-]*)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$, ^:include:/.*$, ^\\|.*$, ^/dev/null$], maxLength=320}, required=true, minLength=1}");
     }
 
     @Test
-    void validatesValidEntity() {
+    void acceptsValidEntity() {
         // given
         final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(EMAIL_ALIAS)
                 .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
                 .identifier("xyz00-office")
                 .config(Map.ofEntries(
-                        entry("target", Array.of("xyz00", "xyz00-abc", "office@example.com"))
+                        entry("target", Array.of(
+                                "xyz00",
+                                "xyz00-abc",
+                                "office@example.com",
+                                "/dev/null",
+                                "|/home/pacs/xyz00/mailinglists/ecartis -s xyz00-intern"
+                                ))
                 ))
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
@@ -46,14 +52,22 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     }
 
     @Test
-    void validatesProperties() {
+    void rejectsInvalidConfig() {
         // given
         final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(EMAIL_ALIAS)
                 .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
                 .identifier("xyz00-office")
                 .config(Map.ofEntries(
-                        entry("target", Array.of("xyz00", "xyz00-abc", "garbage", "office@example.com"))
+                        entry("target", Array.of(
+                                "/dev/null",
+                                "xyz00",
+                                "xyz00-abc",
+                                "garbage",
+                                "office@example.com",
+                                ":include:/home/pacs/xyz00/mailinglists/textfile",
+                                "|/home/pacs/xyz00/mailinglists/executable"
+                        ))
                 ))
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
@@ -63,11 +77,11 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'EMAIL_ALIAS:xyz00-office.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9]+)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$] but 'garbage' does not match any");
+                "'EMAIL_ALIAS:xyz00-office.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\._-]*)?$, ^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$, ^:include:/.*$, ^\\|.*$, ^/dev/null$] but 'garbage' does not match any");
     }
 
     @Test
-    void validatesInvalidIdentifier() {
+    void rejectsInvalidIndentifier() {
         // given
         final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
                 .type(EMAIL_ALIAS)
@@ -84,7 +98,7 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'identifier' expected to match '^xyz00$|^xyz00-[a-z0-9]+$', but is 'abc00-office'");
+                "'identifier' expected to match '^xyz00$|^xyz00-[a-z0-9][a-z0-9\\._-]*$', but is 'abc00-office'");
     }
 
     @Test

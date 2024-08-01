@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
 import lombok.SneakyThrows;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.system.SystemProcess;
 
 import java.util.List;
@@ -59,12 +59,12 @@ class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator 
     }
 
     @Override
-    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+    protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         return  Pattern.compile("^" + Pattern.quote(assetEntity.getParentAsset().getIdentifier() + IDENTIFIER_SUFFIX) + "$");
     }
 
     @Override
-    public void preprocessEntity(final HsHostingAssetEntity entity) {
+    public void preprocessEntity(final HsHostingAsset entity) {
         super.preprocessEntity(entity);
         if (entity.getIdentifier() == null) {
             ofNullable(entity.getParentAsset()).ifPresent(pa -> entity.setIdentifier(pa.getIdentifier() + IDENTIFIER_SUFFIX));
@@ -73,7 +73,7 @@ class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator 
 
     @Override
     @SneakyThrows
-    public List<String> validateContext(final HsHostingAssetEntity assetEntity) {
+    public List<String> validateContext(final HsHostingAsset assetEntity) {
         final var result = super.validateContext(assetEntity);
 
         // TODO.spec: define which checks should get raised to error level
@@ -87,7 +87,7 @@ class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator 
         return result;
     }
 
-    String toZonefileString(final HsHostingAssetEntity assetEntity) {
+    String toZonefileString(final HsHostingAsset assetEntity) {
         // TODO.spec: we need to expand the templates (auto-...) in the same way as in Saltstack
         return """
               $ORIGIN {domain}.
@@ -104,7 +104,7 @@ class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator 
                     .replace("{userRRs}", getPropertyValues(assetEntity, "user-RR") );
     }
 
-    private String fqdn(final HsHostingAssetEntity assetEntity) {
+    private String fqdn(final HsHostingAsset assetEntity) {
         return assetEntity.getIdentifier().substring(0, assetEntity.getIdentifier().length()-IDENTIFIER_SUFFIX.length());
     }
 }

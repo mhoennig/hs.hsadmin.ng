@@ -38,8 +38,8 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         );
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> unixUsers() {
-        return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
+    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> unixUsers() {
+        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
             final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
                     .map(ha -> ha.getSubHostingAssets().stream()
                             .filter(subAsset -> subAsset.getType() == UNIX_USER)
@@ -53,8 +53,8 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         };
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> databaseUsers() {
-        return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
+    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> databaseUsers() {
+        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
             final var dbUserCount = ofNullable(entity.getRelatedHostingAsset())
                     .map(ha -> ha.getSubHostingAssets().stream()
                             .filter(bi -> bi.getType() == PGSQL_USER || bi.getType() == MARIADB_USER )
@@ -68,8 +68,8 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         };
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> databases() {
-        return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
+    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> databases() {
+        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
             final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
                     .map(ha -> ha.getSubHostingAssets().stream()
                         .filter(bi -> bi.getType()==PGSQL_USER || bi.getType()==MARIADB_USER )
@@ -85,8 +85,8 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         };
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> eMailAddresses() {
-        return (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
+    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> eMailAddresses() {
+        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
             final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
                     .map(ha -> ha.getSubHostingAssets().stream()
                         .filter(bi -> bi.getType() == DOMAIN_MBOX_SETUP)

@@ -1,9 +1,9 @@
-### HsHostingAssetEntity-Validation
+### HsHostingAsset-Validation
 
-There is just a single `HsHostingAssetEntity` class for all types of hosting assets like Managed-Server, Managed-Webspace, Unix-Users, Databases etc. These are distinguished by  `HsHostingAssetType HsHostingAssetEntity.type`.
+There is just a single `HsHostingAsset` interface and `HsHostingAssetEntity` entity for all types of hosting assets like Managed-Server, Managed-Webspace, Unix-Users, Databases etc. These are distinguished by  `HsHostingAssetType HsHostingAsset.type`.
 
 For each of these types, a distinct validator has to be 
-implemented as a subclass of `HsHostingAssetEntityValidator` which needs to be registered (see `HsHostingAssetEntityValidatorRegistry`) for the relevant type(s).
+implemented as a subclass of `HsHostingAssetValidator` which needs to be registered (see `HsHostingAssetValidatorRegistry`) for the relevant type(s).
 
 ### Kinds of Validations
 
@@ -21,7 +21,7 @@ References in this context are:
 - the Assigned-To-Hosting-Asset and
 - the Contact.
 
-The first parameters of the `HsHostingAssetEntityValidator` superclass take rule descriptors for these references. These are all Subclasses fo   
+The first parameters of the `HsHostingAssetValidator` superclass take rule descriptors for these references. These are all Subclasses fo   
 
 ### Validation Order
 
@@ -37,4 +37,4 @@ In general, the validation es executed in this order:
 2. the limits of the parent entity (parent asset + booking item)
 3. limits against the own own-sub-entities
 
-This implementation can be found in `HsHostingAssetEntityValidator.validate`.
+This implementation can be found in `HsHostingAssetValidator.validate`.

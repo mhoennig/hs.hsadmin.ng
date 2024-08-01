@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ class PasswordPropertyUnitTest {
     private final ValidatableProperty<PasswordProperty, String> passwordProp =
             passwordProperty("password").minLength(8).maxLength(40).hashedUsing(LINUX_SHA512).writeOnly();
     private final List<String> violations = new ArrayList<>();
+    private EntityManager em = null; // not actually needed in these test cases
 
     @ParameterizedTest
     @ValueSource(strings = {
@@ -99,7 +101,12 @@ class PasswordPropertyUnitTest {
     void shouldComputeHash() {
 
         // when
-        final var result = passwordProp.compute(new PropertiesProvider() {
+        final var result = passwordProp.compute(em, new PropertiesProvider() {
+
+            @Override
+            public boolean isLoaded() {
+                return false;
+            }
 
             @Override
             public Map<String, Object> directProps() {

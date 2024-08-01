@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 
 import java.util.regex.Pattern;
 
@@ -21,7 +21,7 @@ class HsPostgreSqlDatabaseHostingAssetValidator extends HostingAssetEntityValida
     }
 
     @Override
-    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+    protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         final var webspaceIdentifier = assetEntity.getParentAsset().getParentAsset().getIdentifier();
         return Pattern.compile("^"+webspaceIdentifier+"$|^"+webspaceIdentifier+"_[a-z0-9_]+$");
     }

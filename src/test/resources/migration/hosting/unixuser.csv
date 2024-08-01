@@ -1,0 +1,19 @@
+unixuser_id;name;comment;shell;homedir;locked;packet_id;userid;quota_softlimit;quota_hardlimit;storage_softlimit;storage_hardlimit
+100824;hsh00;Hostsharing Paket;/bin/bash;/home/pacs/hsh00;0;630;10000;0;0;0;0
+
+5803;lug00;LUGs;/bin/bash;/home/pacs/lug00;0;1094;102090;0;0;0;0
+5805;lug00-wla.1;Paul Klemm;/bin/bash;/home/pacs/lug00/users/deaf;0;1094;102091;4;0;0;0
+5809;lug00-wla.2;Walter Müller;/bin/bash;/home/pacs/lug00/users/marl;0;1094;102093;4;8;0;0
+5811;lug00-ola.a;LUG OLA - POP a;/usr/bin/passwd;/home/pacs/lug00/users/marl.a;1;1094;102094;0;0;0;0
+5813;lug00-ola.b;LUG OLA - POP b;/usr/bin/passwd;/home/pacs/lug00/users/marl.b;1;1094;102095;0;0;0;0
+5835;lug00-test;Test;/usr/bin/passwd;/home/pacs/lug00/users/test;0;1094;102106;2000000;4000000;20;0
+
+100705;hsh00-mim;Michael Mellis;/bin/false;/home/pacs/hsh00/users/mi;0;630;10003;0;0;0;0
+5964;mim00;Michael Mellis;/bin/bash;/home/pacs/mim00;0;1112;102147;0;0;0;0
+5966;mim00-1981;Jahrgangstreffen 1981;/bin/bash;/home/pacs/mim00/users/1981;0;1112;102148;128;256;0;0
+5990;mim00-mail;Mailbox;/bin/bash;/home/pacs/mim00/users/mail;0;1112;102160;0;0;0;0
+
+167846;hsh00-dph;hsh00-uph;/bin/false;/home/pacs/hsh00/users/uph;0;630;110568;0;0;0;0
+169546;dph00;Reinhard Wiese;/bin/bash;/home/pacs/dph00;0;19959;110593;0;0;0;0
+169596;dph00-uph;Domain admin;/bin/bash;/home/pacs/dph00/users/uph;0;19959;110594;0;0;0;0
+

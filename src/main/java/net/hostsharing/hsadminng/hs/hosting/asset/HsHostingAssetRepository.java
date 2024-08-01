@@ -39,7 +39,7 @@ public interface HsHostingAssetRepository extends Repository<HsHostingAssetEntit
         return findAllByCriteriaImpl(projectUuid, parentAssetUuid, HsHostingAssetType.asString(type));
     }
 
-    HsHostingAssetEntity save(HsHostingAssetEntity current);
+    HsHostingAssetEntity save(HsHostingAsset current);
 
     int deleteByUuid(final UUID uuid);
 

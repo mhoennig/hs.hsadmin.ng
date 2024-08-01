@@ -8,15 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.CascadeType;
@@ -39,10 +34,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
-import static java.util.Collections.emptyMap;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
@@ -70,17 +63,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsHostingAssetEntity implements Stringifyable, RbacObject<HsHostingAssetEntity>, PropertiesProvider {
-
-    private static Stringify<HsHostingAssetEntity> stringify = stringify(HsHostingAssetEntity.class)
-            .withProp(HsHostingAssetEntity::getType)
-            .withProp(HsHostingAssetEntity::getIdentifier)
-            .withProp(HsHostingAssetEntity::getCaption)
-            .withProp(HsHostingAssetEntity::getParentAsset)
-            .withProp(HsHostingAssetEntity::getAssignedToAsset)
-            .withProp(HsHostingAssetEntity::getBookingItem)
-            .withProp(HsHostingAssetEntity::getConfig)
-            .quotedValues(false);
+public class HsHostingAssetEntity implements HsHostingAsset {
 
     @Id
     @GeneratedValue
@@ -136,14 +119,6 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject<HsHosting
         this.isLoaded = true;
     }
 
-    public HsBookingProjectEntity getRelatedProject() {
-        return Optional.ofNullable(bookingItem)
-                .map(HsBookingItemEntity::getRelatedProject)
-                .orElseGet(() -> Optional.ofNullable(parentAsset)
-                        .map(HsHostingAssetEntity::getRelatedProject)
-                        .orElse(null));
-    }
-
     public PatchableMapWrapper<Object> getConfig() {
         return PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper;}, config);
     }
@@ -158,29 +133,8 @@ public class HsHostingAssetEntity implements Stringifyable, RbacObject<HsHosting
     }
 
     @Override
-    public Object getContextValue(final String propName) {
-        final var v = config.get(propName);
-        if (v != null) {
-            return v;
-        }
-
-        if (bookingItem != null) {
-            return bookingItem.getResources().get(propName);
-        }
-        if (parentAsset != null && parentAsset.getBookingItem() != null) {
-            return parentAsset.getBookingItem().getResources().get(propName);
-        }
-        return emptyMap();
-    }
-
-    @Override
     public String toString() {
-        return stringify.apply(this);
-    }
-
-    @Override
-    public String toShortString() {
-        return type + ":" + identifier;
+        return stringify.using(HsHostingAssetEntity.class).apply(this);
     }
 
     public static RbacView rbac() {

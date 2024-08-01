@@ -16,9 +16,8 @@ import static java.lang.Boolean.TRUE;
 
 public final class Stringify<B> {
 
-    private final Class<B> clazz;
     private final String name;
-    private Function<B, ?> idProp;
+    private Function<? extends B, ?> idProp;
     private final List<Property<B>> props = new ArrayList<>();
     private String separator = ", ";
     private Boolean quotedValues = null;
@@ -31,8 +30,16 @@ public final class Stringify<B> {
         return new Stringify<>(clazz, null);
     }
 
+    public <T extends B> Stringify<T> using(final Class<T> subClass) {
+        //noinspection unchecked
+        return (Stringify<T>) new Stringify<T>(subClass, null)
+                .withIdProp(cast(idProp))
+                .withProps(cast(props))
+                .withSeparator(separator)
+                .quotedValues(quotedValues);
+    }
+
     private Stringify(final Class<B> clazz, final String name) {
-        this.clazz = clazz;
         if (name != null) {
             this.name = name;
         } else {
@@ -45,7 +52,7 @@ public final class Stringify<B> {
         }
     }
 
-    public Stringify<B> withIdProp(final Function<B, ?> getter) {
+    public Stringify<B> withIdProp(final Function<? extends B, ?> getter) {
         idProp = getter;
         return this;
     }
@@ -57,6 +64,11 @@ public final class Stringify<B> {
 
     public Stringify<B> withProp(final Function<B, ?> getter) {
         props.add(new Property<>(null, getter));
+        return this;
+    }
+
+    private Stringify<B> withProps(final List<Property<B>> props) {
+        this.props.addAll(props);
         return this;
     }
 
@@ -74,7 +86,7 @@ public final class Stringify<B> {
                 .map(propVal -> propName(propVal, "=") + optionallyQuoted(propVal))
                 .collect(Collectors.joining(separator));
         return idProp != null
-            ? name + "(" + idProp.apply(object) + ": " + propValues + ")"
+            ? name + "(" + idProp.apply(cast(object)) + ": " + propValues + ")"
             : name + "(" + propValues + ")";
     }
 
@@ -104,6 +116,11 @@ public final class Stringify<B> {
     public Stringify<B> quotedValues(final boolean quotedValues) {
         this.quotedValues = quotedValues;
         return this;
+    }
+
+    private <T> T cast(final Object object) {
+        //noinspection unchecked
+        return (T)object;
     }
 
     private record Property<B>(String name, Function<B, ?> getter) {}

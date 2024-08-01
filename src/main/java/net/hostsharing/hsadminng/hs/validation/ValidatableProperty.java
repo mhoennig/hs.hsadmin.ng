@@ -9,6 +9,7 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.apache.commons.lang3.function.TriFunction;
 
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static java.lang.Boolean.FALSE;
@@ -46,11 +48,17 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
     private Set<String> requiresAtMaxOneOf;
     private T defaultValue;
 
+    protected enum ComputeMode {
+        IN_INIT,
+        IN_PREP,
+        IN_REVAMP
+    }
+
     @JsonIgnore
-    private Function<PropertiesProvider, T> computedBy;
+    private BiFunction<EntityManager, PropertiesProvider, T> computedBy;
 
     @Accessors(makeFinal = true, chain = true, fluent = false)
-    private boolean computed; // used in descriptor, because computedBy cannot be rendered to a text string
+    private ComputeMode computed; // name 'computed' instead 'computeMode' for better readability in property description
 
     @Accessors(makeFinal = true, chain = true, fluent = false)
     private boolean readOnly;
@@ -75,7 +83,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
         return null;
     }
 
-protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> function) {
+    protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> function) {
         this.deferredInit = function;
     }
 
@@ -95,7 +103,6 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
 
     public P readOnly() {
         this.readOnly = true;
-        optional();
         return self();
     }
 
@@ -137,8 +144,8 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
         if (asTotalLimitValidators == null) {
             asTotalLimitValidators = new ArrayList<>();
         }
-        final TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> validator =
-                (final HsBookingItemEntity entity, final IntegerProperty prop, final Integer factor) -> {
+        final TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> validator =
+                (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
 
             final var total = entity.getSubBookingItems().stream()
                     .map(server -> server.getResources().get(propertyName))
@@ -169,11 +176,11 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
         return thresholdPercentage;
     }
 
-    public ValidatableProperty<P, T> eachComprising(final int factor, final TriFunction<HsBookingItemEntity, IntegerProperty, Integer, List<String>> validator) {
+    public ValidatableProperty<P, T> eachComprising(final int factor, final TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> validator) {
         if (asTotalLimitValidators == null) {
             asTotalLimitValidators = new ArrayList<>();
         }
-        asTotalLimitValidators.add((final HsBookingItemEntity entity) -> validator.apply(entity, (IntegerProperty)this,  factor));
+        asTotalLimitValidators.add((final HsBookingItemEntity entity) -> validator.apply(entity, (IntegerProperty<?>)this,  factor));
         return this;
     }
 
@@ -235,8 +242,8 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
     protected abstract void validate(final List<String> result, final T propValue, final PropertiesProvider propProvider);
 
     public void verifyConsistency(final Map.Entry<? extends Enum<?>, ?> typeDef) {
-        if (required == null && requiresAtLeastOneOf == null && requiresAtMaxOneOf == null) {
-            throw new IllegalStateException(typeDef.getKey() + "[" + propertyName + "] not fully initialized, please call either .required(), .optional(), .withDefault(...), .requiresAtLeastOneOf(...) or .requiresAtMaxOneOf(...)" );
+        if (required == null && requiresAtLeastOneOf == null && requiresAtMaxOneOf == null && !readOnly && defaultValue == null) {
+            throw new IllegalStateException(typeDef.getKey() + "[" + propertyName + "] not fully initialized, please call either .readOnly(), .required(), .optional(), .withDefault(...), .requiresAtLeastOneOf(...) or .requiresAtMaxOneOf(...)" );
         }
     }
 
@@ -301,14 +308,26 @@ protected void setDeferredInit(final Function<ValidatableProperty<?, ?>[], T[]> 
                 .toList();
     }
 
-    public P computedBy(final Function<PropertiesProvider, T> compute) {
+    public P initializedBy(final BiFunction<EntityManager, PropertiesProvider, T> compute) {
+        return computedBy(ComputeMode.IN_INIT, compute);
+    }
+
+    public P renderedBy(final BiFunction<EntityManager, PropertiesProvider, T> compute) {
+        return computedBy(ComputeMode.IN_REVAMP, compute);
+    }
+
+    protected P computedBy(final ComputeMode computeMode, final BiFunction<EntityManager, PropertiesProvider, T> compute) {
         this.computedBy = compute;
-        this.computed = true;
+        this.computed = computeMode;
         return self();
     }
 
-    public <E extends PropertiesProvider> T compute(final E entity) {
-        return computedBy.apply(entity);
+    public boolean isComputed(final ComputeMode computeMode) {
+        return computed == computeMode;
+    }
+
+    public <E extends PropertiesProvider> T compute(final EntityManager em, final E entity) {
+        return computedBy.apply(em, entity);
     }
 
     @Override

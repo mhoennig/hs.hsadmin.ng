@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.EntityManager;
 import java.nio.charset.Charset;
 import java.util.Base64;
 import java.util.HashMap;
@@ -26,6 +27,8 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
             .identifier("vm1234|PgSql.default")
             .caption("some valid test PgSql-Instance")
             .build();
+
+    private EntityManager em = null; // not actually needed in these test cases
 
     private static HsHostingAssetEntityBuilder givenValidMariaDbUserBuilder() {
         return HsHostingAssetEntity.builder()
@@ -49,7 +52,7 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(props).extracting(Object::toString).containsExactlyInAnyOrder(
-                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=true, hashedUsing=SCRAM_SHA256, undisclosed=true}"
+                "{type=password, propertyName=password, minLength=8, maxLength=40, writeOnly=true, computed=IN_PREP, hashedUsing=SCRAM_SHA256, undisclosed=true}"
         );
     }
 
@@ -61,7 +64,7 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
 
         // when
         HashGenerator.nextSalt(new String(Base64.getDecoder().decode("L1QxSVNyTU81b3NZS1djNg=="), Charset.forName("latin1")));
-        validator.prepareProperties(givenMariaDbUserHostingAsset);
+        validator.prepareProperties(em, givenMariaDbUserHostingAsset);
 
         // then
         assertThat(givenMariaDbUserHostingAsset.getConfig()).containsExactlyInAnyOrderEntriesOf(ofEntries(

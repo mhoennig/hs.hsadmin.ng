@@ -111,6 +111,21 @@ create trigger hs_hosting_asset_type_hierarchy_check_tg
 --//
 
 
+
+-- ============================================================================
+--changeset hosting-asset-system-sequences:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_unixuser_system_id_seq
+    AS integer
+    MINVALUE 1000000
+    MAXVALUE 9999999
+    NO CYCLE
+    OWNED BY NONE;
+
+--//
+
+
 -- ============================================================================
 --changeset hosting-asset-BOOKING-ITEM-HIERARCHY-CHECK:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------

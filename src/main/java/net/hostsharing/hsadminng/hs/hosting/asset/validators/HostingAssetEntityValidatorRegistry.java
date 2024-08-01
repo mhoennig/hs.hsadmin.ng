@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
@@ -12,7 +13,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.*;
 
 public class HostingAssetEntityValidatorRegistry {
 
-    private static final Map<Enum<HsHostingAssetType>, HsEntityValidator<HsHostingAssetEntity>> validators = new HashMap<>();
+    private static final Map<Enum<HsHostingAssetType>, HsEntityValidator<HsHostingAsset>> validators = new HashMap<>();
     static {
         // HOWTO: add (register) new HsHostingAssetType-specific validators
         register(CLOUD_SERVER, new HsCloudServerHostingAssetValidator());
@@ -36,14 +37,14 @@ public class HostingAssetEntityValidatorRegistry {
         register(IPV6_NUMBER, new HsIPv6NumberHostingAssetValidator());
     }
 
-    private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAssetEntity> validator) {
+    private static void register(final Enum<HsHostingAssetType> type, final HsEntityValidator<HsHostingAsset> validator) {
         stream(validator.propertyValidators).forEach( entry -> {
             entry.verifyConsistency(Map.entry(type, validator));
         });
         validators.put(type, validator);
     }
 
-    public static HsEntityValidator<HsHostingAssetEntity> forType(final Enum<HsHostingAssetType> type) {
+    public static HsEntityValidator<HsHostingAsset> forType(final Enum<HsHostingAssetType> type) {
         if ( validators.containsKey(type)) {
             return validators.get(type);
         }

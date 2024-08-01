@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.validation;
 
 
 
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,6 +14,9 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
+import static net.hostsharing.hsadminng.hs.validation.ValidatableProperty.ComputeMode.IN_INIT;
+import static net.hostsharing.hsadminng.hs.validation.ValidatableProperty.ComputeMode.IN_PREP;
+import static net.hostsharing.hsadminng.hs.validation.ValidatableProperty.ComputeMode.IN_REVAMP;
 
 // TODO.refa: rename to HsEntityProcessor, also subclasses
 public abstract class HsEntityValidator<E extends PropertiesProvider> {
@@ -106,21 +110,21 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
         throw new IllegalArgumentException("Integer value (or null) expected, but got " + value);
     }
 
-    public void prepareProperties(final E entity) {
+    public void prepareProperties(final EntityManager em, final E entity) {
         stream(propertyValidators).forEach(p -> {
-            if ( p.isWriteOnly() && p.isComputed()) {
-                entity.directProps().put(p.propertyName, p.compute(entity));
+            if (p.isComputed(IN_PREP) || p.isComputed(IN_INIT) && !entity.isLoaded() ) {
+                entity.directProps().put(p.propertyName, p.compute(em, entity));
             }
         });
     }
 
-    public Map<String, Object> revampProperties(final E entity, final Map<String, Object> config) {
+    public Map<String, Object> revampProperties(final EntityManager em, final E entity, final Map<String, Object> config) {
         final var copy = new HashMap<>(config);
         stream(propertyValidators).forEach(p -> {
             if (p.isWriteOnly()) {
                 copy.remove(p.propertyName);
-            } else if (p.isReadOnly() && p.isComputed()) {
-                copy.put(p.propertyName, p.compute(entity));
+            } else if (p.isComputed(IN_REVAMP)) {
+                copy.put(p.propertyName, p.compute(em, entity));
             }
         });
         return copy;

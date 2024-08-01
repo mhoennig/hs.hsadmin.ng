@@ -72,7 +72,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entity = mapper.map(body, HsHostingAssetEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var mapped = new HostingAssetEntitySaveProcessor(entity)
+        final var mapped = new HostingAssetEntitySaveProcessor(em, entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -133,7 +133,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         new HsHostingAssetEntityPatcher(em, entity).apply(body);
 
-        final var mapped = new HostingAssetEntitySaveProcessor(entity)
+        final var mapped = new HostingAssetEntitySaveProcessor(em, entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -162,5 +162,5 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @SuppressWarnings("unchecked")
     final BiConsumer<HsHostingAssetEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
             -> resource.setConfig(HostingAssetEntityValidatorRegistry.forType(entity.getType())
-                .revampProperties(entity, (Map<String, Object>) resource.getConfig()));
+                .revampProperties(em, entity, (Map<String, Object>) resource.getConfig()));
 }

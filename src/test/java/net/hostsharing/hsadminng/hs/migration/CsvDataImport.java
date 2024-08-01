@@ -3,6 +3,8 @@ package net.hostsharing.hsadminng.hs.migration;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -25,18 +27,24 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.lang.Boolean.parseBoolean;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.mapper.Array.emptyArray;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
@@ -68,7 +76,7 @@ public class CsvDataImport extends ContextBasedTest {
     @MockBean
     HttpServletRequest request;
 
-    private static final List<AssertionError> errors = new ArrayList<>();
+    static final List<String> errors = new ArrayList<>();
 
     public List<String[]> readAllLines(Reader reader) throws Exception {
 
@@ -113,6 +121,16 @@ public class CsvDataImport extends ContextBasedTest {
         return records.subList(1, records.size());
     }
 
+    @SneakyThrows
+    public static String[] parseCsvLine(final String csvLine) {
+        try (final var reader = new CSVReader(new StringReader(csvLine))) {
+            return stream(ofNullable(reader.readNext()).orElse(emptyArray(String.class)))
+                    .map(String::trim)
+                    .map(target -> target.startsWith("'") && target.endsWith("'") ? target.substring(1, target.length()-1) : target)
+                    .toArray(String[]::new);
+        }
+    }
+
     String[] trimAll(final String[] record) {
         for (int i = 0; i < record.length; ++i) {
             if (record[i] != null) {
@@ -124,20 +142,72 @@ public class CsvDataImport extends ContextBasedTest {
 
     public <T extends RbacObject> T persist(final Integer id, final T entity) {
         try {
-            final var asString = entity.toString();
-            if ( asString.contains("'null null, null'") || asString.equals("person()")) {
-                System.err.println("skipping to persist empty record-id " + id +  " #" + entity.hashCode() + ": " + entity);
-                return entity;
+            if (entity instanceof HsHostingAsset ha) {
+                //noinspection unchecked
+                return (T) persistViaSql(id, ha);
             }
-            //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
-            em.persist(entity);
-            // uncomment for debugging purposes
-            // em.flush(); // makes it slow, but produces better error messages
-            // System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
+            return  persistViaEM(id, entity);
         } catch (Exception exc) {
-            System.err.println("failed to persist #" + entity.hashCode() + ": " + entity);
-            System.err.println(exc);
+            errors.add("failed to persist #" + entity.hashCode() + ": " + entity);
+            errors.add(exc.toString());
         }
+        return entity;
+    }
+
+    public <T extends RbacObject> T persistViaEM(final Integer id, final T entity) {
+        //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
+        em.persist(entity);
+        // uncomment for debugging purposes
+        // em.flush(); // makes it slow, but produces better error messages
+        // System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
+        return entity;
+    }
+
+    @SneakyThrows
+    public RbacObject<HsHostingAsset> persistViaSql(final Integer id, final HsHostingAsset entity) {
+        if (entity.getUuid() == null) {
+            entity.setUuid(UUID.randomUUID());
+        }
+
+        final var query = em.createNativeQuery("""
+                insert into hs_hosting_asset(
+                           uuid,
+                           type,
+                           bookingitemuuid,
+                           parentassetuuid,
+                           assignedtoassetuuid,
+                           alarmcontactuuid,
+                           identifier,
+                           caption,
+                           config,
+                           version)
+               values (
+                           :uuid,
+                           :type,
+                           :bookingitemuuid,
+                           :parentassetuuid,
+                           :assignedtoassetuuid,
+                           :alarmcontactuuid,
+                           :identifier,
+                           :caption,
+                           cast(:config as jsonb),
+                           :version)
+               """)
+                .setParameter("uuid", entity.getUuid())
+                .setParameter("type", entity.getType().name())
+                .setParameter("bookingitemuuid", ofNullable(entity.getBookingItem()).map(RbacObject::getUuid).orElse(null))
+                .setParameter("parentassetuuid", ofNullable(entity.getParentAsset()).map(RbacObject::getUuid).orElse(null))
+                .setParameter("assignedtoassetuuid", ofNullable(entity.getAssignedToAsset()).map(RbacObject::getUuid).orElse(null))
+                .setParameter("alarmcontactuuid", ofNullable(entity.getAlarmContact()).map(RbacObject::getUuid).orElse(null))
+                .setParameter("identifier", entity.getIdentifier())
+                .setParameter("caption", entity.getCaption())
+                .setParameter("config", entity.getConfig().toString())
+                .setParameter("version", entity.getVersion());
+
+        final var count = query.executeUpdate();
+        logError(() -> {
+            assertThat(count).isEqualTo(1);
+        });
         return entity;
     }
 
@@ -215,12 +285,33 @@ public class CsvDataImport extends ContextBasedTest {
         try {
             assertion.run();
         } catch (final AssertionError exc) {
-            errors.add(exc);
+            errors.add(exc.toString());
         }
     }
 
     void logErrors() {
-        assumeThat(errors).isEmpty();
+        assertThat(errors).isEmpty();
+    }
+
+    void expectErrors(final String... expectedErrors) {
+        assertContainsExactlyInAnyOrderIgnoringWhitespace(errors, expectedErrors);
+    }
+
+    private static class IgnoringWhitespaceComparator implements Comparator<String> {
+        @Override
+        public int compare(String s1, String s2) {
+            return s1.replaceAll("\\s", "").compareTo(s2.replaceAll("\\s", ""));
+        }
+    }
+
+    public static void assertContainsExactlyInAnyOrderIgnoringWhitespace(final List<String> expected, final List<String> actual) {
+        final var sortedExpected = expected.stream().map(m -> m.replaceAll("\\s", "")).toList();
+        final var sortedActual = actual.stream().map(m -> m.replaceAll("\\s", "")).toArray(String[]::new);
+        assertThat(sortedExpected).containsExactlyInAnyOrder(sortedActual);
+    }
+
+    public static void assertContainsExactlyInAnyOrderIgnoringWhitespace(final List<String> expected, final String... actual) {
+        assertContainsExactlyInAnyOrderIgnoringWhitespace(expected, asList(actual));
     }
 }
 
@@ -252,7 +343,7 @@ class Record {
     }
 
     String getString(final String columnName) {
-        return row[columns.indexOf(columnName)];
+        return row[columns.indexOf(columnName)].trim();
     }
 
     boolean isEmpty(final String columnName) {
@@ -288,12 +379,17 @@ class Record {
     }
 }
 
+@Retention(RetentionPolicy.RUNTIME)
+@interface ContinueOnFailure {
+}
+
 class OrderedDependedTestsExtension implements TestWatcher, BeforeEachCallback {
 
     private static boolean previousTestsPassed = true;
 
-    public void testFailed(ExtensionContext context, Throwable cause) {
-        previousTestsPassed = false;
+    @Override
+    public void testFailed(final ExtensionContext context, final Throwable cause) {
+        previousTestsPassed = previousTestsPassed && context.getElement().map(e -> e.isAnnotationPresent(ContinueOnFailure.class)).orElse(false);
     }
 
     @Override

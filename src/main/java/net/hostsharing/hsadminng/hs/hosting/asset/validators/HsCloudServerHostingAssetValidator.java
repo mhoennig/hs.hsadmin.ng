@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 
 import java.util.regex.Pattern;
 
@@ -16,7 +16,7 @@ class HsCloudServerHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     @Override
-    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+    protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         return Pattern.compile("^vm[0-9][0-9][0-9][0-9]$");
     }
 }

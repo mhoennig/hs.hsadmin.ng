@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.validation;
 
+import lombok.Setter;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
-import lombok.Setter;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -13,7 +13,10 @@ import static net.hostsharing.hsadminng.mapper.Array.insertNewEntriesAfterExisti
 @Setter
 public class PasswordProperty extends StringProperty<PasswordProperty> {
 
-    private static final String[] KEY_ORDER = insertNewEntriesAfterExistingEntry(StringProperty.KEY_ORDER, "computed", "hashedUsing");
+    private static final String[] KEY_ORDER = insertNewEntriesAfterExistingEntry(
+            StringProperty.KEY_ORDER,
+            "computed",
+            "hashedUsing");
 
     private Algorithm hashedUsing;
 
@@ -34,10 +37,11 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
 
     public PasswordProperty hashedUsing(final Algorithm algorithm) {
         this.hashedUsing = algorithm;
-        computedBy((entity)
-                -> ofNullable(entity.getDirectValue(propertyName, String.class))
-                    .map(password -> HashGenerator.using(algorithm).withRandomSalt().hash(password))
-                    .orElse(null));
+        computedBy(
+                ComputeMode.IN_PREP,
+                (em, entity) -> ofNullable(entity.getDirectValue(propertyName, String.class))
+                        .map(password -> HashGenerator.using(algorithm).withRandomSalt().hash(password))
+                        .orElse(null));
         return self();
     }
 
@@ -69,9 +73,10 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
             }
         }
 
-        final long groupsCovered = Stream.of(hasLowerCase, hasUpperCase, hasDigit, hasSpecialChar).filter(v->v).count();
-        if ( groupsCovered < 3) {
-            result.add(propertyName + "' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters");
+        final long groupsCovered = Stream.of(hasLowerCase, hasUpperCase, hasDigit, hasSpecialChar).filter(v -> v).count();
+        if (groupsCovered < 3) {
+            result.add(propertyName
+                    + "' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters");
         }
         if (containsColon) {
             result.add(propertyName + "' must not contain colon (':')");

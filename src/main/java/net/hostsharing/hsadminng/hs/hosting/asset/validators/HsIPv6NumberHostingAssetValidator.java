@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -24,7 +24,7 @@ class HsIPv6NumberHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     @Override
-    public List<String> validateEntity(final HsHostingAssetEntity assetEntity) {
+    public List<String> validateEntity(final HsHostingAsset assetEntity) {
         final var violations = super.validateEntity(assetEntity);
 
         if (!isValidIPv6Address(assetEntity.getIdentifier())) {
@@ -35,7 +35,7 @@ class HsIPv6NumberHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     @Override
-    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+    protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         return IPV6_REGEX;
     }
 

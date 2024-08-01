@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 
 import java.util.regex.Pattern;
@@ -11,7 +11,7 @@ import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringPrope
 
 class HsEMailAddressHostingAssetValidator extends HostingAssetEntityValidator {
 
-    private static final String UNIX_USER_REGEX = "^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9]+)?$"; // also accepts legacy pac-names
+    private static final String UNIX_USER_REGEX = "^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\._-]*)?$"; // also accepts legacy pac-names
     private static final String EMAIL_ADDRESS_LOCAL_PART_REGEX = "[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+"; // RFC 5322
     private static final String EMAIL_ADDRESS_DOMAIN_PART_REGEX = "[a-zA-Z0-9.-]+";
     private static final String EMAIL_ADDRESS_FULL_REGEX = "^" + EMAIL_ADDRESS_LOCAL_PART_REGEX + "@" + EMAIL_ADDRESS_DOMAIN_PART_REGEX + "$";
@@ -29,7 +29,7 @@ class HsEMailAddressHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     @Override
-    public void preprocessEntity(final HsHostingAssetEntity entity) {
+    public void preprocessEntity(final HsHostingAsset entity) {
         super.preprocessEntity(entity);
         super.preprocessEntity(entity);
         if (entity.getIdentifier() == null) {
@@ -38,11 +38,11 @@ class HsEMailAddressHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     @Override
-    protected Pattern identifierPattern(final HsHostingAssetEntity assetEntity) {
+    protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         return Pattern.compile("^"+ Pattern.quote(combineIdentifier(assetEntity)) + "$");
     }
 
-    private static String combineIdentifier(final HsHostingAssetEntity emailAddressAssetEntity) {
+    private static String combineIdentifier(final HsHostingAsset emailAddressAssetEntity) {
         return emailAddressAssetEntity.getDirectValue("local-part", String.class) +
                 ofNullable(emailAddressAssetEntity.getDirectValue("sub-domain", String.class)).map(s -> "." + s).orElse("") +
                 "@" +

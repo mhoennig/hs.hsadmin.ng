@@ -384,29 +384,29 @@ class EntityTypeRelation<E, T extends Node> {
                 " *==> ");
     }
 
-    static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> optionalParent(final HsHostingAssetType hostingAssetType) {
+    static EntityTypeRelation<HsHostingAsset, HsHostingAssetType> optionalParent(final HsHostingAssetType hostingAssetType) {
         return new EntityTypeRelation<>(
                 OPTIONAL,
                 PARENT_ASSET,
-                HsHostingAssetEntity::getParentAsset,
+                HsHostingAsset::getParentAsset,
                 hostingAssetType,
                 " o..> ");
     }
 
-    static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> requiredParent(final HsHostingAssetType hostingAssetType) {
+    static EntityTypeRelation<HsHostingAsset, HsHostingAssetType> requiredParent(final HsHostingAssetType hostingAssetType) {
         return new EntityTypeRelation<>(
                 REQUIRED,
                 PARENT_ASSET,
-                HsHostingAssetEntity::getParentAsset,
+                HsHostingAsset::getParentAsset,
                 hostingAssetType,
                 " *==> ");
     }
 
-    static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> assignedTo(final HsHostingAssetType hostingAssetType) {
+    static EntityTypeRelation<HsHostingAsset, HsHostingAssetType> assignedTo(final HsHostingAssetType hostingAssetType) {
         return new EntityTypeRelation<>(
                 REQUIRED,
                 ASSIGNED_TO_ASSET,
-                HsHostingAssetEntity::getAssignedToAsset,
+                HsHostingAsset::getAssignedToAsset,
                 hostingAssetType,
                 " o--> ");
     }
@@ -416,11 +416,11 @@ class EntityTypeRelation<E, T extends Node> {
         return this;
     }
 
-    static EntityTypeRelation<HsHostingAssetEntity, HsHostingAssetType> optionallyAssignedTo(final HsHostingAssetType hostingAssetType) {
+    static EntityTypeRelation<HsHostingAsset, HsHostingAssetType> optionallyAssignedTo(final HsHostingAssetType hostingAssetType) {
         return new EntityTypeRelation<>(
                 OPTIONAL,
                 ASSIGNED_TO_ASSET,
-                HsHostingAssetEntity::getAssignedToAsset,
+                HsHostingAsset::getAssignedToAsset,
                 hostingAssetType,
                 " o..> ");
     }

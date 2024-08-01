@@ -1,24 +1,27 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
 import net.hostsharing.hsadminng.errors.MultiValidationException;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 
+import jakarta.persistence.EntityManager;
 import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Wraps the steps of the pararation, validation, mapping and revamp around saving of a HsHostingAssetEntity into a readable API.
+ * Wraps the steps of the pararation, validation, mapping and revamp around saving of a HsHostingAsset into a readable API.
  */
 public class HostingAssetEntitySaveProcessor {
 
-    private final HsEntityValidator<HsHostingAssetEntity> validator;
+    private final HsEntityValidator<HsHostingAsset> validator;
     private String expectedStep = "preprocessEntity";
-    private HsHostingAssetEntity entity;
+    private final EntityManager em;
+    private HsHostingAsset entity;
     private HsHostingAssetResource resource;
 
-    public HostingAssetEntitySaveProcessor(final HsHostingAssetEntity entity) {
+    public HostingAssetEntitySaveProcessor(final EntityManager em, final HsHostingAsset entity) {
+        this.em = em;
         this.entity = entity;
         this.validator = HostingAssetEntityValidatorRegistry.forType(entity.getType());
     }
@@ -37,15 +40,26 @@ public class HostingAssetEntitySaveProcessor {
         return this;
     }
 
+    /// validates the entity itself including its properties, but ignoring some error messages for import of legacy data
+    public HostingAssetEntitySaveProcessor validateEntityIgnoring(final String ignoreRegExp) {
+        step("validateEntity", "prepareForSave");
+        MultiValidationException.throwIfNotEmpty(
+                validator.validateEntity(entity).stream()
+                        .filter(errorMsg -> !errorMsg.matches(ignoreRegExp))
+                        .toList()
+        );
+        return this;
+    }
+
     /// hashing passwords etc.
     @SuppressWarnings("unchecked")
     public HostingAssetEntitySaveProcessor prepareForSave() {
         step("prepareForSave", "saveUsing");
-        validator.prepareProperties(entity);
+        validator.prepareProperties(em, entity);
         return this;
     }
 
-    public HostingAssetEntitySaveProcessor saveUsing(final Function<HsHostingAssetEntity, HsHostingAssetEntity> saveFunction) {
+    public HostingAssetEntitySaveProcessor saveUsing(final Function<HsHostingAsset, HsHostingAsset> saveFunction) {
         step("saveUsing", "validateContext");
         entity = saveFunction.apply(entity);
         return this;
@@ -60,7 +74,7 @@ public class HostingAssetEntitySaveProcessor {
 
     /// maps entity to JSON resource representation
     public HostingAssetEntitySaveProcessor mapUsing(
-            final Function<HsHostingAssetEntity, HsHostingAssetResource> mapFunction) {
+            final Function<HsHostingAsset, HsHostingAssetResource> mapFunction) {
         step("mapUsing", "revampProperties");
         resource = mapFunction.apply(entity);
         return this;
@@ -70,7 +84,7 @@ public class HostingAssetEntitySaveProcessor {
     @SuppressWarnings("unchecked")
     public HsHostingAssetResource revampProperties() {
         step("revampProperties", null);
-        final var revampedProps = validator.revampProperties(entity, (Map<String, Object>) resource.getConfig());
+        final var revampedProps = validator.revampProperties(em, entity, (Map<String, Object>) resource.getConfig());
         resource.setConfig(revampedProps);
         return resource;
     }

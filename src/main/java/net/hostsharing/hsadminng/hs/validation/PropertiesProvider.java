@@ -4,11 +4,16 @@ import java.util.Map;
 
 public interface PropertiesProvider {
 
+    boolean isLoaded();
     Map<String, Object> directProps();
     Object getContextValue(final String propName);
 
     default <T> T getDirectValue(final String propName, final Class<T> clazz) {
         return cast(propName, directProps().get(propName), clazz, null);
+    }
+
+    default <T> T getDirectValue(final String propName, final Class<T> clazz, final T defaultValue) {
+        return cast(propName, directProps().get(propName), clazz, defaultValue);
     }
 
     default <T>  T getContextValue(final String propName, final Class<T> clazz) {
