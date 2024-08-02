@@ -10,6 +10,8 @@ import static net.hostsharing.hsadminng.hs.validation.PasswordProperty.passwordP
 
 class HsPostgreSqlUserHostingAssetValidator extends HostingAssetEntityValidator {
 
+    final static String HEAD_REGEXP = "^PGU\\|";
+
     public HsPostgreSqlUserHostingAssetValidator() {
         super(
                 PGSQL_USER,
@@ -28,6 +30,6 @@ class HsPostgreSqlUserHostingAssetValidator extends HostingAssetEntityValidator 
     @Override
     protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         final var webspaceIdentifier = assetEntity.getParentAsset().getIdentifier();
-        return Pattern.compile("^"+webspaceIdentifier+"$|^"+webspaceIdentifier+"_[a-z0-9_]+$");
+        return Pattern.compile(HEAD_REGEXP+webspaceIdentifier+"$|"+HEAD_REGEXP+webspaceIdentifier+"_[a-zA-Z0-9_]+$");
     }
 }

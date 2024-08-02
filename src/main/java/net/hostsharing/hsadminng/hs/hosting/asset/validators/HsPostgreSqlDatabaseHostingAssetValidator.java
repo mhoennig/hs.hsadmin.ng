@@ -9,6 +9,8 @@ import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringPrope
 
 class HsPostgreSqlDatabaseHostingAssetValidator extends HostingAssetEntityValidator {
 
+    final static String HEAD_REGEXP = "^PGD\\|";
+
     public HsPostgreSqlDatabaseHostingAssetValidator() {
         super(
                 PGSQL_DATABASE,
@@ -23,6 +25,6 @@ class HsPostgreSqlDatabaseHostingAssetValidator extends HostingAssetEntityValida
     @Override
     protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         final var webspaceIdentifier = assetEntity.getParentAsset().getParentAsset().getIdentifier();
-        return Pattern.compile("^"+webspaceIdentifier+"$|^"+webspaceIdentifier+"_[a-z0-9_]+$");
+        return Pattern.compile(HEAD_REGEXP+webspaceIdentifier+"$|"+HEAD_REGEXP+webspaceIdentifier+"_[a-zA-Z0-9_]+$");
     }
 }

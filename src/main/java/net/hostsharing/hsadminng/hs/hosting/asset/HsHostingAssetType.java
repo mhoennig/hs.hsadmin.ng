@@ -50,6 +50,7 @@ public enum HsHostingAssetType implements Node {
             inGroup("Webspace"),
             requiredParent(MANAGED_WEBSPACE)),
 
+    // TODO.spec: do we really want to keep email aliases or migrate to unix users with .forward?
     EMAIL_ALIAS( // named e.g. xyz00-abc
             inGroup("Webspace"),
             requiredParent(MANAGED_WEBSPACE)),

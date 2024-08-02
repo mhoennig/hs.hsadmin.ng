@@ -41,9 +41,17 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
         return self();
     }
 
+    public Integer minLength() {
+        return this.minLength;
+    }
+
     public P maxLength(final int maxLength) {
         this.maxLength = maxLength;
         return self();
+    }
+
+    public Integer maxLength() {
+        return this.maxLength;
     }
 
     public P matchesRegEx(final String... regExPattern) {

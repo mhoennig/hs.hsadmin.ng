@@ -31,6 +31,12 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
 
     @Override
     protected void validate(final List<String> result, final String propValue, final PropertiesProvider propProvider) {
+        // TODO.impl: remove after legacy data is migrated
+        if (HashGenerator.using(hashedUsing).couldBeHash(propValue) && propValue.length() > this.maxLength()) {
+            // already hashed => do not validate
+            return;
+        }
+
         super.validate(result, propValue, propProvider);
         validatePassword(result, propValue);
     }
@@ -40,7 +46,7 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
         computedBy(
                 ComputeMode.IN_PREP,
                 (em, entity) -> ofNullable(entity.getDirectValue(propertyName, String.class))
-                        .map(password -> HashGenerator.using(algorithm).withRandomSalt().hash(password))
+                        .map(password -> HashGenerator.using(algorithm).withRandomSalt().hashIfNotYetHashed(password))
                         .orElse(null));
         return self();
     }

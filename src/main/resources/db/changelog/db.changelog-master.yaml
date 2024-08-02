@@ -151,3 +151,5 @@ databaseChangeLog:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7013-hs-hosting-asset-rbac.sql
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7018-hs-hosting-asset-test-data.sql
+    - include:
+        file: db/changelog/9-hs-global/9000-statistics.sql

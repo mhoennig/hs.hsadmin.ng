@@ -48,6 +48,7 @@ import static net.hostsharing.hsadminng.mapper.Array.emptyArray;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class CsvDataImport extends ContextBasedTest {
 
@@ -281,6 +282,12 @@ public class CsvDataImport extends ContextBasedTest {
         }).assertSuccessful();
     }
 
+    // makes it possible to fail when an expression is expected
+    <T> T failWith(final String message) {
+        fail(message);
+        return null;
+    }
+
     void logError(final Runnable assertion) {
         try {
             assertion.run();
@@ -290,7 +297,9 @@ public class CsvDataImport extends ContextBasedTest {
     }
 
     void logErrors() {
-        assertThat(errors).isEmpty();
+        final var errorsToLog = new ArrayList<>(errors);
+        errors.clear();
+        assertThat(errorsToLog).isEmpty();
     }
 
     void expectErrors(final String... expectedErrors) {
@@ -305,8 +314,16 @@ public class CsvDataImport extends ContextBasedTest {
     }
 
     public static void assertContainsExactlyInAnyOrderIgnoringWhitespace(final List<String> expected, final List<String> actual) {
-        final var sortedExpected = expected.stream().map(m -> m.replaceAll("\\s", "")).toList();
-        final var sortedActual = actual.stream().map(m -> m.replaceAll("\\s", "")).toArray(String[]::new);
+        final var sortedExpected = expected.stream()
+                .map(m -> m.replaceAll("\\s+", " "))
+                .map(m -> m.replaceAll("^ ", ""))
+                .map(m -> m.replaceAll(" $", ""))
+                .toList();
+        final var sortedActual = actual.stream()
+                .map(m -> m.replaceAll("\\s+", " "))
+                .map(m -> m.replaceAll("^ ", ""))
+                .map(m -> m.replaceAll(" $", ""))
+                .toArray(String[]::new);
         assertThat(sortedExpected).containsExactlyInAnyOrder(sortedActual);
     }
 
@@ -324,11 +341,7 @@ class Columns {
     }
 
     int indexOf(final String columnName) {
-        int index = columnNames.indexOf(columnName);
-        if (index < 0) {
-            throw new RuntimeException("column name '" + columnName + "' not found in: " + columnNames);
-        }
-        return index;
+        return columnNames.indexOf(columnName);
     }
 }
 
@@ -340,6 +353,12 @@ class Record {
     public Record(final Columns columns, final String[] row) {
         this.columns = columns;
         this.row = row;
+    }
+
+    String getString(final String columnName, final String defaultValue) {
+        final var index = columns.indexOf(columnName);
+        final var value = index >= 0 && index < row.length ? row[index].trim() : null;
+        return value != null ? value : defaultValue;
     }
 
     String getString(final String columnName) {

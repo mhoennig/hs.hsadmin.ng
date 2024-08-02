@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_DATABASE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_INSTANCE;
 
 class HsPostgreSqlDbInstanceHostingAssetValidator extends HostingAssetEntityValidator {
 
@@ -13,7 +13,7 @@ class HsPostgreSqlDbInstanceHostingAssetValidator extends HostingAssetEntityVali
 
     public HsPostgreSqlDbInstanceHostingAssetValidator() {
         super(
-                PGSQL_DATABASE,
+                PGSQL_INSTANCE,
                 AlarmContact.isOptional(),
 
                 // TODO.spec: PostgreSQL extensions in database and here? also decide which. Free selection or booleans/checkboxes?

@@ -35,7 +35,7 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
                 .type(PGSQL_USER)
                 .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
                 .assignedToAsset(GIVEN_PGSQL_INSTANCE)
-                .identifier("xyz00_temp")
+                .identifier("PGU|xyz00_temp")
                 .caption("some valid test PgSql-User")
                 .config(new HashMap<>(ofEntries(
                         entry("password", "Test1234")
@@ -104,9 +104,9 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'PGSQL_USER:xyz00_temp.config.unknown' is not expected but is set to '100'",
-                "'PGSQL_USER:xyz00_temp.config.password' length is expected to be at min 8 but length of provided value is 5",
-                "'PGSQL_USER:xyz00_temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
+                "'PGSQL_USER:PGU|xyz00_temp.config.unknown' is not expected but is set to '100'",
+                "'PGSQL_USER:PGU|xyz00_temp.config.password' length is expected to be at min 8 but length of provided value is 5",
+                "'PGSQL_USER:PGU|xyz00_temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
         );
     }
 
@@ -123,6 +123,6 @@ class HsPostgreSqlUserHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^xyz00$|^xyz00_[a-z0-9_]+$', but is 'xyz99-temp'");
+                "'identifier' expected to match '^PGU\\|xyz00$|^PGU\\|xyz00_[a-zA-Z0-9_]+$', but is 'xyz99-temp'");
     }
 }

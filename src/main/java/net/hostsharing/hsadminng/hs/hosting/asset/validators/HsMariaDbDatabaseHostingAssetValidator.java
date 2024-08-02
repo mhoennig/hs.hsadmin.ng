@@ -9,6 +9,8 @@ import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringPrope
 
 class HsMariaDbDatabaseHostingAssetValidator extends HostingAssetEntityValidator {
 
+    final static String HEAD_REGEXP = "^MAD\\|";
+
     public HsMariaDbDatabaseHostingAssetValidator() {
         super(
                 MARIADB_DATABASE,
@@ -20,6 +22,6 @@ class HsMariaDbDatabaseHostingAssetValidator extends HostingAssetEntityValidator
     @Override
     protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
         final var webspaceIdentifier = assetEntity.getParentAsset().getParentAsset().getIdentifier();
-        return Pattern.compile("^"+webspaceIdentifier+"$|^"+webspaceIdentifier+"_[a-z0-9_]+$");
+        return Pattern.compile(HEAD_REGEXP+webspaceIdentifier+"$|"+HEAD_REGEXP+webspaceIdentifier+"_[a-zA-Z0-9_]+$");
     }
 }

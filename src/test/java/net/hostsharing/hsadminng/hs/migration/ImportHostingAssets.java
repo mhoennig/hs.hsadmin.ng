@@ -1,6 +1,8 @@
 package net.hostsharing.hsadminng.hs.migration;
 
 import net.hostsharing.hsadminng.context.Context;
+import net.hostsharing.hsadminng.hash.HashGenerator;
+import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
@@ -22,22 +24,32 @@ import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static java.util.Arrays.stream;
 import static java.util.Map.entry;
+import static java.util.Map.ofEntries;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ALIAS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.IPV4_NUMBER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_DATABASE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_INSTANCE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_USER;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_DATABASE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_INSTANCE;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_USER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,6 +109,9 @@ public class ImportHostingAssets extends ImportOfficeData {
     static final Integer PACKET_ID_OFFSET = 3000000;
     static final Integer UNIXUSER_ID_OFFSET = 4000000;
     static final Integer EMAILALIAS_ID_OFFSET = 5000000;
+    static final Integer DBINSTANCE_ID_OFFSET = 6000000;
+    static final Integer DBUSER_ID_OFFSET = 7000000;
+    static final Integer DB_ID_OFFSET = 8000000;
 
     record Hive(int hive_id, String hive_name, int inet_addr_id, AtomicReference<HsHostingAssetRawEntity> serverRef) {}
 
@@ -104,6 +119,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     static Map<Integer, HsBookingItemEntity> bookingItems = new WriteOnceMap<>();
     static Map<Integer, Hive> hives = new WriteOnceMap<>();
     static Map<Integer, HsHostingAssetRawEntity> hostingAssets = new WriteOnceMap<>(); // TODO.impl: separate maps for each type?
+    static Map<String, HsHostingAssetRawEntity> dbUsersByEngineAndName = new WriteOnceMap<>();
 
     @Test
     @Order(11010)
@@ -333,6 +349,95 @@ public class ImportHostingAssets extends ImportOfficeData {
                 """);
     }
 
+    @Test
+    @Order(15000)
+    void createDatabaseInstances() {
+        createDatabaseInstances(hostingAssets.values().stream().filter(ha -> ha.getType()==MANAGED_SERVER).toList());
+    }
+
+    @Test
+    @Order(15009)
+    void verifyDatabaseInstances() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEachType(5, PGSQL_INSTANCE, MARIADB_INSTANCE)).isEqualToIgnoringWhitespace("""
+                {
+                   6000000=HsHostingAssetRawEntity(PGSQL_INSTANCE, vm1061|PgSql.default, vm1061-PostgreSQL default instance, MANAGED_SERVER:vm1061),
+                   6000001=HsHostingAssetRawEntity(MARIADB_INSTANCE, vm1061|MariaDB.default, vm1061-MariaDB default instance, MANAGED_SERVER:vm1061),
+                   6000002=HsHostingAssetRawEntity(PGSQL_INSTANCE, vm1050|PgSql.default, vm1050-PostgreSQL default instance, MANAGED_SERVER:vm1050),
+                   6000003=HsHostingAssetRawEntity(MARIADB_INSTANCE, vm1050|MariaDB.default, vm1050-MariaDB default instance, MANAGED_SERVER:vm1050),
+                   6000004=HsHostingAssetRawEntity(PGSQL_INSTANCE, vm1068|PgSql.default, vm1068-PostgreSQL default instance, MANAGED_SERVER:vm1068),
+                   6000005=HsHostingAssetRawEntity(MARIADB_INSTANCE, vm1068|MariaDB.default, vm1068-MariaDB default instance, MANAGED_SERVER:vm1068),
+                   6000006=HsHostingAssetRawEntity(PGSQL_INSTANCE, vm1093|PgSql.default, vm1093-PostgreSQL default instance, MANAGED_SERVER:vm1093),
+                   6000007=HsHostingAssetRawEntity(MARIADB_INSTANCE, vm1093|MariaDB.default, vm1093-MariaDB default instance, MANAGED_SERVER:vm1093)
+                }
+                """);
+    }
+
+    @Test
+    @Order(15010)
+    void importDatabaseUsers() {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/hosting/database_user.csv")) {
+            final var lines = readAllLines(reader);
+            importDatabaseUsers(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(15019)
+    void verifyDatabaseUsers() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEachType(5, PGSQL_USER, MARIADB_USER)).isEqualToIgnoringWhitespace("""
+                {
+                   7001857=HsHostingAssetRawEntity(PGSQL_USER, PGU|hsh00, hsh00, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$JDiZmaxU+O+ByArLY/CkYZ8HbOk0r/I8LyABnno5gQs=:NI3T500/63dzI1B07Jh3UtQGlukS6JxuS0XoxM/QgAc="}),
+                   7001858=HsHostingAssetRawEntity(MARIADB_USER, MAU|hsh00, hsh00, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*59067A36BA197AD0A47D74909296C5B002A0FB9F"}),
+                   7001859=HsHostingAssetRawEntity(PGSQL_USER, PGU|hsh00_vorstand, hsh00_vorstand, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$54Wh+OGx/GaIvAia+I3k78jHGhqmYwe4+iLssmH5zhk=:D4Gq1z2Li2BVSaZrz1azDrs6pwsIzhq4+suK1Hh6ZIg="}),
+                   7001860=HsHostingAssetRawEntity(PGSQL_USER, PGU|hsh00_hsadmin, hsh00_hsadmin, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$54Wh+OGx/GaIvAia+I3k78jHGhqmYwe4+iLssmH5zhk=:D4Gq1z2Li2BVSaZrz1azDrs6pwsIzhq4+suK1Hh6ZIg="}),
+                   7001861=HsHostingAssetRawEntity(PGSQL_USER, PGU|hsh00_hsadmin_ro, hsh00_hsadmin_ro, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$UhJnJJhmKANbcaG+izWK3rz5bmhhluSuiCJFlUmDVI8=:6AC4mbLfJGiGlEOWhpz9BivvMODhLLHOnRnnktJPgn8="}),
+                   7004908=HsHostingAssetRawEntity(MARIADB_USER, MAU|hsh00_mantis, hsh00_mantis, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*EA4C0889A22AAE66BBEBC88161E8CF862D73B44F"}),
+                   7004909=HsHostingAssetRawEntity(MARIADB_USER, MAU|hsh00_mantis_ro, hsh00_mantis_ro, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*B3BB6D0DA2EC01958616E9B3BCD2926FE8C38383"}),
+                   7004931=HsHostingAssetRawEntity(PGSQL_USER, PGU|hsh00_phpPgSqlAdmin, hsh00_phpPgSqlAdmin, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$UhJnJJhmKANbcaG+izWK3rz5bmhhluSuiCJFlUmDVI8=:6AC4mbLfJGiGlEOWhpz9BivvMODhLLHOnRnnktJPgn8="}),
+                   7004932=HsHostingAssetRawEntity(MARIADB_USER, MAU|hsh00_phpMyAdmin, hsh00_phpMyAdmin, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*3188720B1889EF5447C722629765F296F40257C2"}),
+                   7007520=HsHostingAssetRawEntity(MARIADB_USER, MAU|lug00_wla, lug00_wla, MANAGED_WEBSPACE:lug00, MARIADB_INSTANCE:vm1068|MariaDB.default, { "password": "*11667C0EAC42BF8B0295ABEDC7D2868A835E4DB5"})
+                }
+                """);
+    }
+
+    @Test
+    @Order(15020)
+    void importDatabases() {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/hosting/database.csv")) {
+            final var lines = readAllLines(reader);
+            importDatabases(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(15029)
+    void verifyDatabases() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEachType(5, PGSQL_DATABASE, MARIADB_DATABASE)).isEqualToIgnoringWhitespace("""
+                {
+                   8000077=HsHostingAssetRawEntity(PGSQL_DATABASE, PGD|hsh00_vorstand, hsh00_vorstand, PGSQL_USER:PGU|hsh00_vorstand, { "encoding": "LATIN1"}),
+                   8000786=HsHostingAssetRawEntity(MARIADB_DATABASE, MAD|hsh00_addr, hsh00_addr, MARIADB_USER:MAU|hsh00, { "encoding": "latin1"}),
+                   8000805=HsHostingAssetRawEntity(MARIADB_DATABASE, MAD|hsh00_db2, hsh00_db2, MARIADB_USER:MAU|hsh00, { "encoding": "latin1"}),
+                   8001858=HsHostingAssetRawEntity(PGSQL_DATABASE, PGD|hsh00, hsh00, PGSQL_USER:PGU|hsh00, { "encoding": "LATIN1"}),
+                   8001860=HsHostingAssetRawEntity(PGSQL_DATABASE, PGD|hsh00_hsadmin, hsh00_hsadmin, PGSQL_USER:PGU|hsh00_hsadmin, { "encoding": "UTF8"}),
+                   8004908=HsHostingAssetRawEntity(MARIADB_DATABASE, MAD|hsh00_mantis, hsh00_mantis, MARIADB_USER:MAU|hsh00_mantis, { "encoding": "utf8"}),
+                   8004931=HsHostingAssetRawEntity(PGSQL_DATABASE, PGD|hsh00_phpPgSqlAdmin, hsh00_phpPgSqlAdmin, PGSQL_USER:PGU|hsh00_phpPgSqlAdmin, { "encoding": "UTF8"}),
+                   8004932=HsHostingAssetRawEntity(PGSQL_DATABASE, PGD|hsh00_phpPgSqlAdmin_new, hsh00_phpPgSqlAdmin_new, PGSQL_USER:PGU|hsh00_phpPgSqlAdmin, { "encoding": "UTF8"}),
+                   8004941=HsHostingAssetRawEntity(MARIADB_DATABASE, MAD|hsh00_phpMyAdmin, hsh00_phpMyAdmin, MARIADB_USER:MAU|hsh00_phpMyAdmin, { "encoding": "utf8"}),
+                   8004942=HsHostingAssetRawEntity(MARIADB_DATABASE, MAD|hsh00_phpMyAdmin_old, hsh00_phpMyAdmin_old, MARIADB_USER:MAU|hsh00_phpMyAdmin, { "encoding": "utf8"})
+                }
+                """);
+    }
+
     // --------------------------------------------------------------------------------------------
 
     @Test
@@ -448,6 +553,30 @@ public class ImportHostingAssets extends ImportOfficeData {
     }
 
     @Test
+    @Order(19200)
+    @Commit
+    void persistDatabaseInstances() {
+        System.out.println("PERSISTING db-users to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        persistHostingAssetsOfType(PGSQL_INSTANCE, MARIADB_INSTANCE);
+    }
+
+    @Test
+    @Order(19210)
+    @Commit
+    void persistDatabaseUsers() {
+        System.out.println("PERSISTING db-users to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        persistHostingAssetsOfType(PGSQL_USER, MARIADB_USER);
+    }
+
+    @Test
+    @Order(19220)
+    @Commit
+    void persistDatabases() {
+        System.out.println("PERSISTING databases to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        persistHostingAssetsOfType(PGSQL_DATABASE, MARIADB_DATABASE);
+    }
+
+    @Test
     @Order(19900)
     void verifyPersistedUnixUsersWithUserId() {
         assumeThatWeAreImportingControlledTestData();
@@ -483,7 +612,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Order(19920)
     void verifyHostingAssetsAreActuallyPersisted() {
         final var haCount = (Integer) em.createNativeQuery("SELECT count(*) FROM hs_hosting_asset", Integer.class).getSingleResult();
-        assertThat(haCount).isGreaterThan(isImportingControlledTestData() ? 20 : 10000);
+        assertThat(haCount).isGreaterThan(isImportingControlledTestData() ? 30 : 10000);
     }
 
     // ============================================================================================
@@ -517,11 +646,12 @@ public class ImportHostingAssets extends ImportOfficeData {
 
     // ============================================================================================
 
-    private void persistHostingAssetsOfType(final HsHostingAssetType hsHostingAssetType) {
+    private void persistHostingAssetsOfType(final HsHostingAssetType... hsHostingAssetTypes) {
+        final var hsHostingAssetTypeSet = stream(hsHostingAssetTypes).collect(toSet());
         jpaAttempt.transacted(() -> {
             hostingAssets.forEach((key, ha) -> {
                         context(rbacSuperuser);
-                        if (ha.getType() == hsHostingAssetType) {
+                        if (hsHostingAssetTypeSet.contains(ha.getType())) {
                             new HostingAssetEntitySaveProcessor(em, ha)
                                     .preprocessEntity()
                                     .validateEntityIgnoring("'EMAIL_ALIAS:.*\\.config\\.target' .*")
@@ -750,7 +880,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .identifier(rec.getString("name"))
                             .caption(rec.getString("comment"))
                             .isLoaded(true) // avoid overwriting imported userids with generated ids
-                            .config(new HashMap<>(Map.ofEntries(
+                            .config(new HashMap<>(ofEntries(
                                     entry("shell", rec.getString("shell")),
                                     // entry("homedir", rec.getString("homedir")), do not import, it's calculated
                                     entry("locked", rec.getBoolean("locked")),
@@ -806,11 +936,107 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
                             .identifier(rec.getString("name"))
                             .caption(rec.getString("name"))
-                            .config(Map.ofEntries(
+                            .config(ofEntries(
                                     entry("target", targets)
                             ))
                             .build();
                     hostingAssets.put(EMAILALIAS_ID_OFFSET + unixuser_id, unixUserAsset);
+                });
+    }
+
+    private void createDatabaseInstances(final List<HsHostingAssetRawEntity> parentAssets) {
+        final var idRef = new AtomicInteger(0);
+        parentAssets.forEach(pa -> {
+            if (pa.getSubHostingAssets() == null) {
+                pa.setSubHostingAssets(new ArrayList<>());
+            }
+
+            final var pgSqlInstanceAsset = HsHostingAssetRawEntity.builder()
+                    .type(PGSQL_INSTANCE)
+                    .parentAsset(pa)
+                    .identifier(pa.getIdentifier() + "|PgSql.default")
+                    .caption(pa.getIdentifier() + "-PostgreSQL default instance")
+                    .build();
+            pa.getSubHostingAssets().add(pgSqlInstanceAsset);
+            hostingAssets.put(DBINSTANCE_ID_OFFSET + idRef.getAndIncrement(), pgSqlInstanceAsset);
+
+            final var mariaDbInstanceAsset = HsHostingAssetRawEntity.builder()
+                    .type(MARIADB_INSTANCE)
+                    .parentAsset(pa)
+                    .identifier(pa.getIdentifier() + "|MariaDB.default")
+                    .caption(pa.getIdentifier() + "-MariaDB default instance")
+                    .build();
+            pa.getSubHostingAssets().add(mariaDbInstanceAsset);
+            hostingAssets.put(DBINSTANCE_ID_OFFSET + idRef.getAndIncrement(), mariaDbInstanceAsset);
+        });
+    }
+
+    private void importDatabaseUsers(final String[] header, final List<String[]> records) {
+        HashGenerator.enableChouldBeHash(true);
+        final var columns = new Columns(header);
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var dbuser_id = rec.getInteger("dbuser_id");
+                    final var packet_id = rec.getInteger("packet_id");
+                    final var engine = rec.getString("engine");
+                    final HsHostingAssetType dbUserAssetType = "mysql".equals(engine) ? MARIADB_USER
+                            : "pgsql".equals(engine) ? PGSQL_USER
+                            : failWith("unknown DB engine " + engine);
+                    final var hash = dbUserAssetType == MARIADB_USER ? Algorithm.MYSQL_NATIVE : Algorithm.SCRAM_SHA256;
+                    final var name = rec.getString("name");
+                    final var password_hash = rec.getString("password_hash", HashGenerator.using(hash).withRandomSalt().hash("fake pw " + name));
+
+                    final HsHostingAssetType dbInstanceAssetType = "mysql".equals(engine) ? MARIADB_INSTANCE
+                            : "pgsql".equals(engine) ? PGSQL_INSTANCE
+                            : failWith("unknown DB engine " + engine);
+                    final var relatedWebspaceHA = hostingAssets.get(PACKET_ID_OFFSET + packet_id).getParentAsset();
+                    final var dbInstanceAsset = relatedWebspaceHA.getSubHostingAssets().stream()
+                            .filter(ha -> ha.getType() == dbInstanceAssetType)
+                            .findAny().orElseThrow(); // there is exactly one: the default instance for the given type
+
+                    final var dbUserAsset = HsHostingAssetRawEntity.builder()
+                            .type(dbUserAssetType)
+                            .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
+                            .assignedToAsset(dbInstanceAsset)
+                            .identifier(dbUserAssetType.name().substring(0, 2) + "U|" + name)
+                            .caption(name)
+                            .config(new HashMap<>(ofEntries(
+                                    entry("password", password_hash)
+                            )))
+                            .build();
+                    dbUsersByEngineAndName.put(engine + ":" + name, dbUserAsset);
+                    hostingAssets.put(DBUSER_ID_OFFSET + dbuser_id, dbUserAsset);
+                });
+    }
+
+    private void importDatabases(final String[] header, final List<String[]> records) {
+        final var columns = new Columns(header);
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    final var database_id = rec.getInteger("database_id");
+                    final var engine = rec.getString("engine");
+                    final var owner = rec.getString("owner");
+                    final var owningDbUserHA =  dbUsersByEngineAndName.get(engine + ":" + owner);
+                    assertThat(owningDbUserHA).as("owning user for " + (engine + ":" + owner) + " not found").isNotNull();
+                    final HsHostingAssetType type = "mysql".equals(engine) ? MARIADB_DATABASE
+                            : "pgsql".equals(engine) ? PGSQL_DATABASE
+                            : failWith("unknown DB engine " + engine);
+                    final var name = rec.getString("name");
+                    final var encoding = rec.getString("encoding").replaceAll("[-_]+", "");
+                    final var dbAsset = HsHostingAssetRawEntity.builder()
+                            .type(type)
+                            .parentAsset(owningDbUserHA)
+                            .identifier(type.name().substring(0, 2) + "D|" + name)
+                            .caption(name)
+                            .config(ofEntries(
+                                    entry("encoding", type == MARIADB_DATABASE ? encoding.toLowerCase() : encoding.toUpperCase())
+                            ))
+                            .build();
+                    hostingAssets.put(DB_ID_OFFSET + database_id, dbAsset);
                 });
     }
 

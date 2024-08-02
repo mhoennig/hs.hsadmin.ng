@@ -27,6 +27,7 @@ public final class HashGenerator {
             "abcdefghijklmnopqrstuvwxyz" +
                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                     "0123456789/.";
+    private static boolean couldBeHashEnabled; // TODO.impl: remove after legacy data is migrated
 
     public enum Algorithm {
         LINUX_SHA512(LinuxEtcShadowHashGenerator::hash, "6"),
@@ -59,12 +60,26 @@ public final class HashGenerator {
        this.algorithm = algorithm;
     }
 
+    public static void enableChouldBeHash(final boolean enable) {
+        couldBeHashEnabled = enable;
+    }
+
+    public boolean couldBeHash(final String value) {
+        return couldBeHashEnabled && value.startsWith(algorithm.prefix);
+    }
+
     public String hash(final String plaintextPassword) {
         if (plaintextPassword == null) {
             throw new IllegalStateException("no password given");
         }
 
         return algorithm.implementation.apply(this, plaintextPassword);
+    }
+
+    public String hashIfNotYetHashed(final String plaintextPasswordOrHash) {
+        return couldBeHash(plaintextPasswordOrHash)
+                ? plaintextPasswordOrHash
+                : hash(plaintextPasswordOrHash);
     }
 
     public static void nextSalt(final String salt) {
