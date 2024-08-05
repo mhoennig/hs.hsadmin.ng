@@ -1,10 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -54,7 +54,7 @@ class HsOfficePartnerControllerRestTest {
     HsOfficePartnerRepository partnerRepo;
 
     @MockBean
-    HsOfficeRelationRepository relationRepo;
+    HsOfficeRelationRealRepository relationRepo;
 
     @MockBean
     EntityManager em;
@@ -69,7 +69,7 @@ class HsOfficePartnerControllerRestTest {
     HsOfficePersonEntity personMock;
 
     @Mock
-    HsOfficeContactEntity contactMock;
+    HsOfficeContactRbacEntity contactMock;
 
     @Mock
     HsOfficePartnerEntity partnerMock;
@@ -83,7 +83,7 @@ class HsOfficePartnerControllerRestTest {
 
         lenient().when(em.getReference(HsOfficePersonEntity.class, GIVEN_MANDANTE_UUID)).thenReturn(mandateMock);
         lenient().when(em.getReference(HsOfficePersonEntity.class, GIVEN_PERSON_UUID)).thenReturn(personMock);
-        lenient().when(em.getReference(HsOfficeContactEntity.class, GIVEN_CONTACT_UUID)).thenReturn(contactMock);
+        lenient().when(em.getReference(HsOfficeContactRbacEntity.class, GIVEN_CONTACT_UUID)).thenReturn(contactMock);
         lenient().when(em.getReference(any(), eq(GIVEN_INVALID_UUID))).thenThrow(EntityNotFoundException.class);
     }
 
@@ -124,7 +124,7 @@ class HsOfficePartnerControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", startsWith("Cannot resolve HsOfficePersonEntity with uuid ")));
+                    .andExpect(jsonPath("message", startsWith("ERROR: [400] Cannot resolve HsOfficePersonEntity with uuid ")));
         }
 
         @Test
@@ -161,7 +161,7 @@ class HsOfficePartnerControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", startsWith("Cannot resolve HsOfficeContactEntity with uuid ")));
+                    .andExpect(jsonPath("message", startsWith("ERROR: [400] Cannot resolve HsOfficeContactRealEntity with uuid ")));
         }
     }
 
@@ -176,7 +176,7 @@ class HsOfficePartnerControllerRestTest {
             when(partnerRepo.deleteByUuid(givenPartnerUuid)).thenReturn(0);
 
             final UUID givenRelationUuid = UUID.randomUUID();
-            when(partnerMock.getPartnerRel()).thenReturn(HsOfficeRelationEntity.builder()
+            when(partnerMock.getPartnerRel()).thenReturn(HsOfficeRelationRealEntity.builder()
                     .uuid(givenRelationUuid)
                     .build());
             when(relationRepo.deleteByUuid(givenRelationUuid)).thenReturn(0);

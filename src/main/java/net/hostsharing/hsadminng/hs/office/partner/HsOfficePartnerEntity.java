@@ -5,11 +5,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContact;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -39,20 +41,20 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@DisplayName("Partner")
-public class HsOfficePartnerEntity implements Stringifyable, RbacObject<HsOfficePartnerEntity> {
+@DisplayAs("Partner")
+public class HsOfficePartnerEntity implements Stringifyable, BaseEntity<HsOfficePartnerEntity> {
 
     public static final String PARTNER_NUMBER_TAG = "P-";
 
     private static Stringify<HsOfficePartnerEntity> stringify = stringify(HsOfficePartnerEntity.class, "partner")
             .withIdProp(HsOfficePartnerEntity::toShortString)
             .withProp(p -> ofNullable(p.getPartnerRel())
-                    .map(HsOfficeRelationEntity::getHolder)
+                    .map(HsOfficeRelation::getHolder)
                     .map(HsOfficePersonEntity::toShortString)
                     .orElse(null))
             .withProp(p -> ofNullable(p.getPartnerRel())
-                    .map(HsOfficeRelationEntity::getContact)
-                    .map(HsOfficeContactEntity::toShortString)
+                    .map(HsOfficeRelation::getContact)
+                    .map(HsOfficeContact::toShortString)
                     .orElse(null))
             .quotedValues(false);
 
@@ -68,7 +70,7 @@ public class HsOfficePartnerEntity implements Stringifyable, RbacObject<HsOffice
 
     @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "partnerreluuid", nullable = false)
-    private HsOfficeRelationEntity partnerRel;
+    private HsOfficeRelationRealEntity partnerRel;
 
     @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "detailsuuid")
@@ -77,7 +79,7 @@ public class HsOfficePartnerEntity implements Stringifyable, RbacObject<HsOffice
 
     @Override
     public HsOfficePartnerEntity load() {
-        RbacObject.super.load();
+        BaseEntity.super.load();
         partnerRel.load();
         details.load();
         return this;
@@ -103,7 +105,7 @@ public class HsOfficePartnerEntity implements Stringifyable, RbacObject<HsOffice
                 .withUpdatableColumns("partnerRelUuid")
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
-                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationEntity.class,
+                .importRootEntityAliasProxy("partnerRel", HsOfficeRelationRbacEntity.class,
                         usingDefaultCase(),
                         directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("partnerRelUuid"))

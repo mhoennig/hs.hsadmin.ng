@@ -15,7 +15,7 @@ import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
@@ -71,7 +71,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsBookingItemEntity implements Stringifyable, RbacObject<HsBookingItemEntity>, PropertiesProvider {
+public class HsBookingItemEntity implements Stringifyable, BaseEntity<HsBookingItemEntity>, PropertiesProvider {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
             .withProp(HsBookingItemEntity::getProject)

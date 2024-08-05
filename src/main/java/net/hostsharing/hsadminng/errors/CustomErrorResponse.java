@@ -46,6 +46,6 @@ public class CustomErrorResponse {
         this.path = path;
         this.statusCode = status.value();
         this.statusPhrase = status.getReasonPhrase();
-        this.message = message;
+        this.message = message.startsWith("ERROR: [") ? message : "ERROR: [" + statusCode + "] " + message;
     }
 }

@@ -12,7 +12,7 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import org.springframework.data.repository.Repository;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -84,6 +84,7 @@ public class ArchitectureTest {
     @ArchTest
     @SuppressWarnings("unused")
     public static final ArchRule dontUseImplSuffix = noClasses()
+            .that().areNotPrivate() // e.g. Lombok SuperBuilder generated classes
             .should().haveSimpleNameEndingWith("Impl");
 
     @ArchTest
@@ -346,7 +347,7 @@ public class ArchitectureTest {
     static final ArchRule tableNamesOfRbacEntitiesShouldEndWith_rv =
         classes()
                 .that().areAnnotatedWith(Table.class)
-                .and().areAssignableTo(RbacObject.class)
+                .and().areAssignableTo(BaseEntity.class)
                 .should(haveTableNameEndingWith_rv())
                 .because("it's required that the table names of RBAC entities end with '_rv'");
 

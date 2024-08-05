@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
@@ -29,7 +29,7 @@ public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAsset
                 // HOWTO: patch nullable JSON resource uuid to an ntity reference
                 .ifPresent(newValue -> entity.setAlarmContact(
                             Optional.ofNullable(newValue)
-                                .map(uuid -> em.getReference(HsOfficeContactEntity.class, newValue))
+                                .map(uuid -> em.getReference(HsOfficeContactRealEntity.class, newValue))
                                 .orElse(null)));
     }
 }

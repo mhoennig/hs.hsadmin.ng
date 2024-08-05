@@ -8,8 +8,8 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -62,7 +62,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
     HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
-    HsOfficeContactRepository contactRepo;
+    HsOfficeContactRbacRepository contactRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -307,7 +307,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .body("", lenientlyEquals("""
                                 {
                                     "statusPhrase": "Bad Request",
-                                    "message": "[
+                                    "message": "ERROR: [400] [
                                               <<<'MANAGED_SERVER:vm1400.config.extra' is not expected but is set to '42',
                                               <<<'MANAGED_SERVER:vm1400.config.monit_max_cpu_usage' is expected to be at most 100 but is 101,
                                               <<<'MANAGED_SERVER:vm1400.config.monit_max_ssd_usage' is expected to be at least 10 but is 0
@@ -360,7 +360,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .body("", lenientlyEquals("""
                                     {
                                         "statusPhrase": "Bad Request",
-                                        "message": "['D-1000111:D-1000111 default project:separate ManagedWebspace.resources.Multi=1 allows at maximum 25 unix users, but 26 found]"
+                                        "message": "ERROR: [400] ['D-1000111:D-1000111 default project:separate ManagedWebspace.resources.Multi=1 allows at maximum 25 unix users, but 26 found]"
                                     }
                                     """.replaceAll(" +<<<", "")));  // @formatter:on
         }
@@ -732,7 +732,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }).assertSuccessful().returnedValue();
     }
 
-    private HsOfficeContactEntity givenContact() {
+    private HsOfficeContactRbacEntity givenContact() {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             return contactRepo.findContactByOptionalCaptionLike("second").stream().findFirst().orElseThrow();

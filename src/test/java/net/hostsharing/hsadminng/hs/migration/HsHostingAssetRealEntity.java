@@ -10,7 +10,7 @@ import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import org.hibernate.annotations.Type;
 
@@ -42,7 +42,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsHostingAssetRawEntity implements HsHostingAsset {
+public class HsHostingAssetRealEntity implements HsHostingAsset {
 
     @Id
     @GeneratedValue
@@ -57,11 +57,11 @@ public class HsHostingAssetRawEntity implements HsHostingAsset {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid")
-    private HsHostingAssetRawEntity parentAsset;
+    private HsHostingAssetRealEntity parentAsset;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignedtoassetuuid")
-    private HsHostingAssetRawEntity assignedToAsset;
+    private HsHostingAssetRealEntity assignedToAsset;
 
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
@@ -69,11 +69,11 @@ public class HsHostingAssetRawEntity implements HsHostingAsset {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "alarmcontactuuid")
-    private HsOfficeContactEntity alarmContact;
+    private HsOfficeContactRealEntity alarmContact;
 
     @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid", referencedColumnName = "uuid")
-    private List<HsHostingAssetRawEntity> subHostingAssets;
+    private List<HsHostingAssetRealEntity> subHostingAssets;
 
     @Column(name = "identifier")
     private String identifier; // e.g. vm1234, xyz00, example.org, xyz00_abc
@@ -109,6 +109,6 @@ public class HsHostingAssetRawEntity implements HsHostingAsset {
 
     @Override
     public String toString() {
-        return stringify.using(HsHostingAssetRawEntity.class).apply(this);
+        return stringify.using(HsHostingAssetRealEntity.class).apply(this);
     }
 }

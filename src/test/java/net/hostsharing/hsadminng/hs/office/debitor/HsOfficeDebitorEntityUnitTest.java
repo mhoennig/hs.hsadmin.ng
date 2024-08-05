@@ -1,17 +1,17 @@
 package net.hostsharing.hsadminng.hs.office.debitor;
 
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsOfficeDebitorEntityUnitTest {
 
-    private HsOfficeRelationEntity givenDebitorRel = HsOfficeRelationEntity.builder()
+    private HsOfficeRelationRealEntity givenDebitorRel = HsOfficeRelationRealEntity.builder()
             .anchor(HsOfficePersonEntity.builder()
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("some partner trade name")
@@ -20,7 +20,7 @@ class HsOfficeDebitorEntityUnitTest {
                     .personType(HsOfficePersonType.LEGAL_PERSON)
                     .tradeName("some billing trade name")
                     .build())
-            .contact(HsOfficeContactEntity.builder().caption("some caption").build())
+            .contact(HsOfficeContactRealEntity.builder().caption("some caption").build())
             .build();
 
     @Test

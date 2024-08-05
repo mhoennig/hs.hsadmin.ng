@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -21,10 +21,7 @@ import static org.mockito.Mockito.lenient;
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
-        HsOfficeDebitorPatchResource,
-        HsOfficeDebitorEntity
-        > {
+class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<HsOfficeDebitorPatchResource, HsOfficeDebitorEntity> {
 
     private static final UUID INITIAL_DEBITOR_UUID = UUID.randomUUID();
     private static final UUID INITIAL_DEBITOR_REL_UUID = UUID.randomUUID();
@@ -44,20 +41,21 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final UUID INITIAL_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
     private static final UUID PATCHED_REFUND_BANK_ACCOUNT_UUID = UUID.randomUUID();
 
-    private final HsOfficeRelationEntity givenInitialDebitorRel = HsOfficeRelationEntity.builder()
+    private final HsOfficeRelationRealEntity givenInitialDebitorRel = HsOfficeRelationRealEntity.builder()
             .uuid(INITIAL_DEBITOR_REL_UUID)
             .build();
 
     private final HsOfficeBankAccountEntity givenInitialBankAccount = HsOfficeBankAccountEntity.builder()
             .uuid(INITIAL_REFUND_BANK_ACCOUNT_UUID)
             .build();
+
     @Mock
     private EntityManager em;
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeRelationEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeRelationEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeRelationRealEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeRelationRealEntity.builder().uuid(invocation.getArgument(1)).build());
         lenient().when(em.getReference(eq(HsOfficeBankAccountEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeBankAccountEntity.builder().uuid(invocation.getArgument(1)).build());
     }
@@ -141,8 +139,8 @@ class HsOfficeDebitorEntityPatcherUnitTest extends PatchUnitTestBase<
         );
     }
 
-    private HsOfficeRelationEntity newDebitorRel(final UUID uuid) {
-        return HsOfficeRelationEntity.builder()
+    private HsOfficeRelationRealEntity newDebitorRel(final UUID uuid) {
+        return HsOfficeRelationRealEntity.builder()
                 .uuid(uuid)
                 .build();
     }

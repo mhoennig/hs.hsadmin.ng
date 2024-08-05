@@ -8,7 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -54,7 +55,6 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.REFERRER;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Builder
 @Entity
@@ -90,7 +90,7 @@ public class HsHostingAssetEntity implements HsHostingAsset {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "alarmcontactuuid")
-    private HsOfficeContactEntity alarmContact;
+    private HsOfficeContactRealEntity alarmContact;
 
     @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid", referencedColumnName = "uuid")
@@ -160,7 +160,7 @@ public class HsHostingAssetEntity implements HsHostingAsset {
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)
 
-                .importEntityAlias("alarmContact", HsOfficeContactEntity.class, usingDefaultCase(),
+                .importEntityAlias("alarmContact", HsOfficeContactRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("alarmContactUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)

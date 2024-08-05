@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetPatchResource;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +48,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
             entry("SSD", 256),
             entry("MEM", 64)
     );
-    final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
+    final HsOfficeContactRealEntity givenInitialContact = HsOfficeContactRealEntity.builder()
             .uuid(UUID.randomUUID())
             .build();
 
@@ -62,8 +62,8 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
     void initMocks() {
         lenient().when(em.getReference(eq(HsHostingAssetEntity.class), any())).thenAnswer(invocation ->
                 HsHostingAssetEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeContactRealEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
@@ -111,7 +111,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
         );
     }
 
-    static HsOfficeContactEntity newContact(final UUID uuid) {
-        return HsOfficeContactEntity.builder().uuid(uuid).build();
+    static HsOfficeContactRealEntity newContact(final UUID uuid) {
+        return HsOfficeContactRealEntity.builder().uuid(uuid).build();
     }
 }

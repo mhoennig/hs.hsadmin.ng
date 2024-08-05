@@ -5,11 +5,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -57,8 +59,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@DisplayName("Debitor")
-public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>, Stringifyable {
+@DisplayAs("Debitor")
+public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>, Stringifyable {
 
     public static final String DEBITOR_NUMBER_TAG = "D-";
     public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
@@ -66,7 +68,7 @@ public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>,
     private static Stringify<HsOfficeDebitorEntity> stringify =
             stringify(HsOfficeDebitorEntity.class, "debitor")
                     .withIdProp(HsOfficeDebitorEntity::toShortString)
-                    .withProp(e -> ofNullable(e.getDebitorRel()).map(HsOfficeRelationEntity::toShortString).orElse(null))
+                    .withProp(e -> ofNullable(e.getDebitorRel()).map(HsOfficeRelation::toShortString).orElse(null))
                     .withProp(HsOfficeDebitorEntity::getDefaultPrefix)
                     .quotedValues(false);
 
@@ -101,7 +103,7 @@ public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>,
 
     @ManyToOne(cascade = { PERSIST, MERGE, REFRESH, DETACH }, optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "debitorreluuid", nullable = false)
-    private HsOfficeRelationEntity debitorRel;
+    private HsOfficeRelationRealEntity debitorRel;
 
     @Column(name = "billable", nullable = false)
     private Boolean billable; // not a primitive because otherwise the default would be false
@@ -128,7 +130,7 @@ public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>,
 
     @Override
     public HsOfficeDebitorEntity load() {
-        RbacObject.super.load();
+        BaseEntity.super.load();
         if (partner != null) {
             partner.load();
         }
@@ -188,7 +190,7 @@ public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>,
                         "defaultPrefix")
                 .toRole("global", ADMIN).grantPermission(INSERT)
 
-                .importRootEntityAliasProxy("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),
+                .importRootEntityAliasProxy("debitorRel", HsOfficeRelationRbacEntity.class, usingCase(DEBITOR),
                         directlyFetchedByDependsOnColumn(),
                         dependsOnColumn("debitorRelUuid"))
                 .createPermission(DELETE).grantedTo("debitorRel", OWNER)
@@ -202,7 +204,7 @@ public class HsOfficeDebitorEntity implements RbacObject<HsOfficeDebitorEntity>,
                 .toRole("refundBankAccount", ADMIN).grantRole("debitorRel", AGENT)
                 .toRole("debitorRel", AGENT).grantRole("refundBankAccount", REFERRER)
 
-                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class, usingDefaultCase(),
+                .importEntityAlias("partnerRel", HsOfficeRelationRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("debitorRelUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}

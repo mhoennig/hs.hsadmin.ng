@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.stringify;
 
-import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.errors.DisplayAs;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -8,11 +8,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
+import static java.util.Optional.ofNullable;
 
 public final class Stringify<B> {
 
@@ -32,18 +32,21 @@ public final class Stringify<B> {
 
     public <T extends B> Stringify<T> using(final Class<T> subClass) {
         //noinspection unchecked
-        return (Stringify<T>) new Stringify<T>(subClass, null)
+        final var stringify = new Stringify<T>(subClass, null)
                 .withIdProp(cast(idProp))
                 .withProps(cast(props))
-                .withSeparator(separator)
-                .quotedValues(quotedValues);
+                .withSeparator(separator);
+        if (quotedValues != null) {
+            stringify.quotedValues(quotedValues);
+        }
+        return stringify;
     }
 
     private Stringify(final Class<B> clazz, final String name) {
         if (name != null) {
             this.name = name;
         } else {
-            final var displayName = clazz.getAnnotation(DisplayName.class);
+            final var displayName = clazz.getAnnotation(DisplayAs.class);
             if (displayName != null) {
                 this.name = displayName.value();
             } else {
@@ -96,7 +99,7 @@ public final class Stringify<B> {
     }
 
     private String propName(final PropertyValue<B> propVal, final String delimiter) {
-        return Optional.ofNullable(propVal.prop.name).map(v -> v + delimiter).orElse("");
+        return ofNullable(propVal.prop.name).map(v -> v + delimiter).orElse("");
     }
 
     private String optionallyQuoted(final PropertyValue<B> propVal) {

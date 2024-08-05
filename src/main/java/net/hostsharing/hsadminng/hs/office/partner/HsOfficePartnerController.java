@@ -2,18 +2,18 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.errors.ReferenceNotFoundException;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePartnersApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerRelInsertResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.mapper.Mapper;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +42,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     private HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    private HsOfficeRelationRepository relationRepo;
+    private HsOfficeRelationRealRepository relationRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -141,7 +141,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         return ResponseEntity.ok(mapped);
     }
 
-    private void optionallyCreateExPartnerRelation(final HsOfficePartnerEntity saved, final HsOfficeRelationEntity previousPartnerRel) {
+    private void optionallyCreateExPartnerRelation(final HsOfficePartnerEntity saved, final HsOfficeRelationRealEntity previousPartnerRel) {
         if (!saved.getPartnerRel().getUuid().equals(previousPartnerRel.getUuid())) {
             relationRepo.save(previousPartnerRel.toBuilder().uuid(null).type(EX_PARTNER).build());
         }
@@ -155,17 +155,17 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
         return entityToSave;
     }
 
-    private HsOfficeRelationEntity persistPartnerRel(final HsOfficePartnerRelInsertResource resource) {
-        final var entity = new HsOfficeRelationEntity();
+    private HsOfficeRelationRealEntity persistPartnerRel(final HsOfficePartnerRelInsertResource resource) {
+        final var entity = new HsOfficeRelationRealEntity();
         entity.setType(HsOfficeRelationType.PARTNER);
         entity.setAnchor(ref(HsOfficePersonEntity.class, resource.getAnchorUuid()));
         entity.setHolder(ref(HsOfficePersonEntity.class, resource.getHolderUuid()));
-        entity.setContact(ref(HsOfficeContactEntity.class, resource.getContactUuid()));
+        entity.setContact(ref(HsOfficeContactRealEntity.class, resource.getContactUuid()));
         em.persist(entity);
         return entity;
     }
 
-    private <E extends RbacObject> E ref(final Class<E> entityClass, final UUID uuid) {
+    private <E extends BaseEntity> E ref(final Class<E> entityClass, final UUID uuid) {
         try {
             return em.getReference(entityClass, uuid);
         } catch (final Throwable exc) {

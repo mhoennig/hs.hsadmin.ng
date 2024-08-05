@@ -6,7 +6,7 @@ import com.opencsv.CSVReaderBuilder;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -141,7 +141,7 @@ public class CsvDataImport extends ContextBasedTest {
         return record;
     }
 
-    public <T extends RbacObject> T persist(final Integer id, final T entity) {
+    public <T extends BaseEntity> T persist(final Integer id, final T entity) {
         try {
             if (entity instanceof HsHostingAsset ha) {
                 //noinspection unchecked
@@ -155,7 +155,7 @@ public class CsvDataImport extends ContextBasedTest {
         return entity;
     }
 
-    public <T extends RbacObject> T persistViaEM(final Integer id, final T entity) {
+    public <T extends BaseEntity> T persistViaEM(final Integer id, final T entity) {
         //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
         em.persist(entity);
         // uncomment for debugging purposes
@@ -165,7 +165,7 @@ public class CsvDataImport extends ContextBasedTest {
     }
 
     @SneakyThrows
-    public RbacObject<HsHostingAsset> persistViaSql(final Integer id, final HsHostingAsset entity) {
+    public BaseEntity<HsHostingAsset> persistViaSql(final Integer id, final HsHostingAsset entity) {
         if (entity.getUuid() == null) {
             entity.setUuid(UUID.randomUUID());
         }
@@ -196,10 +196,10 @@ public class CsvDataImport extends ContextBasedTest {
                """)
                 .setParameter("uuid", entity.getUuid())
                 .setParameter("type", entity.getType().name())
-                .setParameter("bookingitemuuid", ofNullable(entity.getBookingItem()).map(RbacObject::getUuid).orElse(null))
-                .setParameter("parentassetuuid", ofNullable(entity.getParentAsset()).map(RbacObject::getUuid).orElse(null))
-                .setParameter("assignedtoassetuuid", ofNullable(entity.getAssignedToAsset()).map(RbacObject::getUuid).orElse(null))
-                .setParameter("alarmcontactuuid", ofNullable(entity.getAlarmContact()).map(RbacObject::getUuid).orElse(null))
+                .setParameter("bookingitemuuid", ofNullable(entity.getBookingItem()).map(BaseEntity::getUuid).orElse(null))
+                .setParameter("parentassetuuid", ofNullable(entity.getParentAsset()).map(BaseEntity::getUuid).orElse(null))
+                .setParameter("assignedtoassetuuid", ofNullable(entity.getAssignedToAsset()).map(BaseEntity::getUuid).orElse(null))
+                .setParameter("alarmcontactuuid", ofNullable(entity.getAlarmContact()).map(BaseEntity::getUuid).orElse(null))
                 .setParameter("identifier", entity.getIdentifier())
                 .setParameter("caption", entity.getCaption())
                 .setParameter("config", entity.getConfig().toString())

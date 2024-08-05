@@ -2,8 +2,8 @@ package net.hostsharing.hsadminng.hs.office.person;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -29,8 +29,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
-@DisplayName("Person")
-public class HsOfficePersonEntity implements RbacObject<HsOfficePersonEntity>, Stringifyable {
+@DisplayAs("Person")
+public class HsOfficePersonEntity implements BaseEntity<HsOfficePersonEntity>, Stringifyable {
 
     private static Stringify<HsOfficePersonEntity> toString = stringify(HsOfficePersonEntity.class, "person")
             .withProp(Fields.personType, HsOfficePersonEntity::getPersonType)

@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test;
 
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -233,7 +233,7 @@ public abstract class PatchUnitTestBase<R, E> {
         }
     }
 
-    protected static class JsonNullableProperty<R, RV, E extends RbacObject, EV> extends Property<R, RV, E, EV> {
+    protected static class JsonNullableProperty<R, RV, E extends BaseEntity, EV> extends Property<R, RV, E, EV> {
 
         private final BiConsumer<R, JsonNullable<RV>> resourceSetter;
         public final RV givenPatchValue;

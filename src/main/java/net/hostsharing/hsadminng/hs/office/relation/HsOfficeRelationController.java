@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeRelationsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
@@ -31,13 +31,13 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     private Mapper mapper;
 
     @Autowired
-    private HsOfficeRelationRepository relationRepo;
+    private HsOfficeRelationRbacRepository relationRbacRepo;
 
     @Autowired
     private HsOfficePersonRepository holderRepo;
 
     @Autowired
-    private HsOfficeContactRepository contactRepo;
+    private HsOfficeContactRealRepository contactrealRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -51,7 +51,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
             final HsOfficeRelationTypeResource relationType) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = relationRepo.findRelationRelatedToPersonUuidAndRelationType(personUuid,
+        final var entities = relationRbacRepo.findRelationRelatedToPersonUuidAndRelationType(personUuid,
                 mapper.map(relationType, HsOfficeRelationType.class));
 
         final var resources = mapper.mapList(entities, HsOfficeRelationResource.class,
@@ -68,20 +68,20 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = new HsOfficeRelationEntity();
+        final var entityToSave = new HsOfficeRelationRbacEntity();
         entityToSave.setType(HsOfficeRelationType.valueOf(body.getType()));
         entityToSave.setMark(body.getMark());
         entityToSave.setAnchor(holderRepo.findByUuid(body.getAnchorUuid()).orElseThrow(
-                () -> new NoSuchElementException("cannot find anchorUuid " + body.getAnchorUuid())
+                () -> new NoSuchElementException("cannot find Person by anchorUuid: " + body.getAnchorUuid())
         ));
         entityToSave.setHolder(holderRepo.findByUuid(body.getHolderUuid()).orElseThrow(
-                () -> new NoSuchElementException("cannot find holderUuid " + body.getHolderUuid())
+                () -> new NoSuchElementException("cannot find Person by holderUuid: " + body.getHolderUuid())
         ));
-        entityToSave.setContact(contactRepo.findByUuid(body.getContactUuid()).orElseThrow(
-                () -> new NoSuchElementException("cannot find contactUuid " + body.getContactUuid())
+        entityToSave.setContact(contactrealRepo.findByUuid(body.getContactUuid()).orElseThrow(
+                () -> new NoSuchElementException("cannot find Contact by contactUuid: " + body.getContactUuid())
         ));
 
-        final var saved = relationRepo.save(entityToSave);
+        final var saved = relationRbacRepo.save(entityToSave);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -102,7 +102,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var result = relationRepo.findByUuid(relationUuid);
+        final var result = relationRbacRepo.findByUuid(relationUuid);
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -117,7 +117,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
             final UUID relationUuid) {
         context.define(currentUser, assumedRoles);
 
-        final var result = relationRepo.deleteByUuid(relationUuid);
+        final var result = relationRbacRepo.deleteByUuid(relationUuid);
         if (result == 0) {
             return ResponseEntity.notFound().build();
         }
@@ -135,17 +135,17 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var current = relationRepo.findByUuid(relationUuid).orElseThrow();
+        final var current = relationRbacRepo.findByUuid(relationUuid).orElseThrow();
 
         new HsOfficeRelationEntityPatcher(em, current).apply(body);
 
-        final var saved = relationRepo.save(current);
+        final var saved = relationRbacRepo.save(current);
         final var mapped = mapper.map(saved, HsOfficeRelationResource.class);
         return ResponseEntity.ok(mapped);
     }
 
 
-    final BiConsumer<HsOfficeRelationEntity, HsOfficeRelationResource> RELATION_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+    final BiConsumer<HsOfficeRelationRbacEntity, HsOfficeRelationResource> RELATION_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setAnchor(mapper.map(entity.getAnchor(), HsOfficePersonResource.class));
         resource.setHolder(mapper.map(entity.getHolder(), HsOfficePersonResource.class));
         resource.setContact(mapper.map(entity.getContact(), HsOfficeContactResource.class));

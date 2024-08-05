@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.test;
 
 import lombok.*;
-import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,7 +88,7 @@ class MapperUnitTest {
         );
 
         assertThat(exception).isInstanceOf(ValidationException.class)
-                .hasMessage("Unable to find SubTargetBean1 with uuid " + GIVEN_UUID);
+                .hasMessage("Unable to find SubTargetBean1 by uuid: " + GIVEN_UUID);
     }
 
     @Test
@@ -101,7 +101,7 @@ class MapperUnitTest {
         );
 
         assertThat(exception).isInstanceOf(ValidationException.class)
-                .hasMessage("Unable to find SomeDisplayName with uuid " + GIVEN_UUID);
+                .hasMessage("Unable to find SomeDisplayName by uuid: " + GIVEN_UUID);
     }
 
     @Test
@@ -217,7 +217,7 @@ class MapperUnitTest {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @DisplayName("SomeDisplayName")
+    @DisplayAs("SomeDisplayName")
     public static class SubTargetBean2 {
 
         private UUID uuid;

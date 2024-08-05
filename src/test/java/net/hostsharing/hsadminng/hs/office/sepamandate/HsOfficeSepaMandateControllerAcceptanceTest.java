@@ -195,7 +195,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .post("http://localhost/api/hs/office/sepamandates")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find BankAccount with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find BankAccount by uuid: 00000000-0000-0000-0000-000000000000"));
             // @formatter:on
         }
 
@@ -225,7 +225,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .post("http://localhost/api/hs/office/sepamandates")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find Debitor with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find Debitor by uuid: 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }

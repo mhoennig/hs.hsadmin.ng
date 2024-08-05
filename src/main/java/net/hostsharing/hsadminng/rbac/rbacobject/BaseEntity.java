@@ -5,7 +5,8 @@ import org.hibernate.Hibernate;
 
 import java.util.UUID;
 
-public interface RbacObject<T extends RbacObject<?>> {
+// TODO.impl: this class does not really belong into this package, but there is no right place yet
+public interface BaseEntity<T extends BaseEntity<?>> {
     UUID getUuid();
 
     int getVersion();

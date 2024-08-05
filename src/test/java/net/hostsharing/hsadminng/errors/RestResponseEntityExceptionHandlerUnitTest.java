@@ -40,7 +40,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(409);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("First Line");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [409] First Line");
     }
 
     @Test
@@ -59,7 +59,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
         assertThat(errorResponse.getBody()).isNotNull()
-                .extracting(CustomErrorResponse::getMessage).isEqualTo("Second Line");
+                .extracting(CustomErrorResponse::getMessage).isEqualTo("ERROR: [400] Second Line");
     }
 
     @Test
@@ -91,7 +91,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("Unable to find Partner with uuid 12345-123454");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] Unable to find Partner with uuid 12345-123454");
     }
 
     @Test
@@ -109,7 +109,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
         assertThat(errorResponse.getBody().getMessage()).isEqualTo(
-                "Unable to find net.hostsharing.hsadminng.WhateverEntity with id 12345-123454");
+                "ERROR: [400] Unable to find net.hostsharing.hsadminng.WhateverEntity with id 12345-123454");
     }
 
     @Test
@@ -125,7 +125,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("whatever error message");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] whatever error message");
     }
 
     @Test
@@ -143,7 +143,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("Unable to find NoDisplayNameEntity with uuid 12345-123454");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] Unable to find NoDisplayNameEntity with uuid 12345-123454");
     }
 
     @Test
@@ -172,7 +172,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(404);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("some error message");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [404] some error message");
     }
 
     @ParameterizedTest
@@ -191,7 +191,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(400);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("given error message");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [400] given error message");
     }
 
     @Test
@@ -218,7 +218,8 @@ class RestResponseEntityExceptionHandlerUnitTest {
                 .extracting("statusCode").isEqualTo(400);
         assertThat(errorResponse.getBody())
                 .extracting("message")
-                .isEqualTo("[someField expected to be something but is \"someRejectedValue\"]");
+                // FYI: the brackets around the message are here because it's actually an array, in this case of size 1
+                .isEqualTo("ERROR: [400] [someField expected to be something but is \"someRejectedValue\"]");
     }
 
     @Test
@@ -232,7 +233,7 @@ class RestResponseEntityExceptionHandlerUnitTest {
 
         // then
         assertThat(errorResponse.getBody().getStatusCode()).isEqualTo(500);
-        assertThat(errorResponse.getBody().getMessage()).isEqualTo("First Line");
+        assertThat(errorResponse.getBody().getMessage()).isEqualTo("ERROR: [500] First Line");
     }
 
     @Test

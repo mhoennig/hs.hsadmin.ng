@@ -32,7 +32,7 @@ import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_C
 import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
 import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
-import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.TEST_CONTACT;
+import static net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealTestEntity.TEST_REAL_CONTACT;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,7 +75,7 @@ public class HsHostingAssetControllerRestTest {
                                 .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
                                 .identifier("vm1234")
                                 .caption("some fake cloud-server")
-                                .alarmContact(TEST_CONTACT)
+                                .alarmContact(TEST_REAL_CONTACT)
                                 .build()),
                 """
                     [
@@ -101,7 +101,7 @@ public class HsHostingAssetControllerRestTest {
                                 .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
                                 .identifier("vm1234")
                                 .caption("some fake managed-server")
-                                .alarmContact(TEST_CONTACT)
+                                .alarmContact(TEST_REAL_CONTACT)
                                 .config(Map.ofEntries(
                                         entry("monit_max_ssd_usage", 70),
                                         entry("monit_max_cpu_usage", 80),

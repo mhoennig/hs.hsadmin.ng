@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -36,7 +36,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
     private final HsOfficePersonEntity givenInitialPerson = HsOfficePersonEntity.builder()
             .uuid(INITIAL_PERSON_UUID)
             .build();
-    private final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
+    private final HsOfficeContactRealEntity givenInitialContact = HsOfficeContactRealEntity.builder()
             .uuid(INITIAL_CONTACT_UUID)
             .build();
 
@@ -48,8 +48,8 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeRelationEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeRelationEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeRelationRealEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeRelationRealEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
@@ -57,7 +57,7 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
         final var entity = HsOfficePartnerEntity.builder()
                 .uuid(INITIAL_PARTNER_UUID)
                 .partnerNumber(12345)
-                .partnerRel(HsOfficeRelationEntity.builder()
+                .partnerRel(HsOfficeRelationRealEntity.builder()
                         .holder(givenInitialPerson)
                         .contact(givenInitialContact)
                         .build())
@@ -89,10 +89,9 @@ class HsOfficePartnerEntityPatcherUnitTest extends PatchUnitTestBase<
         );
     }
 
-    private static HsOfficeRelationEntity newPartnerRel(final UUID uuid) {
-        final var newPartnerRel = HsOfficeRelationEntity.builder()
+    private static HsOfficeRelationRealEntity newPartnerRel(final UUID uuid) {
+        return HsOfficeRelationRealEntity.builder()
                     .uuid(uuid)
                     .build();
-        return newPartnerRel;
     }
 }

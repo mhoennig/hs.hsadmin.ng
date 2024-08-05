@@ -33,7 +33,7 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
                 JOIN HsOfficePersonEntity person
                     ON person.uuid = partner.partnerRel.holder.uuid
                         OR person.uuid = debitor.debitorRel.holder.uuid
-                JOIN HsOfficeContactEntity contact
+                JOIN HsOfficeContactRealEntity contact
                     ON contact.uuid = debitor.debitorRel.contact.uuid 
                         OR contact.uuid = partner.partnerRel.contact.uuid
                 WHERE :name is null

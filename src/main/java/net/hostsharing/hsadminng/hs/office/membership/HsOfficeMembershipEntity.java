@@ -7,9 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -61,8 +61,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@DisplayName("Membership")
-public class HsOfficeMembershipEntity implements RbacObject<HsOfficeMembershipEntity>, Stringifyable {
+@DisplayAs("Membership")
+public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEntity>, Stringifyable {
 
     public static final String MEMBER_NUMBER_TAG = "M-";
     public static final String TWO_DECIMAL_DIGITS = "^([0-9]{2})$";
@@ -102,7 +102,7 @@ public class HsOfficeMembershipEntity implements RbacObject<HsOfficeMembershipEn
 
     @Override
     public HsOfficeMembershipEntity load() {
-        RbacObject.super.load();
+        BaseEntity.super.load();
         partner.load();
         return this;
     }
@@ -165,7 +165,7 @@ public class HsOfficeMembershipEntity implements RbacObject<HsOfficeMembershipEn
                 .withRestrictedViewOrderBy(SQL.projection("validity"))
                 .withUpdatableColumns("validity", "membershipFeeBillable", "status")
 
-                .importEntityAlias("partnerRel", HsOfficeRelationEntity.class, usingDefaultCase(),
+                .importEntityAlias("partnerRel", HsOfficeRelationRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("partnerUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}

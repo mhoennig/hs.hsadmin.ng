@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.rbacdef;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import org.reflections.Reflections;
 import org.reflections.scanners.TypeAnnotationsScanner;
 
@@ -12,6 +12,7 @@ import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
@@ -89,11 +90,11 @@ public class RbacView {
      * @param <E>
      *     a JPA entity class extending RbacObject
      */
-    public static <E extends RbacObject> RbacView rbacViewFor(final String alias, final Class<E> entityClass) {
+    public static <E extends BaseEntity> RbacView rbacViewFor(final String alias, final Class<E> entityClass) {
         return new RbacView(alias, entityClass);
     }
 
-    RbacView(final String alias, final Class<? extends RbacObject> entityClass) {
+    RbacView(final String alias, final Class<? extends BaseEntity> entityClass) {
         rootEntityAlias = new EntityAlias(alias, entityClass);
         entityAliases.put(alias, rootEntityAlias);
         new RbacUserReference(CREATOR);
@@ -253,7 +254,7 @@ public class RbacView {
                 .orElseGet(() -> new RbacPermissionDefinition(entityAlias, permission, null, true));
     }
 
-    public <EC extends RbacObject> RbacView declarePlaceholderEntityAliases(final String... aliasNames) {
+    public <EC extends BaseEntity> RbacView declarePlaceholderEntityAliases(final String... aliasNames) {
         for (String alias : aliasNames) {
             entityAliases.put(alias, new EntityAlias(alias));
         }
@@ -286,9 +287,9 @@ public class RbacView {
      * @param <EC>
      *     a JPA entity class extending RbacObject
      */
-    public <EC extends RbacObject> RbacView importRootEntityAliasProxy(
+    public <EC extends BaseEntity> RbacView importRootEntityAliasProxy(
             final String aliasName,
-            final Class<? extends RbacObject> entityClass,
+            final Class<? extends BaseEntity> entityClass,
             final ColumnValue forCase,
             final SQL fetchSql,
             final Column dependsOnColum) {
@@ -312,7 +313,7 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importSubEntityAlias(
-            final String aliasName, final Class<? extends RbacObject> entityClass,
+            final String aliasName, final Class<? extends BaseEntity> entityClass,
             final SQL fetchSql, final Column dependsOnColum) {
         importEntityAliasImpl(aliasName, entityClass, usingDefaultCase(), fetchSql, dependsOnColum, true, NOT_NULL);
         return this;
@@ -349,14 +350,14 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importEntityAlias(
-            final String aliasName, final Class<? extends RbacObject> entityClass, final ColumnValue usingCase,
+            final String aliasName, final Class<? extends BaseEntity> entityClass, final ColumnValue usingCase,
             final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
         importEntityAliasImpl(aliasName, entityClass, usingCase, fetchSql, dependsOnColum, false, nullable);
         return this;
     }
 
     private EntityAlias importEntityAliasImpl(
-            final String aliasName, final Class<? extends RbacObject> entityClass, final ColumnValue usingCase,
+            final String aliasName, final Class<? extends BaseEntity> entityClass, final ColumnValue usingCase,
             final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity, final Nullable nullable) {
 
         final var entityAlias = ofNullable(entityAliases.get(aliasName))
@@ -378,7 +379,7 @@ public class RbacView {
         return entityAlias;
     }
 
-    private static RbacView rbacDefinition(final Class<? extends RbacObject> entityClass)
+    private static RbacView rbacDefinition(final Class<? extends BaseEntity> entityClass)
             throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         return (RbacView) entityClass.getMethod("rbac").invoke(null);
     }
@@ -432,10 +433,20 @@ public class RbacView {
     }
 
     private void verifyVersionColumnExists() {
-        if (stream(rootEntityAlias.entityClass.getDeclaredFields())
-                .noneMatch(f -> f.getAnnotation(Version.class) != null)) {
+        final var clazz = rootEntityAlias.entityClass;
+        if (!hasVersionColumn(clazz)) {
             throw new IllegalArgumentException("@Version field required in updatable entity " + rootEntityAlias.entityClass);
         }
+    }
+
+    private static boolean hasVersionColumn(final Class<?> clazz) {
+        if (stream(clazz.getDeclaredFields()).anyMatch(f -> f.getAnnotation(Version.class) != null)) {
+            return true;
+        }
+        if (clazz.getSuperclass() != null) {
+            return hasVersionColumn(clazz.getSuperclass());
+        }
+        return false;
     }
 
     /**
@@ -900,13 +911,13 @@ public class RbacView {
         return distinctGrantDef;
     }
 
-    record EntityAlias(String aliasName, Class<? extends RbacObject> entityClass, ColumnValue usingCase, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
+    record EntityAlias(String aliasName, Class<? extends BaseEntity> entityClass, ColumnValue usingCase, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
 
         public EntityAlias(final String aliasName) {
             this(aliasName, null, null, null, null, false, null);
         }
 
-        public EntityAlias(final String aliasName, final Class<? extends RbacObject> entityClass) {
+        public EntityAlias(final String aliasName, final Class<? extends BaseEntity> entityClass) {
             this(aliasName, entityClass, null, null, null, false, null);
         }
 
@@ -936,6 +947,10 @@ public class RbacView {
         }
 
         private String withoutEntitySuffix(final String simpleEntityName) {
+            // TODO.impl: maybe introduce an annotation like @RbacObjectName("hsOfficeContact")?
+            if ( simpleEntityName.endsWith("RbacEntity")) {
+                return simpleEntityName.substring(0, simpleEntityName.length() - "RbacEntity".length());
+            }
             return simpleEntityName.substring(0, simpleEntityName.length() - "Entity".length());
         }
 
@@ -1210,7 +1225,7 @@ public class RbacView {
         }
     }
 
-    private static void generateRbacView(final Class<? extends RbacObject> c) {
+    private static void generateRbacView(final Class<? extends BaseEntity> c) {
         final Method mainMethod = stream(c.getMethods()).filter(
                         m -> isStatic(m.getModifiers()) && m.getName().equals("main")
                 )
@@ -1227,17 +1242,20 @@ public class RbacView {
         }
     }
 
-    public static Set<Class<? extends RbacObject>> findRbacEntityClasses(String packageName) {
+    public static Set<Class<? extends BaseEntity>> findRbacEntityClasses(String packageName) {
         final var reflections = new Reflections(packageName, TypeAnnotationsScanner.class);
         return reflections.getTypesAnnotatedWith(Entity.class).stream()
-                .filter(c -> stream(c.getInterfaces()).anyMatch(i -> i==RbacObject.class))
-                .map(RbacView::castToSubclassOfRbacObject)
+                .filter(c -> stream(c.getInterfaces()).anyMatch(i -> i== BaseEntity.class))
+                .filter(c -> stream(c.getDeclaredMethods())
+                        .anyMatch(m -> m.getName().equals("rbac") && Modifier.isStatic(m.getModifiers()))
+                )
+                .map(RbacView::castToSubclassOfBaseEntity)
                 .collect(Collectors.toSet());
     }
 
     @SuppressWarnings("unchecked")
-    private static Class<? extends RbacObject> castToSubclassOfRbacObject(final Class<?> clazz) {
-        return (Class<? extends RbacObject>) clazz;
+    private static Class<? extends BaseEntity> castToSubclassOfBaseEntity(final Class<?> clazz) {
+        return (Class<? extends BaseEntity>) clazz;
     }
 
     /**

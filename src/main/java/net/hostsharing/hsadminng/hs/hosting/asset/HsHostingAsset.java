@@ -2,9 +2,9 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -16,7 +16,7 @@ import java.util.UUID;
 import static java.util.Collections.emptyMap;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
-public interface HsHostingAsset extends Stringifyable, RbacObject<HsHostingAsset>, PropertiesProvider {
+public interface HsHostingAsset extends Stringifyable, BaseEntity<HsHostingAsset>, PropertiesProvider {
 
     Stringify<HsHostingAsset> stringify = stringify(HsHostingAsset.class)
             .withProp(HsHostingAsset::getType)
@@ -36,7 +36,7 @@ public interface HsHostingAsset extends Stringifyable, RbacObject<HsHostingAsset
     String getIdentifier();
     HsBookingItemEntity getBookingItem();
     HsHostingAsset getAssignedToAsset();
-    HsOfficeContactEntity getAlarmContact();
+    HsOfficeContactRealEntity getAlarmContact();
     List<? extends HsHostingAsset> getSubHostingAssets();
     String getCaption();
     Map<String, Object> getConfig();

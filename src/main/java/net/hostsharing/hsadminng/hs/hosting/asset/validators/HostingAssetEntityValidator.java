@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import net.hostsharing.hsadminng.hs.validation.ValidatableProperty;
 
@@ -213,7 +213,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
         }
     }
 
-    static class AlarmContact extends ReferenceValidator<HsOfficeContactEntity, Enum<?>> {
+    static class AlarmContact extends ReferenceValidator<HsOfficeContactRealEntity, Enum<?>> {
 
         AlarmContact(final HsHostingAssetType.RelationPolicy policy) {
             super(policy, HsHostingAsset::getAlarmContact);

@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ class HsOfficePartnerEntityUnitTest {
 
     private final HsOfficePartnerEntity givenPartner = HsOfficePartnerEntity.builder()
             .partnerNumber(12345)
-            .partnerRel(HsOfficeRelationEntity.builder()
+            .partnerRel(HsOfficeRelationRealEntity.builder()
                     .anchor(HsOfficePersonEntity.builder()
                             .personType(HsOfficePersonType.LEGAL_PERSON)
                             .tradeName("Hostsharing eG")
@@ -23,7 +23,7 @@ class HsOfficePartnerEntityUnitTest {
                             .personType(HsOfficePersonType.LEGAL_PERSON)
                             .tradeName("some trade name")
                             .build())
-                    .contact(HsOfficeContactEntity.builder().caption("some caption").build())
+                    .contact(HsOfficeContactRealEntity.builder().caption("some caption").build())
                     .build())
             .build();
 

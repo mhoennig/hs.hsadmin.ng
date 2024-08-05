@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.mapper;
 
-import net.hostsharing.hsadminng.errors.DisplayName;
 import org.modelmapper.ModelMapper;
 import org.springframework.util.ReflectionUtils;
 
@@ -12,6 +11,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+
+import static net.hostsharing.hsadminng.errors.DisplayAs.DisplayName;
 
 /**
  * A nicer API for ModelMapper.
@@ -74,11 +75,7 @@ public class Mapper extends ModelMapper {
         if (entity != null) {
             return entity;
         }
-        final var displayNameAnnot = entityClass.getAnnotation(DisplayName.class);
-        final var displayName = displayNameAnnot != null ? displayNameAnnot.value() : entityClass.getSimpleName();
-        throw new ValidationException("Unable to find %s with uuid %s".formatted(
-                displayName, subEntityUuid
-        ));
+        throw new ValidationException("Unable to find " + DisplayName.of(entityClass) + " by uuid: " + subEntityUuid);
     }
 
     public <S, T> T map(final S source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {

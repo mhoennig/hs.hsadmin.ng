@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.migration;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionEntity;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType;
 import net.hostsharing.hsadminng.hs.office.coopshares.HsOfficeCoopSharesTransactionEntity;
@@ -14,10 +14,11 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerDetailsEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonType;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -120,13 +121,13 @@ public class ImportOfficeData extends CsvDataImport {
         -1
     );
 
-    static Map<Integer, HsOfficeContactEntity> contacts = new WriteOnceMap<>();
+    static Map<Integer, HsOfficeContactRealEntity> contacts = new WriteOnceMap<>();
     static Map<Integer, HsOfficePersonEntity> persons = new WriteOnceMap<>();
     static Map<Integer, HsOfficePartnerEntity> partners = new WriteOnceMap<>();
     static Map<Integer, HsOfficeDebitorEntity> debitors = new WriteOnceMap<>();
     static Map<Integer, HsOfficeMembershipEntity> memberships = new WriteOnceMap<>();
 
-    static Map<Integer, HsOfficeRelationEntity> relations = new WriteOnceMap<>();
+    static Map<Integer, HsOfficeRelation> relations = new WriteOnceMap<>();
     static Map<Integer, HsOfficeSepaMandateEntity> sepaMandates = new WriteOnceMap<>();
     static Map<Integer, HsOfficeBankAccountEntity> bankAccounts = new WriteOnceMap<>();
     static Map<Integer, HsOfficeCoopSharesTransactionEntity> coopShares = new WriteOnceMap<>();
@@ -359,8 +360,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1030)
     void importSepaMandates() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
-
         try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/office/sepa_mandates.csv")) {
             final var lines = readAllLines(reader);
             importSepaMandates(justHeader(lines), withoutHeader(lines));
@@ -372,7 +371,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1039)
     void verifySepaMandates() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(bankAccounts)).isEqualToIgnoringWhitespace("""
@@ -402,8 +400,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1040)
     void importCoopShares() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
-
         try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/office/share_transactions.csv")) {
             final var lines = readAllLines(reader);
             importCoopShares(justHeader(lines), withoutHeader(lines));
@@ -415,7 +411,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1041)
     void verifyCoopShares() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
@@ -438,8 +433,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1050)
     void importCoopAssets() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
-
         try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/office/asset_transactions.csv")) {
             final var lines = readAllLines(reader);
             importCoopAssets(justHeader(lines), withoutHeader(lines));
@@ -451,7 +444,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1059)
     void verifyCoopAssets() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
@@ -481,7 +473,6 @@ public class ImportOfficeData extends CsvDataImport {
     @Test
     @Order(1099)
     void verifyMemberships() {
-        assumeThatWeAreExplicitlyImportingOfficeData();
         assumeThatWeAreImportingControlledTestData();
 
         assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
@@ -692,8 +683,11 @@ public class ImportOfficeData extends CsvDataImport {
 
     }
 
-    protected void assumeThatWeAreExplicitlyImportingOfficeData() {
-        // not throwing AssumptionException
+    @Test
+    @Order(9190)
+    void verifyMembershipsActuallyPersisted() {
+        final var biCount = (Integer) em.createNativeQuery("SELECT count(*) FROM hs_office_membership", Integer.class).getSingleResult();
+        assertThat(biCount).isGreaterThan(isImportingControlledTestData() ? 5 : 300);
     }
 
     private static boolean isImportingControlledTestData() {
@@ -704,7 +698,7 @@ public class ImportOfficeData extends CsvDataImport {
         assumeThat(partners.size()).isLessThanOrEqualTo(MAX_NUMBER_OF_TEST_DATA_PARTNERS);
     }
 
-    private <E extends RbacObject> void updateLegacyIds(
+    private <E extends BaseEntity> void updateLegacyIds(
             Map<Integer, E> entities,
             final String legacyIdTable,
             final String legacyIdColumn) {
@@ -978,7 +972,7 @@ public class ImportOfficeData extends CsvDataImport {
                         contactPerson = addPerson(HsOfficePersonEntity.builder().build(), rec);
                     }
 
-                    final var contact = HsOfficeContactEntity.builder().build();
+                    final var contact = HsOfficeContactRealEntity.builder().build();
                     initContact(contact, rec);
 
                     if (containsPartnerRel(rec)) {
@@ -1052,12 +1046,12 @@ public class ImportOfficeData extends CsvDataImport {
         return containsRole(rec, "partner");
     }
 
-    private static HsOfficeRelationEntity addRelation(
+    private static HsOfficeRelationRealEntity addRelation(
             final HsOfficeRelationType type,
             final HsOfficePersonEntity anchor,
             final HsOfficePersonEntity holder,
-            final HsOfficeContactEntity contact) {
-        final var rel = HsOfficeRelationEntity.builder()
+            final HsOfficeContactRealEntity contact) {
+        final var rel = HsOfficeRelationRealEntity.builder()
                 .anchor(anchor)
                 .holder(holder)
                 .contact(contact)
@@ -1117,7 +1111,7 @@ public class ImportOfficeData extends CsvDataImport {
         assertThat(unexpectedRolesSet).isEmpty();
     }
 
-    private HsOfficeContactEntity initContact(final HsOfficeContactEntity contact, final Record contactRecord) {
+    private HsOfficeContactRealEntity initContact(final HsOfficeContactRealEntity contact, final Record contactRecord) {
 
         contact.setCaption(toCaption(
                 contactRecord.getString("salut"),

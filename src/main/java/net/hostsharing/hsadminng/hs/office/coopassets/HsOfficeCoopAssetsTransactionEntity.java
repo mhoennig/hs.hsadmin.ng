@@ -6,9 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.errors.DisplayName;
+import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
@@ -40,8 +40,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@DisplayName("CoopAssetsTransaction")
-public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacObject<HsOfficeCoopAssetsTransactionEntity> {
+@DisplayAs("CoopAssetsTransaction")
+public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseEntity<HsOfficeCoopAssetsTransactionEntity> {
 
     private static Stringify<HsOfficeCoopAssetsTransactionEntity> stringify = stringify(HsOfficeCoopAssetsTransactionEntity.class)
             .withIdProp(HsOfficeCoopAssetsTransactionEntity::getTaggedMemberNumber)
@@ -107,7 +107,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, RbacO
 
     @Override
     public HsOfficeCoopAssetsTransactionEntity load() {
-        RbacObject.super.load();
+        BaseEntity.super.load();
         membership.load();
         return this;
     }

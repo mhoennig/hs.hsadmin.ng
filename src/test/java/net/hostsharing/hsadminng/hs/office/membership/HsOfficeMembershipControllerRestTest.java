@@ -85,7 +85,8 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", is("[partnerUuid must not be null but is \"null\"]")));
+                    // FYI: the brackets around the message are here because it's actually an array, in this case of size 1
+                    .andExpect(jsonPath("message", is("ERROR: [400] [partnerUuid must not be null but is \"null\"]")));
         }
 
         @Test
@@ -114,7 +115,7 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", is("Unable to find Partner with uuid " + givenPartnerUuid)));
+                    .andExpect(jsonPath("message", is("ERROR: [400] Unable to find Partner by uuid: " + givenPartnerUuid)));
         }
 
         @ParameterizedTest

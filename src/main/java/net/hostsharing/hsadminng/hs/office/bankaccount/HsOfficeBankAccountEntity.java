@@ -2,8 +2,8 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
@@ -26,8 +26,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldNameConstants
-@DisplayName("BankAccount")
-public class HsOfficeBankAccountEntity implements RbacObject<HsOfficeBankAccountEntity>, Stringifyable {
+@DisplayAs("BankAccount")
+public class HsOfficeBankAccountEntity implements BaseEntity<HsOfficeBankAccountEntity>, Stringifyable {
 
     private static Stringify<HsOfficeBankAccountEntity> toString = stringify(HsOfficeBankAccountEntity.class, "bankAccount")
             .withIdProp(HsOfficeBankAccountEntity::getIban)

@@ -152,8 +152,8 @@ public class RestResponseEntityExceptionHandler
             final var entityName = matcher.group(1);
             final var entityClass = resolveClass(entityName);
             if (entityClass.isPresent()) {
-                return (entityClass.get().isAnnotationPresent(DisplayName.class)
-                        ? exceptionMessage.replace(entityName, entityClass.get().getAnnotation(DisplayName.class).value())
+                return (entityClass.get().isAnnotationPresent(DisplayAs.class)
+                        ? exceptionMessage.replace(entityName, entityClass.get().getAnnotation(DisplayAs.class).value())
                         : exceptionMessage.replace(entityName, entityClass.get().getSimpleName()))
                         .replace(" with id ", " with uuid ");
             }

@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
-import net.hostsharing.hsadminng.errors.DisplayName;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.errors.DisplayAs;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
@@ -25,8 +25,8 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@DisplayName("PartnerDetails")
-public class HsOfficePartnerDetailsEntity implements RbacObject<HsOfficePartnerDetailsEntity>, Stringifyable {
+@DisplayAs("PartnerDetails")
+public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerDetailsEntity>, Stringifyable {
 
     private static Stringify<HsOfficePartnerDetailsEntity> stringify = stringify(
             HsOfficePartnerDetailsEntity.class,

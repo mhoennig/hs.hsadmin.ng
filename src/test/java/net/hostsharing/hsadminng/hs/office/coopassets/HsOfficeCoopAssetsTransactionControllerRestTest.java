@@ -124,7 +124,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                 .andExpect(status().is4xxClientError())
                 .andExpect(jsonPath("statusCode", is(400)))
                 .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is(testCase.expectedErrorMessage)));
+                .andExpect(jsonPath("message", is("ERROR: [400] " + testCase.expectedErrorMessage)));
     }
 
 }

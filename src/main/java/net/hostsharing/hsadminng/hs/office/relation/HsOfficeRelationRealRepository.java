@@ -8,28 +8,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface HsOfficeRelationRepository extends Repository<HsOfficeRelationEntity, UUID> {
+public interface HsOfficeRelationRealRepository extends Repository<HsOfficeRelationRealEntity, UUID> {
 
-    Optional<HsOfficeRelationEntity> findByUuid(UUID id);
+    Optional<HsOfficeRelationRealEntity> findByUuid(UUID id);
 
-    default List<HsOfficeRelationEntity> findRelationRelatedToPersonUuidAndRelationType(@NotNull UUID personUuid, HsOfficeRelationType relationType) {
+    default List<HsOfficeRelationRealEntity> findRelationRelatedToPersonUuidAndRelationType(@NotNull UUID personUuid, HsOfficeRelationType relationType) {
         return findRelationRelatedToPersonUuidAndRelationTypeString(personUuid, relationType.toString());
     }
 
     @Query(value = """
-            SELECT p.* FROM hs_office_relation_rv AS p
+            SELECT p.* FROM hs_office_relation AS p
                 WHERE p.anchorUuid = :personUuid OR p.holderUuid = :personUuid
                """, nativeQuery = true)
-    List<HsOfficeRelationEntity> findRelationRelatedToPersonUuid(@NotNull UUID personUuid);
+    List<HsOfficeRelationRealEntity> findRelationRelatedToPersonUuid(@NotNull UUID personUuid);
 
     @Query(value = """
-            SELECT p.* FROM hs_office_relation_rv AS p
+            SELECT p.* FROM hs_office_relation AS p
                 WHERE (:relationType IS NULL OR p.type = cast(:relationType AS HsOfficeRelationType))
                     AND ( p.anchorUuid = :personUuid OR p.holderUuid = :personUuid)
                """, nativeQuery = true)
-    List<HsOfficeRelationEntity> findRelationRelatedToPersonUuidAndRelationTypeString(@NotNull UUID personUuid, String relationType);
+    List<HsOfficeRelationRealEntity> findRelationRelatedToPersonUuidAndRelationTypeString(@NotNull UUID personUuid, String relationType);
 
-    HsOfficeRelationEntity save(final HsOfficeRelationEntity entity);
+    HsOfficeRelationRealEntity save(final HsOfficeRelationRealEntity entity);
 
     long count();
 

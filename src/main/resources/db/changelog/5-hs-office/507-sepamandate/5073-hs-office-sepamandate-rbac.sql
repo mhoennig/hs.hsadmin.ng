@@ -173,8 +173,8 @@ begin
         return NEW;
     end if;
 
-    raise exception '[403] insert into hs_office_sepamandate not allowed for current subjects % (%)',
-            currentSubjects(), currentSubjectsUuids();
+    raise exception '[403] insert into hs_office_sepamandate values(%) not allowed for current subjects % (%)',
+            NEW, currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger hs_office_sepamandate_insert_permission_check_tg

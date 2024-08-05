@@ -178,6 +178,8 @@ begin
         create or replace view %1$s_rv as
             with accessible_%1$s_uuids as (
 
+                -- TODO.perf: this CTE query makes RBAC-SELECT-permission-queries so slow (~500ms), any idea how to optimize?
+                --  My guess is, that the depth of role-grants causes the problem.
                 with recursive grants as (
                     select descendantUuid, ascendantUuid, 1 as level
                         from RbacGrants
@@ -197,8 +199,7 @@ begin
                     from granted
                              join RbacPermission perm on granted.descendantUuid = perm.uuid
                              join RbacObject obj on obj.uuid = perm.objectUuid
-                    where perm.op = 'SELECT'
-                      and obj.objectTable = '%1$s'
+                    where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
                     limit 8001
             )
             select target.*

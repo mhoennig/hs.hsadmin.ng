@@ -29,7 +29,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     private Mapper mapper;
 
     @Autowired
-    private HsOfficeContactRepository contactRepo;
+    private HsOfficeContactRbacRepository contactRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,7 +54,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsOfficeContactEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(body, HsOfficeContactRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = contactRepo.save(entityToSave);
 
@@ -119,7 +119,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     }
 
     @SuppressWarnings("unchecked")
-    final BiConsumer<HsOfficeContactInsertResource, HsOfficeContactEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+    final BiConsumer<HsOfficeContactInsertResource, HsOfficeContactRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.putEmailAddresses(from(resource.getEmailAddresses()));
         entity.putPhoneNumbers(from(resource.getPhoneNumbers()));
     };

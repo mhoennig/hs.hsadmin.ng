@@ -1,10 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
@@ -42,13 +42,13 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    HsOfficeRelationRepository relationRepo;
+    HsOfficeRelationRealRepository relationRepo;
 
     @Autowired
     HsOfficePersonRepository personRepo;
 
     @Autowired
-    HsOfficeContactRepository contactRepo;
+    HsOfficeContactRealRepository contactrealRepo;
 
     @Autowired
     RawRbacObjectRepository rawObjectRepo;
@@ -109,10 +109,10 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // when
             attempt(em, () -> {
                 final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike("Erben Bessler").get(0);
-                final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
+                final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
                 final var givenMandantPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
 
-                final var newRelation = HsOfficeRelationEntity.builder()
+                final var newRelation = HsOfficeRelationRealEntity.builder()
                         .holder(givenPartnerPerson)
                         .type(HsOfficeRelationType.PARTNER)
                         .anchor(givenMandantPerson)
@@ -329,7 +329,8 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] insert into hs_office_partner_details not allowed for current subjects {hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT}");
+                    "ERROR: [403] insert into hs_office_partner_details ",
+                    " not allowed for current subjects {hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT}");
         }
 
         private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
@@ -462,12 +463,12 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         }).assertSuccessful().returnedValue();
     }
 
-    private HsOfficeRelationEntity givenSomeTemporaryHostsharingPartnerRel(final String person, final String contact) {
+    private HsOfficeRelationRealEntity givenSomeTemporaryHostsharingPartnerRel(final String person, final String contact) {
         final var givenMandantorPerson = personRepo.findPersonByOptionalNameLike("Hostsharing eG").get(0);
         final var givenPartnerPerson = personRepo.findPersonByOptionalNameLike(person).get(0);
-        final var givenContact = contactRepo.findContactByOptionalCaptionLike(contact).get(0);
+        final var givenContact = contactrealRepo.findContactByOptionalCaptionLike(contact).get(0);
 
-        final var partnerRel = HsOfficeRelationEntity.builder()
+        final var partnerRel = HsOfficeRelationRealEntity.builder()
                 .holder(givenPartnerPerson)
                 .type(HsOfficeRelationType.PARTNER)
                 .anchor(givenMandantorPerson)

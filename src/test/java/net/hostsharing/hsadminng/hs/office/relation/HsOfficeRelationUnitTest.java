@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HsOfficeRelationEntityUnitTest {
+class HsOfficeRelationUnitTest {
 
     private HsOfficePersonEntity anchor = HsOfficePersonEntity.builder()
             .personType(HsOfficePersonType.LEGAL_PERSON)
@@ -20,7 +20,7 @@ class HsOfficeRelationEntityUnitTest {
 
     @Test
     void toStringReturnsAllProperties() {
-        final var given = HsOfficeRelationEntity.builder()
+        final var given = HsOfficeRelationRbacEntity.builder()
                 .type(HsOfficeRelationType.SUBSCRIBER)
                 .mark("members-announce")
                 .anchor(anchor)
@@ -32,7 +32,7 @@ class HsOfficeRelationEntityUnitTest {
 
     @Test
     void toShortString() {
-        final var given = HsOfficeRelationEntity.builder()
+        final var given = HsOfficeRelationRbacEntity.builder()
                 .type(HsOfficeRelationType.REPRESENTATIVE)
                 .anchor(anchor)
                 .holder(holder)

@@ -142,8 +142,8 @@ begin
         return NEW;
     end if;
 
-    raise exception '[403] insert into test_customer not allowed for current subjects % (%)',
-            currentSubjects(), currentSubjectsUuids();
+    raise exception '[403] insert into test_customer values(%) not allowed for current subjects % (%)',
+            NEW, currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger test_customer_insert_permission_check_tg

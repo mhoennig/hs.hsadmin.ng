@@ -5,9 +5,10 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeDebitors
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorResource;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import org.apache.commons.lang3.Validate;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
+import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
 
+import static net.hostsharing.hsadminng.errors.DisplayAs.DisplayName;
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 
 @RestController
@@ -38,7 +40,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     private HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
-    private HsOfficeRelationRepository relRepo;
+    private HsOfficeRelationRealRepository relrealRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -82,13 +84,16 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         final var entityToSave = mapper.map(body, HsOfficeDebitorEntity.class);
         if ( body.getDebitorRel() != null ) {
             body.getDebitorRel().setType(DEBITOR.name());
-            final var debitorRel = mapper.map(body.getDebitorRel(), HsOfficeRelationEntity.class);
-            entityToSave.setDebitorRel(relRepo.save(debitorRel));
+            final var debitorRel = mapper.map(body.getDebitorRel(), HsOfficeRelationRealEntity.class);
+            validateEntityExists("debitorRel.anchorUuid", debitorRel.getAnchor());
+            validateEntityExists("debitorRel.holderUuid", debitorRel.getHolder());
+            validateEntityExists("debitorRel.contactUuid", debitorRel.getContact());
+            entityToSave.setDebitorRel(relrealRepo.save(debitorRel));
         } else {
-            final var debitorRelOptional = relRepo.findByUuid(body.getDebitorRelUuid());
+            final var debitorRelOptional = relrealRepo.findByUuid(body.getDebitorRelUuid());
             debitorRelOptional.ifPresentOrElse(
-                    debitorRel -> {entityToSave.setDebitorRel(relRepo.save(debitorRel));},
-                    () -> { throw new EntityNotFoundException("ERROR: [400] debitorRelUuid not found: " + body.getDebitorRelUuid());});
+                    debitorRel -> {entityToSave.setDebitorRel(relrealRepo.save(debitorRel));},
+                    () -> { throw new ValidationException("Unable to find RealRelation by debitorRelUuid: " + body.getDebitorRelUuid());});
         }
 
         final var savedEntity = debitorRepo.save(entityToSave);
@@ -154,5 +159,16 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         Hibernate.initialize(saved);
         final var mapped = mapper.map(saved, HsOfficeDebitorResource.class);
         return ResponseEntity.ok(mapped);
+    }
+
+    // TODO.impl: extract this to some generally usable class?
+    private <T extends BaseEntity<T>> T validateEntityExists(final String property, final T entitySkeleton) {
+        final var foundEntity = em.find(entitySkeleton.getClass(), entitySkeleton.getUuid());
+        if ( foundEntity == null) {
+            throw new ValidationException("Unable to find " + DisplayName.of(entitySkeleton) + " by " + property + ": " + entitySkeleton.getUuid());
+        }
+
+        //noinspection unchecked
+        return (T) foundEntity;
     }
 }

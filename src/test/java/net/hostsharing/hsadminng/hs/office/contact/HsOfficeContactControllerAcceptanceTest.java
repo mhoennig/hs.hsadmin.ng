@@ -45,7 +45,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     Context contextMock;
 
     @Autowired
-    HsOfficeContactRepository contactRepo;
+    HsOfficeContactRbacRepository contactRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -355,10 +355,10 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
         }
     }
 
-    private HsOfficeContactEntity givenSomeTemporaryContactCreatedBy(final String creatingUser) {
+    private HsOfficeContactRbacEntity givenSomeTemporaryContactCreatedBy(final String creatingUser) {
         return jpaAttempt.transacted(() -> {
             context.define(creatingUser);
-            final var newContact = HsOfficeContactEntity.builder()
+            final var newContact = HsOfficeContactRbacEntity.builder()
                     .uuid(UUID.randomUUID())
                     .caption("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
                     .emailAddresses(Map.of("main", RandomStringUtils.randomAlphabetic(10) + "@example.org"))
@@ -375,7 +375,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
     void cleanup() {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
-            em.createQuery("DELETE FROM HsOfficeContactEntity c WHERE c.caption LIKE 'Temp %'").executeUpdate();
+            em.createQuery("DELETE FROM HsOfficeContactRbacEntity c WHERE c.caption LIKE 'Temp %'").executeUpdate();
         }).assertSuccessful();
     }
 }

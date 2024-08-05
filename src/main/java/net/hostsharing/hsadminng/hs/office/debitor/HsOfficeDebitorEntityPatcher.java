@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.office.debitor;
 
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorPatchResource;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
@@ -25,7 +25,7 @@ class HsOfficeDebitorEntityPatcher implements EntityPatcher<HsOfficeDebitorPatch
     public void apply(final HsOfficeDebitorPatchResource resource) {
         OptionalFromJson.of(resource.getDebitorRelUuid()).ifPresent(newValue -> {
             verifyNotNull(newValue, "debitorRel");
-            entity.setDebitorRel(em.getReference(HsOfficeRelationEntity.class, newValue));
+            entity.setDebitorRel(em.getReference(HsOfficeRelationRealEntity.class, newValue));
         });
         Optional.ofNullable(resource.getBillable()).ifPresent(entity::setBillable);
         OptionalFromJson.of(resource.getVatId()).ifPresent(entity::setVatId);

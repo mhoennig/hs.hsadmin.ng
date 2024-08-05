@@ -5,11 +5,11 @@ import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountRepository;
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRepository;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerRepository;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRepository;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.json.JSONException;
@@ -55,7 +55,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficePartnerRepository partnerRepo;
 
     @Autowired
-    HsOfficeContactRepository contactRepo;
+    HsOfficeContactRealRepository contactrealRepo;
 
     @Autowired
     HsOfficeBankAccountRepository bankAccountRepo;
@@ -64,7 +64,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     HsOfficePersonRepository personRepo;
 
     @Autowired
-    HsOfficeRelationRepository relRepo;
+    HsOfficeRelationRealRepository relrealRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -268,13 +268,13 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
             final var givenBankAccount = bankAccountRepo.findByOptionalHolderLike("Fourth").get(0);
             final var givenBillingPerson = personRepo.findPersonByOptionalNameLike("Fourth").get(0);
 
             final var givenDebitorRelUUid = jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
-                return relRepo.save(HsOfficeRelationEntity.builder()
+                return relrealRepo.save(HsOfficeRelationRealEntity.builder()
                         .type(DEBITOR)
                         .anchor(givenPartner.getPartnerRel().getHolder())
                         .holder(givenBillingPerson)
@@ -325,7 +325,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Third").get(0);
-            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -405,7 +405,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find Contact with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find RealContact by debitorRel.contactUuid: 00000000-0000-0000-0000-000000000000"));
             // @formatter:on
         }
 
@@ -414,9 +414,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitorRelUuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
-            final var location = RestAssured // @formatter:off
+            RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
@@ -434,7 +433,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("Unable to find HsOfficeRelationEntity with uuid 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find RealRelation by uuid: 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }
@@ -551,7 +550,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
 
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor();
-            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth").get(0);
+            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth").get(0);
 
             final var location = RestAssured // @formatter:off
                 .given()
@@ -721,12 +720,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenPartner = partnerRepo.findPartnerByOptionalNameLike("Fourth").get(0).load();
-            final var givenContact = contactRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
+            final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("fourth contact").get(0);
             final var newDebitor = HsOfficeDebitorEntity.builder()
                     .debitorNumberSuffix(nextDebitorSuffix())
                     .billable(true)
                     .debitorRel(
-                            HsOfficeRelationEntity.builder()
+                            HsOfficeRelationRealEntity.builder()
                                     .type(DEBITOR)
                                     .anchor(givenPartner.getPartnerRel().getHolder())
                                     .holder(givenPartner.getPartnerRel().getHolder())

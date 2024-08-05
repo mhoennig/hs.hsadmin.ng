@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface HsOfficeContactRepository extends Repository<HsOfficeContactEntity, UUID> {
+public interface HsOfficeContactRealRepository extends Repository<HsOfficeContactRealEntity, UUID> {
 
-    Optional<HsOfficeContactEntity> findByUuid(UUID id);
+    Optional<HsOfficeContactRealEntity> findByUuid(UUID id);
 
     @Query("""
-            SELECT c FROM HsOfficeContactEntity c
+            SELECT c FROM HsOfficeContactRealEntity c
                 WHERE :caption is null
                     OR c.caption like concat(cast(:caption as text), '%')
                """)
-    List<HsOfficeContactEntity> findContactByOptionalCaptionLike(String caption);
+    List<HsOfficeContactRealEntity> findContactByOptionalCaptionLike(String caption);
 
-    HsOfficeContactEntity save(final HsOfficeContactEntity entity);
+    HsOfficeContactRealEntity save(final HsOfficeContactRealEntity entity);
 
     int deleteByUuid(final UUID uuid);
 

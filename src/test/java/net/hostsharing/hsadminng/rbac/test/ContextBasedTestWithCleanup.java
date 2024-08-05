@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.test;
 
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantEntity;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
@@ -50,7 +50,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @Autowired
     JpaAttempt jpaAttempt;
 
-    private TreeMap<UUID, Class<? extends RbacObject>> entitiesToCleanup = new TreeMap<>();
+    private TreeMap<UUID, Class<? extends BaseEntity>> entitiesToCleanup = new TreeMap<>();
 
     private static Long latestIntialTestDataSerialId;
     private static boolean countersInitialized = false;
@@ -64,19 +64,19 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
     private TestInfo testInfo;
 
-    public <T extends RbacObject> T refresh(final T entity) {
+    public <T extends BaseEntity> T refresh(final T entity) {
         final var merged = em.merge(entity);
         em.refresh(merged);
         return merged;
     }
 
-    public UUID toCleanup(final Class<? extends RbacObject> entityClass, final UUID uuidToCleanup) {
+    public UUID toCleanup(final Class<? extends BaseEntity> entityClass, final UUID uuidToCleanup) {
         out.println("toCleanup(" + entityClass.getSimpleName() + ", " + uuidToCleanup + ")");
         entitiesToCleanup.put(uuidToCleanup, entityClass);
         return uuidToCleanup;
     }
 
-    public <E extends RbacObject> E toCleanup(final E entity) {
+    public <E extends BaseEntity> E toCleanup(final E entity) {
         out.println("toCleanup(" + entity.getClass() + ", " + entity.getUuid());
         if ( entity.getUuid() == null ) {
             throw new IllegalArgumentException("only persisted entities with valid uuid allowed");
@@ -85,7 +85,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return entity;
     }
 
-    protected void cleanupAllNew(final Class<? extends RbacObject> entityClass) {
+    protected void cleanupAllNew(final Class<? extends BaseEntity> entityClass) {
         if (initialRbacObjects == null) {
             out.println("skipping cleanupAllNew: " + entityClass.getSimpleName());
             return; // TODO: seems @AfterEach is called without any @BeforeEach

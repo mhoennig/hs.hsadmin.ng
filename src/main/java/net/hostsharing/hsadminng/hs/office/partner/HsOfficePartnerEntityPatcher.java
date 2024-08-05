@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.partner;
 
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePartnerPatchResource;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.mapper.EntityPatcher;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
@@ -21,7 +21,7 @@ class HsOfficePartnerEntityPatcher implements EntityPatcher<HsOfficePartnerPatch
     public void apply(final HsOfficePartnerPatchResource resource) {
         OptionalFromJson.of(resource.getPartnerRelUuid()).ifPresent(newValue -> {
             verifyNotNull(newValue, "partnerRel");
-            entity.setPartnerRel(em.getReference(HsOfficeRelationEntity.class, newValue));
+            entity.setPartnerRel(em.getReference(HsOfficeRelationRealEntity.class, newValue));
         });
 
         new HsOfficePartnerDetailsEntityPatcher(em, entity.getDetails()).apply(resource.getDetails());

@@ -13,9 +13,9 @@ import static net.hostsharing.hsadminng.mapper.PatchMap.patchMap;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
-class HsOfficeContactEntityPatcherUnitTest extends PatchUnitTestBase<
+class HsOfficeContactPatcherUnitTest extends PatchUnitTestBase<
         HsOfficeContactPatchResource,
-        HsOfficeContactEntity
+        HsOfficeContactRbacEntity
         > {
 
     private static final UUID INITIAL_CONTACT_UUID = UUID.randomUUID();
@@ -42,8 +42,8 @@ class HsOfficeContactEntityPatcherUnitTest extends PatchUnitTestBase<
     );
 
     @Override
-    protected HsOfficeContactEntity newInitialEntity() {
-        final var entity = new HsOfficeContactEntity();
+    protected HsOfficeContactRbacEntity newInitialEntity() {
+        final var entity = new HsOfficeContactRbacEntity();
         entity.setUuid(INITIAL_CONTACT_UUID);
         entity.setCaption("initial caption");
         entity.putEmailAddresses(Map.ofEntries(
@@ -64,7 +64,7 @@ class HsOfficeContactEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficeContactEntityPatcher createPatcher(final HsOfficeContactEntity entity) {
+    protected HsOfficeContactEntityPatcher createPatcher(final HsOfficeContactRbacEntity entity) {
         return new HsOfficeContactEntityPatcher(entity);
     }
 
@@ -75,26 +75,26 @@ class HsOfficeContactEntityPatcherUnitTest extends PatchUnitTestBase<
                         "caption",
                         HsOfficeContactPatchResource::setCaption,
                         "patched caption",
-                        HsOfficeContactEntity::setCaption),
+                        HsOfficeContactRbacEntity::setCaption),
                 new SimpleProperty<>(
                         "resources",
                         HsOfficeContactPatchResource::setEmailAddresses,
                         PATCH_EMAIL_ADDRESSES,
-                        HsOfficeContactEntity::putEmailAddresses,
+                        HsOfficeContactRbacEntity::putEmailAddresses,
                         PATCHED_EMAIL_ADDRESSES)
                         .notNullable(),
                 new SimpleProperty<>(
                         "resources",
                         HsOfficeContactPatchResource::setPhoneNumbers,
                         PATCH_PHONE_NUMBERS,
-                        HsOfficeContactEntity::putPhoneNumbers,
+                        HsOfficeContactRbacEntity::putPhoneNumbers,
                         PATCHED_PHONE_NUMBERS)
                         .notNullable(),
                 new JsonNullableProperty<>(
                         "patched given name",
                         HsOfficeContactPatchResource::setPostalAddress,
                         "patched given name",
-                        HsOfficeContactEntity::setPostalAddress)
+                        HsOfficeContactRbacEntity::setPostalAddress)
         );
     }
 }

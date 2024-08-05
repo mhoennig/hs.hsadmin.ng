@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.relation;
 
-import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactEntity;
+import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationPatchResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
@@ -21,9 +21,9 @@ import static org.mockito.Mockito.lenient;
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockitoExtension.class)
-class HsOfficeRelationEntityPatcherUnitTest extends PatchUnitTestBase<
+class HsOfficeRelationPatcherUnitTest extends PatchUnitTestBase<
         HsOfficeRelationPatchResource,
-        HsOfficeRelationEntity
+        HsOfficeRelation
         > {
 
     static final UUID INITIAL_RELATION_UUID = UUID.randomUUID();
@@ -34,8 +34,8 @@ class HsOfficeRelationEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsOfficeContactEntity.class), any())).thenAnswer(invocation ->
-                HsOfficeContactEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsOfficeContactRealEntity.class), any())).thenAnswer(invocation ->
+                HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     final HsOfficePersonEntity givenInitialAnchorPerson = HsOfficePersonEntity.builder()
@@ -44,13 +44,13 @@ class HsOfficeRelationEntityPatcherUnitTest extends PatchUnitTestBase<
     final HsOfficePersonEntity givenInitialHolderPerson = HsOfficePersonEntity.builder()
             .uuid(UUID.randomUUID())
             .build();
-    final HsOfficeContactEntity givenInitialContact = HsOfficeContactEntity.builder()
+    final HsOfficeContactRealEntity givenInitialContact = HsOfficeContactRealEntity.builder()
             .uuid(UUID.randomUUID())
             .build();
 
     @Override
-    protected HsOfficeRelationEntity newInitialEntity() {
-        final var entity = new HsOfficeRelationEntity();
+    protected HsOfficeRelation newInitialEntity() {
+        final var entity = new HsOfficeRelationRbacEntity();
         entity.setUuid(INITIAL_RELATION_UUID);
         entity.setType(HsOfficeRelationType.REPRESENTATIVE);
         entity.setAnchor(givenInitialAnchorPerson);
@@ -65,7 +65,7 @@ class HsOfficeRelationEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsOfficeRelationEntityPatcher createPatcher(final HsOfficeRelationEntity relation) {
+    protected HsOfficeRelationEntityPatcher createPatcher(final HsOfficeRelation relation) {
         return new HsOfficeRelationEntityPatcher(em, relation);
     }
 
@@ -76,15 +76,13 @@ class HsOfficeRelationEntityPatcherUnitTest extends PatchUnitTestBase<
                         "contact",
                         HsOfficeRelationPatchResource::setContactUuid,
                         PATCHED_CONTACT_UUID,
-                        HsOfficeRelationEntity::setContact,
+                        HsOfficeRelation::setContact,
                         newContact(PATCHED_CONTACT_UUID))
                         .notNullable()
         );
     }
 
-    static HsOfficeContactEntity newContact(final UUID uuid) {
-        final var newContact = new HsOfficeContactEntity();
-        newContact.setUuid(uuid);
-        return newContact;
+    static HsOfficeContactRealEntity newContact(final UUID uuid) {
+        return HsOfficeContactRealEntity.builder().uuid(uuid).build();
     }
 }

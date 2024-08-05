@@ -206,8 +206,8 @@ begin
         return NEW;
     end if;
 
-    raise exception '[403] insert into test_domain not allowed for current subjects % (%)',
-            currentSubjects(), currentSubjectsUuids();
+    raise exception '[403] insert into test_domain values(%) not allowed for current subjects % (%)',
+            NEW, currentSubjects(), currentSubjectsUuids();
 end; $$;
 
 create trigger test_domain_insert_permission_check_tg

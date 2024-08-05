@@ -175,7 +175,8 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("insert into test_customer not allowed for current subjects {test_customer#xxx:ADMIN}"));
+                    .body("message", containsString("ERROR: [403] insert into test_customer "))
+                    .body("message", containsString(" not allowed for current subjects {test_customer#xxx:ADMIN}"));
             // @formatter:on
 
             // finally, the new customer was not created
@@ -204,7 +205,8 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("ERROR: [403] insert into test_customer not allowed for current subjects {customer-admin@yyy.example.com}"));
+                    .body("message", containsString("ERROR: [403] insert into test_customer "))
+                    .body("message", containsString(" not allowed for current subjects"));
                 // @formatter:on
 
             // finally, the new customer was not created

@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static net.hostsharing.hsadminng.hs.office.contact.TestHsOfficeContact.hsOfficeContact;
+import static net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacTestEntity.hsOfficeContact;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
 import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
@@ -29,10 +29,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import( { Context.class, JpaAttempt.class })
-class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
+class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
-    HsOfficeContactRepository contactRepo;
+    HsOfficeContactRbacRepository contactRepo;
 
     @Autowired
     RawRbacRoleRepository rawRoleRepo;
@@ -65,7 +65,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeContactEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeContactRbacEntity::getUuid).isNotNull();
             assertThatContactIsPersisted(result.returnedValue());
             assertThat(contactRepo.count()).isEqualTo(count + 1);
         }
@@ -82,7 +82,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeContactEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsOfficeContactRbacEntity::getUuid).isNotNull();
             assertThatContactIsPersisted(result.returnedValue());
             assertThat(contactRepo.count()).isEqualTo(count + 1);
         }
@@ -120,7 +120,7 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
             ));
         }
 
-        private void assertThatContactIsPersisted(final HsOfficeContactEntity saved) {
+        private void assertThatContactIsPersisted(final HsOfficeContactRbacEntity saved) {
             final var found = contactRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().extracting(Object::toString).isEqualTo(saved.toString());
         }
@@ -270,16 +270,16 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
                 "[creating contact test-data second contact, hs_office_contact, INSERT]");
     }
 
-    private HsOfficeContactEntity givenSomeTemporaryContact(
+    private HsOfficeContactRbacEntity givenSomeTemporaryContact(
             final String createdByUser,
-            Supplier<HsOfficeContactEntity> entitySupplier) {
+            Supplier<HsOfficeContactRbacEntity> entitySupplier) {
         return jpaAttempt.transacted(() -> {
             context(createdByUser);
             return toCleanup(contactRepo.save(entitySupplier.get()));
         }).assumeSuccessful().returnedValue();
     }
 
-    private HsOfficeContactEntity givenSomeTemporaryContact(final String createdByUser) {
+    private HsOfficeContactRbacEntity givenSomeTemporaryContact(final String createdByUser) {
         final var random = RandomStringUtils.randomAlphabetic(12);
         return givenSomeTemporaryContact(createdByUser, () ->
                 hsOfficeContact(
@@ -287,15 +287,15 @@ class HsOfficeContactRepositoryIntegrationTest extends ContextBasedTestWithClean
                         "some-temporary-contact" + random + "@example.com"));
     }
 
-    void exactlyTheseContactsAreReturned(final List<HsOfficeContactEntity> actualResult, final String... contactCaptions) {
+    void exactlyTheseContactsAreReturned(final List<HsOfficeContactRbacEntity> actualResult, final String... contactCaptions) {
         assertThat(actualResult)
-                .extracting(HsOfficeContactEntity::getCaption)
+                .extracting(HsOfficeContactRbacEntity::getCaption)
                 .containsExactlyInAnyOrder(contactCaptions);
     }
 
-    void allTheseContactsAreReturned(final List<HsOfficeContactEntity> actualResult, final String... contactCaptions) {
+    void allTheseContactsAreReturned(final List<HsOfficeContactRbacEntity> actualResult, final String... contactCaptions) {
         assertThat(actualResult)
-                .extracting(HsOfficeContactEntity::getCaption)
+                .extracting(HsOfficeContactRbacEntity::getCaption)
                 .contains(contactCaptions);
     }
 }

@@ -3,10 +3,10 @@ package net.hostsharing.hsadminng.hs.booking.project;
 import lombok.*;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationEntity;
+import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
-import net.hostsharing.hsadminng.rbac.rbacobject.RbacObject;
+import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -34,7 +34,7 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HsBookingProjectEntity implements Stringifyable, RbacObject<HsBookingProjectEntity> {
+public class HsBookingProjectEntity implements Stringifyable, BaseEntity<HsBookingProjectEntity> {
 
     private static Stringify<HsBookingProjectEntity> stringify = stringify(HsBookingProjectEntity.class)
             .withProp(HsBookingProjectEntity::getDebitor)
@@ -81,7 +81,7 @@ public class HsBookingProjectEntity implements Stringifyable, RbacObject<HsBooki
                         directlyFetchedByDependsOnColumn(),
                         NOT_NULL)
 
-                .importEntityAlias("debitorRel", HsOfficeRelationEntity.class, usingCase(DEBITOR),
+                .importEntityAlias("debitorRel", HsOfficeRelationRbacEntity.class, usingCase(DEBITOR),
                         dependsOnColumn("debitorUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}

@@ -121,8 +121,8 @@ WITH statements AS (
     SELECT * FROM pg_stat_statements pss
 )
 SELECT calls,
-    total_exec_time::int/(60*1000) as total_exec_time_mins,
-    mean_exec_time::int as mean_exec_time_millis, 
+    total_exec_time::int/(60*1000) as total_mins,
+    mean_exec_time::int as mean_millis, 
     query
 FROM statements
 WHERE calls > 100 AND shared_blks_hit > 0
