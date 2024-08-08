@@ -97,6 +97,7 @@ public class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityVal
 
     String toZonefileString(final HsHostingAsset assetEntity) {
         // TODO.spec: we need to expand the templates (auto-...) in the same way as in Saltstack, with proper IP-numbers etc.
+        // TODO.impl: auto-AUTOCONFIG-RR auto-AUTODISCOVER-RR missing
         return """
                 $TTL {ttl}
 

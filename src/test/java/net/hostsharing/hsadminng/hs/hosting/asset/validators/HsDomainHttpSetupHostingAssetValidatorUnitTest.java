@@ -59,7 +59,7 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
                 "{type=string, propertyName=passenger-nodejs, matchesRegEx=[^/.*], provided=[/usr/bin/node], defaultValue=/usr/bin/node}",
                 "{type=string, propertyName=passenger-python, matchesRegEx=[^/.*], provided=[/usr/bin/python3], defaultValue=/usr/bin/python3}",
                 "{type=string, propertyName=passenger-ruby, matchesRegEx=[^/.*], provided=[/usr/bin/ruby], defaultValue=/usr/bin/ruby}",
-                "{type=string[], propertyName=subdomains, elementsOf={type=string, propertyName=subdomains, matchesRegEx=[(?!-)[A-Za-z0-9-]{1,63}(?<!-)], required=true}}"
+                "{type=string[], propertyName=subdomains, elementsOf={type=string, propertyName=subdomains, matchesRegEx=[(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))], required=true}}"
         );
     }
 
@@ -157,8 +157,8 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
         assertThat(result).containsExactlyInAnyOrder(
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.htdocsfallback' is expected to be of type Boolean, but is of type String",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.fcgi-php-bin' is expected to match any of [^/.*] but 'false' does not match",
-                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(?!-)[A-Za-z0-9-]{1,63}(?<!-)] but '' does not match",
-                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(?!-)[A-Za-z0-9-]{1,63}(?<!-)] but '@' does not match",
-                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(?!-)[A-Za-z0-9-]{1,63}(?<!-)] but 'example.com' does not match");
+                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))] but '' does not match",
+                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))] but '@' does not match",
+                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))] but 'example.com' does not match");
     }
 }
