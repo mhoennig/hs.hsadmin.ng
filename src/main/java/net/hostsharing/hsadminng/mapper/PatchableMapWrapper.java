@@ -1,21 +1,26 @@
 package net.hostsharing.hsadminng.mapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import jakarta.validation.constraints.NotNull;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.joining;
 
 /** This class wraps another (usually persistent) map and
  * supports applying `PatchMap` as well as a toString method with stable entry order.
  */
 public class PatchableMapWrapper<T> implements Map<String, T> {
+
+    private static final ObjectMapper jsonWriter = new ObjectMapper()
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .configure(SerializationFeature.INDENT_OUTPUT, true);
 
     private final Map<String, T> delegate;
 
@@ -53,24 +58,9 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         });
     }
 
+    @SneakyThrows
     public String toString() {
-        return "{\n"
-                + (
-                    keySet().stream().sorted()
-                            .map(k -> "    \"" + k + "\": " + formatted(get(k))))
-                            .collect(joining(",\n")
-                )
-                + "\n}\n";
-    }
-
-    private Object formatted(final Object value) {
-        if ( value == null || value instanceof Number || value instanceof Boolean ) {
-            return value;
-        }
-        if ( value.getClass().isArray() ) {
-            return "\"" + Arrays.toString( (Object[]) value) + "\"";
-        }
-        return "\"" + value + "\"";
+        return jsonWriter.writeValueAsString(delegate);
     }
 
     // --- below just delegating methods --------------------------------

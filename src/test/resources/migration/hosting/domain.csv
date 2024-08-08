@@ -1,0 +1,10 @@
+domain_id;domain_name;domain_since;domain_dns_master;domain_owner;valid_subdomain_names;passenger_python;passenger_nodejs;passenger_ruby;fcgi_php_bin;domainoptions
+4531;l-u-g.org;2013-09-10;dns.hostsharing.net;5803;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
+4532;linuxfanboysngirls.de;2013-09-10;dns.hostsharing.net;5809;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
+4534;lug-mars.de;2013-09-10;dns.hostsharing.net;5809;www;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,letsencrypt,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
+4581;1981.ist-im-netz.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
+4587;mellis.de;2013-09-17;dns.hostsharing.net;5964;www,michael,test,photos,static,input;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;htdocsfallback,indexes,includes,letsencrypt,multiviews,cgi,fastcgi,passenger
+4589;ist-im-netz.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;htdocsfallback,indexes,includes,letsencrypt,multiviews,cgi,fastcgi,passenger
+4600;waera.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
+4604;xn--wra-qla.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
+27662;dph-netzwerk.de;2021-06-02;h93.hostsharing.net;169596;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;htdocsfallback,indexes,autoconfig,greylisting,includes,letsencrypt,multiviews,cgi,fastcgi,passenger

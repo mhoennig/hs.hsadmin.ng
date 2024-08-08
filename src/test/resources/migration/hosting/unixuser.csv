@@ -15,5 +15,5 @@ unixuser_id;name;comment;shell;homedir;locked;packet_id;userid;quota_softlimit;q
 
 167846;hsh00-dph;hsh00-uph;/bin/false;/home/pacs/hsh00/users/uph;0;630;110568;0;0;0;0
 169546;dph00;Reinhard Wiese;/bin/bash;/home/pacs/dph00;0;19959;110593;0;0;0;0
-169596;dph00-uph;Domain admin;/bin/bash;/home/pacs/dph00/users/uph;0;19959;110594;0;0;0;0
+169596;dph00-dph;Domain admin;/bin/bash;/home/pacs/dph00/users/uph;0;19959;110594;0;0;0;0
 

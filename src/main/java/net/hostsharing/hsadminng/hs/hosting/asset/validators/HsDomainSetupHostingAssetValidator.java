@@ -9,7 +9,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMA
 
 class HsDomainSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
-    public static final String FQDN_REGEX = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";
+    public static final String FQDN_REGEX = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,12}";
 
     private final Pattern identifierPattern;
 

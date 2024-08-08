@@ -1,0 +1,274 @@
+{
+    "1981.ist-im-netz.de": {
+        "DOM_OWNER": "mim00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    },
+    "mellis.de": {
+        "DOM_OWNER": "mim00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": true,
+        "auto-AUTOCONFIG-RR": true,
+        "auto-AUTODISCOVER-RR": true,
+        "auto-DKIM-RR": true,
+        "auto-MAILSERVICES-RR": true,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": true,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": true,
+        "user-RR": [
+            [
+                "dump.hoennig.de.",
+                21600,
+                "IN",
+                "CNAME",
+                "mih12.hostsharing.net."
+            ],
+            [
+                "fotos.hoennig.de.",
+                21600,
+                "IN",
+                "CNAME",
+                "mih12.hostsharing.net."
+            ],
+            [
+                "maven.hoennig.de.",
+                21600,
+                "IN",
+                "NS",
+                "dns1.hostsharing.net."
+            ],
+            [
+                "key1._domainkey.mellis.de.",
+                21600,
+                "IN",
+                "TXT",
+                "\"v=DKIM1; k=rsa; t=s; h=sha256; s=email; \" \"p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzAIotiz04KGTF9ECNxEmnnl6eTHplxxYJpOWhx3YiLbQyt6D+sN5uMa/\" \"RMIJDr5BzqzHDQPTM6esLldtIu4OpHppdu3PG4BUB8aXfA0EQvt0wQ/VFGNP36x87nfqs2L8NxbgPwhVD5RqFgj6aheTt64PB+VRco3Nc2qLF4iGpM9UlQbp/W2IITXPbLd9Z/qPo4S6Yeghsq4eFSlcNqSGyO42d23EbAxiehJKBu2eTKX5Vj+n06h1zuXOHyC5IwIe515hmS/\" \"kybbyTTEe35Rmuh+1W9aBJb85d34Thi+knUJeysFleHe7mXG7k6zFiG5HjaP7CvDzzdWvCcaJhOIqXwIDAQAB\""
+            ]
+        ]
+    },
+    "ist-im-netz.de": {
+        "DOM_OWNER": "mim00",
+        "TTL": 14400,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": false,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": [
+            [
+                "1981.ist-im-netz.de.",
+                14400,
+                "IN",
+                "NS",
+                "dns1.hostsharing.net."
+            ],
+            [
+                "1981.ist-im-netz.de.",
+                14400,
+                "IN",
+                "NS",
+                "dns2.hostsharing.net."
+            ],
+            [
+                "1981.ist-im-netz.de.",
+                14400,
+                "IN",
+                "NS",
+                "dns3.hostsharing.net."
+            ]
+        ]
+    },
+    "l-u-g.de": {
+        "DOM_OWNER": "lug00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    },
+    "l-u-g.org": {
+        "DOM_OWNER": "lug00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    },
+    "linuxfanboysngirls.de": {
+        "DOM_OWNER": "lug00-wla.2",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    },
+    "lug-mars.de": {
+        "DOM_OWNER": "lug00-wla.2",
+        "TTL": 14400,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": false,
+        "auto-NS-RR": true,
+        "auto-SOA": false,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": false,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": [
+            [
+                "lug-mars.de.",
+                14400,
+                "IN",
+                "SOA",
+                "dns1.hostsharing.net. hostmaster.hostsharing.net. 1611590905 10800 3600 604800 3600"
+            ],
+            [
+                "lug-mars.de.",
+                14400,
+                "IN",
+                "MX",
+                "10 mailin1.hostsharing.net."
+            ],
+            [
+                "lug-mars.de.",
+                14400,
+                "IN",
+                "MX",
+                "20 mailin2.hostsharing.net."
+            ],
+            [
+                "lug-mars.de.",
+                14400,
+                "IN",
+                "MX",
+                "30 mailin3.hostsharing.net."
+            ],
+            [
+                "bbb.lug-mars.de.",
+                14400,
+                "IN",
+                "A",
+                "83.223.79.72"
+            ],
+            [
+                "ftp.lug-mars.de.",
+                14400,
+                "IN",
+                "A",
+                "83.223.79.72"
+            ],
+            [
+                "www.lug-mars.de.",
+                14400,
+                "IN",
+                "A",
+                "83.223.79.72"
+            ]
+        ]
+    },
+    "waera.de": {
+        "DOM_OWNER": "mim00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    },
+    "xn--wra-qla.de": {
+        "DOM_OWNER": "mim00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    }
+}

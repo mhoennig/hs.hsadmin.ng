@@ -81,6 +81,27 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     }
 
     @Test
+    void rejectsEmptyTargetArray() {
+        // given
+        final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
+                .type(EMAIL_ALIAS)
+                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .identifier("xyz00-office")
+                .config(Map.ofEntries(
+                        entry("target", new String[0])
+                ))
+                .build();
+        final var validator = HostingAssetEntityValidatorRegistry.forType(emailAliasHostingAssetEntity.getType());
+
+        // when
+        final var result = validator.validateEntity(emailAliasHostingAssetEntity);
+
+        // then
+        assertThat(result).containsExactlyInAnyOrder(
+                "'EMAIL_ALIAS:xyz00-office.config.target' length is expected to be at min 1 but length of [[]] is 0");
+    }
+
+    @Test
     void rejectsInvalidIndentifier() {
         // given
         final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()

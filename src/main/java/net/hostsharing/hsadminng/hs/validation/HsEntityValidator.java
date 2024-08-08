@@ -145,4 +145,8 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
         }
         return "";
     }
+
+    public ValidatableProperty<?, ?> getProperty(final String propertyName) {
+        return stream(propertyValidators).filter(pv -> pv.propertyName().equals(propertyName)).findFirst().orElse(null);
+    }
 }

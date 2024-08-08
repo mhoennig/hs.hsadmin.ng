@@ -13,8 +13,8 @@ import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringPrope
 class HsDomainHttpSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
     public static final String IDENTIFIER_SUFFIX = "|HTTP";
-    public static final String FILESYSTEM_PATH = "^/";
-    public static final String PARTIAL_DOMAIN_NAME_REGEX = "(?!-)[A-Za-z0-9-]{1,63}(?<!-)";
+    public static final String FILESYSTEM_PATH = "^/.*";
+    public static final String SUBDOMAIN_NAME_REGEX = "(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))";
 
     HsDomainHttpSetupHostingAssetValidator() {
         super(
@@ -37,7 +37,7 @@ class HsDomainHttpSetupHostingAssetValidator extends HostingAssetEntityValidator
                 stringProperty("passenger-python").matchesRegEx(FILESYSTEM_PATH).provided("/usr/bin/python3").withDefault("/usr/bin/python3"),
                 stringProperty("passenger-ruby").matchesRegEx(FILESYSTEM_PATH).provided("/usr/bin/ruby").withDefault("/usr/bin/ruby"),
                 arrayOf(
-                        stringProperty("subdomains").matchesRegEx(PARTIAL_DOMAIN_NAME_REGEX).required()
+                        stringProperty("subdomains").matchesRegEx(SUBDOMAIN_NAME_REGEX).required()
                 ).optional());
     }
 

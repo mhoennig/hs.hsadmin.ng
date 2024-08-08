@@ -105,6 +105,7 @@ public class ImportOfficeData extends CsvDataImport {
 
     // at least as the number of lines in business_partners.csv from test-data, but less than real data partner count
     public static final int MAX_NUMBER_OF_TEST_DATA_PARTNERS = 100;
+    public static final int DELIBERATELY_BROKEN_BUSINESS_PARTNER_ID = 199;
 
     static int relationId = 2000000;
 
@@ -151,7 +152,7 @@ public class ImportOfficeData extends CsvDataImport {
         assumeThatWeAreImportingControlledTestData();
 
         // no contacts yet => mostly null values
-        assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
                    100=partner(P-10003: null null, null),
                    120=partner(P-10020: null null, null),
@@ -164,8 +165,8 @@ public class ImportOfficeData extends CsvDataImport {
                    542=partner(P-11019: null null, null)
                 }
                 """);
-        assertThat(toFormattedString(contacts)).isEqualTo("{}");
-        assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(contacts)).isEqualTo("{}");
+        assertThat(toJsonFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
                    100=debitor(D-1000300: rel(anchor='null null, null', type='DEBITOR'), mim),
                    120=debitor(D-1002000: rel(anchor='null null, null', type='DEBITOR'), xyz),
@@ -178,7 +179,7 @@ public class ImportOfficeData extends CsvDataImport {
                    542=debitor(D-1101900: rel(anchor='null null, null', type='DEBITOR'), dph)
                 }
                 """);
-        assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
                    100=Membership(M-1000300, P-10003, [2000-12-06,), ACTIVE),
                    120=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
@@ -206,7 +207,7 @@ public class ImportOfficeData extends CsvDataImport {
     void verifyContacts() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(toFormattedString(partners)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(partners)).isEqualToIgnoringWhitespace("""
                 {
                    100=partner(P-10003: ?? Michael Mellis, Herr Michael Mellis , Michael Mellis),
                    120=partner(P-10020: LP JM GmbH, Herr Philip Meyer-Contract , JM GmbH),
@@ -219,7 +220,7 @@ public class ImportOfficeData extends CsvDataImport {
                    542=partner(P-11019: ?? Das Perfekte Haus, Herr Richard Wiese , Das Perfekte Haus)
                 }
                 """);
-        assertThat(toFormattedString(contacts)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(contacts)).isEqualToIgnoringWhitespace("""
                 {
                    100=contact(caption='Herr Michael Mellis , Michael Mellis', emailAddresses='{ "main": "michael@Mellis.example.org"}'),
                    1200=contact(caption='JM e.K.', emailAddresses='{ "main": "jm-ex-partner@example.org"}'),
@@ -241,7 +242,7 @@ public class ImportOfficeData extends CsvDataImport {
                    90698=contact(caption='Jan Henning ', emailAddresses='{ "main": "mail@jan-henning.example.org"}')
                 }
                 """);
-        assertThat(toFormattedString(persons)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(persons)).isEqualToIgnoringWhitespace("""
                 {
                    100=person(personType='??', tradeName='Michael Mellis', familyName='Mellis', givenName='Michael'),
                    1200=person(personType='LP', tradeName='JM e.K.'),
@@ -263,7 +264,7 @@ public class ImportOfficeData extends CsvDataImport {
                    90698=person(personType='NP', familyName='Henning', givenName='Jan')
                 }
                 """);
-        assertThat(toFormattedString(debitors)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(debitors)).isEqualToIgnoringWhitespace("""
                 {
                    100=debitor(D-1000300: rel(anchor='?? Michael Mellis', type='DEBITOR', holder='?? Michael Mellis'), mim),
                    120=debitor(D-1002000: rel(anchor='LP JM GmbH', type='DEBITOR', holder='LP JM GmbH'), xyz),
@@ -276,7 +277,7 @@ public class ImportOfficeData extends CsvDataImport {
                    542=debitor(D-1101900: rel(anchor='?? Das Perfekte Haus', type='DEBITOR', holder='?? Das Perfekte Haus'), dph)
                 }
                 """);
-        assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
                    100=Membership(M-1000300, P-10003, [2000-12-06,), ACTIVE),
                    120=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
@@ -286,7 +287,7 @@ public class ImportOfficeData extends CsvDataImport {
                    542=Membership(M-1101900, P-11019, [2021-05-25,), ACTIVE)
                 }
                 """);
-        assertThat(toFormattedString(relations)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(relations)).isEqualToIgnoringWhitespace("""
                 {
                    2000000=rel(anchor='LP Hostsharing e.G.', type='PARTNER', holder='?? Michael Mellis', contact='Herr Michael Mellis , Michael Mellis'),
                    2000001=rel(anchor='?? Michael Mellis', type='DEBITOR', holder='?? Michael Mellis', contact='Herr Michael Mellis , Michael Mellis'),
@@ -373,7 +374,7 @@ public class ImportOfficeData extends CsvDataImport {
     void verifySepaMandates() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(toFormattedString(bankAccounts)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(bankAccounts)).isEqualToIgnoringWhitespace("""
             {
                132=bankAccount(DE37500105177419788228: holder='Michael Mellis', bic='GENODEF1HH2'),
                234234=bankAccount(DE37500105177419788228: holder='Michael Mellis', bic='INGDDEFFXXX'),
@@ -384,7 +385,7 @@ public class ImportOfficeData extends CsvDataImport {
                387=bankAccount(DE89370400440532013000: holder='Richard Wiese Das Perfekte Haus', bic='COBADEFFXXX')
             }
             """);
-        assertThat(toFormattedString(sepaMandates)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(sepaMandates)).isEqualToIgnoringWhitespace("""
             {
                132=SEPA-Mandate(DE37500105177419788228, HS-10003-20140801, 2013-12-01, [2013-12-01,)),
                234234=SEPA-Mandate(DE37500105177419788228, MH12345, 2004-06-12, [2004-06-15,)),
@@ -413,7 +414,7 @@ public class ImportOfficeData extends CsvDataImport {
     void verifyCoopShares() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(toFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(coopShares)).isEqualToIgnoringWhitespace("""
                 {
                    241=CoopShareTransaction(M-1000300: 2011-12-05, SUBSCRIPTION, 16, 1000300),
                    279=CoopShareTransaction(M-1015200: 2013-10-21, SUBSCRIPTION, 1, 1015200),
@@ -446,7 +447,7 @@ public class ImportOfficeData extends CsvDataImport {
     void verifyCoopAssets() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(toFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(coopAssets)).isEqualToIgnoringWhitespace("""
                 {
                    1093=CoopAssetsTransaction(M-1000300: 2023-10-05, DEPOSIT, 3072, 1000300, Kapitalerhoehung - Ueberweisung),
                    1094=CoopAssetsTransaction(M-1000300: 2023-10-06, DEPOSIT, 3072, 1000300, Kapitalerhoehung - Ueberweisung),
@@ -475,7 +476,7 @@ public class ImportOfficeData extends CsvDataImport {
     void verifyMemberships() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(toFormattedString(memberships)).isEqualToIgnoringWhitespace("""
+        assertThat(toJsonFormattedString(memberships)).isEqualToIgnoringWhitespace("""
                 {
                    100=Membership(M-1000300, P-10003, [2000-12-06,), ACTIVE),
                    120=Membership(M-1002000, P-10020, [2000-12-06,2016-01-01), UNKNOWN),
@@ -494,11 +495,15 @@ public class ImportOfficeData extends CsvDataImport {
         partners.forEach((id, p) -> {
             final var partnerRel = p.getPartnerRel();
             assertThat(partnerRel).describedAs("partner " + id + " without partnerRel").isNotNull();
-            if ( id != 199 ) {
-                logError( () -> assertThat(partnerRel.getContact()).describedAs("partner " + id + " without partnerRel.contact").isNotNull());
-                logError( () -> assertThat(partnerRel.getContact().getCaption()).describedAs("partner " + id + " without valid partnerRel.contact").isNotNull());
-                logError( () -> assertThat(partnerRel.getHolder()).describedAs("partner " + id + " without partnerRel.relHolder").isNotNull());
-                logError( () -> assertThat(partnerRel.getHolder().getPersonType()).describedAs("partner " + id + " without valid partnerRel.relHolder").isNotNull());
+            if (id != DELIBERATELY_BROKEN_BUSINESS_PARTNER_ID) {
+                logError( () -> {
+                    assertThat(partnerRel.getContact()).describedAs("partner " + id + " without partnerRel.contact").isNotNull();
+                    assertThat(partnerRel.getContact().getCaption()).describedAs("partner " + id + " without valid partnerRel.contact").isNotNull();
+                });
+                logError( () -> {
+                    assertThat(partnerRel.getHolder()).describedAs("partner " + id + " without partnerRel.relHolder").isNotNull();
+                    assertThat(partnerRel.getHolder().getPersonType()).describedAs("partner " + id + " without valid partnerRel.relHolder").isNotNull();
+                });
             }
         });
     }
@@ -604,6 +609,13 @@ public class ImportOfficeData extends CsvDataImport {
 
     @Test
     @Order(9000)
+    @ContinueOnFailure
+    void logCollectedErrorsBeforePersist() {
+        assertNoErrors();
+    }
+
+    @Test
+    @Order(9010)
     void persistOfficeEntities() {
 
         System.out.println("PERSISTING office data to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
@@ -714,6 +726,13 @@ public class ImportOfficeData extends CsvDataImport {
                 .setParameter("uuid", entity.getUuid())
                 .executeUpdate()
         );
+    }
+
+    @Test
+    @Order(9999)
+    @ContinueOnFailure
+    void logCollectedErrors() {
+        this.assertNoErrors();
     }
 
     private void importBusinessPartners(final String[] header, final List<String[]> records) {

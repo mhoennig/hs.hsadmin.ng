@@ -30,7 +30,8 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
                 .assignedToAsset(HsHostingAssetEntity.builder().type(UNIX_USER).build())
                 .identifier("example.org|HTTP")
                 .config(Map.ofEntries(
-                        entry("passenger-errorpage", true),   
+                        entry("passenger-errorpage", true),
+                        entry("fcgi-php-bin", "/usr/bin/whatsoever"),
                         entry("subdomains", Array.of("www", "test")
                     )
                 ));
@@ -54,10 +55,10 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
                 "{type=boolean, propertyName=includes, defaultValue=true}",
                 "{type=boolean, propertyName=letsencrypt, defaultValue=true}",
                 "{type=boolean, propertyName=multiviews, defaultValue=true}",
-                "{type=string, propertyName=fcgi-php-bin, matchesRegEx=[^/], provided=[/usr/lib/cgi-bin/php], defaultValue=/usr/lib/cgi-bin/php}",
-                "{type=string, propertyName=passenger-nodejs, matchesRegEx=[^/], provided=[/usr/bin/node], defaultValue=/usr/bin/node}",
-                "{type=string, propertyName=passenger-python, matchesRegEx=[^/], provided=[/usr/bin/python3], defaultValue=/usr/bin/python3}",
-                "{type=string, propertyName=passenger-ruby, matchesRegEx=[^/], provided=[/usr/bin/ruby], defaultValue=/usr/bin/ruby}",
+                "{type=string, propertyName=fcgi-php-bin, matchesRegEx=[^/.*], provided=[/usr/lib/cgi-bin/php], defaultValue=/usr/lib/cgi-bin/php}",
+                "{type=string, propertyName=passenger-nodejs, matchesRegEx=[^/.*], provided=[/usr/bin/node], defaultValue=/usr/bin/node}",
+                "{type=string, propertyName=passenger-python, matchesRegEx=[^/.*], provided=[/usr/bin/python3], defaultValue=/usr/bin/python3}",
+                "{type=string, propertyName=passenger-ruby, matchesRegEx=[^/.*], provided=[/usr/bin/ruby], defaultValue=/usr/bin/ruby}",
                 "{type=string[], propertyName=subdomains, elementsOf={type=string, propertyName=subdomains, matchesRegEx=[(?!-)[A-Za-z0-9-]{1,63}(?<!-)], required=true}}"
         );
     }
@@ -155,7 +156,7 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
         // then
         assertThat(result).containsExactlyInAnyOrder(
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.htdocsfallback' is expected to be of type Boolean, but is of type String",
-                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.fcgi-php-bin' is expected to match any of [^/] but 'false' does not match",
+                "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.fcgi-php-bin' is expected to match any of [^/.*] but 'false' does not match",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(?!-)[A-Za-z0-9-]{1,63}(?<!-)] but '' does not match",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(?!-)[A-Za-z0-9-]{1,63}(?<!-)] but '@' does not match",
                 "'DOMAIN_HTTP_SETUP:example.org|HTTP.config.subdomains' is expected to match any of [(?!-)[A-Za-z0-9-]{1,63}(?<!-)] but 'example.com' does not match");

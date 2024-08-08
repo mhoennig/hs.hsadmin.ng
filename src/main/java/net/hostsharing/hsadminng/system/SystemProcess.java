@@ -21,6 +21,11 @@ public class SystemProcess {
         this.processBuilder = new ProcessBuilder(command);
     }
 
+
+    public String getCommand() {
+        return processBuilder.command().toString();
+    }
+
     public int execute() throws IOException, InterruptedException {
         final var process = processBuilder.start();
         stdOut = fetchOutput(process.getInputStream()); // yeah, twisted ProcessBuilder API

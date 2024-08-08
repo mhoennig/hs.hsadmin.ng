@@ -49,7 +49,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactly(
-                "'identifier' expected to match '^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}', but is '"+testCase.domainName+"'"
+                "'identifier' expected to match '^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,12}', but is '"+testCase.domainName+"'"
         );
     }
 

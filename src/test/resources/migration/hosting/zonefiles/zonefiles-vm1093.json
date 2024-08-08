@@ -1,0 +1,89 @@
+{
+    "dph-netzwerk.de": {
+        "DOM_OWNER": "dph00-dph",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": true,
+        "auto-AUTOCONFIG-RR": true,
+        "auto-AUTODISCOVER-RR": true,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": true,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": true,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": [
+            [
+                "dph-netzwerk.de.",
+                21600,
+                "IN",
+                "TXT",
+                "\"v=spf1 include:spf.hostsharing.net ?all\""
+            ],
+            [
+                "*.dph-netzwerk.de.",
+                21600,
+                "IN",
+                "TXT",
+                "\"v=spf1 include:spf.hostsharing.net ?all\""
+            ]
+        ]
+    },
+    "mellis.de": {
+        "DOM_OWNER": "old00",
+        "TTL": 21600,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": true,
+        "auto-AUTOCONFIG-RR": true,
+        "auto-AUTODISCOVER-RR": true,
+        "auto-DKIM-RR": true,
+        "auto-MAILSERVICES-RR": true,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": true,
+        "auto-WILDCARD-MX-RR": true,
+        "auto-WILDCARD-SPF-RR": true,
+        "user-RR": [
+            [
+                "dump.mellis.de.",
+                21600,
+                "IN",
+                "CNAME",
+                "mih12.hostsharing.net."
+            ],
+            [
+                "key1._domainkey.mellis.de.",
+                21600,
+                "IN",
+                "TXT",
+                "\"v=DKIM1; k=rsa; t=s; h=sha256; s=email; \" \"p=OldFake+sN5uMa/\" \"OldFake/OldFake+OldFake/W2IITXPbLd9Z/OldFake+OldFake/\" \"OldFake+OldFake+OldFake\""
+            ]
+        ]
+    },
+    "ist-im-netz.de": {
+        "DOM_OWNER": "mim00",
+        "TTL": 700,
+        "auto-A-RR": true,
+        "auto-AAAA-RR": false,
+        "auto-AUTOCONFIG-RR": false,
+        "auto-AUTODISCOVER-RR": false,
+        "auto-DKIM-RR": false,
+        "auto-MAILSERVICES-RR": false,
+        "auto-MX-RR": true,
+        "auto-NS-RR": true,
+        "auto-SOA": true,
+        "auto-SPF-RR": false,
+        "auto-WILDCARD-A-RR": true,
+        "auto-WILDCARD-AAAA-RR": false,
+        "auto-WILDCARD-MX-RR": false,
+        "auto-WILDCARD-SPF-RR": false,
+        "user-RR": []
+    }
+}
