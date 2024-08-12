@@ -135,6 +135,15 @@ public class ImportOfficeData extends CsvDataImport {
     static Map<Integer, HsOfficeCoopAssetsTransactionEntity> coopAssets = new WriteOnceMap<>();
 
     @Test
+    @Order(1)
+    void verifyInitialDatabase() {
+        // SQL DELETE for thousands of records takes too long, so we make sure, we only start with initial or test data
+        final var contactCount = (Integer) em.createNativeQuery("select count(*) from hs_office_contact", Integer.class)
+                .getSingleResult();
+        assertThat(contactCount).isLessThan(20);
+    }
+
+    @Test
     @Order(1010)
     void importBusinessPartners() {
 

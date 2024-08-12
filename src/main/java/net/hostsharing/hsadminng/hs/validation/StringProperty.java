@@ -77,6 +77,7 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
 
     @Override
     protected void validate(final List<String> result, final String propValue, final PropertiesProvider propProvider) {
+        super.validate(result, propValue, propProvider);
         if (minLength != null && propValue.length()<minLength) {
             result.add(propertyName + "' length is expected to be at min " + minLength + " but length of " + display(propValue) + " is " + propValue.length());
         }
@@ -87,12 +88,10 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
                 stream(matchesRegEx).map(p -> p.matcher(propValue)).noneMatch(Matcher::matches)) {
             result.add(propertyName + "' is expected to match any of " + Arrays.toString(matchesRegEx) + " but " + display(propValue) + " does not match" + (matchesRegEx.length>1?" any":""));
         }
-        if (isReadOnly() && propValue != null) {
-            result.add(propertyName + "' is readonly but given as " + display(propValue));
-        }
     }
 
-    private String display(final String propValue) {
+    @Override
+    protected String display(final String propValue) {
         return undisclosed ? "provided value" : ("'" + propValue + "'");
     }
 

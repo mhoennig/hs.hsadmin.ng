@@ -227,7 +227,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             exactlyTheseAssetsAreReturned(
                     result,
                     "HsHostingAssetEntity(MANAGED_WEBSPACE, fir01, some Webspace, MANAGED_SERVER:vm1011, D-1000111:D-1000111 default project:separate ManagedWebspace)",
-                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:D-1000111 default project:separate ManagedServer, { monit_max_cpu_usage: 90, monit_max_ram_usage: 80, monit_max_ssd_usage: 70 } )");
+                    "HsHostingAssetEntity(MANAGED_SERVER, vm1011, some ManagedServer, D-1000111:D-1000111 default project:separate ManagedServer, { monit_max_cpu_usage : 90, monit_max_ram_usage : 80, monit_max_ssd_usage : 70 })");
         }
 
         @Test
@@ -444,6 +444,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                 .extracting(HsHostingAssetEntity::toString)
                 .extracting(input -> input.replaceAll("\\s+", " "))
                 .extracting(input -> input.replaceAll("\"", ""))
+                .extracting(input -> input.replaceAll("\" : ", "\": "))
                 .containsExactlyInAnyOrder(serverNames);
     }
 }

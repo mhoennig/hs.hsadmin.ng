@@ -20,6 +20,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -309,7 +310,7 @@ public class CsvDataImport extends ContextBasedTest {
     void logError(final Runnable assertion) {
         try {
             assertion.run();
-        } catch (final AssertionError exc) {
+        } catch (final AssertionError | ValidationException exc) {
             logError(exc.getMessage());
         }
     }

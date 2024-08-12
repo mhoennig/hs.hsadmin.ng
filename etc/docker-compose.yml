@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_PASSWORD: password
     volumes:
-      - /home/mi/Projekte/Hostsharing/hsadmin-ng/etc/postgresql-log-slow-queries.conf:/etc/postgresql/postgresql.conf
+      - ./postgresql-log-slow-queries.conf:/etc/postgresql/postgresql.conf
     ports:
       - "5432:5432"
     command:
@@ -17,3 +17,11 @@ services:
         apt-get update &&
         apt-get install -y postgresql-contrib &&
         docker-entrypoint.sh postgres -c config_file=/etc/postgresql/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 8G
+        reservations:
+          cpus: '1'
+          memory: 2G

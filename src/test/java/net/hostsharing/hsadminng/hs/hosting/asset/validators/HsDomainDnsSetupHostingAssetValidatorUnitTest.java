@@ -5,8 +5,10 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
 import net.hostsharing.hsadminng.mapper.Array;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import static java.util.Map.entry;
@@ -58,6 +60,11 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
                                 "_acme-challenge.PAULCHEN-VS.core.example.org. 60 IN CNAME _acme-challenge.core.example.org.acme-pki.de.")
                         )
                 ));
+    }
+
+    @BeforeEach
+    void reset() {
+        HsDomainDnsSetupHostingAssetValidator.addZonefileErrorsTo(null);
     }
 
     @Test
@@ -313,6 +320,32 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(errors).containsExactlyInAnyOrder(
+                "[example.org|DNS] dns_master_load:line 26: example.org: multiple RRs of singleton type",
+                "[example.org|DNS] zone example.org/IN: loading from master file (null) failed: multiple RRs of singleton type",
+                "[example.org|DNS] zone example.org/IN: not loaded due to errors."
+        );
+    }
+
+    @Test
+    void acceptsInvalidZonefileWithActiveErrorFilter() {
+        // given
+        final var givenEntity = validEntityBuilder().config(Map.ofEntries(
+                        entry("user-RR", Array.of(
+                                "example.org.        1814400  IN  SOA     example.org. root.example.org (1234 10800 900 604800 86400)",
+                                "example.org.        1814400  IN  SOA     example.org. root.example.org (4321 10800 900 604800 86400)"
+                        ))
+                ))
+                .build();
+        final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+
+        // when
+        final var zonefileErrors = new ArrayList<String>();
+        HsDomainDnsSetupHostingAssetValidator.addZonefileErrorsTo(zonefileErrors);
+        final var errors = validator.validateContext(givenEntity);
+
+        // then
+        assertThat(errors).isEmpty();
+        assertThat(zonefileErrors).containsExactlyInAnyOrder(
                 "[example.org|DNS] dns_master_load:line 26: example.org: multiple RRs of singleton type",
                 "[example.org|DNS] zone example.org/IN: loading from master file (null) failed: multiple RRs of singleton type",
                 "[example.org|DNS] zone example.org/IN: not loaded due to errors."

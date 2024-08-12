@@ -128,8 +128,8 @@ public class HsHostingAssetEntity implements HsHostingAsset {
     }
 
     @Override
-    public Map<String, Object> directProps() {
-        return config;
+    public PatchableMapWrapper<Object> directProps() {
+        return getConfig();
     }
 
     @Override

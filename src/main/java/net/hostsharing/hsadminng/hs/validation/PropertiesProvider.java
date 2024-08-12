@@ -1,11 +1,11 @@
 package net.hostsharing.hsadminng.hs.validation;
 
-import java.util.Map;
+import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 
 public interface PropertiesProvider {
 
     boolean isLoaded();
-    Map<String, Object> directProps();
+    PatchableMapWrapper<Object> directProps();
     Object getContextValue(final String propName);
 
     default <T> T getDirectValue(final String propName, final Class<T> clazz) {
@@ -14,6 +14,10 @@ public interface PropertiesProvider {
 
     default <T> T getDirectValue(final String propName, final Class<T> clazz, final T defaultValue) {
         return cast(propName, directProps().get(propName), clazz, defaultValue);
+    }
+
+    default boolean isPatched(String propertyName) {
+        return directProps().isPatched(propertyName);
     }
 
     default <T>  T getContextValue(final String propName, final Class<T> clazz) {

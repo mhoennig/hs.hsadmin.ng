@@ -15,7 +15,9 @@ import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityS
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.apache.commons.collections4.ListUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
@@ -35,6 +37,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,6 +58,7 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMA
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_MBOX_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SMTP_SETUP;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ALIAS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.IPV4_NUMBER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
@@ -118,19 +123,8 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 @ExtendWith(OrderedDependedTestsExtension.class)
 public class ImportHostingAssets extends ImportOfficeData {
 
-    static final Integer IP_NUMBER_ID_OFFSET = 1000000;
-    static final Integer HIVE_ID_OFFSET = 2000000;
-    static final Integer PACKET_ID_OFFSET = 3000000;
-    static final Integer UNIXUSER_ID_OFFSET = 4000000;
-    static final Integer EMAILALIAS_ID_OFFSET = 5000000;
-    static final Integer DBINSTANCE_ID_OFFSET = 6000000;
-    static final Integer DBUSER_ID_OFFSET = 7000000;
-    static final Integer DB_ID_OFFSET = 8000000;
-    static final Integer DOMAIN_SETUP_OFFSET = 10000000;
-    static final Integer DOMAIN_DNS_SETUP_OFFSET = 11000000;
-    static final Integer DOMAIN_HTTP_SETUP_OFFSET = 12000000;
-    static final Integer DOMAIN_MBOX_SETUP_OFFSET = 13000000;
-    static final Integer DOMAIN_SMTP_SETUP_OFFSET = 14000000;
+    private static final Set<String> NOBODY_SUBSTITUTES = Set.of("nomail", "bounce");
+
     static List<String> zonefileErrors = new ArrayList<>();
 
     record Hive(int hive_id, String hive_name, int inet_addr_id, AtomicReference<HsHostingAssetRealEntity> serverRef) {}
@@ -138,7 +132,21 @@ public class ImportHostingAssets extends ImportOfficeData {
     static Map<Integer, HsBookingProjectEntity> bookingProjects = new WriteOnceMap<>();
     static Map<Integer, HsBookingItemEntity> bookingItems = new WriteOnceMap<>();
     static Map<Integer, Hive> hives = new WriteOnceMap<>();
-    static Map<Integer, HsHostingAssetRealEntity> hostingAssets = new WriteOnceMap<>(); // TODO.impl: separate maps for each type?
+
+    static Map<Integer, HsHostingAssetRealEntity> ipNumberAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> packetAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> unixUserAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> emailAliasAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> dbInstanceAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> dbUserAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> dbAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> domainSetupAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> domainDnsSetupAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> domainHttpSetupAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> domainMBoxSetupAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> domainSmtpSetupAssets = new WriteOnceMap<>();
+    static Map<Integer, HsHostingAssetRealEntity> emailAddressAssets = new WriteOnceMap<>();
+
     static Map<String, HsHostingAssetRealEntity> dbUsersByEngineAndName = new WriteOnceMap<>();
     static Map<String, HsHostingAssetRealEntity> domainSetupsByName = new WriteOnceMap<>();
 
@@ -171,13 +179,13 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyIpNumbers() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(5, IPV4_NUMBER)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(5, ipNumberAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   1000363=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.34),
-                   1000381=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.52),
-                   1000402=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.73),
-                   1000433=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.104),
-                   1000457=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.128)
+                   363=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.34),
+                   381=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.52),
+                   402=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.73),
+                   433=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.104),
+                   457=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.128)
                 }
                 """);
     }
@@ -200,11 +208,11 @@ public class ImportHostingAssets extends ImportOfficeData {
 
         assertThat(toJsonFormattedString(first(5, hives))).isEqualToIgnoringWhitespace("""
                 {
-                   2000001=Hive[hive_id=1, hive_name=h00, inet_addr_id=358, serverRef=null],
-                   2000002=Hive[hive_id=2, hive_name=h01, inet_addr_id=359, serverRef=null],
-                   2000004=Hive[hive_id=4, hive_name=h02, inet_addr_id=360, serverRef=null],
-                   2000007=Hive[hive_id=7, hive_name=h03, inet_addr_id=361, serverRef=null],
-                   2000013=Hive[hive_id=13, hive_name=h04, inet_addr_id=430, serverRef=null]
+                   1001=Hive[hive_id=1001, hive_name=h00, inet_addr_id=358, serverRef=null],
+                   1002=Hive[hive_id=1002, hive_name=h01, inet_addr_id=359, serverRef=null],
+                   1004=Hive[hive_id=1004, hive_name=h02, inet_addr_id=360, serverRef=null],
+                   1007=Hive[hive_id=1007, hive_name=h03, inet_addr_id=361, serverRef=null],
+                   1013=Hive[hive_id=1013, hive_name=h04, inet_addr_id=430, serverRef=null]
                 }
                 """);
     }
@@ -225,30 +233,32 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyPackets() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(3, CLOUD_SERVER, MANAGED_SERVER, MANAGED_WEBSPACE)).isEqualToIgnoringWhitespace("""
-                {
-                   3000630=HsHostingAssetRealEntity(MANAGED_WEBSPACE,   hsh00, HA hsh00,  MANAGED_SERVER:vm1050,    D-1000000:hsh default project:BI hsh00),
-                   3000968=HsHostingAssetRealEntity(MANAGED_SERVER,    vm1061, HA vm1061,                           D-1015200:rar default project:BI vm1061),
-                   3000978=HsHostingAssetRealEntity(MANAGED_SERVER,    vm1050, HA vm1050,                           D-1000000:hsh default project:BI vm1050),
-                   3001061=HsHostingAssetRealEntity(MANAGED_SERVER,    vm1068, HA vm1068,                           D-1000300:mim default project:BI vm1068),
-                   3001094=HsHostingAssetRealEntity(MANAGED_WEBSPACE,   lug00, HA lug00,  MANAGED_SERVER:vm1068,    D-1000300:mim default project:BI lug00),
-                   3001112=HsHostingAssetRealEntity(MANAGED_WEBSPACE,   mim00, HA mim00,  MANAGED_SERVER:vm1068,    D-1000300:mim default project:BI mim00),
-                   3023611=HsHostingAssetRealEntity(CLOUD_SERVER,      vm2097, HA vm2097,                           D-1101800:wws default project:BI vm2097)
-                }
-                """);
         assertThat(firstOfEachType(
                 3,
                 HsBookingItemType.CLOUD_SERVER,
                 HsBookingItemType.MANAGED_SERVER,
                 HsBookingItemType.MANAGED_WEBSPACE)).isEqualToIgnoringWhitespace("""
                 {
-                   3000630=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_WEBSPACE, [2001-06-01,), BI hsh00),
-                   3000968=HsBookingItemEntity(D-1015200:rar default project, MANAGED_SERVER, [2013-04-01,), BI vm1061),
-                   3000978=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2013-04-01,), BI vm1050),
-                   3001061=HsBookingItemEntity(D-1000300:mim default project, MANAGED_SERVER, [2013-08-19,), BI vm1068),
-                   3001094=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-10,), BI lug00),
-                   3001112=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-17,), BI mim00),
-                   3023611=HsBookingItemEntity(D-1101800:wws default project, CLOUD_SERVER, [2022-08-10,), BI vm2097)
+                   10630=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_WEBSPACE, [2001-06-01,), BI hsh00),
+                   10968=HsBookingItemEntity(D-1015200:rar default project, MANAGED_SERVER, [2013-04-01,), BI vm1061),
+                   10978=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2013-04-01,), BI vm1050),
+                   11061=HsBookingItemEntity(D-1000300:mim default project, MANAGED_SERVER, [2013-08-19,), BI vm1068),
+                   11094=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-10,), BI lug00),
+                   11112=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-17,), BI mim00),
+                   23611=HsBookingItemEntity(D-1101800:wws default project, CLOUD_SERVER, [2022-08-10,), BI vm2097)
+                }
+                """);
+        assertThat(firstOfEach(9, packetAssets)).isEqualToIgnoringWhitespace("""
+                {
+                   10630=HsHostingAssetRealEntity(MANAGED_WEBSPACE, hsh00, HA hsh00, MANAGED_SERVER:vm1050, D-1000000:hsh default project:BI hsh00),
+                   10968=HsHostingAssetRealEntity(MANAGED_SERVER, vm1061, HA vm1061, D-1015200:rar default project:BI vm1061),
+                   10978=HsHostingAssetRealEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
+                   11061=HsHostingAssetRealEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
+                   11094=HsHostingAssetRealEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
+                   11112=HsHostingAssetRealEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
+                   11447=HsHostingAssetRealEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093),
+                   19959=HsHostingAssetRealEntity(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00),
+                   23611=HsHostingAssetRealEntity(CLOUD_SERVER, vm2097, HA vm2097, D-1101800:wws default project:BI vm2097)
                 }
                 """);
     }
@@ -269,18 +279,16 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyPacketComponents() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(5, CLOUD_SERVER, MANAGED_SERVER, MANAGED_WEBSPACE))
+        assertThat(firstOfEach(7, packetAssets))
                 .isEqualToIgnoringWhitespace("""
                         {
-                           3000630=HsHostingAssetRealEntity(MANAGED_WEBSPACE, hsh00, HA hsh00, MANAGED_SERVER:vm1050, D-1000000:hsh default project:BI hsh00),
-                           3000968=HsHostingAssetRealEntity(MANAGED_SERVER, vm1061, HA vm1061, D-1015200:rar default project:BI vm1061),
-                           3000978=HsHostingAssetRealEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
-                           3001061=HsHostingAssetRealEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
-                           3001094=HsHostingAssetRealEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
-                           3001112=HsHostingAssetRealEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
-                           3001447=HsHostingAssetRealEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093),
-                           3019959=HsHostingAssetRealEntity(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00),
-                           3023611=HsHostingAssetRealEntity(CLOUD_SERVER, vm2097, HA vm2097, D-1101800:wws default project:BI vm2097)
+                           10630=HsHostingAssetRealEntity(MANAGED_WEBSPACE, hsh00, HA hsh00, MANAGED_SERVER:vm1050, D-1000000:hsh default project:BI hsh00),
+                           10968=HsHostingAssetRealEntity(MANAGED_SERVER, vm1061, HA vm1061, D-1015200:rar default project:BI vm1061),
+                           10978=HsHostingAssetRealEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
+                           11061=HsHostingAssetRealEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
+                           11094=HsHostingAssetRealEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
+                           11112=HsHostingAssetRealEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
+                           11447=HsHostingAssetRealEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093)
                         }
                         """);
         assertThat(firstOfEachType(
@@ -290,15 +298,15 @@ public class ImportHostingAssets extends ImportOfficeData {
                 HsBookingItemType.MANAGED_WEBSPACE))
                 .isEqualToIgnoringWhitespace("""
                         {
-                           3000630=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_WEBSPACE, [2001-06-01,), BI hsh00, {"HDD": 10, "Multi": 25, "SLA-Platform": "EXT24H", "SSD": 16, "Traffic": 50}),
-                           3000968=HsBookingItemEntity(D-1015200:rar default project, MANAGED_SERVER, [2013-04-01,), BI vm1061, {"CPU": 6, "HDD": 250, "RAM": 14, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 375, "Traffic": 250}),
-                           3000978=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2013-04-01,), BI vm1050, {"CPU": 4, "HDD": 250, "RAM": 32, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 150, "Traffic": 250}),
-                           3001061=HsBookingItemEntity(D-1000300:mim default project, MANAGED_SERVER, [2013-08-19,), BI vm1068, {"CPU": 2, "HDD": 250, "RAM": 4, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT2H", "SLA-Web": true, "Traffic": 250}),
-                           3001094=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-10,), BI lug00, {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 1, "Traffic": 10}),
-                           3001112=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-17,), BI mim00, {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 3, "Traffic": 20}),
-                           3001447=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2014-11-28,), BI vm1093, {"CPU": 6, "HDD": 500, "RAM": 16, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 300, "Traffic": 250}),
-                           3019959=HsBookingItemEntity(D-1101900:dph default project, MANAGED_WEBSPACE, [2021-06-02,), BI dph00, {"Multi": 1, "SLA-Platform": "EXT24H", "SSD": 25, "Traffic": 20}),
-                           3023611=HsBookingItemEntity(D-1101800:wws default project, CLOUD_SERVER, [2022-08-10,), BI vm2097, {"CPU": 8, "RAM": 12, "SLA-Infrastructure": "EXT4H", "SSD": 25, "Traffic": 250})
+                           10630=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_WEBSPACE, [2001-06-01,), BI hsh00, {"HDD": 10, "Multi": 25, "SLA-Platform": "EXT24H", "SSD": 16, "Traffic": 50}),
+                           10968=HsBookingItemEntity(D-1015200:rar default project, MANAGED_SERVER, [2013-04-01,), BI vm1061, {"CPU": 6, "HDD": 250, "RAM": 14, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 375, "Traffic": 250}),
+                           10978=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2013-04-01,), BI vm1050, {"CPU": 4, "HDD": 250, "RAM": 32, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 150, "Traffic": 250}),
+                           11061=HsBookingItemEntity(D-1000300:mim default project, MANAGED_SERVER, [2013-08-19,), BI vm1068, {"CPU": 2, "HDD": 250, "RAM": 4, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT2H", "SLA-Web": true, "Traffic": 250}),
+                           11094=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-10,), BI lug00, {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 1, "Traffic": 10}),
+                           11112=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-17,), BI mim00, {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 3, "Traffic": 20}),
+                           11447=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2014-11-28,), BI vm1093, {"CPU": 6, "HDD": 500, "RAM": 16, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 300, "Traffic": 250}),
+                           19959=HsBookingItemEntity(D-1101900:dph default project, MANAGED_WEBSPACE, [2021-06-02,), BI dph00, {"Multi": 1, "SLA-Platform": "EXT24H", "SSD": 25, "Traffic": 20}),
+                           23611=HsBookingItemEntity(D-1101800:wws default project, CLOUD_SERVER, [2022-08-10,), BI vm2097, {"CPU": 8, "RAM": 12, "SLA-Infrastructure": "EXT4H", "SSD": 25, "Traffic": 250})
                         }
                         """);
     }
@@ -319,22 +327,22 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyUnixUsers() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(15, UNIX_USER)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(15, unixUserAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   4005803=HsHostingAssetRealEntity(UNIX_USER, lug00, LUGs, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102090}),
-                   4005805=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.1, Paul Klemm, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102091}),
-                   4005809=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.2, Walter Müller, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 8, "SSD soft quota": 4, "locked": false, "shell": "/bin/bash", "userid": 102093}),
-                   4005811=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102094}),
-                   4005813=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102095}),
-                   4005835=HsHostingAssetRealEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "shell": "/usr/bin/passwd", "userid": 102106}),
-                   4005964=HsHostingAssetRealEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102147}),
-                   4005966=HsHostingAssetRealEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "shell": "/bin/bash", "userid": 102148}),
-                   4005990=HsHostingAssetRealEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102160}),
-                   4100705=HsHostingAssetRealEntity(UNIX_USER, hsh00-mim, Michael Mellis, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/false", "userid": 10003}),
-                   4100824=HsHostingAssetRealEntity(UNIX_USER, hsh00, Hostsharing Paket, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 10000}),
-                   4167846=HsHostingAssetRealEntity(UNIX_USER, hsh00-dph, hsh00-uph, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/false", "userid": 110568}),
-                   4169546=HsHostingAssetRealEntity(UNIX_USER, dph00, Reinhard Wiese, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110593}),
-                   4169596=HsHostingAssetRealEntity(UNIX_USER, dph00-dph, Domain admin, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110594})
+                   5803=HsHostingAssetRealEntity(UNIX_USER, lug00, LUGs, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102090}),
+                   5805=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.1, Paul Klemm, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102091}),
+                   5809=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.2, Walter Müller, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 8, "SSD soft quota": 4, "locked": false, "shell": "/bin/bash", "userid": 102093}),
+                   5811=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102094}),
+                   5813=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102095}),
+                   5835=HsHostingAssetRealEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "shell": "/usr/bin/passwd", "userid": 102106}),
+                   5964=HsHostingAssetRealEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102147}),
+                   5966=HsHostingAssetRealEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "shell": "/bin/bash", "userid": 102148}),
+                   5990=HsHostingAssetRealEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102160}),
+                   6705=HsHostingAssetRealEntity(UNIX_USER, hsh00-mim, Michael Mellis, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/false", "userid": 10003}),
+                   6824=HsHostingAssetRealEntity(UNIX_USER, hsh00, Hostsharing Paket, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 10000}),
+                   7846=HsHostingAssetRealEntity(UNIX_USER, hsh00-dph, hsh00-uph, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/false", "userid": 110568}),
+                   9546=HsHostingAssetRealEntity(UNIX_USER, dph00, Reinhard Wiese, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110593}),
+                   9596=HsHostingAssetRealEntity(UNIX_USER, dph00-dph, Domain admin, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110594})
                 }
                 """);
     }
@@ -355,17 +363,17 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyEmailAliases() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(15, EMAIL_ALIAS)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(15, emailAliasAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   5002403=HsHostingAssetRealEntity(EMAIL_ALIAS, lug00, lug00, MANAGED_WEBSPACE:lug00, {"target": [ "michael.mellis@example.com" ]}),
-                   5002405=HsHostingAssetRealEntity(EMAIL_ALIAS, lug00-wla-listar, lug00-wla-listar, MANAGED_WEBSPACE:lug00, {"target": [ "|/home/pacs/lug00/users/in/mailinglist/listar" ]}),
-                   5002429=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00, mim00, MANAGED_WEBSPACE:mim00, {"target": [ "mim12-mi@mim12.hostsharing.net" ]}),
-                   5002431=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-abruf, mim00-abruf, MANAGED_WEBSPACE:mim00, {"target": [ "michael.mellis@hostsharing.net" ]}),
-                   5002449=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-hhfx, mim00-hhfx, MANAGED_WEBSPACE:mim00, {"target": [ "mim00-hhfx", "|/usr/bin/formail -I 'Reply-To: hamburger-fx@example.net' | /usr/lib/sendmail mim00-hhfx-l" ]}),
-                   5002451=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-hhfx-l, mim00-hhfx-l, MANAGED_WEBSPACE:mim00, {"target": [ ":include:/home/pacs/mim00/etc/hhfx.list" ]}),
-                   5002454=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-dev.null, mim00-dev.null, MANAGED_WEBSPACE:mim00, {"target": [ "/dev/null" ]}),
-                   5002455=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-1_with_space, mim00-1_with_space, MANAGED_WEBSPACE:mim00, {"target": [ "|/home/pacs/mim00/install/corpslistar/listar" ]}),
-                   5002456=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-1_with_single_quotes, mim00-1_with_single_quotes, MANAGED_WEBSPACE:mim00, {"target": [ "|/home/pacs/rir00/mailinglist/ecartis -r kybs06-intern" ]})
+                   2403=HsHostingAssetRealEntity(EMAIL_ALIAS, lug00, lug00, MANAGED_WEBSPACE:lug00, {"target": [ "michael.mellis@example.com" ]}),
+                   2405=HsHostingAssetRealEntity(EMAIL_ALIAS, lug00-wla-listar, lug00-wla-listar, MANAGED_WEBSPACE:lug00, {"target": [ "|/home/pacs/lug00/users/in/mailinglist/listar" ]}),
+                   2429=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00, mim00, MANAGED_WEBSPACE:mim00, {"target": [ "mim12-mi@mim12.hostsharing.net" ]}),
+                   2431=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-abruf, mim00-abruf, MANAGED_WEBSPACE:mim00, {"target": [ "michael.mellis@hostsharing.net" ]}),
+                   2449=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-hhfx, mim00-hhfx, MANAGED_WEBSPACE:mim00, {"target": [ "mim00-hhfx", "|/usr/bin/formail -I 'Reply-To: hamburger-fx@example.net' | /usr/lib/sendmail mim00-hhfx-l" ]}),
+                   2451=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-hhfx-l, mim00-hhfx-l, MANAGED_WEBSPACE:mim00, {"target": [ ":include:/home/pacs/mim00/etc/hhfx.list" ]}),
+                   2454=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-dev.null, mim00-dev.null, MANAGED_WEBSPACE:mim00, {"target": [ "/dev/null" ]}),
+                   2455=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-1_with_space, mim00-1_with_space, MANAGED_WEBSPACE:mim00, {"target": [ "|/home/pacs/mim00/install/corpslistar/listar" ]}),
+                   2456=HsHostingAssetRealEntity(EMAIL_ALIAS, mim00-1_with_single_quotes, mim00-1_with_single_quotes, MANAGED_WEBSPACE:mim00, {"target": [ "|/home/pacs/rir00/mailinglist/ecartis -r kybs06-intern" ]})
                 }
                 """);
     }
@@ -373,7 +381,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Test
     @Order(15000)
     void createDatabaseInstances() {
-        createDatabaseInstances(hostingAssets.values().stream().filter(ha -> ha.getType() == MANAGED_SERVER).toList());
+        createDatabaseInstances(packetAssets.values().stream().filter(ha -> ha.getType() == MANAGED_SERVER).toList());
     }
 
     @Test
@@ -381,16 +389,16 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyDatabaseInstances() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(5, PGSQL_INSTANCE, MARIADB_INSTANCE)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(8, dbInstanceAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   6000000=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1061|PgSql.default, vm1061-PostgreSQL default instance, MANAGED_SERVER:vm1061),
-                   6000001=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1061|MariaDB.default, vm1061-MariaDB default instance, MANAGED_SERVER:vm1061),
-                   6000002=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1050|PgSql.default, vm1050-PostgreSQL default instance, MANAGED_SERVER:vm1050),
-                   6000003=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1050|MariaDB.default, vm1050-MariaDB default instance, MANAGED_SERVER:vm1050),
-                   6000004=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1068|PgSql.default, vm1068-PostgreSQL default instance, MANAGED_SERVER:vm1068),
-                   6000005=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1068|MariaDB.default, vm1068-MariaDB default instance, MANAGED_SERVER:vm1068),
-                   6000006=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1093|PgSql.default, vm1093-PostgreSQL default instance, MANAGED_SERVER:vm1093),
-                   6000007=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1093|MariaDB.default, vm1093-MariaDB default instance, MANAGED_SERVER:vm1093)
+                   0=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1061|PgSql.default, vm1061-PostgreSQL default instance, MANAGED_SERVER:vm1061),
+                   1=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1061|MariaDB.default, vm1061-MariaDB default instance, MANAGED_SERVER:vm1061),
+                   2=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1050|PgSql.default, vm1050-PostgreSQL default instance, MANAGED_SERVER:vm1050),
+                   3=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1050|MariaDB.default, vm1050-MariaDB default instance, MANAGED_SERVER:vm1050),
+                   4=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1068|PgSql.default, vm1068-PostgreSQL default instance, MANAGED_SERVER:vm1068),
+                   5=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1068|MariaDB.default, vm1068-MariaDB default instance, MANAGED_SERVER:vm1068),
+                   6=HsHostingAssetRealEntity(PGSQL_INSTANCE, vm1093|PgSql.default, vm1093-PostgreSQL default instance, MANAGED_SERVER:vm1093),
+                   7=HsHostingAssetRealEntity(MARIADB_INSTANCE, vm1093|MariaDB.default, vm1093-MariaDB default instance, MANAGED_SERVER:vm1093)
                 }
                 """);
     }
@@ -411,18 +419,18 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyDatabaseUsers() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(5, PGSQL_USER, MARIADB_USER)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(10, dbUserAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   7001857=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00, hsh00, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$JDiZmaxU+O+ByArLY/CkYZ8HbOk0r/I8LyABnno5gQs=:NI3T500/63dzI1B07Jh3UtQGlukS6JxuS0XoxM/QgAc="}),
-                   7001858=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00, hsh00, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*59067A36BA197AD0A47D74909296C5B002A0FB9F"}),
-                   7001859=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_vorstand, hsh00_vorstand, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$54Wh+OGx/GaIvAia+I3k78jHGhqmYwe4+iLssmH5zhk=:D4Gq1z2Li2BVSaZrz1azDrs6pwsIzhq4+suK1Hh6ZIg="}),
-                   7001860=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_hsadmin, hsh00_hsadmin, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$54Wh+OGx/GaIvAia+I3k78jHGhqmYwe4+iLssmH5zhk=:D4Gq1z2Li2BVSaZrz1azDrs6pwsIzhq4+suK1Hh6ZIg="}),
-                   7001861=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_hsadmin_ro, hsh00_hsadmin_ro, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$UhJnJJhmKANbcaG+izWK3rz5bmhhluSuiCJFlUmDVI8=:6AC4mbLfJGiGlEOWhpz9BivvMODhLLHOnRnnktJPgn8="}),
-                   7004908=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00_mantis, hsh00_mantis, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*EA4C0889A22AAE66BBEBC88161E8CF862D73B44F"}),
-                   7004909=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00_mantis_ro, hsh00_mantis_ro, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*B3BB6D0DA2EC01958616E9B3BCD2926FE8C38383"}),
-                   7004931=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_phpPgSqlAdmin, hsh00_phpPgSqlAdmin, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$UhJnJJhmKANbcaG+izWK3rz5bmhhluSuiCJFlUmDVI8=:6AC4mbLfJGiGlEOWhpz9BivvMODhLLHOnRnnktJPgn8="}),
-                   7004932=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00_phpMyAdmin, hsh00_phpMyAdmin, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*3188720B1889EF5447C722629765F296F40257C2"}),
-                   7007520=HsHostingAssetRealEntity(MARIADB_USER, MAU|lug00_wla, lug00_wla, MANAGED_WEBSPACE:lug00, MARIADB_INSTANCE:vm1068|MariaDB.default, { "password": "*11667C0EAC42BF8B0295ABEDC7D2868A835E4DB5"})
+                   1857=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00, hsh00, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$JDiZmaxU+O+ByArLY/CkYZ8HbOk0r/I8LyABnno5gQs=:NI3T500/63dzI1B07Jh3UtQGlukS6JxuS0XoxM/QgAc="}),
+                   1858=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00, hsh00, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*59067A36BA197AD0A47D74909296C5B002A0FB9F"}),
+                   1859=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_vorstand, hsh00_vorstand, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$54Wh+OGx/GaIvAia+I3k78jHGhqmYwe4+iLssmH5zhk=:D4Gq1z2Li2BVSaZrz1azDrs6pwsIzhq4+suK1Hh6ZIg="}),
+                   1860=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_hsadmin, hsh00_hsadmin, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$54Wh+OGx/GaIvAia+I3k78jHGhqmYwe4+iLssmH5zhk=:D4Gq1z2Li2BVSaZrz1azDrs6pwsIzhq4+suK1Hh6ZIg="}),
+                   1861=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_hsadmin_ro, hsh00_hsadmin_ro, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$UhJnJJhmKANbcaG+izWK3rz5bmhhluSuiCJFlUmDVI8=:6AC4mbLfJGiGlEOWhpz9BivvMODhLLHOnRnnktJPgn8="}),
+                   4908=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00_mantis, hsh00_mantis, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*EA4C0889A22AAE66BBEBC88161E8CF862D73B44F"}),
+                   4909=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00_mantis_ro, hsh00_mantis_ro, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*B3BB6D0DA2EC01958616E9B3BCD2926FE8C38383"}),
+                   4931=HsHostingAssetRealEntity(PGSQL_USER, PGU|hsh00_phpPgSqlAdmin, hsh00_phpPgSqlAdmin, MANAGED_WEBSPACE:hsh00, PGSQL_INSTANCE:vm1050|PgSql.default, { "password": "SCRAM-SHA-256$4096:Zml4ZWQgc2FsdA==$UhJnJJhmKANbcaG+izWK3rz5bmhhluSuiCJFlUmDVI8=:6AC4mbLfJGiGlEOWhpz9BivvMODhLLHOnRnnktJPgn8="}),
+                   4932=HsHostingAssetRealEntity(MARIADB_USER, MAU|hsh00_phpMyAdmin, hsh00_phpMyAdmin, MANAGED_WEBSPACE:hsh00, MARIADB_INSTANCE:vm1050|MariaDB.default, { "password": "*3188720B1889EF5447C722629765F296F40257C2"}),
+                   7520=HsHostingAssetRealEntity(MARIADB_USER, MAU|lug00_wla, lug00_wla, MANAGED_WEBSPACE:lug00, MARIADB_INSTANCE:vm1068|MariaDB.default, { "password": "*11667C0EAC42BF8B0295ABEDC7D2868A835E4DB5"})
                 }
                 """);
     }
@@ -443,18 +451,18 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyDatabases() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(5, PGSQL_DATABASE, MARIADB_DATABASE)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(10, dbAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   8000077=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_vorstand, hsh00_vorstand, PGSQL_USER:PGU|hsh00_vorstand, { "encoding": "LATIN1"}),
-                   8000786=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_addr, hsh00_addr, MARIADB_USER:MAU|hsh00, { "encoding": "latin1"}),
-                   8000805=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_db2, hsh00_db2, MARIADB_USER:MAU|hsh00, { "encoding": "latin1"}),
-                   8001858=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00, hsh00, PGSQL_USER:PGU|hsh00, { "encoding": "LATIN1"}),
-                   8001860=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_hsadmin, hsh00_hsadmin, PGSQL_USER:PGU|hsh00_hsadmin, { "encoding": "UTF8"}),
-                   8004908=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_mantis, hsh00_mantis, MARIADB_USER:MAU|hsh00_mantis, { "encoding": "utf8"}),
-                   8004931=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_phpPgSqlAdmin, hsh00_phpPgSqlAdmin, PGSQL_USER:PGU|hsh00_phpPgSqlAdmin, { "encoding": "UTF8"}),
-                   8004932=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_phpPgSqlAdmin_new, hsh00_phpPgSqlAdmin_new, PGSQL_USER:PGU|hsh00_phpPgSqlAdmin, { "encoding": "UTF8"}),
-                   8004941=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_phpMyAdmin, hsh00_phpMyAdmin, MARIADB_USER:MAU|hsh00_phpMyAdmin, { "encoding": "utf8"}),
-                   8004942=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_phpMyAdmin_old, hsh00_phpMyAdmin_old, MARIADB_USER:MAU|hsh00_phpMyAdmin, { "encoding": "utf8"})
+                   1077=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_vorstand, hsh00_vorstand, PGSQL_USER:PGU|hsh00_vorstand, {"encoding": "LATIN1"}),
+                   1786=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_addr, hsh00_addr, MARIADB_USER:MAU|hsh00, {"encoding": "latin1"}),
+                   1805=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_dba, hsh00_dba, MARIADB_USER:MAU|hsh00, {"encoding": "latin1"}),
+                   1858=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00, hsh00, PGSQL_USER:PGU|hsh00, {"encoding": "LATIN1"}),
+                   1860=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_hsadmin, hsh00_hsadmin, PGSQL_USER:PGU|hsh00_hsadmin, {"encoding": "UTF8"}),
+                   4908=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_mantis, hsh00_mantis, MARIADB_USER:MAU|hsh00_mantis, {"encoding": "utf8"}),
+                   4931=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_phpPgSqlAdmin, hsh00_phpPgSqlAdmin, PGSQL_USER:PGU|hsh00_phpPgSqlAdmin, {"encoding": "UTF8"}),
+                   4932=HsHostingAssetRealEntity(PGSQL_DATABASE, PGD|hsh00_phpPgSqlAdmin_new, hsh00_phpPgSqlAdmin_new, PGSQL_USER:PGU|hsh00_phpPgSqlAdmin, {"encoding": "UTF8"}),
+                   4941=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_phpMyAdmin, hsh00_phpMyAdmin, MARIADB_USER:MAU|hsh00_phpMyAdmin, {"encoding": "utf8"}),
+                   4942=HsHostingAssetRealEntity(MARIADB_DATABASE, MAD|hsh00_phpMyAdmin_old, hsh00_phpMyAdmin_old, MARIADB_USER:MAU|hsh00_phpMyAdmin, {"encoding": "utf8"})
                 }
                 """);
     }
@@ -481,68 +489,112 @@ public class ImportHostingAssets extends ImportOfficeData {
         });
     }
 
-    private String vmName(final String zonenfileName) {
-        return zonenfileName.substring(zonenfileName.length() - "vm0000.json".length()).substring(0, 6);
-    }
-
     @Test
     @Order(16029)
     void verifyDomains() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(
-                12,
-                DOMAIN_SETUP,
-                DOMAIN_DNS_SETUP,
-                DOMAIN_HTTP_SETUP,
-                DOMAIN_MBOX_SETUP,
-                DOMAIN_SMTP_SETUP)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(12, domainSetupAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   10004531=HsHostingAssetRealEntity(DOMAIN_SETUP, l-u-g.org, l-u-g.org),
-                   10004532=HsHostingAssetRealEntity(DOMAIN_SETUP, linuxfanboysngirls.de, linuxfanboysngirls.de),
-                   10004534=HsHostingAssetRealEntity(DOMAIN_SETUP, lug-mars.de, lug-mars.de),
-                   10004581=HsHostingAssetRealEntity(DOMAIN_SETUP, 1981.ist-im-netz.de, 1981.ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de),
-                   10004587=HsHostingAssetRealEntity(DOMAIN_SETUP, mellis.de, mellis.de),
-                   10004589=HsHostingAssetRealEntity(DOMAIN_SETUP, ist-im-netz.de, ist-im-netz.de),
-                   10004600=HsHostingAssetRealEntity(DOMAIN_SETUP, waera.de, waera.de),
-                   10004604=HsHostingAssetRealEntity(DOMAIN_SETUP, xn--wra-qla.de, wära.de),
-                   10027662=HsHostingAssetRealEntity(DOMAIN_SETUP, dph-netzwerk.de, dph-netzwerk.de),
-                   11004531=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, l-u-g.org|DNS, DNS-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, MANAGED_WEBSPACE:lug00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
-                   11004532=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, linuxfanboysngirls.de|DNS, DNS-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, MANAGED_WEBSPACE:lug00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
-                   11004534=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, lug-mars.de|DNS, DNS-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, MANAGED_WEBSPACE:lug00, {"TTL": 14400, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": false, "auto-NS-RR": true, "auto-SOA": false, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ "lug-mars.de. 14400 IN SOA dns1.hostsharing.net. hostmaster.hostsharing.net. 1611590905 10800 3600 604800 3600", "lug-mars.de. 14400 IN MX 10 mailin1.hostsharing.net.", "lug-mars.de. 14400 IN MX 20 mailin2.hostsharing.net.", "lug-mars.de. 14400 IN MX 30 mailin3.hostsharing.net.", "bbb.lug-mars.de. 14400 IN A 83.223.79.72", "ftp.lug-mars.de. 14400 IN A 83.223.79.72", "www.lug-mars.de. 14400 IN A 83.223.79.72" ]}),
-                   11004581=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, 1981.ist-im-netz.de|DNS, DNS-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
-                   11004587=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, mellis.de|DNS, DNS-Setup für mellis.de, DOMAIN_SETUP:mellis.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": true, "auto-AUTOCONFIG-RR": true, "auto-AUTODISCOVER-RR": true, "auto-DKIM-RR": true, "auto-MAILSERVICES-RR": true, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": true, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": true, "user-RR": [ "dump.hoennig.de. 21600 IN CNAME mih12.hostsharing.net.", "fotos.hoennig.de. 21600 IN CNAME mih12.hostsharing.net.", "maven.hoennig.de. 21600 IN NS dns1.hostsharing.net." ]}),
-                   11004589=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, ist-im-netz.de|DNS, DNS-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, MANAGED_WEBSPACE:mim00, {"TTL": 700, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
-                   11004600=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, waera.de|DNS, DNS-Setup für waera.de, DOMAIN_SETUP:waera.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": false, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": false, "auto-NS-RR": false, "auto-SOA": false, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": false, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
-                   11004604=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, xn--wra-qla.de|DNS, DNS-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": false, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": false, "auto-NS-RR": false, "auto-SOA": false, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": false, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
-                   11027662=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, dph-netzwerk.de|DNS, DNS-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, MANAGED_WEBSPACE:dph00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": true, "auto-AUTOCONFIG-RR": true, "auto-AUTODISCOVER-RR": true, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": true, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": true, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ "dph-netzwerk.de. 21600 IN TXT \\"v=spf1 include:spf.hostsharing.net ?all\\"", "*.dph-netzwerk.de. 21600 IN TXT \\"v=spf1 include:spf.hostsharing.net ?all\\"" ]}),
-                   12004531=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, l-u-g.org|HTTP, HTTP-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, UNIX_USER:lug00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   12004532=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, linuxfanboysngirls.de|HTTP, HTTP-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, UNIX_USER:lug00-wla.2, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   12004534=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, lug-mars.de|HTTP, HTTP-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, UNIX_USER:lug00-wla.2, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "www" ]}),
-                   12004581=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, 1981.ist-im-netz.de|HTTP, HTTP-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   12004587=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, mellis.de|HTTP, HTTP-Setup für mellis.de, DOMAIN_SETUP:mellis.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": false, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "www", "michael", "test", "photos", "static", "input" ]}),
-                   12004589=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, ist-im-netz.de|HTTP, HTTP-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": false, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   12004600=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, waera.de|HTTP, HTTP-Setup für waera.de, DOMAIN_SETUP:waera.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   12004604=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, xn--wra-qla.de|HTTP, HTTP-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   12027662=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, dph-netzwerk.de|HTTP, HTTP-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, UNIX_USER:dph00-dph, {"autoconfig": true, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
-                   13004531=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, l-u-g.org|MBOX, E-Mail-Empfang-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, MANAGED_WEBSPACE:lug00),
-                   13004532=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, linuxfanboysngirls.de|MBOX, E-Mail-Empfang-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, MANAGED_WEBSPACE:lug00),
-                   13004534=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, lug-mars.de|MBOX, E-Mail-Empfang-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, MANAGED_WEBSPACE:lug00),
-                   13004581=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, 1981.ist-im-netz.de|MBOX, E-Mail-Empfang-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, MANAGED_WEBSPACE:mim00),
-                   13004587=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, mellis.de|MBOX, E-Mail-Empfang-Setup für mellis.de, DOMAIN_SETUP:mellis.de, MANAGED_WEBSPACE:mim00),
-                   13004589=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, ist-im-netz.de|MBOX, E-Mail-Empfang-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, MANAGED_WEBSPACE:mim00),
-                   13004600=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, waera.de|MBOX, E-Mail-Empfang-Setup für waera.de, DOMAIN_SETUP:waera.de, MANAGED_WEBSPACE:mim00),
-                   13004604=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, xn--wra-qla.de|MBOX, E-Mail-Empfang-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, MANAGED_WEBSPACE:mim00),
-                   13027662=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, dph-netzwerk.de|MBOX, E-Mail-Empfang-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, MANAGED_WEBSPACE:dph00),
-                   14004531=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, l-u-g.org|SMTP, E-Mail-Versand-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, MANAGED_WEBSPACE:lug00),
-                   14004532=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, linuxfanboysngirls.de|SMTP, E-Mail-Versand-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, MANAGED_WEBSPACE:lug00),
-                   14004534=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, lug-mars.de|SMTP, E-Mail-Versand-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, MANAGED_WEBSPACE:lug00),
-                   14004581=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, 1981.ist-im-netz.de|SMTP, E-Mail-Versand-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, MANAGED_WEBSPACE:mim00),
-                   14004587=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, mellis.de|SMTP, E-Mail-Versand-Setup für mellis.de, DOMAIN_SETUP:mellis.de, MANAGED_WEBSPACE:mim00),
-                   14004589=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, ist-im-netz.de|SMTP, E-Mail-Versand-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, MANAGED_WEBSPACE:mim00),
-                   14004600=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, waera.de|SMTP, E-Mail-Versand-Setup für waera.de, DOMAIN_SETUP:waera.de, MANAGED_WEBSPACE:mim00),
-                   14004604=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, xn--wra-qla.de|SMTP, E-Mail-Versand-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, MANAGED_WEBSPACE:mim00),
-                   14027662=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, dph-netzwerk.de|SMTP, E-Mail-Versand-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, MANAGED_WEBSPACE:dph00)
+                    4531=HsHostingAssetRealEntity(DOMAIN_SETUP, l-u-g.org, l-u-g.org),
+                    4532=HsHostingAssetRealEntity(DOMAIN_SETUP, linuxfanboysngirls.de, linuxfanboysngirls.de),
+                    4534=HsHostingAssetRealEntity(DOMAIN_SETUP, lug-mars.de, lug-mars.de),
+                    4581=HsHostingAssetRealEntity(DOMAIN_SETUP, 1981.ist-im-netz.de, 1981.ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de),
+                    4587=HsHostingAssetRealEntity(DOMAIN_SETUP, mellis.de, mellis.de),
+                    4589=HsHostingAssetRealEntity(DOMAIN_SETUP, ist-im-netz.de, ist-im-netz.de),
+                    4600=HsHostingAssetRealEntity(DOMAIN_SETUP, waera.de, waera.de),
+                    4604=HsHostingAssetRealEntity(DOMAIN_SETUP, xn--wra-qla.de, wära.de),
+                    7662=HsHostingAssetRealEntity(DOMAIN_SETUP, dph-netzwerk.de, dph-netzwerk.de)
+                }
+                """);
+
+        assertThat(firstOfEach(12, domainDnsSetupAssets)).isEqualToIgnoringWhitespace("""
+                {
+                   4531=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, l-u-g.org|DNS, DNS-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, MANAGED_WEBSPACE:lug00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
+                   4532=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, linuxfanboysngirls.de|DNS, DNS-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, MANAGED_WEBSPACE:lug00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
+                   4534=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, lug-mars.de|DNS, DNS-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, MANAGED_WEBSPACE:lug00, {"TTL": 14400, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": false, "auto-NS-RR": true, "auto-SOA": false, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ "lug-mars.de. 14400 IN SOA dns1.hostsharing.net. hostmaster.hostsharing.net. 1611590905 10800 3600 604800 3600", "lug-mars.de. 14400 IN MX 10 mailin1.hostsharing.net.", "lug-mars.de. 14400 IN MX 20 mailin2.hostsharing.net.", "lug-mars.de. 14400 IN MX 30 mailin3.hostsharing.net.", "bbb.lug-mars.de. 14400 IN A 83.223.79.72", "ftp.lug-mars.de. 14400 IN A 83.223.79.72", "www.lug-mars.de. 14400 IN A 83.223.79.72" ]}),
+                   4581=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, 1981.ist-im-netz.de|DNS, DNS-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
+                   4587=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, mellis.de|DNS, DNS-Setup für mellis.de, DOMAIN_SETUP:mellis.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": true, "auto-AUTOCONFIG-RR": true, "auto-AUTODISCOVER-RR": true, "auto-DKIM-RR": true, "auto-MAILSERVICES-RR": true, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": true, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": true, "user-RR": [ "dump.hoennig.de. 21600 IN CNAME mih12.hostsharing.net.", "fotos.hoennig.de. 21600 IN CNAME mih12.hostsharing.net.", "maven.hoennig.de. 21600 IN NS dns1.hostsharing.net." ]}),
+                   4589=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, ist-im-netz.de|DNS, DNS-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, MANAGED_WEBSPACE:mim00, {"TTL": 700, "auto-A-RR": true, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
+                   4600=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, waera.de|DNS, DNS-Setup für waera.de, DOMAIN_SETUP:waera.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": false, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": false, "auto-NS-RR": false, "auto-SOA": false, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": false, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
+                   4604=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, xn--wra-qla.de|DNS, DNS-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, MANAGED_WEBSPACE:mim00, {"TTL": 21600, "auto-A-RR": false, "auto-AAAA-RR": false, "auto-AUTOCONFIG-RR": false, "auto-AUTODISCOVER-RR": false, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": false, "auto-MX-RR": false, "auto-NS-RR": false, "auto-SOA": false, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": false, "auto-WILDCARD-AAAA-RR": false, "auto-WILDCARD-MX-RR": false, "auto-WILDCARD-SPF-RR": false, "user-RR": [ ]}),
+                   7662=HsHostingAssetRealEntity(DOMAIN_DNS_SETUP, dph-netzwerk.de|DNS, DNS-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, MANAGED_WEBSPACE:dph00, {"TTL": 21600, "auto-A-RR": true, "auto-AAAA-RR": true, "auto-AUTOCONFIG-RR": true, "auto-AUTODISCOVER-RR": true, "auto-DKIM-RR": false, "auto-MAILSERVICES-RR": true, "auto-MX-RR": true, "auto-NS-RR": true, "auto-SOA": true, "auto-SPF-RR": false, "auto-WILDCARD-A-RR": true, "auto-WILDCARD-AAAA-RR": true, "auto-WILDCARD-MX-RR": true, "auto-WILDCARD-SPF-RR": false, "user-RR": [ "dph-netzwerk.de. 21600 IN TXT \\"v=spf1 include:spf.hostsharing.net ?all\\"", "*.dph-netzwerk.de. 21600 IN TXT \\"v=spf1 include:spf.hostsharing.net ?all\\"" ]})
+                }
+                """);
+
+        assertThat(firstOfEach(12, domainHttpSetupAssets)).isEqualToIgnoringWhitespace("""
+                {
+                   4531=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, l-u-g.org|HTTP, HTTP-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, UNIX_USER:lug00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
+                   4532=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, linuxfanboysngirls.de|HTTP, HTTP-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, UNIX_USER:lug00-wla.2, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
+                   4534=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, lug-mars.de|HTTP, HTTP-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, UNIX_USER:lug00-wla.2, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "www" ]}),
+                   4581=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, 1981.ist-im-netz.de|HTTP, HTTP-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
+                   4587=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, mellis.de|HTTP, HTTP-Setup für mellis.de, DOMAIN_SETUP:mellis.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": false, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "www", "michael", "test", "photos", "static", "input" ]}),
+                   4589=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, ist-im-netz.de|HTTP, HTTP-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": false, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
+                   4600=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, waera.de|HTTP, HTTP-Setup für waera.de, DOMAIN_SETUP:waera.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
+                   4604=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, xn--wra-qla.de|HTTP, HTTP-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, UNIX_USER:mim00, {"autoconfig": false, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": false, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]}),
+                   7662=HsHostingAssetRealEntity(DOMAIN_HTTP_SETUP, dph-netzwerk.de|HTTP, HTTP-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, UNIX_USER:dph00-dph, {"autoconfig": true, "cgi": true, "fastcgi": true, "fcgi-php-bin": "/usr/lib/cgi-bin/php", "greylisting": true, "htdocsfallback": true, "includes": true, "indexes": true, "letsencrypt": true, "multiviews": true, "passenger": true, "passenger-errorpage": false, "passenger-nodejs": "/usr/bin/node", "passenger-python": "/usr/bin/python3", "passenger-ruby": "/usr/bin/ruby", "subdomains": [ "*" ]})
+                }
+                """);
+
+        assertThat(firstOfEach(12, domainMBoxSetupAssets)).isEqualToIgnoringWhitespace("""
+                {
+                   4531=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, l-u-g.org|MBOX, E-Mail-Empfang-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, MANAGED_WEBSPACE:lug00),
+                   4532=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, linuxfanboysngirls.de|MBOX, E-Mail-Empfang-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, MANAGED_WEBSPACE:lug00),
+                   4534=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, lug-mars.de|MBOX, E-Mail-Empfang-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, MANAGED_WEBSPACE:lug00),
+                   4581=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, 1981.ist-im-netz.de|MBOX, E-Mail-Empfang-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, MANAGED_WEBSPACE:mim00),
+                   4587=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, mellis.de|MBOX, E-Mail-Empfang-Setup für mellis.de, DOMAIN_SETUP:mellis.de, MANAGED_WEBSPACE:mim00),
+                   4589=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, ist-im-netz.de|MBOX, E-Mail-Empfang-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, MANAGED_WEBSPACE:mim00),
+                   4600=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, waera.de|MBOX, E-Mail-Empfang-Setup für waera.de, DOMAIN_SETUP:waera.de, MANAGED_WEBSPACE:mim00),
+                   4604=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, xn--wra-qla.de|MBOX, E-Mail-Empfang-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, MANAGED_WEBSPACE:mim00),
+                   7662=HsHostingAssetRealEntity(DOMAIN_MBOX_SETUP, dph-netzwerk.de|MBOX, E-Mail-Empfang-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, MANAGED_WEBSPACE:dph00)
+                }
+                """);
+
+        assertThat(firstOfEach(12, domainSmtpSetupAssets)).isEqualToIgnoringWhitespace("""
+                {
+                   4531=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, l-u-g.org|SMTP, E-Mail-Versand-Setup für l-u-g.org, DOMAIN_SETUP:l-u-g.org, MANAGED_WEBSPACE:lug00),
+                   4532=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, linuxfanboysngirls.de|SMTP, E-Mail-Versand-Setup für linuxfanboysngirls.de, DOMAIN_SETUP:linuxfanboysngirls.de, MANAGED_WEBSPACE:lug00),
+                   4534=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, lug-mars.de|SMTP, E-Mail-Versand-Setup für lug-mars.de, DOMAIN_SETUP:lug-mars.de, MANAGED_WEBSPACE:lug00),
+                   4581=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, 1981.ist-im-netz.de|SMTP, E-Mail-Versand-Setup für 1981.ist-im-netz.de, DOMAIN_SETUP:1981.ist-im-netz.de, MANAGED_WEBSPACE:mim00),
+                   4587=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, mellis.de|SMTP, E-Mail-Versand-Setup für mellis.de, DOMAIN_SETUP:mellis.de, MANAGED_WEBSPACE:mim00),
+                   4589=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, ist-im-netz.de|SMTP, E-Mail-Versand-Setup für ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de, MANAGED_WEBSPACE:mim00),
+                   4600=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, waera.de|SMTP, E-Mail-Versand-Setup für waera.de, DOMAIN_SETUP:waera.de, MANAGED_WEBSPACE:mim00),
+                   4604=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, xn--wra-qla.de|SMTP, E-Mail-Versand-Setup für wära.de, DOMAIN_SETUP:xn--wra-qla.de, MANAGED_WEBSPACE:mim00),
+                   7662=HsHostingAssetRealEntity(DOMAIN_SMTP_SETUP, dph-netzwerk.de|SMTP, E-Mail-Versand-Setup für dph-netzwerk.de, DOMAIN_SETUP:dph-netzwerk.de, MANAGED_WEBSPACE:dph00)
+                }
+                """);
+    }
+
+    @Test
+    @Order(17010)
+    void importEmailAddresses() {
+        try (Reader reader = resourceReader(MIGRATION_DATA_PATH + "/hosting/emailaddr.csv")) {
+            final var lines = readAllLines(reader);
+            importEmailAddresses(justHeader(lines), withoutHeader(lines));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @Order(17029)
+    void verifyEmailAddresses() {
+        assumeThatWeAreImportingControlledTestData();
+
+        assertThat(firstOfEach(12, emailAddressAssets)).isEqualToIgnoringWhitespace("""
+                {
+                   54745=HsHostingAssetRealEntity(EMAIL_ADDRESS, lugmaster@l-u-g.org, lugmaster@l-u-g.org, DOMAIN_MBOX_SETUP:l-u-g.org|MBOX, {"local-part": "lugmaster", "target": [ "nobody" ]}),
+                   54746=HsHostingAssetRealEntity(EMAIL_ADDRESS, abuse@l-u-g.org, abuse@l-u-g.org, DOMAIN_MBOX_SETUP:l-u-g.org|MBOX, {"local-part": "abuse", "target": [ "lug00" ]}),
+                   54747=HsHostingAssetRealEntity(EMAIL_ADDRESS, postmaster@l-u-g.org, postmaster@l-u-g.org, DOMAIN_MBOX_SETUP:l-u-g.org|MBOX, {"local-part": "postmaster", "target": [ "nobody" ]}),
+                   54748=HsHostingAssetRealEntity(EMAIL_ADDRESS, webmaster@l-u-g.org, webmaster@l-u-g.org, DOMAIN_MBOX_SETUP:l-u-g.org|MBOX, {"local-part": "webmaster", "target": [ "nobody" ]}),
+                   54749=HsHostingAssetRealEntity(EMAIL_ADDRESS, abuse@linuxfanboysngirls.de, abuse@linuxfanboysngirls.de, DOMAIN_MBOX_SETUP:linuxfanboysngirls.de|MBOX, {"local-part": "abuse", "target": [ "lug00-mars" ]}),
+                   54750=HsHostingAssetRealEntity(EMAIL_ADDRESS, postmaster@linuxfanboysngirls.de, postmaster@linuxfanboysngirls.de, DOMAIN_MBOX_SETUP:linuxfanboysngirls.de|MBOX, {"local-part": "postmaster", "target": [ "m.hinsel@example.org" ]}),
+                   54751=HsHostingAssetRealEntity(EMAIL_ADDRESS, webmaster@linuxfanboysngirls.de, webmaster@linuxfanboysngirls.de, DOMAIN_MBOX_SETUP:linuxfanboysngirls.de|MBOX, {"local-part": "webmaster", "target": [ "m.hinsel@example.org" ]}),
+                   54755=HsHostingAssetRealEntity(EMAIL_ADDRESS, abuse@lug-mars.de, abuse@lug-mars.de, DOMAIN_MBOX_SETUP:lug-mars.de|MBOX, {"local-part": "abuse", "target": [ "lug00-marl" ]}),
+                   54756=HsHostingAssetRealEntity(EMAIL_ADDRESS, postmaster@lug-mars.de, postmaster@lug-mars.de, DOMAIN_MBOX_SETUP:lug-mars.de|MBOX, {"local-part": "postmaster", "target": [ "m.hinsel@example.org" ]}),
+                   54757=HsHostingAssetRealEntity(EMAIL_ADDRESS, webmaster@lug-mars.de, webmaster@lug-mars.de, DOMAIN_MBOX_SETUP:lug-mars.de|MBOX, {"local-part": "webmaster", "target": [ "m.hinsel@example.org" ]}),
+                   54760=HsHostingAssetRealEntity(EMAIL_ADDRESS, info@hamburg-west.l-u-g.org, info@hamburg-west.l-u-g.org, DOMAIN_MBOX_SETUP:l-u-g.org|MBOX, {"local-part": "info", "sub-domain": "hamburg-west", "target": [ "peter.lottmann@example.com" ]}),
+                   54761=HsHostingAssetRealEntity(EMAIL_ADDRESS, lugmaster@hamburg-west.l-u-g.org, lugmaster@hamburg-west.l-u-g.org, DOMAIN_MBOX_SETUP:l-u-g.org|MBOX, {"local-part": "lugmaster", "sub-domain": "hamburg-west", "target": [ "raoul.lottmann@example.com" ]})
                 }
                 """);
     }
@@ -563,16 +615,90 @@ public class ImportHostingAssets extends ImportOfficeData {
 
     @Test
     @Order(18020)
-    void validateHostingAssets() {
-        hostingAssets.forEach((id, ha) -> {
-            try {
+    void validateIpNumberAssets() {
+        validateHostingAssets(ipNumberAssets);
+    }
+
+    @Test
+    @Order(18021)
+    void validateServerAndWebspaceAssets() {
+        validateHostingAssets(packetAssets);
+    }
+
+    @Test
+    @Order(18022)
+    void validateUnixUserAssets() {
+        validateHostingAssets(unixUserAssets);
+    }
+
+    @Test
+    @Order(18023)
+    void validateEmailAliasAssets() {
+        validateHostingAssets(emailAliasAssets);
+    }
+
+    @Test
+    @Order(18030)
+    void validateDbInstanceAssets() {
+        validateHostingAssets(dbInstanceAssets);
+    }
+
+    @Test
+    @Order(18031)
+    void validateDbUserAssets() {
+        validateHostingAssets(dbUserAssets);
+    }
+    
+    @Test
+    @Order(18032)
+    void validateDbAssets() {
+        validateHostingAssets(dbAssets);
+    }
+
+    @Test
+    @Order(18040)
+    void validateDomainSetupAssets() {
+        validateHostingAssets(domainSetupAssets);
+    }
+
+    @Test
+    @Order(18041)
+    void validateDomainDnsSetupAssets() {
+        validateHostingAssets(domainDnsSetupAssets);
+    }
+
+    @Test
+    @Order(18042)
+    void validateDomainHttpSetupAssets() {
+        validateHostingAssets(domainHttpSetupAssets);
+    }
+
+    @Test
+    @Order(18043)
+    void validateDomainSmtpSetupAssets() {
+        validateHostingAssets(domainSmtpSetupAssets);
+    }
+
+    @Test
+    @Order(18044)
+    void validateDomainMBoxSetupAssets() {
+        validateHostingAssets(domainMBoxSetupAssets);
+    }
+
+    @Test
+    @Order(18050)
+    void validateEmailAddressAssets() {
+        validateHostingAssets(emailAddressAssets);
+    }
+
+    void validateHostingAssets(final Map<Integer, HsHostingAssetRealEntity> assets) {
+        assets.forEach((id, ha) -> {
+            logError(() ->
                 new HostingAssetEntitySaveProcessor(em, ha)
                         .preprocessEntity()
                         .validateEntity()
-                        .prepareForSave();
-            } catch (final Exception exc) {
-                errors.add("validation failed for id:" + id + "( " + ha + "): " + exc.getMessage());
-            }
+                        .prepareForSave()
+            );
         });
     }
 
@@ -583,6 +709,9 @@ public class ImportHostingAssets extends ImportOfficeData {
         if (isImportingControlledTestData()) {
             expectError("zonedata dom_owner of mellis.de is old00 but expected to be mim00");
             expectError("\nexpected: \"vm1068\"\n but was: \"vm1093\"");
+            expectError("['EMAIL_ADDRESS:webmaster@hamburg-west.l-u-g.org.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\.+_-]*)?$, ^([a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)?@[a-zA-Z0-9.-]+$, ^nobody$, ^/dev/null$] but 'raoul.lottmann@example.com peter.lottmann@example.com' does not match any]");
+            expectError("['EMAIL_ADDRESS:abuse@mellis.de.config.target' length is expected to be at min 1 but length of [[]] is 0]");
+            expectError("['EMAIL_ADDRESS:abuse@ist-im-netz.de.config.target' length is expected to be at min 1 but length of [[]] is 0]");
         }
         this.assertNoErrors();
     }
@@ -622,7 +751,7 @@ public class ImportHostingAssets extends ImportOfficeData {
 
         System.out.println("PERSISTING cloud-servers to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
 
-        persistHostingAssetsOfType(CLOUD_SERVER);
+        persistHostingAssets(packetAssets, CLOUD_SERVER);
     }
 
     @Test
@@ -630,7 +759,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistManagedServers() {
         System.out.println("PERSISTING managed-servers to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(MANAGED_SERVER);
+        persistHostingAssets(packetAssets, MANAGED_SERVER);
     }
 
     @Test
@@ -638,7 +767,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistManagedWebspaces() {
         System.out.println("PERSISTING managed-webspaces to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(MANAGED_WEBSPACE);
+        persistHostingAssets(packetAssets, MANAGED_WEBSPACE);
     }
 
     @Test
@@ -646,7 +775,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistIPNumbers() {
         System.out.println("PERSISTING ip-numbers to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(IPV4_NUMBER);
+        persistHostingAssets(ipNumberAssets);
     }
 
     @Test
@@ -654,7 +783,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistUnixUsers() {
         System.out.println("PERSISTING unix-users to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(UNIX_USER);
+        persistHostingAssets(unixUserAssets);
     }
 
     @Test
@@ -662,7 +791,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistEmailAliases() {
         System.out.println("PERSISTING email-aliases to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(EMAIL_ALIAS);
+        persistHostingAssets(emailAliasAssets);
     }
 
     @Test
@@ -670,7 +799,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDatabaseInstances() {
         System.out.println("PERSISTING db-users to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(PGSQL_INSTANCE, MARIADB_INSTANCE);
+        persistHostingAssets(dbInstanceAssets);
     }
 
     @Test
@@ -678,7 +807,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDatabaseUsers() {
         System.out.println("PERSISTING db-users to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(PGSQL_USER, MARIADB_USER);
+        persistHostingAssets(dbUserAssets);
     }
 
     @Test
@@ -686,7 +815,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDatabases() {
         System.out.println("PERSISTING databases to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(PGSQL_DATABASE, MARIADB_DATABASE);
+        persistHostingAssets(dbAssets);
     }
 
     @Test
@@ -694,7 +823,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDomainSetups() {
         System.out.println("PERSISTING domain setups to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(DOMAIN_SETUP);
+        persistHostingAssets(domainSetupAssets);
     }
 
     @Test
@@ -702,7 +831,8 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDomainDnsSetups() {
         System.out.println("PERSISTING domain DNS setups to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(DOMAIN_DNS_SETUP);
+        HsDomainDnsSetupHostingAssetValidator.addZonefileErrorsTo(zonefileErrors);
+        persistHostingAssets(domainDnsSetupAssets);
     }
 
     @Test
@@ -710,7 +840,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDomainHttpSetups() {
         System.out.println("PERSISTING domain HTTP setups to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(DOMAIN_HTTP_SETUP);
+        persistHostingAssets(domainHttpSetupAssets);
     }
 
     @Test
@@ -718,7 +848,7 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDomainMboxSetups() {
         System.out.println("PERSISTING domain MBOX setups to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(DOMAIN_MBOX_SETUP);
+        persistHostingAssets(domainMBoxSetupAssets);
     }
 
     @Test
@@ -726,7 +856,15 @@ public class ImportHostingAssets extends ImportOfficeData {
     @Commit
     void persistDomainSmtpSetups() {
         System.out.println("PERSISTING domain SMTP setups to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
-        persistHostingAssetsOfType(DOMAIN_SMTP_SETUP);
+        persistHostingAssets(domainSmtpSetupAssets);
+    }
+
+    @Test
+    @Order(19400)
+    @Commit
+    void persistEmailAddresses() {
+        System.out.println("PERSISTING email-aliases to database '" + jdbcUrl + "' as user '" + postgresAdminUser + "'");
+        persistHostingAssets(emailAddressAssets);
     }
 
     @Test
@@ -734,22 +872,22 @@ public class ImportHostingAssets extends ImportOfficeData {
     void verifyPersistedUnixUsersWithUserId() {
         assumeThatWeAreImportingControlledTestData();
 
-        assertThat(firstOfEachType(15, UNIX_USER)).isEqualToIgnoringWhitespace("""
+        assertThat(firstOfEach(15, unixUserAssets)).isEqualToIgnoringWhitespace("""
                 {
-                   4005803=HsHostingAssetRealEntity(UNIX_USER, lug00, LUGs, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102090}),
-                   4005805=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.1, Paul Klemm, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102091}),
-                   4005809=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.2, Walter Müller, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 8, "SSD soft quota": 4, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102093}),
-                   4005811=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102094}),
-                   4005813=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102095}),
-                   4005835=HsHostingAssetRealEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, { "SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102106}),
-                   4005964=HsHostingAssetRealEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102147}),
-                   4005966=HsHostingAssetRealEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102148}),
-                   4005990=HsHostingAssetRealEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102160}),
-                   4100705=HsHostingAssetRealEntity(UNIX_USER, hsh00-mim, Michael Mellis, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/false", "userid": 10003}),
-                   4100824=HsHostingAssetRealEntity(UNIX_USER, hsh00, Hostsharing Paket, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 10000}),
-                   4167846=HsHostingAssetRealEntity(UNIX_USER, hsh00-dph, hsh00-uph, MANAGED_WEBSPACE:hsh00, { "HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/false", "userid": 110568}),
-                   4169546=HsHostingAssetRealEntity(UNIX_USER, dph00, Reinhard Wiese, MANAGED_WEBSPACE:dph00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 110593}),
-                   4169596=HsHostingAssetRealEntity(UNIX_USER, dph00-dph, Domain admin, MANAGED_WEBSPACE:dph00, { "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 110594})
+                   5803=HsHostingAssetRealEntity(UNIX_USER, lug00, LUGs, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102090}),
+                   5805=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.1, Paul Klemm, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102091}),
+                   5809=HsHostingAssetRealEntity(UNIX_USER, lug00-wla.2, Walter Müller, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 8, "SSD soft quota": 4, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102093}),
+                   5811=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102094}),
+                   5813=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102095}),
+                   5835=HsHostingAssetRealEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102106}),
+                   5964=HsHostingAssetRealEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102147}),
+                   5966=HsHostingAssetRealEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102148}),
+                   5990=HsHostingAssetRealEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102160}),
+                   6705=HsHostingAssetRealEntity(UNIX_USER, hsh00-mim, Michael Mellis, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/false", "userid": 10003}),
+                   6824=HsHostingAssetRealEntity(UNIX_USER, hsh00, Hostsharing Paket, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 10000}),
+                   7846=HsHostingAssetRealEntity(UNIX_USER, hsh00-dph, hsh00-uph, MANAGED_WEBSPACE:hsh00, {"HDD hard quota": 0, "HDD soft quota": 0, "SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/false", "userid": 110568}),
+                   9546=HsHostingAssetRealEntity(UNIX_USER, dph00, Reinhard Wiese, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 110593}),
+                   9596=HsHostingAssetRealEntity(UNIX_USER, dph00-dph, Domain admin, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 110594})
                 }
                 """);
     }
@@ -768,6 +906,16 @@ public class ImportHostingAssets extends ImportOfficeData {
         final var haCount = (Integer) em.createNativeQuery("select count(*) from hs_hosting_asset", Integer.class)
                 .getSingleResult();
         assertThat(haCount).isGreaterThan(isImportingControlledTestData() ? 40 : 15000);
+
+        verifyActuallyPersistedHostingAssetCount(CLOUD_SERVER, 1, 50);
+        verifyActuallyPersistedHostingAssetCount(MANAGED_SERVER, 4, 100);
+        verifyActuallyPersistedHostingAssetCount(MANAGED_WEBSPACE, 4, 100);
+        verifyActuallyPersistedHostingAssetCount(UNIX_USER, 14, 100);
+        verifyActuallyPersistedHostingAssetCount(EMAIL_ALIAS, 9, 1400);
+        verifyActuallyPersistedHostingAssetCount(PGSQL_DATABASE, 8, 100);
+        verifyActuallyPersistedHostingAssetCount(MARIADB_DATABASE, 8, 100);
+        verifyActuallyPersistedHostingAssetCount(DOMAIN_SETUP, 9, 100);
+        verifyActuallyPersistedHostingAssetCount(EMAIL_ADDRESS, 71, 30000);
     }
 
     // ============================================================================================
@@ -787,6 +935,12 @@ public class ImportHostingAssets extends ImportOfficeData {
         assertNoErrors();
     }
 
+    // ============================================================================================
+
+    private String vmName(final String zonenfileName) {
+        return zonenfileName.substring(zonenfileName.length() - "vm0000.json".length()).substring(0, 6);
+    }
+
     private void persistRecursively(final Integer key, final HsBookingItemEntity bi) {
         if (bi.getParentItem() != null) {
             persistRecursively(key, HsBookingItemEntityValidatorRegistry.validated(bi.getParentItem()));
@@ -794,30 +948,50 @@ public class ImportHostingAssets extends ImportOfficeData {
         persist(key, HsBookingItemEntityValidatorRegistry.validated(bi));
     }
 
-    // ============================================================================================
+    private void persistHostingAssets(final Map<Integer, HsHostingAssetRealEntity> assets) {
+        persistHostingAssets(assets, null);
+    }
 
-    private void persistHostingAssetsOfType(final HsHostingAssetType... hsHostingAssetTypes) {
-        final var hsHostingAssetTypeSet = stream(hsHostingAssetTypes).collect(toSet());
+    private void persistHostingAssets(final Map<Integer, HsHostingAssetRealEntity> assets, final HsHostingAssetType type) {
+        final var assetsOfType = assets.entrySet().stream()
+                .filter(entry -> type == null || type == entry.getValue().getType())
+                .toList();
+        final var chunkSize = isImportingControlledTestData() ? 10 : 500;
+        ListUtils.partition(assetsOfType, chunkSize).forEach(chunk ->
+                jpaAttempt.transacted(() -> {
+                            context(rbacSuperuser);
+                            chunk.forEach(entry ->
+                                    logError(() ->
+                                            new HostingAssetEntitySaveProcessor(em, entry.getValue())
+                                                    .preprocessEntity()
+                                                    .validateEntityIgnoring(
+                                                            "'EMAIL_ALIAS:.*\\.config\\.target' .*",
+                                                            "'EMAIL_ADDRESS:.*\\.config\\.target' .*"
+                                                    )
+                                                    .prepareForSave()
+                                                    .saveUsing(entity -> persist(entry.getKey(), entity))
+                                                    .validateContext()
+                                    ));
+                        }
+                ).assertSuccessful()
+        );
+    }
 
-        if (hsHostingAssetTypeSet.contains(DOMAIN_DNS_SETUP)) {
-            HsDomainDnsSetupHostingAssetValidator.addZonefileErrorsTo(zonefileErrors);
+    private void verifyActuallyPersistedHostingAssetCount(
+            final HsHostingAssetType assetType,
+            final int expectedCountInTestDataCount,
+            final int minCountExpectedInProdData) {
+        final var q = em.createNativeQuery(
+                "select count(*) from hs_hosting_asset where type = cast(:type as HsHostingAssetType)",
+                Integer.class);
+        q.setParameter("type", assetType.name());
+        final var count = (Integer) q.getSingleResult();
+        if (isImportingControlledTestData()) {
+            assertThat(count).isEqualTo(expectedCountInTestDataCount);
+        } else {
+            assertThat(count).isGreaterThanOrEqualTo(minCountExpectedInProdData);
         }
 
-        jpaAttempt.transacted(() ->
-                hostingAssets.forEach((key, ha) -> {
-                    if (hsHostingAssetTypeSet.contains(ha.getType())) {
-                        context(rbacSuperuser); // if put only outside the loop, it seems to get lost after a while, no idea why
-                        logError(() ->
-                                new HostingAssetEntitySaveProcessor(em, ha)
-                                        .preprocessEntity()
-                                        .validateEntityIgnoring("'EMAIL_ALIAS:.*\\.config\\.target' .*")
-                                        .prepareForSave()
-                                        .saveUsing(entity -> persist(key, entity))
-                                        .validateContext()
-                        );
-                    }
-                })
-        ).assertSuccessful();
     }
 
     private void importIpNumbers(final String[] header, final List<String[]> records) {
@@ -831,7 +1005,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .identifier(rec.getString("inet_addr"))
                             .caption(rec.getString("description"))
                             .build();
-                    hostingAssets.put(IP_NUMBER_ID_OFFSET + rec.getInteger("inet_addr_id"), ipNumber);
+                    ipNumberAssets.put(rec.getInteger("inet_addr_id"), ipNumber);
                 });
     }
 
@@ -847,7 +1021,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             rec.getString("hive_name"),
                             rec.getInteger("inet_addr_id"),
                             new AtomicReference<>());
-                    hives.put(HIVE_ID_OFFSET + hive_id, hive);
+                    hives.put(hive_id, hive);
                 });
     }
 
@@ -879,7 +1053,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .project(bookingProjects.get(bp_id))
                             .validity(toPostgresDateRange(created, cancelled))
                             .build();
-                    bookingItems.put(PACKET_ID_OFFSET + packet_id, bookingItem);
+                    bookingItems.put(packet_id, bookingItem);
                     final var haType = determineHaType(basepacket_code);
 
                     logError(() -> assertThat(!free || haType == MANAGED_WEBSPACE || bookingItem.getRelatedProject()
@@ -898,11 +1072,10 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .bookingItem(bookingItem)
                             .caption("HA " + packet_name)
                             .build();
-                    hostingAssets.put(PACKET_ID_OFFSET + packet_id, asset);
+                    packetAssets.put(packet_id, asset);
                     if (haType == MANAGED_SERVER) {
                         hive(hive_id).serverRef.set(asset);
                     }
-
                     if (cur_inet_addr_id != null) {
                         ipNumber(cur_inet_addr_id).setAssignedToAsset(asset);
                     }
@@ -1032,7 +1205,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                     final var packet_id = rec.getInteger("packet_id");
                     final var unixUserAsset = HsHostingAssetRealEntity.builder()
                             .type(UNIX_USER)
-                            .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
+                            .parentAsset(packetAssets.get(packet_id))
                             .identifier(rec.getString("name"))
                             .caption(rec.getString("comment"))
                             .isLoaded(true) // avoid overwriting imported userids with generated ids
@@ -1076,7 +1249,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                         unixUserAsset.getConfig().remove("HDD soft quota");
                     }
 
-                    hostingAssets.put(UNIXUSER_ID_OFFSET + unixuser_id, unixUserAsset);
+                    unixUserAssets.put(unixuser_id, unixUserAsset);
                 });
     }
 
@@ -1086,19 +1259,19 @@ public class ImportHostingAssets extends ImportOfficeData {
                 .map(this::trimAll)
                 .map(row -> new Record(columns, row))
                 .forEach(rec -> {
-                    final var unixuser_id = rec.getInteger("emailalias_id");
+                    final var emailalias_id = rec.getInteger("emailalias_id");
                     final var packet_id = rec.getInteger("pac_id");
                     final var targets = parseCsvLine(rec.getString("target"));
-                    final var unixUserAsset = HsHostingAssetRealEntity.builder()
+                    final var emailAliasAsset = HsHostingAssetRealEntity.builder()
                             .type(EMAIL_ALIAS)
-                            .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
+                            .parentAsset(packetAssets.get(packet_id))
                             .identifier(rec.getString("name"))
                             .caption(rec.getString("name"))
                             .config(ofEntries(
                                     entry("target", targets)
                             ))
                             .build();
-                    hostingAssets.put(EMAILALIAS_ID_OFFSET + unixuser_id, unixUserAsset);
+                    emailAliasAssets.put(emailalias_id, emailAliasAsset);
                 });
     }
 
@@ -1116,7 +1289,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                     .caption(pa.getIdentifier() + "-PostgreSQL default instance")
                     .build();
             pa.getSubHostingAssets().add(pgSqlInstanceAsset);
-            hostingAssets.put(DBINSTANCE_ID_OFFSET + idRef.getAndIncrement(), pgSqlInstanceAsset);
+            dbInstanceAssets.put(idRef.getAndIncrement(), pgSqlInstanceAsset);
 
             final var mariaDbInstanceAsset = HsHostingAssetRealEntity.builder()
                     .type(MARIADB_INSTANCE)
@@ -1125,7 +1298,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                     .caption(pa.getIdentifier() + "-MariaDB default instance")
                     .build();
             pa.getSubHostingAssets().add(mariaDbInstanceAsset);
-            hostingAssets.put(DBINSTANCE_ID_OFFSET + idRef.getAndIncrement(), mariaDbInstanceAsset);
+            dbInstanceAssets.put(idRef.getAndIncrement(), mariaDbInstanceAsset);
         });
     }
 
@@ -1151,14 +1324,14 @@ public class ImportHostingAssets extends ImportOfficeData {
                     final HsHostingAssetType dbInstanceAssetType = "mysql".equals(engine) ? MARIADB_INSTANCE
                             : "pgsql".equals(engine) ? PGSQL_INSTANCE
                             : failWith("unknown DB engine " + engine);
-                    final var relatedWebspaceHA = hostingAssets.get(PACKET_ID_OFFSET + packet_id).getParentAsset();
+                    final var relatedWebspaceHA = packetAssets.get(packet_id).getParentAsset();
                     final var dbInstanceAsset = relatedWebspaceHA.getSubHostingAssets().stream()
                             .filter(ha -> ha.getType() == dbInstanceAssetType)
                             .findAny().orElseThrow(); // there is exactly one: the default instance for the given type
 
                     final var dbUserAsset = HsHostingAssetRealEntity.builder()
                             .type(dbUserAssetType)
-                            .parentAsset(hostingAssets.get(PACKET_ID_OFFSET + packet_id))
+                            .parentAsset(packetAssets.get(packet_id))
                             .assignedToAsset(dbInstanceAsset)
                             .identifier(dbUserAssetType.name().substring(0, 2) + "U|" + name)
                             .caption(name)
@@ -1167,7 +1340,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             )))
                             .build();
                     dbUsersByEngineAndName.put(engine + ":" + name, dbUserAsset);
-                    hostingAssets.put(DBUSER_ID_OFFSET + dbuser_id, dbUserAsset);
+                    dbUserAssets.put(dbuser_id, dbUserAsset);
                 });
     }
 
@@ -1198,7 +1371,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                                             type == MARIADB_DATABASE ? encoding.toLowerCase() : encoding.toUpperCase())
                             ))
                             .build();
-                    hostingAssets.put(DB_ID_OFFSET + database_id, dbAsset);
+                    dbAssets.put(database_id, dbAsset);
                 });
     }
 
@@ -1212,8 +1385,8 @@ public class ImportHostingAssets extends ImportOfficeData {
                 .forEach(rec -> {
                     final var domain_id = rec.getInteger("domain_id");
                     final var domain_name = rec.getString("domain_name");
-                    // final var domain_since = rec.getString("domain_since");
-                    // final var domain_dns_master = rec.getString("domain_dns_master");
+                    // final var domain_since = rec.getString("domain_since"); TODO.spec: to related BookingItem?
+                    // final var domain_dns_master = rec.getString("domain_dns_master"); TODO.spec: do we need this and where?
                     final var owner_id = rec.getInteger("domain_owner");
                     final var domainoptions = rec.getString("domainoptions");
 
@@ -1228,11 +1401,11 @@ public class ImportHostingAssets extends ImportOfficeData {
                             ))
                             .build();
                     domainSetupsByName.put(domain_name, domainSetupAsset);
-                    hostingAssets.put(DOMAIN_SETUP_OFFSET + domain_id, domainSetupAsset);
+                    domainSetupAssets.put(domain_id, domainSetupAsset);
                     domainSetupAsset.setSubHostingAssets(new ArrayList<>());
 
                     // Domain DNS Setup
-                    final var ownerAsset = hostingAssets.get(UNIXUSER_ID_OFFSET + owner_id);
+                    final var ownerAsset = unixUserAssets.get(owner_id);
                     final var webspaceAsset = ownerAsset.getParentAsset();
                     assertThat(webspaceAsset.getType()).isEqualTo(MANAGED_WEBSPACE);
                     final var domainDnsSetupAsset = HsHostingAssetRealEntity.builder()
@@ -1243,7 +1416,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .caption("DNS-Setup für " + IDN.toUnicode(domain_name))
                             .config(new HashMap<>()) // is read from separate files
                             .build();
-                    hostingAssets.put(DOMAIN_DNS_SETUP_OFFSET + domain_id, domainDnsSetupAsset);
+                    domainDnsSetupAssets.put(domain_id, domainDnsSetupAsset);
                     domainSetupAsset.getSubHostingAssets().add(domainDnsSetupAsset);
 
                     // Domain HTTP Setup
@@ -1282,7 +1455,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                                             httpDomainSetupValidator.getProperty("passenger-ruby").defaultValue()))
                             ))
                             .build();
-                    hostingAssets.put(DOMAIN_HTTP_SETUP_OFFSET + domain_id, domainHttpSetupAsset);
+                    domainHttpSetupAssets.put(domain_id, domainHttpSetupAsset);
                     domainSetupAsset.getSubHostingAssets().add(domainHttpSetupAsset);
 
                     // Domain MBOX Setup
@@ -1295,8 +1468,9 @@ public class ImportHostingAssets extends ImportOfficeData {
                             .config(ofEntries(
                                     // no properties available
                             ))
+                            .subHostingAssets(new ArrayList<>())
                             .build();
-                    hostingAssets.put(DOMAIN_MBOX_SETUP_OFFSET + domain_id, domainMboxSetupAsset);
+                    domainMBoxSetupAssets.put(domain_id, domainMboxSetupAsset);
                     domainSetupAsset.getSubHostingAssets().add(domainMboxSetupAsset);
 
                     // Domain SMTP Setup
@@ -1310,7 +1484,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                                     // no properties available
                             ))
                             .build();
-                    hostingAssets.put(DOMAIN_SMTP_SETUP_OFFSET + domain_id, domainSmtpSetupAsset);
+                    domainSmtpSetupAssets.put(domain_id, domainSmtpSetupAsset);
                     domainSetupAsset.getSubHostingAssets().add(domainSmtpSetupAsset);
                 });
 
@@ -1378,6 +1552,53 @@ public class ImportHostingAssets extends ImportOfficeData {
         });
     }
 
+    private void importEmailAddresses(final String[] header, final List<String[]> records) {
+        final var columns = new Columns(header);
+        records.stream()
+                .map(this::trimAll)
+                .map(row -> new Record(columns, row))
+                .forEach(rec -> {
+                    // emailaddr_id;domain_id;localpart;subdomain;target
+                    final var emailaddr_id = rec.getInteger("emailaddr_id");
+                    final var domain_id = rec.getInteger("domain_id");
+                    final var localpart = rec.getString("localpart");
+                    final var subdomain = rec.getString("subdomain");
+                    final var targets = stream(parseCsvLine(rec.getString("target")))
+                            .map(t -> NOBODY_SUBSTITUTES.contains(t) ? "nobody" : t)
+                            .toArray(String[]::new);
+                    final var domainMboxSetup = domainMBoxSetupAssets.get(domain_id);
+                    final var domainSetup = domainMboxSetup.getParentAsset();
+                    final var emailAddress = localpart + "@" +
+                            (subdomain != null && !subdomain.isBlank() ? subdomain + "." : "") + domainSetup.getIdentifier();
+                    final var emailAddressAsset = HsHostingAssetRealEntity.builder()
+                            .type(EMAIL_ADDRESS)
+                            .parentAsset(domainMboxSetup)
+                            .identifier(emailAddress)
+                            .caption(emailAddress)
+                            .config(ofNonNullEntries(
+                                    entryIfNotNull("local-part", localpart),
+                                    entryIfNotNull("sub-domain", subdomain),
+                                    entry("target", targets)
+                            ))
+                            .build();
+                    emailAddressAssets.put(emailaddr_id, emailAddressAsset);
+                    domainMboxSetup.getSubHostingAssets().add(emailAddressAsset);
+                });
+    }
+
+    @SafeVarargs
+    private static Map<String, Object> ofNonNullEntries(final Map.Entry<String, Object>... entries) {
+        //noinspection unchecked
+        return ofEntries(stream(entries).filter(Objects::nonNull).toArray(Map.Entry[]::new));
+    }
+
+    private static Map.Entry<String, Object> entryIfNotNull(final String key, final @Nullable String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return entry(key, value);
+    }
+
     // ============================================================================================
 
     <V> V returning(
@@ -1408,26 +1629,31 @@ public class ImportHostingAssets extends ImportOfficeData {
     }
 
     private static HsHostingAssetRealEntity ipNumber(final Integer inet_addr_id) {
-        return inet_addr_id != null ? hostingAssets.get(IP_NUMBER_ID_OFFSET + inet_addr_id) : null;
+        return inet_addr_id != null ? ipNumberAssets.get(inet_addr_id) : null;
     }
 
     private static Hive hive(final Integer hive_id) {
-        return hive_id != null ? hives.get(HIVE_ID_OFFSET + hive_id) : null;
+        return hive_id != null ? hives.get(hive_id) : null;
     }
 
     private static HsHostingAssetRealEntity pac(final Integer packet_id) {
-        return packet_id != null ? hostingAssets.get(PACKET_ID_OFFSET + packet_id) : null;
+        return packet_id != null ? packetAssets.get(packet_id) : null;
     }
 
-    private String firstOfEachType(
+    private String firstOfEach(
             final int maxCount,
-            final HsHostingAssetType... types) {
-        return toJsonFormattedString(stream(types)
-                .flatMap(t ->
-                        hostingAssets.entrySet().stream()
-                                .filter(hae -> hae.getValue().getType() == t)
-                                .limit(maxCount)
-                )
+            final Map<Integer, HsHostingAssetRealEntity> assets) {
+        return toJsonFormattedString(assets.entrySet().stream().limit(maxCount)
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, ImportHostingAssets::uniqueKeys, TreeMap::new)));
+    }
+
+    private String firstOfEach(
+            final int maxCount,
+            final Map<Integer, HsHostingAssetRealEntity> assets,
+            final HsHostingAssetType type) {
+        return toJsonFormattedString(assets.entrySet().stream()
+                .filter(hae -> hae.getValue().getType() == type)
+                .limit(maxCount)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, ImportHostingAssets::uniqueKeys, TreeMap::new)));
     }
 

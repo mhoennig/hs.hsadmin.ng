@@ -126,7 +126,7 @@ SELECT calls,
     query
 FROM statements
 WHERE calls > 100 AND shared_blks_hit > 0
-ORDER BY total_exec_time_mins DESC
+ORDER BY total_exec_time DESC
 LIMIT 16;
 ```
 

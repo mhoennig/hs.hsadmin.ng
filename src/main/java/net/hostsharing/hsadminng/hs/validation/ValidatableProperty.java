@@ -34,7 +34,7 @@ import static org.apache.commons.lang3.ObjectUtils.isArray;
 public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T> {
 
     protected static final String[] KEY_ORDER_HEAD = Array.of("propertyName");
-    protected static final String[] KEY_ORDER_TAIL = Array.of("required", "requiresAtLeastOneOf", "requiresAtMaxOneOf", "defaultValue", "readOnly", "writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
+    protected static final String[] KEY_ORDER_TAIL = Array.of("required", "requiresAtLeastOneOf", "requiresAtMaxOneOf", "defaultValue", "readOnly", "writeOnce","writeOnly", "computed", "isTotalsValidator", "thresholdPercentage");
     protected static final String[] KEY_ORDER = Array.join(KEY_ORDER_HEAD, KEY_ORDER_TAIL);
 
     final Class<T> type;
@@ -65,6 +65,9 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
 
     @Accessors(makeFinal = true, chain = true, fluent = false)
     private boolean writeOnly;
+
+    @Accessors(makeFinal = true, chain = true, fluent = false)
+    private boolean writeOnce;
 
     private Function<ValidatableProperty<?, ?>[], T[]> deferredInit;
     private boolean isTotalsValidator = false;
@@ -97,7 +100,11 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
 
     public P writeOnly() {
         this.writeOnly = true;
-        optional();
+        return self();
+    }
+
+    public P writeOnce() {
+        this.writeOnce = true;
         return self();
     }
 
@@ -198,6 +205,9 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
             if (required == TRUE) {
                 result.add(propertyName + "' is required but missing");
             }
+            if (isWriteOnce() && propsProvider.isLoaded() && propsProvider.isPatched(propertyName) ) {
+                result.add(propertyName + "' is write-once but got removed");
+            }
             validateRequiresAtLeastOneOf(result, propsProvider);
         }
         if (propValue != null){
@@ -239,17 +249,33 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
         }
     }
 
-    protected abstract void validate(final List<String> result, final T propValue, final PropertiesProvider propProvider);
+    protected void validate(final List<String> result, final T propValue, final PropertiesProvider propProvider) {
+        if (isReadOnly() && propValue != null) {
+            result.add(propertyName + "' is readonly but given as " + display(propValue));
+        }
+        if (isWriteOnce() && propProvider.isLoaded() && propValue != null && propProvider.isPatched(propertyName) ) {
+            result.add(propertyName + "' is write-once but given as " + display(propValue));
+        }
+    }
 
     public void verifyConsistency(final Map.Entry<? extends Enum<?>, ?> typeDef) {
-        if (required == null && requiresAtLeastOneOf == null && requiresAtMaxOneOf == null && !readOnly && defaultValue == null) {
+        if (isSpecPotentiallyComplete()) {
             throw new IllegalStateException(typeDef.getKey() + "[" + propertyName + "] not fully initialized, please call either .readOnly(), .required(), .optional(), .withDefault(...), .requiresAtLeastOneOf(...) or .requiresAtMaxOneOf(...)" );
         }
+    }
+
+    private boolean isSpecPotentiallyComplete() {
+        return required == null && requiresAtLeastOneOf == null && requiresAtMaxOneOf == null && !readOnly && !writeOnly
+                && defaultValue == null;
     }
 
     @SuppressWarnings("unchecked")
     public T getValue(final Map<String, Object> propValues) {
         return (T) Optional.ofNullable(propValues.get(propertyName)).orElse(defaultValue);
+    }
+
+    protected String display(final T propValue) {
+        return propValue == null ? null : propValue.toString();
     }
 
     protected abstract String simpleTypeName();

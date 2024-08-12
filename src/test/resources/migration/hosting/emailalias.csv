@@ -1,10 +1,10 @@
 emailalias_id;pac_id;name;target
-2403;1094;lug00;michael.mellis@example.com
-2405;1094;lug00-wla-listar;|/home/pacs/lug00/users/in/mailinglist/listar
-2429;1112;mim00;mim12-mi@mim12.hostsharing.net
-2431;1112;mim00-abruf;michael.mellis@hostsharing.net
-2449;1112;mim00-hhfx;"mim00-hhfx,""|/usr/bin/formail -I 'Reply-To: hamburger-fx@example.net' | /usr/lib/sendmail mim00-hhfx-l"""
-2451;1112;mim00-hhfx-l;:include:/home/pacs/mim00/etc/hhfx.list
-2454;1112;mim00-dev.null; /dev/null
-2455;1112;mim00-1_with_space;" ""|/home/pacs/mim00/install/corpslistar/listar"""
-2456;1112;mim00-1_with_single_quotes;'|/home/pacs/rir00/mailinglist/ecartis -r kybs06-intern'
+2403;11094;lug00;michael.mellis@example.com
+2405;11094;lug00-wla-listar;|/home/pacs/lug00/users/in/mailinglist/listar
+2429;11112;mim00;mim12-mi@mim12.hostsharing.net
+2431;11112;mim00-abruf;michael.mellis@hostsharing.net
+2449;11112;mim00-hhfx;"mim00-hhfx,""|/usr/bin/formail -I 'Reply-To: hamburger-fx@example.net' | /usr/lib/sendmail mim00-hhfx-l"""
+2451;11112;mim00-hhfx-l;:include:/home/pacs/mim00/etc/hhfx.list
+2454;11112;mim00-dev.null; /dev/null
+2455;11112;mim00-1_with_space;" ""|/home/pacs/mim00/install/corpslistar/listar"""
+2456;11112;mim00-1_with_single_quotes;'|/home/pacs/rir00/mailinglist/ecartis -r kybs06-intern'

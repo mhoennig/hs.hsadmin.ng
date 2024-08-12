@@ -34,7 +34,7 @@ public abstract class PatchUnitTestBase<R, E> {
 
     @Test
     @SuppressWarnings("unchecked")
-    void willPatchAllProperties() {
+    protected void willPatchAllProperties() {
         // given
         final var givenEntity = newInitialEntity();
         final var patchResource = newPatchResource();
@@ -55,7 +55,7 @@ public abstract class PatchUnitTestBase<R, E> {
 
     @ParameterizedTest
     @MethodSource("propertyTestCases")
-    void willPatchOnlyGivenProperty(final Property<R, Object, E, Object> testCase) {
+    protected void willPatchOnlyGivenProperty(final Property<R, Object, E, Object> testCase) {
 
         // given
         final var givenEntity = newInitialEntity();

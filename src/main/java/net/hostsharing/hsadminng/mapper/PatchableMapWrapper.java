@@ -7,7 +7,9 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -23,6 +25,7 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
             .configure(SerializationFeature.INDENT_OUTPUT, true);
 
     private final Map<String, T> delegate;
+    private final Set<String> patched = new HashSet<>();
 
     private PatchableMapWrapper(final Map<String, T> map) {
         delegate = map;
@@ -36,6 +39,10 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         });
     }
 
+    public static <T> PatchableMapWrapper<T> of(final  Map<String, T> delegate) {
+        return new PatchableMapWrapper<T>(delegate);
+    }
+
     @NotNull
     public static <E> ImmutablePair<String, E> entry(final String key, final E value) {
         return new ImmutablePair<>(key, value);
@@ -45,6 +52,7 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         if (entries != null ) {
             delegate.clear();
             delegate.putAll(entries);
+            patched.clear();
         }
     }
 
@@ -56,6 +64,10 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
                 put(key, value);
             }
         });
+    }
+
+    public boolean isPatched(final String propertyName) {
+        return patched.contains(propertyName);
     }
 
     @SneakyThrows
@@ -92,11 +104,17 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
 
     @Override
     public T put(final String key, final T value) {
+        if (!Objects.equals(value, delegate.get(key))) {
+            patched.add(key);
+        }
         return delegate.put(key, value);
     }
 
     @Override
     public T remove(final Object key) {
+        if (delegate.containsKey(key.toString())) {
+            patched.add(key.toString());
+        }
         return delegate.remove(key);
     }
 
@@ -107,20 +125,24 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
 
     @Override
     public void clear() {
+        patched.addAll(delegate.keySet());
         delegate.clear();
     }
 
     @Override
+    @NotNull
     public Set<String> keySet() {
         return delegate.keySet();
     }
 
     @Override
+    @NotNull
     public Collection<T> values() {
         return delegate.values();
     }
 
     @Override
+    @NotNull
     public Set<Entry<String, T>> entrySet() {
         return delegate.entrySet();
     }

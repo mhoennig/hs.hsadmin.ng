@@ -189,15 +189,11 @@ begin
                     select g.descendantUuid, g.ascendantUuid, level + 1 as level
                         from RbacGrants g
                                  inner join grants on grants.descendantUuid = g.ascendantUuid
-                        where g.assumed
-                ),
-                granted as (
-                   select distinct descendantUuid
-                       from grants
+                        where g.assumed and level<10
                 )
                 select distinct perm.objectUuid as objectUuid
-                    from granted
-                             join RbacPermission perm on granted.descendantUuid = perm.uuid
+                    from grants
+                             join RbacPermission perm on grants.descendantUuid = perm.uuid
                              join RbacObject obj on obj.uuid = perm.objectUuid
                     where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
                     limit 8001

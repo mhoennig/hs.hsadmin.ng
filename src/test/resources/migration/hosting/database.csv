@@ -1,8 +1,8 @@
 database_id;engine;packet_id;name;owner;encoding
 
-77;pgsql;630;hsh00_vorstand;hsh00_vorstand;LATIN1
-786;mysql;630;hsh00_addr;hsh00;latin1
-805;mysql;630;hsh00_db2;hsh00;LATIN-1
+1077;pgsql;630;hsh00_vorstand;hsh00_vorstand;LATIN1
+1786;mysql;630;hsh00_addr;hsh00;latin1
+1805;mysql;630;hsh00_dba;hsh00;LATIN-1
 
 1858;pgsql;630;hsh00;hsh00;LATIN1
 1860;pgsql;630;hsh00_hsadmin;hsh00_hsadmin;UTF8

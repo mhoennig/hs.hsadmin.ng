@@ -14,7 +14,7 @@ public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAsset
     private final EntityManager em;
     private final HsHostingAssetEntity entity;
 
-    HsHostingAssetEntityPatcher(final EntityManager em, final HsHostingAssetEntity entity) {
+    public HsHostingAssetEntityPatcher(final EntityManager em, final HsHostingAssetEntity entity) {
         this.em = em;
         this.entity = entity;
     }

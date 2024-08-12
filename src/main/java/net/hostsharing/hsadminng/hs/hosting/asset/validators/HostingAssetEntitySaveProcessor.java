@@ -6,8 +6,10 @@ import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 
 import jakarta.persistence.EntityManager;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * Wraps the steps of the pararation, validation, mapping and revamp around saving of a HsHostingAsset into a readable API.
@@ -40,12 +42,14 @@ public class HostingAssetEntitySaveProcessor {
         return this;
     }
 
+    // TODO.impl: remove once the migration of legacy data is done
     /// validates the entity itself including its properties, but ignoring some error messages for import of legacy data
-    public HostingAssetEntitySaveProcessor validateEntityIgnoring(final String ignoreRegExp) {
+    public HostingAssetEntitySaveProcessor validateEntityIgnoring(final String... ignoreRegExp) {
         step("validateEntity", "prepareForSave");
+        final var ignoreRegExpPatterns = Arrays.stream(ignoreRegExp).map(Pattern::compile).toList();
         MultiValidationException.throwIfNotEmpty(
                 validator.validateEntity(entity).stream()
-                        .filter(errorMsg -> !errorMsg.matches(ignoreRegExp))
+                        .filter(error -> ignoreRegExpPatterns.stream().noneMatch(p -> p.matcher(error).matches() ))
                         .toList()
         );
         return this;

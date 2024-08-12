@@ -546,7 +546,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "caption": "some patched test-unix-user",
+                                "caption" : "some patched test-unix-user",
                                 "config": {
                                     "shell": "/bin/bash",
                                     "totpKey": "0x1234567890abcdef0123456789abcdef",
@@ -588,7 +588,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             }).returnedValue()).isPresent().get()
                     .matches(asset -> {
                         assertThat(asset.getCaption()).isEqualTo("some patched test-unix-user");
-                        assertThat(asset.getConfig().toString()).isEqualTo("""
+                        assertThat(asset.getConfig().toString()).isEqualToIgnoringWhitespace("""
                                {
                                    "password": "$6$Jr5w/Y8zo8pCkqg7$/rePRbvey3R6Sz/02YTlTQcRt5qdBPTj2h5.hz.rB8NfIoND8pFOjeB7orYcPs9JNf3JDxPP2V.6MQlE5BwAY/",
                                    "shell": "/bin/bash",

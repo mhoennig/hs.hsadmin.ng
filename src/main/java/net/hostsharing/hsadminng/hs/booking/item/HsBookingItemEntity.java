@@ -158,8 +158,8 @@ public class HsBookingItemEntity implements Stringifyable, BaseEntity<HsBookingI
     }
 
     @Override
-    public Map<String, Object> directProps() {
-        return resources;
+    public PatchableMapWrapper<Object> directProps() {
+        return getResources();
     }
 
     @Override

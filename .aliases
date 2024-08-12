@@ -84,3 +84,9 @@ alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
 alias gw-test='. .aliases; ./gradlew test importOfficeData'
 alias gw-check='. .aliases; gw test importOfficeData check -x pitest -x :dependencyCheckAnalyze'
+
+# etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
+alias gw-importOfficeData-in-docker-compose='
+        docker-compose -f etc/docker-compose.yml down &&
+        docker-compose -f etc/docker-compose.yml up -d && sleep 10 &&
+        time gw-importHostingAssets'

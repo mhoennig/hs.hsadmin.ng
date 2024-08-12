@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.validation;
 
 import net.hostsharing.hsadminng.hash.LinuxEtcShadowHashGenerator;
+import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -109,10 +110,10 @@ class PasswordPropertyUnitTest {
             }
 
             @Override
-            public Map<String, Object> directProps() {
-                return Map.ofEntries(
+            public PatchableMapWrapper<Object> directProps() {
+                return PatchableMapWrapper.of(Map.ofEntries(
                         entry(passwordProp.propertyName, "some password")
-                );
+                ));
             }
 
             @Override

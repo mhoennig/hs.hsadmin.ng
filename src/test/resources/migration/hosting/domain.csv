@@ -7,4 +7,4 @@ domain_id;domain_name;domain_since;domain_dns_master;domain_owner;valid_subdomai
 4589;ist-im-netz.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;htdocsfallback,indexes,includes,letsencrypt,multiviews,cgi,fastcgi,passenger
 4600;waera.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
 4604;xn--wra-qla.de;2013-09-17;dns.hostsharing.net;5964;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;greylisting,multiviews,indexes,htdocsfallback,includes,cgi,fastcgi,passenger
-27662;dph-netzwerk.de;2021-06-02;h93.hostsharing.net;169596;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;htdocsfallback,indexes,autoconfig,greylisting,includes,letsencrypt,multiviews,cgi,fastcgi,passenger
+7662;dph-netzwerk.de;2021-06-02;h93.hostsharing.net;9596;*;/usr/bin/python3;/usr/bin/node;/usr/bin/ruby;/usr/lib/cgi-bin/php;htdocsfallback,indexes,autoconfig,greylisting,includes,letsencrypt,multiviews,cgi,fastcgi,passenger

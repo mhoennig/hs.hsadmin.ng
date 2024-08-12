@@ -43,10 +43,10 @@ public class ArrayProperty<P extends ValidatableProperty<?, E>, E> extends Valid
     @Override
     protected void validate(final List<String> result, final E[] propValue, final PropertiesProvider propProvider) {
         if (minLength != null && propValue.length < minLength) {
-            result.add(propertyName + "' length is expected to be at min " + minLength + " but length of " + display(propValue) + " is " + propValue.length);
+            result.add(propertyName + "' length is expected to be at min " + minLength + " but length of " + displayArray(propValue) + " is " + propValue.length);
         }
         if (maxLength != null && propValue.length > maxLength) {
-            result.add(propertyName + "' length is expected to be at max " + maxLength + " but length of " + display(propValue) + " is " + propValue.length);
+            result.add(propertyName + "' length is expected to be at max " + maxLength + " but length of " + displayArray(propValue) + " is " + propValue.length);
         }
         stream(propValue).forEach(e -> elementsOf.validate(result, e, propProvider));
     }
@@ -57,7 +57,7 @@ public class ArrayProperty<P extends ValidatableProperty<?, E>, E> extends Valid
     }
 
     @SafeVarargs
-    private String display(final E... propValue) {
+    private String displayArray(final E... propValue) {
         return "[" + Arrays.toString(propValue) + "]";
     }
 }
