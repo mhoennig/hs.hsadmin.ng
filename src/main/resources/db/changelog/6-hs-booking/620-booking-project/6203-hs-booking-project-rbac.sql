@@ -49,7 +49,7 @@ begin
 
     perform createRoleWithGrants(
         hsBookingProjectOWNER(NEW),
-            incomingSuperRoles => array[hsOfficeRelationAGENT(newDebitorRel)]
+            incomingSuperRoles => array[hsOfficeRelationAGENT(newDebitorRel, unassumed())]
     );
 
     perform createRoleWithGrants(

@@ -324,10 +324,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             assertThat(givenHostingAsset.getBookingItem().getResources().get("Multi"))
                     .as("precondition failed")
                     .isEqualTo(1);
+            final var preExistingUnixUserCount = assetRepo.findAllByCriteria(null, givenHostingAsset.getUuid(), UNIX_USER).size();
+            final var UNIX_USER_PER_MULTI_OPTION = 25;
 
             jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
-                for (int n = 0; n < 25; ++n) {
+                for (int n = 0; n < UNIX_USER_PER_MULTI_OPTION -preExistingUnixUserCount+1; ++n) {
                     toCleanup(assetRepo.save(
                             HsHostingAssetEntity.builder()
                                     .type(UNIX_USER)
@@ -413,7 +415,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         }
 
         @Test
-        void debitorAgentUser_canGetRelatedAsset() {
+        void projectAgentUser_canGetRelatedAsset() {
             context.define("superuser-alex@hostsharing.net");
             final var givenAssetUuid = assetRepo.findByIdentifier("vm1013").stream()
                     .filter(bi -> bi.getBookingItem().getProject().getCaption().equals("D-1000313 default project"))
@@ -422,6 +424,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "person-TuckerJack@example.com")
+                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)

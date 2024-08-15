@@ -23,6 +23,7 @@ declare
     managedServerUuid                   uuid;
     managedWebspaceUuid                 uuid;
     webUnixUserUuid                     uuid;
+    mboxUnixUserUuid                     uuid;
     domainSetupUuid                     uuid;
     domainMBoxSetupUuid                 uuid;
     mariaDbInstanceUuid                 uuid;
@@ -71,6 +72,7 @@ begin
     select uuid_generate_v4() into managedServerUuid;
     select uuid_generate_v4() into managedWebspaceUuid;
     select uuid_generate_v4() into webUnixUserUuid;
+    select uuid_generate_v4() into mboxUnixUserUuid;
     select uuid_generate_v4() into domainSetupUuid;
     select uuid_generate_v4() into domainMBoxSetupUuid;
     select uuid_generate_v4() into mariaDbInstanceUuid;
@@ -94,11 +96,12 @@ begin
        (uuid_generate_v4(),     null,                   'PGSQL_DATABASE',    pgSqlUserUuid,       pgSqlInstanceUuid,     defaultPrefix || '01_web',                           'some default Postgresql database','{ "encryption": "utf8", "collation": "utf8"}'::jsonb ),
        (uuid_generate_v4(),     null,                   'EMAIL_ALIAS',       managedWebspaceUuid, null,                  defaultPrefix || '01-web',                           'some E-Mail-Alias',            '{ "target": [ "office@example.org", "archive@example.com" ] }'::jsonb),
        (webUnixUserUuid,        null,                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-web',                           'some UnixUser for Website',    '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
+       (mboxUnixUserUuid,       null,                   'UNIX_USER',         managedWebspaceUuid, null,                  defaultPrefix || '01-mbox',                          'some UnixUser for E-Mail',     '{ "SSD-soft-quota": "128", "SSD-hard-quota": "256", "HDD-soft-quota": "512", "HDD-hard-quota": "1024"}'::jsonb),
        (domainSetupUuid,        null,                   'DOMAIN_SETUP',      null,                null,                  defaultPrefix || '.example.org',                     'some Domain-Setup',            '{}'::jsonb),
        (uuid_generate_v4(),     null,                   'DOMAIN_DNS_SETUP',  domainSetupUuid,     null,                  defaultPrefix || '.example.org|DNS',                 'some Domain-DNS-Setup',        '{}'::jsonb),
        (uuid_generate_v4(),     null,                   'DOMAIN_HTTP_SETUP', domainSetupUuid,     webUnixUserUuid,       defaultPrefix || '.example.org|HTTP',                'some Domain-HTTP-Setup',       '{ "option-htdocsfallback": true, "use-fcgiphpbin": "/usr/lib/cgi-bin/php", "validsubdomainnames": "*"}'::jsonb),
-       (uuid_generate_v4(),     null,                   'DOMAIN_SMTP_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',                 'some Domain-SMPT-Setup',       '{}'::jsonb),
-       (domainMBoxSetupUuid,    null,                   'DOMAIN_MBOX_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|DNS',                 'some Domain-MBOX-Setup',       '{}'::jsonb),
+       (uuid_generate_v4(),     null,                   'DOMAIN_SMTP_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|SMTP',                'some Domain-SMTP-Setup',       '{}'::jsonb),
+       (domainMBoxSetupUuid,    null,                   'DOMAIN_MBOX_SETUP', domainSetupUuid,     managedWebspaceUuid,   defaultPrefix || '.example.org|MBOX',                'some Domain-MBOX-Setup',       '{}'::jsonb),
        (uuid_generate_v4(),     null,                   'EMAIL_ADDRESS',     domainMBoxSetupUuid, null,                  'test@' || defaultPrefix || '.example.org',          'some E-Mail-Address',          '{}'::jsonb);
 end; $$;
 --//

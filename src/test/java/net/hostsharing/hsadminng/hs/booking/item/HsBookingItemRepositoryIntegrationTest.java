@@ -170,9 +170,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPU: 2, RAM: 8, SSD: 500, Traffic: 500 })",
-                    "HsBookingItemEntity(D-1000212:D-1000212 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
+                    "HsBookingItemEntity(MANAGED_SERVER, separate ManagedServer, D-1000212:D-1000212 default project, [2022-10-01,), { CPU: 2, RAM: 8, SSD: 500, Traffic: 500 })",
+                    "HsBookingItemEntity(MANAGED_WEBSPACE, separate ManagedWebspace, D-1000212:D-1000212 default project, [2022-10-01,), { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
+                    "HsBookingItemEntity(PRIVATE_CLOUD, some PrivateCloud, D-1000212:D-1000212 default project, [2024-04-01,), { CPU: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
              assertThat(result.stream().filter(bi -> bi.getRelatedHostingAsset()!=null).findAny())
                      .as("at least one relatedProject expected, but none found => fetching relatedProject does not work")
                      .isNotEmpty();
@@ -182,7 +182,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         public void normalUser_canViewOnlyRelatedBookingItems() {
             // given:
             context("person-FirbySusan@example.com");
-            final var projectUuid = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+            final var debitor = debitorRepo.findDebitorByDebitorNumber(1000111);
+            context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:OWNER");
+            final var projectUuid = debitor.stream()
                     .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
                     .findAny().orElseThrow().getUuid();
@@ -193,9 +195,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // then:
             exactlyTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_WEBSPACE, [2022-10-01,), separate ManagedWebspace, { Daemons : 0, Multi : 1, SSD : 100, Traffic : 50 })",
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, MANAGED_SERVER, [2022-10-01,), separate ManagedServer, { CPU : 2, RAM : 8, SSD : 500, Traffic : 500 })",
-                    "HsBookingItemEntity(D-1000111:D-1000111 default project, PRIVATE_CLOUD, [2024-04-01,), some PrivateCloud, { CPU : 10, HDD : 10000, RAM : 32, SSD : 4000, Traffic : 2000 })");
+                    "HsBookingItemEntity(MANAGED_SERVER, separate ManagedServer, D-1000111:D-1000111 default project, [2022-10-01,), { CPU : 2, RAM : 8, SSD : 500, Traffic : 500 })",
+                    "HsBookingItemEntity(MANAGED_WEBSPACE, separate ManagedWebspace, D-1000111:D-1000111 default project, [2022-10-01,), { Daemons : 0, Multi : 1, SSD : 100, Traffic : 50 })",
+                    "HsBookingItemEntity(PRIVATE_CLOUD, some PrivateCloud, D-1000111:D-1000111 default project, [2024-04-01,), { CPU : 10, HDD : 10000, RAM : 32, SSD : 4000, Traffic : 2000 })");
         }
     }
 
@@ -209,7 +211,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
+                context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
                 final var foundBookingItem = em.find(HsBookingItemEntity.class, givenBookingItemUuid);
                 foundBookingItem.getResources().put("CPU", 2);
                 foundBookingItem.getResources().remove("SSD-storage");
@@ -262,12 +264,12 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void nonGlobalAdmin_canNotDeleteTheirRelatedBookingItem() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com");
+                context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
                 assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent();
 
                 bookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
@@ -286,7 +288,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         @Test
         public void deletingABookingItemAlsoDeletesRelatedRolesAndGrants() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
             final var initialGrantNames = Array.from(distinctGrantDisplaysOf(rawGrantRepo.findAll()));
             final var givenBookingItem = givenSomeTemporaryBookingItem("D-1000111 default project");

@@ -34,6 +34,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.io.Reader;
 import java.net.IDN;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,9 +184,9 @@ public class ImportHostingAssets extends ImportOfficeData {
                 {
                    363=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.34),
                    381=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.52),
+                   401=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.72),
                    402=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.73),
-                   433=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.104),
-                   457=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.128)
+                   433=HsHostingAssetRealEntity(IPV4_NUMBER, 83.223.95.104)
                 }
                 """);
     }
@@ -239,13 +240,13 @@ public class ImportHostingAssets extends ImportOfficeData {
                 HsBookingItemType.MANAGED_SERVER,
                 HsBookingItemType.MANAGED_WEBSPACE)).isEqualToIgnoringWhitespace("""
                 {
-                   10630=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_WEBSPACE, [2001-06-01,), BI hsh00),
-                   10968=HsBookingItemEntity(D-1015200:rar default project, MANAGED_SERVER, [2013-04-01,), BI vm1061),
-                   10978=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2013-04-01,), BI vm1050),
-                   11061=HsBookingItemEntity(D-1000300:mim default project, MANAGED_SERVER, [2013-08-19,), BI vm1068),
-                   11094=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-10,), BI lug00),
-                   11112=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-17,), BI mim00),
-                   23611=HsBookingItemEntity(D-1101800:wws default project, CLOUD_SERVER, [2022-08-10,), BI vm2097)
+                   10630=HsBookingItemEntity(MANAGED_WEBSPACE, BI hsh00, D-1000000:hsh default project, [2001-06-01,)),
+                   10968=HsBookingItemEntity(MANAGED_SERVER, BI vm1061, D-1015200:rar default project, [2013-04-01,)),
+                   10978=HsBookingItemEntity(MANAGED_SERVER, BI vm1050, D-1000000:hsh default project, [2013-04-01,)),
+                   11061=HsBookingItemEntity(MANAGED_SERVER, BI vm1068, D-1000300:mim default project, [2013-08-19,)),
+                   11094=HsBookingItemEntity(MANAGED_WEBSPACE, BI lug00, D-1000300:mim default project, [2013-09-10,)),
+                   11111=HsBookingItemEntity(MANAGED_WEBSPACE, BI xyz68, D-1000000:vm1068 Monitor, [2013-08-19,)),
+                   23611=HsBookingItemEntity(CLOUD_SERVER, BI vm2097, D-1101800:wws default project, [2022-08-10,))
                 }
                 """);
         assertThat(firstOfEach(9, packetAssets)).isEqualToIgnoringWhitespace("""
@@ -255,10 +256,10 @@ public class ImportHostingAssets extends ImportOfficeData {
                    10978=HsHostingAssetRealEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
                    11061=HsHostingAssetRealEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
                    11094=HsHostingAssetRealEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
+                   11111=HsHostingAssetRealEntity(MANAGED_WEBSPACE, xyz68, HA xyz68, MANAGED_SERVER:vm1068, D-1000000:vm1068 Monitor:BI xyz68),
                    11112=HsHostingAssetRealEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
                    11447=HsHostingAssetRealEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093),
-                   19959=HsHostingAssetRealEntity(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00),
-                   23611=HsHostingAssetRealEntity(CLOUD_SERVER, vm2097, HA vm2097, D-1101800:wws default project:BI vm2097)
+                   19959=HsHostingAssetRealEntity(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00)
                 }
                 """);
     }
@@ -287,8 +288,8 @@ public class ImportHostingAssets extends ImportOfficeData {
                            10978=HsHostingAssetRealEntity(MANAGED_SERVER, vm1050, HA vm1050, D-1000000:hsh default project:BI vm1050),
                            11061=HsHostingAssetRealEntity(MANAGED_SERVER, vm1068, HA vm1068, D-1000300:mim default project:BI vm1068),
                            11094=HsHostingAssetRealEntity(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00),
-                           11112=HsHostingAssetRealEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00),
-                           11447=HsHostingAssetRealEntity(MANAGED_SERVER, vm1093, HA vm1093, D-1000000:hsh default project:BI vm1093)
+                           11111=HsHostingAssetRealEntity(MANAGED_WEBSPACE, xyz68, HA xyz68, MANAGED_SERVER:vm1068, D-1000000:vm1068 Monitor:BI xyz68),
+                           11112=HsHostingAssetRealEntity(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00)
                         }
                         """);
         assertThat(firstOfEachType(
@@ -298,15 +299,16 @@ public class ImportHostingAssets extends ImportOfficeData {
                 HsBookingItemType.MANAGED_WEBSPACE))
                 .isEqualToIgnoringWhitespace("""
                         {
-                           10630=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_WEBSPACE, [2001-06-01,), BI hsh00, {"HDD": 10, "Multi": 25, "SLA-Platform": "EXT24H", "SSD": 16, "Traffic": 50}),
-                           10968=HsBookingItemEntity(D-1015200:rar default project, MANAGED_SERVER, [2013-04-01,), BI vm1061, {"CPU": 6, "HDD": 250, "RAM": 14, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 375, "Traffic": 250}),
-                           10978=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2013-04-01,), BI vm1050, {"CPU": 4, "HDD": 250, "RAM": 32, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 150, "Traffic": 250}),
-                           11061=HsBookingItemEntity(D-1000300:mim default project, MANAGED_SERVER, [2013-08-19,), BI vm1068, {"CPU": 2, "HDD": 250, "RAM": 4, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT2H", "SLA-Web": true, "Traffic": 250}),
-                           11094=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-10,), BI lug00, {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 1, "Traffic": 10}),
-                           11112=HsBookingItemEntity(D-1000300:mim default project, MANAGED_WEBSPACE, [2013-09-17,), BI mim00, {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 3, "Traffic": 20}),
-                           11447=HsBookingItemEntity(D-1000000:hsh default project, MANAGED_SERVER, [2014-11-28,), BI vm1093, {"CPU": 6, "HDD": 500, "RAM": 16, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 300, "Traffic": 250}),
-                           19959=HsBookingItemEntity(D-1101900:dph default project, MANAGED_WEBSPACE, [2021-06-02,), BI dph00, {"Multi": 1, "SLA-Platform": "EXT24H", "SSD": 25, "Traffic": 20}),
-                           23611=HsBookingItemEntity(D-1101800:wws default project, CLOUD_SERVER, [2022-08-10,), BI vm2097, {"CPU": 8, "RAM": 12, "SLA-Infrastructure": "EXT4H", "SSD": 25, "Traffic": 250})
+                           10630=HsBookingItemEntity(MANAGED_WEBSPACE, BI hsh00, D-1000000:hsh default project, [2001-06-01,), {"HDD": 10, "Multi": 25, "SLA-Platform": "EXT24H", "SSD": 16, "Traffic": 50}),
+                           10968=HsBookingItemEntity(MANAGED_SERVER, BI vm1061, D-1015200:rar default project, [2013-04-01,), {"CPU": 6, "HDD": 250, "RAM": 14, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 375, "Traffic": 250}),
+                           10978=HsBookingItemEntity(MANAGED_SERVER, BI vm1050, D-1000000:hsh default project, [2013-04-01,), {"CPU": 4, "HDD": 250, "RAM": 32, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 150, "Traffic": 250}),
+                           11061=HsBookingItemEntity(MANAGED_SERVER, BI vm1068, D-1000300:mim default project, [2013-08-19,), {"CPU": 2, "HDD": 250, "RAM": 4, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT2H", "SLA-Web": true, "Traffic": 250}),
+                           11094=HsBookingItemEntity(MANAGED_WEBSPACE, BI lug00, D-1000300:mim default project, [2013-09-10,), {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 1, "Traffic": 10}),
+                           11111=HsBookingItemEntity(MANAGED_WEBSPACE, BI xyz68, D-1000000:vm1068 Monitor, [2013-08-19,), {"SSD": 3}),
+                           11112=HsBookingItemEntity(MANAGED_WEBSPACE, BI mim00, D-1000300:mim default project, [2013-09-17,), {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 3, "Traffic": 20}),
+                           11447=HsBookingItemEntity(MANAGED_SERVER, BI vm1093, D-1000000:hsh default project, [2014-11-28,), {"CPU": 6, "HDD": 500, "RAM": 16, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 300, "Traffic": 250}),
+                           19959=HsBookingItemEntity(MANAGED_WEBSPACE, BI dph00, D-1101900:dph default project, [2021-06-02,), {"Multi": 1, "SLA-Platform": "EXT24H", "SSD": 25, "Traffic": 20}),
+                           23611=HsBookingItemEntity(CLOUD_SERVER, BI vm2097, D-1101800:wws default project, [2022-08-10,), {"CPU": 8, "RAM": 12, "SLA-Infrastructure": "EXT4H", "SSD": 25, "Traffic": 250})
                         }
                         """);
     }
@@ -335,6 +337,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                    5811=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102094}),
                    5813=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/usr/bin/passwd", "userid": 102095}),
                    5835=HsHostingAssetRealEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "shell": "/usr/bin/passwd", "userid": 102106}),
+                   5961=HsHostingAssetRealEntity(UNIX_USER, xyz68, Monitoring h68, MANAGED_WEBSPACE:xyz68, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102141}),
                    5964=HsHostingAssetRealEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102147}),
                    5966=HsHostingAssetRealEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "shell": "/bin/bash", "userid": 102148}),
                    5990=HsHostingAssetRealEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 102160}),
@@ -880,6 +883,7 @@ public class ImportHostingAssets extends ImportOfficeData {
                    5811=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.a, LUG OLA - POP a, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102094}),
                    5813=HsHostingAssetRealEntity(UNIX_USER, lug00-ola.b, LUG OLA - POP b, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102095}),
                    5835=HsHostingAssetRealEntity(UNIX_USER, lug00-test, Test, MANAGED_WEBSPACE:lug00, {"SSD hard quota": 1024, "SSD soft quota": 1024, "locked": false, "password": null, "shell": "/usr/bin/passwd", "userid": 102106}),
+                   5961=HsHostingAssetRealEntity(UNIX_USER, xyz68, Monitoring h68, MANAGED_WEBSPACE:xyz68, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102141}),
                    5964=HsHostingAssetRealEntity(UNIX_USER, mim00, Michael Mellis, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102147}),
                    5966=HsHostingAssetRealEntity(UNIX_USER, mim00-1981, Jahrgangstreffen 1981, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 256, "SSD soft quota": 128, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102148}),
                    5990=HsHostingAssetRealEntity(UNIX_USER, mim00-mail, Mailbox, MANAGED_WEBSPACE:mim00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "password": null, "shell": "/bin/bash", "userid": 102160}),
@@ -909,13 +913,26 @@ public class ImportHostingAssets extends ImportOfficeData {
 
         verifyActuallyPersistedHostingAssetCount(CLOUD_SERVER, 1, 50);
         verifyActuallyPersistedHostingAssetCount(MANAGED_SERVER, 4, 100);
-        verifyActuallyPersistedHostingAssetCount(MANAGED_WEBSPACE, 4, 100);
-        verifyActuallyPersistedHostingAssetCount(UNIX_USER, 14, 100);
+        verifyActuallyPersistedHostingAssetCount(MANAGED_WEBSPACE, 5, 100);
+        verifyActuallyPersistedHostingAssetCount(UNIX_USER, 15, 100);
         verifyActuallyPersistedHostingAssetCount(EMAIL_ALIAS, 9, 1400);
         verifyActuallyPersistedHostingAssetCount(PGSQL_DATABASE, 8, 100);
         verifyActuallyPersistedHostingAssetCount(MARIADB_DATABASE, 8, 100);
         verifyActuallyPersistedHostingAssetCount(DOMAIN_SETUP, 9, 100);
         verifyActuallyPersistedHostingAssetCount(EMAIL_ADDRESS, 71, 30000);
+    }
+
+    @Test
+    @Order(19930)
+    void verifyProjectAgentsCanViewEmailAddresses() {
+        assumeThatWeAreImportingControlledTestData();
+
+        final var haCount = jpaAttempt.transacted(() -> {
+                    context(rbacSuperuser, "hs_booking_project#D-1000300-mimdefaultproject:AGENT");
+                    return (Integer) em.createNativeQuery("select count(*) from hs_hosting_asset_rv where type='EMAIL_ADDRESS'", Integer.class)
+                            .getSingleResult();
+                }).assertSuccessful().returnedValue();
+        assertThat(haCount).isEqualTo(68);
     }
 
     // ============================================================================================
@@ -1095,7 +1112,20 @@ public class ImportHostingAssets extends ImportOfficeData {
                         final var managedWebspace = pac(packet_id);
                         final var parentAsset = hive(hive_id).serverRef.get();
                         managedWebspace.setParentAsset(parentAsset);
-                        managedWebspace.getBookingItem().setParentItem(parentAsset.getBookingItem());
+
+                        if (parentAsset.getRelatedProject() != managedWebspace.getRelatedProject()
+                                && managedWebspace.getRelatedProject().getDebitor().getDebitorNumber() == 10000_00 ) {
+                            assertThat(managedWebspace.getIdentifier()).startsWith("xyz");
+                            final var hshDebitor = managedWebspace.getBookingItem().getProject().getDebitor();
+                            final var newProject = HsBookingProjectEntity.builder()
+                                    .debitor(hshDebitor)
+                                    .caption(parentAsset.getIdentifier() + " Monitor")
+                                    .build();
+                            bookingProjects.put(Collections.max(bookingProjects.keySet())+1, newProject);
+                            managedWebspace.getBookingItem().setProject(newProject);
+                        } else {
+                            managedWebspace.getBookingItem().setParentItem(parentAsset.getBookingItem());
+                        }
                     }
                 });
     }

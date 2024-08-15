@@ -67,7 +67,9 @@ begin
 
     perform createRoleWithGrants(
         hsHostingAssetAGENT(NEW),
-            incomingSuperRoles => array[hsHostingAssetADMIN(NEW)],
+            incomingSuperRoles => array[
+            	hsHostingAssetADMIN(NEW),
+            	hsHostingAssetAGENT(newAssignedToAsset)],
             outgoingSubRoles => array[
             	hsHostingAssetTENANT(newAssignedToAsset),
             	hsOfficeContactREFERRER(newAlarmContact)]

@@ -287,7 +287,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     class PatchBookingItem {
 
         @Test
-        void globalAdmin_canPatchAllUpdatablePropertiesOfBookingItem() {
+        void projectAgent_canPatchAllUpdatablePropertiesOfBookingItem() {
 
             final var givenBookingItem = givenSomeNewBookingItem("D-1000111 default project", MANAGED_WEBSPACE,
                     resource("HDD", 100), resource("SSD", 50), resource("Traffic", 250));
@@ -295,6 +295,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("assumed-roles", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT")
                     .contentType(ContentType.JSON)
                     .body("""
                         {

@@ -74,10 +74,10 @@ import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 public class HsBookingItemEntity implements Stringifyable, BaseEntity<HsBookingItemEntity>, PropertiesProvider {
 
     private static Stringify<HsBookingItemEntity> stringify = stringify(HsBookingItemEntity.class)
-            .withProp(HsBookingItemEntity::getProject)
             .withProp(HsBookingItemEntity::getType)
-            .withProp(e -> e.getValidity().asString())
             .withProp(HsBookingItemEntity::getCaption)
+            .withProp(HsBookingItemEntity::getProject)
+            .withProp(e -> e.getValidity().asString())
             .withProp(HsBookingItemEntity::getResources)
             .quotedValues(false);
 

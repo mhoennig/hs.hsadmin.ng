@@ -48,7 +48,7 @@ role:global:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
 role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
 role:debitorRel:AGENT -.-> role:debitorRel:TENANT
-role:debitorRel:AGENT ==> role:project:OWNER
+role:debitorRel:AGENT ==>|XX| role:project:OWNER
 role:project:OWNER ==> role:project:ADMIN
 role:project:ADMIN ==> role:project:AGENT
 role:project:AGENT ==> role:project:TENANT

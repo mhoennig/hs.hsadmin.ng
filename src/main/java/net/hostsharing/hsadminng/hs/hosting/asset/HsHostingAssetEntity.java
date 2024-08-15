@@ -185,6 +185,7 @@ public class HsHostingAssetEntity implements HsHostingAsset {
                     with.permission(UPDATE);
                 })
                 .createSubRole(AGENT, (with) -> {
+                    with.incomingSuperRole("assignedToAsset", AGENT); // TODO.spec: or ADMIN?
                     with.outgoingSubRole("assignedToAsset", TENANT);
                     with.outgoingSubRole("alarmContact", REFERRER);
                 })

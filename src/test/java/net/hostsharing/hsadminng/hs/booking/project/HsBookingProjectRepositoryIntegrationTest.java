@@ -125,7 +125,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                             "{ grant perm:hs_booking_project#D-1000111-somenewbookingproject:INSERT>hs_booking_item to role:hs_booking_project#D-1000111-somenewbookingproject:ADMIN by system and assume }",
 
                             // agent
-                            "{ grant role:hs_booking_project#D-1000111-somenewbookingproject:OWNER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system and assume }",
+                            "{ grant role:hs_booking_project#D-1000111-somenewbookingproject:OWNER to role:relation#FirstGmbH-with-DEBITOR-FirstGmbH:AGENT by system }",
                             "{ grant role:hs_booking_project#D-1000111-somenewbookingproject:TENANT to role:hs_booking_project#D-1000111-somenewbookingproject:AGENT by system and assume }",
 
                             // tenant
@@ -161,9 +161,10 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         }
 
         @Test
-        public void normalUser_canViewOnlyRelatedBookingProjects() {
+        public void packetAgent_canViewOnlyRelatedBookingProjects() {
+
             // given:
-            context("person-FirbySusan@example.com");
+            context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
             final var debitorUuid = debitorRepo.findByDebitorNumber(1000111).stream()
                     .findAny().orElseThrow().getUuid();
 
@@ -233,12 +234,11 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void nonGlobalAdmin_canNotDeleteTheirRelatedBookingProject() {
             // given
-            context("superuser-alex@hostsharing.net", null);
             final var givenBookingProject = givenSomeTemporaryBookingProject(1000111);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com");
+                context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-sometempproject:AGENT");
                 assertThat(bookingProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent();
 
                 bookingProjectRepo.deleteByUuid(givenBookingProject.getUuid());

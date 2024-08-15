@@ -9,6 +9,7 @@ unixuser_id;name;comment;shell;homedir;locked;packet_id;userid;quota_softlimit;q
 5835;lug00-test;Test;/usr/bin/passwd;/home/pacs/lug00/users/test;0;11094;102106;2000000;4000000;20;0
 
 6705;hsh00-mim;Michael Mellis;/bin/false;/home/pacs/hsh00/users/mi;0;10630;10003;0;0;0;0
+5961;xyz68;Monitoring h68;/bin/bash;/home/pacs/xyz68;0;11111;102141;0;0;0;0
 5964;mim00;Michael Mellis;/bin/bash;/home/pacs/mim00;0;11112;102147;0;0;0;0
 5966;mim00-1981;Jahrgangstreffen 1981;/bin/bash;/home/pacs/mim00/users/1981;0;11112;102148;128;256;0;0
 5990;mim00-mail;Mailbox;/bin/bash;/home/pacs/mim00/users/mail;0;11112;102160;0;0;0;0

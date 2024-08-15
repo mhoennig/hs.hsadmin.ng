@@ -28,6 +28,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
@@ -98,7 +99,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void createsAndGrantsRoles() {
             // given
-            context("superuser-alex@hostsharing.net");
+            context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
             final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
             em.flush();
@@ -152,7 +153,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                             "{ grant role:hs_booking_item#fir01:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
                             "{ grant role:hs_hosting_asset#fir00:TENANT to role:hs_hosting_asset#fir00:AGENT by system and assume }",
                             "{ grant role:hs_hosting_asset#vm1011:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
-                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:hs_hosting_asset#fir00:TENANT by system and assume }", // workaround
+                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
 
                             null));
         }
@@ -195,7 +196,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    class FindByDebitorUuid {
+    class FindAssets {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewArbitraryAssetsOfAllDebitors() {
@@ -214,9 +215,9 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        public void normalUser_canViewOnlyRelatedAsset() {
+        public void normalUser_canViewOnlyRelatedAssets() {
             // given:
-            context("person-FirbySusan@example.com");
+            context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
             final var projectUuid = projectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
@@ -231,7 +232,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         }
 
         @Test
-        public void normalUser_canFilterAssetsRelatedToParentAsset() {
+        public void managedServerAgent_canFindAssetsRelatedToManagedServer() {
             // given
             context("superuser-alex@hostsharing.net");
             final var parentAssetUuid = assetRepo.findByIdentifier("vm1012").stream()
@@ -248,6 +249,21 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     "HsHostingAssetEntity(MANAGED_WEBSPACE, sec01, some Webspace, MANAGED_SERVER:vm1012, D-1000212:D-1000212 default project:separate ManagedWebspace)",
                     "HsHostingAssetEntity(MARIADB_INSTANCE, vm1012.MariaDB.default, some default MariaDB instance, MANAGED_SERVER:vm1012)",
                     "HsHostingAssetEntity(PGSQL_INSTANCE, vm1012.Postgresql.default, some default Postgresql instance, MANAGED_SERVER:vm1012)");
+        }
+
+        @Test
+        public void managedServerAgent_canFindRelatedEmailAddresses() {
+            // given
+            context("superuser-alex@hostsharing.net");
+
+            // when
+            context("superuser-alex@hostsharing.net", "hs_hosting_asset#sec01:AGENT");
+            final var result = assetRepo.findAllByCriteria(null, null, EMAIL_ADDRESS);
+
+            // then
+            exactlyTheseAssetsAreReturned(
+                    result,
+                    "HsHostingAssetEntity(EMAIL_ADDRESS, test@sec.example.org, some E-Mail-Address, DOMAIN_MBOX_SETUP:sec.example.org|MBOX)");
         }
     }
 
@@ -310,12 +326,12 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void relatedOwner_canDeleteTheirRelatedAsset() {
             // given
-            context("superuser-alex@hostsharing.net", null);
+            context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenAsset = givenSomeTemporaryAsset("D-1000111 default project", "vm1000");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com");
+                context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
                 assertThat(assetRepo.findByUuid(givenAsset.getUuid())).isPresent();
 
                 assetRepo.deleteByUuid(givenAsset.getUuid());

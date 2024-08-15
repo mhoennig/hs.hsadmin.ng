@@ -264,7 +264,7 @@ public enum HsHostingAssetType implements Node {
                 package Booking #feb28c {
                 %{bookingNodes}
                 }
-                                
+
                 package Hosting #feb28c{
                 %{hostingGroups}
                 }

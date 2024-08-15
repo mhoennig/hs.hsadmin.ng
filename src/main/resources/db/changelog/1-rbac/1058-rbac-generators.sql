@@ -177,26 +177,35 @@ begin
     sql := format($sql$
         create or replace view %1$s_rv as
             with accessible_%1$s_uuids as (
-
-                -- TODO.perf: this CTE query makes RBAC-SELECT-permission-queries so slow (~500ms), any idea how to optimize?
-                --  My guess is, that the depth of role-grants causes the problem.
-                with recursive grants as (
-                    select descendantUuid, ascendantUuid, 1 as level
-                        from RbacGrants
-                        where assumed
-                          and ascendantUuid = any (currentSubjectsuUids())
-                    union all
-                    select g.descendantUuid, g.ascendantUuid, level + 1 as level
-                        from RbacGrants g
-                                 inner join grants on grants.descendantUuid = g.ascendantUuid
-                        where g.assumed and level<10
-                )
-                select distinct perm.objectUuid as objectUuid
-                    from grants
-                             join RbacPermission perm on grants.descendantUuid = perm.uuid
-                             join RbacObject obj on obj.uuid = perm.objectUuid
-                    where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
-                    limit 8001
+                     with recursive
+                          recursive_grants as
+                              (select distinct rbacgrants.descendantuuid,
+                                               rbacgrants.ascendantuuid,
+                                               1 as level,
+                                               true
+                                   from rbacgrants
+                                   where rbacgrants.assumed
+                                     and (rbacgrants.ascendantuuid = any (currentsubjectsuuids()))
+                               union all
+                               select distinct g.descendantuuid,
+                                               g.ascendantuuid,
+                                               grants.level + 1 as level,
+                                               assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
+                                   from rbacgrants g
+                                            join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
+                                   where g.assumed),
+                          grant_count AS (
+                            SELECT COUNT(*) AS grant_count FROM recursive_grants
+                          ),
+                          count_check as (select assertTrue((select count(*) as grant_count from recursive_grants) < 400000,
+                                'too many grants for current subjects: ' || (select count(*) as grant_count from recursive_grants))
+                                                     as valid)
+                      select distinct perm.objectuuid
+                          from recursive_grants
+                                   join rbacpermission perm on recursive_grants.descendantuuid = perm.uuid
+                                   join rbacobject obj on obj.uuid = perm.objectuuid
+                                   join count_check cc on cc.valid
+                          where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
             )
             select target.*
                 from %1$s as target

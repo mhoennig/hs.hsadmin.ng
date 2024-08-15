@@ -49,6 +49,7 @@ subgraph assignedToAsset["`**assignedToAsset**`"]
     subgraph assignedToAsset:roles[ ]
         style assignedToAsset:roles fill:#99bcdb,stroke:white
 
+        role:assignedToAsset:AGENT[[assignedToAsset:AGENT]]
         role:assignedToAsset:TENANT[[assignedToAsset:TENANT]]
     end
 end
@@ -97,6 +98,7 @@ role:asset:OWNER ==> role:asset:ADMIN
 role:bookingItem:AGENT ==> role:asset:ADMIN
 role:parentAsset:AGENT ==> role:asset:ADMIN
 role:asset:ADMIN ==> role:asset:AGENT
+role:assignedToAsset:AGENT ==> role:asset:AGENT
 role:asset:AGENT ==> role:assignedToAsset:TENANT
 role:asset:AGENT ==> role:alarmContact:REFERRER
 role:asset:AGENT ==> role:asset:TENANT

@@ -94,7 +94,7 @@ public class HsBookingProjectEntity implements Stringifyable, BaseEntity<HsBooki
                 .toRole("global", ADMIN).grantPermission(DELETE)
 
                 .createRole(OWNER, (with) -> {
-                    with.incomingSuperRole("debitorRel", AGENT);
+                    with.incomingSuperRole("debitorRel", AGENT).unassumed();
                 })
                 .createSubRole(ADMIN, (with) -> {
                     with.permission(UPDATE);

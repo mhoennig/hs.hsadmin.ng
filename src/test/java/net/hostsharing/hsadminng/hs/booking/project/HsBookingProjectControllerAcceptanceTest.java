@@ -163,7 +163,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
-        void debitorAgentUser_canGetRelatedBookingProject() {
+        void projectAgentUser_canGetRelatedBookingProject() {
             context.define("superuser-alex@hostsharing.net");
             final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000313 default project").stream()
                     .findAny().orElseThrow().getUuid();
@@ -171,6 +171,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
             RestAssured // @formatter:off
                 .given()
                     .header("current-user", "person-TuckerJack@example.com")
+                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects/" + givenBookingProjectUuid)

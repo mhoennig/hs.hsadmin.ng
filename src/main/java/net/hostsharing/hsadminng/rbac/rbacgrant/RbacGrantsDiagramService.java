@@ -215,7 +215,7 @@ public class RbacGrantsDiagramService {
     @NotNull
     private static String cleanId(final String idName) {
         return idName.replaceAll("@.*", "")
-                .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "").replace(">", ":");
+                .replace("[", "").replace("]", "").replace("(", "").replace(")", "").replace(",", "").replace(">", ":").replace("|", "_");
     }
 
 
