@@ -1,20 +1,18 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
-import org.springframework.data.repository.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface HsBookingItemRepository extends Repository<HsBookingItemEntity, UUID> {
+public interface HsBookingItemRepository<E extends HsBookingItem> {
 
-    Optional<HsBookingItemEntity> findByUuid(final UUID bookingItemUuid);
+    Optional<E> findByUuid(final UUID bookingItemUuid);
 
-    List<HsBookingItemEntity> findByCaption(String bookingItemCaption);
+    List<E> findByCaption(String bookingItemCaption);
 
-    List<HsBookingItemEntity> findAllByProjectUuid(final UUID projectItemUuid);
+    List<E> findAllByProjectUuid(final UUID projectItemUuid);
 
-    HsBookingItemEntity save(HsBookingItemEntity current);
+    E save(E current);
 
     int deleteByUuid(final UUID uuid);
 

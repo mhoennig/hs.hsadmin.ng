@@ -1,19 +1,17 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
-import org.springframework.data.repository.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface HsBookingProjectRepository extends Repository<HsBookingProjectEntity, UUID> {
+public interface HsBookingProjectRepository<E extends HsBookingProject> {
 
-    Optional<HsBookingProjectEntity> findByUuid(final UUID bookingProjectUuid);
-    List<HsBookingProjectEntity> findByCaption(final String projectCaption);
+    Optional<E> findByUuid(final UUID bookingProjectUuid);
+    List<E> findByCaption(final String projectCaption);
 
-    List<HsBookingProjectEntity> findAllByDebitorUuid(final UUID bookingProjectUuid);
+    List<E> findAllByDebitorUuid(final UUID bookingProjectUuid);
 
-    HsBookingProjectEntity save(HsBookingProjectEntity current);
+    E save(E current);
 
     int deleteByUuid(final UUID uuid);
 

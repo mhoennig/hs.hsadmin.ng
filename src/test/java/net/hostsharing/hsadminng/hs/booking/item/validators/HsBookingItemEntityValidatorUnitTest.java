@@ -1,10 +1,11 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.EntityManager;
 import jakarta.validation.ValidationException;
 
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.PRIVATE_CLOUD;
@@ -18,22 +19,24 @@ class HsBookingItemEntityValidatorUnitTest {
     final HsBookingDebitorEntity debitor = HsBookingDebitorEntity.builder()
             .debitorNumber(12345)
             .build();
-    final HsBookingProjectEntity project = HsBookingProjectEntity.builder()
+    final HsBookingProjectRealEntity project = HsBookingProjectRealEntity.builder()
             .debitor(debitor)
             .caption("test project")
             .build();
 
+    private EntityManager em;
+
     @Test
-    void validThrowsException() {
+    void rejectsInvalidEntity() {
         // given
-        final var cloudServerBookingItemEntity = HsBookingItemEntity.builder()
+        final var cloudServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(CLOUD_SERVER)
                 .project(project)
                 .caption("Test-Server")
                 .build();
 
         // when
-        final var result = catchThrowable( ()-> HsBookingItemEntityValidatorRegistry.validated(cloudServerBookingItemEntity));
+        final var result = catchThrowable( ()-> HsBookingItemEntityValidatorRegistry.validated(em, cloudServerBookingItemEntity));
 
         // then
         assertThat(result).isInstanceOf(ValidationException.class)

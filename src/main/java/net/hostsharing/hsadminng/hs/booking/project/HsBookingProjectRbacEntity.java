@@ -1,73 +1,45 @@
 package net.hostsharing.hsadminng.hs.booking.project;
 
-import lombok.*;
-import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.io.IOException;
-import java.util.UUID;
 
-import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
-@Builder
 @Entity
 @Table(name = "hs_booking_project_rv")
+@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class HsBookingProjectEntity implements Stringifyable, BaseEntity<HsBookingProjectEntity> {
-
-    private static Stringify<HsBookingProjectEntity> stringify = stringify(HsBookingProjectEntity.class)
-            .withProp(HsBookingProjectEntity::getDebitor)
-            .withProp(HsBookingProjectEntity::getCaption)
-            .quotedValues(false);
-
-    @Id
-    @GeneratedValue
-    private UUID uuid;
-
-    @Version
-    private int version;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "debitoruuid")
-    private HsBookingDebitorEntity debitor;
-
-    @Column(name = "caption")
-    private String caption;
-
-    @Override
-    public String toString() {
-        return stringify.apply(this);
-    }
-
-    @Override
-    public String toShortString() {
-        return ofNullable(debitor).map(HsBookingDebitorEntity::toShortString).orElse("D-???????") +
-                ":" + caption;
-    }
+public class HsBookingProjectRbacEntity extends HsBookingProject {
 
     public static RbacView rbac() {
-        return rbacViewFor("project", HsBookingProjectEntity.class)
+        return rbacViewFor("project", HsBookingProjectRbacEntity.class)
                 .withIdentityView(SQL.query("""
                         SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingProject.caption) as idName
                             FROM hs_booking_project bookingProject

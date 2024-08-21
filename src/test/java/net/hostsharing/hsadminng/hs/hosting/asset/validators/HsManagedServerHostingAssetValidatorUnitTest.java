@@ -1,15 +1,16 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,12 +20,12 @@ class HsManagedServerHostingAssetValidatorUnitTest {
     @Test
     void validatesProperties() {
         // given
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_SERVER)
                 .identifier("vm1234")
-                .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
-                .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
-                .assignedToAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
+                .bookingItem(MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY)
+                .parentAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
                 .config(Map.ofEntries(
                         entry("monit_max_hdd_usage", "90"),
                         entry("monit_max_cpu_usage", 2),
@@ -48,10 +49,10 @@ class HsManagedServerHostingAssetValidatorUnitTest {
     @Test
     void validatesInvalidIdentifier() {
         // given
-        final var mangedServerHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedServerHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_SERVER)
                 .identifier("xyz00")
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.MANAGED_SERVER).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.MANAGED_SERVER).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 
@@ -66,12 +67,12 @@ class HsManagedServerHostingAssetValidatorUnitTest {
     @Test
     void rejectsInvalidReferencedEntities() {
         // given
-        final var mangedServerHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedServerHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_SERVER)
                 .identifier("xyz00")
-                .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
-                .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
-                .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
+                .bookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY)
+                .parentAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(MANAGED_SERVER).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 

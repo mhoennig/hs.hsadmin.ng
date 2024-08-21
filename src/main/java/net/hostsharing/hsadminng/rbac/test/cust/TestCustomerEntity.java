@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
 import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
@@ -24,6 +25,7 @@ import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class TestCustomerEntity implements BaseEntity<TestCustomerEntity> {
 
     @Id

@@ -7,8 +7,7 @@ import static net.hostsharing.hsadminng.hs.booking.debitor.TestHsBookingDebitor.
 @UtilityClass
 public class TestHsBookingProject {
 
-
-    public static final HsBookingProjectEntity TEST_PROJECT = HsBookingProjectEntity.builder()
+    public static final HsBookingProjectRealEntity PROJECT_TEST_ENTITY = HsBookingProjectRealEntity.builder()
             .debitor(TEST_BOOKING_DEBITOR)
             .caption("test project")
             .build();

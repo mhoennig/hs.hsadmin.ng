@@ -8,9 +8,9 @@ import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 
 public class HsBookingProjectEntityPatcher implements EntityPatcher<HsBookingProjectPatchResource> {
 
-    private final HsBookingProjectEntity entity;
+    private final HsBookingProject entity;
 
-    public HsBookingProjectEntityPatcher(final HsBookingProjectEntity entity) {
+    public HsBookingProjectEntityPatcher(final HsBookingProject entity) {
         this.entity = entity;
     }
 

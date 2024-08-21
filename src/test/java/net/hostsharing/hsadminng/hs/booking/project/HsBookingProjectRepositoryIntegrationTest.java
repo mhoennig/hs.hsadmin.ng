@@ -9,6 +9,8 @@ import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -32,10 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
-    HsBookingProjectRepository bookingProjectRepo;
+    HsBookingProjectRealRepository realProjectRepo;
 
     @Autowired
-    HsBookingProjectRepository projectRepo;
+    HsBookingProjectRbacRepository rbacProjectRepo;
 
     @Autowired
     HsBookingDebitorRepository debitorRepo;
@@ -61,24 +63,24 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
         @Test
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewBookingProject() {
             // given
-            context("superuser-alex@hostsharing.net");
-            final var count = bookingProjectRepo.count();
+            context("superuser-alex@hostsharing.net"); // TODO.test: remove once we have a realDebitorRepo
+            final var count = realProjectRepo.count();
             final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).get(0);
 
             // when
             final var result = attempt(em, () -> {
-                final var newBookingProject = HsBookingProjectEntity.builder()
+                final var newBookingProject = HsBookingProjectRbacEntity.builder()
                         .debitor(givenDebitor)
                         .caption("some new booking project")
                         .build();
-                return toCleanup(bookingProjectRepo.save(newBookingProject));
+                return toCleanup(rbacProjectRepo.save(newBookingProject));
             });
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsBookingProjectEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsBookingProject::getUuid).isNotNull();
             assertThatBookingProjectIsPersisted(result.returnedValue());
-            assertThat(bookingProjectRepo.count()).isEqualTo(count + 1);
+            assertThat(realProjectRepo.count()).isEqualTo(count + 1);
         }
 
         @Test
@@ -93,11 +95,11 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             // when
             attempt(em, () -> {
                 final var givenDebitor = debitorRepo.findByDebitorNumber(1000111).get(0);
-                final var newBookingProject = HsBookingProjectEntity.builder()
+                final var newBookingProject = HsBookingProjectRbacEntity.builder()
                         .debitor(givenDebitor)
                         .caption("some new booking project")
                         .build();
-                return toCleanup(bookingProjectRepo.save(newBookingProject));
+                return toCleanup(rbacProjectRepo.save(newBookingProject));
             });
 
             // then
@@ -135,33 +137,35 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                             null));
         }
 
-        private void assertThatBookingProjectIsPersisted(final HsBookingProjectEntity saved) {
-            final var found = bookingProjectRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().map(HsBookingProjectEntity::toString).get().isEqualTo(saved.toString());
+        private void assertThatBookingProjectIsPersisted(final HsBookingProject saved) {
+            final var found = rbacProjectRepo.findByUuid(saved.getUuid());
+            assertThat(found).isNotEmpty().map(HsBookingProject::toString).get().isEqualTo(saved.toString());
         }
     }
 
     @Nested
     class FindByDebitorUuid {
 
-        @Test
-        public void globalAdmin_withoutAssumedRole_canViewAllBookingProjectsOfArbitraryDebitor() {
+        @ParameterizedTest
+        @EnumSource(TestCase.class)
+        public void globalAdmin_withoutAssumedRole_canViewAllBookingProjectsOfArbitraryDebitor(final TestCase testCase) {
             // given
             context("superuser-alex@hostsharing.net");
             final var debitorUuid = debitorRepo.findByDebitorNumber(1000212).stream()
                     .findAny().orElseThrow().getUuid();
 
             // when
-            final var result = bookingProjectRepo.findAllByDebitorUuid(debitorUuid);
+            final var result = repoUnderTest(testCase).findAllByDebitorUuid(debitorUuid);
 
             // then
             allTheseBookingProjectsAreReturned(
                     result,
-                    "HsBookingProjectEntity(D-1000212, D-1000212 default project)");
+                    "HsBookingProject(D-1000212, D-1000212 default project)");
         }
 
-        @Test
-        public void packetAgent_canViewOnlyRelatedBookingProjects() {
+        @ParameterizedTest
+        @EnumSource(TestCase.class)
+        public void packetAgent_canViewOnlyRelatedBookingProjects(final TestCase testCase) {
 
             // given:
             context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
@@ -169,50 +173,52 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                     .findAny().orElseThrow().getUuid();
 
             // when:
-            final var result = bookingProjectRepo.findAllByDebitorUuid(debitorUuid);
+            final var result = repoUnderTest(testCase).findAllByDebitorUuid(debitorUuid);
 
             // then:
-            exactlyTheseBookingProjectsAreReturned(
-                    result,
-                    "HsBookingProjectEntity(D-1000111, D-1000111 default project)");
+            assertResult(testCase, result,
+                    "HsBookingProject(D-1000111, D-1000111 default project)");
         }
     }
 
     @Nested
     class UpdateBookingProject {
 
-        @Test
-        public void hostsharingAdmin_canUpdateArbitraryBookingProject() {
+        @ParameterizedTest
+        @EnumSource(TestCase.class)
+        public void bookingProjectAdmin_canUpdateArbitraryBookingProject(final TestCase testCase) {
             // given
             final var givenBookingProjectUuid = givenSomeTemporaryBookingProject(1000111).getUuid();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
-                final var foundBookingProject = em.find(HsBookingProjectEntity.class, givenBookingProjectUuid);
-                return toCleanup(bookingProjectRepo.save(foundBookingProject));
+                context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-sometempproject:ADMIN");
+                final var foundBookingProject = em.find(HsBookingProjectRbacEntity.class, givenBookingProjectUuid);
+                foundBookingProject.setCaption("updated caption");
+                return toCleanup(repoUnderTest(testCase).save(foundBookingProject));
             });
 
             // then
             result.assertSuccessful();
-            jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net");
-                assertThatBookingProjectActuallyInDatabase(result.returnedValue());
-            }).assertSuccessful();
+            assertThat(result.returnedValue().getCaption()).isEqualTo("updated caption");
+            assertThatBookingProjectActuallyInDatabase(result.returnedValue());
         }
 
-        private void assertThatBookingProjectActuallyInDatabase(final HsBookingProjectEntity saved) {
-            final var found = bookingProjectRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().get().isNotSameAs(saved)
-                    .extracting(Object::toString).isEqualTo(saved.toString());
+        private void assertThatBookingProjectActuallyInDatabase(final HsBookingProject saved) {
+            jpaAttempt.transacted(() -> {
+                final var found = realProjectRepo.findByUuid(saved.getUuid());
+                assertThat(found).isNotEmpty().get().isNotSameAs(saved)
+                        .extracting(Object::toString).isEqualTo(saved.toString());
+            }).assertSuccessful();
         }
     }
 
     @Nested
     class DeleteByUuid {
 
-        @Test
-        public void globalAdmin_withoutAssumedRole_canDeleteAnyBookingProject() {
+        @ParameterizedTest
+        @EnumSource(TestCase.class)
+        public void globalAdmin_withoutAssumedRole_canDeleteAnyBookingProject(final TestCase testCase) {
             // given
             context("superuser-alex@hostsharing.net", null);
             final var givenBookingProject = givenSomeTemporaryBookingProject(1000111);
@@ -220,14 +226,14 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                bookingProjectRepo.deleteByUuid(givenBookingProject.getUuid());
+                repoUnderTest(testCase).deleteByUuid(givenBookingProject.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-fran@hostsharing.net", null);
-                return bookingProjectRepo.findByUuid(givenBookingProject.getUuid());
+                return rbacProjectRepo.findByUuid(givenBookingProject.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
 
@@ -239,9 +245,9 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-sometempproject:AGENT");
-                assertThat(bookingProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent();
+                assertThat(rbacProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent();
 
-                bookingProjectRepo.deleteByUuid(givenBookingProject.getUuid());
+                repoUnderTest(TestCase.RBAC).deleteByUuid(givenBookingProject.getUuid());
             });
 
             // then
@@ -250,12 +256,13 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "[403] Subject ", " is not allowed to delete hs_booking_project");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                return bookingProjectRepo.findByUuid(givenBookingProject.getUuid());
+                return rbacProjectRepo.findByUuid(givenBookingProject.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
 
-        @Test
-        public void deletingABookingProjectAlsoDeletesRelatedRolesAndGrants() {
+        @ParameterizedTest
+        @EnumSource(TestCase.class)
+        public void deletingABookingProjectAlsoDeletesRelatedRolesAndGrants(final TestCase testCase) {
             // given
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = Array.from(distinctRoleNamesOf(rawRoleRepo.findAll()));
@@ -265,7 +272,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                return bookingProjectRepo.deleteByUuid(givenBookingProject.getUuid());
+                return repoUnderTest(testCase).deleteByUuid(givenBookingProject.getUuid());
             });
 
             // then
@@ -295,32 +302,78 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                 "[creating booking-project test-data 1000313, hs_booking_project, INSERT]");
     }
 
-    private HsBookingProjectEntity givenSomeTemporaryBookingProject(final int debitorNumber) {
+    private HsBookingProjectRealEntity givenSomeTemporaryBookingProject(final int debitorNumber) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).get(0);
-            final var newBookingProject = HsBookingProjectEntity.builder()
+            final var newBookingProject = HsBookingProjectRealEntity.builder()
                     .debitor(givenDebitor)
                     .caption("some temp project")
                     .build();
 
-            return toCleanup(bookingProjectRepo.save(newBookingProject));
+            return toCleanup(realProjectRepo.save(newBookingProject));
         }).assertSuccessful().returnedValue();
     }
 
     void exactlyTheseBookingProjectsAreReturned(
-            final List<HsBookingProjectEntity> actualResult,
+            final List<? extends HsBookingProject> actualResult,
             final String... bookingProjectNames) {
         assertThat(actualResult)
-                .extracting(HsBookingProjectEntity::toString)
+                .extracting(HsBookingProject::toString)
                 .containsExactlyInAnyOrder(bookingProjectNames);
     }
 
     void allTheseBookingProjectsAreReturned(
-            final List<HsBookingProjectEntity> actualResult,
+            final List<? extends HsBookingProject> actualResult,
             final String... bookingProjectNames) {
         assertThat(actualResult)
-                .extracting(HsBookingProjectEntity::toString)
+                .extracting(HsBookingProject::toString)
                 .contains(bookingProjectNames);
+    }
+
+    private HsBookingProjectRepository repoUnderTest(final TestCase testCase) {
+        return testCase.repo(HsBookingProjectRepositoryIntegrationTest.this);
+    }
+
+    private void assertResult(
+            final TestCase testCase,
+            final List<? extends HsBookingProject> actualResult,
+            final String... expectedProjects) {
+        testCase.assertResult(HsBookingProjectRepositoryIntegrationTest.this, actualResult, expectedProjects);
+    }
+
+    enum TestCase {
+        REAL {
+            @Override
+            HsBookingProjectRepository repo(final HsBookingProjectRepositoryIntegrationTest test) {
+                return test.realProjectRepo;
+            }
+
+            @Override
+            void assertResult(
+                    final HsBookingProjectRepositoryIntegrationTest test,
+                    final List<? extends HsBookingProject> result,
+                    final String... expectedProjects) {
+                test.allTheseBookingProjectsAreReturned(result, expectedProjects);
+            }
+        },
+        RBAC {
+            @Override
+            HsBookingProjectRepository repo(final HsBookingProjectRepositoryIntegrationTest test) {
+                return test.rbacProjectRepo;
+            }
+
+            @Override
+            void assertResult(
+                    final HsBookingProjectRepositoryIntegrationTest test,
+                    final List<? extends HsBookingProject> result,
+                    final String... expectedProjects) {
+                test.exactlyTheseBookingProjectsAreReturned(result, expectedProjects);
+            }
+        };
+
+        abstract HsBookingProjectRepository repo(final HsBookingProjectRepositoryIntegrationTest test);
+
+        abstract void assertResult(final HsBookingProjectRepositoryIntegrationTest test, final List<? extends HsBookingProject> result, final String... expectedProjects);
     }
 }

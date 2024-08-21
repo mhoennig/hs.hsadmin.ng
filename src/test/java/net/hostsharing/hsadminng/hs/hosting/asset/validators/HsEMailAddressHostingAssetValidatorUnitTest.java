@@ -1,6 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.junit.jupiter.api.Test;
 
@@ -8,26 +9,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Map.ofEntries;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_MBOX_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.mapper.PatchableMapWrapper.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsEMailAddressHostingAssetValidatorUnitTest {
 
-    final static HsHostingAssetEntity domainSetup = HsHostingAssetEntity.builder()
+    final static HsHostingAssetRealEntity domainSetup = HsHostingAssetRealEntity.builder()
             .type(DOMAIN_MBOX_SETUP)
             .identifier("example.org")
             .build();
-    final static HsHostingAssetEntity domainMboxSetup = HsHostingAssetEntity.builder()
+    final static HsHostingAssetRealEntity domainMboxSetup = HsHostingAssetRealEntity.builder()
             .type(DOMAIN_MBOX_SETUP)
             .identifier("example.org|MBOX")
             .parentAsset(domainSetup)
             .build();
-    static HsHostingAssetEntity.HsHostingAssetEntityBuilder validEntityBuilder() {
-            return HsHostingAssetEntity.builder()
+    static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
+            return HsHostingAssetRbacEntity.builder()
                 .type(EMAIL_ADDRESS)
                 .parentAsset(domainMboxSetup)
                 .identifier("old-local-part@example.org")
@@ -173,9 +174,9 @@ class HsEMailAddressHostingAssetValidatorUnitTest {
     void validatesInvalidReferences() {
         // given
         final var emailAddressHostingAssetEntity = validEntityBuilder()
-                .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
-                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
-                .assignedToAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                .bookingItem(MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY)
+                .parentAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
+                .assignedToAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(emailAddressHostingAssetEntity.getType());
 

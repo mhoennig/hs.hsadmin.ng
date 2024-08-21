@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.apache.commons.lang3.function.TriFunction;
 
@@ -73,7 +73,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
     private boolean isTotalsValidator = false;
 
     @JsonIgnore
-    private List<Function<HsBookingItemEntity, List<String>>> asTotalLimitValidators; // TODO.impl: move to BookingItemIntegerProperty
+    private List<Function<HsBookingItem, List<String>>> asTotalLimitValidators; // TODO.impl: move to BookingItemIntegerProperty
 
     private Integer thresholdPercentage; // TODO.impl: move to IntegerProperty
 
@@ -151,8 +151,8 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
         if (asTotalLimitValidators == null) {
             asTotalLimitValidators = new ArrayList<>();
         }
-        final TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> validator =
-                (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
+        final TriFunction<HsBookingItem, IntegerProperty<?>, Integer, List<String>> validator =
+                (final HsBookingItem entity, final IntegerProperty<?> prop, final Integer factor) -> {
 
             final var total = entity.getSubBookingItems().stream()
                     .map(server -> server.getResources().get(propertyName))
@@ -167,7 +167,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
             }
             return emptyList();
         };
-        asTotalLimitValidators.add((final HsBookingItemEntity entity) -> validator.apply(entity, (IntegerProperty)this,  1));
+        asTotalLimitValidators.add((final HsBookingItem entity) -> validator.apply(entity, (IntegerProperty)this,  1));
         return self();
     }
 
@@ -183,11 +183,11 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
         return thresholdPercentage;
     }
 
-    public ValidatableProperty<P, T> eachComprising(final int factor, final TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> validator) {
+    public ValidatableProperty<P, T> eachComprising(final int factor, final TriFunction<HsBookingItem, IntegerProperty<?>, Integer, List<String>> validator) {
         if (asTotalLimitValidators == null) {
             asTotalLimitValidators = new ArrayList<>();
         }
-        asTotalLimitValidators.add((final HsBookingItemEntity entity) -> validator.apply(entity, (IntegerProperty<?>)this,  factor));
+        asTotalLimitValidators.add((final HsBookingItem entity) -> validator.apply(entity, (IntegerProperty<?>)this,  factor));
         return this;
     }
 
@@ -323,7 +323,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
         return value;
     }
 
-    public List<String> validateTotals(final HsBookingItemEntity bookingItem) {
+    public List<String> validateTotals(final HsBookingItem bookingItem) {
         if (asTotalLimitValidators==null) {
             return emptyList();
         }

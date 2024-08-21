@@ -1,13 +1,15 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
+import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import net.hostsharing.hsadminng.hs.validation.IntegerProperty;
 import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Collections.emptyList;
-import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_MBOX_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_DATABASE;
@@ -38,9 +40,9 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         );
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> unixUsers() {
-        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
-            final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
+    private static TriFunction<HsBookingItem, IntegerProperty<?>, Integer, List<String>> unixUsers() {
+        return (final HsBookingItem entity, final IntegerProperty<?> prop, final Integer factor) -> {
+            final var unixUserCount = fetchRelatedBookingItem(entity)
                     .map(ha -> ha.getSubHostingAssets().stream()
                             .filter(subAsset -> subAsset.getType() == UNIX_USER)
                         .count())
@@ -53,9 +55,9 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         };
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> databaseUsers() {
-        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
-            final var dbUserCount = ofNullable(entity.getRelatedHostingAsset())
+    private static TriFunction<HsBookingItem, IntegerProperty<?>, Integer, List<String>> databaseUsers() {
+        return (final HsBookingItem entity, final IntegerProperty<?> prop, final Integer factor) -> {
+            final var dbUserCount = fetchRelatedBookingItem(entity)
                     .map(ha -> ha.getSubHostingAssets().stream()
                             .filter(bi -> bi.getType() == PGSQL_USER || bi.getType() == MARIADB_USER )
                             .count())
@@ -68,9 +70,9 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         };
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> databases() {
-        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
-            final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
+    private static TriFunction<HsBookingItem, IntegerProperty<?>, Integer, List<String>> databases() {
+        return (final HsBookingItem entity, final IntegerProperty<?> prop, final Integer factor) -> {
+            final var unixUserCount = fetchRelatedBookingItem(entity)
                     .map(ha -> ha.getSubHostingAssets().stream()
                         .filter(bi -> bi.getType()==PGSQL_USER || bi.getType()==MARIADB_USER )
                         .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
@@ -85,9 +87,9 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
         };
     }
 
-    private static TriFunction<HsBookingItemEntity, IntegerProperty<?>, Integer, List<String>> eMailAddresses() {
-        return (final HsBookingItemEntity entity, final IntegerProperty<?> prop, final Integer factor) -> {
-            final var unixUserCount = ofNullable(entity.getRelatedHostingAsset())
+    private static TriFunction<HsBookingItem, IntegerProperty<?>, Integer, List<String>> eMailAddresses() {
+        return (final HsBookingItem entity, final IntegerProperty<?> prop, final Integer factor) -> {
+            final var unixUserCount = fetchRelatedBookingItem(entity)
                     .map(ha -> ha.getSubHostingAssets().stream()
                         .filter(bi -> bi.getType() == DOMAIN_MBOX_SETUP)
                         .flatMap(domainEMailSetup -> domainEMailSetup.getSubHostingAssets().stream()
@@ -100,5 +102,14 @@ class HsManagedWebspaceBookingItemValidator extends HsBookingItemEntityValidator
             }
             return emptyList();
         };
+    }
+
+    private static Optional<HsHostingAssetRealEntity> fetchRelatedBookingItem(final HsBookingItem entity) {
+        // TODO.perf: maybe we need to cache the result at least for a single valiationrun
+        return HsEntityValidator.localEntityManager.get().createQuery(
+                        "SELECT asset FROM HsHostingAssetRealEntity asset WHERE asset.bookingItem.uuid=:bookingItemUuid",
+                        HsHostingAssetRealEntity.class)
+                .setParameter("bookingItemUuid", entity.getUuid())
+                .getResultStream().findFirst(); // there are 0 or 1, never more
     }
 }

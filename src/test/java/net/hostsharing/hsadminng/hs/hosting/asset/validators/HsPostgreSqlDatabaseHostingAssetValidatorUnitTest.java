@@ -1,35 +1,40 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
+import net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
+import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.stream.Stream;
 
 import static java.util.Map.ofEntries;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_DATABASE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_INSTANCE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.PGSQL_USER;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
 
-    private static final HsHostingAssetEntity GIVEN_PGSQL_INSTANCE = HsHostingAssetEntity.builder()
+    private static final HsHostingAssetRealEntity GIVEN_PGSQL_INSTANCE = HsHostingAssetRealEntity.builder()
             .type(PGSQL_INSTANCE)
-            .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+            .parentAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
             .identifier("vm1234|PgSql.default")
             .caption("some valid test PgSql-Instance")
             .build();
 
-    private static final HsHostingAssetEntity GIVEN_PGSQL_USER = HsHostingAssetEntity.builder()
+    private static final HsHostingAssetRealEntity GIVEN_PGSQL_USER = HsHostingAssetRealEntity.builder()
             .type(PGSQL_USER)
-            .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+            .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
             .assignedToAsset(GIVEN_PGSQL_INSTANCE)
             .identifier("xyz00_user")
             .caption("some valid test PgSql-User")
@@ -38,8 +43,8 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
             )))
             .build();
 
-    private static HsHostingAssetEntityBuilder givenValidPgSqlDatabaseBuilder() {
-        return HsHostingAssetEntity.builder()
+    private static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> givenValidPgSqlDatabaseBuilder() {
+        return HsHostingAssetRbacEntity.builder()
                 .type(PGSQL_DATABASE)
                 .parentAsset(GIVEN_PGSQL_USER)
                 .identifier("PGD|xyz00_db")
@@ -68,12 +73,13 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
         // given
         final var givenPgSqlUserHostingAsset = givenValidPgSqlDatabaseBuilder().build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(givenPgSqlUserHostingAsset.getType());
+        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = Stream.concat(
+        final var result = HsEntityValidator.doWithEntityManager(em, () -> Stream.concat(
                 validator.validateEntity(givenPgSqlUserHostingAsset).stream(),
                 validator.validateContext(givenPgSqlUserHostingAsset).stream()
-        ).toList();
+        ).toList());
 
         // then
         assertThat(result).isEmpty();
@@ -83,9 +89,9 @@ class HsPostgreSqlDatabaseHostingAssetValidatorUnitTest {
     void rejectsInvalidReferences() {
         // given
         final var givenPgSqlUserHostingAsset = givenValidPgSqlDatabaseBuilder()
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
-                .parentAsset(HsHostingAssetEntity.builder().type(PGSQL_INSTANCE).build())
-                .assignedToAsset(HsHostingAssetEntity.builder().type(PGSQL_INSTANCE).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(HsHostingAssetRealEntity.builder().type(PGSQL_INSTANCE).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(PGSQL_INSTANCE).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(givenPgSqlUserHostingAsset.getType());
 

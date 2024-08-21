@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public class HsBookingItemEntityPatcher implements EntityPatcher<HsBookingItemPatchResource> {
 
-    private final HsBookingItemEntity entity;
+    private final HsBookingItem entity;
 
-    public HsBookingItemEntityPatcher(final HsBookingItemEntity entity) {
+    public HsBookingItemEntityPatcher(final HsBookingItem entity) {
         this.entity = entity;
     }
 

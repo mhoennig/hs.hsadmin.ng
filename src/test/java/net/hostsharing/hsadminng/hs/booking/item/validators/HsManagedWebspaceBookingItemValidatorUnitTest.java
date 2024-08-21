@@ -1,10 +1,11 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.EntityManager;
 import java.util.Map;
 
 import static java.util.Map.entry;
@@ -16,15 +17,16 @@ class HsManagedWebspaceBookingItemValidatorUnitTest {
     final HsBookingDebitorEntity debitor = HsBookingDebitorEntity.builder()
             .debitorNumber(12345)
             .build();
-    final HsBookingProjectEntity project = HsBookingProjectEntity.builder()
+    final HsBookingProjectRealEntity project = HsBookingProjectRealEntity.builder()
             .debitor(debitor)
             .caption("Test-Project")
             .build();
+    private EntityManager em;
 
     @Test
     void validatesProperties() {
         // given
-        final var mangedServerBookingItemEntity = HsBookingItemEntity.builder()
+        final var mangedServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .project(project)
                 .caption("Test Managed-Webspace")
@@ -37,7 +39,7 @@ class HsManagedWebspaceBookingItemValidatorUnitTest {
                 .build();
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(mangedServerBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, mangedServerBookingItemEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(

@@ -32,10 +32,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
     private Integer port;
 
     @Autowired
-    HsBookingProjectRepository bookingProjectRepo;
-
-    @Autowired
-    HsBookingProjectRepository projectRepo;
+    HsBookingProjectRealRepository realProjectRepo;
 
     @Autowired
     HsBookingDebitorRepository debitorRepo;
@@ -126,7 +123,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void globalAdmin_canGetArbitraryBookingProject() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000111 default project").stream()
+            final var givenBookingProjectUuid = realProjectRepo.findByCaption("D-1000111 default project").stream()
                             .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
@@ -148,8 +145,8 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void normalUser_canNotGetUnrelatedBookingProject() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000212 default project").stream()
-                    .map(HsBookingProjectEntity::getUuid)
+            final var givenBookingProjectUuid = realProjectRepo.findByCaption("D-1000212 default project").stream()
+                    .map(HsBookingProject::getUuid)
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
@@ -165,7 +162,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
         @Test
         void projectAgentUser_canGetRelatedBookingProject() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingProjectUuid = bookingProjectRepo.findByCaption("D-1000313 default project").stream()
+            final var givenBookingProjectUuid = realProjectRepo.findByCaption("D-1000313 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
             RestAssured // @formatter:off
@@ -217,7 +214,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
 
             // finally, the bookingProject is actually updated
             context.define("superuser-alex@hostsharing.net");
-            assertThat(bookingProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent().get()
+            assertThat(realProjectRepo.findByUuid(givenBookingProject.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getDebitor().toString()).isEqualTo("booking-debitor(D-1000111: fir)");
                         return true;
@@ -243,7 +240,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
                     .statusCode(204); // @formatter:on
 
             // then the given bookingProject is gone
-            assertThat(bookingProjectRepo.findByUuid(givenBookingProject.getUuid())).isEmpty();
+            assertThat(realProjectRepo.findByUuid(givenBookingProject.getUuid())).isEmpty();
         }
 
         @Test
@@ -261,21 +258,21 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
                     .statusCode(404); // @formatter:on
 
             // then the given bookingProject is still there
-            assertThat(bookingProjectRepo.findByUuid(givenBookingProject.getUuid())).isNotEmpty();
+            assertThat(realProjectRepo.findByUuid(givenBookingProject.getUuid())).isNotEmpty();
         }
     }
 
-    private HsBookingProjectEntity givenSomeBookingProject(final int debitorNumber, final String caption) {
+    private HsBookingProjectRealEntity givenSomeBookingProject(final int debitorNumber, final String caption) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             final var givenDebitor = debitorRepo.findByDebitorNumber(debitorNumber).stream().findAny().orElseThrow();
-            final var newBookingProject = HsBookingProjectEntity.builder()
+            final var newBookingProject = HsBookingProjectRealEntity.builder()
                     .uuid(UUID.randomUUID())
                     .debitor(givenDebitor)
                     .caption(caption)
                     .build();
 
-            return bookingProjectRepo.save(newBookingProject);
+            return realProjectRepo.save(newBookingProject);
         }).assertSuccessful().returnedValue();
     }
 }

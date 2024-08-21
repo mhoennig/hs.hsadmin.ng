@@ -1,10 +1,11 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.EntityManager;
 import java.util.Map;
 
 import static java.util.List.of;
@@ -20,15 +21,16 @@ class HsCloudServerBookingItemValidatorUnitTest {
     final HsBookingDebitorEntity debitor = HsBookingDebitorEntity.builder()
             .debitorNumber(12345)
             .build();
-    final HsBookingProjectEntity project = HsBookingProjectEntity.builder()
+    final HsBookingProjectRealEntity project = HsBookingProjectRealEntity.builder()
             .debitor(debitor)
             .caption("Test-Project")
             .build();
+    private EntityManager em;
 
     @Test
     void validatesProperties() {
         // given
-        final var cloudServerBookingItemEntity = HsBookingItemEntity.builder()
+        final var cloudServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(CLOUD_SERVER)
                 .project(project)
                 .caption("Test-Server")
@@ -42,7 +44,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                 .build();
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(cloudServerBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, cloudServerBookingItemEntity);
 
         // then
         assertThat(result).containsExactly("'D-12345:Test-Project:Test-Server.resources.SLA-EMail' is not expected but is set to 'true'");
@@ -68,7 +70,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
     @Test
     void validatesExceedingPropertyTotals() {
         // given
-        final var subCloudServerBookingItemEntity = HsBookingItemEntity.builder()
+        final var subCloudServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(CLOUD_SERVER)
                 .caption("Test Cloud-Server")
                 .resources(ofEntries(
@@ -78,7 +80,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                         entry("Traffic", 2500)
                 ))
                 .build();
-        final HsBookingItemEntity subManagedServerBookingItemEntity = HsBookingItemEntity.builder()
+        final HsBookingItemRealEntity subManagedServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(MANAGED_SERVER)
                 .caption("Test Managed-Server")
                 .resources(ofEntries(
@@ -88,7 +90,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
                         entry("Traffic", 3000)
                 ))
                 .build();
-        final var privateCloudBookingItemEntity = HsBookingItemEntity.builder()
+        final var privateCloudBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(PRIVATE_CLOUD)
                 .project(project)
                 .caption("Test Cloud")
@@ -107,7 +109,7 @@ class HsCloudServerBookingItemValidatorUnitTest {
         subCloudServerBookingItemEntity.setParentItem(privateCloudBookingItemEntity);
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(subCloudServerBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, subCloudServerBookingItemEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(

@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import net.hostsharing.hsadminng.hs.validation.ValidatableProperty;
 import org.apache.commons.lang3.BooleanUtils;
@@ -14,14 +14,14 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.ofNullable;
 
-public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingItemEntity> {
+public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingItem> {
 
     public HsBookingItemEntityValidator(final ValidatableProperty<?, ?>... properties) {
         super(properties);
     }
 
     @Override
-    public List<String> validateEntity(final HsBookingItemEntity bookingItem) {
+    public List<String> validateEntity(final HsBookingItem bookingItem) {
         // TODO.impl: HsBookingItemType could do this similar to HsHostingAssetType
         if ( bookingItem.getParentItem() == null && bookingItem.getProject() == null) {
             return List.of(bookingItem + ".'parentItem' or .'project' expected to be set, but both are null");
@@ -30,21 +30,21 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
     }
 
     @Override
-    public List<String> validateContext(final HsBookingItemEntity bookingItem) {
+    public List<String> validateContext(final HsBookingItem bookingItem) {
         return sequentiallyValidate(
                 () -> optionallyValidate(bookingItem.getParentItem()),
                 () -> validateAgainstSubEntities(bookingItem)
         );
     }
 
-    private static List<String> optionallyValidate(final HsBookingItemEntity bookingItem) {
+    private static List<String> optionallyValidate(final HsBookingItem bookingItem) {
            return bookingItem != null
                    ? enrich(prefix(bookingItem.toShortString(), ""),
                         HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateContext(bookingItem))
                    : emptyList();
     }
 
-    protected List<String> validateAgainstSubEntities(final HsBookingItemEntity bookingItem) {
+    protected List<String> validateAgainstSubEntities(final HsBookingItem bookingItem) {
         return enrich(prefix(bookingItem.toShortString(), "resources"),
                     Stream.concat(
                         stream(propertyValidators)
@@ -58,7 +58,7 @@ public class HsBookingItemEntityValidator extends HsEntityValidator<HsBookingIte
 
     // TODO.refa: convert into generic shape like multi-options validator
     private static String validateMaxTotalValue(
-            final HsBookingItemEntity bookingItem,
+            final HsBookingItem bookingItem,
             final ValidatableProperty<?, ?> propDef) {
         final var propName = propDef.propertyName();
         final var propUnit = ofNullable(propDef.unit()).map(u -> " " + u).orElse("");

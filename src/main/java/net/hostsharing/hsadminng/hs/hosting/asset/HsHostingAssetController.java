@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntitySaveProcessor;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.api.HsHostingAssetsApi;
@@ -39,10 +39,13 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     private Mapper mapper;
 
     @Autowired
-    private HsHostingAssetRepository assetRepo;
+    private HsHostingAssetRbacRepository rbacAssetRepo;
 
     @Autowired
-    private HsBookingItemRepository bookingItemRepo;
+    private HsHostingAssetRealRepository realAssetRepo;
+
+    @Autowired
+    private HsBookingItemRealRepository realBookingItemRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,7 +57,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
             final HsHostingAssetTypeResource type) {
         context.define(currentUser, assumedRoles);
 
-        final var entities = assetRepo.findAllByCriteria(debitorUuid, parentAssetUuid, HsHostingAssetType.of(type));
+        final var entities = rbacAssetRepo.findAllByCriteria(debitorUuid, parentAssetUuid, HsHostingAssetType.of(type));
 
         final var resources = mapper.mapList(entities, HsHostingAssetResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
@@ -70,13 +73,13 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entity = mapper.map(body, HsHostingAssetEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entity = mapper.map(body, HsHostingAssetRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var mapped = new HostingAssetEntitySaveProcessor(em, entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
-                .saveUsing(assetRepo::save)
+                .saveUsing(rbacAssetRepo::save)
                 .validateContext()
                 .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class))
                 .revampProperties();
@@ -98,7 +101,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var result = assetRepo.findByUuid(assetUuid);
+        final var result = rbacAssetRepo.findByUuid(assetUuid);
         return result
                 .map(assetEntity -> ResponseEntity.ok(
                         mapper.map(assetEntity, HsHostingAssetResource.class, ENTITY_TO_RESOURCE_POSTMAPPER)))
@@ -113,7 +116,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
             final UUID assetUuid) {
         context.define(currentUser, assumedRoles);
 
-        final var result = assetRepo.deleteByUuid(assetUuid);
+        final var result = rbacAssetRepo.deleteByUuid(assetUuid);
         return result == 0
                 ? ResponseEntity.notFound().build()
                 : ResponseEntity.noContent().build();
@@ -129,7 +132,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entity = assetRepo.findByUuid(assetUuid).orElseThrow();
+        final var entity = rbacAssetRepo.findByUuid(assetUuid).orElseThrow();
 
         new HsHostingAssetEntityPatcher(em, entity).apply(body);
 
@@ -137,7 +140,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
-                .saveUsing(assetRepo::save)
+                .saveUsing(rbacAssetRepo::save)
                 .validateContext()
                 .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class))
                 .revampProperties();
@@ -145,22 +148,22 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
         return ResponseEntity.ok(mapped);
     }
 
-    final BiConsumer<HsHostingAssetInsertResource, HsHostingAssetEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+    final BiConsumer<HsHostingAssetInsertResource, HsHostingAssetRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.putConfig(KeyValueMap.from(resource.getConfig()));
         if (resource.getBookingItemUuid() != null) {
-            entity.setBookingItem(bookingItemRepo.findByUuid(resource.getBookingItemUuid())
+            entity.setBookingItem(realBookingItemRepo.findByUuid(resource.getBookingItemUuid())
                     .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] bookingItemUuid %s not found".formatted(
                             resource.getBookingItemUuid()))));
         }
         if (resource.getParentAssetUuid() != null) {
-            entity.setParentAsset(assetRepo.findByUuid(resource.getParentAssetUuid())
+            entity.setParentAsset(realAssetRepo.findByUuid(resource.getParentAssetUuid())
                     .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] parentAssetUuid %s not found".formatted(
                             resource.getParentAssetUuid()))));
         }
     };
 
     @SuppressWarnings("unchecked")
-    final BiConsumer<HsHostingAssetEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
+    final BiConsumer<HsHostingAssetRbacEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
             -> resource.setConfig(HostingAssetEntityValidatorRegistry.forType(entity.getType())
                 .revampProperties(em, entity, (Map<String, Object>) resource.getConfig()));
 }

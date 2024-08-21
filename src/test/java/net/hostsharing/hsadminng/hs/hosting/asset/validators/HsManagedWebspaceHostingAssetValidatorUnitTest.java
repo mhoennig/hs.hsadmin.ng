@@ -1,10 +1,15 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
+import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -13,12 +18,13 @@ import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.PROJECT_TEST_ENTITY;
 
+@ExtendWith(MockitoExtension.class)
 class HsManagedWebspaceHostingAssetValidatorUnitTest {
 
-    final HsBookingItemEntity managedServerBookingItem = HsBookingItemEntity.builder()
-            .project(TEST_PROJECT)
+    final HsBookingItemRealEntity managedServerBookingItem = HsBookingItemRealEntity.builder()
+            .project(PROJECT_TEST_ENTITY)
             .type(HsBookingItemType.MANAGED_SERVER)
             .caption("Test Managed-Server")
             .resources(Map.ofEntries(
@@ -30,12 +36,12 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                     entry("SLA-EMail", true)
             ))
             .build();
-    final HsBookingItemEntity cloudServerBookingItem = managedServerBookingItem.toBuilder()
+    final HsBookingItemRealEntity cloudServerBookingItem = managedServerBookingItem.toBuilder()
             .type(HsBookingItemType.CLOUD_SERVER)
             .caption("Test Cloud-Server")
             .build();
 
-    final HsHostingAssetEntity mangedServerAssetEntity = HsHostingAssetEntity.builder()
+    final HsHostingAssetRealEntity mangedServerAssetEntity = HsHostingAssetRealEntity.builder()
             .type(HsHostingAssetType.MANAGED_SERVER)
             .bookingItem(managedServerBookingItem)
             .identifier("vm1234")
@@ -45,7 +51,7 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                     entry("monit_max_ram_usage", 90)
             ))
             .build();
-    final HsHostingAssetEntity cloudServerAssetEntity = HsHostingAssetEntity.builder()
+    final HsHostingAssetRealEntity cloudServerAssetEntity = HsHostingAssetRealEntity.builder()
             .type(HsHostingAssetType.CLOUD_SERVER)
             .bookingItem(cloudServerBookingItem)
             .identifier("vm1234")
@@ -60,9 +66,9 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     void acceptsAlienIdentifierPrefixForPreExistingEntity() {
         // given
         final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
-                .bookingItem(HsBookingItemEntity.builder()
+                .bookingItem(HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.MANAGED_WEBSPACE)
                         .resources(Map.ofEntries(entry("SSD", 25), entry("Traffic", 250)))
                         .build())
@@ -70,9 +76,11 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
                 .identifier("xyz00")
                 .isLoaded(true)
                 .build();
+        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = validator.validateContext(mangedWebspaceHostingAssetEntity);
+        final var result = HsEntityValidator.doWithEntityManager(em, () ->
+                validator.validateContext(mangedWebspaceHostingAssetEntity));
 
         // then
         assertThat(result).isEmpty();
@@ -82,9 +90,9 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     void validatesIdentifierAndReferencedEntities() {
         // given
         final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
                 .parentAsset(mangedServerAssetEntity)
                 .identifier("xyz00")
                 .build();
@@ -100,9 +108,9 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     void validatesUnknownProperties() {
         // given
         final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.MANAGED_WEBSPACE).build())
                 .parentAsset(mangedServerAssetEntity)
                 .identifier("abc00")
                 .config(Map.ofEntries(
@@ -121,23 +129,25 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     void validatesValidEntity() {
         // given
         final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
-                .bookingItem(HsBookingItemEntity.builder()
+                .bookingItem(HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.MANAGED_WEBSPACE)
-                        .project(TEST_PROJECT)
+                        .project(PROJECT_TEST_ENTITY)
                         .caption("some ManagedWebspace")
                         .resources(Map.ofEntries(entry("SSD", 25), entry("Traffic", 250)))
                         .build())
                 .parentAsset(mangedServerAssetEntity)
                 .identifier("abc00")
                 .build();
+        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = Stream.concat(
+        final var result = HsEntityValidator.doWithEntityManager(em, () ->
+                Stream.concat(
                         validator.validateEntity(mangedWebspaceHostingAssetEntity).stream(),
                         validator.validateContext(mangedWebspaceHostingAssetEntity).stream())
-                .toList();
+                .toList());
 
         // then
         assertThat(result).isEmpty();
@@ -147,15 +157,15 @@ class HsManagedWebspaceHostingAssetValidatorUnitTest {
     void rejectsInvalidEntityReferences() {
         // given
         final var validator = HostingAssetEntityValidatorRegistry.forType(MANAGED_WEBSPACE);
-        final var mangedWebspaceHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var mangedWebspaceHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(MANAGED_WEBSPACE)
-                .bookingItem(HsBookingItemEntity.builder()
+                .bookingItem(HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.MANAGED_SERVER)
                         .caption("some ManagedServer")
                         .resources(Map.ofEntries(entry("SSD", 25), entry("Traffic", 250)))
                         .build())
                 .parentAsset(cloudServerAssetEntity)
-                .assignedToAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
                 .identifier("abc00")
                 .build();
 

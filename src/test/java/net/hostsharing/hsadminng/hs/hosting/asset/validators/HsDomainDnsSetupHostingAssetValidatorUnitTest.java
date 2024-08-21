@@ -1,20 +1,21 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static java.util.Map.entry;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_DNS_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator.RR_COMMENT;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator.RR_RECORD_DATA;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainDnsSetupHostingAssetValidator.RR_RECORD_TYPE;
@@ -25,16 +26,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HsDomainDnsSetupHostingAssetValidatorUnitTest {
 
-    static final HsHostingAssetEntity validDomainSetupEntity = HsHostingAssetEntity.builder()
+    static final HsHostingAssetRealEntity validDomainSetupEntity = HsHostingAssetRealEntity.builder()
             .type(DOMAIN_SETUP)
             .identifier("example.org")
             .build();
 
-    static HsHostingAssetEntityBuilder validEntityBuilder() {
-        return HsHostingAssetEntity.builder()
+    private EntityManager em;
+
+    static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
+        return HsHostingAssetRbacEntity.builder()
                 .type(DOMAIN_DNS_SETUP)
                 .parentAsset(validDomainSetupEntity)
-                .assignedToAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .assignedToAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("example.org|DNS")
                 .config(Map.ofEntries(
                         entry("TTL", 21600),
@@ -139,9 +142,9 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
     void rejectsInvalidReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
                 .parentAsset(null)
-                .assignedToAsset(HsHostingAssetEntity.builder().type(DOMAIN_SETUP).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(DOMAIN_SETUP).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 

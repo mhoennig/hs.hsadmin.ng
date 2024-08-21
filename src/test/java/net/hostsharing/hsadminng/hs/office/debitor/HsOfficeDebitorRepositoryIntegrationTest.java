@@ -140,7 +140,8 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             });
 
             // then
-            result.assertExceptionWithRootCauseMessage(org.hibernate.exception.ConstraintViolationException.class);
+            result.assertExceptionWithRootCauseMessage(org.hibernate.exception.ConstraintViolationException.class,
+                    "ERROR: new row for relation \"hs_office_debitor\" violates check constraint \"check_default_prefix\"");
         }
 
         @Test

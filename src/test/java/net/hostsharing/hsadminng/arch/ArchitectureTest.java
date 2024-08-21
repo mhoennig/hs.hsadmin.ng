@@ -1,6 +1,9 @@
 package net.hostsharing.hsadminng.arch;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -8,11 +11,10 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import org.springframework.data.repository.Repository;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -328,8 +330,8 @@ public class ArchitectureTest {
                         ContextBasedTest.class,
                         RbacGrantsDiagramService.class)
                 .ignoreDependency(
-                        HsBookingItemEntity.class,
-                        HsHostingAssetEntity.class);
+                        HsBookingItem.class,
+                        HsHostingAssetRbacEntity.class);
 
 
     @ArchTest
@@ -347,9 +349,20 @@ public class ArchitectureTest {
     static final ArchRule tableNamesOfRbacEntitiesShouldEndWith_rv =
         classes()
                 .that().areAnnotatedWith(Table.class)
-                .and().areAssignableTo(BaseEntity.class)
+                .and().containAnyMethodsThat(hasStaticMethodNamed("rbac"))
+                // .and().haveNameNotMatching(".*RealEntity") TODO.test: check rules for RealEntity vs. RbacEntity
                 .should(haveTableNameEndingWith_rv())
                 .because("it's required that the table names of RBAC entities end with '_rv'");
+
+
+    private static DescribedPredicate<JavaMethod> hasStaticMethodNamed(final String expectedName) {
+        return new DescribedPredicate<>("rbac entity") {
+            @Override
+            public boolean test(final JavaMethod method) {
+                return method.getModifiers().contains(JavaModifier.STATIC) && method.getName().equals(expectedName);
+            }
+        };
+    }
 
     static ArchCondition<JavaClass> haveTableNameEndingWith_rv() {
         return new ArchCondition<>("RBAC table name end with _rv") {

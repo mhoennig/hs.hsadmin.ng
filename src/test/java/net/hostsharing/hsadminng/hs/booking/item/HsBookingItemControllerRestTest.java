@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -51,10 +51,10 @@ class HsBookingItemControllerRestTest {
     EntityManagerFactory emf;
 
     @MockBean
-    HsBookingProjectRepository bookingProjectRepo;
+    HsBookingProjectRealRepository realProjectRepo;
 
     @MockBean
-    HsBookingItemRepository bookingItemRepo;
+    HsBookingItemRbacRepository rbacBookingItemRepo;
 
     @BeforeEach
     void init() {
@@ -73,12 +73,12 @@ class HsBookingItemControllerRestTest {
             final var givenProjectUuid = UUID.randomUUID();
 
             // given
-            when(em.find(HsBookingProjectEntity.class, givenProjectUuid)).thenAnswer(invocation ->
-                            HsBookingProjectEntity.builder()
+            when(em.find(HsBookingProjectRealEntity.class, givenProjectUuid)).thenAnswer(invocation ->
+                            HsBookingProjectRealEntity.builder()
                                     .uuid(invocation.getArgument(1))
                                     .build()
                     );
-            when(bookingItemRepo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+            when(rbacBookingItemRepo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
@@ -123,12 +123,12 @@ class HsBookingItemControllerRestTest {
             final var givenProjectUuid = UUID.randomUUID();
 
             // given
-            when(em.find(HsBookingProjectEntity.class, givenProjectUuid)).thenAnswer(invocation ->
-                    HsBookingProjectEntity.builder()
+            when(em.find(HsBookingProjectRealEntity.class, givenProjectUuid)).thenAnswer(invocation ->
+                    HsBookingProjectRealEntity.builder()
                             .uuid(invocation.getArgument(1))
                             .build()
             );
-            when(bookingItemRepo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+            when(rbacBookingItemRepo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             mockMvc.perform(MockMvcRequestBuilders

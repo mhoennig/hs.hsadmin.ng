@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -12,17 +12,17 @@ import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SMTP_SETUP;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MARIADB_INSTANCE;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsMariaDbInstanceHostingAssetValidator.DEFAULT_INSTANCE_IDENTIFIER_SUFFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsPostgreSqlInstanceHostingAssetValidatorUnitTest {
 
-    static HsHostingAssetEntityBuilder validEntityBuilder() {
-        return HsHostingAssetEntity.builder()
+    static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
+        return HsHostingAssetRbacEntity.builder()
                 .type(MARIADB_INSTANCE)
-                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
-                .identifier(TEST_MANAGED_SERVER_HOSTING_ASSET.getIdentifier() + DEFAULT_INSTANCE_IDENTIFIER_SUFFIX);
+                .parentAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
+                .identifier(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY.getIdentifier() + DEFAULT_INSTANCE_IDENTIFIER_SUFFIX);
     }
 
     @Test
@@ -80,9 +80,9 @@ class HsPostgreSqlInstanceHostingAssetValidatorUnitTest {
     void rejectsInvalidReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
-                .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_WEBSPACE).build())
-                .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_WEBSPACE).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(HsHostingAssetRealEntity.builder().type(MANAGED_WEBSPACE).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(MANAGED_WEBSPACE).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 

@@ -77,11 +77,11 @@ public class JpaAttempt {
 
     public static class JpaResult<T> {
 
-        private final T result;
+        private final T value;
         private final RuntimeException exception;
 
-        private JpaResult(final T result, final RuntimeException exception) {
-            this.result = result;
+        private JpaResult(final T value, final RuntimeException exception) {
+            this.value = value;
             this.exception = exception;
         }
 
@@ -102,7 +102,7 @@ public class JpaAttempt {
         }
 
         public T returnedValue() {
-            return result;
+            return value;
         }
 
         public ObjectAssert<T> assertThatResult() {

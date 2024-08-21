@@ -1,9 +1,11 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import org.junit.jupiter.api.Test;
+
+import jakarta.persistence.EntityManager;
 
 import static java.util.List.of;
 import static java.util.Map.entry;
@@ -11,7 +13,7 @@ import static java.util.Map.ofEntries;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.PRIVATE_CLOUD;
-import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.PROJECT_TEST_ENTITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsPrivateCloudBookingItemValidatorUnitTest {
@@ -19,17 +21,18 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
     final HsBookingDebitorEntity debitor = HsBookingDebitorEntity.builder()
             .debitorNumber(12345)
             .build();
-    final HsBookingProjectEntity project = HsBookingProjectEntity.builder()
+    final HsBookingProjectRealEntity project = HsBookingProjectRealEntity.builder()
             .debitor(debitor)
             .caption("Test-Project")
             .build();
+    private EntityManager em;
 
     @Test
     void validatesPropertyTotals() {
         // given
-        final var privateCloudBookingItemEntity = HsBookingItemEntity.builder()
+        final var privateCloudBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(PRIVATE_CLOUD)
-                .project(TEST_PROJECT)
+                .project(PROJECT_TEST_ENTITY)
                 .caption("myPC")
                 .resources(ofEntries(
                         entry("CPU", 4),
@@ -40,7 +43,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                         entry("SLA-EMail", 2)
                 ))
                 .subBookingItems(of(
-                        HsBookingItemEntity.builder()
+                        HsBookingItemRealEntity.builder()
                                 .type(MANAGED_SERVER)
                                 .caption("myMS-1")
                                 .resources(ofEntries(
@@ -52,7 +55,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                                         entry("SLA-EMail", true)
                                 ))
                                 .build(),
-                        HsBookingItemEntity.builder()
+                        HsBookingItemRealEntity.builder()
                                 .type(CLOUD_SERVER)
                                 .caption("myMS-2")
                                 .resources(ofEntries(
@@ -68,7 +71,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                 .build();
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(privateCloudBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, privateCloudBookingItemEntity);
 
         // then
         assertThat(result).isEmpty();
@@ -77,7 +80,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
     @Test
     void validatesExceedingPropertyTotals() {
         // given
-        final var privateCloudBookingItemEntity = HsBookingItemEntity.builder()
+        final var privateCloudBookingItemEntity = HsBookingItemRealEntity.builder()
                 .project(project)
                 .type(PRIVATE_CLOUD)
                 .caption("myPC")
@@ -90,7 +93,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                         entry("SLA-EMail", 1)
                 ))
                 .subBookingItems(of(
-                        HsBookingItemEntity.builder()
+                        HsBookingItemRealEntity.builder()
                                 .type(MANAGED_SERVER)
                                 .caption("myMS-1")
                                 .resources(ofEntries(
@@ -102,7 +105,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                                         entry("SLA-EMail", true)
                                 ))
                                 .build(),
-                        HsBookingItemEntity.builder()
+                        HsBookingItemRealEntity.builder()
                                 .type(CLOUD_SERVER)
                                 .caption("myMS-2")
                                 .resources(ofEntries(
@@ -122,7 +125,7 @@ class HsPrivateCloudBookingItemValidatorUnitTest {
                 .build();
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(privateCloudBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, privateCloudBookingItemEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(

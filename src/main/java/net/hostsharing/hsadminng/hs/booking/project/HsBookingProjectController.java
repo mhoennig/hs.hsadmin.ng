@@ -28,7 +28,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     private Mapper mapper;
 
     @Autowired
-    private HsBookingProjectRepository bookingProjectRepo;
+    private HsBookingProjectRbacRepository bookingProjectRepo;
 
     @Autowired
     private HsBookingDebitorRepository debitorRepo;
@@ -56,7 +56,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsBookingProjectEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(body, HsBookingProjectRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
         final var saved = bookingProjectRepo.save(entityToSave);
 
@@ -118,7 +118,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
         return ResponseEntity.ok(mapped);
     }
 
-    final BiConsumer<HsBookingProjectInsertResource, HsBookingProjectEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+    final BiConsumer<HsBookingProjectInsertResource, HsBookingProjectRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         if (resource.getDebitorUuid() != null) {
             entity.setDebitor(debitorRepo.findByUuid(resource.getDebitorUuid())
                     .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] debitorUuid %s not found".formatted(

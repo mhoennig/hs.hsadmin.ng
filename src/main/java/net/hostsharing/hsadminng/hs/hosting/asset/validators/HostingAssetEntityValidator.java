@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
@@ -27,7 +27,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
 
     static final ValidatableProperty<?, ?>[] NO_EXTRA_PROPERTIES = new ValidatableProperty<?, ?>[0];
 
-    private final ReferenceValidator<HsBookingItemEntity, HsBookingItemType> bookingItemReferenceValidation;
+    private final ReferenceValidator<HsBookingItem, HsBookingItemType> bookingItemReferenceValidation;
     private final ReferenceValidator<HsHostingAsset, HsHostingAssetType> parentAssetReferenceValidation;
     private final ReferenceValidator<HsHostingAsset, HsHostingAssetType> assignedToAssetReferenceValidation;
     private final HostingAssetEntityValidator.AlarmContact alarmContactValidation;
@@ -41,7 +41,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
                 assetType.bookingItemPolicy(),
                 assetType.bookingItemTypes(),
                 HsHostingAsset::getBookingItem,
-                HsBookingItemEntity::getType);
+                HsBookingItem::getType);
         this.parentAssetReferenceValidation = new ReferenceValidator<>(
                 assetType.parentAssetPolicy(),
                 assetType.parentAssetTypes(),
@@ -104,7 +104,7 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
                 : emptyList();
     }
 
-    private static List<String> optionallyValidate(final HsBookingItemEntity bookingItem) {
+    private static List<String> optionallyValidate(final HsBookingItem bookingItem) {
         return bookingItem != null
                 ? enrich(
                 prefix(bookingItem.toShortString(), "bookingItem"),

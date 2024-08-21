@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.PROJECT_TEST_ENTITY;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static net.hostsharing.hsadminng.mapper.PatchMap.patchMap;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
         HsBookingItemPatchResource,
-        HsBookingItemEntity
+        HsBookingItem
         > {
 
     private static final UUID INITIAL_BOOKING_ITEM_UUID = UUID.randomUUID();
@@ -62,15 +62,15 @@ class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
     void initMocks() {
         lenient().when(em.getReference(eq(HsOfficeDebitorEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeDebitorEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsBookingItemEntity.class), any())).thenAnswer(invocation ->
-                HsBookingItemEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsBookingItem.class), any())).thenAnswer(invocation ->
+                HsBookingItemRbacEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
-    protected HsBookingItemEntity newInitialEntity() {
-        final var entity = new HsBookingItemEntity();
+    protected HsBookingItem newInitialEntity() {
+        final var entity = new HsBookingItemRbacEntity();
         entity.setUuid(INITIAL_BOOKING_ITEM_UUID);
-        entity.setProject(TEST_PROJECT);
+        entity.setProject(PROJECT_TEST_ENTITY);
         entity.getResources().putAll(KeyValueMap.from(INITIAL_RESOURCES));
         entity.setCaption(INITIAL_CAPTION);
         entity.setValidity(Range.closedInfinite(GIVEN_VALID_FROM));
@@ -83,7 +83,7 @@ class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsBookingItemEntityPatcher createPatcher(final HsBookingItemEntity bookingItem) {
+    protected HsBookingItemEntityPatcher createPatcher(final HsBookingItem bookingItem) {
         return new HsBookingItemEntityPatcher(bookingItem);
     }
 
@@ -94,19 +94,19 @@ class HsBookingItemEntityPatcherUnitTest extends PatchUnitTestBase<
                         "caption",
                         HsBookingItemPatchResource::setCaption,
                         PATCHED_CAPTION,
-                        HsBookingItemEntity::setCaption),
+                        HsBookingItem::setCaption),
                 new SimpleProperty<>(
                         "resources",
                         HsBookingItemPatchResource::setResources,
                         PATCH_RESOURCES,
-                        HsBookingItemEntity::putResources,
+                        HsBookingItem::putResources,
                         PATCHED_RESOURCES)
                         .notNullable(),
                 new JsonNullableProperty<>(
                         "validto",
                         HsBookingItemPatchResource::setValidTo,
                         PATCHED_VALID_TO,
-                        HsBookingItemEntity::setValidTo)
+                        HsBookingItem::setValidTo)
         );
     }
 }

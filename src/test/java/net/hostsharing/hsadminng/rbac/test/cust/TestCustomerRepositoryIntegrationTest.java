@@ -66,7 +66,8 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "ERROR: [403] insert into test_customer not allowed for current subjects {test_customer#xxx:ADMIN}");
+                    "ERROR: [403] insert into test_customer ",
+                    "not allowed for current subjects {test_customer#xxx:ADMIN}");
         }
 
         @Test
@@ -84,7 +85,8 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "ERROR: [403] insert into test_customer not allowed for current subjects {customer-admin@xxx.example.com}");
+                    "ERROR: [403] insert into test_customer ",
+                    " not allowed for current subjects {customer-admin@xxx.example.com}");
 
         }
 

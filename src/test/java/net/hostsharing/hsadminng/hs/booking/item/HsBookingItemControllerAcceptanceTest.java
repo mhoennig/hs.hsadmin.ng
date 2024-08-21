@@ -4,7 +4,7 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -44,10 +44,10 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     private Integer port;
 
     @Autowired
-    HsBookingItemRepository bookingItemRepo;
+    HsBookingItemRealRepository realBookingItemRepo;
 
     @Autowired
-    HsBookingProjectRepository projectRepo;
+    HsBookingProjectRealRepository realProjectRepo;
 
     @Autowired
     HsOfficeDebitorRepository debitorRepo;
@@ -65,7 +65,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             // given
             context("superuser-alex@hostsharing.net");
             final var givenProject = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
-                            .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                            .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                             .flatMap(List::stream)
                             .findFirst()
                             .orElseThrow();
@@ -133,7 +133,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             context.define("superuser-alex@hostsharing.net");
             final var givenProject = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
-                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
                     .findFirst()
                     .orElseThrow();
@@ -191,9 +191,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Order(1)
         void globalAdmin_canGetArbitraryBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedWebspace").stream()
+            final var givenBookingItemUuid = realBookingItemRepo.findByCaption("separate ManagedWebspace").stream()
                             .filter(bi -> belongsToProject(bi, "D-1000111 default project"))
-                            .map(HsBookingItemEntity::getUuid)
+                            .map(HsBookingItem::getUuid)
                             .findAny().orElseThrow();
 
             RestAssured // @formatter:off
@@ -225,9 +225,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Order(2)
         void normalUser_canNotGetUnrelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItemUuid = bookingItemRepo.findByCaption("separate ManagedServer").stream()
+            final var givenBookingItemUuid = realBookingItemRepo.findByCaption("separate ManagedServer").stream()
                     .filter(bi -> belongsToProject(bi, "D-1000212 default project"))
-                    .map(HsBookingItemEntity::getUuid)
+                    .map(HsBookingItem::getUuid)
                     .findAny().orElseThrow();
 
             RestAssured // @formatter:off
@@ -244,7 +244,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         @Order(3)
         void projectAdmin_canGetRelatedBookingItem() {
             context.define("superuser-alex@hostsharing.net");
-            final var givenBookingItem = bookingItemRepo.findByCaption("separate ManagedServer").stream()
+            final var givenBookingItem = realBookingItemRepo.findByCaption("separate ManagedServer").stream()
                     .filter(bi -> belongsToProject(bi, "D-1000313 default project"))
                     .findAny().orElseThrow();
 
@@ -274,9 +274,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     """)); // @formatter:on
         }
 
-        private static boolean belongsToProject(final HsBookingItemEntity bi, final String projectCaption) {
+        private static boolean belongsToProject(final HsBookingItem bi, final String projectCaption) {
             return ofNullable(bi)
-                    .map(HsBookingItemEntity::getProject)
+                    .map(HsBookingItem::getProject)
                     .filter(bp -> bp.getCaption().equals(projectCaption))
                     .isPresent();
         }
@@ -328,7 +328,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             // finally, the bookingItem is actually updated
             context.define("superuser-alex@hostsharing.net");
-            assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent().get()
+            assertThat(realBookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent().get()
                     .matches(mandate -> {
                         assertThat(mandate.getProject().getDebitor().toString()).isEqualTo("booking-debitor(D-1000111: fir)");
                         assertThat(mandate.getValidFrom()).isEqualTo("2022-11-01");
@@ -358,7 +358,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .statusCode(204); // @formatter:on
 
             // then the given bookingItem is gone
-            assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isEmpty();
+            assertThat(realBookingItemRepo.findByUuid(givenBookingItem.getUuid())).isEmpty();
         }
 
         @Test
@@ -377,18 +377,18 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .statusCode(404); // @formatter:on
 
             // then the given bookingItem is still there
-            assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isNotEmpty();
+            assertThat(realBookingItemRepo.findByUuid(givenBookingItem.getUuid())).isNotEmpty();
         }
     }
 
     @SafeVarargs
-    private HsBookingItemEntity givenSomeNewBookingItem(final String projectCaption,
+    private HsBookingItem givenSomeNewBookingItem(final String projectCaption,
             final HsBookingItemType hsBookingItemType, final Map.Entry<String, Object>... resources) {
         return jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
-            final var givenProject = projectRepo.findByCaption(projectCaption).stream()
+            final var givenProject = realProjectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
-            final var newBookingItem = HsBookingItemEntity.builder()
+            final var newBookingItem = HsBookingItemRealEntity.builder()
                     .uuid(UUID.randomUUID())
                     .project(givenProject)
                     .type(hsBookingItemType)
@@ -398,7 +398,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                             LocalDate.parse("2022-11-01"), LocalDate.parse("2023-03-31")))
                     .build();
 
-            return bookingItemRepo.save(newBookingItem);
+            return realBookingItemRepo.save(newBookingItem);
         }).assertSuccessful().returnedValue();
     }
 

@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HsDomainSetupHostingAssetValidatorUnitTest {
 
-    static HsHostingAssetEntityBuilder validEntityBuilder() {
-        return HsHostingAssetEntity.builder()
+    static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
+        return HsHostingAssetRbacEntity.builder()
                 .type(DOMAIN_SETUP)
                 .identifier("example.org");
     }
@@ -94,9 +94,9 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     void validatesReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
-                .parentAsset(HsHostingAssetEntity.builder().type(CLOUD_SERVER).build())
-                .assignedToAsset(HsHostingAssetEntity.builder().type(MANAGED_SERVER).build())
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(MANAGED_SERVER).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
 

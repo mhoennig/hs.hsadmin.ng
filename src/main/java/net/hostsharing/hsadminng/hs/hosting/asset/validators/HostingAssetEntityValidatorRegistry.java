@@ -3,7 +3,6 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
-import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 
 import java.util.*;
@@ -54,13 +53,4 @@ public class HostingAssetEntityValidatorRegistry {
     public static Set<Enum<HsHostingAssetType>> types() {
         return validators.keySet();
     }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> asMap(final HsHostingAssetResource resource) {
-        if (resource.getConfig() instanceof Map map) {
-            return map;
-        }
-        throw new IllegalArgumentException("expected a Map, but got a " + resource.getConfig().getClass());
-    }
-
 }

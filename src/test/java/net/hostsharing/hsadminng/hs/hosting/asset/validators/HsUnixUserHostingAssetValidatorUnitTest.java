@@ -1,8 +1,11 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
 import net.hostsharing.hsadminng.hash.HashGenerator;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
+import net.hostsharing.hsadminng.hs.validation.HsEntityValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,8 +18,8 @@ import java.util.HashMap;
 import java.util.stream.Stream;
 
 import static java.util.Map.ofEntries;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_WEBSPACE_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.MANAGED_WEBSPACE_BOOKING_ITEM_REAL_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.UNIX_USER;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
@@ -27,21 +30,27 @@ import static org.mockito.Mockito.mock;
 @ExtendWith(MockitoExtension.class)
 class HsUnixUserHostingAssetValidatorUnitTest {
 
-    private final HsHostingAssetEntity TEST_MANAGED_SERVER_HOSTING_ASSET = HsHostingAssetEntity.builder()
+    private final HsHostingAssetRealEntity TEST_MANAGED_SERVER_HOSTING_ASSET_REAL_ENTITY = HsHostingAssetRealEntity.builder()
             .type(HsHostingAssetType.MANAGED_SERVER)
             .identifier("vm1234")
             .caption("some managed server")
-            .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
+            .bookingItem(MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY)
             .build();
-    private final HsHostingAssetEntity TEST_MANAGED_WEBSPACE_HOSTING_ASSET = HsHostingAssetEntity.builder()
+    private final HsHostingAssetRealEntity TEST_MANAGED_WEBSPACE_HOSTING_ASSET_REAL_ENTITY = HsHostingAssetRealEntity.builder()
             .type(MANAGED_WEBSPACE)
-            .bookingItem(TEST_MANAGED_WEBSPACE_BOOKING_ITEM)
-            .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+            .bookingItem(MANAGED_WEBSPACE_BOOKING_ITEM_REAL_ENTITY)
+            .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET_REAL_ENTITY)
             .identifier("abc00")
             .build();
-    private final HsHostingAssetEntity GIVEN_VALID_UNIX_USER_HOSTING_ASSET = HsHostingAssetEntity.builder()
+    private final HsHostingAssetRbacEntity TEST_MANAGED_WEBSPACE_HOSTING_ASSET_RBAC_ENTITY = HsHostingAssetRbacEntity.builder()
+            .type(MANAGED_WEBSPACE)
+            .bookingItem(MANAGED_WEBSPACE_BOOKING_ITEM_REAL_ENTITY)
+            .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET_REAL_ENTITY)
+            .identifier("abc00")
+            .build();
+    private final HsHostingAssetRbacEntity GIVEN_VALID_UNIX_USER_HOSTING_ASSET = HsHostingAssetRbacEntity.builder()
             .type(UNIX_USER)
-            .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+            .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET_REAL_ENTITY)
             .identifier("abc00-temp")
             .caption("some valid test UnixUser")
             .config(new HashMap<>(ofEntries(
@@ -89,12 +98,13 @@ class HsUnixUserHostingAssetValidatorUnitTest {
         // given
         final var unixUserHostingAsset =  GIVEN_VALID_UNIX_USER_HOSTING_ASSET;
         final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());
+        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = Stream.concat(
+        final var result = HsEntityValidator.doWithEntityManager(em, () -> Stream.concat(
                 validator.validateEntity(unixUserHostingAsset).stream(),
                 validator.validateContext(unixUserHostingAsset).stream()
-        ).toList();
+        ).toList());
 
         // then
         assertThat(result).isEmpty();
@@ -103,9 +113,9 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     @Test
     void validatesUnixUserProperties() {
         // given
-        final var unixUserHostingAsset = HsHostingAssetEntity.builder()
+        final var unixUserHostingAsset = HsHostingAssetRbacEntity.builder()
                 .type(UNIX_USER)
-                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET_REAL_ENTITY)
                 .identifier("abc00-temp")
                 .caption("some test UnixUser with invalid properties")
                 .config(ofEntries(
@@ -140,9 +150,9 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     @Test
     void validatesInvalidIdentifier() {
         // given
-        final var unixUserHostingAsset = HsHostingAssetEntity.builder()
+        final var unixUserHostingAsset = HsHostingAssetRbacEntity.builder()
                 .type(UNIX_USER)
-                .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_WEBSPACE).identifier("abc00").build())
+                .parentAsset(HsHostingAssetRealEntity.builder().type(MANAGED_WEBSPACE).identifier("abc00").build())
                 .identifier("xyz99-temp")
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(unixUserHostingAsset.getType());

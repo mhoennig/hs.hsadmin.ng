@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.hs.booking.item;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRepository;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
@@ -39,10 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup {
 
     @Autowired
-    HsBookingItemRepository bookingItemRepo;
+    HsBookingItemRbacRepository rbacBookingItemRepo;
 
     @Autowired
-    HsBookingProjectRepository projectRepo;
+    HsBookingProjectRealRepository realProjectRepo;
 
     @Autowired
     HsOfficeDebitorRepository debitorRepo;
@@ -69,27 +69,27 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         public void testHostsharingAdmin_withoutAssumedRole_canCreateNewBookingItem() {
             // given
             context("superuser-alex@hostsharing.net");
-            final var count = bookingItemRepo.count();
+            final var count = rbacBookingItemRepo.count();
             final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
-            final var givenProject = projectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
+            final var givenProject = realProjectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
 
             // when
             final var result = attempt(em, () -> {
-                final var newBookingItem = HsBookingItemEntity.builder()
+                final var newBookingItem = HsBookingItemRbacEntity.builder()
                         .project(givenProject)
                         .type(HsBookingItemType.CLOUD_SERVER)
                         .caption("some new booking item")
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
-                return toCleanup(bookingItemRepo.save(newBookingItem));
+                return toCleanup(rbacBookingItemRepo.save(newBookingItem));
             });
 
             // then
             result.assertSuccessful();
-            assertThat(result.returnedValue()).isNotNull().extracting(HsBookingItemEntity::getUuid).isNotNull();
+            assertThat(result.returnedValue()).isNotNull().extracting(HsBookingItem::getUuid).isNotNull();
             assertThatBookingItemIsPersisted(result.returnedValue());
-            assertThat(bookingItemRepo.count()).isEqualTo(count + 1);
+            assertThat(rbacBookingItemRepo.count()).isEqualTo(count + 1);
         }
 
         @Test
@@ -102,15 +102,15 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // when
             attempt(em, () -> {
                 final var givenDebitor = debitorRepo.findDebitorByOptionalNameLike("First").get(0);
-                final var givenProject = projectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
-                final var newBookingItem = HsBookingItemEntity.builder()
+                final var givenProject = realProjectRepo.findAllByDebitorUuid(givenDebitor.getUuid()).get(0);
+                final var newBookingItem = HsBookingItemRbacEntity.builder()
                         .project(givenProject)
                         .type(MANAGED_WEBSPACE)
                         .caption("some new booking item")
                         .validity(Range.closedOpen(
                                 LocalDate.parse("2020-01-01"), LocalDate.parse("2023-01-01")))
                         .build();
-                return toCleanup(bookingItemRepo.save(newBookingItem));
+                return toCleanup(rbacBookingItemRepo.save(newBookingItem));
             });
 
             // then
@@ -146,9 +146,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                             null));
         }
 
-        private void assertThatBookingItemIsPersisted(final HsBookingItemEntity saved) {
-            final var found = bookingItemRepo.findByUuid(saved.getUuid());
-            assertThat(found).isNotEmpty().map(HsBookingItemEntity::toString).get().isEqualTo(saved.toString());
+        private void assertThatBookingItemIsPersisted(final HsBookingItem saved) {
+            final var found = rbacBookingItemRepo.findByUuid(saved.getUuid());
+            assertThat(found).isNotEmpty().map(HsBookingItem::toString).get().isEqualTo(saved.toString());
         }
     }
 
@@ -160,22 +160,19 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // given
             context("superuser-alex@hostsharing.net");
             final var projectUuid = debitorRepo.findDebitorByDebitorNumber(1000212).stream()
-                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
                     .findAny().orElseThrow().getUuid();
 
             // when
-            final var result = bookingItemRepo.findAllByProjectUuid(projectUuid);
+            final var result = rbacBookingItemRepo.findAllByProjectUuid(projectUuid);
 
             // then
             allTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(MANAGED_SERVER, separate ManagedServer, D-1000212:D-1000212 default project, [2022-10-01,), { CPU: 2, RAM: 8, SSD: 500, Traffic: 500 })",
-                    "HsBookingItemEntity(MANAGED_WEBSPACE, separate ManagedWebspace, D-1000212:D-1000212 default project, [2022-10-01,), { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
-                    "HsBookingItemEntity(PRIVATE_CLOUD, some PrivateCloud, D-1000212:D-1000212 default project, [2024-04-01,), { CPU: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
-             assertThat(result.stream().filter(bi -> bi.getRelatedHostingAsset()!=null).findAny())
-                     .as("at least one relatedProject expected, but none found => fetching relatedProject does not work")
-                     .isNotEmpty();
+                    "HsBookingItem(MANAGED_SERVER, separate ManagedServer, D-1000212:D-1000212 default project, [2022-10-01,), { CPU: 2, RAM: 8, SSD: 500, Traffic: 500 })",
+                    "HsBookingItem(MANAGED_WEBSPACE, separate ManagedWebspace, D-1000212:D-1000212 default project, [2022-10-01,), { Daemons: 0, Multi: 1, SSD: 100, Traffic: 50 })",
+                    "HsBookingItem(PRIVATE_CLOUD, some PrivateCloud, D-1000212:D-1000212 default project, [2024-04-01,), { CPU: 10, HDD: 10000, RAM: 32, SSD: 4000, Traffic: 2000 })");
         }
 
         @Test
@@ -185,19 +182,19 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             final var debitor = debitorRepo.findDebitorByDebitorNumber(1000111);
             context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:OWNER");
             final var projectUuid = debitor.stream()
-                    .map(d -> projectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
                     .findAny().orElseThrow().getUuid();
 
             // when:
-            final var result = bookingItemRepo.findAllByProjectUuid(projectUuid);
+            final var result = rbacBookingItemRepo.findAllByProjectUuid(projectUuid);
 
             // then:
             exactlyTheseBookingItemsAreReturned(
                     result,
-                    "HsBookingItemEntity(MANAGED_SERVER, separate ManagedServer, D-1000111:D-1000111 default project, [2022-10-01,), { CPU : 2, RAM : 8, SSD : 500, Traffic : 500 })",
-                    "HsBookingItemEntity(MANAGED_WEBSPACE, separate ManagedWebspace, D-1000111:D-1000111 default project, [2022-10-01,), { Daemons : 0, Multi : 1, SSD : 100, Traffic : 50 })",
-                    "HsBookingItemEntity(PRIVATE_CLOUD, some PrivateCloud, D-1000111:D-1000111 default project, [2024-04-01,), { CPU : 10, HDD : 10000, RAM : 32, SSD : 4000, Traffic : 2000 })");
+                    "HsBookingItem(MANAGED_SERVER, separate ManagedServer, D-1000111:D-1000111 default project, [2022-10-01,), { CPU : 2, RAM : 8, SSD : 500, Traffic : 500 })",
+                    "HsBookingItem(MANAGED_WEBSPACE, separate ManagedWebspace, D-1000111:D-1000111 default project, [2022-10-01,), { Daemons : 0, Multi : 1, SSD : 100, Traffic : 50 })",
+                    "HsBookingItem(PRIVATE_CLOUD, some PrivateCloud, D-1000111:D-1000111 default project, [2024-04-01,), { CPU : 10, HDD : 10000, RAM : 32, SSD : 4000, Traffic : 2000 })");
         }
     }
 
@@ -212,13 +209,13 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
-                final var foundBookingItem = em.find(HsBookingItemEntity.class, givenBookingItemUuid);
+                final var foundBookingItem = em.find(HsBookingItemRbacEntity.class, givenBookingItemUuid);
                 foundBookingItem.getResources().put("CPU", 2);
                 foundBookingItem.getResources().remove("SSD-storage");
                 foundBookingItem.getResources().put("HSD-storage", 2048);
                 foundBookingItem.setValidity(Range.closedOpen(
                         LocalDate.parse("2019-05-17"), LocalDate.parse("2023-01-01")));
-                return toCleanup(bookingItemRepo.save(foundBookingItem));
+                return toCleanup(rbacBookingItemRepo.save(foundBookingItem));
             });
 
             // then
@@ -229,10 +226,10 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             }).assertSuccessful();
         }
 
-        private void assertThatBookingItemActuallyInDatabase(final HsBookingItemEntity saved) {
-            final var found = bookingItemRepo.findByUuid(saved.getUuid());
+        private void assertThatBookingItemActuallyInDatabase(final HsBookingItem saved) {
+            final var found = rbacBookingItemRepo.findByUuid(saved.getUuid());
             assertThat(found).isNotEmpty().get().isNotSameAs(saved)
-                    .extracting(HsBookingItemEntity::getResources)
+                    .extracting(HsBookingItem::getResources)
                     .extracting(Object::toString)
                     .isEqualTo(saved.getResources().toString());
         }
@@ -250,14 +247,14 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                bookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
+                rbacBookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
             });
 
             // then
             result.assertSuccessful();
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-fran@hostsharing.net", null);
-                return bookingItemRepo.findByUuid(givenBookingItem.getUuid());
+                return rbacBookingItemRepo.findByUuid(givenBookingItem.getUuid());
             }).assertSuccessful().returnedValue()).isEmpty();
         }
 
@@ -270,9 +267,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
-                assertThat(bookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent();
+                assertThat(rbacBookingItemRepo.findByUuid(givenBookingItem.getUuid())).isPresent();
 
-                bookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
+                rbacBookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
             });
 
             // then
@@ -281,7 +278,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     "[403] Subject ", " is not allowed to delete hs_booking_item");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                return bookingItemRepo.findByUuid(givenBookingItem.getUuid());
+                return rbacBookingItemRepo.findByUuid(givenBookingItem.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there
         }
 
@@ -296,7 +293,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
-                return bookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
+                return rbacBookingItemRepo.deleteByUuid(givenBookingItem.getUuid());
             });
 
             // then
@@ -314,7 +311,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                 select currentTask, targetTable, targetOp
                     from tx_journal_v
                     where targettable = 'hs_booking_item';
-                    """);
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
@@ -326,12 +323,12 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                 "[creating booking-item test-data 1000313, hs_booking_item, INSERT]");
     }
 
-    private HsBookingItemEntity givenSomeTemporaryBookingItem(final String projectCaption) {
+    private HsBookingItem givenSomeTemporaryBookingItem(final String projectCaption) {
         return jpaAttempt.transacted(() -> {
             context("superuser-alex@hostsharing.net");
-            final var givenProject = projectRepo.findByCaption(projectCaption).stream()
+            final var givenProject = realProjectRepo.findByCaption(projectCaption).stream()
                     .findAny().orElseThrow();
-            final var newBookingItem = HsBookingItemEntity.builder()
+            final var newBookingItem = HsBookingItemRbacEntity.builder()
                     .project(givenProject)
                     .type(MANAGED_SERVER)
                     .caption("some temp booking item")
@@ -342,23 +339,23 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                             entry("SSD-storage", 256)))
                     .build();
 
-            return toCleanup(bookingItemRepo.save(newBookingItem));
+            return toCleanup(rbacBookingItemRepo.save(newBookingItem));
         }).assertSuccessful().returnedValue();
     }
 
     void exactlyTheseBookingItemsAreReturned(
-            final List<HsBookingItemEntity> actualResult,
+            final List<? extends HsBookingItem> actualResult,
             final String... bookingItemNames) {
         assertThat(actualResult)
-                .extracting(HsBookingItemEntity::toString)
+                .extracting(HsBookingItem::toString)
                 .extracting(string-> string.replaceAll("\\s+", " "))
                 .extracting(string-> string.replaceAll("\"", ""))
                 .containsExactlyInAnyOrder(bookingItemNames);
     }
 
-    void allTheseBookingItemsAreReturned(final List<HsBookingItemEntity> actualResult, final String... bookingItemNames) {
+    void allTheseBookingItemsAreReturned(final List<? extends HsBookingItem> actualResult, final String... bookingItemNames) {
         assertThat(actualResult)
-                .extracting(HsBookingItemEntity::toString)
+                .extracting(HsBookingItem::toString)
                 .extracting(string -> string.replaceAll("\\s+", " "))
                 .extracting(string -> string.replaceAll("\"", ""))
                 .extracting(string -> string.replaceAll(" : ", ": "))

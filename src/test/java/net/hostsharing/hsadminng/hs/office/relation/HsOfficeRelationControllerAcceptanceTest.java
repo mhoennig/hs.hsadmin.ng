@@ -161,7 +161,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new relation can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(HsOfficeRelation.class, UUID.fromString(
+            final var newUserUuid = toCleanup(HsOfficeRelationRealEntity.class, UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1)));
             assertThat(newUserUuid).isNotNull();
         }

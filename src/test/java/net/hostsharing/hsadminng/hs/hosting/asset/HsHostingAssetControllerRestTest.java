@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRepository;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.mapper.Mapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY;
 import static net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealTestEntity.TEST_REAL_CONTACT;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,17 +62,20 @@ public class HsHostingAssetControllerRestTest {
 
     @MockBean
     @SuppressWarnings("unused") // bean needs to be present for HsHostingAssetController
-    private HsBookingItemRepository bookingItemRepo;
+    private HsBookingItemRealRepository realBookingItemRepo;
 
     @MockBean
-    private HsHostingAssetRepository hostingAssetRepo;
+    private HsHostingAssetRealRepository realAssetRepo;
+
+    @MockBean
+    private HsHostingAssetRbacRepository rbacAssetRepo;
 
     enum ListTestCases {
         CLOUD_SERVER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.CLOUD_SERVER)
-                                .bookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM)
+                                .bookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY)
                                 .identifier("vm1234")
                                 .caption("some fake cloud-server")
                                 .alarmContact(TEST_REAL_CONTACT)
@@ -96,9 +99,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         MANAGED_SERVER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.MANAGED_SERVER)
-                                .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
+                                .bookingItem(MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY)
                                 .identifier("vm1234")
                                 .caption("some fake managed-server")
                                 .alarmContact(TEST_REAL_CONTACT)
@@ -131,9 +134,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         UNIX_USER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.UNIX_USER)
-                                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                                .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                                 .identifier("xyz00-office")
                                 .caption("some fake Unix-User")
                                 .config(Map.ofEntries(
@@ -165,9 +168,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         EMAIL_ALIAS(
                 List.of(
-                    HsHostingAssetEntity.builder()
+                    HsHostingAssetRbacEntity.builder()
                             .type(HsHostingAssetType.EMAIL_ALIAS)
-                            .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                            .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                             .identifier("xyz00-office")
                             .caption("some fake EMail-Alias")
                             .config(Map.ofEntries(
@@ -189,7 +192,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         DOMAIN_SETUP(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.DOMAIN_SETUP)
                                 .identifier("example.org")
                                 .caption("some fake Domain-Setup")
@@ -207,7 +210,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         DOMAIN_DNS_SETUP(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.DOMAIN_DNS_SETUP)
                                 .identifier("example.org")
                                 .caption("some fake Domain-DNS-Setup")
@@ -250,7 +253,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         DOMAIN_HTTP_SETUP(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.DOMAIN_HTTP_SETUP)
                                 .identifier("example.org|HTTP")
                                 .caption("some fake Domain-HTTP-Setup")
@@ -303,7 +306,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         DOMAIN_SMTP_SETUP(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.DOMAIN_SMTP_SETUP)
                                 .identifier("example.org|SMTP")
                                 .caption("some fake Domain-SMTP-Setup")
@@ -321,7 +324,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         DOMAIN_MBOX_SETUP(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.DOMAIN_MBOX_SETUP)
                                 .identifier("example.org|MBOX")
                                 .caption("some fake Domain-MBOX-Setup")
@@ -339,9 +342,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         EMAIL_ADDRESS(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.EMAIL_ADDRESS)
-                                .parentAsset(HsHostingAssetEntity.builder()
+                                .parentAsset(HsHostingAssetRealEntity.builder()
                                         .type(HsHostingAssetType.DOMAIN_MBOX_SETUP)
                                         .identifier("example.org|MBOX")
                                         .caption("some fake Domain-MBOX-Setup")
@@ -367,9 +370,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         MARIADB_INSTANCE(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.MARIADB_INSTANCE)
-                                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .parentAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
                                 .identifier("vm1234|MariaDB.default")
                                 .caption("some fake MariaDB instance")
                                 .build()),
@@ -386,7 +389,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         MARIADB_USER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.MARIADB_USER)
                                 .identifier("xyz00_temp")
                                 .caption("some fake MariaDB user")
@@ -404,7 +407,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         MARIADB_DATABASE(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.MARIADB_DATABASE)
                                 .identifier("xyz00_temp")
                                 .caption("some fake MariaDB database")
@@ -429,9 +432,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         PGSQL_INSTANCE(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.PGSQL_INSTANCE)
-                                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .parentAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
                                 .identifier("vm1234|PgSql.default")
                                 .caption("some fake PgSql instance")
                                 .build()),
@@ -448,7 +451,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         PGSQL_USER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.PGSQL_USER)
                                 .identifier("xyz00_temp")
                                 .caption("some fake PgSql user")
@@ -466,7 +469,7 @@ public class HsHostingAssetControllerRestTest {
                 """),
         PGSQL_DATABASE(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.PGSQL_DATABASE)
                                 .identifier("xyz00_temp")
                                 .caption("some fake PgSql database")
@@ -491,9 +494,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         IPV4_NUMBER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.IPV4_NUMBER)
-                                .assignedToAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .assignedToAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
                                 .identifier("11.12.13.14")
                                 .caption("some fake IPv4 number")
                                 .build()),
@@ -510,9 +513,9 @@ public class HsHostingAssetControllerRestTest {
                 """),
         IPV6_NUMBER(
                 List.of(
-                        HsHostingAssetEntity.builder()
+                        HsHostingAssetRbacEntity.builder()
                                 .type(HsHostingAssetType.IPV6_NUMBER)
-                                .assignedToAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                                .assignedToAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
                                 .identifier("2001:db8:3333:4444:5555:6666:7777:8888")
                                 .caption("some fake IPv6 number")
                                 .build()),
@@ -529,13 +532,13 @@ public class HsHostingAssetControllerRestTest {
                 """);
 
         final HsHostingAssetType assetType;
-        final List<HsHostingAssetEntity> givenHostingAssetsOfType;
+        final List<HsHostingAssetRbacEntity> givenHostingAssetsOfType;
         final String expectedResponse;
         final JsonNode expectedResponseJson;
 
         @SneakyThrows
         ListTestCases(
-                final List<HsHostingAssetEntity> givenHostingAssetsOfType,
+                final List<HsHostingAssetRbacEntity> givenHostingAssetsOfType,
                 final String expectedResponse) {
             this.assetType = HsHostingAssetType.valueOf(name());
             this.givenHostingAssetsOfType = givenHostingAssetsOfType;
@@ -561,7 +564,7 @@ public class HsHostingAssetControllerRestTest {
     @EnumSource(HsHostingAssetControllerRestTest.ListTestCases.class)
     void shouldListAssets(final HsHostingAssetControllerRestTest.ListTestCases testCase) throws Exception {
         // given
-        when(hostingAssetRepo.findAllByCriteria(null, null, testCase.assetType))
+        when(rbacAssetRepo.findAllByCriteria(null, null, testCase.assetType))
                 .thenReturn(testCase.givenHostingAssetsOfType);
 
         // when

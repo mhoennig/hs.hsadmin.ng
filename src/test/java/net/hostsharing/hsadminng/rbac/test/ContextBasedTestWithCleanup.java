@@ -7,6 +7,7 @@ import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
 import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import org.apache.commons.collections4.SetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import jakarta.persistence.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static java.lang.System.out;
 import static java.util.Comparator.comparing;
@@ -55,9 +57,10 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     private static Long latestIntialTestDataSerialId;
     private static boolean countersInitialized = false;
     private static boolean initialTestDataValidated = false;
-    private static Long initialRbacObjectCount = null;
-    private static Long initialRbacRoleCount = null;
-    private static Long initialRbacGrantCount = null;
+    static private Long previousRbacObjectCount;
+    private Long initialRbacObjectCount = null;
+    private Long initialRbacRoleCount = null;
+    private Long initialRbacGrantCount = null;
     private Set<String> initialRbacObjects;
     private Set<String> initialRbacRoles;
     private Set<String> initialRbacGrants;
@@ -119,6 +122,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     @BeforeEach
         //@Transactional -- TODO: check why this does not work but jpaAttempt.transacted does work
     void retrieveInitialTestData(final TestInfo testInfo) {
+        this.testInfo = testInfo;
         out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".retrieveInitialTestData");
 
         if (latestIntialTestDataSerialId == null ) {
@@ -126,7 +130,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         }
 
         if (initialRbacObjects != null){
-            assertNoNewRbacObjectsRolesAndGrantsLeaked();
+            assertNoNewRbacObjectsRolesAndGrantsLeaked("before");
         }
 
         initialTestDataValidated = false;
@@ -156,7 +160,10 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         assertThat(countersInitialized).as("error while retrieving initial test data").isTrue();
         assertThat(initialTestDataValidated).as("check previous test for leaked test data").isTrue();
 
-        out.println("TOTAL OBJECT COUNT (before): " + initialRbacObjectCount);
+        out.println(testInfo.getDisplayName() + ": TOTAL OBJECT COUNT (initial): " + previousRbacObjectCount + " -> " + initialRbacObjectCount);
+        if (previousRbacObjectCount != null) {
+            assertThat(initialRbacObjectCount).as("TOTAL OBJECT COUNT changed from " + previousRbacObjectCount + " to " + initialRbacObjectCount).isEqualTo(previousRbacObjectCount);
+        }
     }
 
     private Long assumeSameInitialCount(final Long countBefore, final long currentCount, final String name) {
@@ -166,23 +173,15 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         return currentCount;
     }
 
-    @BeforeEach
-    void keepTestInfo(final TestInfo testInfo) {
-        this.testInfo = testInfo;
-    }
-
     @AfterEach
     void cleanupAndCheckCleanup(final TestInfo testInfo) {
-        // If the whole test method has its own transaction, cleanup makes no sense.
-        // If that transaction even failed, cleaunup would cause an exception.
-        if (!tm.getTransaction(null).isRollbackOnly()) {
-            out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".cleanupAndCheckCleanup");
-            cleanupTemporaryTestData();
-            repeatUntilTrue(3, this::deleteLeakedRbacObjects);
+        this.testInfo = testInfo;
 
-            long rbacObjectCount = assertNoNewRbacObjectsRolesAndGrantsLeaked();
-            out.println("TOTAL OBJECT COUNT (after): " + rbacObjectCount);
-        }
+        out.println(ContextBasedTestWithCleanup.class.getSimpleName() + ".cleanupAndCheckCleanup");
+        cleanupTemporaryTestData();
+        repeatUntilTrue(3, this::deleteLeakedRbacObjects);
+
+        assertNoNewRbacObjectsRolesAndGrantsLeaked("after");
     }
 
     private void cleanupTemporaryTestData() {
@@ -207,8 +206,8 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
         }
     }
 
-    private long assertNoNewRbacObjectsRolesAndGrantsLeaked() {
-        return jpaAttempt.transacted(() -> {
+    private void assertNoNewRbacObjectsRolesAndGrantsLeaked(final String event) {
+        long rbacObjectCount = jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net");
             assertEqual(initialRbacObjects, allRbacObjects());
             if (DETAILED_BUT_SLOW_CHECK) {
@@ -218,21 +217,27 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
             // The detailed check works with sets, thus it cannot determine duplicates.
             // Therefore, we always compare the counts as well.
-            long rbacObjectCount = 0;
-            assertThat(rbacObjectCount = rbacObjectRepo.count()).as("not all business objects got cleaned up (by current test)")
+            long count = rbacObjectRepo.count();
+            out.println(testInfo.getDisplayName() + ": TOTAL OBJECT COUNT (" + event+ "): " + previousRbacObjectCount+  " -> " + count);
+            assertThat(count).as("not all business objects got cleaned up (by current test)")
                     .isEqualTo(initialRbacObjectCount);
             assertThat(rbacRoleRepo.count()).as("not all rbac roles got cleaned up (by current test)")
                     .isEqualTo(initialRbacRoleCount);
             assertThat(rbacGrantRepo.count()).as("not all rbac grants got cleaned up (by current test)")
                     .isEqualTo(initialRbacGrantCount);
-            return rbacObjectCount;
+            return count;
         }).assertSuccessful().returnedValue();
+
+        if (previousRbacObjectCount != null) {
+            assertThat(rbacObjectCount).as("TOTAL OBJECT COUNT changed from " + previousRbacObjectCount + " to " + rbacObjectCount).isEqualTo(previousRbacObjectCount);
+        }
+        previousRbacObjectCount = rbacObjectCount;
     }
 
     private boolean deleteLeakedRbacObjects() {
         final var deletionSuccessful = new AtomicBoolean(true);
-        rbacObjectRepo.findAll().stream()
-            .filter(o -> o.serialId > latestIntialTestDataSerialId)
+        jpaAttempt.transacted(() -> rbacObjectRepo.findAll()).assertSuccessful().returnedValue().stream()
+            .filter(o -> latestIntialTestDataSerialId != null && o.serialId > latestIntialTestDataSerialId)
             .sorted(comparing(o -> o.serialId))
             .forEach(o -> {
                 final var exception = jpaAttempt.transacted(() -> {
@@ -256,7 +261,8 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     private void assertEqual(final Set<String> before, final Set<String> after) {
         assertThat(before).isNotNull();
         assertThat(after).isNotNull();
-        assertThat(difference(before, after)).as("missing entities (deleted initial test data)").isEmpty();
+        final SetUtils.SetView<String> difference = difference(before, after);
+        assertThat(difference).as("missing entities (deleted initial test data)").isEmpty();
         assertThat(difference(after, before)).as("spurious entities (test data not cleaned up by this test)").isEmpty();
     }
 
@@ -291,8 +297,28 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     }
 
     /**
-     * Generates a diagram of the RBAC-Grants to the current subjects (user or assumed roles).
+     * @return an array of all RBAC roles matching the given pattern
+     *
+     * Usually unused, but for temporary debugging purposes of findind role names for new tests.
      */
+    @SuppressWarnings("unused")
+    protected String[] roleNames(final String sqlLikeExpression) {
+        final var pattern = Pattern.compile(sqlLikeExpression);
+        //noinspection unchecked
+        final List<Object[]> rows = (List<Object[]>) em.createNativeQuery("select * from rbacrole_ev where roleidname like 'hs_booking_project#%'")
+                .getResultList();
+        return rows.stream()
+                .map(row -> (row[0]).toString())
+                .filter(roleName -> pattern.matcher(roleName).matches())
+                .toArray(String[]::new);
+    }
+
+    /**
+     * Generates a diagram of the RBAC-Grants to the current subjects (user or assumed roles).
+     *
+     * Usually unused, but for temporary use for debugging and other analysis.
+     */
+    @SuppressWarnings("unused")
     protected void generateRbacDiagramForCurrentSubjects(final EnumSet<RbacGrantsDiagramService.Include> include, final String name) {
         RbacGrantsDiagramService.writeToFile(
                 name,
@@ -303,7 +329,10 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
     /**
      * Generates a diagram of the RBAC-Grants for the given object and permission.
+     *
+     * Usually unused, but for temporary use for debugging and other analysis.
      */
+    @SuppressWarnings("unused")
     protected void generateRbacDiagramForObjectPermission(final UUID targetObject, final String rbacOp, final String name) {
         RbacGrantsDiagramService.writeToFile(
                 name,

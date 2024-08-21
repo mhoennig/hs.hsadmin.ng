@@ -7,13 +7,13 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.PROJECT_TEST_ENTITY;
 
 @UtilityClass
 public class TestHsBookingItem {
 
-    public static final HsBookingItemEntity TEST_CLOUD_SERVER_BOOKING_ITEM = HsBookingItemEntity.builder()
-            .project(TEST_PROJECT)
+    public static final HsBookingItemRealEntity CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY = HsBookingItemRealEntity.builder()
+            .project(PROJECT_TEST_ENTITY)
             .type(HsBookingItemType.CLOUD_SERVER)
             .caption("test cloud server booking item")
             .resources(Map.ofEntries(
@@ -25,8 +25,8 @@ public class TestHsBookingItem {
             .validity(Range.closedInfinite(LocalDate.of(2020, 1, 15)))
             .build();
 
-    public static final HsBookingItemEntity TEST_MANAGED_SERVER_BOOKING_ITEM = HsBookingItemEntity.builder()
-            .project(TEST_PROJECT)
+    public static final HsBookingItemRealEntity MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY = HsBookingItemRealEntity.builder()
+            .project(PROJECT_TEST_ENTITY)
             .type(HsBookingItemType.MANAGED_SERVER)
             .caption("test project booking item")
             .resources(Map.ofEntries(
@@ -38,8 +38,8 @@ public class TestHsBookingItem {
             .validity(Range.closedInfinite(LocalDate.of(2020, 1, 15)))
             .build();
 
-    public static final HsBookingItemEntity TEST_MANAGED_WEBSPACE_BOOKING_ITEM = HsBookingItemEntity.builder()
-            .parentItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
+    public static final HsBookingItemRealEntity MANAGED_WEBSPACE_BOOKING_ITEM_REAL_ENTITY = HsBookingItemRealEntity.builder()
+            .parentItem(MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY)
             .type(HsBookingItemType.MANAGED_WEBSPACE)
             .caption("test managed webspace item")
             .resources(Map.ofEntries(

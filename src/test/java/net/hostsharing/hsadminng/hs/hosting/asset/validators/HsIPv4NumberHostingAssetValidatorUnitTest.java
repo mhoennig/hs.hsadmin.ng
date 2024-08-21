@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HsIPv4NumberHostingAssetValidatorUnitTest {
 
-    static HsHostingAssetEntityBuilder validEntityBuilder() {
-        return HsHostingAssetEntity.builder()
+    static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
+        return HsHostingAssetRbacEntity.builder()
                 .type(IPV4_NUMBER)
                 .identifier("83.223.95.145");
     }
@@ -69,7 +69,7 @@ class HsIPv4NumberHostingAssetValidatorUnitTest {
     void acceptsValidReferencedEntity(final HsHostingAssetType givenAssignedToAssetType) {
         // given
         final var ipNumberHostingAssetEntity = validEntityBuilder()
-                .assignedToAsset(HsHostingAssetEntity.builder().type(givenAssignedToAssetType).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(givenAssignedToAssetType).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(ipNumberHostingAssetEntity.getType());
 
@@ -84,9 +84,9 @@ class HsIPv4NumberHostingAssetValidatorUnitTest {
     void rejectsInvalidReferencedEntities() {
         // given
         final var ipNumberHostingAssetEntity = validEntityBuilder()
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
-                .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_WEBSPACE).build())
-                .assignedToAsset(HsHostingAssetEntity.builder().type(UNIX_USER).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(HsHostingAssetRealEntity.builder().type(MANAGED_WEBSPACE).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(UNIX_USER).build())
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(ipNumberHostingAssetEntity.getType());
 

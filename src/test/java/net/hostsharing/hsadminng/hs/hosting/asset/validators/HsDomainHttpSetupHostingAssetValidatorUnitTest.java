@@ -1,9 +1,9 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity.HsHostingAssetEntityBuilder;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.junit.jupiter.api.Test;
 
@@ -18,16 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HsDomainHttpSetupHostingAssetValidatorUnitTest {
 
-    static final HsHostingAssetEntity validDomainSetupEntity = HsHostingAssetEntity.builder()
+    static final HsHostingAssetRealEntity validDomainSetupEntity = HsHostingAssetRealEntity.builder()
                 .type(DOMAIN_SETUP)
                 .identifier("example.org")
                 .build();
 
-    static HsHostingAssetEntityBuilder validEntityBuilder() {
-        return HsHostingAssetEntity.builder()
+    static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
+        return HsHostingAssetRbacEntity.builder()
                 .type(DOMAIN_HTTP_SETUP)
                 .parentAsset(validDomainSetupEntity)
-                .assignedToAsset(HsHostingAssetEntity.builder().type(UNIX_USER).build())
+                .assignedToAsset(HsHostingAssetRealEntity.builder().type(UNIX_USER).build())
                 .identifier("example.org|HTTP")
                 .config(Map.ofEntries(
                         entry("passenger-errorpage", true),
@@ -109,8 +109,8 @@ class HsDomainHttpSetupHostingAssetValidatorUnitTest {
     void rejectsInvalidReferencedEntities() {
         // given
         final var mangedServerHostingAssetEntity = validEntityBuilder()
-                .bookingItem(HsBookingItemEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
-                .parentAsset(HsHostingAssetEntity.builder().type(MANAGED_WEBSPACE).build())
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
+                .parentAsset(HsHostingAssetRealEntity.builder().type(MANAGED_WEBSPACE).build())
                 .assignedToAsset(null)
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());

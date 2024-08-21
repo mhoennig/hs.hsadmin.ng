@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
 import lombok.AllArgsConstructor;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.Node;
 
@@ -354,14 +354,14 @@ class EntityTypeRelation<E, T extends Node> {
 
     final HsHostingAssetType.RelationPolicy relationPolicy;
     final HsHostingAssetType.RelationType relationType;
-    final Function<HsHostingAssetEntity, E> getter;
+    final Function<HsHostingAssetRbacEntity, E> getter;
     private final List<T> acceptedRelatedTypes;
     final String edge;
 
     private EntityTypeRelation(
             final HsHostingAssetType.RelationPolicy relationPolicy,
             final HsHostingAssetType.RelationType relationType,
-            final Function<HsHostingAssetEntity, E> getter,
+            final Function<HsHostingAssetRbacEntity, E> getter,
             final T acceptedRelatedType,
             final String edge
     ) {
@@ -376,11 +376,11 @@ class EntityTypeRelation<E, T extends Node> {
         return (Set<R>) result;
     }
 
-    static EntityTypeRelation<HsBookingItemEntity, HsBookingItemType> requires(final HsBookingItemType bookingItemType) {
+    static EntityTypeRelation<HsBookingItem, HsBookingItemType> requires(final HsBookingItemType bookingItemType) {
         return new EntityTypeRelation<>(
                 REQUIRED,
                 BOOKING_ITEM,
-                HsHostingAssetEntity::getBookingItem,
+                HsHostingAssetRbacEntity::getBookingItem,
                 bookingItemType,
                 " *==> ");
     }

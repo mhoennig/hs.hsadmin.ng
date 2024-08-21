@@ -1,16 +1,16 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
 import net.hostsharing.hsadminng.mapper.Array;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_MANAGED_SERVER_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetTestEntities.MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ALIAS;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_SERVER_HOSTING_ASSET;
-import static net.hostsharing.hsadminng.hs.hosting.asset.TestHsHostingAssetEntities.TEST_MANAGED_WEBSPACE_HOSTING_ASSET;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HsEMailAliasHostingAssetValidatorUnitTest {
@@ -28,9 +28,9 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     @Test
     void acceptsValidEntity() {
         // given
-        final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var emailAliasHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(EMAIL_ALIAS)
-                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("xyz00-office")
                 .config(Map.ofEntries(
                         entry("target", Array.of(
@@ -54,9 +54,9 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     @Test
     void rejectsInvalidConfig() {
         // given
-        final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var emailAliasHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(EMAIL_ALIAS)
-                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("xyz00-office")
                 .config(Map.ofEntries(
                         entry("target", Array.of(
@@ -83,9 +83,9 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     @Test
     void rejectsEmptyTargetArray() {
         // given
-        final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var emailAliasHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(EMAIL_ALIAS)
-                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("xyz00-office")
                 .config(Map.ofEntries(
                         entry("target", new String[0])
@@ -104,9 +104,9 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     @Test
     void rejectsInvalidIndentifier() {
         // given
-        final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var emailAliasHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(EMAIL_ALIAS)
-                .parentAsset(TEST_MANAGED_WEBSPACE_HOSTING_ASSET)
+                .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("abc00-office")
                 .config(Map.ofEntries(
                         entry("target", Array.of("office@example.com"))
@@ -125,11 +125,11 @@ class HsEMailAliasHostingAssetValidatorUnitTest {
     @Test
     void validatesInvalidReferences() {
         // given
-        final var emailAliasHostingAssetEntity = HsHostingAssetEntity.builder()
+        final var emailAliasHostingAssetEntity = HsHostingAssetRbacEntity.builder()
                 .type(EMAIL_ALIAS)
-                .bookingItem(TEST_MANAGED_SERVER_BOOKING_ITEM)
-                .parentAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
-                .assignedToAsset(TEST_MANAGED_SERVER_HOSTING_ASSET)
+                .bookingItem(MANAGED_SERVER_BOOKING_ITEM_REAL_ENTITY)
+                .parentAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
+                .assignedToAsset(MANAGED_SERVER_HOSTING_ASSET_REAL_TEST_ENTITY)
                 .identifier("abc00-office")
                 .config(Map.ofEntries(
                         entry("target", Array.of("office@example.com"))

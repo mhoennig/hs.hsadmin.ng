@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.TEST_CLOUD_SERVER_BOOKING_ITEM;
+import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY;
 import static net.hostsharing.hsadminng.mapper.PatchMap.entry;
 import static net.hostsharing.hsadminng.mapper.PatchMap.patchMap;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
         HsHostingAssetPatchResource,
-        HsHostingAssetEntity
+        HsHostingAssetRbacEntity
         > {
 
     private static final UUID INITIAL_BOOKING_ITEM_UUID = UUID.randomUUID();
@@ -60,17 +60,17 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
 
     @BeforeEach
     void initMocks() {
-        lenient().when(em.getReference(eq(HsHostingAssetEntity.class), any())).thenAnswer(invocation ->
-                HsHostingAssetEntity.builder().uuid(invocation.getArgument(1)).build());
+        lenient().when(em.getReference(eq(HsHostingAssetRbacEntity.class), any())).thenAnswer(invocation ->
+                HsHostingAssetRbacEntity.builder().uuid(invocation.getArgument(1)).build());
         lenient().when(em.getReference(eq(HsOfficeContactRealEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeContactRealEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
-    protected HsHostingAssetEntity newInitialEntity() {
-        final var entity = new HsHostingAssetEntity();
+    protected HsHostingAssetRbacEntity newInitialEntity() {
+        final var entity = new HsHostingAssetRbacEntity();
         entity.setUuid(INITIAL_BOOKING_ITEM_UUID);
-        entity.setBookingItem(TEST_CLOUD_SERVER_BOOKING_ITEM);
+        entity.setBookingItem(CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY);
         entity.getConfig().putAll(KeyValueMap.from(INITIAL_CONFIG));
         entity.setCaption(INITIAL_CAPTION);
         entity.setAlarmContact(givenInitialContact);
@@ -83,7 +83,7 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsHostingAssetEntityPatcher createPatcher(final HsHostingAssetEntity server) {
+    protected HsHostingAssetEntityPatcher createPatcher(final HsHostingAssetRbacEntity server) {
         return new HsHostingAssetEntityPatcher(em, server);
     }
 
@@ -94,19 +94,19 @@ class HsHostingAssetEntityPatcherUnitTest extends PatchUnitTestBase<
                         "caption",
                         HsHostingAssetPatchResource::setCaption,
                         PATCHED_CAPTION,
-                        HsHostingAssetEntity::setCaption),
+                        HsHostingAssetRbacEntity::setCaption),
                 new SimpleProperty<>(
                         "config",
                         HsHostingAssetPatchResource::setConfig,
                         PATCH_CONFIG,
-                        HsHostingAssetEntity::putConfig,
+                        HsHostingAssetRbacEntity::putConfig,
                         PATCHED_CONFIG)
                         .notNullable(),
                 new JsonNullableProperty<>(
                         "alarmContact",
                         HsHostingAssetPatchResource::setAlarmContactUuid,
                         PATCHED_CONTACT_UUID,
-                        HsHostingAssetEntity::setAlarmContact,
+                        HsHostingAssetRbacEntity::setAlarmContact,
                         newContact(PATCHED_CONTACT_UUID))
         );
     }

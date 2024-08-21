@@ -10,7 +10,7 @@ import java.time.Month;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.TEST_PROJECT;
+import static net.hostsharing.hsadminng.hs.booking.project.TestHsBookingProject.PROJECT_TEST_ENTITY;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,8 +20,8 @@ class HsBookingItemEntityUnitTest {
 
     private MockedStatic<LocalDate> localDateMockedStatic = Mockito.mockStatic(LocalDate.class, Mockito.CALLS_REAL_METHODS);
 
-    final HsBookingItemEntity givenBookingItem = HsBookingItemEntity.builder()
-            .project(TEST_PROJECT)
+    final HsBookingItem givenBookingItem = HsBookingItemRbacEntity.builder()
+            .project(PROJECT_TEST_ENTITY)
             .type(HsBookingItemType.CLOUD_SERVER)
             .caption("some caption")
             .resources(Map.ofEntries(
@@ -43,7 +43,7 @@ class HsBookingItemEntityUnitTest {
         localDateMockedStatic.when(LocalDate::now).thenReturn(fakedToday);
 
         // when
-        final var newBookingItem = HsBookingItemEntity.builder().build();
+        final var newBookingItem = HsBookingItemRbacEntity.builder().build();
 
         // then
         assertThat(newBookingItem.getValidity().toString()).isEqualTo("Range{lower=2024-05-01, upper=null, mask=82, clazz=class java.time.LocalDate}");
@@ -53,7 +53,7 @@ class HsBookingItemEntityUnitTest {
     void toStringContainsAllPropertiesAndResourcesSortedByKey() {
         final var result = givenBookingItem.toString();
 
-        assertThat(result).isEqualToIgnoringWhitespace("HsBookingItemEntity(CLOUD_SERVER, some caption, D-1234500:test project, [2020-01-01,2031-01-01), { \"CPU\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
+        assertThat(result).isEqualToIgnoringWhitespace("HsBookingItem(CLOUD_SERVER, some caption, D-1234500:test project, [2020-01-01,2031-01-01), { \"CPU\": 2, \"HDD-storage\": 2048, \"SSD-storage\": 512 })");
     }
 
     @Test

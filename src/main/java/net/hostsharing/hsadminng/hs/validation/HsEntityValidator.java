@@ -21,6 +21,8 @@ import static net.hostsharing.hsadminng.hs.validation.ValidatableProperty.Comput
 // TODO.refa: rename to HsEntityProcessor, also subclasses
 public abstract class HsEntityValidator<E extends PropertiesProvider> {
 
+    public static final ThreadLocal<EntityManager> localEntityManager = new ThreadLocal<>();
+
     public final ValidatableProperty<?, ?>[] propertyValidators;
 
     public <T extends Enum <T>> HsEntityValidator(final ValidatableProperty<?, ?>... validators) {
@@ -37,6 +39,15 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
 
     protected static String prefix(final String... parts) {
         return String.join(".", parts);
+    }
+
+    public static <R> R doWithEntityManager(final EntityManager em, final Supplier<R> code) {
+        localEntityManager.set(em);
+        try {
+            return code.get();
+        } finally {
+            localEntityManager.remove();
+        }
     }
 
     public abstract List<String> validateEntity(final E entity);

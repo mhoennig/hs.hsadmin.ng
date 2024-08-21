@@ -23,7 +23,7 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class HsBookingProjectEntityPatcherUnitTest extends PatchUnitTestBase<
         HsBookingProjectPatchResource,
-        HsBookingProjectEntity
+        HsBookingProject
         > {
 
     private static final UUID INITIAL_BOOKING_PROJECT_UUID = UUID.randomUUID();
@@ -38,13 +38,11 @@ class HsBookingProjectEntityPatcherUnitTest extends PatchUnitTestBase<
     void initMocks() {
         lenient().when(em.getReference(eq(HsOfficeDebitorEntity.class), any())).thenAnswer(invocation ->
                 HsOfficeDebitorEntity.builder().uuid(invocation.getArgument(1)).build());
-        lenient().when(em.getReference(eq(HsBookingProjectEntity.class), any())).thenAnswer(invocation ->
-                HsBookingProjectEntity.builder().uuid(invocation.getArgument(1)).build());
     }
 
     @Override
-    protected HsBookingProjectEntity newInitialEntity() {
-        final var entity = new HsBookingProjectEntity();
+    protected HsBookingProject newInitialEntity() {
+        final var entity = new HsBookingProjectRbacEntity();
         entity.setUuid(INITIAL_BOOKING_PROJECT_UUID);
         entity.setDebitor(TEST_BOOKING_DEBITOR);
         entity.setCaption(INITIAL_CAPTION);
@@ -57,7 +55,7 @@ class HsBookingProjectEntityPatcherUnitTest extends PatchUnitTestBase<
     }
 
     @Override
-    protected HsBookingProjectEntityPatcher createPatcher(final HsBookingProjectEntity bookingProject) {
+    protected HsBookingProjectEntityPatcher createPatcher(final HsBookingProject bookingProject) {
         return new HsBookingProjectEntityPatcher(bookingProject);
     }
 
@@ -68,7 +66,7 @@ class HsBookingProjectEntityPatcherUnitTest extends PatchUnitTestBase<
                         "caption",
                         HsBookingProjectPatchResource::setCaption,
                         PATCHED_CAPTION,
-                        HsBookingProjectEntity::setCaption)
+                        HsBookingProject::setCaption)
         );
     }
 }

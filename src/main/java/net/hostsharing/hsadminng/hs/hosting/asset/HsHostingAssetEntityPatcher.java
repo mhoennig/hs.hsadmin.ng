@@ -12,9 +12,9 @@ import java.util.Optional;
 public class HsHostingAssetEntityPatcher implements EntityPatcher<HsHostingAssetPatchResource> {
 
     private final EntityManager em;
-    private final HsHostingAssetEntity entity;
+    private final HsHostingAssetRbacEntity entity;
 
-    public HsHostingAssetEntityPatcher(final EntityManager em, final HsHostingAssetEntity entity) {
+    public HsHostingAssetEntityPatcher(final EntityManager em, final HsHostingAssetRbacEntity entity) {
         this.em = em;
         this.entity = entity;
     }

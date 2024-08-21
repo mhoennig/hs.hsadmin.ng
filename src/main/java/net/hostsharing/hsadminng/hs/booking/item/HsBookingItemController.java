@@ -33,7 +33,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
     private Mapper mapper;
 
     @Autowired
-    private HsBookingItemRepository bookingItemRepo;
+    private HsBookingItemRbacRepository bookingItemRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -61,9 +61,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         context.define(currentUser, assumedRoles);
 
-        final var entityToSave = mapper.map(body, HsBookingItemEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
+        final var entityToSave = mapper.map(body, HsBookingItemRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var saved = HsBookingItemEntityValidatorRegistry.validated(bookingItemRepo.save(entityToSave));
+        final var saved = HsBookingItemEntityValidatorRegistry.validated(em, bookingItemRepo.save(entityToSave));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -119,19 +119,19 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         new HsBookingItemEntityPatcher(current).apply(body);
 
-        final var saved = bookingItemRepo.save(HsBookingItemEntityValidatorRegistry.validated(current));
+        final var saved = bookingItemRepo.save(HsBookingItemEntityValidatorRegistry.validated(em, current));
         final var mapped = mapper.map(saved, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
-    final BiConsumer<HsBookingItemEntity, HsBookingItemResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+    final BiConsumer<HsBookingItemRbacEntity, HsBookingItemResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setValidFrom(entity.getValidity().lower());
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
     };
 
-    final BiConsumer<HsBookingItemInsertResource, HsBookingItemEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+    final BiConsumer<HsBookingItemInsertResource, HsBookingItemRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.setValidity(toPostgresDateRange(LocalDate.now(), resource.getValidTo()));
         entity.putResources(KeyValueMap.from(resource.getResources()));
     };

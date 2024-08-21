@@ -72,8 +72,10 @@ public class HostingAssetEntitySaveProcessor {
     /// validates the entity within it's parent and child hierarchy (e.g. totals validators and other limits)
     public HostingAssetEntitySaveProcessor validateContext() {
         step("validateContext", "mapUsing");
-        MultiValidationException.throwIfNotEmpty(validator.validateContext(entity));
-        return this;
+        return HsEntityValidator.doWithEntityManager(em, () -> {
+            MultiValidationException.throwIfNotEmpty(validator.validateContext(entity));
+            return this;
+        });
     }
 
     /// maps entity to JSON resource representation

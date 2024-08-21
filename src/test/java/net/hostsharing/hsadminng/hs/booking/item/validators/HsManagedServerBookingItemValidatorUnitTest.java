@@ -1,11 +1,14 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
+import net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemEntity;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectEntity;
-import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetEntity;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,18 +20,20 @@ import static java.util.Arrays.stream;
 import static java.util.List.of;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityManagerMock.createEntityManagerMockWithAssetQueryFake;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.PRIVATE_CLOUD;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class HsManagedServerBookingItemValidatorUnitTest {
 
     final HsBookingDebitorEntity debitor = HsBookingDebitorEntity.builder()
             .debitorNumber(12345)
             .build();
-    final HsBookingProjectEntity project = HsBookingProjectEntity.builder()
+    final HsBookingProjectRealEntity project = HsBookingProjectRealEntity.builder()
             .debitor(debitor)
             .caption("Test-Project")
             .build();
@@ -36,7 +41,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
     @Test
     void validatesProperties() {
         // given
-        final var mangedServerBookingItemEntity = HsBookingItemEntity.builder()
+        final var mangedServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(MANAGED_SERVER)
                 .project(project)
                 .resources(Map.ofEntries(
@@ -48,9 +53,10 @@ class HsManagedServerBookingItemValidatorUnitTest {
                         entry("SLA-EMail", true)
                 ))
                 .build();
+        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(mangedServerBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, mangedServerBookingItemEntity);
 
         // then
         assertThat(result).containsExactly("'D-12345:Test-Project:null.resources.SLA-EMail' is expected to be false because SLA-Platform=BASIC but is true");
@@ -80,7 +86,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
     @Test
     void validatesExceedingPropertyTotals() {
         // given
-        final var subCloudServerBookingItemEntity = HsBookingItemEntity.builder()
+        final var subCloudServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(CLOUD_SERVER)
                 .resources(ofEntries(
                         entry("CPU", 2),
@@ -89,7 +95,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
                         entry("Traffic", 2500)
                 ))
                 .build();
-        final HsBookingItemEntity subManagedServerBookingItemEntity = HsBookingItemEntity.builder()
+        final HsBookingItemRealEntity subManagedServerBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(MANAGED_SERVER)
                 .resources(ofEntries(
                         entry("CPU", 3),
@@ -98,7 +104,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
                         entry("Traffic", 3000)
                 ))
                 .build();
-        final var privateCloudBookingItemEntity = HsBookingItemEntity.builder()
+        final var privateCloudBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(PRIVATE_CLOUD)
                 .project(project)
                 .resources(ofEntries(
@@ -116,8 +122,10 @@ class HsManagedServerBookingItemValidatorUnitTest {
         subManagedServerBookingItemEntity.setParentItem(privateCloudBookingItemEntity);
         subCloudServerBookingItemEntity.setParentItem(privateCloudBookingItemEntity);
 
+        final var em = EntityManagerMock.createEntityManagerMockWithAssetQueryFake(null);
+
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(subManagedServerBookingItemEntity);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, subManagedServerBookingItemEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
@@ -131,7 +139,7 @@ class HsManagedServerBookingItemValidatorUnitTest {
     @Test
     void validatesExceedingTotals() {
         // given
-        final var managedWebspaceBookingItem = HsBookingItemEntity.builder()
+        final var managedWebspaceBookingItem = HsBookingItemRealEntity.builder()
                 .type(MANAGED_WEBSPACE)
                 .project(project)
                 .caption("test Managed-Webspace")
@@ -140,7 +148,8 @@ class HsManagedServerBookingItemValidatorUnitTest {
                         entry("Traffic", 1000),
                         entry("Multi", 1)
                 ))
-                .relatedHostingAsset(HsHostingAssetEntity.builder()
+                .build();
+        final var em = createEntityManagerMockWithAssetQueryFake(HsHostingAssetRealEntity.builder()
                         .type(HsHostingAssetType.MANAGED_WEBSPACE)
                         .identifier("abc00")
                         .subHostingAssets(concat(
@@ -157,13 +166,11 @@ class HsManagedServerBookingItemValidatorUnitTest {
                                         "%c%c.example.com",
                                         10, HsHostingAssetType.EMAIL_ADDRESS
                                 )
-                            ))
-                        .build()
-                )
-                .build();
+                        ))
+                        .build());
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(managedWebspaceBookingItem);
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, managedWebspaceBookingItem);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
@@ -175,47 +182,48 @@ class HsManagedServerBookingItemValidatorUnitTest {
     }
 
     @SafeVarargs
-    private List<HsHostingAssetEntity> concat(final List<HsHostingAssetEntity>... hostingAssets) {
+    private List<HsHostingAssetRealEntity> concat(final List<HsHostingAssetRealEntity>... hostingAssets) {
         return stream(hostingAssets)
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
     }
 
-    private List<HsHostingAssetEntity> generate(final int count, final HsHostingAssetType hostingAssetType,
+    private List<HsHostingAssetRealEntity> generate(final int count, final HsHostingAssetType hostingAssetType,
             final String identifierPattern) {
         return IntStream.range(0, count)
-                        .mapToObj(number -> HsHostingAssetEntity.builder()
+                        .mapToObj(number -> (HsHostingAssetRealEntity) HsHostingAssetRealEntity.builder()
                                     .type(hostingAssetType)
                                     .identifier(identifierPattern.formatted((number/'a')+'a', (number%'a')+'a'))
                                     .build())
                 .toList();
     }
 
-    private List<HsHostingAssetEntity> generateDbUsersWithDatabases(
+    private List<HsHostingAssetRealEntity> generateDbUsersWithDatabases(
             final int userCount,
             final HsHostingAssetType directAssetType,
             final String directAssetIdentifierFormat,
             final int dbCount,
             final HsHostingAssetType subAssetType) {
-        return IntStream.range(0, userCount)
-                .mapToObj(n -> HsHostingAssetEntity.builder()
+        final List<HsHostingAssetRealEntity> list = IntStream.range(0, userCount)
+                .mapToObj(n -> HsHostingAssetRealEntity.builder()
                         .type(directAssetType)
-                        .identifier(directAssetIdentifierFormat.formatted((n/'a')+'a', (n%'a')+'a'))
+                        .identifier(directAssetIdentifierFormat.formatted((n / 'a') + 'a', (n % 'a') + 'a'))
                         .subHostingAssets(
-                                generate(dbCount, subAssetType, "%c%c.example.com".formatted((n/'a')+'a', (n%'a')+'a'))
+                                generate(dbCount, subAssetType, "%c%c.example.com" .formatted((n / 'a') + 'a', (n % 'a') + 'a'))
                         )
                         .build())
                 .toList();
+        return list;
     }
 
-    private List<HsHostingAssetEntity> generateDomainEmailSetupsWithEMailAddresses(
+    private List<HsHostingAssetRealEntity> generateDomainEmailSetupsWithEMailAddresses(
             final int domainCount,
             final HsHostingAssetType directAssetType,
             final String directAssetIdentifierFormat,
             final int emailAddressCount,
             final HsHostingAssetType subAssetType) {
         return IntStream.range(0, domainCount)
-                .mapToObj(n -> HsHostingAssetEntity.builder()
+                .mapToObj(n ->  HsHostingAssetRealEntity.builder()
                         .type(directAssetType)
                         .identifier(directAssetIdentifierFormat.formatted((n/'a')+'a', (n%'a')+'a'))
                         .subHostingAssets(
