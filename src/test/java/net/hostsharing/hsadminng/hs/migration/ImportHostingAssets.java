@@ -115,7 +115,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
  */
 @Tag("importHostingAssets")
 @DataJpaTest(properties = {
-        "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///spring_boot_testcontainers}",
+        "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///importHostingAssetsTC}",
         "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
         "spring.datasource.password=${HSADMINNG_POSTGRES_ADMIN_PASSWORD:password}",
         "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
@@ -124,7 +124,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 @Import({ Context.class, JpaAttempt.class })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
-public class ImportHostingAssets extends ImportOfficeData {
+public class ImportHostingAssets extends BaseOfficeDataImport {
 
     private static final Set<String> NOBODY_SUBSTITUTES = Set.of("nomail", "bounce");
 
@@ -242,13 +242,13 @@ public class ImportHostingAssets extends ImportOfficeData {
                 HsBookingItemType.MANAGED_SERVER,
                 HsBookingItemType.MANAGED_WEBSPACE)).isEqualToIgnoringWhitespace("""
                 {
-                   10630=HsBookingItemEntity(MANAGED_WEBSPACE, BI hsh00, D-1000000:hsh default project, [2001-06-01,)),
-                   10968=HsBookingItemEntity(MANAGED_SERVER, BI vm1061, D-1015200:rar default project, [2013-04-01,)),
-                   10978=HsBookingItemEntity(MANAGED_SERVER, BI vm1050, D-1000000:hsh default project, [2013-04-01,)),
-                   11061=HsBookingItemEntity(MANAGED_SERVER, BI vm1068, D-1000300:mim default project, [2013-08-19,)),
-                   11094=HsBookingItemEntity(MANAGED_WEBSPACE, BI lug00, D-1000300:mim default project, [2013-09-10,)),
-                   11111=HsBookingItemEntity(MANAGED_WEBSPACE, BI xyz68, D-1000000:vm1068 Monitor, [2013-08-19,)),
-                   23611=HsBookingItemEntity(CLOUD_SERVER, BI vm2097, D-1101800:wws default project, [2022-08-10,))
+                   10630=HsBookingItem(MANAGED_WEBSPACE, BI hsh00, D-1000000:hsh default project, [2001-06-01,)),
+                   10968=HsBookingItem(MANAGED_SERVER, BI vm1061, D-1015200:rar default project, [2013-04-01,)),
+                   10978=HsBookingItem(MANAGED_SERVER, BI vm1050, D-1000000:hsh default project, [2013-04-01,)),
+                   11061=HsBookingItem(MANAGED_SERVER, BI vm1068, D-1000300:mim default project, [2013-08-19,)),
+                   11094=HsBookingItem(MANAGED_WEBSPACE, BI lug00, D-1000300:mim default project, [2013-09-10,)),
+                   11111=HsBookingItem(MANAGED_WEBSPACE, BI xyz68, D-1000000:vm1068 Monitor, [2013-08-19,)),
+                   23611=HsBookingItem(CLOUD_SERVER, BI vm2097, D-1101800:wws default project, [2022-08-10,))
                 }
                 """);
         assertThat(firstOfEach(9, packetAssets)).isEqualToIgnoringWhitespace("""
@@ -301,16 +301,16 @@ public class ImportHostingAssets extends ImportOfficeData {
                 HsBookingItemType.MANAGED_WEBSPACE))
                 .isEqualToIgnoringWhitespace("""
                         {
-                           10630=HsBookingItemEntity(MANAGED_WEBSPACE, BI hsh00, D-1000000:hsh default project, [2001-06-01,), {"HDD": 10, "Multi": 25, "SLA-Platform": "EXT24H", "SSD": 16, "Traffic": 50}),
-                           10968=HsBookingItemEntity(MANAGED_SERVER, BI vm1061, D-1015200:rar default project, [2013-04-01,), {"CPU": 6, "HDD": 250, "RAM": 14, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 375, "Traffic": 250}),
-                           10978=HsBookingItemEntity(MANAGED_SERVER, BI vm1050, D-1000000:hsh default project, [2013-04-01,), {"CPU": 4, "HDD": 250, "RAM": 32, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 150, "Traffic": 250}),
-                           11061=HsBookingItemEntity(MANAGED_SERVER, BI vm1068, D-1000300:mim default project, [2013-08-19,), {"CPU": 2, "HDD": 250, "RAM": 4, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT2H", "SLA-Web": true, "Traffic": 250}),
-                           11094=HsBookingItemEntity(MANAGED_WEBSPACE, BI lug00, D-1000300:mim default project, [2013-09-10,), {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 1, "Traffic": 10}),
-                           11111=HsBookingItemEntity(MANAGED_WEBSPACE, BI xyz68, D-1000000:vm1068 Monitor, [2013-08-19,), {"SSD": 3}),
-                           11112=HsBookingItemEntity(MANAGED_WEBSPACE, BI mim00, D-1000300:mim default project, [2013-09-17,), {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 3, "Traffic": 20}),
-                           11447=HsBookingItemEntity(MANAGED_SERVER, BI vm1093, D-1000000:hsh default project, [2014-11-28,), {"CPU": 6, "HDD": 500, "RAM": 16, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 300, "Traffic": 250}),
-                           19959=HsBookingItemEntity(MANAGED_WEBSPACE, BI dph00, D-1101900:dph default project, [2021-06-02,), {"Multi": 1, "SLA-Platform": "EXT24H", "SSD": 25, "Traffic": 20}),
-                           23611=HsBookingItemEntity(CLOUD_SERVER, BI vm2097, D-1101800:wws default project, [2022-08-10,), {"CPU": 8, "RAM": 12, "SLA-Infrastructure": "EXT4H", "SSD": 25, "Traffic": 250})
+                           10630=HsBookingItem(MANAGED_WEBSPACE, BI hsh00, D-1000000:hsh default project, [2001-06-01,), {"HDD": 10, "Multi": 25, "SLA-Platform": "EXT24H", "SSD": 16, "Traffic": 50}),
+                           10968=HsBookingItem(MANAGED_SERVER, BI vm1061, D-1015200:rar default project, [2013-04-01,), {"CPU": 6, "HDD": 250, "RAM": 14, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 375, "Traffic": 250}),
+                           10978=HsBookingItem(MANAGED_SERVER, BI vm1050, D-1000000:hsh default project, [2013-04-01,), {"CPU": 4, "HDD": 250, "RAM": 32, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 150, "Traffic": 250}),
+                           11061=HsBookingItem(MANAGED_SERVER, BI vm1068, D-1000300:mim default project, [2013-08-19,), {"CPU": 2, "HDD": 250, "RAM": 4, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT2H", "SLA-Web": true, "Traffic": 250}),
+                           11094=HsBookingItem(MANAGED_WEBSPACE, BI lug00, D-1000300:mim default project, [2013-09-10,), {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 1, "Traffic": 10}),
+                           11111=HsBookingItem(MANAGED_WEBSPACE, BI xyz68, D-1000000:vm1068 Monitor, [2013-08-19,), {"SSD": 3}),
+                           11112=HsBookingItem(MANAGED_WEBSPACE, BI mim00, D-1000300:mim default project, [2013-09-17,), {"Multi": 5, "SLA-Platform": "EXT24H", "SSD": 3, "Traffic": 20}),
+                           11447=HsBookingItem(MANAGED_SERVER, BI vm1093, D-1000000:hsh default project, [2014-11-28,), {"CPU": 6, "HDD": 500, "RAM": 16, "SLA-EMail": true, "SLA-Maria": true, "SLA-Office": true, "SLA-PgSQL": true, "SLA-Platform": "EXT4H", "SLA-Web": true, "SSD": 300, "Traffic": 250}),
+                           19959=HsBookingItem(MANAGED_WEBSPACE, BI dph00, D-1101900:dph default project, [2021-06-02,), {"Multi": 1, "SLA-Platform": "EXT24H", "SSD": 25, "Traffic": 20}),
+                           23611=HsBookingItem(CLOUD_SERVER, BI vm2097, D-1101800:wws default project, [2022-08-10,), {"CPU": 8, "RAM": 12, "SLA-Infrastructure": "EXT4H", "SSD": 25, "Traffic": 250})
                         }
                         """);
     }

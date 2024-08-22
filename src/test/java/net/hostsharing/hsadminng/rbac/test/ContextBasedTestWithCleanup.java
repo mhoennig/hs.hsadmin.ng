@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 // TODO.impl: cleanup the whole class
 public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
 
-    private static final boolean DETAILED_BUT_SLOW_CHECK = true;
+    private static final boolean DETAILED_BUT_SLOW_CHECK = false;
 
     @PersistenceContext
     protected EntityManager em;

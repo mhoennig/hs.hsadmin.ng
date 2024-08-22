@@ -30,5 +30,5 @@ spring:
 
 logging:
     level:
-        liquibase: INFO
-        net.ttddyy.dsproxy.listener: DEBUG
+        liquibase: WARN
+        net.ttddyy.dsproxy.listener: DEBUG # HOWTO: log meaningful SQL statements
