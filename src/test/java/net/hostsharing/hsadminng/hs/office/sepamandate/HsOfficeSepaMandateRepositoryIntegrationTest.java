@@ -379,7 +379,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'reference'
                     from tx_journal_v
                     where targettable = 'hs_office_sepamandate';
                     """);
@@ -389,9 +389,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating SEPA-mandate test-data 1000111, hs_office_sepamandate, INSERT]",
-                "[creating SEPA-mandate test-data 1000212, hs_office_sepamandate, INSERT]",
-                "[creating SEPA-mandate test-data 1000313, hs_office_sepamandate, INSERT]");
+                "[creating SEPA-mandate test-data, hs_office_sepamandate, INSERT, ref-10001-11]",
+                "[creating SEPA-mandate test-data, hs_office_sepamandate, INSERT, ref-10002-12]",
+                "[creating SEPA-mandate test-data, hs_office_sepamandate, INSERT, ref-10003-13]");
     }
 
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandate(final String iban) {

@@ -23,13 +23,12 @@ do $$
  */
 create table tx_context
 (
-    contextId       bigint primary key not null,
-    txId            bigint             not null,
-    txTimestamp     timestamp          not null,
-    currentUser     varchar(63)        not null, -- not the uuid, because users can be deleted
-    assumedRoles    varchar(1023)      not null, -- not the uuids, because roles can be deleted
-    currentTask     varchar(127)       not null,
-    currentRequest  text               not null
+    txId            xid8            primary key     not null,
+    txTimestamp     timestamp                       not null,
+    currentUser     varchar(63)                     not null, -- not the uuid, because users can be deleted
+    assumedRoles    varchar(1023)                   not null, -- not the uuids, because roles can be deleted
+    currentTask     varchar(127)                    not null,
+    currentRequest  text                            not null
 );
 
 create index on tx_context using brin (txTimestamp);
@@ -43,7 +42,7 @@ create index on tx_context using brin (txTimestamp);
  */
 create table tx_journal
 (
-    contextId   bigint    not null references tx_context (contextId),
+    txId        xid8      not null references tx_context (txId),
     targetTable text      not null,
     targetUuid  uuid      not null, -- Assumes that all audited tables have a uuid column.
     targetOp    operation not null,
@@ -62,7 +61,7 @@ create index on tx_journal (targetTable, targetUuid);
 create view tx_journal_v as
 select txc.*, txj.targettable, txj.targetop, txj.targetuuid, txj.targetdelta
     from tx_journal txj
-    left join tx_context txc using (contextid)
+    left join tx_context txc using (txId)
     order by txc.txtimestamp;
 --//
 
@@ -77,31 +76,31 @@ create or replace function tx_journal_trigger()
     language plpgsql as $$
 declare
     curTask text;
-    curContextId bigint;
+    curTxId xid8;
 begin
     curTask := currentTask();
-    curContextId := txid_current()+bigIntHash(curTask);
+    curTxId := pg_current_xact_id();
 
     insert
-        into tx_context (contextId, txId, txTimestamp, currentUser, assumedRoles, currentTask, currentRequest)
-        values (curContextId, txid_current(), now(),
-                currentUser(), assumedRoles(), curTask, currentRequest())
+        into tx_context (txId, txTimestamp, currentUser, assumedRoles, currentTask, currentRequest)
+            values ( curTxId, now(),
+                    currentUser(), assumedRoles(), curTask, currentRequest())
         on conflict do nothing;
 
     case tg_op
         when 'INSERT' then insert
                                into tx_journal
-                               values (curContextId,
+                               values (curTxId,
                                        tg_table_name, new.uuid, tg_op::operation,
                                        to_jsonb(new));
         when 'UPDATE' then insert
                                into tx_journal
-                               values (curContextId,
+                               values (curTxId,
                                        tg_table_name, old.uuid, tg_op::operation,
                                        jsonb_changes_delta(to_jsonb(old), to_jsonb(new)));
         when 'DELETE' then insert
                                into tx_journal
-                               values (curContextId,
+                               values (curTxId,
                                        tg_table_name, old.uuid, 'DELETE'::operation,
                                        null::jsonb);
         else raise exception 'Trigger op % not supported for %.', tg_op, tg_table_name;

@@ -14,12 +14,8 @@ create or replace procedure createHsBookingProjectTransactionTestData(
     )
     language plpgsql as $$
 declare
-    currentTask         varchar;
     relatedDebitor      hs_office_debitor;
 begin
-    currentTask := 'creating booking-project test-data ' || givenPartnerNumber::text || givenDebitorSuffix;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select debitor.* into relatedDebitor
                      from hs_office_debitor debitor
@@ -43,6 +39,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsBookingProjectTransactionTestData(10001, '11');
         call createHsBookingProjectTransactionTestData(10002, '12');
         call createHsBookingProjectTransactionTestData(10003, '13');

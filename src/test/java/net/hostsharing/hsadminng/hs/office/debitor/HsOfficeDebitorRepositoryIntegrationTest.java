@@ -589,7 +589,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'defaultprefix'
                     from tx_journal_v
                     where targettable = 'hs_office_debitor';
                     """);
@@ -599,8 +599,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating debitor test-data FirstGmbH-firstcontact, hs_office_debitor, INSERT]",
-                "[creating debitor test-data Seconde.K.-secondcontact, hs_office_debitor, INSERT]");
+                "[creating debitor test-data, hs_office_debitor, INSERT, fir]",
+                "[creating debitor test-data, hs_office_debitor, INSERT, sec]",
+                "[creating debitor test-data, hs_office_debitor, INSERT, thi]");
     }
 
     private HsOfficeDebitorEntity givenSomeTemporaryDebitor(

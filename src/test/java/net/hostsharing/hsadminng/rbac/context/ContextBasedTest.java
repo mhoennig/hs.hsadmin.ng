@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Import;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.sql.Timestamp;
 
 @Import(RbacGrantsDiagramService.class)
 public abstract class ContextBasedTest {
@@ -47,4 +48,26 @@ public abstract class ContextBasedTest {
     protected void context(final String currentUser) {
         context(currentUser, null);
     }
+
+    protected void historicalContext(final Long txId) {
+        // set local cannot be used with query parameters
+        em.createNativeQuery("""
+                set local hsadminng.tx_history_txid to ':txid';
+                """.replace(":txid", txId.toString())).executeUpdate();
+        em.createNativeQuery("""
+                set local hsadminng.tx_history_timestamp to '';
+                """).executeUpdate();
+    }
+
+
+    protected void historicalContext(final Timestamp txTimestamp) {
+        // set local cannot be used with query parameters
+        em.createNativeQuery("""
+                set local hsadminng.tx_history_timestamp to ':timestamp';
+                """.replace(":timestamp", txTimestamp.toString())).executeUpdate();
+        em.createNativeQuery("""
+                set local hsadminng.tx_history_txid to '';
+                """).executeUpdate();
+    }
+
 }

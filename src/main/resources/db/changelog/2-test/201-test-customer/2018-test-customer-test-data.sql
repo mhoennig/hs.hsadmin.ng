@@ -25,16 +25,11 @@ create or replace procedure createTestCustomerTestData(
 )
     language plpgsql as $$
 declare
-    currentTask   varchar;
     custRowId     uuid;
     custAdminName varchar;
     custAdminUuid uuid;
     newCust       test_customer;
 begin
-    currentTask = 'creating RBAC test customer #' || custReference || '/' || custPrefix;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-
     custRowId = uuid_generate_v4();
     custAdminName = 'customer-admin@' || custPrefix || '.example.com';
     custAdminUuid = createRbacUser(custAdminName);
@@ -77,6 +72,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating RBAC test customer', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createTestCustomerTestData(99901, 'xxx');
         call createTestCustomerTestData(99902, 'yyy');
         call createTestCustomerTestData(99903, 'zzz');

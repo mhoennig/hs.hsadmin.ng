@@ -17,16 +17,13 @@ create or replace procedure createHsOfficePersonTestData(
     language plpgsql as $$
 declare
     fullName    varchar;
-    currentTask varchar;
     emailAddr   varchar;
 begin
     fullName := concat_ws(', ', newTradeName, newFamilyName, newGivenName);
-    currentTask = 'creating person test-data ' || fullName;
     emailAddr = 'person-' || left(cleanIdentifier(fullName), 32) || '@example.com';
-    call defineContext(currentTask);
+    call defineContext('creating person test-data');
     perform createRbacUser(emailAddr);
-    call defineContext(currentTask, null, emailAddr);
-    execute format('set local hsadminng.currentTask to %L', currentTask);
+    call defineContext('creating person test-data', null, emailAddr);
 
     raise notice 'creating test person: % by %', fullName, emailAddr;
     insert

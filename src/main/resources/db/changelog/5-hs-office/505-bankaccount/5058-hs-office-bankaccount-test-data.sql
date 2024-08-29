@@ -11,16 +11,11 @@
 create or replace procedure createHsOfficeBankAccountTestData(givenHolder varchar, givenIBAN varchar, givenBIC varchar)
     language plpgsql as $$
 declare
-    currentTask   varchar;
     emailAddr varchar;
 begin
-    currentTask = 'creating bankaccount test-data ' || givenHolder;
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-
     emailAddr = 'bankaccount-admin@' || cleanIdentifier(givenHolder) || '.example.com';
-    call defineContext(currentTask);
     perform createRbacUser(emailAddr);
-    call defineContext(currentTask, null, emailAddr);
+    call defineContext('creating bankaccount test-data', null, emailAddr);
 
     raise notice 'creating test bankaccount: %', givenHolder;
     insert
@@ -36,6 +31,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating bankaccount test-data');
+
         -- IBANs+BICs taken from https://ibanvalidieren.de/beispiele.html
         call createHsOfficeBankAccountTestData('First GmbH', 'DE02120300000000202051', 'BYLADEM1001');
         call createHsOfficeBankAccountTestData('Peter Smith', 'DE02500105170137075030', 'INGDDEFF');

@@ -336,7 +336,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'membernumbersuffix'
                     from tx_journal_v
                     where targettable = 'hs_office_membership';
                     """);
@@ -346,9 +346,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating Membership test-data P-10001M-...01, hs_office_membership, INSERT]",
-                "[creating Membership test-data P-10002M-...02, hs_office_membership, INSERT]",
-                "[creating Membership test-data P-10003M-...03, hs_office_membership, INSERT]");
+                "[creating Membership test-data, hs_office_membership, INSERT, 01]",
+                "[creating Membership test-data, hs_office_membership, INSERT, 02]",
+                "[creating Membership test-data, hs_office_membership, INSERT, 03]");
     }
 
     private HsOfficeMembershipEntity givenSomeTemporaryMembership(final String partnerTradeName, final String memberNumberSuffix) {

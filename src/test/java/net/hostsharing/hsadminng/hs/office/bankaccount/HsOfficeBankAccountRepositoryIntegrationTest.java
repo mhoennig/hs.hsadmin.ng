@@ -271,7 +271,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'iban'
                     from tx_journal_v
                     where targettable = 'hs_office_bankaccount';
                     """);
@@ -281,8 +281,9 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating bankaccount test-data First GmbH, hs_office_bankaccount, INSERT]",
-                "[creating bankaccount test-data Second e.K., hs_office_bankaccount, INSERT]");
+                "[creating bankaccount test-data, hs_office_bankaccount, INSERT, DE02120300000000202051]",
+                "[creating bankaccount test-data, hs_office_bankaccount, INSERT, DE02500105170137075030]",
+                "[creating bankaccount test-data, hs_office_bankaccount, INSERT, DE02100500000054540402]");
     }
 
     private HsOfficeBankAccountEntity givenSomeTemporaryBankAccount(final String createdByUser) {

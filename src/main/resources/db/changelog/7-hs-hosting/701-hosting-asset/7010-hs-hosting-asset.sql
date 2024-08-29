@@ -166,6 +166,14 @@ execute procedure hs_hosting_asset_booking_item_hierarchy_check_tf();
 -- ============================================================================
 --changeset hs-hosting-asset-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-
 call create_journal('hs_hosting_asset');
 --//
+
+
+-- ============================================================================
+--changeset hs-hosting-asset-MAIN-TABLE-HISTORIZATION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+call tx_create_historicization('hs_hosting_asset');
+--//
+
+

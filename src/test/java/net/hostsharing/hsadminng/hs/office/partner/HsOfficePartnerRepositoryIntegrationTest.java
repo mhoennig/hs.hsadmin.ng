@@ -433,7 +433,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'partnernumber'
                     from tx_journal_v
                     where targettable = 'hs_office_partner';
                     """);
@@ -443,8 +443,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating partner test-data FirstGmbH-firstcontact, hs_office_partner, INSERT]",
-                "[creating partner test-data Seconde.K.-secondcontact, hs_office_partner, INSERT]");
+                "[creating partner test-data , hs_office_partner, INSERT, 10001]",
+                "[creating partner test-data , hs_office_partner, INSERT, 10002]",
+                "[creating partner test-data , hs_office_partner, INSERT, 10003]",
+                "[creating partner test-data , hs_office_partner, INSERT, 10004]",
+                "[creating partner test-data , hs_office_partner, INSERT, 10010]");
     }
 
     private HsOfficePartnerEntity givenSomeTemporaryHostsharingPartner(

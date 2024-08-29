@@ -260,7 +260,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'tradename', targetdelta->>'lastname'
                     from tx_journal_v
                     where targettable = 'hs_office_person';
                     """);
@@ -270,8 +270,10 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating person test-data First GmbH, hs_office_person, INSERT]",
-                "[creating person test-data Second e.K., Smith, Peter, hs_office_person, INSERT]");
+                "[creating person test-data, hs_office_person, INSERT, Hostsharing eG, null]",
+                "[creating person test-data, hs_office_person, INSERT, First GmbH, null]",
+                "[creating person test-data, hs_office_person, INSERT, Second e.K., null]",
+                "[creating person test-data, hs_office_person, INSERT, Third OHG, null]");
     }
 
     private HsOfficePersonEntity givenSomeTemporaryPerson(

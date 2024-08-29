@@ -13,7 +13,6 @@ declare
     custAdminUser varchar;
     custAdminRole varchar;
     pacName       varchar;
-    currentTask   varchar;
     pac           test_package;
 begin
     select * from test_customer where test_customer.prefix = customerPrefix into cust;
@@ -21,13 +20,9 @@ begin
     for t in 0..(pacCount-1)
         loop
             pacName = cust.prefix || to_char(t, 'fm00');
-            currentTask = 'creating RBAC test package #' || pacName || ' for customer ' || cust.prefix || ' #' ||
-                          cust.uuid;
-
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
             custAdminRole = 'test_customer#' || cust.prefix || ':ADMIN';
-            call defineContext(currentTask, null, 'superuser-fran@hostsharing.net', custAdminRole);
-            raise notice 'task: % by % as %', currentTask, custAdminUser, custAdminRole;
+            call defineContext('creating RBAC test package', null, 'superuser-fran@hostsharing.net', custAdminRole);
 
             insert
                 into test_package (customerUuid, name, description)

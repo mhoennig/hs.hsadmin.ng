@@ -20,6 +20,8 @@ import org.springframework.orm.jpa.JpaSystemException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -56,6 +58,50 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
 
     @MockBean
     HttpServletRequest request;
+
+    @Test
+    public void auditJournalLogIsAvailable() {
+        // given
+        final var query = em.createNativeQuery("""
+                select currentTask, targetTable, targetOp, targetdelta->>'caption'
+                    from tx_journal_v
+                    where targettable = 'hs_booking_project';
+                    """);
+
+        // when
+        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
+
+        // then
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating booking-project test-data, hs_booking_project, INSERT, D-1000111 default project]",
+                "[creating booking-project test-data, hs_booking_project, INSERT, D-1000212 default project]",
+                "[creating booking-project test-data, hs_booking_project, INSERT, D-1000313 default project]");
+    }
+
+    @Test
+    public void historizationIsAvailable() {
+        // given
+        final String nativeQuerySql = """
+                select count(*)
+                    from hs_booking_project_hv ha;
+                """;
+
+        // when
+        historicalContext(Timestamp.from(ZonedDateTime.now().minusDays(1).toInstant()));
+        final var query = em.createNativeQuery(nativeQuerySql, Integer.class);
+        @SuppressWarnings("unchecked") final var countBefore = (Integer) query.getSingleResult();
+
+        // then
+        assertThat(countBefore).as("hs_booking_project_hv should not contain rows for a timestamp in the past").isEqualTo(0);
+
+        // and when
+        historicalContext(Timestamp.from(ZonedDateTime.now().plusHours(1).toInstant()));
+        em.createNativeQuery(nativeQuerySql, Integer.class);
+        @SuppressWarnings("unchecked") final var countAfter = (Integer) query.getSingleResult();
+
+        // then
+        assertThat(countAfter).as("hs_booking_project_hv should contain rows for a timestamp in the future").isGreaterThan(1);
+    }
 
     @Nested
     class CreateBookingProject {
@@ -281,25 +327,6 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
-    }
-
-    @Test
-    public void auditJournalLogIsAvailable() {
-        // given
-        final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
-                    from tx_journal_v
-                    where targettable = 'hs_booking_project';
-                    """);
-
-        // when
-        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
-
-        // then
-        assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating booking-project test-data 1000111, hs_booking_project, INSERT]",
-                "[creating booking-project test-data 1000212, hs_booking_project, INSERT]",
-                "[creating booking-project test-data 1000313, hs_booking_project, INSERT]");
     }
 
     private HsBookingProjectRealEntity givenSomeTemporaryBookingProject(final int debitorNumber) {

@@ -610,7 +610,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         deleteTestDataFromHsOfficeTables();
         resetHsOfficeSequences();
         deleteFromTestTables();
-        deleteFromRbacTables();
+        deleteFromCommonTables();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);

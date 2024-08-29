@@ -11,7 +11,6 @@ create or replace procedure createdomainTestData( packageName varchar, domainCou
 declare
     pac         record;
     pacAdmin    varchar;
-    currentTask varchar;
 begin
     select p.uuid, p.name, c.prefix as custPrefix
         from test_package p
@@ -21,10 +20,8 @@ begin
 
     for t in 0..(domainCount-1)
         loop
-            currentTask = 'creating RBAC test domain #' || t || ' for package ' || pac.name || ' #' || pac.uuid;
-            raise notice 'task: %', currentTask;
             pacAdmin = 'pac-admin-' || pac.name || '@' || pac.custPrefix || '.example.com';
-            call defineContext(currentTask, null, pacAdmin, null);
+            call defineContext('creating RBAC test domain', null, pacAdmin, null);
 
             insert
                 into test_domain (name, packageUuid)

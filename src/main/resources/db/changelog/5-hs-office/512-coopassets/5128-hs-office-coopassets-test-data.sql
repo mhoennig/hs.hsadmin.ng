@@ -14,15 +14,9 @@ create or replace procedure createHsOfficeCoopAssetsTransactionTestData(
     )
     language plpgsql as $$
 declare
-    currentTask             varchar;
     membership              hs_office_membership;
     lossEntryUuid           uuid;
 begin
-    currentTask = 'creating coopAssetsTransaction test-data ' || givenPartnerNumber || givenMemberNumberSuffix;
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-    SET CONSTRAINTS ALL DEFERRED;
-
-    call defineContext(currentTask);
     select m.uuid
         from hs_office_membership m
                  join hs_office_partner p on p.uuid = m.partneruuid
@@ -49,6 +43,9 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating coopAssetsTransaction test-data');
+        SET CONSTRAINTS ALL DEFERRED;
+
         call createHsOfficeCoopAssetsTransactionTestData(10001, '01');
         call createHsOfficeCoopAssetsTransactionTestData(10002, '02');
         call createHsOfficeCoopAssetsTransactionTestData(10003, '03');

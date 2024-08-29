@@ -15,7 +15,6 @@ create or replace procedure createHsOfficePartnerTestData(
         contactCaption      varchar )
     language plpgsql as $$
 declare
-    currentTask         varchar;
     idName              varchar;
     mandantPerson       hs_office_person;
     partnerRel         hs_office_relation;
@@ -23,9 +22,6 @@ declare
     relatedDetailsUuid  uuid;
 begin
     idName := cleanIdentifier( partnerPersonName|| '-' || contactCaption);
-    currentTask := 'creating partner test-data ' || idName;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select p.* from hs_office_person p
                where p.tradeName = mandantTradeName
@@ -69,13 +65,14 @@ end; $$;
 --//
 
 
-
 -- ============================================================================
 --changeset hs-office-partner-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
+        call defineContext('creating partner test-data ', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsOfficePartnerTestData('Hostsharing eG', 10001, 'First GmbH', 'first contact');
         call createHsOfficePartnerTestData('Hostsharing eG', 10002, 'Second e.K.', 'second contact');
         call createHsOfficePartnerTestData('Hostsharing eG', 10003, 'Third OHG', 'third contact');

@@ -15,14 +15,9 @@ create or replace procedure createHsOfficeSepaMandateTestData(
         withReference varchar)
     language plpgsql as $$
 declare
-    currentTask         varchar;
     relatedDebitor      hs_office_debitor;
     relatedBankAccount  hs_office_bankAccount;
 begin
-    currentTask := 'creating SEPA-mandate test-data ' || forPartnerNumber::text || forDebitorSuffix::text;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-
     select debitor.* into relatedDebitor
         from hs_office_debitor debitor
         join hs_office_relation debitorRel on debitorRel.uuid = debitor.debitorRelUuid
@@ -48,6 +43,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating SEPA-mandate test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsOfficeSepaMandateTestData(10001, '11', 'DE02120300000000202051', 'ref-10001-11');
         call createHsOfficeSepaMandateTestData(10002, '12', 'DE02100500000054540402', 'ref-10002-12');
         call createHsOfficeSepaMandateTestData(10003, '13', 'DE02300209000106531065', 'ref-10003-13');

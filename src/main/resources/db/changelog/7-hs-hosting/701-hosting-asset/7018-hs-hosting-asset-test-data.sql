@@ -11,7 +11,6 @@
 create or replace procedure createHsHostingAssetTestData(givenProjectCaption varchar)
     language plpgsql as $$
 declare
-    currentTask                         varchar;
     relatedProject                      hs_booking_project;
     relatedDebitor                      hs_office_debitor;
     privateCloudBI                      hs_booking_item;
@@ -31,9 +30,7 @@ declare
     pgSqlInstanceUuid                   uuid;
     PgSqlUserUuid                       uuid;
 begin
-    currentTask := 'creating hosting-asset test-data ' || givenProjectCaption;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
+    call defineContext('creating hosting-asset test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
 
     select project.* into relatedProject
                   from hs_booking_project project
@@ -113,6 +110,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating hosting-asset test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsHostingAssetTestData('D-1000111 default project');
         call createHsHostingAssetTestData('D-1000212 default project');
         call createHsHostingAssetTestData('D-1000313 default project');

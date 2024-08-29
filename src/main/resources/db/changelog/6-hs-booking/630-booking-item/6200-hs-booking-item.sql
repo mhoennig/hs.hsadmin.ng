@@ -36,3 +36,11 @@ create table if not exists hs_booking_item
 
 call create_journal('hs_booking_item');
 --//
+
+
+-- ============================================================================
+--changeset hs-booking-item-MAIN-TABLE-HISTORIZATION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+call tx_create_historicization('hs_booking_item');
+--//
+

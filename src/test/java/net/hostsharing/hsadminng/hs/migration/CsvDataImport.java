@@ -249,8 +249,11 @@ public class CsvDataImport extends ContextBasedTest {
             context(rbacSuperuser);
             // TODO.perf: could we instead skip creating test-data based on an env var?
             em.createNativeQuery("delete from hs_hosting_asset where true").executeUpdate();
+            em.createNativeQuery("delete from hs_hosting_asset_ex where true").executeUpdate();
             em.createNativeQuery("delete from hs_booking_item where true").executeUpdate();
+            em.createNativeQuery("delete from hs_booking_item_ex where true").executeUpdate();
             em.createNativeQuery("delete from hs_booking_project where true").executeUpdate();
+            em.createNativeQuery("delete from hs_booking_project_ex where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopassetstransaction where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopassetstransaction_legacy_id where true").executeUpdate();
             em.createNativeQuery("delete from hs_office_coopsharestransaction where true").executeUpdate();
@@ -292,7 +295,7 @@ public class CsvDataImport extends ContextBasedTest {
         }).assertSuccessful();
     }
 
-    protected void deleteFromRbacTables() {
+    protected void deleteFromCommonTables() {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             em.createNativeQuery("delete from rbacuser_rv where name not like 'superuser-%'").executeUpdate();

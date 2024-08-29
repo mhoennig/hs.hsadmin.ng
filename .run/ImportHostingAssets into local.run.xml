@@ -1,10 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ImportHostingAssets" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="ImportHostingAssets into local" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="HSADMINNG_MIGRATION_DATA_PATH" value="migration" />
-          <entry key="HSADMINNG_POSTGRES_ADMIN_USERNAME" value="admin" />
+          <entry key="HSADMINNG_POSTGRES_ADMIN_PASSWORD" value="password" />
+          <entry key="HSADMINNG_POSTGRES_ADMIN_USERNAME" value="postgres" />
+          <entry key="HSADMINNG_POSTGRES_JDBC_URL" value="jdbc:postgresql://localhost:5432/postgres" />
           <entry key="HSADMINNG_POSTGRES_RESTRICTED_USERNAME" value="restricted" />
         </map>
       </option>

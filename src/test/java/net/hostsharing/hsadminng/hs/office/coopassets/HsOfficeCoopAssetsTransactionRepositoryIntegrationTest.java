@@ -220,7 +220,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'reference'
                     from tx_journal_v
                     where targettable = 'hs_office_coopassetstransaction';
                     """);
@@ -230,8 +230,18 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating coopAssetsTransaction test-data 1000101, hs_office_coopassetstransaction, INSERT]",
-                "[creating coopAssetsTransaction test-data 1000202, hs_office_coopassetstransaction, INSERT]");
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-1]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-2]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-3]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-3]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-1]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-2]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-3]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-3]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-1]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-2]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-3]",
+                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-3]");
     }
 
     @BeforeEach

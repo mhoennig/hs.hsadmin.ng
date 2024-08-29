@@ -394,7 +394,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'mark'
                     from tx_journal_v
                     where targettable = 'hs_office_relation';
                     """);
@@ -404,8 +404,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating relation test-data HostsharingeG-FirstGmbH, hs_office_relation, INSERT]",
-                "[creating relation test-data FirstGmbH-Firby, hs_office_relation, INSERT]");
+                "[creating relation test-data, hs_office_relation, INSERT, members-announce]");
     }
 
     private HsOfficeRelationRbacEntity givenSomeTemporaryRelationBessler(final String holderPerson, final String contact) {

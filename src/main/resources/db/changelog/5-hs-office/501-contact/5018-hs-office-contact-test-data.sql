@@ -11,17 +11,13 @@
 create or replace procedure createHsOfficeContactTestData(contCaption varchar)
     language plpgsql as $$
 declare
-    currentTask     varchar;
     postalAddr      varchar;
     emailAddr       varchar;
 begin
-    currentTask = 'creating contact test-data ' || contCaption;
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-
     emailAddr = 'contact-admin@' || cleanIdentifier(contCaption) || '.example.com';
-    call defineContext(currentTask);
+    call defineContext('creating contact test-data');
     perform createRbacUser(emailAddr);
-    call defineContext(currentTask, null, emailAddr);
+    call defineContext('creating contact test-data', null, emailAddr);
 
     postalAddr := E'Vorname Nachname\nStraße Hnr\nPLZ Stadt';
 

@@ -14,15 +14,10 @@ create or replace procedure createHsBookingItemTransactionTestData(
     )
     language plpgsql as $$
 declare
-    currentTask         varchar;
     relatedProject      hs_booking_project;
     privateCloudUuid    uuid;
     managedServerUuid   uuid;
 begin
-    currentTask := 'creating booking-item test-data ' || givenPartnerNumber::text || givenDebitorSuffix;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-
     select project.* into relatedProject
                      from hs_booking_project project
                      where project.caption = 'D-' || givenPartnerNumber || givenDebitorSuffix || ' default project';
@@ -49,7 +44,11 @@ end; $$;
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
+    declare
+        currentTask text;
     begin
+        call defineContext('creating booking-item test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsBookingItemTransactionTestData(10001, '11');
         call createHsBookingItemTransactionTestData(10002, '12');
         call createHsBookingItemTransactionTestData(10003, '13');

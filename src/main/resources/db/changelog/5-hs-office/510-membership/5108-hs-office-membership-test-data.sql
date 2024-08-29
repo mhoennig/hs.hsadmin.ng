@@ -13,15 +13,8 @@ create or replace procedure createHsOfficeMembershipTestData(
         newMemberNumberSuffix char(2) )
     language plpgsql as $$
 declare
-    currentTask             varchar;
     relatedPartner          hs_office_partner;
 begin
-    currentTask := 'creating Membership test-data ' ||
-                    'P-' || forPartnerNumber::text ||
-                    'M-...' || newMemberNumberSuffix;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
-
     select partner.* from hs_office_partner partner
                      where partner.partnerNumber = forPartnerNumber into relatedPartner;
 
@@ -40,6 +33,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating Membership test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsOfficeMembershipTestData(10001, '01');
         call createHsOfficeMembershipTestData(10002, '02');
         call createHsOfficeMembershipTestData(10003, '03');

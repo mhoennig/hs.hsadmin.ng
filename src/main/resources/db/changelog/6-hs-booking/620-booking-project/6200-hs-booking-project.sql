@@ -20,3 +20,10 @@ create table if not exists hs_booking_project
 
 call create_journal('hs_booking_project');
 --//
+
+
+-- ============================================================================
+--changeset hs-booking-project-MAIN-TABLE-HISTORIZATION:1 endDelimiter:--//
+-- ----------------------------------------------------------------------------
+call tx_create_historicization('hs_booking_project');
+--//

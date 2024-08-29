@@ -256,7 +256,7 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
     public void auditJournalLogIsAvailable() {
         // given
         final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
+                select currentTask, targetTable, targetOp, targetdelta->>'caption'
                     from tx_journal_v
                     where targettable = 'hs_office_contact';
                     """);
@@ -266,8 +266,9 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating contact test-data first contact, hs_office_contact, INSERT]",
-                "[creating contact test-data second contact, hs_office_contact, INSERT]");
+                "[creating contact test-data, hs_office_contact, INSERT, first contact]",
+                "[creating contact test-data, hs_office_contact, INSERT, second contact]",
+                "[creating contact test-data, hs_office_contact, INSERT, third contact]");
     }
 
     private HsOfficeContactRbacEntity givenSomeTemporaryContact(

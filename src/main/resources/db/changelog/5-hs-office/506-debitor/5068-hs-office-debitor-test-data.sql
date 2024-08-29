@@ -16,15 +16,11 @@ create or replace procedure createHsOfficeDebitorTestData(
     )
     language plpgsql as $$
 declare
-    currentTask             varchar;
     idName                  varchar;
     relatedDebitorRelUuid   uuid;
     relatedBankAccountUuid  uuid;
 begin
     idName := cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactCaption);
-    currentTask := 'creating debitor test-data ' || idName;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select debitorRel.uuid
             into relatedDebitorRelUuid
@@ -54,6 +50,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating debitor test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsOfficeDebitorTestData(11, 'First GmbH', 'first contact', 'fir');
         call createHsOfficeDebitorTestData(12, 'Second e.K.', 'second contact', 'sec');
         call createHsOfficeDebitorTestData(13, 'Third OHG', 'third contact', 'thi');

@@ -20,7 +20,9 @@ import org.springframework.orm.jpa.JpaSystemException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +63,54 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
 
     @MockBean
     HttpServletRequest request;
+
+    @Test
+    public void auditJournalLogIsAvailable() {
+        // given
+        final var query = em.createNativeQuery("""
+                select currentTask, targetTable, targetOp, targetdelta->>'caption'
+                    from tx_journal_v
+                    where targettable = 'hs_booking_item';
+                """);
+
+        // when
+        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
+
+        // then
+        assertThat(customerLogEntries).map(Arrays::toString).contains(
+                "[creating booking-item test-data, hs_booking_item, INSERT, prod CloudServer]",
+                "[creating booking-item test-data, hs_booking_item, INSERT, separate ManagedServer]",
+                "[creating booking-item test-data, hs_booking_item, INSERT, separate ManagedWebspace]",
+                "[creating booking-item test-data, hs_booking_item, INSERT, some ManagedServer]",
+                "[creating booking-item test-data, hs_booking_item, INSERT, some ManagedWebspace]",
+                "[creating booking-item test-data, hs_booking_item, INSERT, some PrivateCloud]",
+                "[creating booking-item test-data, hs_booking_item, INSERT, test CloudServer]");
+    }
+
+    @Test
+    public void historizationIsAvailable() {
+        // given
+        final String nativeQuerySql = """
+                select count(*)
+                    from hs_booking_item_hv ha;
+                """;
+
+        // when
+        historicalContext(Timestamp.from(ZonedDateTime.now().minusDays(1).toInstant()));
+        final var query = em.createNativeQuery(nativeQuerySql, Integer.class);
+        @SuppressWarnings("unchecked") final var countBefore = (Integer) query.getSingleResult();
+
+        // then
+        assertThat(countBefore).as("hs_booking_item should not contain rows for a timestamp in the past").isEqualTo(0);
+
+        // and when
+        historicalContext(Timestamp.from(ZonedDateTime.now().plusHours(1).toInstant()));
+        em.createNativeQuery(nativeQuerySql, Integer.class);
+        @SuppressWarnings("unchecked") final var countAfter = (Integer) query.getSingleResult();
+
+        // then
+        assertThat(countAfter).as("hs_booking_item should contain rows for a timestamp in the future").isGreaterThan(1);
+    }
 
     @Nested
     class CreateBookingItem {
@@ -302,25 +352,6 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(initialRoleNames);
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(initialGrantNames);
         }
-    }
-
-    @Test
-    public void auditJournalLogIsAvailable() {
-        // given
-        final var query = em.createNativeQuery("""
-                select currentTask, targetTable, targetOp
-                    from tx_journal_v
-                    where targettable = 'hs_booking_item';
-                """);
-
-        // when
-        @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
-
-        // then
-        assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating booking-item test-data 1000111, hs_booking_item, INSERT]",
-                "[creating booking-item test-data 1000212, hs_booking_item, INSERT]",
-                "[creating booking-item test-data 1000313, hs_booking_item, INSERT]");
     }
 
     private HsBookingItem givenSomeTemporaryBookingItem(final String projectCaption) {

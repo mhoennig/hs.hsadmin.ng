@@ -16,7 +16,6 @@ create or replace procedure createHsOfficeRelationTestData(
         mark varchar default null)
     language plpgsql as $$
 declare
-    currentTask     varchar;
     idName          varchar;
     anchorPerson    hs_office_person;
     holderPerson    hs_office_person;
@@ -24,9 +23,6 @@ declare
 
 begin
     idName := cleanIdentifier( anchorPersonName || '-' || holderPersonName);
-    currentTask := 'creating relation test-data ' || idName;
-    call defineContext(currentTask, null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
-    execute format('set local hsadminng.currentTask to %L', currentTask);
 
     select p.*
             into anchorPerson
@@ -89,6 +85,8 @@ end; $$;
 
 do language plpgsql $$
     begin
+        call defineContext('creating relation test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+
         call createHsOfficeRelationTestData('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
         call createHsOfficeRelationTestData('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
         call createHsOfficeRelationTestData('First GmbH', 'DEBITOR', 'First GmbH', 'first contact');
