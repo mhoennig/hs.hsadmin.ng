@@ -90,3 +90,8 @@ alias gw-importOfficeData-in-docker-compose='
         docker-compose -f etc/docker-compose.yml down &&
         docker-compose -f etc/docker-compose.yml up -d && sleep 10 &&
         time gw-importHostingAssets'
+
+if [ ! -f .environment ]; then
+    cp .tc-environment .environment
+fi
+source .environment

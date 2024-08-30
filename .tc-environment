@@ -2,6 +2,7 @@ unset HSADMINNG_POSTGRES_JDBC_URL # dynamically set, different for normal tests 
 export HSADMINNG_POSTGRES_ADMIN_USERNAME=admin
 export HSADMINNG_POSTGRES_ADMIN_PASSWORD=
 export HSADMINNG_POSTGRES_RESTRICTED_USERNAME=restricted
+export HSADMINNG_SUPERUSER=superuser-alex@hostsharing.net
 export HSADMINNG_MIGRATION_DATA_PATH=migration
-export LANG=de_DE.UTF-8
+export LIQUIBASE_CONTEXT=
 export LANG=en_US.UTF-8
