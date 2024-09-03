@@ -176,17 +176,31 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "type": "MANAGED_WEBSPACE",
                                 "identifier": "fir10",
                                 "caption": "some separate ManagedWebspace HA",
-                                "config": {}
+                                "config": {
+                                    "groupid": 1000000
+                                }
                             }
                             """))
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
-            // finally, the new asset can be accessed under the generated UUID
-            final var newWebspace = UUID.fromString(
+            // the new asset can be accessed under the generated UUID
+            final var newWebspaceUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newWebspace).isNotNull();
-            toCleanup(HsHostingAssetRbacEntity.class, newWebspace);
+            assertThat(newWebspaceUuid).isNotNull();
+            toCleanup(HsHostingAssetRbacEntity.class, newWebspaceUuid);
+
+            // and a default user got created
+            final var webspaceUnixUser = em.createQuery("SELECT ha FROM HsHostingAssetRealEntity ha WHERE ha.parentAsset.uuid=:webspaceUUID")
+                    .setParameter("webspaceUUID", newWebspaceUuid)
+                    .getSingleResult();
+            assertThat(webspaceUnixUser).isNotNull().extracting(Object::toString)
+                    .isEqualTo("""
+                            HsHostingAsset(UNIX_USER, fir10, fir10 webspace user, MANAGED_WEBSPACE:fir10, {
+                              "password" : null,
+                              "userid" : 1000000
+                            })
+                            """.trim());
         }
 
         @Test
@@ -325,7 +339,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
             jpaAttempt.transacted(() -> {
                 context.define("superuser-alex@hostsharing.net");
-                for (int n = 0; n < UNIX_USER_PER_MULTI_OPTION -preExistingUnixUserCount+1; ++n) {
+                for (int n = 0; n < UNIX_USER_PER_MULTI_OPTION-preExistingUnixUserCount; ++n) {
                     toCleanup(realAssetRepo.save(
                             HsHostingAssetRealEntity.builder()
                                     .type(UNIX_USER)

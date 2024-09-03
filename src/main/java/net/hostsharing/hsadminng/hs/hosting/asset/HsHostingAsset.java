@@ -34,6 +34,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,9 +89,10 @@ public abstract class HsHostingAsset implements Stringifyable, BaseEntity<HsHost
     @JoinColumn(name = "alarmcontactuuid")
     private HsOfficeContactRealEntity alarmContact;
 
+    @Builder.Default
     @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid", referencedColumnName = "uuid")
-    private List<HsHostingAssetRealEntity> subHostingAssets;
+    private List<HsHostingAssetRealEntity> subHostingAssets = new ArrayList<>();
 
     @Column(name = "identifier")
     private String identifier; // e.g. vm1234, xyz00, example.org, xyz00_abc

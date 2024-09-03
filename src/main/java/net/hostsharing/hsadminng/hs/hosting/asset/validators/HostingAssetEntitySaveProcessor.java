@@ -58,15 +58,40 @@ public class HostingAssetEntitySaveProcessor {
     /// hashing passwords etc.
     @SuppressWarnings("unchecked")
     public HostingAssetEntitySaveProcessor prepareForSave() {
-        step("prepareForSave", "saveUsing");
+        step("prepareForSave", "save");
         validator.prepareProperties(em, entity);
         return this;
     }
 
+    /**
+     * Saves the entity using the given `saveFunction`.
+     *
+     * <p>`validator.postPersist(em, entity)` is NOT called.
+     * If any postprocessing is necessary, the saveFunction has to implement this.</p>
+     * @param saveFunction
+     * @return
+     */
     public HostingAssetEntitySaveProcessor saveUsing(final Function<HsHostingAsset, HsHostingAsset> saveFunction) {
-        step("saveUsing", "validateContext");
+        step("save", "validateContext");
         entity = saveFunction.apply(entity);
         return this;
+    }
+
+    /**
+     * Saves the using the `EntityManager`, but does NOT ever merge the entity.
+     *
+     * <p>`validator.postPersist(em, entity)` is called afterwards with the entity guaranteed to be flushed to the database.</p>
+     * @return
+     */
+    public HostingAssetEntitySaveProcessor save() {
+        return saveUsing(e -> {
+            if (!em.contains(entity)) {
+                em.persist(entity);
+            }
+            em.flush(); // makes RbacEntity available as RealEntity if needed
+            validator.postPersist(em, entity);
+            return entity;
+        });
     }
 
     /// validates the entity within it's parent and child hierarchy (e.g. totals validators and other limits)

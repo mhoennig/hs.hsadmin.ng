@@ -79,7 +79,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
-                .saveUsing(rbacAssetRepo::save)
+                .save()
                 .validateContext()
                 .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class))
                 .revampProperties();
@@ -140,7 +140,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
-                .saveUsing(rbacAssetRepo::save)
+                .save()
                 .validateContext()
                 .mapUsing(e -> mapper.map(e, HsHostingAssetResource.class))
                 .revampProperties();

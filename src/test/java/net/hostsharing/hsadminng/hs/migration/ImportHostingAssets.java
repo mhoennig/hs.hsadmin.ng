@@ -350,6 +350,18 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                    9596=HsHostingAsset(UNIX_USER, dph00-dph, Domain admin, MANAGED_WEBSPACE:dph00, {"SSD hard quota": 0, "SSD soft quota": 0, "locked": false, "shell": "/bin/bash", "userid": 110594})
                 }
                 """);
+
+        // now with groupids
+        assertThat(firstOfEach(5, packetAssets, MANAGED_WEBSPACE))
+                .isEqualToIgnoringWhitespace("""
+                        {
+                           10630=HsHostingAsset(MANAGED_WEBSPACE, hsh00, HA hsh00, MANAGED_SERVER:vm1050, D-1000000:hsh default project:BI hsh00, {"groupid": 6824}),
+                           11094=HsHostingAsset(MANAGED_WEBSPACE, lug00, HA lug00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI lug00, {"groupid": 5803}),
+                           11111=HsHostingAsset(MANAGED_WEBSPACE, xyz68, HA xyz68, MANAGED_SERVER:vm1068, D-1000000:vm1068 Monitor:BI xyz68, {"groupid": 5961}),
+                           11112=HsHostingAsset(MANAGED_WEBSPACE, mim00, HA mim00, MANAGED_SERVER:vm1068, D-1000300:mim default project:BI mim00, {"groupid": 5964}),
+                           19959=HsHostingAsset(MANAGED_WEBSPACE, dph00, HA dph00, MANAGED_SERVER:vm1093, D-1101900:dph default project:BI dph00, {"groupid": 9546})
+                        }
+                        """);
     }
 
     @Test
@@ -1235,9 +1247,10 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                 .forEach(rec -> {
                     final var unixuser_id = rec.getInteger("unixuser_id");
                     final var packet_id = rec.getInteger("packet_id");
+                    final var parentWebspaceAsset = packetAssets.get(packet_id);
                     final var unixUserAsset = HsHostingAssetRealEntity.builder()
                             .type(UNIX_USER)
-                            .parentAsset(packetAssets.get(packet_id))
+                            .parentAsset(parentWebspaceAsset)
                             .identifier(rec.getString("name"))
                             .caption(rec.getString("comment"))
                             .isLoaded(true) // avoid overwriting imported userids with generated ids
@@ -1252,6 +1265,10 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                                     entry("HDD hard quota", rec.getInteger("storage_hardlimit"))
                             )))
                             .build();
+
+                    if (unixUserAsset.getIdentifier().equals(parentWebspaceAsset.getIdentifier())) {
+                        parentWebspaceAsset.getConfig().put("groupid", unixuser_id);
+                    }
 
                     // TODO.spec: crop SSD+HDD limits if > booked
                     if (unixUserAsset.getDirectValue("SSD hard quota", Integer.class, 0)

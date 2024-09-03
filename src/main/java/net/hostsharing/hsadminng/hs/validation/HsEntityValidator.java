@@ -160,4 +160,7 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
     public ValidatableProperty<?, ?> getProperty(final String propertyName) {
         return stream(propertyValidators).filter(pv -> pv.propertyName().equals(propertyName)).findFirst().orElse(null);
     }
+
+    public void postPersist(final EntityManager em, final E entity) {
+    }
 }
