@@ -15,7 +15,7 @@ We could not find a pattern, why that was the case. The impression that it had t
 
 ## Preparation
 
-### Configuring PostgreSQL 
+### Configuring PostgreSQL
 
 The pg_stat_statements PostgreSQL-Extension can be used to measure how long queries take and how often they are called.
 
@@ -355,6 +355,88 @@ In production, the `SELECT ... FROM hs_office_relation_rv` (No. 2) with about 0.
 3. For the production code, we could use raw-entities for referenced entities, here usually RBAC SELECT permission is given anyway.
  
 
+## The Problematically Huge Join
+
+The origin problem was the expensive RBAC check for many SELECT queries.
+This consists of two parts:
+
+1. The recursive CTE query to determine which object's UUIDs are visible for the current subject.
+   This query itself takes currently about 250ms thus is no problem by itself as long as we only need it once per request.
+2. Joining the result from 1. with the result if a business query.
+   The performance of the business query itself is no problem, for the join see the following explanations.
+
+Superusers can see all objects (currently already over 90.000)
+and even high level roles of customers with many hosting assets can see several thousand objects.
+This is the one side of that problematic join.
+
+The other side of that problematic is the result of the business query.
+For example if a user wants to select all of their e-mail-addresses, that might easily half of the visible objects.
+
+Thus, we would have a join of for example 5.000 x 2.500 rows, which is going to be slow.
+As there are currently about 84.000 objects are hosting assets and 33.000 e-mail-addresses in our system,
+for a superuser we would even run into an 84.0000 x 33.0000 join.
+
+We found some solution approaches:
+
+1. Getting rid of the `rbacrole` and `rbacpermission` table and only having implicit roles with implicit grants (OWNER->ADMIN->AGENT->TENENT->REFERRER) by comparison of ordered enum values and fixed permission assignments (e.g. OWENER->DELETE, ADMIN->UPDATE etc.). We could also get rid of the table `rbacreferece` if we enter users as business objects.
+
+    This should dramatically reduce the size of the table `rbackgrant` as well as the recusion levels.
+
+    But since we only apply this query once for each business query, that would only improve performance once we have way more objects in our system, but does not help our current problem.
+
+    It's quite some effort to implement even just a prototype, so we did not further explore this idea. 
+
+2. Adding the object type to the table `rbacObject` to reduce the size of the result of the recursive CTE query.
+
+    See chapter below.
+
+3. Inverting the recursion of the CTE-query, combined with the type condition.
+    
+    Instead of starting the recursion with `currentsubjectsuuids()`, 
+    we could start it with the target table name and row-type,
+    then recurse down to the `currentsubjectsuuids()`.
+
+    In the end, we need the object UUIDs, though. 
+    But if we start with the join of `rbacObject` with `rbacPermission`, 
+    we need to forward the object UUIDs through the whole recursion.
+ 
+   This idea was not yet further explored. 
+
+
+### Adding The Object Type To The Table `rbacObject`
+
+This optimization idea came from Michael Hierweck and was promising.
+The idea is to reduce the size of the result of the recursive CTE query and maybe even speed up that query itself.
+
+To evaluate this, I added a type column to the `rbacObject` table, initially as an enum hsHostingAssetType. Then I entered the type there for all rows from hs_hosting_asset. This means that 83,886 of 92,545 rows in `rbacobject` have a type set, leaving 8,659 without.
+
+If we do this for other types (we currently have 1,271 relations and 927 booking items), it gets more complicated because they are different enum types. As varchar(16), we could lose performance again due to the higher storage space requirements.
+
+But the performance gained is not particularly high anyway.
+See the average seconds per recursive CTE select as role 'hs_hosting_asset:<DEBITOR>defaultproject:ADMIN',
+joined with business query for all `'EMAIL_ADDRESSES'`:
+
+|                                                     | D-1000000-hsh    | D-1000300-mih |
+|-----------------------------------------------------|------------------|---------------|
+| currently (without type comparision in rbacobject): |  ~3.30 - ~3.49   | ~0.23         |  
+| optimized (with type comparision  in rbacobject):   |  ~2.99 - ~3.08   | ~0.21         |
+
+As you can see, the query is no problem at all for normal customers (in the example, yours truly). With Hostsharing (D-1000000-hsh) it is quite slow.
+
+Luckily this experiment also shows that it's not a big problem, having all hosting assets in the same database table.
+
+Implementing this approach would be a bit difficult anyway, because we would need to transfer the type query parameter into the definition of the restricted view. We have not even the slightest idea how this could be done.
+
+See the related queries in [recursive-cte-experiments-for-accessible-uuids.sql](../sql/recursive-cte-experiments-for-accessible-uuids.sql). They might have changed independently since this document was written, but you can still check out the old version from git.
+
+### Rearranging the Parts of the CTE-Query
+
+I also moved the function call which determines into its own WITH-section, with no improvement.
+
+Experimentally I moved the business condition into the CTE SELECT, also with no improvement.
+
+Such rearrangements seem to be successfully done by the PostgreSQL query optimizer.
+
 ## Summary
 
 ### What we did Achieve?
@@ -363,13 +445,19 @@ In a first step, the total import runtime for office entities was reduced from a
 
 In a second step, we reduced the import of booking- and hosting-assets from about 100min (not counting the required office entities) to 5min.
 
-### What Helped?
+### What did not Help?
+
+Rearranging the CTE query by extracting parts into WITH-clauses did not improve the performance.
+
+Surprisingly little performance gain (<10% improvement) came from reducing the result of the CTE query by moving the hosting asset type into RBAC-system and using it in the inner SELECT query instead of in the outer SELECT query of the application side. 
+
+### What did Help?
 
 Merging the recursive CTE query to determine the RBAC SELECT-permission, made it more clear which business-queries take the time.
 
 Avoiding EAGER-loading where not necessary, reduced the total runtime of the import to about the half.
 
-The major improvement came from using direct INSERT statements, which then also bypassed the RBAC SELECT permission checks.
+The major improvement came from using direct INSERT statements, which avoided some SELECT statements unnecessarily generated by the EntityManager and also completely bypassed the RBAC SELECT permission checks.
 
 ### What Still Has To Be Done?
 
