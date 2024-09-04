@@ -249,6 +249,15 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void globalAdmin_canAddTopLevelAsset() {
 
             context.define("superuser-alex@hostsharing.net");
+            final var givenProject = realProjectRepo.findByCaption("D-1000111 default project").stream()
+                    .findAny().orElseThrow();
+            final var bookingItem = givenSomeTemporaryBookingItem(() ->
+               HsBookingItemRealEntity.builder()
+                       .project(givenProject)
+                       .type(HsBookingItemType.DOMAIN_SETUP)
+                       .caption("some temp domain setup booking item")
+                       .build()
+            );
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -256,12 +265,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .contentType(ContentType.JSON)
                     .body("""
                             {
+                                "bookingItemUuid": "%s",
                                 "type": "DOMAIN_SETUP",
                                 "identifier": "example.com",
                                 "caption": "some unrelated domain-setup",
                                 "config": {}
                             }
-                            """)
+                            """.formatted(bookingItem.getUuid()))
                     .port(port)
                     .when()
                     .post("http://localhost/api/hs/hosting/assets")
@@ -726,6 +736,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .resources(resources)
                     .build();
             return toCleanup(realBookingItemRepo.save(newBookingItem));
+        }).assertSuccessful().returnedValue();
+    }
+
+    private HsBookingItemRealEntity givenSomeTemporaryBookingItem(final Supplier<HsBookingItemRealEntity> newBookingItem) {
+        return jpaAttempt.transacted(() -> {
+            context.define("superuser-alex@hostsharing.net"); // needed to determine creator
+            return toCleanup(realBookingItemRepo.save(newBookingItem.get()));
         }).assertSuccessful().returnedValue();
     }
 

@@ -20,6 +20,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder() {
         return HsHostingAssetRbacEntity.builder()
                 .type(DOMAIN_SETUP)
+                .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.DOMAIN_SETUP).build())
                 .identifier("example.org");
     }
 
@@ -93,20 +94,33 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     @Test
     void validatesReferencedEntities() {
         // given
-        final var mangedServerHostingAssetEntity = validEntityBuilder()
+        final var domainSetupHostingAssetEntity = validEntityBuilder()
                 .parentAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
                 .assignedToAsset(HsHostingAssetRealEntity.builder().type(MANAGED_SERVER).build())
                 .bookingItem(HsBookingItemRealEntity.builder().type(HsBookingItemType.CLOUD_SERVER).build())
                 .build();
-        final var validator = HostingAssetEntityValidatorRegistry.forType(mangedServerHostingAssetEntity.getType());
+        final var validator = HostingAssetEntityValidatorRegistry.forType(domainSetupHostingAssetEntity.getType());
 
         // when
-        final var result = validator.validateEntity(mangedServerHostingAssetEntity);
+        final var result = validator.validateEntity(domainSetupHostingAssetEntity);
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'DOMAIN_SETUP:example.org.bookingItem' must be null but is of type CLOUD_SERVER",
+                "'DOMAIN_SETUP:example.org.bookingItem' or parentItem must be null but is of type CLOUD_SERVER",
                 "'DOMAIN_SETUP:example.org.parentAsset' must be null or of type DOMAIN_SETUP but is of type CLOUD_SERVER",
                 "'DOMAIN_SETUP:example.org.assignedToAsset' must be null but is of type MANAGED_SERVER");
+    }
+
+    @Test
+    void expectsEitherParentAssetOrBookingItem() {
+        // given
+        final var domainSetupHostingAssetEntity = validEntityBuilder().build();
+        final var validator = HostingAssetEntityValidatorRegistry.forType(domainSetupHostingAssetEntity.getType());
+
+        // when
+        final var result = validator.validateEntity(domainSetupHostingAssetEntity);
+
+        // then
+        assertThat(result).isEmpty();
     }
 }

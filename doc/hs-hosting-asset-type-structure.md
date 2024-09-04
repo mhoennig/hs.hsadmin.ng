@@ -12,6 +12,7 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
+    entity BI_DOMAIN_SETUP
 }
 
 package Hosting #feb28c{
@@ -67,6 +68,7 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
+    entity BI_DOMAIN_SETUP
 }
 
 package Hosting #feb28c{
@@ -94,6 +96,7 @@ BI_MANAGED_WEBSPACE *--> BI_MANAGED_SERVER
 HA_MANAGED_WEBSPACE *==> BI_MANAGED_WEBSPACE
 HA_UNIX_USER *==> HA_MANAGED_WEBSPACE
 HA_EMAIL_ALIAS *==> HA_MANAGED_WEBSPACE
+HA_DOMAIN_SETUP *==> BI_DOMAIN_SETUP
 HA_DOMAIN_SETUP o..> HA_DOMAIN_SETUP
 HA_DOMAIN_DNS_SETUP *==> HA_DOMAIN_SETUP
 HA_DOMAIN_DNS_SETUP o--> HA_MANAGED_WEBSPACE
@@ -125,6 +128,7 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
+    entity BI_DOMAIN_SETUP
 }
 
 package Hosting #feb28c{
@@ -173,6 +177,7 @@ package Booking #feb28c {
     entity BI_CLOUD_SERVER
     entity BI_MANAGED_SERVER
     entity BI_MANAGED_WEBSPACE
+    entity BI_DOMAIN_SETUP
 }
 
 package Hosting #feb28c{

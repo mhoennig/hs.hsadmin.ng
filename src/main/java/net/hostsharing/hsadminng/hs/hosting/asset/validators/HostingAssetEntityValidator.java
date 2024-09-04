@@ -182,26 +182,36 @@ public abstract class HostingAssetEntityValidator extends HsEntityValidator<HsHo
 
         List<String> validate(final HsHostingAsset assetEntity, final String referenceFieldName) {
 
-            final var actualEntity = referencedEntityGetter.apply(assetEntity);
-            final var actualEntityType = actualEntity != null ? referencedEntityTypeGetter.apply(actualEntity) : null;
+            final var referencedEntity = referencedEntityGetter.apply(assetEntity);
+            final var referencedEntityType = referencedEntity != null ? referencedEntityTypeGetter.apply(referencedEntity) : null;
 
             switch (policy) {
             case REQUIRED:
-                if (!referencedEntityTypes.contains(actualEntityType)) {
-                    return List.of(actualEntityType == null
+                if (!referencedEntityTypes.contains(referencedEntityType)) {
+                    return List.of(referencedEntityType == null
                             ? referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is null"
-                            : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + actualEntityType);
+                            : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + referencedEntityType);
+                }
+                break;
+            case TERMINATORY:
+                if (assetEntity.getParentAsset() != null && assetEntity.getBookingItem() != null) {
+                    return List.of(referenceFieldName + "' or parentItem must be null but is of type " + referencedEntityType);
+                }
+                if (assetEntity.getParentAsset() == null && !referencedEntityTypes.contains(referencedEntityType)) {
+                    return List.of(referencedEntityType == null
+                            ? referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is null"
+                            : referenceFieldName + "' must be of type " + toDisplay(referencedEntityTypes) + " but is of type " + referencedEntityType);
                 }
                 break;
             case OPTIONAL:
-                if (actualEntityType != null && !referencedEntityTypes.contains(actualEntityType)) {
+                if (referencedEntityType != null && !referencedEntityTypes.contains(referencedEntityType)) {
                     return List.of(referenceFieldName + "' must be null or of type " + toDisplay(referencedEntityTypes) + " but is of type "
-                            + actualEntityType);
+                            + referencedEntityType);
                 }
                 break;
             case FORBIDDEN:
-                if (actualEntityType != null) {
-                    return List.of(referenceFieldName + "' must be null but is of type " + actualEntityType);
+                if (referencedEntityType != null) {
+                    return List.of(referenceFieldName + "' must be null but is of type " + referencedEntityType);
                 }
                 break;
             }

@@ -513,15 +513,15 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
         assertThat(firstOfEach(12, domainSetupAssets)).isEqualToIgnoringWhitespace("""
                 {
-                    4531=HsHostingAsset(DOMAIN_SETUP, l-u-g.org, l-u-g.org),
-                    4532=HsHostingAsset(DOMAIN_SETUP, linuxfanboysngirls.de, linuxfanboysngirls.de),
-                    4534=HsHostingAsset(DOMAIN_SETUP, lug-mars.de, lug-mars.de),
-                    4581=HsHostingAsset(DOMAIN_SETUP, 1981.ist-im-netz.de, 1981.ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de),
-                    4587=HsHostingAsset(DOMAIN_SETUP, mellis.de, mellis.de),
-                    4589=HsHostingAsset(DOMAIN_SETUP, ist-im-netz.de, ist-im-netz.de),
-                    4600=HsHostingAsset(DOMAIN_SETUP, waera.de, waera.de),
-                    4604=HsHostingAsset(DOMAIN_SETUP, xn--wra-qla.de, wära.de),
-                    7662=HsHostingAsset(DOMAIN_SETUP, dph-netzwerk.de, dph-netzwerk.de)
+                   4531=HsHostingAsset(DOMAIN_SETUP, l-u-g.org, l-u-g.org, D-1000300:mim default project:BI l-u-g.org),
+                   4532=HsHostingAsset(DOMAIN_SETUP, linuxfanboysngirls.de, linuxfanboysngirls.de, D-1000300:mim default project:BI linuxfanboysngirls.de),
+                   4534=HsHostingAsset(DOMAIN_SETUP, lug-mars.de, lug-mars.de, D-1000300:mim default project:BI lug-mars.de),
+                   4581=HsHostingAsset(DOMAIN_SETUP, 1981.ist-im-netz.de, 1981.ist-im-netz.de, DOMAIN_SETUP:ist-im-netz.de),
+                   4587=HsHostingAsset(DOMAIN_SETUP, mellis.de, mellis.de, D-1000300:mim default project:BI mellis.de),
+                   4589=HsHostingAsset(DOMAIN_SETUP, ist-im-netz.de, ist-im-netz.de, D-1000300:mim default project:BI ist-im-netz.de),
+                   4600=HsHostingAsset(DOMAIN_SETUP, waera.de, waera.de, D-1000300:mim default project:BI waera.de),
+                   4604=HsHostingAsset(DOMAIN_SETUP, xn--wra-qla.de, wära.de, D-1000300:mim default project:BI xn--wra-qla.de),
+                   7662=HsHostingAsset(DOMAIN_SETUP, dph-netzwerk.de, dph-netzwerk.de, D-1101900:dph default project:BI dph-netzwerk.de)
                 }
                 """);
 
@@ -1441,6 +1441,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
                     // Domain Setup
                     final var domainSetupAsset = HsHostingAssetRealEntity.builder()
+                            // .bookingItem(bookingItem) are set once we've collected all domains
                             .type(DOMAIN_SETUP)
                             // .parentAsset(parentDomainSetupAsset) are set once we've collected all of them
                             .identifier(domain_name)
@@ -1542,8 +1543,25 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
             final var parentDomainSetup = domainSetupsByName.get(parentDomainName);
             if (parentDomainSetup != null) {
                 domainSetup.setParentAsset(parentDomainSetup);
+            } else {
+                final var relatedProject = domainSetup.getSubHostingAssets().stream()
+                        .map(ha -> ha.getAssignedToAsset() != null ? ha.getAssignedToAsset().getRelatedProject() : null)
+                        .findAny().orElseThrow();
+                final var bookingItem = HsBookingItemRealEntity.builder()
+                        .type(HsBookingItemType.DOMAIN_SETUP)
+                        .caption("BI " + domainSetup.getIdentifier())
+                        .project((HsBookingProjectRealEntity) relatedProject)
+                        //.validity(toPostgresDateRange(created, cancelled))
+                        .build();
+                domainSetup.setBookingItem(bookingItem);
+                bookingItems.put(nextAvailableBookingItemId(), bookingItem);
+
             }
         });
+    }
+
+    private static @NotNull Integer nextAvailableBookingItemId() {
+        return bookingItems.keySet().stream().max(Long::compare).map(id -> id + 1).orElseThrow();
     }
 
     private String withDefault(final String givenValue, final Object defaultValue) {

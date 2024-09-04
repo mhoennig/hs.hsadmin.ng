@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.ValidationException;
 
+import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.DOMAIN_SETUP;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.PRIVATE_CLOUD;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.CLOUD_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
@@ -53,6 +54,6 @@ class HsBookingItemEntityValidatorUnitTest {
         final var result = HsBookingItemEntityValidatorRegistry.types();
 
         // then
-        assertThat(result).containsExactlyInAnyOrder(PRIVATE_CLOUD, CLOUD_SERVER, MANAGED_SERVER, MANAGED_WEBSPACE);
+        assertThat(result).containsExactlyInAnyOrder(PRIVATE_CLOUD, CLOUD_SERVER, MANAGED_SERVER, MANAGED_WEBSPACE, DOMAIN_SETUP);
     }
 }

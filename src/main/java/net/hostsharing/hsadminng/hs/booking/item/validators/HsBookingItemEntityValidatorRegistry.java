@@ -13,6 +13,7 @@ import java.util.Set;
 
 import static java.util.Arrays.stream;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.CLOUD_SERVER;
+import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.DOMAIN_SETUP;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.PRIVATE_CLOUD;
@@ -25,6 +26,7 @@ public class HsBookingItemEntityValidatorRegistry {
         register(CLOUD_SERVER, new HsCloudServerBookingItemValidator());
         register(MANAGED_SERVER, new HsManagedServerBookingItemValidator());
         register(MANAGED_WEBSPACE, new HsManagedWebspaceBookingItemValidator());
+        register(DOMAIN_SETUP, new HsDomainSetupBookingItemValidator());
     }
 
     private static void register(final Enum<HsBookingItemType> type, final HsEntityValidator<HsBookingItem> validator) {

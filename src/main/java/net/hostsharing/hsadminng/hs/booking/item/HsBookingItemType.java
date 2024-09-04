@@ -9,7 +9,8 @@ public enum HsBookingItemType implements Node {
     PRIVATE_CLOUD,
     CLOUD_SERVER(PRIVATE_CLOUD),
     MANAGED_SERVER(PRIVATE_CLOUD),
-    MANAGED_WEBSPACE(MANAGED_SERVER);
+    MANAGED_WEBSPACE(MANAGED_SERVER),
+    DOMAIN_SETUP;
 
     private final HsBookingItemType parentItemType;
 

@@ -8,7 +8,8 @@ create type HsBookingItemType as enum (
     'PRIVATE_CLOUD',
     'CLOUD_SERVER',
     'MANAGED_SERVER',
-    'MANAGED_WEBSPACE'
+    'MANAGED_WEBSPACE',
+    'DOMAIN_SETUP'
     );
 
 CREATE CAST (character varying as HsBookingItemType) WITH INOUT AS IMPLICIT;

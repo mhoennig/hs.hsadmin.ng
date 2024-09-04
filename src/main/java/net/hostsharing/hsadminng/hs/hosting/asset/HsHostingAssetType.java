@@ -24,8 +24,10 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.opti
 import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.optionallyAssignedTo;
 import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.requiredParent;
 import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.requires;
+import static net.hostsharing.hsadminng.hs.hosting.asset.EntityTypeRelation.terminatory;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.OPTIONAL;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.REQUIRED;
+import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationPolicy.TERMINATORY;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationType.ASSIGNED_TO_ASSET;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationType.BOOKING_ITEM;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.RelationType.PARENT_ASSET;
@@ -57,6 +59,7 @@ public enum HsHostingAssetType implements Node {
 
     DOMAIN_SETUP( // named e.g. example.org
             inGroup("Domain"),
+            terminatory(HsBookingItemType.DOMAIN_SETUP),
             optionalParent(SAME_TYPE)
     ),
 
@@ -339,7 +342,7 @@ public enum HsHostingAssetType implements Node {
     }
 
     public enum RelationPolicy {
-        FORBIDDEN, OPTIONAL, REQUIRED
+        FORBIDDEN, OPTIONAL, TERMINATORY, REQUIRED
     }
 
     public enum RelationType {
@@ -374,6 +377,15 @@ class EntityTypeRelation<E, T extends Node> {
                 .collect(toSet());
         //noinspection unchecked
         return (Set<R>) result;
+    }
+
+    static EntityTypeRelation<HsBookingItem, HsBookingItemType> terminatory(final HsBookingItemType bookingItemType) {
+        return new EntityTypeRelation<>(
+                TERMINATORY,
+                BOOKING_ITEM,
+                HsHostingAssetRbacEntity::getBookingItem,
+                bookingItemType,
+                " *..> ");
     }
 
     static EntityTypeRelation<HsBookingItem, HsBookingItemType> requires(final HsBookingItemType bookingItemType) {
