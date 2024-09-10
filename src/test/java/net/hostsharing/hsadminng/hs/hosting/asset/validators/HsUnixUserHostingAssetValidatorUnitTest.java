@@ -141,7 +141,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
                 "'UNIX_USER:abc00-temp.config.HDD hard quota' is expected to be at most 0 but is 100",
                 "'UNIX_USER:abc00-temp.config.HDD soft quota' is expected to be at most 100 but is 200",
                 "'UNIX_USER:abc00-temp.config.homedir' is readonly but given as '/is/read-only'",
-                "'UNIX_USER:abc00-temp.config.totpKey' is expected to match any of [^0x([0-9A-Fa-f]{2})+$] but provided value does not match",
+                "'UNIX_USER:abc00-temp.config.totpKey' is expected to match [^0x([0-9A-Fa-f]{2})+$] but provided value does not match",
                 "'UNIX_USER:abc00-temp.config.password' length is expected to be at min 8 but length of provided value is 5",
                 "'UNIX_USER:abc00-temp.config.password' must contain at least one character of at least 3 of the following groups: upper case letters, lower case letters, digits, special characters"
         );

@@ -69,7 +69,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
             512167, // 11139, partner without contractual contact
             512170, // 11142, partner without contractual contact
             511725, // 10764, partner without contractual contact
-            // 512171, // 11143, partner without partner contact -- exc
+            // 512171, // 11143, partner without partner contact -- exception
             -1
     );
 

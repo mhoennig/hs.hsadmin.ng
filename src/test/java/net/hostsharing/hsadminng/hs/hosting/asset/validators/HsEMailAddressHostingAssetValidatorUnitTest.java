@@ -89,8 +89,8 @@ class HsEMailAddressHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).containsExactlyInAnyOrder(
-                "'EMAIL_ADDRESS:old-local-part@example.org.config.local-part' is expected to match any of [^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$] but 'no@allowed' does not match",
-                "'EMAIL_ADDRESS:old-local-part@example.org.config.sub-domain' is expected to match any of [^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$] but 'no@allowedeither' does not match",
+                "'EMAIL_ADDRESS:old-local-part@example.org.config.local-part' is expected to match [^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$] but 'no@allowed' does not match",
+                "'EMAIL_ADDRESS:old-local-part@example.org.config.sub-domain' is expected to match [^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+$] but 'no@allowedeither' does not match",
                 "'EMAIL_ADDRESS:old-local-part@example.org.config.target' is expected to match any of [^[a-z][a-z0-9]{2}[0-9]{2}(-[a-z0-9][a-z0-9\\.+_-]*)?$, ^([a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+)?@[a-zA-Z0-9.-]+$, ^nobody$, ^/dev/null$] but 'garbage' does not match any");
     }
 

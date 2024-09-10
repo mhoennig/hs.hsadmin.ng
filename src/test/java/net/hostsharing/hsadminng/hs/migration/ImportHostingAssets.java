@@ -1352,7 +1352,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     }
 
     private void importDatabaseUsers(final String[] header, final List<String[]> records) {
-        HashGenerator.enableChouldBeHash(true);
+        HashGenerator.enableCouldBeHash(true);
         final var columns = new Columns(header);
         records.stream()
                 .map(this::trimAll)
@@ -1552,6 +1552,8 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                         .caption("BI " + domainSetup.getIdentifier())
                         .project((HsBookingProjectRealEntity) relatedProject)
                         //.validity(toPostgresDateRange(created, cancelled))
+                        .resources(Map.ofEntries(
+                                entry("domainName", domainSetup.getIdentifier())))
                         .build();
                 domainSetup.setBookingItem(bookingItem);
                 bookingItems.put(nextAvailableBookingItemId(), bookingItem);

@@ -3,55 +3,104 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_SETUP;
+import static net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns.superDomain;
+import static net.hostsharing.hsadminng.hs.hosting.asset.validators.HsDomainHttpSetupHostingAssetValidator.SUBDOMAIN_NAME_REGEX;
 
 class HsDomainSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
     public static final String FQDN_REGEX = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,12}";
-
-    private final Pattern identifierPattern;
+    public static final String DOMAIN_NAME_PROPERTY_NAME = "domainName";
 
     HsDomainSetupHostingAssetValidator() {
-        super(  DOMAIN_SETUP,
+        super(
+                DOMAIN_SETUP,
                 AlarmContact.isOptional(),
 
                 NO_EXTRA_PROPERTIES);
-        this.identifierPattern = Pattern.compile(FQDN_REGEX);
     }
 
     @Override
     public List<String> validateEntity(final HsHostingAsset assetEntity) {
-        // TODO.impl: for newly created entities, check the permission of setting up a domain
-        //
-        // reject, if the domain is any of these:
-        //  hostsharing.com|net|org|coop, // just to be on the safe side
-        //  [^.}+, // top-level-domain
-        //   co.uk, org.uk, gov.uk, ac.uk, sch.uk,
-        //   com.au, net.au, org.au, edu.au, gov.au, asn.au, id.au,
-        //   co.jp, ne.jp, or.jp, ac.jp, go.jp,
-        //   com.cn, net.cn, org.cn, gov.cn, edu.cn, ac.cn,
-        //   com.br, net.br, org.br, gov.br, edu.br, mil.br, art.br,
-        //   co.in, net.in, org.in, gen.in, firm.in, ind.in,
-        //   com.mx, net.mx, org.mx, gob.mx, edu.mx,
-        //   gov.it, edu.it,
-        //   co.nz, net.nz, org.nz, govt.nz, ac.nz, school.nz, geek.nz, kiwi.nz,
-        //   co.kr, ne.kr, or.kr, go.kr, re.kr, pe.kr
-        //
-        // allow if
-        //  - user has Admin/Agent-role for all its sub-domains and the direct parent-Domain which are set up at at Hostsharing
-        //  - domain has DNS zone with TXT record approval
-        //  - parent-domain has DNS zone with TXT record approval
-        //
-        // TXT-Record check:
-        // new InitialDirContext().getAttributes("dns:_netblocks.google.com", new String[] { "TXT"}).get("TXT").getAll();
+        final var violations = // new ArrayList<String>();
+            super.validateEntity(assetEntity);
+        if (!violations.isEmpty()) {
+            return violations;
+        }
 
-        return super.validateEntity(assetEntity);
+        final var domainName = assetEntity.getIdentifier();
+        final var dnsResult = new Dns(domainName).fetchRecordsOfType("TXT");
+        final Supplier<String> getCode = () -> assetEntity.getBookingItem().getDirectValue("verificationCode", String.class);
+        switch (dnsResult.status()) {
+            case Dns.Status.SUCCESS: {
+                final var expectedTxtRecordValue = "Hostsharing-domain-setup-verification-code=" + getCode.get();
+                final var verificationFound = findTxtRecord(dnsResult, expectedTxtRecordValue)
+                        .or(() -> superDomain(domainName)
+                                .flatMap(superDomainName -> findTxtRecord(
+                                        new Dns(superDomainName).fetchRecordsOfType("TXT"),
+                                        expectedTxtRecordValue))
+                        );
+                if (verificationFound.isEmpty()) {
+                    violations.add(
+                            "[DNS] no TXT record '" + expectedTxtRecordValue +
+                                    "' found for domain name '" + domainName + "' (nor in its super-domain)");
+                }
+                break;
+            }
+
+            case Dns.Status.NAME_NOT_FOUND: {
+                if (isDnsVerificationRequiredForUnregisteredDomain(assetEntity)) {
+                    final var superDomain = superDomain(domainName);
+                    final var expectedTxtRecordValue = "Hostsharing-domain-setup-verification-code=" + getCode.get();
+                    final var verificationFoundInSuperDomain = superDomain.flatMap(superDomainName -> findTxtRecord(
+                            new Dns(superDomainName).fetchRecordsOfType("TXT"),
+                            expectedTxtRecordValue));
+                    if (verificationFoundInSuperDomain.isEmpty()) {
+                        violations.add(
+                                "[DNS] no TXT record '" + expectedTxtRecordValue +
+                                        "' found for domain name '" + superDomain.orElseThrow() + "'");
+                    }
+                }
+                // otherwise no DNS verification to be able to setup DNS for domains to register
+                break;
+            }
+
+            case Dns.Status.INVALID_NAME:
+                violations.add("[DNS] invalid domain name '" + assetEntity.getIdentifier() + "'");
+                break;
+
+            case Dns.Status.SERVICE_UNAVAILABLE:
+            case Dns.Status.UNKNOWN_FAILURE:
+                violations.add("[DNS] lookup failed for domain name '" + assetEntity.getIdentifier() + "': " + dnsResult.exception());
+                break;
+        }
+        return violations;
     }
 
     @Override
     protected Pattern identifierPattern(final HsHostingAsset assetEntity) {
-        return identifierPattern;
+        if (assetEntity.getBookingItem() != null) {
+            final var bookingItemDomainName = assetEntity.getBookingItem()
+                    .getDirectValue(DOMAIN_NAME_PROPERTY_NAME, String.class);
+            return Pattern.compile(bookingItemDomainName, Pattern.CASE_INSENSITIVE | Pattern.LITERAL);
+        }
+        final var parentDomainName = assetEntity.getParentAsset().getIdentifier();
+        return Pattern.compile(SUBDOMAIN_NAME_REGEX + "\\." + parentDomainName.replace(".", "\\."), Pattern.CASE_INSENSITIVE);
+    }
+
+    private static boolean isDnsVerificationRequiredForUnregisteredDomain(final HsHostingAsset assetEntity) {
+        return !Dns.isRegistrableDomain(assetEntity.getIdentifier())
+                && assetEntity.getParentAsset() == null;
+    }
+
+
+    private static Optional<String> findTxtRecord(final Dns.Result result, final String expectedTxtRecordValue) {
+        return result.records().stream()
+                .filter(r -> r.contains(expectedTxtRecordValue))
+                .findAny();
     }
 }

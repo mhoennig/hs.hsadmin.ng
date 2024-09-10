@@ -9,10 +9,12 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
+import net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
@@ -63,6 +65,11 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
 
     @Autowired
     JpaAttempt jpaAttempt;
+
+    @AfterEach
+    void cleanup() {
+        Dns.resetFakeResults();
+    }
 
     @Nested
     @Order(2)
@@ -249,6 +256,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
         void globalAdmin_canAddTopLevelAsset() {
 
             context.define("superuser-alex@hostsharing.net");
+            Dns.fakeResultForDomain("example.com", new Dns.Result(Dns.Status.NAME_NOT_FOUND, null, null));
             final var givenProject = realProjectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow();
             final var bookingItem = givenSomeTemporaryBookingItem(() ->
@@ -256,6 +264,8 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                        .project(givenProject)
                        .type(HsBookingItemType.DOMAIN_SETUP)
                        .caption("some temp domain setup booking item")
+                       .resources(Map.ofEntries(
+                               entry("domainName", "example.com")))
                        .build()
             );
 
