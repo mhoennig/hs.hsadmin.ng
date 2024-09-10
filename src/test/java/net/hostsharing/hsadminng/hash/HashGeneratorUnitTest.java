@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.util.Base64;
 
 import static net.hostsharing.hsadminng.hash.HashGenerator.Algorithm.LINUX_SHA512;
+import static net.hostsharing.hsadminng.hash.HashGenerator.Algorithm.LINUX_YESCRYPT;
 import static net.hostsharing.hsadminng.hash.HashGenerator.Algorithm.MYSQL_NATIVE;
 import static net.hostsharing.hsadminng.hash.HashGenerator.Algorithm.SCRAM_SHA256;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +56,18 @@ class HashGeneratorUnitTest {
                 LinuxEtcShadowHashGenerator.verify(hash, WRONG_PASSWORD)
         );
         assertThat(throwable).hasMessage("invalid password");
+    }
+
+    @Test
+    void generatesLinuxSha512PasswordHash() {
+        final var hash = HashGenerator.using(LINUX_SHA512).withSalt("ooei1HK6JXVaI7KC").hash(GIVEN_PASSWORD);
+        assertThat(hash).isEqualTo(GIVEN_LINUX_GENERATED_SHA512_HASH);
+    }
+
+    @Test
+    void generatesLinuxYescriptPasswordHash() {
+        final var hash = HashGenerator.using(LINUX_YESCRYPT).withSalt("wgYACPmBXvlMg2MzeZA0p1").hash(GIVEN_PASSWORD);
+        assertThat(hash).isEqualTo(GIVEN_LINUX_GENERATED_YESCRYPT_HASH);
     }
 
     @Test

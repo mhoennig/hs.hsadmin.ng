@@ -31,21 +31,36 @@ public final class HashGenerator {
 
     public enum Algorithm {
         LINUX_SHA512(LinuxEtcShadowHashGenerator::hash, "6"),
-        LINUX_YESCRYPT(LinuxEtcShadowHashGenerator::hash, "y"),
+        LINUX_YESCRYPT(LinuxEtcShadowHashGenerator::hash, "y", "j9T$") {
+            @Override
+            String enrichedSalt(final String salt) {
+                return prefix + "$" + (salt.startsWith(optionalParam) ? salt : optionalParam + salt);
+            }
+        },
         MYSQL_NATIVE(MySQLNativePasswordHashGenerator::hash, "*"),
         SCRAM_SHA256(PostgreSQLScramSHA256::hash, "SCRAM-SHA-256");
 
         final BiFunction<HashGenerator, String, String> implementation;
         final String prefix;
+        final String optionalParam;
 
-        Algorithm(BiFunction<HashGenerator, String, String> implementation, final String prefix) {
+        Algorithm(BiFunction<HashGenerator, String, String> implementation, final String prefix, final String optionalParam) {
             this.implementation = implementation;
             this.prefix = prefix;
+            this.optionalParam = optionalParam;
+        }
+
+        Algorithm(BiFunction<HashGenerator, String, String> implementation, final String prefix) {
+            this(implementation, prefix, null);
         }
 
         static Algorithm byPrefix(final String prefix) {
             return Arrays.stream(Algorithm.values()).filter(a -> a.prefix.equals(prefix)).findAny()
                     .orElseThrow(() -> new IllegalArgumentException("unknown hash algorithm: '" + prefix + "'"));
+        }
+
+        String enrichedSalt(final String salt) {
+            return prefix + "$" + salt;
         }
     }
 
@@ -60,7 +75,7 @@ public final class HashGenerator {
        this.algorithm = algorithm;
     }
 
-    public static void enableChouldBeHash(final boolean enable) {
+    public static void enableCouldBeHash(final boolean enable) {
         couldBeHashEnabled = enable;
     }
 
@@ -73,7 +88,11 @@ public final class HashGenerator {
             throw new IllegalStateException("no password given");
         }
 
-        return algorithm.implementation.apply(this, plaintextPassword);
+        final var hash = algorithm.implementation.apply(this, plaintextPassword);
+        if (hash.length() < plaintextPassword.length()) {
+            throw new AssertionError("generated hash too short: " + hash);
+        }
+        return hash;
     }
 
     public String hashIfNotYetHashed(final String plaintextPasswordOrHash) {
@@ -101,5 +120,11 @@ public final class HashGenerator {
             stringBuilder.append(RANDOM_SALT_CHARACTERS.charAt(randomIndex));
         }
         return withSalt(stringBuilder.toString());
+    }
+
+    public static void main(String[] args) {
+        System.out.println(
+            HashGenerator.using(Algorithm.LINUX_YESCRYPT).withRandomSalt().hash("my plaintext domain transfer passphrase")
+        );
     }
 }
