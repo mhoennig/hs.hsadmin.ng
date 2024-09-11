@@ -26,6 +26,10 @@ public class ArrayProperty<P extends ValidatableProperty<?, E>, E> extends Valid
     }
 
     public static <T> ArrayProperty<?, T[]> arrayOf(final ValidatableProperty<?, T> elementsOf) {
+        if (elementsOf.type != String.class) {
+            // see also net.hostsharing.hsadminng.mapper.PatchableMapWrapper.fixValueType
+            throw new IllegalArgumentException("currently arrayOf(...) is only implemented for stringProperty(...)");
+        }
         //noinspection unchecked
         return (ArrayProperty<?, T[]>) new ArrayProperty<>(elementsOf);
     }

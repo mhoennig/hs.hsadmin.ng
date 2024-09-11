@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -107,7 +108,7 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
         if (!Objects.equals(value, delegate.get(key))) {
             patched.add(key);
         }
-        return delegate.put(key, value);
+        return delegate.put(key, fixValueType(value));
     }
 
     @Override
@@ -145,5 +146,16 @@ public class PatchableMapWrapper<T> implements Map<String, T> {
     @NotNull
     public Set<Entry<String, T>> entrySet() {
         return delegate.entrySet();
+    }
+
+    private T fixValueType(final T value) {
+        if (value instanceof ArrayList<?> arrayListValue) {
+            // Jackson deserialization creates ArrayList for JSON arrays, but we need a String[].
+            // Jackson could be configured to create Object[], but that does not help.
+            final var valueToPut = arrayListValue.stream().map(Object::toString).toArray(String[]::new);
+            //noinspection unchecked
+            return (T) valueToPut;
+        }
+        return value;
     }
 }

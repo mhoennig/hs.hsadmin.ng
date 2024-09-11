@@ -12,15 +12,14 @@ import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,8 +28,8 @@ import java.util.function.BiConsumer;
 @RestController
 public class HsHostingAssetController implements HsHostingAssetsApi {
 
-    @PersistenceContext
-    private EntityManager em;
+    @Autowired
+    private EntityManagerWrapper emw;
 
     @Autowired
     private Context context;
@@ -75,7 +74,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entity = mapper.map(body, HsHostingAssetRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
-        final var mapped = new HostingAssetEntitySaveProcessor(em, entity)
+        final var mapped = new HostingAssetEntitySaveProcessor(emw, entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -134,9 +133,9 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
 
         final var entity = rbacAssetRepo.findByUuid(assetUuid).orElseThrow();
 
-        new HsHostingAssetEntityPatcher(em, entity).apply(body);
+        new HsHostingAssetEntityPatcher(emw, entity).apply(body);
 
-        final var mapped = new HostingAssetEntitySaveProcessor(em, entity)
+        final var mapped = new HostingAssetEntitySaveProcessor(emw, entity)
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -165,5 +164,5 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     @SuppressWarnings("unchecked")
     final BiConsumer<HsHostingAssetRbacEntity, HsHostingAssetResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource)
             -> resource.setConfig(HostingAssetEntityValidatorRegistry.forType(entity.getType())
-                .revampProperties(em, entity, (Map<String, Object>) resource.getConfig()));
+                .revampProperties(emw, entity, (Map<String, Object>) resource.getConfig()));
 }

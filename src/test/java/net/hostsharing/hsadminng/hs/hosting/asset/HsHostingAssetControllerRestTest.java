@@ -1,20 +1,26 @@
 package net.hostsharing.hsadminng.hs.hosting.asset;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
+import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -24,8 +30,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.SynchronizationType;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.booking.item.TestHsBookingItem.CLOUD_SERVER_BOOKING_ITEM_REAL_ENTITY;
@@ -36,12 +45,14 @@ import static net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealTes
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsHostingAssetController.class)
-@Import(Mapper.class)
+@Import({Mapper.class, JsonObjectMapperConfiguration.class})
 @RunWith(SpringRunner.class)
 public class HsHostingAssetControllerRestTest {
 
@@ -54,8 +65,8 @@ public class HsHostingAssetControllerRestTest {
     @Autowired
     Mapper mapper;
 
-    @Mock
-    private EntityManager em;
+    @MockBean
+    private EntityManagerWrapper em;
 
     @MockBean
     EntityManagerFactory emf;
@@ -70,6 +81,15 @@ public class HsHostingAssetControllerRestTest {
     @MockBean
     private HsHostingAssetRbacRepository rbacAssetRepo;
 
+    @TestConfiguration
+    public static class TestConfig {
+
+        @Bean
+        public EntityManager entityManager() {
+            return mock(EntityManager.class);
+        }
+
+    }
     enum ListTestCases {
         CLOUD_SERVER(
                 List.of(
@@ -583,5 +603,130 @@ public class HsHostingAssetControllerRestTest {
         for (int n = 0; n < resultBody.size(); ++n) {
             assertThat(resultBody.get(n).path("config")).isEqualTo(testCase.expectedConfig(n));
         }
+    }
+
+    @Test
+    void shouldPatchAsset() throws Exception {
+        // given
+        final var givenDomainSetup = HsHostingAssetRealEntity.builder()
+                .type(HsHostingAssetType.DOMAIN_SETUP)
+                .identifier("example.org")
+                .caption("some fake Domain-Setup")
+                .build();
+        final var givenUnixUser = HsHostingAssetRealEntity.builder()
+                .type(HsHostingAssetType.UNIX_USER)
+                .parentAsset(MANAGED_WEBSPACE_HOSTING_ASSET_REAL_TEST_ENTITY)
+                .identifier("xyz00-office")
+                .caption("some fake Unix-User")
+                .config(Map.ofEntries(
+                        entry("password", "$6$salt$hashed-salted-password"),
+                        entry("totpKey", "0x0123456789abcdef"),
+                        entry("shell", "/bin/bash"),
+                        entry("SSD-soft-quota", 128),
+                        entry("SSD-hard-quota", 256),
+                        entry("HDD-soft-quota", 256),
+                        entry("HDD-hard-quota", 512)))
+                .build();
+        final var givenDomainHttpSetupUuid = UUID.randomUUID();
+        final var givenDomainHttpSetupHostingAsset = HsHostingAssetRbacEntity.builder()
+                .type(HsHostingAssetType.DOMAIN_HTTP_SETUP)
+                .identifier("example.org|HTTP")
+                .caption("some fake Domain-HTTP-Setup")
+                .parentAsset(givenDomainSetup)
+                .assignedToAsset(givenUnixUser)
+                .config(new HashMap<>(Map.ofEntries(
+                        entry("htdocsfallback", false),
+                        entry("indexes", false),
+                        entry("cgi", false),
+                        entry("passenger", false),
+                        entry("passenger-errorpage", true),
+                        entry("fastcgi", false),
+                        entry("autoconfig", false),
+                        entry("greylisting", false),
+                        entry("includes", false),
+                        entry("letsencrypt", false),
+                        entry("multiviews", false),
+                        entry("fcgi-php-bin", "/usr/lib/cgi-bin/php-orig"),
+                        entry("passenger-nodejs", "/usr/bin/node-js7"),
+                        entry("passenger-python", "/usr/bin/python6"),
+                        entry("passenger-ruby", "/usr/bin/ruby5"),
+                        entry("subdomains", Array.of("www", "test1", "test2"))
+                )))
+                .build();
+        when(rbacAssetRepo.findByUuid(givenDomainHttpSetupUuid)).thenReturn(Optional.of(givenDomainHttpSetupHostingAsset));
+        when(em.contains(givenDomainHttpSetupHostingAsset)).thenReturn(true);
+        doNothing().when(em).flush();
+
+        // when
+        final var result = mockMvc.perform(MockMvcRequestBuilders
+                        .patch("/api/hs/hosting/assets/" + givenDomainHttpSetupUuid)
+                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                            "type": "DOMAIN_HTTP_SETUP",
+                            "identifier": "updated example.org|HTTP",
+                            "caption": "some updated fake Domain-HTTP-Setup",
+                            "alarmContact": null,
+                            "config": {
+                                "autoconfig": true,
+                                "multiviews": true,
+                                "passenger": false,
+                                "fcgi-php-bin": null,
+                                "passenger-nodejs": "/usr/bin/node-js8",
+                                "subdomains": ["www","test"]
+                            }
+                        }
+                        """)
+                        .accept(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$", lenientlyEquals("""
+                        {
+                            "type": "DOMAIN_HTTP_SETUP",
+                            "identifier": "example.org|HTTP",
+                            "caption": "some updated fake Domain-HTTP-Setup",
+                            "alarmContact": null
+                        }
+                        """)))
+                .andReturn();
+
+        // and the config properties do match not just leniently but even strictly
+        final var actualConfig = formatJsonNode(result.getResponse().getContentAsString());
+        final var expectedConfig = formatJsonNode("""
+               {
+                    "config": {
+                      "autoconfig" : true,
+                      "cgi" : false,
+                      "fastcgi" : false,
+                      // "fcgi-php-bin" : "/usr/lib/cgi-bin/php", TODO.spec: do we want defaults to work like initializers?
+                      "greylisting" : false,
+                      "htdocsfallback" : false,
+                      "includes" : false,
+                      "indexes" : false,
+                      "letsencrypt" : false,
+                      "multiviews" : true,
+                      "passenger" : false,
+                      "passenger-errorpage" : true,
+                      "passenger-nodejs" : "/usr/bin/node-js8",
+                      "passenger-python" : "/usr/bin/python6",
+                      "passenger-ruby" : "/usr/bin/ruby5",
+                      "subdomains" : [ "www", "test" ]
+                   }
+               }
+               """);
+        assertThat(actualConfig).isEqualTo(expectedConfig);
+    }
+
+    private static final ObjectMapper SORTED_MAPPER = new ObjectMapper();
+    static {
+        SORTED_MAPPER.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+    }
+
+    private static String formatJsonNode(final String json) throws JsonProcessingException {
+        final var node = SORTED_MAPPER.readTree(json.replaceAll("//.*", "")).path("config");
+        final var obj = SORTED_MAPPER.treeToValue(node, Object.class);
+        return SORTED_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }
 }
