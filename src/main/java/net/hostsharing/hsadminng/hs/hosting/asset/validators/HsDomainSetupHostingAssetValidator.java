@@ -26,9 +26,11 @@ class HsDomainSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
     @Override
     public List<String> validateEntity(final HsHostingAsset assetEntity) {
-        final var violations = // new ArrayList<String>();
-            super.validateEntity(assetEntity);
-        if (!violations.isEmpty()) {
+        final var violations = super.validateEntity(assetEntity);
+        if (!violations.isEmpty() || assetEntity.isLoaded()) {
+            // it makes no sense to do DNS-based validation
+            //  if the entity is already persisted or
+            //  if the identifier (domain name) or structure is already invalid
             return violations;
         }
 

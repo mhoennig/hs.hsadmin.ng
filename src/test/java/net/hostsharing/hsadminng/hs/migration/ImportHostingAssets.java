@@ -1450,6 +1450,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                                     // nothing here
                             ))
                             .build();
+                    domainSetupAsset.markAsLoaded(); // to skip setup verification
                     domainSetupsByName.put(domain_name, domainSetupAsset);
                     domainSetupAssets.put(domain_id, domainSetupAsset);
                     domainSetupAsset.setSubHostingAssets(new ArrayList<>());
