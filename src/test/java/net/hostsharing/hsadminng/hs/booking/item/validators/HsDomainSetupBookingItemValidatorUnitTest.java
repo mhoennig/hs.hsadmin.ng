@@ -28,7 +28,7 @@ class HsDomainSetupBookingItemValidatorUnitTest {
     private EntityManager em;
 
     @Test
-    void acceptsRegisterableDomain() {
+    void acceptsRegisterableDomainWithGeneratedVerificationCode() {
         // given
         final var domainSetupBookingItemEntity = HsBookingItemRealEntity.builder()
                 .type(DOMAIN_SETUP)
@@ -36,6 +36,26 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
                         entry("domainName", "example.org")
+                ))
+                .build();
+
+        // when
+        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, domainSetupBookingItemEntity);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void acceptsRegisterableDomainWithExplicitVerificationCode() {
+        // given
+        final var domainSetupBookingItemEntity = HsBookingItemRealEntity.builder()
+                .type(DOMAIN_SETUP)
+                .project(project)
+                .caption("Test-Domain")
+                .resources(Map.ofEntries(
+                        entry("domainName", "example.org"),
+                        entry("verificationCode", "1234-5678-9100")
                 ))
                 .build();
 
@@ -150,6 +170,6 @@ class HsDomainSetupBookingItemValidatorUnitTest {
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
                 "{type=string, propertyName=domainName, matchesRegEx=[^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,12}], matchesRegExDescription=is not a (non-top-level) fully qualified domain name, notMatchesRegEx=[[^.]+, (co|org|gov|ac|sch)\\.uk, (com|net|org|edu|gov|asn|id)\\.au, (co|ne|or|ac|go)\\.jp, (com|net|org|gov|edu|ac)\\.cn, (com|net|org|gov|edu|mil|art)\\.br, (co|net|org|gen|firm|ind)\\.in, (com|net|org|gob|edu)\\.mx, (gov|edu)\\.it, (co|net|org|govt|ac|school|geek|kiwi)\\.nz, (co|ne|or|go|re|pe)\\.kr], notMatchesRegExDescription=is a forbidden registrar-level domain name, maxLength=253, required=true, writeOnce=true}",
-                "{type=string, propertyName=verificationCode, readOnly=true, computed=IN_INIT}");
+                "{type=string, propertyName=verificationCode, minLength=12, maxLength=64, computed=IN_INIT}");
     }
 }

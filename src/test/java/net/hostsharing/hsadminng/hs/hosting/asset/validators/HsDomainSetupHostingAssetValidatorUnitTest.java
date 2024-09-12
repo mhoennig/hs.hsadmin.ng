@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset.validators;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealEntity;
 import org.junit.jupiter.api.AfterEach;
@@ -35,8 +36,10 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     static HsHostingAssetRbacEntity.HsHostingAssetRbacEntityBuilder<?, ?> validEntityBuilder(
             final String domainName,
             final Function<HsBookingItemRealEntity.HsBookingItemRealEntityBuilder<?, ?>, HsBookingItemRealEntity> buildBookingItem) {
-        final HsBookingItemRealEntity bookingItem = buildBookingItem.apply(
+        final var project = HsBookingProjectRealEntity.builder().build();
+        final var bookingItem = buildBookingItem.apply(
                 HsBookingItemRealEntity.builder()
+                        .project(project)
                         .type(HsBookingItemType.DOMAIN_SETUP)
                         .resources(new HashMap<>(ofEntries(
                                 entry("domainName", domainName)
@@ -90,7 +93,8 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
         // then
         assertThat(result).contains(
-                "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.org', but is '" + testCase.domainName + "'"
+                "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.org', but is '"
+                        + testCase.domainName + "'"
         );
     }
 
@@ -141,8 +145,9 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     @Test
     void validatesReferencedEntities() {
         // given
-        final var domainSetupHostingAssetEntity = validEntityBuilder("example.org",
-                    bib -> bib.type(HsBookingItemType.CLOUD_SERVER).build())
+        final var domainSetupHostingAssetEntity = validEntityBuilder(
+                "example.org",
+                bib -> bib.type(HsBookingItemType.CLOUD_SERVER).build())
                 .parentAsset(HsHostingAssetRealEntity.builder().type(CLOUD_SERVER).build())
                 .assignedToAsset(HsHostingAssetRealEntity.builder().type(MANAGED_SERVER).build())
                 .build();
@@ -161,11 +166,12 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     @Test
     void rejectsDomainNameNotMatchingBookingItemDomainName() {
         // given
-        final var domainSetupHostingAssetEntity = validEntityBuilder("not-matching-booking-item-domain-name.org",
-                    bib -> bib.resources(new HashMap<>(ofEntries(
-                            entry("domainName", "example.org")
-                    ))).build()
-                ).build();
+        final var domainSetupHostingAssetEntity = validEntityBuilder(
+                "not-matching-booking-item-domain-name.org",
+                bib -> bib.resources(new HashMap<>(ofEntries(
+                        entry("domainName", "example.org")
+                ))).build()
+        ).build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(domainSetupHostingAssetEntity.getType());
 
         // when
@@ -263,6 +269,24 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     //=====================================================================================================================
 
     @Test
+    void rejectsSetupOfRegistrar1stLevelDomain() {
+        domainSetupFor("org").notRegistered()
+                .isRejectedWithCauseForbidden("registrar-level domain name");
+    }
+
+    @Test
+    void rejectsSetupOfRegistrar2ndLevelDomain() {
+        domainSetupFor("co.uk").notRegistered()
+                .isRejectedWithCauseForbidden("registrar-level domain name");
+    }
+
+    @Test
+    void rejectsSetupOfHostsharingDomain() {
+        domainSetupFor("hostsharing.net").notRegistered()
+                .isRejectedWithCauseForbidden("Hostsharing domain name");
+    }
+
+    @Test
     void allowSetupOfAvailableRegistrableDomain() {
         domainSetupFor("example.com").notRegistered()
                 .isAccepted();
@@ -299,6 +323,18 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     }
 
     @Test
+    void allowSetupOfUnregisteredSubdomainIfSuperDomainParentAssetIsSpecified() {
+        domainSetupFor("sub.example.org").notRegistered().withParentAsset("example.org")
+                .isAccepted();
+    }
+
+    @Test
+    void rejectSetupOfUnregisteredSubdomainIfWrongParentAssetIsSpecified() {
+        domainSetupFor("sub.example.org").notRegistered().withParentAsset("example.net")
+                .isRejectedDueToInvalidIdentifier();
+    }
+
+    @Test
     void allowSetupOfUnregisteredSubdomainWithValidDnsVerificationInSuperDomain() {
         domainSetupFor("sub.example.org").notRegistered().withVerificationIn("example.org")
                 .isAccepted();
@@ -323,6 +359,12 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     }
 
     @Test
+    void rejectSetupOfUnregisteredSubdomainOfUnregisteredSuperDomain() {
+        domainSetupFor("sub.sub.example.org").notRegistered()
+                .isRejectedWithCauseDomainNameNotFound("sub.example.org");
+    }
+
+    @Test
     void acceptSetupOfUnregisteredSubdomainWithParentAssetEvenWithoutDnsVerificationInSuperDomain() {
         domainSetupWithParentAssetFor("sub.example.org").notRegistered()
                 .isAccepted();
@@ -339,6 +381,20 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     void rejectSetupOfExistingSubdomainWithoutDnsVerification() {
         domainSetupFor("sub.example.org").registered()
                 .isRejectedWithCauseMissingVerificationIn("sub.example.org");
+    }
+
+    @Test
+    void allowSetupOfRegistrableDomainWithUserDefinedVerificationCode() {
+        domainSetupFor("example.edu.it").notRegistered().withUserDefinedVerificationCode("ABCD-EFGH-IJKL-MNOP")
+                .withVerificationIn("example.edu.it")
+                .isAccepted();
+    }
+
+    @Test
+    void rejectSetupOfRegistrableDomainWithInvalidUserDefinedVerificationCode() {
+        domainSetupFor("example.edu.it").notRegistered().withUserDefinedVerificationCode("ABCD-EFGH-IJKL-MNOP")
+                .withVerificationIn("example.edu.it", "SOME-OTHER-CODE")
+                .isRejectedWithCauseMissingVerificationIn("example.edu.it");
     }
 
     //====================================================================================================================
@@ -360,11 +416,9 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
     class DomainSetupBuilder {
 
         private final HsHostingAssetRbacEntity domainAsset;
-        private final String expectedHash;
 
         public DomainSetupBuilder(final String domainName) {
             domainAsset = validEntityBuilder(domainName).build();
-            expectedHash = domainAsset.getBookingItem().getDirectValue("verificationCode", String.class);
         }
 
         public DomainSetupBuilder(final HsHostingAssetRealEntity parentAsset, final String domainName) {
@@ -372,7 +426,6 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
                     .bookingItem(null)
                     .parentAsset(parentAsset)
                     .build();
-            expectedHash = null;
         }
 
         DomainSetupBuilder notRegistered() {
@@ -399,30 +452,79 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
             return this;
         }
 
-        DomainSetupBuilder withVerificationIn(final String domainName) {
-            assertThat(expectedHash).as("no expectedHash available").isNotNull();
+        DomainSetupBuilder withUserDefinedVerificationCode(final String verificationCode) {
+            domainAsset.getBookingItem().getResources().put("verificationCode", verificationCode);
+            return this;
+        }
+
+        DomainSetupBuilder withVerificationIn(final String domainName, final String verificationCode) {
+            assertThat(verificationCode).as("explicit verificationCode must not be null").isNotNull();
             Dns.fakeResultForDomain(
                     domainName,
-                    Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=" + expectedHash));
+                    Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=" + verificationCode));
+            return this;
+        }
+
+        DomainSetupBuilder withVerificationIn(final String domainName) {
+            assertThat(expectedVerificationCode()).as("no expectedHash available").isNotNull();
+            Dns.fakeResultForDomain(
+                    domainName,
+                    Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=" + expectedVerificationCode()));
             return this;
         }
 
         void isRejectedWithCauseMissingVerificationIn(final String domainName) {
-            assertThat(expectedHash).as("no expectedHash available").isNotNull();
+            assertThat(expectedVerificationCode()).as("no expectedHash available").isNotNull();
             assertThat(validate()).containsAnyOf(
-                    "[DNS] no TXT record 'Hostsharing-domain-setup-verification-code=" + expectedHash
+                    "[DNS] no TXT record 'Hostsharing-domain-setup-verification-code=" + expectedVerificationCode()
                             + "' found for domain name '" + domainName + "' (nor in its super-domain)",
-                    "[DNS] no TXT record 'Hostsharing-domain-setup-verification-code=" + expectedHash
+                    "[DNS] no TXT record 'Hostsharing-domain-setup-verification-code=" + expectedVerificationCode()
                             + "' found for domain name '" + domainName + "'");
+        }
+
+        void isRejectedWithCauseForbidden(final String type) {
+            assertThat(validate()).contains(
+                    "'D-???????:null:null.resources.domainName' = '" + domainAsset.getIdentifier() + "' is a forbidden " + type
+            );
+        }
+
+        void isRejectedDueToInvalidIdentifier() {
+            assertThat(validate()).contains(
+                    "'identifier' expected to match '(\\*|(?!-)[A-Za-z0-9-]{1,63}(?<!-))\\.example\\.net', but is 'sub.example.org'"
+            );
+        }
+
+        void isRejectedWithCauseDomainNameNotFound(final String domainName) {
+            assertThat(validate()).contains(
+                    "[DNS] lookup failed for domain name '" + domainName + "': javax.naming.NameNotFoundException: domain not registered"
+            );
         }
 
         void isAccepted() {
             assertThat(validate()).isEmpty();
         }
 
+        private String expectedVerificationCode() {
+            return domainAsset.getBookingItem().getDirectValue("verificationCode", String.class);
+        }
+
         private List<String> validate() {
-            final var validator = HostingAssetEntityValidatorRegistry.forType(DOMAIN_SETUP);
-            return validator.validateEntity(domainAsset);
+            if ( domainAsset.getBookingItem() != null ) {
+                final var biValidation = HsBookingItemEntityValidatorRegistry.forType(HsBookingItemType.DOMAIN_SETUP)
+                        .validateEntity(domainAsset.getBookingItem());
+                if (!biValidation.isEmpty()) {
+                    return biValidation;
+                }
+            }
+
+            return HostingAssetEntityValidatorRegistry.forType(DOMAIN_SETUP)
+                    .validateEntity(domainAsset);
+        }
+
+        DomainSetupBuilder withParentAsset(final String parentAssetDomainName) {
+            domainAsset.setBookingItem(null);
+            domainAsset.setParentAsset(HsHostingAssetRealEntity.builder().type(DOMAIN_SETUP).identifier(parentAssetDomainName).build());
+            return this;
         }
     }
 
@@ -432,7 +534,10 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
 
     private DomainSetupBuilder domainSetupWithParentAssetFor(final String domainName) {
         return new DomainSetupBuilder(
-                HsHostingAssetRealEntity.builder().type(DOMAIN_SETUP).identifier(Dns.superDomain(domainName).orElseThrow()).build(),
+                HsHostingAssetRealEntity.builder()
+                        .type(DOMAIN_SETUP)
+                        .identifier(Dns.superDomain(domainName).orElseThrow())
+                        .build(),
                 domainName);
     }
 }

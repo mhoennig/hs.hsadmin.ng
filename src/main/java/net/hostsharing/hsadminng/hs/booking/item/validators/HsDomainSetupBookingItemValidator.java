@@ -25,8 +25,9 @@ class HsDomainSetupBookingItemValidator extends HsBookingItemEntityValidator {
                         .notMatchesRegEx(REGISTRAR_LEVEL_DOMAINS).describedAs("is a forbidden registrar-level domain name")
                         .required(),
                 stringProperty(VERIFICATION_CODE_PROPERTY_NAME)
-                        .readOnly().initializedBy(HsDomainSetupBookingItemValidator::generateVerificationCode)
-
+                        .minLength(12)
+                        .maxLength(64)
+                        .initializedBy(HsDomainSetupBookingItemValidator::generateVerificationCode)
         );
     }
 

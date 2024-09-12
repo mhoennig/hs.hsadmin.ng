@@ -266,7 +266,7 @@ public abstract class ValidatableProperty<P extends ValidatableProperty<?, ?>, T
 
     private boolean isSpecPotentiallyComplete() {
         return required == null && requiresAtLeastOneOf == null && requiresAtMaxOneOf == null && !readOnly && !writeOnly
-                && defaultValue == null;
+                && defaultValue == null && computedBy == null;
     }
 
     @SuppressWarnings("unchecked")
