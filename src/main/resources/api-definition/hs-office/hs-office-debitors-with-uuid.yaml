@@ -4,7 +4,7 @@ get:
     description: 'Fetch a single debitor by its uuid, if visible for the current subject.'
     operationId: getDebitorByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: debitorUUID
           in: path
@@ -32,7 +32,7 @@ patch:
     description: 'Updates a single debitor by its uuid, if permitted for the current subject.'
     operationId: patchDebitor
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: debitorUUID
             in: path
@@ -63,7 +63,7 @@ delete:
     description: 'Delete a single debitor by its uuid, if permitted for the current subject.'
     operationId: deleteDebitorByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: debitorUUID
           in: path

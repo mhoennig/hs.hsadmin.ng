@@ -14,7 +14,7 @@ import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRbacEntity;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import org.springframework.data.repository.Repository;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -68,11 +68,11 @@ public class ArchitectureTest {
                     "..mapper",
                     "..ping",
                     "..rbac",
-                    "..rbac.rbacuser",
-                    "..rbac.rbacgrant",
-                    "..rbac.rbacrole",
-                    "..rbac.rbacobject",
-                    "..rbac.rbacdef",
+                    "..rbac.generator",
+                    "..rbac.subject",
+                    "..rbac.grant",
+                    "..rbac.role",
+                    "..rbac.object",
                     "..stringify"
                     // ATTENTION: Don't simply add packages here, also add arch rules for the new package!
             );
@@ -160,7 +160,7 @@ public class ArchitectureTest {
                     "..hs.booking.(*)..",
                     "..hs.hosting.(*)..",
                     "..hs.migration",
-                    "..rbac.rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
+                    "..rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
             );
 
     @ArchTest

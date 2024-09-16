@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset test-domain-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:test-domain-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('test_domain');
+call rbac.generateRelatedRbacObject('test_domain');
 --//
 
 
 -- ============================================================================
---changeset test-domain-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:test-domain-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('testDomain', 'test_domain');
+call rbac.generateRbacRoleDescriptors('testDomain', 'test_domain');
 --//
 
 
 -- ============================================================================
---changeset test-domain-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:test-domain-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -33,27 +33,27 @@ declare
     newPackage test_package;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM test_package WHERE uuid = NEW.packageUuid    INTO newPackage;
     assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s', NEW.packageUuid);
 
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testDomainOWNER(NEW),
             permissions => array['DELETE', 'UPDATE'],
             incomingSuperRoles => array[testPackageADMIN(newPackage)],
             outgoingSubRoles => array[testPackageTENANT(newPackage)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testDomainADMIN(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[testDomainOWNER(NEW)],
             outgoingSubRoles => array[testPackageTENANT(newPackage)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -77,7 +77,7 @@ execute procedure insertTriggerForTestDomain_tf();
 
 
 -- ============================================================================
---changeset test-domain-rbac-update-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:test-domain-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -95,7 +95,7 @@ declare
     newPackage test_package;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM test_package WHERE uuid = OLD.packageUuid    INTO oldPackage;
     assert oldPackage.uuid is not null, format('oldPackage must not be null for OLD.packageUuid = %s', OLD.packageUuid);
@@ -106,18 +106,18 @@ begin
 
     if NEW.packageUuid <> OLD.packageUuid then
 
-        call revokeRoleFromRole(testDomainOWNER(OLD), testPackageADMIN(oldPackage));
-        call grantRoleToRole(testDomainOWNER(NEW), testPackageADMIN(newPackage));
+        call rbac.revokeRoleFromRole(testDomainOWNER(OLD), testPackageADMIN(oldPackage));
+        call rbac.grantRoleToRole(testDomainOWNER(NEW), testPackageADMIN(newPackage));
 
-        call revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainOWNER(OLD));
-        call grantRoleToRole(testPackageTENANT(newPackage), testDomainOWNER(NEW));
+        call rbac.revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainOWNER(OLD));
+        call rbac.grantRoleToRole(testPackageTENANT(newPackage), testDomainOWNER(NEW));
 
-        call revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainADMIN(OLD));
-        call grantRoleToRole(testPackageTENANT(newPackage), testDomainADMIN(NEW));
+        call rbac.revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainADMIN(OLD));
+        call rbac.grantRoleToRole(testPackageTENANT(newPackage), testDomainADMIN(NEW));
 
     end if;
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -141,7 +141,7 @@ execute procedure updateTriggerForTestDomain_tf();
 
 
 -- ============================================================================
---changeset test-domain-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:test-domain-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to test_package ----------------------------
@@ -153,13 +153,13 @@ do language plpgsql $$
     declare
         row test_package;
     begin
-        call defineContext('create INSERT INTO test_domain permissions for pre-exising test_package rows');
+        call base.defineContext('create INSERT INTO test_domain permissions for pre-exising test_package rows');
 
         FOR row IN SELECT * FROM test_package
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'test_domain'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'test_domain'),
                         testPackageADMIN(row));
             END LOOP;
     end;
@@ -174,22 +174,22 @@ create or replace function new_test_domain_grants_insert_to_test_package_tf()
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'test_domain'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'test_domain'),
             testPackageADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_test_domain_grants_insert_to_test_package_tg
+create trigger z_new_test_domain_grants_after_insert_tg
     after insert on test_package
     for each row
 execute procedure new_test_domain_grants_insert_to_test_package_tf();
 
 
 -- ============================================================================
---changeset test_domain-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:test_domain-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -202,12 +202,12 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission via direct foreign key: NEW.packageUuid
-    if hasInsertPermission(NEW.packageUuid, 'test_domain') then
+    if rbac.hasInsertPermission(NEW.packageUuid, 'test_domain') then
         return NEW;
     end if;
 
     raise exception '[403] insert into test_domain values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger test_domain_insert_permission_check_tg
@@ -218,10 +218,10 @@ create trigger test_domain_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset test-domain-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:test-domain-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('test_domain',
+call rbac.generateRbacIdentityViewFromProjection('test_domain',
     $idName$
         name
     $idName$);
@@ -229,9 +229,9 @@ call generateRbacIdentityViewFromProjection('test_domain',
 
 
 -- ============================================================================
---changeset test-domain-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:test-domain-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('test_domain',
+call rbac.generateRbacRestrictedView('test_domain',
     $orderBy$
         name
     $orderBy$,

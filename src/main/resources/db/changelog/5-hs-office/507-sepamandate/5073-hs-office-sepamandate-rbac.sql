@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:hs-office-sepamandate-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_sepamandate');
+call rbac.generateRelatedRbacObject('hs_office_sepamandate');
 --//
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-office-sepamandate-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office_sepamandate');
+call rbac.generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office_sepamandate');
 --//
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-sepamandate-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -34,7 +34,7 @@ declare
     newDebitorRel hs_office_relation;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office_bankaccount WHERE uuid = NEW.bankAccountUuid    INTO newBankAccount;
     assert newBankAccount.uuid is not null, format('newBankAccount must not be null for NEW.bankAccountUuid = %s', NEW.bankAccountUuid);
@@ -47,20 +47,20 @@ begin
     assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
 
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeSepaMandateOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalADMIN()],
-            userUuids => array[currentUserUuid()]
+            incomingSuperRoles => array[rbac.globalADMIN()],
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeSepaMandateADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficeSepaMandateOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeSepaMandateAGENT(NEW),
             incomingSuperRoles => array[hsOfficeSepaMandateADMIN(NEW)],
             outgoingSubRoles => array[
@@ -68,7 +68,7 @@ begin
             	hsOfficeRelationAGENT(newDebitorRel)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeSepaMandateREFERRER(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
@@ -78,7 +78,7 @@ begin
             outgoingSubRoles => array[hsOfficeRelationTENANT(newDebitorRel)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -102,7 +102,7 @@ execute procedure insertTriggerForHsOfficeSepaMandate_tf();
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to hs_office_relation ----------------------------
@@ -114,13 +114,13 @@ do language plpgsql $$
     declare
         row hs_office_relation;
     begin
-        call defineContext('create INSERT INTO hs_office_sepamandate permissions for pre-exising hs_office_relation rows');
+        call base.defineContext('create INSERT INTO hs_office_sepamandate permissions for pre-exising hs_office_relation rows');
 
         FOR row IN SELECT * FROM hs_office_relation
             WHERE type = 'DEBITOR'
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_office_sepamandate'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_sepamandate'),
                         hsOfficeRelationADMIN(row));
             END LOOP;
     end;
@@ -129,28 +129,28 @@ $$;
 /**
     Grants hs_office_sepamandate INSERT permission to specified role of new hs_office_relation rows.
 */
-create or replace function new_hs_office_sepamandate_grants_insert_to_hs_office_relation_tf()
+create or replace function new_hsof_sepamandate_grants_insert_to_hsof_relation_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if NEW.type = 'DEBITOR' then
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_office_sepamandate'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_sepamandate'),
             hsOfficeRelationADMIN(NEW));
     end if;
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_sepamandate_grants_insert_to_hs_office_relation_tg
+create trigger z_new_hs_office_sepamandate_grants_after_insert_tg
     after insert on hs_office_relation
     for each row
-execute procedure new_hs_office_sepamandate_grants_insert_to_hs_office_relation_tf();
+execute procedure new_hsof_sepamandate_grants_insert_to_hsof_relation_tf();
 
 
 -- ============================================================================
---changeset hs_office_sepamandate-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs_office_sepamandate-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -169,12 +169,12 @@ begin
         WHERE debitor.uuid = NEW.debitorUuid
     );
     assert superObjectUuid is not null, 'object uuid fetched depending on hs_office_sepamandate.debitorUuid must not be null, also check fetchSql in RBAC DSL';
-    if hasInsertPermission(superObjectUuid, 'hs_office_sepamandate') then
+    if rbac.hasInsertPermission(superObjectUuid, 'hs_office_sepamandate') then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_office_sepamandate values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_office_sepamandate_insert_permission_check_tg
@@ -185,10 +185,10 @@ create trigger hs_office_sepamandate_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-office-sepamandate-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromQuery('hs_office_sepamandate',
+call rbac.generateRbacIdentityViewFromQuery('hs_office_sepamandate',
     $idName$
         select sm.uuid as uuid, ba.iban || '-' || sm.validity as idName
             from hs_office_sepamandate sm
@@ -198,9 +198,9 @@ call generateRbacIdentityViewFromQuery('hs_office_sepamandate',
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_sepamandate',
+call rbac.generateRbacRestrictedView('hs_office_sepamandate',
     $orderBy$
         validity
     $orderBy$,

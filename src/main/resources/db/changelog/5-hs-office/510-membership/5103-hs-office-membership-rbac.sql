@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:hs-office-membership-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_membership');
+call rbac.generateRelatedRbacObject('hs_office_membership');
 --//
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-office-membership-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeMembership', 'hs_office_membership');
+call rbac.generateRbacRoleDescriptors('hsOfficeMembership', 'hs_office_membership');
 --//
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-membership-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -33,7 +33,7 @@ declare
     newPartnerRel hs_office_relation;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT partnerRel.*
         FROM hs_office_partner AS partner
@@ -43,12 +43,12 @@ begin
     assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerUuid = %s', NEW.partnerUuid);
 
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeMembershipOWNER(NEW),
-            userUuids => array[currentUserUuid()]
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeMembershipADMIN(NEW),
             permissions => array['DELETE', 'UPDATE'],
             incomingSuperRoles => array[
@@ -56,7 +56,7 @@ begin
             	hsOfficeRelationADMIN(newPartnerRel)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeMembershipAGENT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
@@ -65,7 +65,7 @@ begin
             outgoingSubRoles => array[hsOfficeRelationTENANT(newPartnerRel)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -89,26 +89,26 @@ execute procedure insertTriggerForHsOfficeMembership_tf();
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-membership-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to global ----------------------------
+-- granting INSERT permission to rbac.global ----------------------------
 
 /*
-    Grants INSERT INTO hs_office_membership permissions to specified role of pre-existing global rows.
+    Grants INSERT INTO hs_office_membership permissions to specified role of pre-existing rbac.global rows.
  */
 do language plpgsql $$
     declare
-        row global;
+        row rbac.global;
     begin
-        call defineContext('create INSERT INTO hs_office_membership permissions for pre-exising global rows');
+        call base.defineContext('create INSERT INTO hs_office_membership permissions for pre-exising rbac.global rows');
 
-        FOR row IN SELECT * FROM global
+        FOR row IN SELECT * FROM rbac.global
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_office_membership'),
-                        globalADMIN());
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_membership'),
+                        rbac.globalADMIN());
             END LOOP;
     end;
 $$;
@@ -116,28 +116,28 @@ $$;
 /**
     Grants hs_office_membership INSERT permission to specified role of new global rows.
 */
-create or replace function new_hs_office_membership_grants_insert_to_global_tf()
+create or replace function rbac.new_hsof_membership_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_office_membership'),
-            globalADMIN());
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_membership'),
+            rbac.globalADMIN());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_membership_grants_insert_to_global_tg
-    after insert on global
+create trigger z_new_hs_office_membership_grants_after_insert_tg
+    after insert on rbac.global
     for each row
-execute procedure new_hs_office_membership_grants_insert_to_global_tf();
+execute procedure rbac.new_hsof_membership_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset hs_office_membership-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs_office_membership-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -149,13 +149,13 @@ create or replace function hs_office_membership_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if global ADMIN
-    if isGlobalAdmin() then
+    -- check INSERT INSERT if rbac.global ADMIN
+    if rbac.isGlobalAdmin() then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_office_membership values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_office_membership_insert_permission_check_tg
@@ -166,10 +166,10 @@ create trigger hs_office_membership_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-office-membership-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromQuery('hs_office_membership',
+call rbac.generateRbacIdentityViewFromQuery('hs_office_membership',
     $idName$
         SELECT m.uuid AS uuid,
                 'M-' || p.partnerNumber || m.memberNumberSuffix as idName
@@ -180,9 +180,9 @@ call generateRbacIdentityViewFromQuery('hs_office_membership',
 
 
 -- ============================================================================
---changeset hs-office-membership-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-membership-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_membership',
+call rbac.generateRbacRestrictedView('hs_office_membership',
     $orderBy$
         validity
     $orderBy$,

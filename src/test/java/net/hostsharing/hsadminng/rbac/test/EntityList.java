@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test;
 
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 
 import java.util.List;
 

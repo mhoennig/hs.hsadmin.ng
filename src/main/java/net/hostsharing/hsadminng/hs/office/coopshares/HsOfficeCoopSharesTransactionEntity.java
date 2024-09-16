@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -19,16 +19,16 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity

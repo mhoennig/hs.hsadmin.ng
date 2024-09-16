@@ -3,7 +3,7 @@ get:
         - testPackages
     operationId: listPackages
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query

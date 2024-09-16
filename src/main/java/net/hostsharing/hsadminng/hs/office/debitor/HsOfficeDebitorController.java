@@ -8,7 +8,7 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebito
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.mapper.Mapper;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import org.apache.commons.lang3.Validate;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,11 +48,11 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeDebitorResource>> listDebitors(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final String name,
             final Integer debitorNumber) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = debitorNumber != null
                 ? debitorRepo.findDebitorByDebitorNumber(debitorNumber)
@@ -65,11 +65,11 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficeDebitorResource> addDebitor(
-            String currentUser,
+            String currentSubject,
             String assumedRoles,
             HsOfficeDebitorInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         Validate.isTrue(body.getDebitorRel() == null || body.getDebitorRelUuid() == null,
                 "ERROR: [400] exactly one of debitorRel and debitorRelUuid must be supplied, but found both");
@@ -112,11 +112,11 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsOfficeDebitorResource> getDebitorByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = debitorRepo.findByUuid(debitorUuid);
         if (result.isEmpty()) {
@@ -128,10 +128,10 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deleteDebitorByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = debitorRepo.deleteByUuid(debitorUuid);
         if (result == 0) {
@@ -144,12 +144,12 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficeDebitorResource> patchDebitor(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid,
             final HsOfficeDebitorPatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = debitorRepo.findByUuid(debitorUuid).orElseThrow();
 

@@ -24,13 +24,13 @@ delete from hs_hosting_asset where uuid='5aea68d2-3b55-464f-8362-b05c76c5a681'::
 commit;
 
 -- single version at point in time
--- set hsadminng.tx_history_txid to (select max(txid) from tx_context where txtimestamp<='2024-08-27 12:13:13.450821');
+-- set hsadminng.tx_history_txid to (select max(txid) from base.tx_context where txtimestamp<='2024-08-27 12:13:13.450821');
 set hsadminng.tx_history_txid to '';
 set hsadminng.tx_history_timestamp to '2024-08-29 12:42';
 -- all versions
-select tx_history_txid(), txc.txtimestamp, txc.currentUser, txc.currentTask, haex.*
+select base.tx_history_txid(), txc.txtimestamp, txc.currentSubject, txc.currentTask, haex.*
     from hs_hosting_asset_ex haex
-             join tx_context txc on haex.txid=txc.txid
+             join base.tx_context txc on haex.txid=txc.txid
     where haex.identifier = 'test@thi.example.org';
 
 select uuid, version, type, identifier, caption from hs_hosting_asset_hv p where identifier = 'test@thi.example.org';

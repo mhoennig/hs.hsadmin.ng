@@ -4,8 +4,8 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -30,8 +30,8 @@ import java.util.Map;
 import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.MANAGED_WEBSPACE;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +69,7 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'caption'
-                    from tx_journal_v
+                    from base.tx_journal_v
                     where targettable = 'hs_booking_item';
                 """);
 
@@ -175,9 +175,9 @@ class HsBookingItemRepositoryIntegrationTest extends ContextBasedTestWithCleanup
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
-                            // global-admin
+                            // rbac.global-admin
                             "{ grant perm:hs_booking_item#somenewbookingitem:INSERT>hs_booking_item to role:hs_booking_item#somenewbookingitem:ADMIN by system and assume }",
-                            "{ grant perm:hs_booking_item#somenewbookingitem:DELETE to role:global#global:ADMIN by system and assume }",
+                            "{ grant perm:hs_booking_item#somenewbookingitem:DELETE to role:rbac.global#global:ADMIN by system and assume }",
 
                             // owner
                             "{ grant role:hs_booking_item#somenewbookingitem:OWNER to role:hs_booking_project#D-1000111-D-1000111defaultproject:AGENT by system and assume }",

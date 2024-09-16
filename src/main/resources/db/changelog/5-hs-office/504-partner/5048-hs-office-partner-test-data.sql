@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-partner-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -21,7 +21,7 @@ declare
     relatedPerson       hs_office_person;
     relatedDetailsUuid  uuid;
 begin
-    idName := cleanIdentifier( partnerPersonName|| '-' || contactCaption);
+    idName := base.cleanIdentifier( partnerPersonName|| '-' || contactCaption);
 
     select p.* from hs_office_person p
                where p.tradeName = mandantTradeName
@@ -66,12 +66,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-partner-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating partner test-data ', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating partner test-data ', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createHsOfficePartnerTestData('Hostsharing eG', 10001, 'First GmbH', 'first contact');
         call createHsOfficePartnerTestData('Hostsharing eG', 10002, 'Second e.K.', 'second contact');

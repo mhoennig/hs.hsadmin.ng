@@ -1,12 +1,12 @@
 package net.hostsharing.hsadminng.rbac.test;
 
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantEntity;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
-import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleEntity;
-import net.hostsharing.hsadminng.rbac.rbacrole.RbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantEntity;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
+import net.hostsharing.hsadminng.rbac.role.RbacRoleEntity;
+import net.hostsharing.hsadminng.rbac.role.RbacRoleRepository;
 import org.apache.commons.collections4.SetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -200,7 +200,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
             });
         }).caughtException();
 
-        // ... and in case of foreign key violations, we rely on the RbacObject cleanup.
+        // ... and in case of foreign key violations, we rely on the rbac.object cleanup.
         if (exception != null) {
             System.err.println(exception);
         }
@@ -305,7 +305,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     protected String[] roleNames(final String sqlLikeExpression) {
         final var pattern = Pattern.compile(sqlLikeExpression);
         //noinspection unchecked
-        final List<Object[]> rows = (List<Object[]>) em.createNativeQuery("select * from rbacrole_ev where roleidname like 'hs_booking_project#%'")
+        final List<Object[]> rows = (List<Object[]>) em.createNativeQuery("select * from rbac.role_ev where roleidname like 'hs_booking_project#%'")
                 .getResultList();
         return rows.stream()
                 .map(row -> (row[0]).toString())
@@ -322,7 +322,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     protected void generateRbacDiagramForCurrentSubjects(final EnumSet<RbacGrantsDiagramService.Include> include, final String name) {
         RbacGrantsDiagramService.writeToFile(
                 name,
-                diagramService.allGrantsToCurrentUser(include),
+                diagramService.allGrantsTocurrentSubject(include),
                 "doc/temp/" + name + ".md"
         );
     }
@@ -362,7 +362,7 @@ interface RbacObjectRepository extends Repository<RbacObjectEntity, UUID> {
 }
 
 @Entity
-@Table(name = "rbacobject")
+@Table(schema ="rbac", name = "object")
 class RbacObjectEntity {
 
     @Id

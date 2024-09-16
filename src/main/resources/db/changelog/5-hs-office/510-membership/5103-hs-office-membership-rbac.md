@@ -85,16 +85,16 @@ end
 user:creator ==> role:membership:OWNER
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
 role:partnerRel.anchorPerson:OWNER -.-> role:partnerRel.anchorPerson:ADMIN
 role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel.anchorPerson:REFERRER
-role:global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
 role:partnerRel.holderPerson:OWNER -.-> role:partnerRel.holderPerson:ADMIN
 role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel.holderPerson:REFERRER
-role:global:ADMIN -.-> role:partnerRel.contact:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.contact:OWNER
 role:partnerRel.contact:OWNER -.-> role:partnerRel.contact:ADMIN
 role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
-role:global:ADMIN -.-> role:partnerRel:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
@@ -111,7 +111,7 @@ role:partnerRel:AGENT ==> role:membership:AGENT
 role:membership:AGENT ==> role:partnerRel:TENANT
 
 %% granting permissions to roles
-role:global:ADMIN ==> perm:membership:INSERT
+role:rbac.global:ADMIN ==> perm:membership:INSERT
 role:membership:ADMIN ==> perm:membership:DELETE
 role:membership:ADMIN ==> perm:membership:UPDATE
 role:membership:AGENT ==> perm:membership:SELECT

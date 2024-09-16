@@ -99,16 +99,16 @@ end
 user:creator ==> role:sepaMandate:OWNER
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:debitorRel.anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel.anchorPerson:OWNER
 role:debitorRel.anchorPerson:OWNER -.-> role:debitorRel.anchorPerson:ADMIN
 role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel.anchorPerson:REFERRER
-role:global:ADMIN -.-> role:debitorRel.holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel.holderPerson:OWNER
 role:debitorRel.holderPerson:OWNER -.-> role:debitorRel.holderPerson:ADMIN
 role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel.holderPerson:REFERRER
-role:global:ADMIN -.-> role:debitorRel.contact:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel.contact:OWNER
 role:debitorRel.contact:OWNER -.-> role:debitorRel.contact:ADMIN
 role:debitorRel.contact:ADMIN -.-> role:debitorRel.contact:REFERRER
-role:global:ADMIN -.-> role:debitorRel:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
 role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
 role:debitorRel:AGENT -.-> role:debitorRel:TENANT
@@ -118,10 +118,10 @@ role:debitorRel:TENANT -.-> role:debitorRel.holderPerson:REFERRER
 role:debitorRel:TENANT -.-> role:debitorRel.contact:REFERRER
 role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
-role:global:ADMIN -.-> role:bankAccount:OWNER
+role:rbac.global:ADMIN -.-> role:bankAccount:OWNER
 role:bankAccount:OWNER -.-> role:bankAccount:ADMIN
 role:bankAccount:ADMIN -.-> role:bankAccount:REFERRER
-role:global:ADMIN ==> role:sepaMandate:OWNER
+role:rbac.global:ADMIN ==> role:sepaMandate:OWNER
 role:sepaMandate:OWNER ==> role:sepaMandate:ADMIN
 role:sepaMandate:ADMIN ==> role:sepaMandate:AGENT
 role:sepaMandate:AGENT ==> role:bankAccount:REFERRER

@@ -31,10 +31,10 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficePersonResource>> listPersons(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final String caption) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = personRepo.findPersonByOptionalNameLike(caption);
 
@@ -45,11 +45,11 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficePersonResource> addPerson(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsOfficePersonInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficePersonEntity.class);
 
@@ -67,11 +67,11 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsOfficePersonResource> getPersonByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID personUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = personRepo.findByUuid(personUuid);
         if (result.isEmpty()) {
@@ -83,10 +83,10 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deletePersonByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID personUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = personRepo.deleteByUuid(personUuid);
         if (result == 0) {
@@ -99,12 +99,12 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficePersonResource> patchPerson(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID personUuid,
             final HsOfficePersonPatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = personRepo.findByUuid(personUuid).orElseThrow();
 

@@ -4,7 +4,7 @@ get:
     description: 'Fetch a single business person by its uuid, if visible for the current subject.'
     operationId: getPersonByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUUID
           in: path
@@ -32,7 +32,7 @@ patch:
     description: 'Updates a single person by its uuid, if permitted for the current subject.'
     operationId: patchPerson
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: personUUID
             in: path
@@ -63,7 +63,7 @@ delete:
     description: 'Delete a single business person by its uuid, if permitted for the current subject.'
     operationId: deletePersonByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUUID
           in: path

@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-relation-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -22,7 +22,7 @@ declare
     contact         hs_office_contact;
 
 begin
-    idName := cleanIdentifier( anchorPersonName || '-' || holderPersonName);
+    idName := base.cleanIdentifier( anchorPersonName || '-' || holderPersonName);
 
     select p.*
             into anchorPerson
@@ -69,8 +69,8 @@ declare
 begin
     for t in startCount..endCount
         loop
-            select p.* from hs_office_person p where tradeName = intToVarChar(t, 4) into person;
-            select c.* from hs_office_contact c where c.caption = intToVarChar(t, 4) || '#' || t into contact;
+            select p.* from hs_office_person p where tradeName = base.intToVarChar(t, 4) into person;
+            select c.* from hs_office_contact c where c.caption = base.intToVarChar(t, 4) || '#' || t into contact;
 
             call createHsOfficeRelationTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
             commit;
@@ -80,12 +80,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-relation-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating relation test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating relation test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createHsOfficeRelationTestData('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
         call createHsOfficeRelationTestData('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');

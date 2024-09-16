@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-relation-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TYPE HsOfficeRelationType AS ENUM (
@@ -18,7 +18,7 @@ CREATE CAST (character varying as HsOfficeRelationType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office_relation
 (
-    uuid             uuid unique references RbacObject (uuid) initially deferred, -- on delete cascade
+    uuid             uuid unique references rbac.object (uuid) initially deferred, -- on delete cascade
     version          int not null default 0,
     anchorUuid       uuid not null references hs_office_person(uuid),
     holderUuid       uuid not null references hs_office_person(uuid),
@@ -30,8 +30,8 @@ create table if not exists hs_office_relation
 
 
 -- ============================================================================
---changeset hs-office-relation-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_relation');
+call base.create_journal('hs_office_relation');
 --//

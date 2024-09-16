@@ -62,7 +62,7 @@ class HsOfficeBankAccountControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/bankaccounts")
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -109,7 +109,7 @@ class HsOfficeBankAccountControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/bankaccounts")
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

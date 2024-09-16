@@ -39,12 +39,12 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeCoopSharesTransactionResource>> listCoopShares(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid,
             final @DateTimeFormat(iso = ISO.DATE) LocalDate fromValueDate,
             final @DateTimeFormat(iso = ISO.DATE) LocalDate toValueDate) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
                 membershipUuid,
@@ -58,11 +58,11 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     @Override
     @Transactional
     public ResponseEntity<HsOfficeCoopSharesTransactionResource> addCoopSharesTransaction(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsOfficeCoopSharesTransactionInsertResource requestBody) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
         validate(requestBody);
 
         final var entityToSave = mapper.map(requestBody, HsOfficeCoopSharesTransactionEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
@@ -81,9 +81,9 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsOfficeCoopSharesTransactionResource> getCoopShareTransactionByUuid(
-        final String currentUser, final String assumedRoles, final UUID shareTransactionUuid) {
+        final String currentSubject, final String assumedRoles, final UUID shareTransactionUuid) {
 
-            context.define(currentUser, assumedRoles);
+            context.define(currentSubject, assumedRoles);
 
             final var result = coopSharesTransactionRepo.findByUuid(shareTransactionUuid);
             if (result.isEmpty()) {

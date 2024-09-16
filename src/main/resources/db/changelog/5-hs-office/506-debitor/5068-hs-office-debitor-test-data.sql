@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-debitor-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-debitor-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -20,7 +20,7 @@ declare
     relatedDebitorRelUuid   uuid;
     relatedBankAccountUuid  uuid;
 begin
-    idName := cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactCaption);
+    idName := base.cleanIdentifier( forPartnerPersonName|| '-' || forBillingContactCaption);
 
     select debitorRel.uuid
             into relatedDebitorRelUuid
@@ -45,12 +45,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-debitor-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-debitor-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating debitor test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating debitor test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createHsOfficeDebitorTestData(11, 'First GmbH', 'first contact', 'fir');
         call createHsOfficeDebitorTestData(12, 'Second e.K.', 'second contact', 'sec');

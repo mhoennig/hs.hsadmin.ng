@@ -36,30 +36,30 @@ class ContextIntegrationTests {
 
         context.define("superuser-alex@hostsharing.net", null);
 
-        assertThat(context.getCurrentTask())
+        assertThat(context.fetchCurrentTask())
                 .isEqualTo("ContextIntegrationTests.defineWithoutHttpServletRequestUsesCallStack");
     }
 
     @Test
     @Transactional
-    void defineWithCurrentUserButWithoutAssumedRoles() {
+    void defineWithcurrentSubjectButWithoutAssumedRoles() {
         // when
         context.define("superuser-alex@hostsharing.net");
 
         // then
-        assertThat(context.getCurrentUser()).
+        assertThat(context.fetchCurrentSubject()).
                 isEqualTo("superuser-alex@hostsharing.net");
 
-        assertThat(context.getCurrentUserUUid()).isNotNull();
+        assertThat(context.fetchCurrentSubjectUuid()).isNotNull();
 
-        assertThat(context.getAssumedRoles()).isEmpty();
+        assertThat(context.fetchAssumedRoles()).isEmpty();
 
-        assertThat(context.currentSubjectsUuids())
-                .containsExactly(context.getCurrentUserUUid());
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids())
+                .containsExactly(context.fetchCurrentSubjectUuid());
     }
 
     @Test
-    void defineWithoutCurrentUserButWithAssumedRoles() {
+    void defineWithoutcurrentSubjectButWithAssumedRoles() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define(null, "test_package#yyy00:ADMIN")
@@ -72,7 +72,7 @@ class ContextIntegrationTests {
     }
 
     @Test
-    void defineWithUnknownCurrentUser() {
+    void defineWithUnknowncurrentSubject() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define("unknown@example.org")
@@ -81,27 +81,27 @@ class ContextIntegrationTests {
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "[401] user unknown@example.org given in `defineContext(...)` does not exist");
+                "[401] subject unknown@example.org given in `base.defineContext(...)` does not exist");
     }
 
     @Test
     @Transactional
-    void defineWithCurrentUserAndAssumedRoles() {
+    void defineWithcurrentSubjectAndAssumedRoles() {
         // given
         context.define("superuser-alex@hostsharing.net", "test_customer#xxx:OWNER;test_customer#yyy:OWNER");
 
         // when
-        final var currentUser = context.getCurrentUser();
-        assertThat(currentUser).isEqualTo("superuser-alex@hostsharing.net");
+        final var currentSubject = context.fetchCurrentSubject();
+        assertThat(currentSubject).isEqualTo("superuser-alex@hostsharing.net");
 
         // then
-        assertThat(context.getAssumedRoles())
+        assertThat(context.fetchAssumedRoles())
                 .isEqualTo(Array.of("test_customer#xxx:OWNER", "test_customer#yyy:OWNER"));
-        assertThat(context.currentSubjectsUuids()).hasSize(2);
+        assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids()).hasSize(2);
     }
 
     @Test
-    public void defineContextWithCurrentUserAndAssumeInaccessibleRole() {
+    public void defineContextWithcurrentSubjectAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define("customer-admin@xxx.example.com", "test_package#yyy00:ADMIN")
@@ -110,6 +110,6 @@ class ContextIntegrationTests {
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "ERROR: [403] user customer-admin@xxx.example.com has no permission to assume role test_package#yyy00:ADMIN");
+                "ERROR: [403] subject customer-admin@xxx.example.com has no permission to assume role test_package#yyy00:ADMIN");
     }
 }

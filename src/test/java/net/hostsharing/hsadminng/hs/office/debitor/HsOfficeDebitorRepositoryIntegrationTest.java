@@ -9,9 +9,9 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
-import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
+import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.hibernate.Hibernate;
@@ -34,8 +34,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static net.hostsharing.hsadminng.rbac.test.EntityList.one;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -190,7 +190,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
                     // owner
                     "{ grant perm:debitor#D-1000122:DELETE                          to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
                     "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:DELETE   to role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER by system and assume }",
-                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:global#global:ADMIN by system and assume }",
+                    "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:rbac.global#global:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to role:person#FirstGmbH:ADMIN by system and assume }",
                     "{ grant role:relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER    to user:superuser-alex@hostsharing.net by relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER and assume }",
 
@@ -349,7 +349,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // then
             result.assertSuccessful();
-            assertThatDebitorIsVisibleForUserWithRole(result.returnedValue(), "global#global:ADMIN", true);
+            assertThatDebitorIsVisibleForUserWithRole(result.returnedValue(), "rbac.global#global:ADMIN", true);
 
             // ... partner role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
@@ -398,7 +398,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "global#global:ADMIN", true);
+                    "rbac.global#global:ADMIN", true);
 
             // ... bank-account role was assigned:
             assertThatDebitorIsVisibleForUserWithRole(
@@ -427,7 +427,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertSuccessful();
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "global#global:ADMIN", true);
+                    "rbac.global#global:ADMIN", true);
 
             // ... bank-account role was removed from previous bank-account admin:
             assertThatDebitorIsNotVisibleForUserWithRole(
@@ -590,7 +590,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'defaultprefix'
-                    from tx_journal_v
+                    from base.tx_journal_v
                     where targettable = 'hs_office_debitor';
                     """);
 

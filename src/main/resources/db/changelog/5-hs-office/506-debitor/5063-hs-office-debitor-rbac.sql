@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:hs-office-debitor-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_debitor');
+call rbac.generateRelatedRbacObject('hs_office_debitor');
 --//
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-office-debitor-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeDebitor', 'hs_office_debitor');
+call rbac.generateRbacRoleDescriptors('hsOfficeDebitor', 'hs_office_debitor');
 --//
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-debitor-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -35,7 +35,7 @@ declare
     newRefundBankAccount hs_office_bankaccount;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT partnerRel.*
         FROM hs_office_relation AS partnerRel
@@ -51,17 +51,17 @@ begin
 
     SELECT * FROM hs_office_bankaccount WHERE uuid = NEW.refundBankAccountUuid    INTO newRefundBankAccount;
 
-    call grantRoleToRole(hsOfficeBankAccountREFERRER(newRefundBankAccount), hsOfficeRelationAGENT(newDebitorRel));
-    call grantRoleToRole(hsOfficeRelationADMIN(newDebitorRel), hsOfficeRelationADMIN(newPartnerRel));
-    call grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeBankAccountADMIN(newRefundBankAccount));
-    call grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeRelationAGENT(newPartnerRel));
-    call grantRoleToRole(hsOfficeRelationTENANT(newPartnerRel), hsOfficeRelationAGENT(newDebitorRel));
+    call rbac.grantRoleToRole(hsOfficeBankAccountREFERRER(newRefundBankAccount), hsOfficeRelationAGENT(newDebitorRel));
+    call rbac.grantRoleToRole(hsOfficeRelationADMIN(newDebitorRel), hsOfficeRelationADMIN(newPartnerRel));
+    call rbac.grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeBankAccountADMIN(newRefundBankAccount));
+    call rbac.grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeRelationAGENT(newPartnerRel));
+    call rbac.grantRoleToRole(hsOfficeRelationTENANT(newPartnerRel), hsOfficeRelationAGENT(newDebitorRel));
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newDebitorRel));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newDebitorRel));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationADMIN(newDebitorRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newDebitorRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newDebitorRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationADMIN(newDebitorRel));
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -85,7 +85,7 @@ execute procedure insertTriggerForHsOfficeDebitor_tf();
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-update-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-debitor-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -101,7 +101,7 @@ begin
 
     if NEW.debitorRelUuid is distinct from OLD.debitorRelUuid
     or NEW.refundBankAccountUuid is distinct from OLD.refundBankAccountUuid then
-        delete from rbacgrants g where g.grantedbytriggerof = OLD.uuid;
+        delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
         call buildRbacSystemForHsOfficeDebitor(NEW);
     end if;
 end; $$;
@@ -127,26 +127,26 @@ execute procedure updateTriggerForHsOfficeDebitor_tf();
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-debitor-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to global ----------------------------
+-- granting INSERT permission to rbac.global ----------------------------
 
 /*
-    Grants INSERT INTO hs_office_debitor permissions to specified role of pre-existing global rows.
+    Grants INSERT INTO hs_office_debitor permissions to specified role of pre-existing rbac.global rows.
  */
 do language plpgsql $$
     declare
-        row global;
+        row rbac.global;
     begin
-        call defineContext('create INSERT INTO hs_office_debitor permissions for pre-exising global rows');
+        call base.defineContext('create INSERT INTO hs_office_debitor permissions for pre-exising rbac.global rows');
 
-        FOR row IN SELECT * FROM global
+        FOR row IN SELECT * FROM rbac.global
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_office_debitor'),
-                        globalADMIN());
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_debitor'),
+                        rbac.globalADMIN());
             END LOOP;
     end;
 $$;
@@ -154,28 +154,28 @@ $$;
 /**
     Grants hs_office_debitor INSERT permission to specified role of new global rows.
 */
-create or replace function new_hs_office_debitor_grants_insert_to_global_tf()
+create or replace function rbac.new_hsof_debitor_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_office_debitor'),
-            globalADMIN());
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_debitor'),
+            rbac.globalADMIN());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_debitor_grants_insert_to_global_tg
-    after insert on global
+create trigger z_new_hs_office_debitor_grants_after_insert_tg
+    after insert on rbac.global
     for each row
-execute procedure new_hs_office_debitor_grants_insert_to_global_tf();
+execute procedure rbac.new_hsof_debitor_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset hs_office_debitor-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs_office_debitor-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -187,13 +187,13 @@ create or replace function hs_office_debitor_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if global ADMIN
-    if isGlobalAdmin() then
+    -- check INSERT INSERT if rbac.global ADMIN
+    if rbac.isGlobalAdmin() then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_office_debitor values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_office_debitor_insert_permission_check_tg
@@ -204,10 +204,10 @@ create trigger hs_office_debitor_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-office-debitor-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromQuery('hs_office_debitor',
+call rbac.generateRbacIdentityViewFromQuery('hs_office_debitor',
     $idName$
         SELECT debitor.uuid AS uuid,
                     'D-' || (SELECT partner.partnerNumber
@@ -224,9 +224,9 @@ call generateRbacIdentityViewFromQuery('hs_office_debitor',
 
 
 -- ============================================================================
---changeset hs-office-debitor-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-debitor-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_debitor',
+call rbac.generateRbacRestrictedView('hs_office_debitor',
     $orderBy$
         defaultPrefix
     $orderBy$,

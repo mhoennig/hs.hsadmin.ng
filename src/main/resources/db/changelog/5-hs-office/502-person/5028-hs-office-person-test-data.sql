@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-person-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -20,10 +20,10 @@ declare
     emailAddr   varchar;
 begin
     fullName := concat_ws(', ', newTradeName, newFamilyName, newGivenName);
-    emailAddr = 'person-' || left(cleanIdentifier(fullName), 32) || '@example.com';
-    call defineContext('creating person test-data');
-    perform createRbacUser(emailAddr);
-    call defineContext('creating person test-data', null, emailAddr);
+    emailAddr = 'person-' || left(base.cleanIdentifier(fullName), 32) || '@example.com';
+    call base.defineContext('creating person test-data');
+    perform rbac.create_subject(emailAddr);
+    call base.defineContext('creating person test-data', null, emailAddr);
 
     raise notice 'creating test person: % by %', fullName, emailAddr;
     insert
@@ -43,7 +43,7 @@ create or replace procedure createTestPersonTestData(
 begin
     for t in startCount..endCount
         loop
-            call createHsOfficePersonTestData('LP', intToVarChar(t, 4));
+            call createHsOfficePersonTestData('LP', base.intToVarChar(t, 4));
             commit;
         end loop;
 end; $$;
@@ -51,7 +51,7 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-person-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

@@ -69,7 +69,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/memberships")
-                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .header("current-subject", "superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
@@ -99,7 +99,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/memberships")
-                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .header("current-subject", "superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
@@ -125,7 +125,7 @@ public class HsOfficeMembershipControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/office/memberships")
-                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .header("current-subject", "superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {

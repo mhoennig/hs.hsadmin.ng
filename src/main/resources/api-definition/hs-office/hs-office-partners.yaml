@@ -1,11 +1,11 @@
 get:
     summary: Returns a list of (optionally filtered) business partners.
-    description: Returns the list of (optionally filtered) business partners which are visible to the current user or any of it's assumed roles.
+    description: Returns the list of (optionally filtered) business partners which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-office-partners
     operationId: listPartners
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: name
           in: query
@@ -33,7 +33,7 @@ post:
         - hs-office-partners
     operationId: addPartner
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

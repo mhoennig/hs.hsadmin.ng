@@ -32,12 +32,12 @@ end
 user:creator ==> role:bankAccount:OWNER
 
 %% granting roles to roles
-role:global:ADMIN ==> role:bankAccount:OWNER
+role:rbac.global:ADMIN ==> role:bankAccount:OWNER
 role:bankAccount:OWNER ==> role:bankAccount:ADMIN
 role:bankAccount:ADMIN ==> role:bankAccount:REFERRER
 
 %% granting permissions to roles
-role:global:GUEST ==> perm:bankAccount:INSERT
+role:rbac.global:GUEST ==> perm:bankAccount:INSERT
 role:bankAccount:OWNER ==> perm:bankAccount:DELETE
 role:bankAccount:ADMIN ==> perm:bankAccount:UPDATE
 role:bankAccount:REFERRER ==> perm:bankAccount:SELECT

@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset test-package-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:test-package-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('test_package');
+call rbac.generateRelatedRbacObject('test_package');
 --//
 
 
 -- ============================================================================
---changeset test-package-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:test-package-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('testPackage', 'test_package');
+call rbac.generateRbacRoleDescriptors('testPackage', 'test_package');
 --//
 
 
 -- ============================================================================
---changeset test-package-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:test-package-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -33,31 +33,31 @@ declare
     newCustomer test_customer;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM test_customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
     assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
 
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testPackageOWNER(NEW),
             permissions => array['DELETE', 'UPDATE'],
             incomingSuperRoles => array[testCustomerADMIN(newCustomer)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testPackageADMIN(NEW),
             incomingSuperRoles => array[testPackageOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testPackageTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[testPackageADMIN(NEW)],
             outgoingSubRoles => array[testCustomerTENANT(newCustomer)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -81,7 +81,7 @@ execute procedure insertTriggerForTestPackage_tf();
 
 
 -- ============================================================================
---changeset test-package-rbac-update-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:test-package-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -99,7 +99,7 @@ declare
     newCustomer test_customer;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM test_customer WHERE uuid = OLD.customerUuid    INTO oldCustomer;
     assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s', OLD.customerUuid);
@@ -110,15 +110,15 @@ begin
 
     if NEW.customerUuid <> OLD.customerUuid then
 
-        call revokeRoleFromRole(testPackageOWNER(OLD), testCustomerADMIN(oldCustomer));
-        call grantRoleToRole(testPackageOWNER(NEW), testCustomerADMIN(newCustomer));
+        call rbac.revokeRoleFromRole(testPackageOWNER(OLD), testCustomerADMIN(oldCustomer));
+        call rbac.grantRoleToRole(testPackageOWNER(NEW), testCustomerADMIN(newCustomer));
 
-        call revokeRoleFromRole(testCustomerTENANT(oldCustomer), testPackageTENANT(OLD));
-        call grantRoleToRole(testCustomerTENANT(newCustomer), testPackageTENANT(NEW));
+        call rbac.revokeRoleFromRole(testCustomerTENANT(oldCustomer), testPackageTENANT(OLD));
+        call rbac.grantRoleToRole(testCustomerTENANT(newCustomer), testPackageTENANT(NEW));
 
     end if;
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -142,7 +142,7 @@ execute procedure updateTriggerForTestPackage_tf();
 
 
 -- ============================================================================
---changeset test-package-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:test-package-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to test_customer ----------------------------
@@ -154,13 +154,13 @@ do language plpgsql $$
     declare
         row test_customer;
     begin
-        call defineContext('create INSERT INTO test_package permissions for pre-exising test_customer rows');
+        call base.defineContext('create INSERT INTO test_package permissions for pre-exising test_customer rows');
 
         FOR row IN SELECT * FROM test_customer
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'test_package'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'test_package'),
                         testCustomerADMIN(row));
             END LOOP;
     end;
@@ -175,22 +175,22 @@ create or replace function new_test_package_grants_insert_to_test_customer_tf()
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'test_package'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'test_package'),
             testCustomerADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_test_package_grants_insert_to_test_customer_tg
+create trigger z_new_test_package_grants_after_insert_tg
     after insert on test_customer
     for each row
 execute procedure new_test_package_grants_insert_to_test_customer_tf();
 
 
 -- ============================================================================
---changeset test_package-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:test_package-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -203,12 +203,12 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission via direct foreign key: NEW.customerUuid
-    if hasInsertPermission(NEW.customerUuid, 'test_package') then
+    if rbac.hasInsertPermission(NEW.customerUuid, 'test_package') then
         return NEW;
     end if;
 
     raise exception '[403] insert into test_package values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger test_package_insert_permission_check_tg
@@ -219,10 +219,10 @@ create trigger test_package_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset test-package-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:test-package-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('test_package',
+call rbac.generateRbacIdentityViewFromProjection('test_package',
     $idName$
         name
     $idName$);
@@ -230,9 +230,9 @@ call generateRbacIdentityViewFromProjection('test_package',
 
 
 -- ============================================================================
---changeset test-package-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:test-package-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('test_package',
+call rbac.generateRbacRestrictedView('test_package',
     $orderBy$
         name
     $orderBy$,

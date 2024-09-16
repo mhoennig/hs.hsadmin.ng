@@ -88,10 +88,10 @@ user:creator ==> role:asset:OWNER
 role:bookingItem:OWNER -.-> role:bookingItem:ADMIN
 role:bookingItem:ADMIN -.-> role:bookingItem:AGENT
 role:bookingItem:AGENT -.-> role:bookingItem:TENANT
-role:global:ADMIN -.-> role:alarmContact:OWNER
+role:rbac.global:ADMIN -.-> role:alarmContact:OWNER
 role:alarmContact:OWNER -.-> role:alarmContact:ADMIN
 role:alarmContact:ADMIN -.-> role:alarmContact:REFERRER
-role:global:ADMIN ==>|XX| role:asset:OWNER
+role:rbac.global:ADMIN ==>|XX| role:asset:OWNER
 role:bookingItem:ADMIN ==> role:asset:OWNER
 role:parentAsset:ADMIN ==> role:asset:OWNER
 role:asset:OWNER ==> role:asset:ADMIN
@@ -107,9 +107,9 @@ role:asset:TENANT ==> role:parentAsset:TENANT
 role:alarmContact:ADMIN ==> role:asset:TENANT
 
 %% granting permissions to roles
-role:global:ADMIN ==> perm:asset:INSERT
+role:rbac.global:ADMIN ==> perm:asset:INSERT
 role:parentAsset:ADMIN ==> perm:asset:INSERT
-role:global:GUEST ==> perm:asset:INSERT
+role:rbac.global:GUEST ==> perm:asset:INSERT
 role:asset:OWNER ==> perm:asset:DELETE
 role:asset:ADMIN ==> perm:asset:UPDATE
 role:asset:TENANT ==> perm:asset:SELECT

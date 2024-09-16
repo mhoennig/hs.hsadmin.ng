@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-booking-project-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -34,12 +34,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-booking-project-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createHsBookingProjectTransactionTestData(10001, '11');
         call createHsBookingProjectTransactionTestData(10002, '12');

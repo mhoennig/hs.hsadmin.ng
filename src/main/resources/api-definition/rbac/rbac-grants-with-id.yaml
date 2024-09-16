@@ -3,7 +3,7 @@ get:
     - rbac-grants
   operationId: getGrantById
   parameters:
-    - $ref: 'auth.yaml#/components/parameters/currentUser'
+    - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     - name: grantedRoleUuid
       in: path
@@ -12,13 +12,13 @@ get:
         type: string
         format: uuid
       description: UUID of the granted role.
-    - name: granteeUserUuid
+    - name: granteeSubjectUuid
       in: path
       required: true
       schema:
         type: string
         format: uuid
-      description: UUID of the user to whom the role was granted.
+      description: UUID of the subject to who the role was granted.
   responses:
     "200":
       description: OK
@@ -36,9 +36,9 @@ get:
 delete:
     tags:
         - rbac-grants
-    operationId: revokeRoleFromUser
+    operationId: revokeRoleFromSubject
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: grantedRoleUuid
           in: path
@@ -47,13 +47,13 @@ delete:
               type: string
               format: uuid
           description: UUID of the granted role.
-        - name: granteeUserUuid
+        - name: granteeSubjectUuid
           in: path
           required: true
           schema:
               type: string
               format: uuid
-          description: UUID of the user to whom the role was granted.
+          description: UUID of the subject to which the role was granted.
     responses:
         "204":
             description: No Content

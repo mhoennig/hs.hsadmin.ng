@@ -54,8 +54,8 @@ role:bookingItem:AGENT ==> role:bookingItem:TENANT
 role:bookingItem:TENANT ==> role:project:TENANT
 
 %% granting permissions to roles
-role:global:ADMIN ==> perm:bookingItem:INSERT
-role:global:ADMIN ==> perm:bookingItem:DELETE
+role:rbac.global:ADMIN ==> perm:bookingItem:INSERT
+role:rbac.global:ADMIN ==> perm:bookingItem:DELETE
 role:project:ADMIN ==> perm:bookingItem:INSERT
 role:bookingItem:ADMIN ==> perm:bookingItem:UPDATE
 role:bookingItem:TENANT ==> perm:bookingItem:SELECT

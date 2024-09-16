@@ -3,17 +3,17 @@ package net.hostsharing.hsadminng.hs.office.contact;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 
 import jakarta.persistence.*;
 import java.io.IOException;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
 @Table(name = "hs_office_contact_rv")

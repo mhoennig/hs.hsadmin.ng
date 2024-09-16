@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-membership-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-membership-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -28,12 +28,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-membership-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-membership-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating Membership test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating Membership test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createHsOfficeMembershipTestData(10001, '01');
         call createHsOfficeMembershipTestData(10002, '02');

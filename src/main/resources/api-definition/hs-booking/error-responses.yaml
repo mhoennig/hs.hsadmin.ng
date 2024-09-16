@@ -8,13 +8,13 @@ components:
                     schema:
                         $ref: '#/components/schemas/Error'
         Unauthorized:
-            description: The current user is unknown or not authorized.
+            description: The current subject is unknown or not authorized.
             content:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/Error'
         Forbidden:
-            description: The current user or none of the assumed or roles is granted access to the resource.
+            description: The current subject or none of the assumed or roles is granted access to the resource.
             content:
                 application/json:
                     schema:

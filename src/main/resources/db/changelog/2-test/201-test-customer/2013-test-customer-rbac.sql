@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset test-customer-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:test-customer-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('test_customer');
+call rbac.generateRelatedRbacObject('test_customer');
 --//
 
 
 -- ============================================================================
---changeset test-customer-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:test-customer-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('testCustomer', 'test_customer');
+call rbac.generateRbacRoleDescriptors('testCustomer', 'test_customer');
 --//
 
 
 -- ============================================================================
---changeset test-customer-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:test-customer-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -32,28 +32,28 @@ create or replace procedure buildRbacSystemForTestCustomer(
 declare
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testCustomerOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalADMIN(unassumed())],
-            userUuids => array[currentUserUuid()]
+            incomingSuperRoles => array[rbac.globalADMIN(rbac.unassumed())],
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testCustomerADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[testCustomerOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         testCustomerTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[testCustomerADMIN(NEW)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -77,26 +77,26 @@ execute procedure insertTriggerForTestCustomer_tf();
 
 
 -- ============================================================================
---changeset test-customer-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:test-customer-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to global ----------------------------
+-- granting INSERT permission to rbac.global ----------------------------
 
 /*
-    Grants INSERT INTO test_customer permissions to specified role of pre-existing global rows.
+    Grants INSERT INTO test_customer permissions to specified role of pre-existing rbac.global rows.
  */
 do language plpgsql $$
     declare
-        row global;
+        row rbac.global;
     begin
-        call defineContext('create INSERT INTO test_customer permissions for pre-exising global rows');
+        call base.defineContext('create INSERT INTO test_customer permissions for pre-exising rbac.global rows');
 
-        FOR row IN SELECT * FROM global
+        FOR row IN SELECT * FROM rbac.global
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'test_customer'),
-                        globalADMIN());
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'test_customer'),
+                        rbac.globalADMIN());
             END LOOP;
     end;
 $$;
@@ -104,28 +104,28 @@ $$;
 /**
     Grants test_customer INSERT permission to specified role of new global rows.
 */
-create or replace function new_test_customer_grants_insert_to_global_tf()
+create or replace function rbac.new_test_customer_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'test_customer'),
-            globalADMIN());
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'test_customer'),
+            rbac.globalADMIN());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_test_customer_grants_insert_to_global_tg
-    after insert on global
+create trigger z_new_test_customer_grants_after_insert_tg
+    after insert on rbac.global
     for each row
-execute procedure new_test_customer_grants_insert_to_global_tf();
+execute procedure rbac.new_test_customer_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset test_customer-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:test_customer-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -137,13 +137,13 @@ create or replace function test_customer_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if global ADMIN
-    if isGlobalAdmin() then
+    -- check INSERT INSERT if rbac.global ADMIN
+    if rbac.isGlobalAdmin() then
         return NEW;
     end if;
 
     raise exception '[403] insert into test_customer values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger test_customer_insert_permission_check_tg
@@ -154,10 +154,10 @@ create trigger test_customer_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset test-customer-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:test-customer-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('test_customer',
+call rbac.generateRbacIdentityViewFromProjection('test_customer',
     $idName$
         prefix
     $idName$);
@@ -165,9 +165,9 @@ call generateRbacIdentityViewFromProjection('test_customer',
 
 
 -- ============================================================================
---changeset test-customer-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:test-customer-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('test_customer',
+call rbac.generateRbacRestrictedView('test_customer',
     $orderBy$
         reference
     $orderBy$,

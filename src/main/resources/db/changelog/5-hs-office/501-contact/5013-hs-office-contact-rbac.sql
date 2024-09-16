@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-contact-rbac-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_contact');
+call rbac.generateRelatedRbacObject('hs_office_contact');
 --//
 
 
 -- ============================================================================
---changeset hs-office-contact-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeContact', 'hs_office_contact');
+call rbac.generateRbacRoleDescriptors('hsOfficeContact', 'hs_office_contact');
 --//
 
 
 -- ============================================================================
---changeset hs-office-contact-rbac-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -32,28 +32,28 @@ create or replace procedure buildRbacSystemForHsOfficeContact(
 declare
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeContactOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalADMIN()],
-            userUuids => array[currentUserUuid()]
+            incomingSuperRoles => array[rbac.globalAdmin()],
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeContactADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficeContactOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeContactREFERRER(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[hsOfficeContactADMIN(NEW)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -77,10 +77,10 @@ execute procedure insertTriggerForHsOfficeContact_tf();
 
 
 -- ============================================================================
---changeset hs-office-contact-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_office_contact',
+call rbac.generateRbacIdentityViewFromProjection('hs_office_contact',
     $idName$
         caption
     $idName$);
@@ -88,9 +88,9 @@ call generateRbacIdentityViewFromProjection('hs_office_contact',
 
 
 -- ============================================================================
---changeset hs-office-contact-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_contact',
+call rbac.generateRbacRestrictedView('hs_office_contact',
     $orderBy$
         caption
     $orderBy$,

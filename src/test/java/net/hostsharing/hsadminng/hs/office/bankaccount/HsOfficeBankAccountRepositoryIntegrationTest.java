@@ -2,8 +2,8 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static net.hostsharing.hsadminng.hs.office.bankaccount.TestHsOfficeBankAccount.hsOfficeBankAccount;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -109,7 +109,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
                     "{ grant perm:hs_office_bankaccount#DE25500105176934832579:DELETE   to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
-                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to role:global#global:ADMIN                                    by system and assume }",
+                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to role:rbac.global#global:ADMIN                                    by system and assume }",
                     "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to user:selfregistered-user-drew@hostsharing.org               by hs_office_bankaccount#DE25500105176934832579:OWNER and assume }",
 
                     "{ grant role:hs_office_bankaccount#DE25500105176934832579:ADMIN    to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
@@ -272,7 +272,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'iban'
-                    from tx_journal_v
+                    from base.tx_journal_v
                     where targettable = 'hs_office_bankaccount';
                     """);
 

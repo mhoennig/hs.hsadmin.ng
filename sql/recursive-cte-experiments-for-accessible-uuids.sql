@@ -1,6 +1,6 @@
 -- just a permanent playground to explore optimization of the central recursive CTE query for RBAC
 
-select * from hs_statistics_view;
+select * from hs_statistics_v;
 
 -- ========================================================
 
@@ -17,7 +17,7 @@ with recursive
                         1 as level,
                         true
             from rbacgrants
-            where (rbacgrants.ascendantuuid = any (currentsubjectsuuids()))
+            where (rbacgrants.ascendantuuid = any (rbac.currentSubjectOrAssumedRolesUuids()))
               and rbacgrants.assumed
         union all
         select distinct g.descendantuuid,

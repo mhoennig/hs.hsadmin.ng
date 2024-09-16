@@ -3,13 +3,13 @@ components:
 
     parameters:
 
-        currentUser:
-            name: current-user
+        currentSubject:
+            name: current-subject
             in: header
             required: true
             schema:
                 type: string
-            description: Identifying name of the currently logged in user.
+            description: Identifying name of the currently logged in subject.
 
         assumedRoles:
             name: assumed-roles
@@ -17,4 +17,4 @@ components:
             required: false
             schema:
                 type: string
-            description: Semicolon-separated list of roles to assume. The current user needs to have the right to assume these roles.
+            description: Semicolon-separated list of roles to assume. The current subject needs to have the right to assume these roles.

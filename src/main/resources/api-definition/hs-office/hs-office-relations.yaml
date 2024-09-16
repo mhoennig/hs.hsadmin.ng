@@ -1,11 +1,11 @@
 get:
     summary: Returns a list of (optionally filtered) person relations for a given person.
-    description: Returns the list of (optionally filtered) person relations of a given person and which are visible to the current user or any of it's assumed roles.
+    description: Returns the list of (optionally filtered) person relations of a given person and which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-office-relations
     operationId: listRelations
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUuid
           in: query
@@ -40,7 +40,7 @@ post:
         - hs-office-relations
     operationId: addRelation
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         content:

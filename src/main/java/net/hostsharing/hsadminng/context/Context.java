@@ -38,53 +38,53 @@ public class Context {
     private HttpServletRequest request;
 
     @Transactional(propagation = MANDATORY)
-    public void define(final String currentUser) {
-        define(currentUser, null);
+    public void define(final String currentSubject) {
+        define(currentSubject, null);
     }
 
     @Transactional(propagation = MANDATORY)
-    public void define(final String currentUser, final String assumedRoles) {
-        define(toTask(request), toCurl(request), currentUser, assumedRoles);
+    public void define(final String currentSubject, final String assumedRoles) {
+        define(toTask(request), toCurl(request), currentSubject, assumedRoles);
     }
 
     @Transactional(propagation = MANDATORY)
     public void define(
             final String currentTask,
             final String currentRequest,
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles) {
         final var query = em.createNativeQuery("""
-                call defineContext(
+                call base.defineContext(
                     cast(:currentTask as varchar(127)),
                     cast(:currentRequest as text),
-                    cast(:currentUser as varchar(63)),
+                    cast(:currentSubject as varchar(63)),
                     cast(:assumedRoles as varchar(1023)));
                 """);
         query.setParameter("currentTask", shortenToMaxLength(currentTask, 127));
         query.setParameter("currentRequest", currentRequest);
-        query.setParameter("currentUser", currentUser);
+        query.setParameter("currentSubject", currentSubject);
         query.setParameter("assumedRoles", assumedRoles != null ? assumedRoles : "");
         query.executeUpdate();
     }
 
-    public String getCurrentTask() {
+    public String fetchCurrentTask() {
         return (String) em.createNativeQuery("select current_setting('hsadminng.currentTask');").getSingleResult();
     }
 
-    public String getCurrentUser() {
-        return String.valueOf(em.createNativeQuery("select currentUser()").getSingleResult());
+    public String fetchCurrentSubject() {
+        return String.valueOf(em.createNativeQuery("select base.currentSubject()").getSingleResult());
     }
 
-    public UUID getCurrentUserUUid() {
-        return (UUID) em.createNativeQuery("select currentUserUUid()", UUID.class).getSingleResult();
+    public UUID fetchCurrentSubjectUuid() {
+        return (UUID) em.createNativeQuery("select rbac.currentSubjectUuid()", UUID.class).getSingleResult();
     }
 
-    public String[] getAssumedRoles() {
-        return (String[]) em.createNativeQuery("select assumedRoles() as roles", String[].class).getSingleResult();
+    public String[] fetchAssumedRoles() {
+        return (String[]) em.createNativeQuery("select base.assumedRoles() as roles", String[].class).getSingleResult();
     }
 
-    public UUID[] currentSubjectsUuids() {
-        return (UUID[]) em.createNativeQuery("select currentSubjectsUuids() as uuids", UUID[].class).getSingleResult();
+    public UUID[] fetchCurrentSubjectOrAssumedRolesUuids() {
+        return (UUID[]) em.createNativeQuery("select rbac.currentSubjectOrAssumedRolesUuids() as uuids", UUID[].class).getSingleResult();
     }
 
     public static String getCallerMethodNameFromStackFrame(final int skipFrames) {

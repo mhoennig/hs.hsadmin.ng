@@ -4,7 +4,7 @@
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================
---changeset hs-office-coopassets-MIGRATION-mapping:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MIGRATION-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE hs_office_coopassetstransaction_legacy_id
@@ -16,7 +16,7 @@ CREATE TABLE hs_office_coopassetstransaction_legacy_id
 
 
 -- ============================================================================
---changeset hs-office-coopassets-MIGRATION-sequence:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MIGRATION-sequence endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE SEQUENCE IF NOT EXISTS hs_office_coopassetstransaction_legacy_id_seq
@@ -27,7 +27,7 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_coopassetstransaction_legacy_id_seq
 
 
 -- ============================================================================
---changeset hs-office-coopassets-MIGRATION-default:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MIGRATION-default endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE hs_office_coopassetstransaction_legacy_id
@@ -37,17 +37,17 @@ ALTER TABLE hs_office_coopassetstransaction_legacy_id
 
 
 -- ============================================================================
---changeset hs-office-coopassets-MIGRATION-insert:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MIGRATION-insert endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CALL defineContext('schema-migration');
+CALL base.defineContext('schema-migration');
 INSERT INTO hs_office_coopassetstransaction_legacy_id(uuid, member_asset_id)
     SELECT uuid, nextVal('hs_office_coopassetstransaction_legacy_id_seq') FROM hs_office_coopassetstransaction;
 --/
 
 
 -- ============================================================================
---changeset hs-office-coopAssets-MIGRATION-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopAssets-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function insertCoopAssetsLegacyIdMapping()
     returns trigger
@@ -72,7 +72,7 @@ create trigger createCoopAssetsLegacyIdMapping
 
 
 -- ============================================================================
---changeset hs-office-coopAssets-MIGRATION-delete-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopAssets-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function deleteCoopAssetsLegacyIdMapping()
     returns trigger

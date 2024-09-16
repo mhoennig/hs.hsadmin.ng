@@ -29,11 +29,11 @@ public class TestPackageController implements TestPackagesApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<TestPackageResource>> listPackages(
-            String currentUser,
+            String currentSubject,
             String assumedRoles,
             String name
     ) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = testPackageRepository.findAllByOptionalNameLike(name);
         return ResponseEntity.ok(mapper.mapList(result, TestPackageResource.class));
@@ -42,12 +42,12 @@ public class TestPackageController implements TestPackagesApi {
     @Override
     @Transactional
     public ResponseEntity<TestPackageResource> updatePackage(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID packageUuid,
             final TestPackageUpdateResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = testPackageRepository.findByUuid(packageUuid);
         OptionalFromJson.of(body.getDescription()).ifPresent(current::setDescription);

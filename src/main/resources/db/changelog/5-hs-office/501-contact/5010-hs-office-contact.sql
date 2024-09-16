@@ -1,12 +1,12 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-contact-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create table if not exists hs_office_contact
 (
-    uuid           uuid unique references RbacObject (uuid) initially deferred,
+    uuid           uuid unique references rbac.object (uuid) initially deferred,
     version        int not null default 0,
     caption        varchar(128) not null,
     postalAddress  text,
@@ -17,8 +17,8 @@ create table if not exists hs_office_contact
 
 
 -- ============================================================================
---changeset hs-office-contact-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-contact-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_contact');
+call base.create_journal('hs_office_contact');
 --//

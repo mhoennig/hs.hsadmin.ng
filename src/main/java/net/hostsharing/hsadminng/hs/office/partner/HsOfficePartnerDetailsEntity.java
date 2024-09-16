@@ -2,9 +2,9 @@ package net.hostsharing.hsadminng.hs.office.partner;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -13,9 +13,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -82,7 +83,7 @@ public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerD
                         "birthName",
                         "birthday",
                         "dateOfDeath")
-                .toRole("global", ADMIN).grantPermission(INSERT)
+                .toRole(GLOBAL, ADMIN).grantPermission(INSERT)
 
                 // The grants are defined in HsOfficePartnerEntity.rbac()
                 // because they have to be changed when its partnerRel changes,

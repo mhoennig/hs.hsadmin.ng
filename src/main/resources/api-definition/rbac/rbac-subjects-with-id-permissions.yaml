@@ -1,0 +1,28 @@
+get:
+    tags:
+        - rbac-subjects
+    description: 'List all visible permissions granted to the given subject; reduced '
+    operationId: listSubjectPermissions
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: subjectUuid
+          in: path
+          required: true
+          schema:
+              type: string
+              format: uuid
+    responses:
+        "200":
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubjectPermission'
+
+        "401":
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        "403":
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'

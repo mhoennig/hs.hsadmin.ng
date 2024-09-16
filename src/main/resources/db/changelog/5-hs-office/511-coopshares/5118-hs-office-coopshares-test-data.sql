@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-coopSharesTransaction-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopSharesTransaction-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -38,12 +38,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-coopSharesTransaction-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopSharesTransaction-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating coopSharesTransaction test-data');
+        call base.defineContext('creating coopSharesTransaction test-data');
         SET CONSTRAINTS ALL DEFERRED;
 
         call createHsOfficeCoopSharesTransactionTestData(10001, '01');

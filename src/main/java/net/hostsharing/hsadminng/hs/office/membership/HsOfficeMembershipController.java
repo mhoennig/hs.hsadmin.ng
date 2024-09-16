@@ -32,11 +32,11 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeMembershipResource>> listMemberships(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             UUID partnerUuid,
             Integer memberNumber) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = ( memberNumber != null)
                     ? List.of(membershipRepo.findMembershipByMemberNumber(memberNumber))
@@ -50,11 +50,11 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficeMembershipResource> addMembership(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsOfficeMembershipInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeMembershipEntity.class);
 
@@ -73,11 +73,11 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsOfficeMembershipResource> getMembershipByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = membershipRepo.findByUuid(membershipUuid);
         if (result.isEmpty()) {
@@ -90,10 +90,10 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deleteMembershipByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = membershipRepo.deleteByUuid(membershipUuid);
         if (result == 0) {
@@ -106,12 +106,12 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficeMembershipResource> patchMembership(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid,
             final HsOfficeMembershipPatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = membershipRepo.findByUuid(membershipUuid).orElseThrow();
 

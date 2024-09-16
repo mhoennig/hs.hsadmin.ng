@@ -10,10 +10,10 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContact;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.NotFound;
@@ -24,13 +24,14 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static jakarta.persistence.CascadeType.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
@@ -103,7 +104,7 @@ public class HsOfficePartnerEntity implements Stringifyable, BaseEntity<HsOffice
         return rbacViewFor("partner", HsOfficePartnerEntity.class)
                 .withIdentityView(SQL.projection("'P-' || partnerNumber"))
                 .withUpdatableColumns("partnerRelUuid")
-                .toRole("global", ADMIN).grantPermission(INSERT)
+                .toRole(GLOBAL, ADMIN).grantPermission(INSERT)
 
                 .importRootEntityAliasProxy("partnerRel", HsOfficeRelationRbacEntity.class,
                         usingDefaultCase(),

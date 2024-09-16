@@ -32,7 +32,7 @@ end
 user:creator ==> role:contact:OWNER
 
 %% granting roles to roles
-role:global:ADMIN ==> role:contact:OWNER
+role:rbac.global:ADMIN ==> role:contact:OWNER
 role:contact:OWNER ==> role:contact:ADMIN
 role:contact:ADMIN ==> role:contact:REFERRER
 
@@ -40,6 +40,6 @@ role:contact:ADMIN ==> role:contact:REFERRER
 role:contact:OWNER ==> perm:contact:DELETE
 role:contact:ADMIN ==> perm:contact:UPDATE
 role:contact:REFERRER ==> perm:contact:SELECT
-role:global:GUEST ==> perm:contact:INSERT
+role:rbac.global:GUEST ==> perm:contact:INSERT
 
 ```

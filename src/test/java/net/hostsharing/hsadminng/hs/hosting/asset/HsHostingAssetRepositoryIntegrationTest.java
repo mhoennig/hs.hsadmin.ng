@@ -5,8 +5,8 @@ import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRbacRepository;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -35,8 +35,8 @@ import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMA
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.EMAIL_ADDRESS;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_SERVER;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.MANAGED_WEBSPACE;
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.mapper.Array.fromFormatted;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,7 +77,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'caption'
-                    from tx_journal_v
+                    from base.tx_journal_v
                     where targettable = 'hs_hosting_asset';
                 """);
 
@@ -200,8 +200,8 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
-                            // global-admin
-                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:global#global:ADMIN by system }", // workaround
+                            // rbac.global-admin
+                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:rbac.global#global:ADMIN by system }", // workaround
 
                             // owner
                             "{ grant role:hs_hosting_asset#fir00:OWNER to user:superuser-alex@hostsharing.net by hs_hosting_asset#fir00:OWNER and assume }",
@@ -250,7 +250,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             context("person-SmithPeter@example.com");
             assertThatAssetIsPersisted(result.returnedValue());
 
-            // ... a global admin can see the new domain setup as well if the domain OWNER role is assumed
+            // ... a rbac.global admin can see the new domain setup as well if the domain OWNER role is assumed
             context("superuser-alex@hostsharing.net", "hs_hosting_asset#example.net:OWNER"); // only works with the assumed role
             assertThatAssetIsPersisted(result.returnedValue());
         }

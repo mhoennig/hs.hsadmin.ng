@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-booking-debitor-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-debitor-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create view hs_booking_debitor_xv as

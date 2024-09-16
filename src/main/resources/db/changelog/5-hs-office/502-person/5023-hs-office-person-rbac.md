@@ -32,12 +32,12 @@ end
 user:creator ==> role:person:OWNER
 
 %% granting roles to roles
-role:global:ADMIN ==> role:person:OWNER
+role:rbac.global:ADMIN ==> role:person:OWNER
 role:person:OWNER ==> role:person:ADMIN
 role:person:ADMIN ==> role:person:REFERRER
 
 %% granting permissions to roles
-role:global:GUEST ==> perm:person:INSERT
+role:rbac.global:GUEST ==> perm:person:INSERT
 role:person:OWNER ==> perm:person:DELETE
 role:person:ADMIN ==> perm:person:UPDATE
 role:person:REFERRER ==> perm:person:SELECT

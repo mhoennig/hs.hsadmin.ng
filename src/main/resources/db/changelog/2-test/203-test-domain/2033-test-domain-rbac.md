@@ -54,7 +54,7 @@ subgraph package.customer["`**package.customer**`"]
 end
 
 %% granting roles to roles
-role:global:ADMIN -.->|XX| role:package.customer:OWNER
+role:rbac.global:ADMIN -.->|XX| role:package.customer:OWNER
 role:package.customer:OWNER -.-> role:package.customer:ADMIN
 role:package.customer:ADMIN -.-> role:package.customer:TENANT
 role:package.customer:ADMIN -.-> role:package:OWNER

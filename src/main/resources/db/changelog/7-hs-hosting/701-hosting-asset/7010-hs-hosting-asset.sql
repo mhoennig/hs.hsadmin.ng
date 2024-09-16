@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hosting-asset-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hosting-asset-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create type HsHostingAssetType as enum (
@@ -30,7 +30,7 @@ CREATE CAST (character varying as HsHostingAssetType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_hosting_asset
 (
-    uuid                uuid unique references RbacObject (uuid),
+    uuid                uuid unique references rbac.object (uuid),
     version             int not null default 0,
     bookingItemUuid     uuid null references hs_booking_item(uuid),
     type                HsHostingAssetType not null,
@@ -48,7 +48,7 @@ create table if not exists hs_hosting_asset
 
 
 -- ============================================================================
---changeset hosting-asset-TYPE-HIERARCHY-CHECK:1 endDelimiter:--//
+--changeset michael.hoennig:hosting-asset-TYPE-HIERARCHY-CHECK endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- TODO.impl: this could be generated from HsHostingAssetType
@@ -91,7 +91,7 @@ begin
         when 'IPV4_NUMBER' then null
         when 'IPV6_NUMBER' then null
 
-        else raiseException(format('[400] unknown asset type %s', NEW.type::text))
+        else base.raiseException(format('[400] unknown asset type %s', NEW.type::text))
     end);
 
     if expectedParentType is not null and actualParentType is null then
@@ -113,7 +113,7 @@ create trigger hs_hosting_asset_type_hierarchy_check_tg
 
 
 -- ============================================================================
---changeset hosting-asset-system-sequences:1 endDelimiter:--//
+--changeset michael.hoennig:hosting-asset-system-sequences endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_unixuser_system_id_seq
@@ -127,7 +127,7 @@ CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_unixuser_system_id_seq
 
 
 -- ============================================================================
---changeset hosting-asset-BOOKING-ITEM-HIERARCHY-CHECK:1 endDelimiter:--//
+--changeset michael.hoennig:hosting-asset-BOOKING-ITEM-HIERARCHY-CHECK endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create or replace function hs_hosting_asset_booking_item_hierarchy_check_tf()
@@ -164,16 +164,16 @@ execute procedure hs_hosting_asset_booking_item_hierarchy_check_tf();
 
 
 -- ============================================================================
---changeset hs-hosting-asset-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call create_journal('hs_hosting_asset');
+call base.create_journal('hs_hosting_asset');
 --//
 
 
 -- ============================================================================
---changeset hs-hosting-asset-MAIN-TABLE-HISTORIZATION:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-MAIN-TABLE-HISTORIZATION endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call tx_create_historicization('hs_hosting_asset');
+call base.tx_create_historicization('hs_hosting_asset');
 --//
 
 

@@ -41,10 +41,10 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsBookingItemResource>> listBookingItemsByProjectUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID projectUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = bookingItemRepo.findAllByProjectUuid(projectUuid);
 
@@ -55,11 +55,11 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Override
     @Transactional
     public ResponseEntity<HsBookingItemResource> addBookingItem(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsBookingItemInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsBookingItemRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
@@ -77,11 +77,11 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsBookingItemResource> getBookingItemByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = bookingItemRepo.findByUuid(bookingItemUuid);
         result.ifPresent(entity -> em.detach(entity)); // prevent further LAZY-loading
@@ -94,10 +94,10 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deleteBookingIemByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = bookingItemRepo.deleteByUuid(bookingItemUuid);
         return result == 0
@@ -108,12 +108,12 @@ public class HsBookingItemController implements HsBookingItemsApi {
     @Override
     @Transactional
     public ResponseEntity<HsBookingItemResource> patchBookingItem(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID bookingItemUuid,
             final HsBookingItemPatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = bookingItemRepo.findByUuid(bookingItemUuid).orElseThrow();
 

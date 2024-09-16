@@ -18,11 +18,11 @@ components:
                 grantedRoleUuid:
                     type: string
                     format: uuid
-                granteeUserName:
+                granteeSubjectName:
                     type: string
-                granteeUserUuid:
+                granteeSubjectUuid:
                     type: string
                     format: uuid
             required:
                 - grantedRoleUuid
-                - granteeUserUuid
+                - granteeSubjectUuid

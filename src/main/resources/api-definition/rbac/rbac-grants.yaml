@@ -1,9 +1,9 @@
 get:
     tags:
         - rbac-grants
-    operationId: listUserGrants
+    operationId: listSubjectGrants
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     responses:
         "200":
@@ -18,9 +18,9 @@ get:
 post:
     tags:
         - rbac-grants
-    operationId: grantRoleToUser
+    operationId: grantRoleToSubject
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         required: true

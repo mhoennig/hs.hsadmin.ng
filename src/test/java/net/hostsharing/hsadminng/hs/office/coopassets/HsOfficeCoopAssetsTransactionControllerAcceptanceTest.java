@@ -62,7 +62,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions")
@@ -80,7 +80,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                     .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions?membershipUuid="+givenMembership.getUuid())
@@ -143,7 +143,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions?membershipUuid="
@@ -176,7 +176,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -233,7 +233,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                                    {
@@ -289,7 +289,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -329,7 +329,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net")
+                .given().header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
@@ -352,7 +352,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "selfregistered-user-drew@hostsharing.org")
+                .given().header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)
@@ -370,7 +370,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "person-FirstGmbH@example.com")
+                    .header("current-subject", "person-FirstGmbH@example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopassetstransactions/" + givenCoopAssetTransactionUuid)

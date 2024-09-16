@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-coopshares-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopshares-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TYPE HsOfficeCoopSharesTransactionType AS ENUM ('ADJUSTMENT', 'SUBSCRIPTION', 'CANCELLATION');
@@ -10,7 +10,7 @@ CREATE CAST (character varying as HsOfficeCoopSharesTransactionType) WITH INOUT 
 
 create table if not exists hs_office_coopsharestransaction
 (
-    uuid            uuid unique references RbacObject (uuid) initially deferred,
+    uuid            uuid unique references rbac.object (uuid) initially deferred,
     version         int not null default 0,
     membershipUuid  uuid not null references hs_office_membership(uuid),
     transactionType HsOfficeCoopSharesTransactionType not null,
@@ -23,7 +23,7 @@ create table if not exists hs_office_coopsharestransaction
 --//
 
 -- ============================================================================
---changeset hs-office-coopshares-BUSINESS-RULES:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopshares-BUSINESS-RULES endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 alter table hs_office_coopsharestransaction
@@ -33,7 +33,7 @@ alter table hs_office_coopsharestransaction
 --//
 
 -- ============================================================================
---changeset hs-office-coopshares-SHARE-COUNT-CONSTRAINT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopshares-SHARE-COUNT-CONSTRAINT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create or replace function checkSharesByMembershipUuid(forMembershipUuid UUID, newShareCount integer)
@@ -61,8 +61,8 @@ alter table hs_office_coopsharestransaction
 --//
 
 -- ============================================================================
---changeset hs-office-coopshares-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopshares-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_coopsharestransaction');
+call base.create_journal('hs_office_coopsharestransaction');
 --//

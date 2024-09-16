@@ -1,11 +1,11 @@
 get:
     summary: Returns a filtered list of all hosting assets.
-    description: Returns the list of all hosting assets which match the given filters and are visible to the current user or any of it's assumed roles.
+    description: Returns the list of all hosting assets which match the given filters and are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-hosting-assets
     operationId: listAssets
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: projectUuid
           in: query
@@ -47,7 +47,7 @@ post:
         - hs-hosting-assets
     operationId: addAsset
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new hosting asset.

@@ -1,11 +1,11 @@
 get:
     summary: Returns a list of all booking items for a specified project.
-    description: Returns the list of all booking items for a specified project which are visible to the current user or any of it's assumed roles.
+    description: Returns the list of all booking items for a specified project which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-booking-items
     operationId: listBookingItemsByProjectUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: projectUuid
           in: query
@@ -34,7 +34,7 @@ post:
         - hs-booking-items
     operationId: addBookingItem
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new booking item.

@@ -32,12 +32,12 @@ end
 user:creator ==>|XX| role:customer:OWNER
 
 %% granting roles to roles
-role:global:ADMIN ==>|XX| role:customer:OWNER
+role:rbac.global:ADMIN ==>|XX| role:customer:OWNER
 role:customer:OWNER ==> role:customer:ADMIN
 role:customer:ADMIN ==> role:customer:TENANT
 
 %% granting permissions to roles
-role:global:ADMIN ==> perm:customer:INSERT
+role:rbac.global:ADMIN ==> perm:customer:INSERT
 role:customer:OWNER ==> perm:customer:DELETE
 role:customer:ADMIN ==> perm:customer:UPDATE
 role:customer:TENANT ==> perm:customer:SELECT

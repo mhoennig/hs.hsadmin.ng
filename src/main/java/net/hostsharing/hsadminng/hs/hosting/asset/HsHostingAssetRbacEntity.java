@@ -6,31 +6,31 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.io.IOException;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.CaseDef.inCaseOf;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.GUEST;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.REFERRER;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.CaseDef.inCaseOf;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NULLABLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.DELETE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.GUEST;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.REFERRER;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
 @Table(name = "hs_hosting_asset_rv")
@@ -106,7 +106,7 @@ public class HsHostingAssetRbacEntity extends HsHostingAsset {
                         "parentAsset",
                         "assignedToAsset",
                         "alarmContact",
-                        "global");
+                        "rbac.global");
     }
 
     public static void main(String[] args) throws IOException {

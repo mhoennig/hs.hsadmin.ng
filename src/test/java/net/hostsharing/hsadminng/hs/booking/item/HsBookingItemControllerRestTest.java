@@ -83,7 +83,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/booking/items")
-                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .header("current-subject", "superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                             {
@@ -133,7 +133,7 @@ class HsBookingItemControllerRestTest {
             // when
             mockMvc.perform(MockMvcRequestBuilders
                             .post("/api/hs/booking/items")
-                            .header("current-user", "superuser-alex@hostsharing.net")
+                            .header("current-subject", "superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                             {

@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-person-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TYPE HsOfficePersonType AS ENUM (
@@ -16,7 +16,7 @@ CREATE CAST (character varying as HsOfficePersonType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office_person
 (
-    uuid           uuid unique references RbacObject (uuid) initially deferred,
+    uuid           uuid unique references rbac.object (uuid) initially deferred,
     version        int not null default 0,
     personType     HsOfficePersonType not null,
     tradeName      varchar(96),
@@ -28,8 +28,8 @@ create table if not exists hs_office_person
 
 
 -- ============================================================================
---changeset hs-office-person-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-person-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_person');
+call base.create_journal('hs_office_person');
 --//

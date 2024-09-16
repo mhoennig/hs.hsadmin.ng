@@ -40,7 +40,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
             // given
-            // alex is not just global-admin but lso the creating user, thus we use fran
+            // alex is not just rbac.global-admin but lso the creating user, thus we use fran
             context.define("superuser-fran@hostsharing.net");
 
             // when
@@ -53,7 +53,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
             given:
-            context.define("superuser-alex@hostsharing.net", "global#global:ADMIN");
+            context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);

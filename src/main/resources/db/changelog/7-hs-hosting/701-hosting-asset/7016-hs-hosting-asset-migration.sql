@@ -40,7 +40,7 @@ ALTER TABLE hs_hosting_asset_legacy_id
 --changeset hs-hosting-asset-MIGRATION-insert:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CALL defineContext('schema-migration');
+CALL base.defineContext('schema-migration');
 INSERT INTO hs_hosting_asset_legacy_id(uuid, legacy_id)
     SELECT uuid, nextVal('hs_hosting_asset_legacy_id_seq') FROM hs_hosting_asset;
 --/

@@ -3,7 +3,7 @@ patch:
         - testPackages
     operationId: updatePackage
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: packageUUID
             in: path

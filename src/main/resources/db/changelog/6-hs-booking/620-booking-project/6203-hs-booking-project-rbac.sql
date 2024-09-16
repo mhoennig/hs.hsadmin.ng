@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-booking-project-rbac-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_booking_project');
+call rbac.generateRelatedRbacObject('hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-project-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsBookingProject', 'hs_booking_project');
+call rbac.generateRbacRoleDescriptors('hsBookingProject', 'hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-project-rbac-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -34,7 +34,7 @@ declare
     newDebitorRel hs_office_relation;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office_debitor WHERE uuid = NEW.debitorUuid    INTO newDebitor;
     assert newDebitor.uuid is not null, format('newDebitor must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
@@ -47,32 +47,32 @@ begin
     assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
 
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingProjectOWNER(NEW),
-            incomingSuperRoles => array[hsOfficeRelationAGENT(newDebitorRel, unassumed())]
+            incomingSuperRoles => array[hsOfficeRelationAGENT(newDebitorRel, rbac.unassumed())]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingProjectADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[hsBookingProjectOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingProjectAGENT(NEW),
             incomingSuperRoles => array[hsBookingProjectADMIN(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingProjectTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[hsBookingProjectAGENT(NEW)],
             outgoingSubRoles => array[hsOfficeRelationTENANT(newDebitorRel)]
     );
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), globalAdmin());
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), rbac.globalAdmin());
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -96,7 +96,7 @@ execute procedure insertTriggerForHsBookingProject_tf();
 
 
 -- ============================================================================
---changeset hs-booking-project-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to hs_office_relation ----------------------------
@@ -108,13 +108,13 @@ do language plpgsql $$
     declare
         row hs_office_relation;
     begin
-        call defineContext('create INSERT INTO hs_booking_project permissions for pre-exising hs_office_relation rows');
+        call base.defineContext('create INSERT INTO hs_booking_project permissions for pre-exising hs_office_relation rows');
 
         FOR row IN SELECT * FROM hs_office_relation
             WHERE type = 'DEBITOR'
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_booking_project'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_booking_project'),
                         hsOfficeRelationADMIN(row));
             END LOOP;
     end;
@@ -129,8 +129,8 @@ create or replace function new_hs_booking_project_grants_insert_to_hs_office_rel
     strict as $$
 begin
     if NEW.type = 'DEBITOR' then
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_booking_project'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_booking_project'),
             hsOfficeRelationADMIN(NEW));
     end if;
     return NEW;
@@ -144,7 +144,7 @@ execute procedure new_hs_booking_project_grants_insert_to_hs_office_relation_tf(
 
 
 -- ============================================================================
---changeset hs_booking_project-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:hs_booking_project-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -163,12 +163,12 @@ begin
         WHERE debitor.uuid = NEW.debitorUuid
     );
     assert superObjectUuid is not null, 'object uuid fetched depending on hs_booking_project.debitorUuid must not be null, also check fetchSql in RBAC DSL';
-    if hasInsertPermission(superObjectUuid, 'hs_booking_project') then
+    if rbac.hasInsertPermission(superObjectUuid, 'hs_booking_project') then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_booking_project values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_booking_project_insert_permission_check_tg
@@ -179,12 +179,12 @@ create trigger hs_booking_project_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-booking-project-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromQuery('hs_booking_project',
+call rbac.generateRbacIdentityViewFromQuery('hs_booking_project',
     $idName$
-        SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || cleanIdentifier(bookingProject.caption) as idName
+        SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || base.cleanIdentifier(bookingProject.caption) as idName
             FROM hs_booking_project bookingProject
             JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
     $idName$);
@@ -192,9 +192,9 @@ call generateRbacIdentityViewFromQuery('hs_booking_project',
 
 
 -- ============================================================================
---changeset hs-booking-project-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_booking_project',
+call rbac.generateRbacRestrictedView('hs_booking_project',
     $orderBy$
         caption
     $orderBy$,

@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
@@ -38,20 +38,21 @@ import static io.hypersistence.utils.hibernate.type.range.Range.emptyRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.lowerInclusiveFromPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.upperInclusiveFromPostgresDateRange;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.fetchedBySql;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.DELETE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.fetchedBySql;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -174,7 +175,7 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
                                     WHERE partner.uuid = ${REF}.partnerUuid
                                 """),
                         NOT_NULL)
-                .toRole("global", ADMIN).grantPermission(INSERT)
+                .toRole(GLOBAL, ADMIN).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);

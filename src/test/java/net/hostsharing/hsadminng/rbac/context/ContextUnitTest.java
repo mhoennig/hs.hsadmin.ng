@@ -28,10 +28,10 @@ import static org.mockito.Mockito.verify;
 class ContextUnitTest {
 
     private static final String DEFINE_CONTEXT_QUERY_STRING = """
-           call defineContext(
+           call base.defineContext(
                cast(:currentTask as varchar(127)),
                cast(:currentRequest as text),
-               cast(:currentUser as varchar(63)),
+               cast(:currentSubject as varchar(63)),
                cast(:assumedRoles as varchar(1023)));
            """;
 
@@ -57,7 +57,7 @@ class ContextUnitTest {
         void registerWithoutHttpServletRequestUsesCallStackForTask() {
             given(em.createNativeQuery(any())).willReturn(nativeQuery);
 
-            context.define("current-user");
+            context.define("current-subject");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter(
@@ -69,7 +69,7 @@ class ContextUnitTest {
         void registerWithoutHttpServletRequestUsesEmptyStringForRequest() {
             given(em.createNativeQuery(any())).willReturn(nativeQuery);
 
-            context.define("current-user");
+            context.define("current-subject");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentRequest", null);
@@ -109,12 +109,12 @@ class ContextUnitTest {
         @Test
         void registerWithHttpServletRequestUsesRequest() throws IOException {
             givenRequest("POST", "http://localhost:9999/api/endpoint", Map.ofEntries(
-                            Map.entry("current-user", "given-user"),
+                            Map.entry("current-subject", "given-user"),
                             Map.entry("content-type", "application/json"),
                             Map.entry("user-agent", "given-user-agent")),
                     "{}");
 
-            context.define("current-user");
+            context.define("current-subject");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentTask", "POST http://localhost:9999/api/endpoint");
@@ -123,20 +123,20 @@ class ContextUnitTest {
         @Test
         void registerWithHttpServletRequestForwardsRequestAsCurl() throws IOException {
             givenRequest("POST", "http://localhost:9999/api/endpoint", Map.ofEntries(
-                            Map.entry("current-user", "given-user"),
+                            Map.entry("current-subject", "given-user"),
                             Map.entry("content-type", "application/json"),
                             Map.entry("user-agent", "given-user-agent")),
                     "{}");
 
-            context.define("current-user");
+            context.define("current-subject");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter("currentRequest", """
                     curl -0 -v -X POST http://localhost:9999/api/endpoint \\
-                    -H 'current-user:given-user' \\
                     -H 'content-type:application/json' \\
+                    -H 'current-subject:given-user' \\
                     --data-binary @- << EOF
-                                            
+
                     {}
                     EOF
                     """.trim());
@@ -146,12 +146,12 @@ class ContextUnitTest {
         void shortensCurrentTaskToMaxLength() throws IOException {
             givenRequest("GET", "http://localhost:9999/api/endpoint/" + "0123456789".repeat(13),
                     Map.ofEntries(
-                            Map.entry("current-user", "given-user"),
+                            Map.entry("current-subject", "given-user"),
                             Map.entry("content-type", "application/json"),
                             Map.entry("user-agent", "given-user-agent")),
                     "{}");
 
-            context.define("current-user");
+            context.define("current-subject");
 
             verify(em).createNativeQuery(DEFINE_CONTEXT_QUERY_STRING);
             verify(nativeQuery).setParameter(eq("currentTask"), argThat((String t) -> t.length() == 127));

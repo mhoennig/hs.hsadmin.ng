@@ -1,30 +1,30 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset rbac-base-REFERENCE:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-REFERENCE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
 
  */
-create type ReferenceType as enum ('RbacUser', 'RbacRole', 'RbacPermission');
+create type rbac.ReferenceType as enum ('rbac.subject', 'rbac.role', 'rbac.permission');
 
-create table RbacReference
+create table rbac.reference
 (
     uuid uuid unique default uuid_generate_v4(),
-    type ReferenceType not null
+    type rbac.ReferenceType not null
 );
 
-create or replace function assertReferenceType(argument varchar, referenceId uuid, expectedType ReferenceType)
-    returns ReferenceType
+create or replace function rbac.assertReferenceType(argument varchar, referenceId uuid, expectedType rbac.ReferenceType)
+    returns rbac.ReferenceType
     language plpgsql as $$
 declare
-    actualType ReferenceType;
+    actualType rbac.ReferenceType;
 begin
     if referenceId is null then
         raise exception '% must be a % and not null', argument, expectedType;
     end if;
 
-    actualType = (select type from RbacReference where uuid = referenceId);
+    actualType = (select type from  rbac.reference where uuid = referenceId);
     if (actualType <> expectedType) then
         raise exception '% must reference a %, but got a %', argument, expectedType, actualType;
     end if;
@@ -33,20 +33,20 @@ end; $$;
 --//
 
 -- ============================================================================
---changeset rbac-base-USER:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-SUBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
 
  */
-create table RbacUser
+create table rbac.subject
 (
-    uuid uuid primary key references RbacReference (uuid) on delete cascade,
+    uuid uuid primary key references  rbac.reference (uuid) on delete cascade,
     name varchar(63) not null unique
 );
 
-call create_journal('RbacUser');
+call base.create_journal('rbac.subject');
 
-create or replace function createRbacUser(userName varchar)
+create or replace function rbac.create_subject(subjectName varchar)
     returns uuid
     returns null on null input
     language plpgsql as $$
@@ -54,47 +54,47 @@ declare
     objectId uuid;
 begin
     insert
-        into RbacReference (type)
-        values ('RbacUser')
+        into  rbac.reference (type)
+        values ('rbac.subject')
         returning uuid into objectId;
     insert
-        into RbacUser (uuid, name)
-        values (objectid, userName);
+        into rbac.subject (uuid, name)
+        values (objectid, subjectName);
     return objectId;
 end;
 $$;
 
-create or replace function createRbacUser(refUuid uuid, userName varchar)
+create or replace function rbac.create_subject(refUuid uuid, subjectName varchar)
     returns uuid
     called on null input
     language plpgsql as $$
 begin
     insert
-        into RbacReference as r (uuid, type)
-        values (coalesce(refUuid, uuid_generate_v4()), 'RbacUser')
+        into  rbac.reference as r (uuid, type)
+        values (coalesce(refUuid, uuid_generate_v4()), 'rbac.subject')
         returning r.uuid into refUuid;
     insert
-        into RbacUser (uuid, name)
-        values (refUuid, userName);
+        into rbac.subject (uuid, name)
+        values (refUuid, subjectName);
     return refUuid;
 end;
 $$;
 
-create or replace function findRbacUserId(userName varchar)
+create or replace function rbac.find_subject_id(subjectName varchar)
     returns uuid
     returns null on null input
     language sql as $$
-select uuid from RbacUser where name = userName
+select uuid from rbac.subject where name = subjectName
 $$;
 --//
 
 -- ============================================================================
---changeset rbac-base-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
 
  */
-create table RbacObject
+create table rbac.object
 (
     uuid        uuid primary key default uuid_generate_v4(),
     serialId    serial, -- TODO.perf: only needed for reverse deletion of temp test data
@@ -102,19 +102,19 @@ create table RbacObject
     unique (objectTable, uuid)
 );
 
-call create_journal('RbacObject');
+call base.create_journal('rbac.object');
 
 --//
 
 
 -- ============================================================================
---changeset rbac-base-GENERATE-RELATED-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-GENERATE-RELATED-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Inserts related RbacObject for use in the BEFORE ONSERT TRIGGERs on the business objects.
+    Inserts related rbac.object for use in the BEFORE INSERT TRIGGERs on the business objects.
  */
-create or replace function insertRelatedRbacObject()
+create or replace function rbac.insert_related_object()
     returns trigger
     language plpgsql
     strict as $$
@@ -124,13 +124,13 @@ begin
     if TG_OP = 'INSERT' then
         if NEW.uuid is null then
             insert
-                into RbacObject (objectTable)
+                into rbac.object (objectTable)
                 values (TG_TABLE_NAME)
                 returning uuid into objectUuid;
             NEW.uuid = objectUuid;
         else
             insert
-                into RbacObject (uuid, objectTable)
+                into rbac.object (uuid, objectTable)
                 values (NEW.uuid, TG_TABLE_NAME)
                 returning uuid into objectUuid;
         end if;
@@ -141,75 +141,79 @@ begin
 end; $$;
 
 /*
-    Deletes related RbacObject for use in the BEFORE DELETE TRIGGERs on the business objects.
+    Deletes related rbac.object for use in the BEFORE DELETE TRIGGERs on the business objects.
+    Through cascades all related rbac roles and grants are going to be deleted as well.
  */
-create or replace function deleteRelatedRbacObject()
+create or replace function rbac.delete_related_rbac_rules_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if TG_OP = 'DELETE' then
-        delete from RbacObject where rbacobject.uuid = old.uuid;
+        delete from rbac.object where rbac.object.uuid = old.uuid;
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
     return old;
 end; $$;
+--//
 
 
 -- ============================================================================
---changeset rbac-base-ROLE:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-ROLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
 
- */
+create type rbac.RoleType as enum ('OWNER', 'ADMIN', 'AGENT', 'TENANT', 'GUEST', 'REFERRER');
 
-create type RbacRoleType as enum ('OWNER', 'ADMIN', 'AGENT', 'TENANT', 'GUEST', 'REFERRER');
-
-create table RbacRole
+create table rbac.role
 (
-    uuid       uuid primary key references RbacReference (uuid) on delete cascade initially deferred, -- initially deferred
-    objectUuid uuid not null references RbacObject (uuid) initially deferred,
-    roleType   RbacRoleType not null,
+    uuid       uuid primary key references rbac.reference (uuid) on delete cascade initially deferred, -- initially deferred
+    objectUuid uuid not null references rbac.object (uuid) initially deferred,
+    roleType   rbac.RoleType not null,
     unique (objectUuid, roleType)
 );
 
-call create_journal('RbacRole');
+call base.create_journal('rbac.role');
+--//
 
-create type RbacRoleDescriptor as
+
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-ROLE-DESCRIPTOR endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create type rbac.RoleDescriptor as
 (
     objectTable varchar(63), -- for human readability and easier debugging
     objectUuid  uuid,
-    roleType    RbacRoleType,
+    roleType    rbac.RoleType,
     assumed     boolean
 );
 
-create or replace function assumed()
+create or replace function rbac.assumed()
     returns boolean
     stable -- leakproof
     language sql as $$
         select true;
 $$;
 
-create or replace function unassumed()
+create or replace function rbac.unassumed()
     returns boolean
     stable -- leakproof
     language sql as $$
 select false;
 $$;
 
-
-create or replace function roleDescriptor(
-        objectTable varchar(63), objectUuid uuid, roleType RbacRoleType,
+create or replace function rbac.roleDescriptorOf(
+        objectTable varchar(63), objectUuid uuid, roleType rbac.RoleType,
         assumed boolean = true) -- just for DSL readability, belongs actually to the grant
-    returns RbacRoleDescriptor
+    returns rbac.RoleDescriptor
     returns null on null input
     stable -- leakproof
     language sql as $$
-        select objectTable, objectUuid, roleType::RbacRoleType, assumed;
+        select objectTable, objectUuid, roleType::rbac.RoleType, assumed;
 $$;
 
-create or replace function createRole(roleDescriptor RbacRoleDescriptor)
+create or replace function rbac.createRole(roleDescriptor rbac.RoleDescriptor)
     returns uuid
     returns null on null input
     language plpgsql as $$
@@ -217,60 +221,65 @@ declare
     referenceId uuid;
 begin
     insert
-        into RbacReference (type)
-        values ('RbacRole')
+        into  rbac.reference (type)
+        values ('rbac.role')
         returning uuid into referenceId;
     insert
-        into RbacRole (uuid, objectUuid, roleType)
+        into rbac.role (uuid, objectUuid, roleType)
         values (referenceId, roleDescriptor.objectUuid, roleDescriptor.roleType);
     return referenceId;
 end;
 $$;
+--//
 
 
-create or replace procedure deleteRole(roleUUid uuid)
+-- ============================================================================
+--changeset michael.hoennig:rbac-base-ROLE-FUNCTIONS endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create or replace procedure rbac.deleteRole(roleUUid uuid)
     language plpgsql as $$
 begin
-    --raise exception '% deleting role uuid %', currentsubjectsuuids(), roleUUid;
-    delete from RbacRole where uuid = roleUUid;
+    --raise exception '% deleting role uuid %', rbac.currentSubjectOrAssumedRolesUuids(), roleUUid;
+    delete from rbac.role where uuid = roleUUid;
 end;
 $$;
 
-create or replace function findRoleId(roleIdName varchar)
+create or replace function rbac.findRoleId(roleIdName varchar)
     returns uuid
     returns null on null input
     language plpgsql as $$
 declare
     roleParts                 text;
-    roleTypeFromRoleIdName    RbacRoleType;
+    roleTypeFromRoleIdName    rbac.RoleType;
     objectNameFromRoleIdName  text;
     objectTableFromRoleIdName text;
     objectUuidOfRole          uuid;
     roleUuid                  uuid;
 begin
-    -- TODO.refa: extract function toRbacRoleDescriptor(roleIdName varchar) + find other occurrences
+    -- TODO.refa: extract function rbac.toRoleDescriptor(roleIdName varchar) + find other occurrences
     roleParts = overlay(roleIdName placing '#' from length(roleIdName) + 1 - strpos(reverse(roleIdName), ':'));
     objectTableFromRoleIdName = split_part(roleParts, '#', 1);
     objectNameFromRoleIdName = split_part(roleParts, '#', 2);
     roleTypeFromRoleIdName = split_part(roleParts, '#', 3);
-    objectUuidOfRole = findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
+    objectUuidOfRole = base.findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
 
     select uuid
-        from RbacRole
+        from rbac.role
         where objectUuid = objectUuidOfRole
           and roleType = roleTypeFromRoleIdName
         into roleUuid;
     return roleUuid;
 end; $$;
 
-create or replace function findRoleId(roleDescriptor RbacRoleDescriptor)
+create or replace function rbac.findRoleId(roleDescriptor rbac.RoleDescriptor)
     returns uuid
     returns null on null input
     language sql as $$
-select uuid from RbacRole where objectUuid = roleDescriptor.objectUuid and roleType = roleDescriptor.roleType;
+select uuid from rbac.role where objectUuid = roleDescriptor.objectUuid and roleType = roleDescriptor.roleType;
 $$;
 
-create or replace function getRoleId(roleDescriptor RbacRoleDescriptor)
+create or replace function rbac.getRoleId(roleDescriptor rbac.RoleDescriptor)
     returns uuid
     language plpgsql as $$
 declare
@@ -278,29 +287,30 @@ declare
 begin
     assert roleDescriptor is not null, 'roleDescriptor must not be null';
 
-    roleUuid := findRoleId(roleDescriptor);
+    roleUuid := rbac.findRoleId(roleDescriptor);
     if (roleUuid is null) then
-        raise exception 'RbacRole "%#%.%" not found', roleDescriptor.objectTable, roleDescriptor.objectUuid, roleDescriptor.roleType;
+        raise exception 'rbac.role "%#%.%" not found', roleDescriptor.objectTable, roleDescriptor.objectUuid, roleDescriptor.roleType;
     end if;
     return roleUuid;
 end;
 $$;
+--//
 
 
 -- ============================================================================
---changeset rbac-base-BEFORE-DELETE-ROLE-TRIGGER:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-BEFORE-DELETE-ROLE-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    RbacRole BEFORE DELETE TRIGGER function which deletes all related roles.
+    rbac.role BEFORE DELETE TRIGGER function which deletes all related roles.
  */
-create or replace function deleteRbacGrantsOfRbacRole()
+create or replace function rbac.delete_grants_of_role_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if TG_OP = 'DELETE' then
-        delete from RbacGrants g where old.uuid in (g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid);
+        delete from rbac.grants g where old.uuid in (g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid);
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
@@ -308,31 +318,31 @@ begin
 end; $$;
 
 /*
-    Installs the RbacRole BEFORE DELETE TRIGGER.
+    Installs the rbac.role BEFORE DELETE TRIGGER.
  */
-create trigger deleteRbacGrantsOfRbacRole_Trigger
+create trigger delete_grants_of_role_tg
     before delete
-    on RbacRole
+    on rbac.role
     for each row
-execute procedure deleteRbacGrantsOfRbacRole();
+execute procedure rbac.delete_grants_of_role_tf();
 --//
 
 
 -- ============================================================================
---changeset rbac-base-BEFORE-DELETE-OBJECT-TRIGGER:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-BEFORE-DELETE-OBJECT-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    RbacObject BEFORE DELETE TRIGGER function which deletes all related roles.
+    rbac.object BEFORE DELETE TRIGGER function which deletes all related roles.
  */
-create or replace function deleteRbacRolesOfRbacObject()
+create or replace function rbac.delete_roles_of_object_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if TG_OP = 'DELETE' then
-        delete from RbacPermission p where p.objectuuid = old.uuid;
-        delete from RbacRole r where r.objectUuid = old.uuid;
+        delete from rbac.permission p where p.objectuuid = old.uuid;
+        delete from rbac.role r where r.objectUuid = old.uuid;
     else
         raise exception 'invalid usage of TRIGGER BEFORE DELETE';
     end if;
@@ -340,23 +350,20 @@ begin
 end; $$;
 
 /*
-    Installs the RbacRole BEFORE DELETE TRIGGER.
+    Installs the rbac.role BEFORE DELETE TRIGGER.
  */
-create trigger deleteRbacRolesOfRbacObject_Trigger
+create trigger delete_roles_of_object_tg
     before delete
-    on RbacObject
+    on rbac.object
     for each row
-        execute procedure deleteRbacRolesOfRbacObject();
+        execute procedure rbac.delete_roles_of_object_tf();
 --//
 
 
 -- ============================================================================
---changeset rbac-base-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
-
- */
-create domain RbacOp as varchar(6)
+create domain rbac.RbacOp as varchar(6)
     check (
                VALUE = 'DELETE'
             or VALUE = 'UPDATE'
@@ -365,23 +372,23 @@ create domain RbacOp as varchar(6)
             or VALUE = 'ASSUME'
         );
 
-create table RbacPermission
+create table rbac.permission
 (
-    uuid        uuid primary key references RbacReference (uuid) on delete cascade,
-    objectUuid  uuid not null references RbacObject,
-    op          RbacOp not null,
+    uuid        uuid primary key references  rbac.reference (uuid) on delete cascade,
+    objectUuid  uuid not null references rbac.object,
+    op          rbac.RbacOp not null,
     opTableName varchar(60)
 );
 -- TODO.perf: check if these indexes are really useful
-create index on RbacPermission (objectUuid, op);
-create index on RbacPermission (opTableName, op);
+create index on rbac.permission (objectUuid, op);
+create index on rbac.permission (opTableName, op);
 
-ALTER TABLE RbacPermission
+ALTER TABLE rbac.permission
     ADD CONSTRAINT RbacPermission_uc UNIQUE NULLS NOT DISTINCT (objectUuid, op, opTableName);
 
-call create_journal('RbacPermission');
+call base.create_journal('rbac.permission');
 
-create or replace function createPermission(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+create or replace function rbac.createPermission(forObjectUuid uuid, forOp rbac.RbacOp, forOpTableName text = null)
     returns uuid
     language plpgsql as $$
 declare
@@ -398,50 +405,50 @@ begin
     end if;
 
     permissionUuid := (
-        select uuid from RbacPermission
+        select uuid from rbac.permission
          where objectUuid = forObjectUuid
            and op = forOp and opTableName is not distinct from forOpTableName);
     if (permissionUuid is null) then
-        insert into RbacReference ("type")
-            values ('RbacPermission')
+        insert into  rbac.reference ("type")
+            values ('rbac.permission')
             returning uuid into permissionUuid;
         begin
-            insert into RbacPermission (uuid, objectUuid, op, opTableName)
+            insert into rbac.permission (uuid, objectUuid, op, opTableName)
                 values (permissionUuid, forObjectUuid, forOp, forOpTableName);
         exception
             when others then
-                raise exception 'insert into RbacPermission (uuid, objectUuid, op, opTableName)
+                raise exception 'insert into rbac.permission (uuid, objectUuid, op, opTableName)
                 values (%, %, %, %);', permissionUuid, forObjectUuid, forOp, forOpTableName;
         end;
     end if;
     return permissionUuid;
 end; $$;
 
-create or replace function findEffectivePermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+create or replace function rbac.findEffectivePermissionId(forObjectUuid uuid, forOp rbac.RbacOp, forOpTableName text = null)
     returns uuid
     returns null on null input
     stable -- leakproof
     language sql as $$
 select uuid
-    from RbacPermission p
+    from rbac.permission p
     where p.objectUuid = forObjectUuid
-      and (forOp = 'SELECT' or p.op = forOp) -- all other RbacOp include 'SELECT'
+      and (forOp = 'SELECT' or p.op = forOp) -- all other rbac.RbacOp include 'SELECT'
       and p.opTableName = forOpTableName
 $$;
 
-create or replace function findPermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+create or replace function rbac.findPermissionId(forObjectUuid uuid, forOp rbac.RbacOp, forOpTableName text = null)
     returns uuid
     returns null on null input
     stable -- leakproof
     language sql as $$
 select uuid
-    from RbacPermission p
+    from rbac.permission p
     where p.objectUuid = forObjectUuid
       and p.op = forOp
       and p.opTableName = forOpTableName
 $$;
 
-create or replace function getPermissionId(forObjectUuid uuid, forOp RbacOp, forOpTableName text = null)
+create or replace function rbac.getPermissionId(forObjectUuid uuid, forOp rbac.RbacOp, forOpTableName text = null)
     returns uuid
     stable -- leakproof
     language plpgsql as $$
@@ -449,7 +456,7 @@ declare
     permissionUuid uuid;
 begin
     select uuid into permissionUuid
-        from RbacPermission p
+        from rbac.permission p
         where p.objectUuid = forObjectUuid
           and p.op = forOp
           and forOpTableName is null or p.opTableName = forOpTableName;
@@ -461,17 +468,17 @@ end; $$;
 
 
 -- ============================================================================
---changeset rbac-base-duplicate-role-grant-exception:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-duplicate-role-grant-exception endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure raiseDuplicateRoleGrantException(subRoleId uuid, superRoleId uuid)
+create or replace procedure rbac.raiseDuplicateRoleGrantException(subRoleId uuid, superRoleId uuid)
     language plpgsql as $$
 declare
     subRoleIdName text;
     superRoleIdName text;
 begin
-    select roleIdName from rbacRole_ev where uuid=subRoleId into subRoleIdName;
-    select roleIdName from rbacRole_ev where uuid=superRoleId into superRoleIdName;
+    select roleIdName from rbac.role_ev where uuid=subRoleId into subRoleIdName;
+    select roleIdName from rbac.role_ev where uuid=superRoleId into superRoleIdName;
     raise exception '[400] Duplicate role grant detected: role % (%) already granted to % (%)', subRoleId, subRoleIdName, superRoleId, superRoleIdName;
 end;
 $$;
@@ -479,54 +486,54 @@ $$;
 
 
 -- ============================================================================
---changeset rbac-base-GRANTS:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-GRANTS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Table to store grants / role- or permission assignments to users or roles.
+    Table to store grants / role- or permission assignments to subjects or roles.
  */
-create table RbacGrants
+create table rbac.grants
 (
     uuid                uuid primary key default uuid_generate_v4(),
-    grantedByTriggerOf  uuid references RbacObject (uuid) on delete cascade initially deferred ,
-    grantedByRoleUuid   uuid references RbacRole (uuid),
-    ascendantUuid       uuid references RbacReference (uuid),
-    descendantUuid      uuid references RbacReference (uuid),
+    grantedByTriggerOf  uuid references rbac.object (uuid) on delete cascade initially deferred ,
+    grantedByRoleUuid   uuid references rbac.role (uuid),
+    ascendantUuid       uuid references  rbac.reference (uuid),
+    descendantUuid      uuid references  rbac.reference (uuid),
     assumed             boolean not null default true,  -- auto assumed (true) vs. needs assumeRoles (false)
     unique (ascendantUuid, descendantUuid),
     constraint rbacGrant_createdBy check ( grantedByRoleUuid is null or grantedByTriggerOf is null) );
-create index on RbacGrants (ascendantUuid);
-create index on RbacGrants (descendantUuid);
+create index on rbac.grants (ascendantUuid);
+create index on rbac.grants (descendantUuid);
 
-call create_journal('RbacGrants');
-create or replace function findGrantees(grantedId uuid)
-    returns setof RbacReference
+call base.create_journal('rbac.grants');
+create or replace function rbac.findGrantees(grantedId uuid)
+    returns setof  rbac.reference
     returns null on null input
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from RbacGrants
+        from rbac.grants
         where descendantUuid = grantedId
     union all
     select g.descendantUuid, g.ascendantUuid
-        from RbacGrants g
+        from rbac.grants g
                  inner join grants on grants.ascendantUuid = g.descendantUuid
 )
 select ref.*
     from grants
-             join RbacReference ref on ref.uuid = grants.ascendantUuid;
+             join rbac.reference ref on ref.uuid = grants.ascendantUuid;
 $$;
 
-create or replace function isGranted(granteeIds uuid[], grantedId uuid)
+create or replace function rbac.isGranted(granteeIds uuid[], grantedId uuid)
     returns bool
     returns null on null input
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from RbacGrants
+        from rbac.grants
         where descendantUuid = grantedId
     union all
     select "grant".descendantUuid, "grant".ascendantUuid
-        from RbacGrants "grant"
+        from rbac.grants "grant"
                  inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
 )
 select exists (
@@ -536,23 +543,23 @@ select exists (
 ) or grantedId = any(granteeIds);
 $$;
 
-create or replace function isGranted(granteeId uuid, grantedId uuid)
+create or replace function rbac.isGranted(granteeId uuid, grantedId uuid)
     returns bool
     returns null on null input
     language sql as $$
-select * from isGranted(array[granteeId], grantedId);
+select * from rbac.isGranted(array[granteeId], grantedId);
 $$;
-create or replace function isPermissionGrantedToSubject(permissionId uuid, subjectId uuid)
+create or replace function rbac.isPermissionGrantedToSubject(permissionId uuid, subjectId uuid)
     returns BOOL
     stable -- leakproof
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from RbacGrants
+        from rbac.grants
         where descendantUuid = permissionId
     union all
     select g.descendantUuid, g.ascendantUuid
-        from RbacGrants g
+        from rbac.grants g
                  inner join grants on grants.ascendantUuid = g.descendantUuid
 )
 select exists(
@@ -562,117 +569,117 @@ select exists(
 );
 $$;
 
-create or replace function hasInsertPermission(objectUuid uuid, tableName text )
+create or replace function rbac.hasInsertPermission(objectUuid uuid, tableName text )
     returns BOOL
     stable -- leakproof
     language plpgsql as $$
 declare
     permissionUuid uuid;
 begin
-    permissionUuid = findPermissionId(objectUuid, 'INSERT'::RbacOp, tableName);
+    permissionUuid = rbac.findPermissionId(objectUuid, 'INSERT'::rbac.RbacOp, tableName);
     return permissionUuid is not null;
 end;
 $$;
 
-create or replace function hasGlobalRoleGranted(userUuid uuid)
+create or replace function rbac.hasGlobalRoleGranted(forAscendantUuid uuid)
     returns bool
     stable -- leakproof
     language sql as $$
 select exists(
            select r.uuid
-               from RbacGrants as g
-                        join RbacRole as r on r.uuid = g.descendantuuid
-                        join RbacObject as o on o.uuid = r.objectuuid
-               where g.ascendantuuid = userUuid
-                 and o.objecttable = 'global'
+               from rbac.grants as g
+                        join rbac.role as r on r.uuid = g.descendantuuid
+                        join rbac.object as o on o.uuid = r.objectuuid
+               where g.ascendantuuid = forAscendantUuid
+                 and o.objecttable = 'rbac.global'
            );
 $$;
 
-create or replace procedure grantPermissionToRole(permissionUuid uuid, roleUuid uuid)
+create or replace procedure rbac.grantPermissionToRole(permissionUuid uuid, roleUuid uuid)
     language plpgsql as $$
 begin
-    perform assertReferenceType('roleId (ascendant)', roleUuid, 'RbacRole');
-    perform assertReferenceType('permissionId (descendant)', permissionUuid, 'RbacPermission');
+    perform rbac.assertReferenceType('roleId (ascendant)', roleUuid, 'rbac.role');
+    perform rbac.assertReferenceType('permissionId (descendant)', permissionUuid, 'rbac.permission');
 
     insert
-        into RbacGrants (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
-        values (currentTriggerObjectUuid(), roleUuid, permissionUuid, true)
+        into rbac.grants (grantedByTriggerOf, ascendantUuid, descendantUuid, assumed)
+        values (rbac.currentTriggerObjectUuid(), roleUuid, permissionUuid, true)
     on conflict do nothing; -- allow granting multiple times
 end;
 $$;
 
-create or replace procedure grantPermissionToRole(permissionUuid uuid, roleDesc RbacRoleDescriptor)
+create or replace procedure rbac.grantPermissionToRole(permissionUuid uuid, roleDesc rbac.RoleDescriptor)
     language plpgsql as $$
 begin
-    call grantPermissionToRole(permissionUuid, findRoleId(roleDesc));
+    call rbac.grantPermissionToRole(permissionUuid, rbac.findRoleId(roleDesc));
 end;
 $$;
 
-create or replace procedure grantRoleToRole(subRoleId uuid, superRoleId uuid, doAssume bool = true)
+create or replace procedure rbac.grantRoleToRole(subRoleId uuid, superRoleId uuid, doAssume bool = true)
     language plpgsql as $$
 begin
-    perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
-    perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
+    perform rbac.assertReferenceType('superRoleId (ascendant)', superRoleId, 'rbac.role');
+    perform rbac.assertReferenceType('subRoleId (descendant)', subRoleId, 'rbac.role');
 
-    if isGranted(subRoleId, superRoleId) then
-        call raiseDuplicateRoleGrantException(subRoleId, superRoleId);
+    if rbac.isGranted(subRoleId, superRoleId) then
+        call rbac.raiseDuplicateRoleGrantException(subRoleId, superRoleId);
     end if;
 
     insert
-        into RbacGrants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
-        values (currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
+        into rbac.grants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        values (rbac.currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 
 
-create or replace procedure grantRoleToRole(subRole RbacRoleDescriptor, superRole RbacRoleDescriptor, doAssume bool = true)
+create or replace procedure rbac.grantRoleToRole(subRole rbac.RoleDescriptor, superRole rbac.RoleDescriptor, doAssume bool = true)
     language plpgsql as $$
 declare
     superRoleId uuid;
     subRoleId uuid;
 begin
-    -- TODO.refa: maybe separate method grantRoleToRoleIfNotNull(...) for NULLABLE references
+    -- TODO.refa: maybe separate method rbac.grantRoleToRoleIfNotNull(...) for NULLABLE references
     if superRole.objectUuid is null or subRole.objectuuid is null then
         return;
     end if;
 
-    superRoleId := findRoleId(superRole);
-    subRoleId := findRoleId(subRole);
+    superRoleId := rbac.findRoleId(superRole);
+    subRoleId := rbac.findRoleId(subRole);
 
-    perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
-    perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
+    perform rbac.assertReferenceType('superRoleId (ascendant)', superRoleId, 'rbac.role');
+    perform rbac.assertReferenceType('subRoleId (descendant)', subRoleId, 'rbac.role');
 
-    if isGranted(subRoleId, superRoleId) then
-        call raiseDuplicateRoleGrantException(subRoleId, superRoleId);
+    if rbac.isGranted(subRoleId, superRoleId) then
+        call rbac.raiseDuplicateRoleGrantException(subRoleId, superRoleId);
     end if;
 
     insert
-        into RbacGrants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
-        values (currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
+        into rbac.grants (grantedByTriggerOf, ascendantuuid, descendantUuid, assumed)
+        values (rbac.currentTriggerObjectUuid(), superRoleId, subRoleId, doAssume)
     on conflict do nothing; -- allow granting multiple times
 end; $$;
 
-create or replace procedure revokeRoleFromRole(subRole RbacRoleDescriptor, superRole RbacRoleDescriptor)
+create or replace procedure rbac.revokeRoleFromRole(subRole rbac.RoleDescriptor, superRole rbac.RoleDescriptor)
     language plpgsql as $$
 declare
     superRoleId uuid;
     subRoleId uuid;
 begin
-    superRoleId := findRoleId(superRole);
-    subRoleId := findRoleId(subRole);
+    superRoleId := rbac.findRoleId(superRole);
+    subRoleId := rbac.findRoleId(subRole);
 
-    perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
-    perform assertReferenceType('subRoleId (descendant)', subRoleId, 'RbacRole');
+    perform rbac.assertReferenceType('superRoleId (ascendant)', superRoleId, 'rbac.role');
+    perform rbac.assertReferenceType('subRoleId (descendant)', subRoleId, 'rbac.role');
 
-    if (isGranted(superRoleId, subRoleId)) then
-        delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
+    if (rbac.isGranted(superRoleId, subRoleId)) then
+        delete from rbac.grants where ascendantUuid = superRoleId and descendantUuid = subRoleId;
     else
         raise exception 'cannot revoke role % (%) from % (%) because it is not granted',
             subRole, subRoleId, superRole, superRoleId;
     end if;
 end; $$;
 
-create or replace procedure revokePermissionFromRole(permissionId UUID, superRole RbacRoleDescriptor)
+create or replace procedure rbac.revokePermissionFromRole(permissionId UUID, superRole rbac.RoleDescriptor)
     language plpgsql as $$
 declare
     superRoleId uuid;
@@ -680,18 +687,18 @@ declare
     objectTable text;
     objectUuid uuid;
 begin
-    superRoleId := findRoleId(superRole);
+    superRoleId := rbac.findRoleId(superRole);
 
-    perform assertReferenceType('superRoleId (ascendant)', superRoleId, 'RbacRole');
-    perform assertReferenceType('permission (descendant)', permissionId, 'RbacPermission');
+    perform rbac.assertReferenceType('superRoleId (ascendant)', superRoleId, 'rbac.role');
+    perform rbac.assertReferenceType('permission (descendant)', permissionId, 'rbac.permission');
 
-    if (isGranted(superRoleId, permissionId)) then
-        delete from RbacGrants where ascendantUuid = superRoleId and descendantUuid = permissionId;
+    if (rbac.isGranted(superRoleId, permissionId)) then
+        delete from rbac.grants where ascendantUuid = superRoleId and descendantUuid = permissionId;
     else
         select p.op, o.objectTable, o.uuid
-            from rbacGrants g
-                     join rbacPermission p on p.uuid=g.descendantUuid
-                     join rbacobject o on o.uuid=p.objectUuid
+            from rbac.grants g
+                     join rbac.permission p on p.uuid=g.descendantUuid
+                     join rbac.object o on o.uuid=p.objectUuid
             where g.uuid=permissionId
             into permissionOp, objectTable, objectUuid;
 
@@ -701,13 +708,13 @@ begin
 end; $$;
 
 -- ============================================================================
---changeset rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS:1 runOnChange=true endDelimiter:--//
+--changeset michael.hoennig:rbac-base-QUERY-ACCESSIBLE-OBJECT-UUIDS runOnChange=true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
 
  */
-create or replace function queryAccessibleObjectUuidsOfSubjectIds(
-    requiredOp RbacOp,
+create or replace function rbac.queryAccessibleObjectUuidsOfSubjectIds(
+    requiredOp rbac.RbacOp,
     forObjectTable varchar,
     subjectIds uuid[],
     maxObjects integer = 8000)
@@ -720,12 +727,12 @@ begin
     return query
         WITH RECURSIVE grants AS (
             SELECT descendantUuid, ascendantUuid, 1 AS level
-                FROM RbacGrants
+                FROM rbac.grants
                 WHERE assumed
                   AND ascendantUuid = any(subjectIds)
             UNION ALL
             SELECT g.descendantUuid, g.ascendantUuid, grants.level + 1 AS level
-                FROM RbacGrants g
+                FROM rbac.grants g
                          INNER JOIN grants ON grants.descendantUuid = g.ascendantUuid
                 WHERE g.assumed
         ),
@@ -735,13 +742,13 @@ begin
        )
         SELECT DISTINCT perm.objectUuid
             FROM granted
-                     JOIN RbacPermission perm ON granted.descendantUuid = perm.uuid
-                     JOIN RbacObject obj ON obj.uuid = perm.objectUuid
+                     JOIN rbac.permission perm ON granted.descendantUuid = perm.uuid
+                     JOIN rbac.object obj ON obj.uuid = perm.objectUuid
             WHERE (requiredOp = 'SELECT' OR perm.op = requiredOp)
               AND obj.objectTable = forObjectTable
             LIMIT maxObjects+1;
 
-    foundRows = lastRowCount();
+    foundRows = base.lastRowCount();
     if foundRows > maxObjects then
         raise exception '[400] Too many accessible objects, limit is %, found %.', maxObjects, foundRows
             using
@@ -753,26 +760,26 @@ $$;
 --//
 
 -- ============================================================================
---changeset rbac-base-QUERY-GRANTED-PERMISSIONS:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-QUERY-GRANTED-PERMISSIONS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns all permissions accessible to the given subject UUID (user or role).
+    Returns all permissions accessible to the given subject UUID (subject or role).
  */
-create or replace function queryPermissionsGrantedToSubjectId(subjectId uuid)
-    returns setof RbacPermission
+create or replace function rbac.queryPermissionsGrantedToSubjectId(subjectId uuid)
+    returns setof rbac.permission
     strict
     language sql as $$
 with recursive grants as (
     select descendantUuid, ascendantUuid
-        from RbacGrants
+        from rbac.grants
         where ascendantUuid = subjectId
     union all
     select g.descendantUuid, g.ascendantUuid
-        from RbacGrants g
+        from rbac.grants g
                  inner join grants on grants.descendantUuid = g.ascendantUuid
 )
 select perm.*
-    from RbacPermission perm
+    from rbac.permission perm
     where perm.uuid in (
         select descendantUuid
             from grants
@@ -782,27 +789,27 @@ $$;
 --//
 
 -- ============================================================================
---changeset rbac-base-QUERY-USERS-WITH-PERMISSION-FOR-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-base-QUERY-SUBJECTS-WITH-PERMISSION-FOR-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns all user UUIDs which have any permission for the given object UUID.
+    Returns all subject UUIDs which have any permission for the given object UUID.
  */
 
-create or replace function queryAllRbacUsersWithPermissionsFor(objectId uuid)
-    returns setof RbacUser
+create or replace function rbac.queryAllRbacSubjectsWithPermissionsFor(objectId uuid)
+    returns setof rbac.subject
     returns null on null input
     language sql as $$
 select *
-    from RbacUser
+    from rbac.subject
     where uuid in (
         -- @formatter:off
         with recursive grants as (
             select descendantUuid, ascendantUuid
-                from RbacGrants
+                from rbac.grants
                 where descendantUuid = objectId
             union all
             select "grant".descendantUuid, "grant".ascendantUuid
-                from RbacGrants "grant"
+                from rbac.grants "grant"
                 inner join grants recur on recur.ascendantUuid = "grant".descendantUuid
         )
         -- @formatter:on
@@ -813,7 +820,7 @@ $$;
 
 
 -- ============================================================================
---changeset rbac-base-PGSQL-ROLES:1 context:dev,tc endDelimiter:--//
+--changeset michael.hoennig:rbac-base-PGSQL-ROLES context:dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do $$

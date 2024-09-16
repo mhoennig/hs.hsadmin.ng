@@ -4,7 +4,7 @@ get:
     description: 'Fetch a single booking item its uuid, if visible for the current subject.'
     operationId: getBookingItemByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: bookingItemUuid
           in: path
@@ -32,7 +32,7 @@ patch:
     description: 'Updates a single booking item identified by its uuid, if permitted for the current subject.'
     operationId: patchBookingItem
     parameters:
-        -   $ref: 'auth.yaml#/components/parameters/currentUser'
+        -   $ref: 'auth.yaml#/components/parameters/currentSubject'
         -   $ref: 'auth.yaml#/components/parameters/assumedRoles'
         -   name: bookingItemUuid
             in: path
@@ -63,7 +63,7 @@ delete:
     description: 'Delete a single booking item identified by its uuid, if permitted for the current subject.'
     operationId: deleteBookingIemByUuid
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: bookingItemUuid
           in: path

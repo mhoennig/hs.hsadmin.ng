@@ -2,28 +2,28 @@
 
 
 -- ============================================================================
---changeset rbac-context-DETERMINE:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-context-DETERMINE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function determineCurrentUserUuid(currentUser varchar)
+create or replace function rbac.determineCurrentSubjectUuid(currentSubject varchar)
     returns uuid
     stable -- leakproof
     language plpgsql as $$
 declare
-    currentUserUuid uuid;
+    currentSubjectUuid uuid;
 begin
-    if currentUser = '' then
+    if currentSubject = '' then
         return null;
     end if;
 
-    select uuid from RbacUser where name = currentUser into currentUserUuid;
-    if currentUserUuid is null then
-        raise exception '[401] user % given in `defineContext(...)` does not exist', currentUser;
+    select uuid from rbac.subject where name = currentSubject into currentSubjectUuid;
+    if currentSubjectUuid is null then
+        raise exception '[401] subject % given in `base.defineContext(...)` does not exist', currentSubject;
     end if;
-    return currentUserUuid;
+    return currentSubjectUuid;
 end; $$;
 
-create or replace function determineCurrentSubjectsUuids(currentUserUuid uuid, assumedRoles varchar)
+create or replace function rbac.determinecurrentsubjectorassumedrolesuuids(currentSubjectOrAssumedRolesUuids uuid, assumedRoles varchar)
     returns uuid[]
     stable -- leakproof
     language plpgsql as $$
@@ -33,11 +33,11 @@ declare
     objectTableToAssume varchar(63);
     objectNameToAssume  varchar(63);
     objectUuidToAssume  uuid;
-    roleTypeToAssume    RbacRoleType;
+    roleTypeToAssume    rbac.RoleType;
     roleIdsToAssume     uuid[];
     roleUuidToAssume    uuid;
 begin
-    if currentUserUuid is null then
+    if currentSubjectOrAssumedRolesUuids is null then
         if length(coalesce(assumedRoles, '')) > 0 then
             raise exception '[403] undefined has no permission to assume role %', assumedRoles;
         else
@@ -45,7 +45,7 @@ begin
         end if;
     end if;
     if  length(coalesce(assumedRoles, '')) = 0 then
-        return array [currentUserUuid];
+        return array [currentSubjectOrAssumedRolesUuids];
     end if;
 
     foreach roleName in array string_to_array(assumedRoles, ';')
@@ -55,21 +55,21 @@ begin
             objectNameToAssume = split_part(roleNameParts, '#', 2);
             roleTypeToAssume = split_part(roleNameParts, '#', 3);
 
-            objectUuidToAssume = findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
+            objectUuidToAssume = base.findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
             if objectUuidToAssume is null then
-                raise exception '[401] object % cannot be found in table %', objectNameToAssume, objectTableToAssume;
+                raise exception '[401] object % cannot be found in table % (from roleNameParts=%)', objectNameToAssume, objectTableToAssume, roleNameParts;
             end if;
 
             select uuid
-                from RbacRole r
+                from rbac.role r
                 where r.objectUuid = objectUuidToAssume
                   and r.roleType = roleTypeToAssume
                 into roleUuidToAssume;
             if roleUuidToAssume is null then
-                raise exception '[403] role % does not exist or is not accessible for user %', roleName, currentUser();
+                raise exception '[403] role % does not exist or is not accessible for subject %', roleName, base.currentSubject();
             end if;
-            if not isGranted(currentUserUuid, roleUuidToAssume) then
-                raise exception '[403] user % has no permission to assume role %', currentUser(), roleName;
+            if not rbac.isGranted(currentSubjectOrAssumedRolesUuids, roleUuidToAssume) then
+                raise exception '[403] subject % has no permission to assume role %', base.currentSubject(), roleName;
             end if;
             roleIdsToAssume := roleIdsToAssume || roleUuidToAssume;
         end loop;
@@ -78,102 +78,102 @@ begin
 end; $$;
 
 -- ============================================================================
---changeset rbac-context-CONTEXT-DEFINED:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-context-CONTEXT-DEFINED endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Callback which is called after the context has been (re-) defined.
     This function will be overwritten by later changesets.
  */
-create or replace procedure contextDefined(
+create or replace procedure base.contextDefined(
     currentTask varchar(127),
     currentRequest text,
-    currentUser varchar(63),
+    currentSubject varchar(63),
     assumedRoles varchar(1023)
 )
     language plpgsql as $$
 declare
-    currentUserUuid uuid;
+    currentSubjectUuid uuid;
 begin
     execute format('set local hsadminng.currentTask to %L', currentTask);
 
     execute format('set local hsadminng.currentRequest to %L', currentRequest);
 
-    execute format('set local hsadminng.currentUser to %L', currentUser);
-    select determineCurrentUserUuid(currentUser) into currentUserUuid;
-    execute format('set local hsadminng.currentUserUuid to %L', coalesce(currentUserUuid::text, ''));
+    execute format('set local hsadminng.currentSubject to %L', currentSubject);
+    select rbac.determineCurrentSubjectUuid(currentSubject) into currentSubjectUuid;
+    execute format('set local hsadminng.currentSubjectUuid to %L', coalesce(currentSubjectUuid::text, ''));
 
     execute format('set local hsadminng.assumedRoles to %L', assumedRoles);
-    execute format('set local hsadminng.currentSubjectsUuids to %L',
-       (select array_to_string(determinecurrentSubjectsUuids(currentUserUuid, assumedRoles), ';')));
+    execute format('set local hsadminng.currentSubjectOrAssumedRolesUuids to %L',
+       (select array_to_string(rbac.determinecurrentsubjectorassumedrolesuuids(currentSubjectUuid, assumedRoles), ';')));
 
-    raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentUser, assumedRoles;
+    raise notice 'Context defined as: %, %, %, [%]', currentTask, currentRequest, currentSubject, assumedRoles;
 end; $$;
 
 
 -- ============================================================================
---changeset rbac-context-CURRENT-USER-ID:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-context-current-subject-ID endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns the uuid of the current user as set via `defineContext(...)`.
+    Returns the uuid of the current subject as set via `base.defineContext(...)`.
  */
 
-create or replace function currentUserUuid()
+create or replace function rbac.currentSubjectUuid()
     returns uuid
     stable -- leakproof
     language plpgsql as $$
 declare
-    currentUserUuid text;
-    currentUserName text;
+    currentSubjectUuid text;
+    currentSubjectName text;
 begin
     begin
-        currentUserUuid := current_setting('hsadminng.currentUserUuid');
+        currentSubjectUuid := current_setting('hsadminng.currentSubjectUuid');
     exception
         when others then
-            currentUserUuid := null;
+            currentSubjectUuid := null;
     end;
-    if (currentUserUuid is null or currentUserUuid = '') then
-        currentUserName := currentUser();
-        if (length(currentUserName) > 0) then
-            raise exception '[401] currentUserUuid cannot be determined, unknown user name "%"', currentUserName;
+    if (currentSubjectUuid is null or currentSubjectUuid = '') then
+        currentSubjectName := base.currentSubject();
+        if (length(currentSubjectName) > 0) then
+            raise exception '[401] currentSubjectUuid cannot be determined, unknown subject name "%"', currentSubjectName;
         else
-            raise exception '[401] currentUserUuid cannot be determined, please call `defineContext(...)` first;"';
+            raise exception '[401] currentSubjectUuid cannot be determined, please call `base.defineContext(...)` first;"';
         end if;
     end if;
-    return currentUserUuid::uuid;
+    return currentSubjectUuid::uuid;
 end; $$;
 --//
 
 -- ============================================================================
---changeset rbac-context-CURRENT-SUBJECT-UUIDS:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-context-CURRENT-SUBJECT-UUIDS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns the uuid of the current user as set via `defineContext(...)`,
-    or, if any, the uuids of all assumed roles as set via `defineContext(...)`
+    Returns the uuid of the current subject as set via `base.defineContext(...)`,
+    or, if any, the uuids of all assumed roles as set via `base.defineContext(...)`
     or empty array, if context is not defined.
  */
-create or replace function currentSubjectsUuids()
+create or replace function rbac.currentSubjectOrAssumedRolesUuids()
     returns uuid[]
     stable -- leakproof
     language plpgsql as $$
 declare
-    currentSubjectsUuids text;
-    currentUserName text;
+    currentSubjectOrAssumedRolesUuids text;
+    currentSubjectName text;
 begin
     begin
-        currentSubjectsUuids := current_setting('hsadminng.currentSubjectsUuids');
+        currentSubjectOrAssumedRolesUuids := current_setting('hsadminng.currentSubjectOrAssumedRolesUuids');
     exception
         when others then
-            currentSubjectsUuids := null;
+            currentSubjectOrAssumedRolesUuids := null;
     end;
-    if (currentSubjectsUuids is null or length(currentSubjectsUuids) = 0 ) then
-        currentUserName := currentUser();
-        if (length(currentUserName) > 0) then
-            raise exception '[401] currentSubjectsUuids (%) cannot be determined, unknown user name "%"', currentSubjectsUuids, currentUserName;
+    if (currentSubjectOrAssumedRolesUuids is null or length(currentSubjectOrAssumedRolesUuids) = 0 ) then
+        currentSubjectName := base.currentSubject();
+        if (length(currentSubjectName) > 0) then
+            raise exception '[401] currentSubjectOrAssumedRolesUuids (%) cannot be determined, unknown subject name "%"', currentSubjectOrAssumedRolesUuids, currentSubjectName;
         else
-            raise exception '[401] currentSubjectsUuids cannot be determined, please call `defineContext(...)` with a valid user;"';
+            raise exception '[401] currentSubjectOrAssumedRolesUuids cannot be determined, please call `base.defineContext(...)` with a valid subject;"';
         end if;
     end if;
-    return string_to_array(currentSubjectsUuids, ';');
+    return string_to_array(currentSubjectOrAssumedRolesUuids, ';');
 end; $$;
 --//
 

@@ -86,16 +86,16 @@ subgraph membership.partnerRel.holderPerson["`**membership.partnerRel.holderPers
 end
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:membership.partnerRel.anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:membership.partnerRel.anchorPerson:OWNER
 role:membership.partnerRel.anchorPerson:OWNER -.-> role:membership.partnerRel.anchorPerson:ADMIN
 role:membership.partnerRel.anchorPerson:ADMIN -.-> role:membership.partnerRel.anchorPerson:REFERRER
-role:global:ADMIN -.-> role:membership.partnerRel.holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:membership.partnerRel.holderPerson:OWNER
 role:membership.partnerRel.holderPerson:OWNER -.-> role:membership.partnerRel.holderPerson:ADMIN
 role:membership.partnerRel.holderPerson:ADMIN -.-> role:membership.partnerRel.holderPerson:REFERRER
-role:global:ADMIN -.-> role:membership.partnerRel.contact:OWNER
+role:rbac.global:ADMIN -.-> role:membership.partnerRel.contact:OWNER
 role:membership.partnerRel.contact:OWNER -.-> role:membership.partnerRel.contact:ADMIN
 role:membership.partnerRel.contact:ADMIN -.-> role:membership.partnerRel.contact:REFERRER
-role:global:ADMIN -.-> role:membership.partnerRel:OWNER
+role:rbac.global:ADMIN -.-> role:membership.partnerRel:OWNER
 role:membership.partnerRel:OWNER -.-> role:membership.partnerRel:ADMIN
 role:membership.partnerRel:ADMIN -.-> role:membership.partnerRel:AGENT
 role:membership.partnerRel:AGENT -.-> role:membership.partnerRel:TENANT

@@ -62,7 +62,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates")
@@ -111,7 +111,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -138,9 +138,9 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new sepaMandate can be accessed under the generated UUID
-            final var newUserUuid = UUID.fromString(
+            final var newSubjectUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isNotNull();
+            assertThat(newSubjectUuid).isNotNull();
         }
 
         // TODO.test: move validation tests to a ...WebMvcTest
@@ -153,7 +153,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -178,7 +178,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -208,7 +208,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -242,7 +242,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates/" + givenSepaMandateUuid)
@@ -272,7 +272,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates/" + givenSepaMandateUuid)
@@ -289,7 +289,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "bankaccount-admin@FirstGmbH.example.com")
+                    .header("current-subject", "bankaccount-admin@FirstGmbH.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/sepamandates/" + givenSepaMandateUuid)
@@ -321,7 +321,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -367,7 +367,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -407,7 +407,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -441,7 +441,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())
@@ -459,7 +459,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "bankaccount-admin@FirstGmbH.example.com")
+                    .header("current-subject", "bankaccount-admin@FirstGmbH.example.com")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())
@@ -477,7 +477,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/sepamandates/" + givenSepaMandate.getUuid())

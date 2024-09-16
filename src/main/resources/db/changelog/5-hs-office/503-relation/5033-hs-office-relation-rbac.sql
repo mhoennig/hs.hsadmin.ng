@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_relation');
+call rbac.generateRelatedRbacObject('hs_office_relation');
 --//
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeRelation', 'hs_office_relation');
+call rbac.generateRbacRoleDescriptors('hsOfficeRelation', 'hs_office_relation');
 --//
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -35,7 +35,7 @@ declare
     newContact hs_office_contact;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office_person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
     assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s', NEW.holderUuid);
@@ -47,25 +47,25 @@ begin
     assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s', NEW.contactUuid);
 
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeRelationOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalADMIN()],
-            userUuids => array[currentUserUuid()]
+            incomingSuperRoles => array[rbac.globalAdmin()],
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeRelationADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficeRelationOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeRelationAGENT(NEW),
             incomingSuperRoles => array[hsOfficeRelationADMIN(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeRelationTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
@@ -78,15 +78,15 @@ begin
     );
 
     IF NEW.type = 'REPRESENTATIVE' THEN
-        call grantRoleToRole(hsOfficePersonOWNER(newAnchorPerson), hsOfficeRelationADMIN(NEW));
-        call grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newAnchorPerson));
-        call grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newHolderPerson));
+        call rbac.grantRoleToRole(hsOfficePersonOWNER(newAnchorPerson), hsOfficeRelationADMIN(NEW));
+        call rbac.grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newAnchorPerson));
+        call rbac.grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newHolderPerson));
     ELSE
-        call grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newHolderPerson));
-        call grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newAnchorPerson));
+        call rbac.grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newHolderPerson));
+        call rbac.grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newAnchorPerson));
     END IF;
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -110,7 +110,7 @@ execute procedure insertTriggerForHsOfficeRelation_tf();
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-update-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -125,7 +125,7 @@ create or replace procedure updateRbacRulesForHsOfficeRelation(
 begin
 
     if NEW.contactUuid is distinct from OLD.contactUuid then
-        delete from rbacgrants g where g.grantedbytriggerof = OLD.uuid;
+        delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
         call buildRbacSystemForHsOfficeRelation(NEW);
     end if;
 end; $$;
@@ -151,7 +151,7 @@ execute procedure updateTriggerForHsOfficeRelation_tf();
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to hs_office_person ----------------------------
@@ -163,13 +163,13 @@ do language plpgsql $$
     declare
         row hs_office_person;
     begin
-        call defineContext('create INSERT INTO hs_office_relation permissions for pre-exising hs_office_person rows');
+        call base.defineContext('create INSERT INTO hs_office_relation permissions for pre-exising hs_office_person rows');
 
         FOR row IN SELECT * FROM hs_office_person
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
                         hsOfficePersonADMIN(row));
             END LOOP;
     end;
@@ -184,8 +184,8 @@ create or replace function new_hs_office_relation_grants_insert_to_hs_office_per
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_office_relation'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_relation'),
             hsOfficePersonADMIN(NEW));
     -- end.
     return NEW;
@@ -199,7 +199,7 @@ execute procedure new_hs_office_relation_grants_insert_to_hs_office_person_tf();
 
 
 -- ============================================================================
---changeset hs_office_relation-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:hs_office_relation-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -212,12 +212,12 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission via direct foreign key: NEW.anchorUuid
-    if hasInsertPermission(NEW.anchorUuid, 'hs_office_relation') then
+    if rbac.hasInsertPermission(NEW.anchorUuid, 'hs_office_relation') then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_office_relation not allowed for current subjects % (%)',
-            currentSubjects(), currentSubjectsUuids();
+            base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_office_relation_insert_permission_check_tg
@@ -228,10 +228,10 @@ create trigger hs_office_relation_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_office_relation',
+call rbac.generateRbacIdentityViewFromProjection('hs_office_relation',
     $idName$
              (select idName from hs_office_person_iv p where p.uuid = anchorUuid)
              || '-with-' || target.type || '-'
@@ -241,9 +241,9 @@ call generateRbacIdentityViewFromProjection('hs_office_relation',
 
 
 -- ============================================================================
---changeset hs-office-relation-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-relation-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_relation',
+call rbac.generateRbacRestrictedView('hs_office_relation',
     $orderBy$
         (select idName from hs_office_person_iv p where p.uuid = target.holderUuid)
     $orderBy$,

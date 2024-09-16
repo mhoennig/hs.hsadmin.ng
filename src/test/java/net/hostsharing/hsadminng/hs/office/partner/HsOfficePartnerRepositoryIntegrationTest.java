@@ -7,9 +7,9 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacObjectRepository;
-import net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleRepository;
+import net.hostsharing.hsadminng.rbac.grant.RawRbacGrantRepository;
+import net.hostsharing.hsadminng.rbac.role.RawRbacObjectRepository;
+import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -27,9 +27,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static net.hostsharing.hsadminng.rbac.rbacgrant.RawRbacGrantEntity.distinctGrantDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacObjectEntity.objectDisplaysOf;
-import static net.hostsharing.hsadminng.rbac.rbacrole.RawRbacRoleEntity.distinctRoleNamesOf;
+import static net.hostsharing.hsadminng.rbac.grant.RawRbacGrantEntity.distinctGrantDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.role.RawRbacObjectEntity.objectDisplaysOf;
+import static net.hostsharing.hsadminng.rbac.role.RawRbacRoleEntity.distinctRoleNamesOf;
 import static net.hostsharing.hsadminng.mapper.Array.from;
 import static net.hostsharing.hsadminng.rbac.test.JpaAttempt.attempt;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -158,7 +158,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                             "{ grant perm:relation#HostsharingeG-with-PARTNER-EBess:SELECT to role:relation#HostsharingeG-with-PARTNER-EBess:TENANT by system and assume }",
 
                             // relation owner
-                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER to role:global#global:ADMIN by system and assume }",
+                            "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER to role:rbac.global#global:ADMIN by system and assume }",
                             "{ grant role:relation#HostsharingeG-with-PARTNER-EBess:OWNER to user:superuser-alex@hostsharing.net by relation#HostsharingeG-with-PARTNER-EBess:OWNER and assume }",
 
                             // relation admin
@@ -278,7 +278,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "global#global:ADMIN");
+                    "rbac.global#global:ADMIN");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
                     "hs_office_person#ThirdOHG:ADMIN");
@@ -434,7 +434,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         // given
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'partnernumber'
-                    from tx_journal_v
+                    from base.tx_journal_v
                     where targettable = 'hs_office_partner';
                     """);
 

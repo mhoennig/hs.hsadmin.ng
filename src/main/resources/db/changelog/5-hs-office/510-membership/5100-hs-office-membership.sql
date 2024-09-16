@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-membership-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-membership-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TYPE HsOfficeMembershipStatus AS ENUM (
@@ -19,7 +19,7 @@ CREATE CAST (character varying as HsOfficeMembershipStatus) WITH INOUT AS IMPLIC
 
 create table if not exists hs_office_membership
 (
-    uuid                    uuid unique references RbacObject (uuid) initially deferred,
+    uuid                    uuid unique references rbac.object (uuid) initially deferred,
     version                 int not null default 0,
     partnerUuid             uuid not null references hs_office_partner(uuid),
     memberNumberSuffix      char(2) not null check (memberNumberSuffix::text ~ '^[0-9][0-9]$'),
@@ -33,8 +33,8 @@ create table if not exists hs_office_membership
 
 
 -- ============================================================================
---changeset hs-office-membership-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-membership-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_membership');
+call base.create_journal('hs_office_membership');
 --//

@@ -14,7 +14,7 @@ import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;

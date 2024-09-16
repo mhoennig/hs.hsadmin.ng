@@ -4,22 +4,22 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 import net.hostsharing.hsadminng.rbac.test.cust.TestCustomerEntity;
 
 import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NOT_NULL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NOT_NULL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
 @Table(name = "test_package_rv")

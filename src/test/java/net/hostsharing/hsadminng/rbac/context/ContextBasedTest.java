@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.context;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.rbac.rbacgrant.RbacGrantsDiagramService;
+import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public abstract class ContextBasedTest {
      <pre>
      RbacGrantsDiagramService.writeToFile(
          "title",
-         diagramService.allGrantsToCurrentUser(of(RbacGrantsDiagramService.Include.USERS, RbacGrantsDiagramService.Include.TEST_ENTITIES, RbacGrantsDiagramService.Include.NOT_ASSUMED, RbacGrantsDiagramService.Include.DETAILS, RbacGrantsDiagramService.Include.PERMISSIONS)),
+         diagramService.allGrantsTocurrentSubject(of(RbacGrantsDiagramService.Include.USERS, RbacGrantsDiagramService.Include.TEST_ENTITIES, RbacGrantsDiagramService.Include.NOT_ASSUMED, RbacGrantsDiagramService.Include.DETAILS, RbacGrantsDiagramService.Include.PERMISSIONS)),
          "filename.md
      );
     </pre>
@@ -41,12 +41,12 @@ public abstract class ContextBasedTest {
         this.test = testInfo;
     }
 
-    protected void context(final String currentUser, final String assumedRoles) {
-        context.define(test.getDisplayName(), null, currentUser, assumedRoles);
+    protected void context(final String currentSubject, final String assumedRoles) {
+        context.define(test.getDisplayName(), null, currentSubject, assumedRoles);
     }
 
-    protected void context(final String currentUser) {
-        context(currentUser, null);
+    protected void context(final String currentSubject) {
+        context(currentSubject, null);
     }
 
     protected void historicalContext(final Long txId) {

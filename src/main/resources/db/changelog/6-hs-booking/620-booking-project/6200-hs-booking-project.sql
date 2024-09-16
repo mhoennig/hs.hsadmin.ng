@@ -1,12 +1,12 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset booking-project-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:booking-project-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create table if not exists hs_booking_project
 (
-    uuid                uuid unique references RbacObject (uuid),
+    uuid                uuid unique references rbac.object (uuid),
     version             int not null default 0,
     debitorUuid         uuid not null references hs_office_debitor(uuid),
     caption             varchar(80) not null
@@ -15,15 +15,15 @@ create table if not exists hs_booking_project
 
 
 -- ============================================================================
---changeset hs-booking-project-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_booking_project');
+call base.create_journal('hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-project-MAIN-TABLE-HISTORIZATION:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-project-MAIN-TABLE-HISTORIZATION endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call tx_create_historicization('hs_booking_project');
+call base.tx_create_historicization('hs_booking_project');
 --//

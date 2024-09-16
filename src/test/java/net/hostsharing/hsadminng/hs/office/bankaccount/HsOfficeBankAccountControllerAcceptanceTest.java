@@ -54,7 +54,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts")
@@ -120,7 +120,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -143,9 +143,9 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new bankaccount can be accessed under the generated UUID
-            final var newUserUuid = UUID.fromString(
+            final var newSubjectUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isNotNull();
+            assertThat(newSubjectUuid).isNotNull();
         }
     }
 
@@ -159,7 +159,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
@@ -180,7 +180,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
@@ -196,7 +196,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "bankaccount-admin@firstbankaccount.example.com")
+                    .header("current-subject", "bankaccount-admin@firstbankaccount.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/bankaccounts/" + givenBankAccountUuid)
@@ -224,7 +224,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                        {
@@ -262,7 +262,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
@@ -279,7 +279,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-test-user@hostsharing.org")
+                    .header("current-subject", "selfregistered-test-user@hostsharing.org")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())
@@ -300,7 +300,7 @@ class HsOfficeBankAccountControllerAcceptanceTest extends ContextBasedTestWithCl
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/bankaccounts/" + givenBankAccount.getUuid())

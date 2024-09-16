@@ -39,10 +39,10 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeSepaMandateResource>> listSepaMandatesByIban(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final String iban) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = sepaMandateRepo.findSepaMandateByOptionalIban(iban);
 
@@ -54,11 +54,11 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficeSepaMandateResource> addSepaMandate(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsOfficeSepaMandateInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsOfficeSepaMandateEntity.class, SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER);
 
@@ -77,11 +77,11 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsOfficeSepaMandateResource> getSepaMandateByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID sepaMandateUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = sepaMandateRepo.findByUuid(sepaMandateUuid);
         if (result.isEmpty()) {
@@ -94,10 +94,10 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deleteSepaMandateByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID sepaMandateUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = sepaMandateRepo.deleteByUuid(sepaMandateUuid);
         if (result == 0) {
@@ -110,12 +110,12 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficeSepaMandateResource> patchSepaMandate(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID sepaMandateUuid,
             final HsOfficeSepaMandatePatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = sepaMandateRepo.findByUuid(sepaMandateUuid).orElseThrow();
 

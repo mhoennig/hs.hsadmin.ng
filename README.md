@@ -77,17 +77,17 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
 
     # the following command should return a JSON array with just all customers:
     curl \
-        -H 'current-user: superuser-alex@hostsharing.net' \
+        -H 'current-subject: superuser-alex@hostsharing.net' \
         http://localhost:8080/api/test/customers
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
     curl \
-        -H 'current-user: superuser-alex@hostsharing.net' -H 'assumed-roles: test_customer#yyy:ADMIN' \
+        -H 'current-subject: superuser-alex@hostsharing.net' -H 'assumed-roles: test_customer#yyy:ADMIN' \
         http://localhost:8080/api/test/packages
 
     # add a new customer
     curl \
-        -H 'current-user: superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
+        -H 'current-subject: superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
         -X POST http://localhost:8080/api/test/customers
 

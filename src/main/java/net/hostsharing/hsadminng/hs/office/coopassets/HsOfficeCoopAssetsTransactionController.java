@@ -37,12 +37,12 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficeCoopAssetsTransactionResource>> listCoopAssets(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid,
             final @DateTimeFormat(iso = ISO.DATE) LocalDate fromValueDate,
             final @DateTimeFormat(iso = ISO.DATE) LocalDate toValueDate) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
                 membershipUuid,
@@ -56,11 +56,11 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     @Override
     @Transactional
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> addCoopAssetsTransaction(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsOfficeCoopAssetsTransactionInsertResource requestBody) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
         validate(requestBody);
 
         final var entityToSave = mapper.map(requestBody, HsOfficeCoopAssetsTransactionEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
@@ -79,9 +79,9 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     @Transactional(readOnly = true)
 
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> getCoopAssetTransactionByUuid(
-        final String currentUser, final String assumedRoles, final UUID assetTransactionUuid) {
+        final String currentSubject, final String assumedRoles, final UUID assetTransactionUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = coopAssetsTransactionRepo.findByUuid(assetTransactionUuid);
         if (result.isEmpty()) {

@@ -3,8 +3,8 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 
@@ -12,10 +12,10 @@ import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
@@ -62,7 +62,7 @@ public class HsOfficeBankAccountEntity implements BaseEntity<HsOfficeBankAccount
                 .withIdentityView(SQL.projection("iban"))
                 .withUpdatableColumns("holder", "iban", "bic")
 
-                .toRole("global", GUEST).grantPermission(INSERT)
+                .toRole(GLOBAL, GUEST).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR);

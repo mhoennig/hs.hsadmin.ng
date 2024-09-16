@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:hs-office-bankaccount-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_bankaccount');
+call rbac.generateRelatedRbacObject('hs_office_bankaccount');
 --//
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-office-bankaccount-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office_bankaccount');
+call rbac.generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office_bankaccount');
 --//
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-bankaccount-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -32,28 +32,28 @@ create or replace procedure buildRbacSystemForHsOfficeBankAccount(
 declare
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeBankAccountOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[globalADMIN()],
-            userUuids => array[currentUserUuid()]
+            incomingSuperRoles => array[rbac.globalADMIN()],
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeBankAccountADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[hsOfficeBankAccountOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsOfficeBankAccountREFERRER(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[hsOfficeBankAccountADMIN(NEW)]
     );
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -77,10 +77,10 @@ execute procedure insertTriggerForHsOfficeBankAccount_tf();
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-office-bankaccount-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_office_bankaccount',
+call rbac.generateRbacIdentityViewFromProjection('hs_office_bankaccount',
     $idName$
         iban
     $idName$);
@@ -88,9 +88,9 @@ call generateRbacIdentityViewFromProjection('hs_office_bankaccount',
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-bankaccount-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_bankaccount',
+call rbac.generateRbacRestrictedView('hs_office_bankaccount',
     $orderBy$
         iban
     $orderBy$,

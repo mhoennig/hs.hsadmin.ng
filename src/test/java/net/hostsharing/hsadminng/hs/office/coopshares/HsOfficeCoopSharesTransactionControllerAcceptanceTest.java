@@ -69,7 +69,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopsharestransactions")
@@ -86,7 +86,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid()).then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                .given().header("current-subject", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid()).then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
                     [
                         {
                             "transactionType": "SUBSCRIPTION",
@@ -141,7 +141,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000202);
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when()
+                .given().header("current-subject", "superuser-alex@hostsharing.net").port(port).when()
                     .get("http://localhost/api/hs/office/coopsharestransactions?membershipUuid=" + givenMembership.getUuid() + "&fromValueDate=2020-01-01&toValueDate=2021-12-31").then().log().all().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
                     [
                         {
@@ -166,7 +166,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             final var location = RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
+                .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
                        {
                            "membershipUuid": "%s",
                            "transactionType": "SUBSCRIPTION",
@@ -210,7 +210,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
 
             final var location = RestAssured // @formatter:off
                 .given()
-                .header("current-user", "superuser-alex@hostsharing.net")
+                .header("current-subject", "superuser-alex@hostsharing.net")
                 .contentType(ContentType.JSON)
                 .body("""
                                    {
@@ -265,7 +265,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
+                .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
                     {
                         "membershipUuid": "%s",
                         "transactionType": "CANCELLATION",
@@ -293,7 +293,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenCoopShareTransactionUuid = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
+                .given().header("current-subject", "superuser-alex@hostsharing.net").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid).then().log().body().assertThat().statusCode(200).contentType("application/json").body("", lenientlyEquals("""
                     {
                         "transactionType": "SUBSCRIPTION"
                     }
@@ -306,7 +306,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var givenCoopShareTransactionUuid = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(null, LocalDate.of(2010, 3, 15), LocalDate.of(2010, 3, 15)).get(0).getUuid();
 
             RestAssured // @formatter:off
-                .given().header("current-user", "selfregistered-user-drew@hostsharing.org").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid).then().log().body().assertThat().statusCode(404); // @formatter:on
+                .given().header("current-subject", "selfregistered-user-drew@hostsharing.org").port(port).when().get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid).then().log().body().assertThat().statusCode(404); // @formatter:on
         }
 
         @Test
@@ -316,7 +316,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "person-FirstGmbH@example.com")
+                    .header("current-subject", "person-FirstGmbH@example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/coopsharestransactions/" + givenCoopShareTransactionUuid)

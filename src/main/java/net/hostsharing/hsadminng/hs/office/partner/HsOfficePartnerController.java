@@ -13,7 +13,7 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.mapper.Mapper;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,10 +50,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsOfficePartnerResource>> listPartners(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final String name) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = partnerRepo.findPartnerByOptionalNameLike(name);
 
@@ -64,11 +64,11 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficePartnerResource> addPartner(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsOfficePartnerInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entityToSave = createPartnerEntity(body);
 
@@ -86,11 +86,11 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsOfficePartnerResource> getPartnerByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = partnerRepo.findByUuid(partnerUuid);
         if (result.isEmpty()) {
@@ -102,10 +102,10 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deletePartnerByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var partnerToDelete = partnerRepo.findByUuid(partnerUuid);
         if (partnerToDelete.isEmpty()) {
@@ -122,12 +122,12 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
     @Override
     @Transactional
     public ResponseEntity<HsOfficePartnerResource> patchPartner(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid,
             final HsOfficePartnerPatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = partnerRepo.findByUuid(partnerUuid).orElseThrow();
         final var previousPartnerRel = current.getPartnerRel();

@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-office-coopassetstransaction-rbac-OBJECT:1 endDelimiter:--//
+--changeset RbacObjectGenerator:hs-office-coopassetstransaction-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_office_coopassetstransaction');
+call rbac.generateRelatedRbacObject('hs_office_coopassetstransaction');
 --//
 
 
 -- ============================================================================
---changeset hs-office-coopassetstransaction-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-office-coopassetstransaction-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsOfficeCoopAssetsTransaction', 'hs_office_coopassetstransaction');
+call rbac.generateRbacRoleDescriptors('hsOfficeCoopAssetsTransaction', 'hs_office_coopassetstransaction');
 --//
 
 
 -- ============================================================================
---changeset hs-office-coopassetstransaction-rbac-insert-trigger:1 endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-coopassetstransaction-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -33,15 +33,15 @@ declare
     newMembership hs_office_membership;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office_membership WHERE uuid = NEW.membershipUuid    INTO newMembership;
     assert newMembership.uuid is not null, format('newMembership must not be null for NEW.membershipUuid = %s', NEW.membershipUuid);
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'SELECT'), hsOfficeMembershipAGENT(newMembership));
-    call grantPermissionToRole(createPermission(NEW.uuid, 'UPDATE'), hsOfficeMembershipADMIN(newMembership));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hsOfficeMembershipAGENT(newMembership));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hsOfficeMembershipADMIN(newMembership));
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -65,7 +65,7 @@ execute procedure insertTriggerForHsOfficeCoopAssetsTransaction_tf();
 
 
 -- ============================================================================
---changeset hs-office-coopassetstransaction-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-coopassetstransaction-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to hs_office_membership ----------------------------
@@ -77,13 +77,13 @@ do language plpgsql $$
     declare
         row hs_office_membership;
     begin
-        call defineContext('create INSERT INTO hs_office_coopassetstransaction permissions for pre-exising hs_office_membership rows');
+        call base.defineContext('create INSERT INTO hs_office_coopassetstransaction permissions for pre-exising hs_office_membership rows');
 
         FOR row IN SELECT * FROM hs_office_membership
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_office_coopassetstransaction'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_coopassetstransaction'),
                         hsOfficeMembershipADMIN(row));
             END LOOP;
     end;
@@ -92,28 +92,28 @@ $$;
 /**
     Grants hs_office_coopassetstransaction INSERT permission to specified role of new hs_office_membership rows.
 */
-create or replace function new_hs_office_coopassetstransaction_grants_insert_to_hs_office_membership_tf()
+create or replace function new_hsof_coopassettx_grants_insert_to_hsof_membership_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_office_coopassetstransaction'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_coopassetstransaction'),
             hsOfficeMembershipADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_coopassetstransaction_grants_insert_to_hs_office_membership_tg
+create trigger z_new_hs_office_coopassetstransaction_grants_after_insert_tg
     after insert on hs_office_membership
     for each row
-execute procedure new_hs_office_coopassetstransaction_grants_insert_to_hs_office_membership_tf();
+execute procedure new_hsof_coopassettx_grants_insert_to_hsof_membership_tf();
 
 
 -- ============================================================================
---changeset hs_office_coopassetstransaction-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset InsertTriggerGenerator:hs_office_coopassetstransaction-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -126,12 +126,12 @@ declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission via direct foreign key: NEW.membershipUuid
-    if hasInsertPermission(NEW.membershipUuid, 'hs_office_coopassetstransaction') then
+    if rbac.hasInsertPermission(NEW.membershipUuid, 'hs_office_coopassetstransaction') then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_office_coopassetstransaction values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_office_coopassetstransaction_insert_permission_check_tg
@@ -142,10 +142,10 @@ create trigger hs_office_coopassetstransaction_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-office-coopassetstransaction-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-office-coopassetstransaction-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_office_coopassetstransaction',
+call rbac.generateRbacIdentityViewFromProjection('hs_office_coopassetstransaction',
     $idName$
         reference
     $idName$);
@@ -153,9 +153,9 @@ call generateRbacIdentityViewFromProjection('hs_office_coopassetstransaction',
 
 
 -- ============================================================================
---changeset hs-office-coopassetstransaction-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-coopassetstransaction-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_office_coopassetstransaction',
+call rbac.generateRbacRestrictedView('hs_office_coopassetstransaction',
     $orderBy$
         reference
     $orderBy$,

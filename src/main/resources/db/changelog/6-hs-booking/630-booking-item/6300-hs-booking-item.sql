@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset booking-item-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:booking-item-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create type HsBookingItemType as enum (
@@ -16,7 +16,7 @@ CREATE CAST (character varying as HsBookingItemType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_booking_item
 (
-    uuid                uuid unique references RbacObject (uuid),
+    uuid                uuid unique references rbac.object (uuid),
     version             int not null default 0,
     projectUuid         uuid null references hs_booking_project(uuid),
     type                HsBookingItemType not null,
@@ -32,16 +32,16 @@ create table if not exists hs_booking_item
 
 
 -- ============================================================================
---changeset hs-booking-item-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_booking_item');
+call base.create_journal('hs_booking_item');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-MAIN-TABLE-HISTORIZATION:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-MAIN-TABLE-HISTORIZATION endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call tx_create_historicization('hs_booking_item');
+call base.tx_create_historicization('hs_booking_item');
 --//
 

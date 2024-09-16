@@ -2,12 +2,12 @@
 
 
 -- ============================================================================
---changeset hs-office-partner-DETAILS-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-DETAILS-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create table hs_office_partner_details
 (
-    uuid                uuid unique references RbacObject (uuid) initially deferred,
+    uuid                uuid unique references rbac.object (uuid) initially deferred,
     version             int not null default 0,
     registrationOffice  varchar(96),
     registrationNumber  varchar(96),
@@ -20,19 +20,19 @@ create table hs_office_partner_details
 
 
 -- ============================================================================
---changeset hs-office-partner-DETAILS-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-DETAILS-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_partner_details');
+call base.create_journal('hs_office_partner_details');
 --//
 
 -- ============================================================================
---changeset hs-office-partner-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create table hs_office_partner
 (
-    uuid                uuid unique references RbacObject (uuid) initially deferred,
+    uuid                uuid unique references rbac.object (uuid) initially deferred,
     version             int not null default 0,
     partnerNumber       numeric(5) unique not null,
     partnerRelUuid      uuid not null references hs_office_relation(uuid), -- deleted in after delete trigger
@@ -42,7 +42,7 @@ create table hs_office_partner
 
 
 -- ============================================================================
---changeset hs-office-partner-DELETE-DEPENDENTS-TRIGGER:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-DELETE-DEPENDENTS-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -80,8 +80,8 @@ create trigger hs_office_partner_delete_dependents_trigger
         execute procedure deleteHsOfficeDependentsOnPartnerDelete();
 
 -- ============================================================================
---changeset hs-office-partner-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_partner');
+call base.create_journal('hs_office_partner');
 --//

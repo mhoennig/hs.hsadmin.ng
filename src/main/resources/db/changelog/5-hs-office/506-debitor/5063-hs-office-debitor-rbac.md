@@ -140,16 +140,16 @@ subgraph refundBankAccount["`**refundBankAccount**`"]
 end
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:debitorRel.anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel.anchorPerson:OWNER
 role:debitorRel.anchorPerson:OWNER -.-> role:debitorRel.anchorPerson:ADMIN
 role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel.anchorPerson:REFERRER
-role:global:ADMIN -.-> role:debitorRel.holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel.holderPerson:OWNER
 role:debitorRel.holderPerson:OWNER -.-> role:debitorRel.holderPerson:ADMIN
 role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel.holderPerson:REFERRER
-role:global:ADMIN -.-> role:debitorRel.contact:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel.contact:OWNER
 role:debitorRel.contact:OWNER -.-> role:debitorRel.contact:ADMIN
 role:debitorRel.contact:ADMIN -.-> role:debitorRel.contact:REFERRER
-role:global:ADMIN -.-> role:debitorRel:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
 role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
 role:debitorRel:AGENT -.-> role:debitorRel:TENANT
@@ -159,21 +159,21 @@ role:debitorRel:TENANT -.-> role:debitorRel.holderPerson:REFERRER
 role:debitorRel:TENANT -.-> role:debitorRel.contact:REFERRER
 role:debitorRel.anchorPerson:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel.holderPerson:ADMIN -.-> role:debitorRel:AGENT
-role:global:ADMIN -.-> role:refundBankAccount:OWNER
+role:rbac.global:ADMIN -.-> role:refundBankAccount:OWNER
 role:refundBankAccount:OWNER -.-> role:refundBankAccount:ADMIN
 role:refundBankAccount:ADMIN -.-> role:refundBankAccount:REFERRER
 role:refundBankAccount:ADMIN ==> role:debitorRel:AGENT
 role:debitorRel:AGENT ==> role:refundBankAccount:REFERRER
-role:global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
 role:partnerRel.anchorPerson:OWNER -.-> role:partnerRel.anchorPerson:ADMIN
 role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel.anchorPerson:REFERRER
-role:global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
 role:partnerRel.holderPerson:OWNER -.-> role:partnerRel.holderPerson:ADMIN
 role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel.holderPerson:REFERRER
-role:global:ADMIN -.-> role:partnerRel.contact:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.contact:OWNER
 role:partnerRel.contact:OWNER -.-> role:partnerRel.contact:ADMIN
 role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
-role:global:ADMIN -.-> role:partnerRel:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
@@ -188,7 +188,7 @@ role:partnerRel:AGENT ==> role:debitorRel:AGENT
 role:debitorRel:AGENT ==> role:partnerRel:TENANT
 
 %% granting permissions to roles
-role:global:ADMIN ==> perm:debitor:INSERT
+role:rbac.global:ADMIN ==> perm:debitor:INSERT
 role:debitorRel:OWNER ==> perm:debitor:DELETE
 role:debitorRel:ADMIN ==> perm:debitor:UPDATE
 role:debitorRel:TENANT ==> perm:debitor:SELECT

@@ -2,10 +2,10 @@
 
 
 -- ============================================================================
---changeset rbac-generators-RELATED-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-generators-RELATED-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRelatedRbacObject(targetTable varchar)
+create or replace procedure rbac.generateRelatedRbacObject(targetTable varchar)
     language plpgsql as $$
 declare
     createInsertTriggerSQL text;
@@ -15,16 +15,16 @@ begin
         create trigger createRbacObjectFor_%s_Trigger
             before insert on %s
             for each row
-                execute procedure insertRelatedRbacObject();
+                execute procedure rbac.insert_related_object();
         $sql$, targetTable, targetTable);
     execute createInsertTriggerSQL;
 
     createDeleteTriggerSQL = format($sql$
-        create trigger deleteRbacRulesFor_%s_Trigger
+        create trigger delete_related_rbac_rules_for_%s_tg
             after delete
             on %s
             for each row
-                execute procedure deleteRelatedRbacObject();
+                execute procedure rbac.delete_related_rbac_rules_tf();
         $sql$, targetTable, targetTable);
     execute createDeleteTriggerSQL;
 end; $$;
@@ -32,62 +32,62 @@ end; $$;
 
 
 -- ============================================================================
---changeset rbac-generators-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-generators-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create procedure generateRbacRoleDescriptors(prefix text, targetTable text)
+create procedure rbac.generateRbacRoleDescriptors(prefix text, targetTable text)
     language plpgsql as $$
 declare
     sql text;
 begin
     sql = format($sql$
         create or replace function %1$sOwner(entity %2$s, assumed boolean = true)
-            returns RbacRoleDescriptor
+            returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'OWNER', assumed);
+            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'OWNER', assumed);
         end; $f$;
 
         create or replace function %1$sAdmin(entity %2$s, assumed boolean = true)
-            returns RbacRoleDescriptor
+            returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'ADMIN', assumed);
+            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'ADMIN', assumed);
         end; $f$;
 
         create or replace function %1$sAgent(entity %2$s, assumed boolean = true)
-            returns RbacRoleDescriptor
+            returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'AGENT', assumed);
+            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'AGENT', assumed);
         end; $f$;
 
         create or replace function %1$sTenant(entity %2$s, assumed boolean = true)
-            returns RbacRoleDescriptor
+            returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'TENANT', assumed);
+            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'TENANT', assumed);
         end; $f$;
 
         -- TODO: remove guest role
         create or replace function %1$sGuest(entity %2$s, assumed boolean = true)
-            returns RbacRoleDescriptor
+            returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'GUEST', assumed);
+            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'GUEST', assumed);
         end; $f$;
 
         create or replace function %1$sReferrer(entity %2$s)
-            returns RbacRoleDescriptor
+            returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return roleDescriptor('%2$s', entity.uuid, 'REFERRER');
+            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'REFERRER');
         end; $f$;
 
         $sql$, prefix, targetTable);
@@ -97,10 +97,10 @@ end; $$;
 
 
 -- ============================================================================
---changeset rbac-generators-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-generators-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRbacIdentityViewFromQuery(targetTable text, sqlQuery text)
+create or replace procedure rbac.generateRbacIdentityViewFromQuery(targetTable text, sqlQuery text)
     language plpgsql as $$
 declare
     sql text;
@@ -140,7 +140,7 @@ begin
     execute sql;
 end; $$;
 
-create or replace procedure generateRbacIdentityViewFromProjection(targetTable text, sqlProjection text)
+create or replace procedure rbac.generateRbacIdentityViewFromProjection(targetTable text, sqlProjection text)
     language plpgsql as $$
 declare
     sqlQuery text;
@@ -148,19 +148,19 @@ begin
     targettable := lower(targettable);
 
     sqlQuery = format($sql$
-            select target.uuid, cleanIdentifier(%2$s) as idName
+            select target.uuid, base.cleanIdentifier(%2$s) as idName
                 from %1$s as target;
         $sql$, targetTable, sqlProjection);
-    call generateRbacIdentityViewFromQuery(targetTable, sqlQuery);
+    call rbac.generateRbacIdentityViewFromQuery(targetTable, sqlQuery);
 end; $$;
 --//
 
 
 -- ============================================================================
---changeset rbac-generators-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-generators-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text = null, columnNames text = '*')
+create or replace procedure rbac.generateRbacRestrictedView(targetTable text, orderBy text, columnUpdates text = null, columnNames text = '*')
     language plpgsql as $$
 declare
     sql text;
@@ -168,7 +168,7 @@ declare
 begin
     targetTable := lower(targetTable);
     if columnNames = '*' then
-        columnNames := columnsNames(targetTable);
+        columnNames := base.tableColumnNames(targetTable);
     end if;
 
     /*
@@ -179,31 +179,31 @@ begin
             with accessible_%1$s_uuids as (
                      with recursive
                           recursive_grants as
-                              (select distinct rbacgrants.descendantuuid,
-                                               rbacgrants.ascendantuuid,
+                              (select distinct rbac.grants.descendantuuid,
+                                               rbac.grants.ascendantuuid,
                                                1 as level,
                                                true
-                                   from rbacgrants
-                                   where rbacgrants.assumed
-                                     and (rbacgrants.ascendantuuid = any (currentsubjectsuuids()))
+                                   from rbac.grants
+                                   where rbac.grants.assumed
+                                     and (rbac.grants.ascendantuuid = any (rbac.currentSubjectOrAssumedRolesUuids()))
                                union all
                                select distinct g.descendantuuid,
                                                g.ascendantuuid,
                                                grants.level + 1 as level,
-                                               assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
-                                   from rbacgrants g
+                                               base.assertTrue(grants.level < 22, 'too many grant-levels: ' || grants.level)
+                                   from rbac.grants g
                                             join recursive_grants grants on grants.descendantuuid = g.ascendantuuid
                                    where g.assumed),
                           grant_count AS (
                             SELECT COUNT(*) AS grant_count FROM recursive_grants
                           ),
-                          count_check as (select assertTrue((select count(*) as grant_count from recursive_grants) < 400000,
+                          count_check as (select base.assertTrue((select count(*) as grant_count from recursive_grants) < 400000,
                                 'too many grants for current subjects: ' || (select count(*) as grant_count from recursive_grants))
                                                      as valid)
                       select distinct perm.objectuuid
                           from recursive_grants
-                                   join rbacpermission perm on recursive_grants.descendantuuid = perm.uuid
-                                   join rbacobject obj on obj.uuid = perm.objectuuid
+                                   join rbac.permission perm on recursive_grants.descendantuuid = perm.uuid
+                                   join rbac.object obj on obj.uuid = perm.objectuuid
                                    join count_check cc on cc.valid
                           where obj.objectTable = '%1$s' -- 'SELECT' permission is included in all other permissions
             )
@@ -256,11 +256,11 @@ begin
             returns trigger
             language plpgsql as $f$
         begin
-            if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('DELETE', '%1$s', currentSubjectsUuids())) then
+            if old.uuid in (select rbac.queryAccessibleObjectUuidsOfSubjectIds('DELETE', '%1$s', rbac.currentSubjectOrAssumedRolesUuids())) then
                 delete from %1$s p where p.uuid = old.uuid;
                 return old;
             end if;
-            raise exception '[403] Subject %% is not allowed to delete %1$s uuid %%', currentSubjectsUuids(), old.uuid;
+            raise exception '[403] Subject %% is not allowed to delete %1$s uuid %%', rbac.currentSubjectOrAssumedRolesUuids(), old.uuid;
         end; $f$;
     $sql$, targetTable);
     execute sql;
@@ -287,13 +287,13 @@ begin
                 returns trigger
                 language plpgsql as $f$
             begin
-                if old.uuid in (select queryAccessibleObjectUuidsOfSubjectIds('UPDATE', '%1$s', currentSubjectsUuids())) then
+                if old.uuid in (select rbac.queryAccessibleObjectUuidsOfSubjectIds('UPDATE', '%1$s', rbac.currentSubjectOrAssumedRolesUuids())) then
                     update %1$s
                         set %2$s
                         where uuid = old.uuid;
                     return old;
                 end if;
-                raise exception '[403] Subject %% is not allowed to update %1$s uuid %%', currentSubjectsUuids(), old.uuid;
+                raise exception '[403] Subject %% is not allowed to update %1$s uuid %%', rbac.currentSubjectOrAssumedRolesUuids(), old.uuid;
             end; $f$;
         $sql$, targetTable, columnUpdates);
         execute sql;

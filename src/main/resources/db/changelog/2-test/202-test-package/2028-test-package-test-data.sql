@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset test-package-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:test-package-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates the given number of test packages for the given customer.
@@ -22,17 +22,17 @@ begin
             pacName = cust.prefix || to_char(t, 'fm00');
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
             custAdminRole = 'test_customer#' || cust.prefix || ':ADMIN';
-            call defineContext('creating RBAC test package', null, 'superuser-fran@hostsharing.net', custAdminRole);
+            call base.defineContext('creating RBAC test package', null, 'superuser-fran@hostsharing.net', custAdminRole);
 
             insert
                 into test_package (customerUuid, name, description)
                 values (cust.uuid, pacName, 'Here you can add your own description of package ' || pacName || '.')
                 returning * into pac;
 
-            call grantRoleToUser(
-                    getRoleId(testCustomerAdmin(cust)),
-                    findRoleId(testPackageAdmin(pac)),
-                    createRbacUser('pac-admin-' || pacName || '@' || cust.prefix || '.example.com'),
+            call rbac.grantRoleToSubject(
+                    rbac.getRoleId(testCustomerAdmin(cust)),
+                    rbac.findRoleId(testPackageAdmin(pac)),
+                    rbac.create_subject('pac-admin-' || pacName || '@' || cust.prefix || '.example.com'),
                     true);
 
         end loop;
@@ -59,7 +59,7 @@ $$;
 
 
 -- ============================================================================
---changeset test-package-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:test-package-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

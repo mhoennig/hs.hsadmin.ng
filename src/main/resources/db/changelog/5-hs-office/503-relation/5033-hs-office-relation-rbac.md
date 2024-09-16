@@ -72,16 +72,16 @@ end
 user:creator ==> role:relation:OWNER
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:anchorPerson:OWNER
 role:anchorPerson:OWNER -.-> role:anchorPerson:ADMIN
 role:anchorPerson:ADMIN -.-> role:anchorPerson:REFERRER
-role:global:ADMIN -.-> role:holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:holderPerson:OWNER
 role:holderPerson:OWNER -.-> role:holderPerson:ADMIN
 role:holderPerson:ADMIN -.-> role:holderPerson:REFERRER
-role:global:ADMIN -.-> role:contact:OWNER
+role:rbac.global:ADMIN -.-> role:contact:OWNER
 role:contact:OWNER -.-> role:contact:ADMIN
 role:contact:ADMIN -.-> role:contact:REFERRER
-role:global:ADMIN ==> role:relation:OWNER
+role:rbac.global:ADMIN ==> role:relation:OWNER
 role:relation:OWNER ==> role:relation:ADMIN
 role:relation:ADMIN ==> role:relation:AGENT
 role:relation:AGENT ==> role:relation:TENANT

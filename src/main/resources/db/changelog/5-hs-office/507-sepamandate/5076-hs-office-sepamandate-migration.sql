@@ -4,7 +4,7 @@
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================
---changeset hs-office-sepamandate-MIGRATION-mapping:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepamandate-MIGRATION-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE hs_office_sepamandate_legacy_id
@@ -16,7 +16,7 @@ CREATE TABLE hs_office_sepamandate_legacy_id
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-MIGRATION-sequence:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepamandate-MIGRATION-sequence endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE SEQUENCE IF NOT EXISTS hs_office_sepamandate_legacy_id_seq
@@ -27,7 +27,7 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_sepamandate_legacy_id_seq
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-MIGRATION-default:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepamandate-MIGRATION-default endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE hs_office_sepamandate_legacy_id
@@ -38,17 +38,17 @@ ALTER TABLE hs_office_sepamandate_legacy_id
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-MIGRATION-insert:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepamandate-MIGRATION-insert endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CALL defineContext('schema-migration');
+CALL base.defineContext('schema-migration');
 INSERT INTO hs_office_sepamandate_legacy_id(uuid, sepa_mandate_id)
     SELECT uuid, nextVal('hs_office_sepamandate_legacy_id_seq') FROM hs_office_sepamandate;
 --/
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-MIGRATION-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepamandate-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function insertSepaMandateLegacyIdMapping()
     returns trigger
@@ -73,7 +73,7 @@ create trigger createSepaMandateLegacyIdMapping
 
 
 -- ============================================================================
---changeset hs-office-sepamandate-MIGRATION-delete-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepamandate-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function deleteSepaMandateLegacyIdMapping()
     returns trigger

@@ -5,8 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -15,19 +15,20 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.io.IOException;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Column.dependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.ColumnValue.usingDefaultCase;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Nullable.NULLABLE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.DELETE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.INSERT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.SELECT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.UPDATE;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.ADMIN;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.AGENT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.OWNER;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.TENANT;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL.directlyFetchedByDependsOnColumn;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Column.dependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.ColumnValue.usingDefaultCase;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Nullable.NULLABLE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.DELETE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.INSERT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.SELECT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.UPDATE;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.AGENT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.OWNER;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.TENANT;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
 @Table(name = "hs_booking_item_rv")
@@ -45,8 +46,8 @@ public class HsBookingItemRbacEntity extends HsBookingItem {
                 .withIdentityView(SQL.projection("caption"))
                 .withRestrictedViewOrderBy(SQL.expression("validity"))
                 .withUpdatableColumns("version", "caption", "validity", "resources")
-                .toRole("global", ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
-                .toRole("global", ADMIN).grantPermission(DELETE)
+                .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
+                .toRole(GLOBAL, ADMIN).grantPermission(DELETE)
 
                 .importEntityAlias("project", HsBookingProject.class, usingDefaultCase(),
                         dependsOnColumn("projectUuid"),
@@ -74,7 +75,7 @@ public class HsBookingItemRbacEntity extends HsBookingItem {
                     with.permission(SELECT);
                 })
 
-                .limitDiagramTo("bookingItem", "project", "global");
+                .limitDiagramTo("bookingItem", "project", "rbac.global");
     }
 
     public static void main(String[] args) throws IOException {

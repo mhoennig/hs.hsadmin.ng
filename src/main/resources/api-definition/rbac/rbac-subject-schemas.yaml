@@ -1,0 +1,33 @@
+
+components:
+
+    schemas:
+
+        RbacSubject:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                    format: uuid
+                name:
+                    type: string
+        RbacSubjectPermission:
+            type: object
+            properties:
+                objectUuid:
+                    type: string
+                    format: uuid
+                objectTable:
+                    type: string
+                objectIdName:
+                    type: string
+                roleName:
+                    type: string
+                roleUuid:
+                    type: string
+                    format: uuid
+                permissionUuid:
+                    type: string
+                    format: uuid
+                op:
+                    type: string

@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset rbac-global-GLOBAL-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     The purpose of this table is provide root business objects
@@ -11,184 +11,184 @@
     In production databases, there is only a single row in this table,
     in test stages, there can be one row for each test data realm.
  */
-create table Global
+create table rbac.global
 (
-    uuid uuid primary key references RbacObject (uuid) on delete cascade,
+    uuid uuid primary key references rbac.object (uuid) on delete cascade,
     name varchar(63) unique
 );
-create unique index Global_Singleton on Global ((0));
+create unique index Global_Singleton on rbac.global ((0));
 
-grant select on global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+grant select on rbac.global to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 --//
 
 
 -- ============================================================================
---changeset rbac-global-IS-GLOBAL-ADMIN:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-IS-GLOBAL-ADMIN endDelimiter:--//
 -- ------------------------------------------------------------------
 
-create or replace function isGlobalAdmin()
+create or replace function rbac.isGlobalAdmin()
     returns boolean
     language plpgsql as $$
 begin
-    return isGranted(currentSubjectsUuids(), findRoleId(globalAdmin()));
+    return rbac.isGranted(rbac.currentSubjectOrAssumedRolesUuids(), rbac.findRoleId(rbac.globalAdmin()));
 end; $$;
 --//
 
 
 -- ============================================================================
---changeset rbac-global-HAS-GLOBAL-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-HAS-GLOBAL-PERMISSION endDelimiter:--//
 -- ------------------------------------------------------------------
 
-create or replace function hasGlobalPermission(op RbacOp)
+create or replace function rbac.hasGlobalPermission(op rbac.RbacOp)
     returns boolean
     language sql as
 $$
     -- TODO.perf: this could to be optimized
-select (select uuid from global) in
-       (select queryAccessibleObjectUuidsOfSubjectIds(op, 'global', currentSubjectsUuids()));
+select (select uuid from rbac.global) in
+       (select rbac.queryAccessibleObjectUuidsOfSubjectIds(op, 'rbac.global', rbac.currentSubjectOrAssumedRolesUuids()));
 $$;
 --//
 
 
 -- ============================================================================
---changeset rbac-global-GLOBAL-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates a view to the global object table which maps the identifying name to the objectUuid.
+    Creates a view to the rbac.global object table which maps the identifying name to the objectUuid.
  */
-drop view if exists global_iv;
-create or replace view global_iv as
+drop view if exists rbac.global_iv;
+create or replace view rbac.global_iv as
 select target.uuid, target.name as idName
-    from global as target;
-grant all privileges on global_iv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
+    from rbac.global as target;
+grant all privileges on rbac.global_iv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
 
 /*
     Returns the objectUuid for a given identifying name (in this case the idName).
  */
-create or replace function globalUuidByIdName(idName varchar)
+create or replace function rbac.globalUuidByIdName(idName varchar)
     returns uuid
     language sql
     strict as $$
-select uuid from global_iv iv where iv.idName = globalUuidByIdName.idName;
+select uuid from rbac.global_iv iv where iv.idName = globalUuidByIdName.idName;
 $$;
 
 /*
     Returns the identifying name for a given objectUuid (in this case the idName).
  */
-create or replace function globalIdNameByUuid(uuid uuid)
+create or replace function rbac.globalIdNameByUuid(uuid uuid)
     returns varchar
     language sql
     strict as $$
-select idName from global_iv iv where iv.uuid = globalIdNameByUuid.uuid;
+select idName from rbac.global_iv iv where iv.uuid = globalIdNameByUuid.uuid;
 $$;
 --//
 
 --liquibase formatted sql
 
 -- ============================================================================
---changeset rbac-global-PSEUDO-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-PSEUDO-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
-  A single row to be referenced as a global object.
+  A single row to be referenced as a rbac.Global object.
  */
 begin transaction;
-call defineContext('initializing table "global"', null, null, null);
+call base.defineContext('initializing table "rbac.global"', null, null, null);
 insert
-    into RbacObject (objecttable) values ('global');
+    into rbac.object (objecttable) values ('rbac.global');
 insert
-    into Global (uuid, name) values ((select uuid from RbacObject where objectTable = 'global'), 'global');
+    into rbac.global (uuid, name) values ((select uuid from rbac.object where objectTable = 'rbac.global'), 'global');
 commit;
 --//
 
 
 -- ============================================================================
---changeset rbac-global-ADMIN-ROLE:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-ADMIN-ROLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    A global administrator role.
+    A rbac.Global administrator role.
  */
-create or replace function globalAdmin(assumed boolean = true)
-    returns RbacRoleDescriptor
+create or replace function rbac.globalAdmin(assumed boolean = true)
+    returns rbac.RoleDescriptor
     returns null on null input
     stable -- leakproof
     language sql as $$
-select 'global', (select uuid from RbacObject where objectTable = 'global'), 'ADMIN'::RbacRoleType, assumed;
+select 'rbac.global', (select uuid from rbac.object where objectTable = 'rbac.global'), 'ADMIN'::rbac.RoleType, assumed;
 $$;
 
 begin transaction;
-    call defineContext('creating role:global#global:ADMIN', null, null, null);
-    select createRole(globalAdmin());
+    call base.defineContext('creating role:rbac.global#global:ADMIN', null, null, null);
+    select rbac.createRole(rbac.globalAdmin());
 commit;
 --//
 
 
 -- ============================================================================
---changeset rbac-global-GUEST-ROLE:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-global-GUEST-ROLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    A global guest role.
+    A rbac.Global guest role.
  */
-create or replace function globalGuest(assumed boolean = true)
-    returns RbacRoleDescriptor
+create or replace function rbac.globalglobalGuest(assumed boolean = true)
+    returns rbac.RoleDescriptor
     returns null on null input
     stable -- leakproof
     language sql as $$
-select 'global', (select uuid from RbacObject where objectTable = 'global'), 'GUEST'::RbacRoleType, assumed;
+select 'rbac.global', (select uuid from rbac.object where objectTable = 'rbac.global'), 'GUEST'::rbac.RoleType, assumed;
 $$;
 
 begin transaction;
-    call defineContext('creating role:global#global:guest', null, null, null);
-    select createRole(globalGuest());
+    call base.defineContext('creating role:rbac.global#global:guest', null, null, null);
+    select rbac.createRole(rbac.globalglobalGuest());
 commit;
 --//
 
 
 -- ============================================================================
---changeset rbac-global-ADMIN-USERS:1 context:dev,tc endDelimiter:--//
+--changeset michael.hoennig:rbac-global-ADMIN-USERS context:dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Create two users and assign both to the administrators role.
+    Create two users and assign both to the administrators' role.
  */
 do language plpgsql $$
     declare
         admins uuid ;
     begin
-        call defineContext('creating fake test-realm admin users', null, null, null);
+        call base.defineContext('creating fake test-realm admin users', null, null, null);
 
-        admins = findRoleId(globalAdmin());
-        call grantRoleToUserUnchecked(admins, admins, createRbacUser('superuser-alex@hostsharing.net'));
-        call grantRoleToUserUnchecked(admins, admins, createRbacUser('superuser-fran@hostsharing.net'));
-        perform createRbacUser('selfregistered-user-drew@hostsharing.org');
-        perform createRbacUser('selfregistered-test-user@hostsharing.org');
+        admins = rbac.findRoleId(rbac.globalAdmin());
+        call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('superuser-alex@hostsharing.net'));
+        call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('superuser-fran@hostsharing.net'));
+        perform rbac.create_subject('selfregistered-user-drew@hostsharing.org');
+        perform rbac.create_subject('selfregistered-test-user@hostsharing.org');
     end;
 $$;
 --//
 
 
 -- ============================================================================
---changeset rbac-global-TEST:1 context:dev,tc runAlways:true endDelimiter:--//
+--changeset michael.hoennig:rbac-global-TEST context:dev,tc runAlways:true endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
-    Tests if currentUserUuid() can fetch the user from the session variable.
+    Tests if rbac.currentSubjectUuid() can fetch the user from the session variable.
  */
 
 do language plpgsql $$
     declare
         userName varchar;
     begin
-        call defineContext('testing currentUserUuid', null, 'superuser-fran@hostsharing.net', null);
-        select userName from RbacUser where uuid = currentUserUuid() into userName;
+        call base.defineContext('testing currentSubjectUuid', null, 'superuser-fran@hostsharing.net', null);
+        select userName from rbac.subject where uuid = rbac.currentSubjectUuid() into userName;
         if userName <> 'superuser-fran@hostsharing.net' then
-            raise exception 'setting or fetching initial currentUser failed, got: %', userName;
+            raise exception 'setting or fetching initial currentSubject failed, got: %', userName;
         end if;
 
-        call defineContext('testing currentUserUuid', null, 'superuser-alex@hostsharing.net', null);
-        select userName from RbacUser where uuid = currentUserUuid() into userName;
+        call base.defineContext('testing currentSubjectUuid', null, 'superuser-alex@hostsharing.net', null);
+        select userName from rbac.subject where uuid = rbac.currentSubjectUuid() into userName;
         if userName = 'superuser-alex@hostsharing.net' then
-            raise exception 'currentUser should not change in one transaction, but did change, got: %', userName;
+            raise exception 'currentSubject should not change in one transaction, but did change, got: %', userName;
         end if;
     end; $$;
 --//

@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-bankaccount-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -13,9 +13,9 @@ create or replace procedure createHsOfficeBankAccountTestData(givenHolder varcha
 declare
     emailAddr varchar;
 begin
-    emailAddr = 'bankaccount-admin@' || cleanIdentifier(givenHolder) || '.example.com';
-    perform createRbacUser(emailAddr);
-    call defineContext('creating bankaccount test-data', null, emailAddr);
+    emailAddr = 'bankaccount-admin@' || base.cleanIdentifier(givenHolder) || '.example.com';
+    perform rbac.create_subject(emailAddr);
+    call base.defineContext('creating bankaccount test-data', null, emailAddr);
 
     raise notice 'creating test bankaccount: %', givenHolder;
     insert
@@ -26,12 +26,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-bankaccount-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-bankaccount-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating bankaccount test-data');
+        call base.defineContext('creating bankaccount test-data');
 
         -- IBANs+BICs taken from https://ibanvalidieren.de/beispiele.html
         call createHsOfficeBankAccountTestData('First GmbH', 'DE02120300000000202051', 'BYLADEM1001');

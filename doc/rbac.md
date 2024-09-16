@@ -29,7 +29,7 @@ skinparam linetype ortho
 package RBAC {
 
     ' forward declarations    
-    entity RbacUser
+    entity RbacSubject
     
     together {
         
@@ -37,8 +37,8 @@ package RBAC {
         entity RbacPermission
  
         
-        RbacUser -[hidden]> RbacRole
-        RbacRole -[hidden]> RbacUser
+        RbacSubject -[hidden]> RbacRole
+        RbacRole -[hidden]> RbacSubject
     }
    
     together {
@@ -57,11 +57,11 @@ package RBAC {
     RbacGrant o-u-> RbacReference
     
     enum RbacReferenceType {
-        RbacUser
+        RbacSubject
         RbacRole
         RbacPermission
     }
-    RbacReferenceType ..> RbacUser
+    RbacReferenceType ..> RbacSubject
     RbacReferenceType ..> RbacRole
     RbacReferenceType ..> RbacPermission
     
@@ -71,12 +71,12 @@ package RBAC {
         type : RbacReferenceType
     }
     RbacReference o--> RbacReferenceType  
-    entity RbacUser {
+    entity RbacSubject {
         *uuid : uuid <<generated>>
         --
         name : varchar
     }
-    RbacUser o-- RbacReference
+    RbacSubject o-- RbacReference
     
     entity RbacRole {
         *uuid : uuid(RbacReference)
@@ -143,20 +143,20 @@ The primary key of the *RbacReference* and its referred object is always identic
 #### RbacReferenceType
 
 The enum *RbacReferenceType* describes the type of reference.
-It's only needed to make it easier to find the referred object in *RbacUser*, *RbacRole* or *RbacPermission*.
+It's only needed to make it easier to find the referred object in *RbacSubject*, *RbacRole* or *RbacPermission*.
 
-#### RbacUser
+#### RbacSubject
 
-An *RbacUser* is a type of RBAC-subject which references a login account outside this system, identified by a name (usually an email-address).
+An *RbacSubject* is a type of RBAC-subject which references a login account outside this system, identified by a name (usually an email-address).
 
-*RbacUser*s can be assigned to multiple *RbacRole*s, through which they can get permissions to *RbacObject*s.
+*RbacSubject*s can be assigned to multiple *RbacRole*s, through which they can get permissions to *RbacObject*s.
 
-The primary key of the *RbacUser* is identical to its related *RbacReference*.
+The primary key of the *RbacSubject* is identical to its related *RbacReference*.
 
 #### RbacRole
 
 An *RbacRole* represents a collection of directly or indirectly assigned *RbacPermission*s. 
-Each *RbacRole* can be assigned to *RbacUser*s or to another *RbacRole*.
+Each *RbacRole* can be assigned to *RbacSubject*s or to another *RbacRole*.
 
 Both kinds of assignments are represented via *RbacGrant*.
 
@@ -184,7 +184,7 @@ Only with this rule, the foreign key in *RbacPermission* can be defined as `NOT 
 
 #### RbacGrant
 
-The *RbacGrant* entities represent the access-rights structure from *RbacUser*s via hierarchical *RbacRoles* down to *RbacPermission*s.
+The *RbacGrant* entities represent the access-rights structure from *RbacSubject*s via hierarchical *RbacRoles* down to *RbacPermission*s.
 
 The core SQL queries to determine access rights are all recursive queries on the *RbacGrant* table.
 
@@ -284,7 +284,7 @@ hide circle
 ' use right-angled line routing
 ' skinparam linetype ortho
 
-package RbacUsers {
+package RbacSubjects {
     object UserMike
     object UserSuse
     object UserPaul
@@ -296,7 +296,7 @@ package RbacRoles {
     object RoleCustXyz_Admin
     object RolePackXyz00_Owner
 }
-RbacUsers -[hidden]> RbacRoles
+RbacSubjects -[hidden]> RbacRoles
 
 package RbacPermissions {
     object PermCustXyz_SELECT
@@ -364,10 +364,10 @@ This way, each user can only select the data they have 'SELECT'-permission for, 
 
 ### Current User
 
-The current use is taken from the session variable `hsadminng.currentUser` which contains the name of the user as stored in the 
-*RbacUser*s table. Example:
+The current use is taken from the session variable `hsadminng.currentSubject` which contains the name of the user as stored in the 
+*RbacSubject*s table. Example:
 
-    SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
+    SET LOCAL hsadminng.currentSubject = 'mike@hostsharing.net';
 
 That user is also used for historicization and audit log, but which is a different topic.
 
@@ -388,7 +388,7 @@ A full example is shown here:
 
     BEGIN TRANSACTION;
         SET SESSION SESSION AUTHORIZATION restricted;
-        SET LOCAL hsadminng.currentUser = 'mike@hostsharing.net';
+        SET LOCAL hsadminng.currentSubject = 'mike@hostsharing.net';
         SET LOCAL hsadminng.assumedRoles = 'customer#aab:admin;customer#aac:admin';
         
         SELECT c.prefix, p.name as "package", ema.localPart || '@' || dom.name as "email-address"
@@ -605,8 +605,8 @@ Find the SQL script here: `28-hs-tests.sql`.
 We have tested two variants of the query for the restricted view,
 both utilizing a PostgreSQL function like this:
 
-    FUNCTION queryAccessibleObjectUuidsOfSubjectIds(
-            requiredOp RbacOp,
+    FUNCTION rbac.queryAccessibleObjectUuidsOfSubjectIds(
+            requiredOp rbac.RbacOp,
             forObjectTable varchar,
             subjectIds uuid[],
             maxObjects integer = 16000)
@@ -623,8 +623,8 @@ Let's have a look at the two view queries:
           FROM customer AS target
          WHERE target.uuid IN (
             SELECT uuid
-              FROM queryAccessibleObjectUuidsOfSubjectIds( 
-                'SELECT, 'customer', currentSubjectsUuids()));
+              FROM rbac.queryAccessibleObjectUuidsOfSubjectIds( 
+                'SELECT, 'customer', currentSubjectOrAssumedRolesUuids()));
 
 This view should be automatically updatable.
 Where, for updates, we actually have to check for 'UPDATE' instead of 'SELECT' operation, which makes it a bit more complicated.
@@ -641,8 +641,8 @@ Looks like the query optimizer needed some statistics to find the best path.
     CREATE OR REPLACE VIEW customer_rv AS
         SELECT DISTINCT target.*
           FROM customer AS target
-          JOIN queryAccessibleObjectUuidsOfSubjectIds( 
-                'SELECT, 'customer', currentSubjectsUuids()) AS allowedObjId
+          JOIN rbac.queryAccessibleObjectUuidsOfSubjectIds( 
+                'SELECT, 'customer', currentSubjectOrAssumedRolesUuids()) AS allowedObjId
             ON target.uuid = allowedObjId;
 
 This view cannot is not updatable automatically,
@@ -671,9 +671,9 @@ Access Control for business objects checked according to the assigned roles.
 But we decided not to create such roles and permissions for the RBAC-Objects itself.
 It would have overcomplicated the system and the necessary information can easily be added to the RBAC-Objects itself, mostly the `RbacGrant`s.
 
-### RbacUser
+### RbacSubject
 
-Users can self-register, thus to create a new RbacUser entity, no login is required.
+Users can self-register, thus to create a new RbacSubject entity, no login is required.
 But such a user has no access-rights except viewing itself.
 
 Users can view themselves.

@@ -590,7 +590,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         final var result = mockMvc.perform(MockMvcRequestBuilders
                         .get("/api/hs/hosting/assets?type="+testCase.name())
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
@@ -660,7 +660,7 @@ public class HsHostingAssetControllerRestTest {
         // when
         final var result = mockMvc.perform(MockMvcRequestBuilders
                         .patch("/api/hs/hosting/assets/" + givenDomainHttpSetupUuid)
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                         {

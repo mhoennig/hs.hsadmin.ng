@@ -1,0 +1,48 @@
+get:
+    tags:
+        - rbac-subjects
+    description: List accessible RBAC subjects with optional filter by name.
+    operationId: listSubjects
+    parameters:
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
+        - $ref: 'auth.yaml#/components/parameters/assumedRoles'
+        - name: name
+          in: query
+          required: false
+          schema:
+              type: string
+    responses:
+        '200':
+            description: OK
+            content:
+                'application/json':
+                    schema:
+                        type: array
+                        items:
+                            $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+        '401':
+            $ref: 'error-responses.yaml#/components/responses/Unauthorized'
+        '403':
+            $ref: 'error-responses.yaml#/components/responses/Forbidden'
+
+post:
+    tags:
+        - rbac-subjects
+    description: Create a new RBAC subject (e.g. user).
+    operationId: createSubject
+    requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+    responses:
+        '201':
+            description: Created
+            content:
+                'application/json':
+                    schema:
+                        $ref: 'rbac-subject-schemas.yaml#/components/schemas/RbacSubject'
+        '409':
+            $ref: 'error-responses.yaml#/components/responses/Conflict'
+

@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_booking_item');
+call rbac.generateRelatedRbacObject('hs_booking_item');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsBookingItem', 'hs_booking_item');
+call rbac.generateRbacRoleDescriptors('hsBookingItem', 'hs_booking_item');
 --//
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -34,31 +34,31 @@ declare
     newParentItem hs_booking_item;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_booking_project WHERE uuid = NEW.projectUuid    INTO newProject;
 
     SELECT * FROM hs_booking_item WHERE uuid = NEW.parentItemUuid    INTO newParentItem;
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingItemOWNER(NEW),
             incomingSuperRoles => array[
             	hsBookingItemAGENT(newParentItem),
             	hsBookingProjectAGENT(newProject)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingItemADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[hsBookingItemOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingItemAGENT(NEW),
             incomingSuperRoles => array[hsBookingItemADMIN(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsBookingItemTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[hsBookingItemAGENT(NEW)],
@@ -69,9 +69,9 @@ begin
 
 
 
-    call grantPermissionToRole(createPermission(NEW.uuid, 'DELETE'), globalAdmin());
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), rbac.globalAdmin());
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -95,7 +95,7 @@ execute procedure insertTriggerForHsBookingItem_tf();
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-GRANTING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to global ----------------------------
@@ -105,22 +105,22 @@ execute procedure insertTriggerForHsBookingItem_tf();
  */
 do language plpgsql $$
     declare
-        row global;
+        row rbac.global%ROWTYPE;
     begin
-        call defineContext('create INSERT INTO hs_booking_item permissions for pre-exising global rows');
+        call base.defineContext('create INSERT INTO hs_booking_item permissions for pre-exising rbac.global rows');
 
-        FOR row IN SELECT * FROM global
+        FOR row IN SELECT * FROM rbac.global
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
-                        globalADMIN());
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
+                        rbac.globalAdmin());
             END LOOP;
     end;
 $$;
 
 /**
-    Grants hs_booking_item INSERT permission to specified role of new global rows.
+    Grants hs_booking_item INSERT permission to specified role of new rbac.global rows.
 */
 create or replace function new_hs_booking_item_grants_insert_to_global_tf()
     returns trigger
@@ -128,16 +128,16 @@ create or replace function new_hs_booking_item_grants_insert_to_global_tf()
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
-            globalADMIN());
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
+            rbac.globalAdmin());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
 create trigger z_new_hs_booking_item_grants_insert_to_global_tg
-    after insert on global
+    after insert on rbac.global
     for each row
 execute procedure new_hs_booking_item_grants_insert_to_global_tf();
 
@@ -150,13 +150,13 @@ do language plpgsql $$
     declare
         row hs_booking_project;
     begin
-        call defineContext('create INSERT INTO hs_booking_item permissions for pre-exising hs_booking_project rows');
+        call base.defineContext('create INSERT INTO hs_booking_item permissions for pre-exising hs_booking_project rows');
 
         FOR row IN SELECT * FROM hs_booking_project
             -- unconditional for all rows in that table
             LOOP
-                call grantPermissionToRole(
-                        createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
+                call rbac.grantPermissionToRole(
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
                         hsBookingProjectADMIN(row));
             END LOOP;
     end;
@@ -171,8 +171,8 @@ create or replace function new_hs_booking_item_grants_insert_to_hs_booking_proje
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
             hsBookingProjectADMIN(NEW));
     -- end.
     return NEW;
@@ -198,8 +198,8 @@ create or replace function new_hs_booking_item_grants_insert_to_hs_booking_item_
     strict as $$
 begin
     -- unconditional for all rows in that table
-        call grantPermissionToRole(
-            createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
+        call rbac.grantPermissionToRole(
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
             hsBookingItemADMIN(NEW));
     -- end.
     return NEW;
@@ -213,7 +213,7 @@ execute procedure new_hs_booking_item_grants_insert_to_hs_booking_item_tf();
 
 
 -- ============================================================================
---changeset hs_booking_item-rbac-CHECKING-INSERT-PERMISSION:1 endDelimiter:--//
+--changeset michael.hoennig:hs_booking_item-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -225,21 +225,21 @@ create or replace function hs_booking_item_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if global ADMIN
-    if isGlobalAdmin() then
+    -- check INSERT INSERT if rbac.Global ADMIN
+    if rbac.isGlobalAdmin() then
         return NEW;
     end if;
     -- check INSERT permission via direct foreign key: NEW.projectUuid
-    if hasInsertPermission(NEW.projectUuid, 'hs_booking_item') then
+    if rbac.hasInsertPermission(NEW.projectUuid, 'hs_booking_item') then
         return NEW;
     end if;
     -- check INSERT permission via direct foreign key: NEW.parentItemUuid
-    if hasInsertPermission(NEW.parentItemUuid, 'hs_booking_item') then
+    if rbac.hasInsertPermission(NEW.parentItemUuid, 'hs_booking_item') then
         return NEW;
     end if;
 
     raise exception '[403] insert into hs_booking_item values(%) not allowed for current subjects % (%)',
-            NEW, currentSubjects(), currentSubjectsUuids();
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
 create trigger hs_booking_item_insert_permission_check_tg
@@ -250,10 +250,10 @@ create trigger hs_booking_item_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_booking_item',
+call rbac.generateRbacIdentityViewFromProjection('hs_booking_item',
     $idName$
         caption
     $idName$);
@@ -261,9 +261,9 @@ call generateRbacIdentityViewFromProjection('hs_booking_item',
 
 
 -- ============================================================================
---changeset hs-booking-item-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-booking-item-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_booking_item',
+call rbac.generateRbacRestrictedView('hs_booking_item',
     $orderBy$
         validity
     $orderBy$,

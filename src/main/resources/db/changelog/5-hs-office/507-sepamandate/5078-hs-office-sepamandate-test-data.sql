@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepaMandate-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -38,12 +38,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-office-sepaMandate-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-office-sepaMandate-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating SEPA-mandate test-data', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating SEPA-mandate test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createHsOfficeSepaMandateTestData(10001, '11', 'DE02120300000000202051', 'ref-10001-11');
         call createHsOfficeSepaMandateTestData(10002, '12', 'DE02100500000054540402', 'ref-10002-12');

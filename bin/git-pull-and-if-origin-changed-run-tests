@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# get the current branch name
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+while true; do
+
+  # get the latest commit hashes from origin and local
+  git fetch origin
+  LOCAL=$(git rev-parse HEAD)
+  REMOTE=$(git rev-parse origin/$BRANCH)
+
+  # check if the local branch differs from the remote branch
+  if [ "$LOCAL" != "$REMOTE" ]; then
+    echo "local $LOCAL differs from remote $REMOTE => pulling changes from origin"
+    git pull origin $BRANCH
+
+    # run the command
+    echo "Running ./gradlew test"
+    source .aliases # only variables, aliases are not expanded in scripts
+    ./gradlew test
+  fi
+
+  # wait 10s with a little animation
+  echo -e -n " waiting for changes (/) ..."
+  sleep 2
+  echo -e -n "\r\033[K waiting for changes (-) ..."
+  sleep 2
+  echo -e -n "\r\033[K waiting for changes (\) ..."
+  sleep 2
+  echo -e -n "\r\033[K waiting for changes (|) ..."
+  sleep 2
+  echo -e -n "\r\033[K waiting for changes ( ) ... "
+  sleep 2
+  echo -e -n "\r\033[K"
+done

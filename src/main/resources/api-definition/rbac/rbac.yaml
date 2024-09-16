@@ -8,14 +8,14 @@ servers:
 
 paths:
 
-    /api/rbac/users:
-        $ref: 'rbac-users.yaml'
+    /api/rbac/subjects:
+        $ref: 'rbac-subjects.yaml'
 
-    /api/rbac/users/{userUuid}/permissions:
-        $ref: 'rbac-users-with-id-permissions.yaml'
+    /api/rbac/subjects/{subjectUuid}/permissions:
+        $ref: 'rbac-subjects-with-id-permissions.yaml'
 
-    /api/rbac/users/{userUuid}:
-        $ref: 'rbac-users-with-uuid.yaml'
+    /api/rbac/subjects/{subjectUuid}:
+        $ref: 'rbac-subjects-with-uuid.yaml'
 
     /api/rbac/roles:
         $ref: 'rbac-roles.yaml'
@@ -23,6 +23,6 @@ paths:
     /api/rbac/grants:
         $ref: 'rbac-grants.yaml'
 
-    /api/rbac/grants/{grantedRoleUuid}/{granteeUserUuid}:
+    /api/rbac/grants/{grantedRoleUuid}/{granteeSubjectUuid}:
         $ref: 'rbac-grants-with-id.yaml'
 

@@ -2,7 +2,7 @@
 
 
 -- ============================================================================
---changeset test-customer-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:test-customer-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Generates a customer reference number for a given test data counter.
@@ -32,7 +32,7 @@ declare
 begin
     custRowId = uuid_generate_v4();
     custAdminName = 'customer-admin@' || custPrefix || '.example.com';
-    custAdminUuid = createRbacUser(custAdminName);
+    custAdminUuid = rbac.create_subject(custAdminName);
 
     insert
         into test_customer (reference, prefix, adminUserName)
@@ -40,9 +40,9 @@ begin
 
     select * into newCust
              from test_customer where reference=custReference;
-    call grantRoleToUser(
-            getRoleId(testCustomerOwner(newCust)),
-            getRoleId(testCustomerAdmin(newCust)),
+    call rbac.grantRoleToSubject(
+            rbac.getRoleId(testCustomerOwner(newCust)),
+            rbac.getRoleId(testCustomerAdmin(newCust)),
             custAdminUuid,
             true);
 end; $$;
@@ -59,7 +59,7 @@ create or replace procedure createTestCustomerTestData(
 begin
     for t in startCount..endCount
         loop
-            call createTestCustomerTestData(testCustomerReference(t), intToVarChar(t, 3));
+            call createTestCustomerTestData(testCustomerReference(t), base.intToVarChar(t, 3));
             commit;
         end loop;
 end; $$;
@@ -67,12 +67,12 @@ end; $$;
 
 
 -- ============================================================================
---changeset test-customer-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:test-customer-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$
     begin
-        call defineContext('creating RBAC test customer', null, 'superuser-alex@hostsharing.net', 'global#global:ADMIN');
+        call base.defineContext('creating RBAC test customer', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
         call createTestCustomerTestData(99901, 'xxx');
         call createTestCustomerTestData(99902, 'yyy');

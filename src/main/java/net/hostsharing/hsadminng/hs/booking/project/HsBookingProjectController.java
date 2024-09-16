@@ -36,10 +36,10 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<HsBookingProjectResource>> listBookingProjectsByDebitorUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entities = bookingProjectRepo.findAllByDebitorUuid(debitorUuid);
 
@@ -50,11 +50,11 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Override
     @Transactional
     public ResponseEntity<HsBookingProjectResource> addBookingProject(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final HsBookingProjectInsertResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsBookingProjectRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
 
@@ -72,11 +72,11 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<HsBookingProjectResource> getBookingProjectByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID bookingProjectUuid) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = bookingProjectRepo.findByUuid(bookingProjectUuid);
         return result
@@ -88,10 +88,10 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Override
     @Transactional
     public ResponseEntity<Void> deleteBookingIemByUuid(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID bookingProjectUuid) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = bookingProjectRepo.deleteByUuid(bookingProjectUuid);
         return result == 0
@@ -102,12 +102,12 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     @Override
     @Transactional
     public ResponseEntity<HsBookingProjectResource> patchBookingProject(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final UUID bookingProjectUuid,
             final HsBookingProjectPatchResource body) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var current = bookingProjectRepo.findByUuid(bookingProjectUuid).orElseThrow();
 

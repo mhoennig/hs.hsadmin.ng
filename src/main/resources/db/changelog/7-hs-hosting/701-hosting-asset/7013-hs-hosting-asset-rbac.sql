@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset hs-hosting-asset-rbac-OBJECT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRelatedRbacObject('hs_hosting_asset');
+call rbac.generateRelatedRbacObject('hs_hosting_asset');
 --//
 
 
 -- ============================================================================
---changeset hs-hosting-asset-rbac-ROLE-DESCRIPTORS:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRoleDescriptors('hsHostingAsset', 'hs_hosting_asset');
+call rbac.generateRbacRoleDescriptors('hsHostingAsset', 'hs_hosting_asset');
 --//
 
 
 -- ============================================================================
---changeset hs-hosting-asset-rbac-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -36,7 +36,7 @@ declare
     newParentAsset hs_hosting_asset;
 
 begin
-    call enterTriggerForObjectUuid(NEW.uuid);
+    call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_booking_item WHERE uuid = NEW.bookingItemUuid    INTO newBookingItem;
 
@@ -46,17 +46,17 @@ begin
 
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentAsset;
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsHostingAssetOWNER(NEW),
             permissions => array['DELETE'],
             incomingSuperRoles => array[
-            	globalADMIN(unassumed()),
+            	rbac.globalADMIN(rbac.unassumed()),
             	hsBookingItemADMIN(newBookingItem),
             	hsHostingAssetADMIN(newParentAsset)],
-            userUuids => array[currentUserUuid()]
+            subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsHostingAssetADMIN(NEW),
             permissions => array['UPDATE'],
             incomingSuperRoles => array[
@@ -65,7 +65,7 @@ begin
             	hsHostingAssetOWNER(NEW)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsHostingAssetAGENT(NEW),
             incomingSuperRoles => array[
             	hsHostingAssetADMIN(NEW),
@@ -75,7 +75,7 @@ begin
             	hsOfficeContactREFERRER(newAlarmContact)]
     );
 
-    perform createRoleWithGrants(
+    perform rbac.defineRoleWithGrants(
         hsHostingAssetTENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
@@ -89,7 +89,7 @@ begin
     IF NEW.type = 'DOMAIN_SETUP' THEN
     END IF;
 
-    call leaveTriggerForObjectUuid(NEW.uuid);
+    call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
 
 /*
@@ -113,7 +113,7 @@ execute procedure insertTriggerForHsHostingAsset_tf();
 
 
 -- ============================================================================
---changeset hs-hosting-asset-rbac-update-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -129,7 +129,7 @@ begin
 
     if NEW.assignedToAssetUuid is distinct from OLD.assignedToAssetUuid
     or NEW.alarmContactUuid is distinct from OLD.alarmContactUuid then
-        delete from rbacgrants g where g.grantedbytriggerof = OLD.uuid;
+        delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
         call buildRbacSystemForHsHostingAsset(NEW);
     end if;
 end; $$;
@@ -155,10 +155,10 @@ execute procedure updateTriggerForHsHostingAsset_tf();
 
 
 -- ============================================================================
---changeset hs-hosting-asset-rbac-IDENTITY-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call generateRbacIdentityViewFromProjection('hs_hosting_asset',
+call rbac.generateRbacIdentityViewFromProjection('hs_hosting_asset',
     $idName$
         identifier
     $idName$);
@@ -166,9 +166,9 @@ call generateRbacIdentityViewFromProjection('hs_hosting_asset',
 
 
 -- ============================================================================
---changeset hs-hosting-asset-rbac-RESTRICTED-VIEW:1 endDelimiter:--//
+--changeset michael.hoennig:hs-hosting-asset-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call generateRbacRestrictedView('hs_hosting_asset',
+call rbac.generateRbacRestrictedView('hs_hosting_asset',
     $orderBy$
         identifier
     $orderBy$,

@@ -1,12 +1,12 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-debitor-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-debitor-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create table hs_office_debitor
 (
-    uuid                    uuid unique references RbacObject (uuid) initially deferred,
+    uuid                    uuid unique references rbac.object (uuid) initially deferred,
     version                 int not null default 0,
     debitorNumberSuffix     char(2) not null check (debitorNumberSuffix::text ~ '^[0-9][0-9]$'),
     debitorRelUuid          uuid not null references hs_office_relation(uuid),
@@ -25,7 +25,7 @@ create table hs_office_debitor
 
 
 -- ============================================================================
---changeset hs-office-debitor-DELETE-DEPENDENTS-TRIGGER:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-debitor-DELETE-DEPENDENTS-TRIGGER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -58,8 +58,8 @@ execute procedure deleteHsOfficeDependentsOnDebitorDelete();
 
 
 -- ============================================================================
---changeset hs-office-debitor-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-debitor-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_debitor');
+call base.create_journal('hs_office_debitor');
 --//

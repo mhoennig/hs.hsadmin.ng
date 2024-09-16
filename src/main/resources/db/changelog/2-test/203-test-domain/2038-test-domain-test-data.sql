@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-domain-TEST-DATA-GENERATOR:1 endDelimiter:--//
+--changeset michael.hoennig:hs-domain-TEST-DATA-GENERATOR endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
     Creates the given count of test unix users for a single package.
@@ -21,11 +21,11 @@ begin
     for t in 0..(domainCount-1)
         loop
             pacAdmin = 'pac-admin-' || pac.name || '@' || pac.custPrefix || '.example.com';
-            call defineContext('creating RBAC test domain', null, pacAdmin, null);
+            call base.defineContext('creating RBAC test domain', null, pacAdmin, null);
 
             insert
                 into test_domain (name, packageUuid)
-                values (pac.name || '-' || intToVarChar(t, 4), pac.uuid);
+                values (pac.name || '-' || base.intToVarChar(t, 4), pac.uuid);
         end loop;
 end; $$;
 
@@ -54,7 +54,7 @@ end; $$;
 
 
 -- ============================================================================
---changeset hs-domain-TEST-DATA-GENERATION:1 –context=dev,tc endDelimiter:--//
+--changeset michael.hoennig:hs-domain-TEST-DATA-GENERATION –context=dev,tc endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 do language plpgsql $$

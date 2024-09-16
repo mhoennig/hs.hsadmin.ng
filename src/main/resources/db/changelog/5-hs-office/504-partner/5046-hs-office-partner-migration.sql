@@ -4,7 +4,7 @@
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================
---changeset hs-office-partner-MIGRATION-mapping:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MIGRATION-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TABLE hs_office_partner_legacy_id
@@ -16,7 +16,7 @@ CREATE TABLE hs_office_partner_legacy_id
 
 
 -- ============================================================================
---changeset hs-office-partner-MIGRATION-sequence:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MIGRATION-sequence endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE SEQUENCE IF NOT EXISTS hs_office_partner_legacy_id_seq
@@ -27,7 +27,7 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_partner_legacy_id_seq
 
 
 -- ============================================================================
---changeset hs-office-partner-MIGRATION-default:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MIGRATION-default endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE hs_office_partner_legacy_id
@@ -36,17 +36,17 @@ ALTER TABLE hs_office_partner_legacy_id
 --/
 
 -- ============================================================================
---changeset hs-office-partner-MIGRATION-insert:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MIGRATION-insert endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CALL defineContext('schema-migration');
+CALL base.defineContext('schema-migration');
 INSERT INTO hs_office_partner_legacy_id(uuid, bp_id)
     SELECT uuid, nextVal('hs_office_partner_legacy_id_seq') FROM hs_office_partner;
 --/
 
 
 -- ============================================================================
---changeset hs-office-partner-MIGRATION-insert-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function insertPartnerLegacyIdMapping()
     returns trigger
@@ -71,7 +71,7 @@ create trigger createPartnerLegacyIdMapping
 
 
 -- ============================================================================
---changeset hs-office-partner-MIGRATION-delete-trigger:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-partner-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 create or replace function deletePartnerLegacyIdMapping()
     returns trigger

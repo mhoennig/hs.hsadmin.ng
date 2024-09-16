@@ -2,10 +2,10 @@
 
 
 -- ============================================================================
---changeset rbac-trigger-context-ENTER:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-trigger-context-ENTER endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure enterTriggerForObjectUuid(currentObjectUuid uuid)
+create or replace procedure rbac.enterTriggerForObjectUuid(currentObjectUuid uuid)
     language plpgsql as $$
 declare
     existingObjectUuid text;
@@ -19,13 +19,13 @@ end; $$;
 
 
 -- ============================================================================
---changeset rbac-trigger-context-CURRENT-ID:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-trigger-context-CURRENT-ID endDelimiter:--//
 -- ----------------------------------------------------------------------------
 /*
-    Returns the uuid of the object uuid whose trigger is currently executed as set via `enterTriggerForObjectUuid(...)`.
+    Returns the uuid of the object uuid whose trigger is currently executed as set via `rbac.enterTriggerForObjectUuid(...)`.
  */
 
-create or replace function currentTriggerObjectUuid()
+create or replace function rbac.currentTriggerObjectUuid()
     returns uuid
     stable -- leakproof
     language plpgsql as $$
@@ -44,10 +44,10 @@ end; $$;
 
 
 -- ============================================================================
---changeset rbac-trigger-context-LEAVE:1 endDelimiter:--//
+--changeset michael.hoennig:rbac-trigger-context-LEAVE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace procedure leaveTriggerForObjectUuid(currentObjectUuid uuid)
+create or replace procedure rbac.leaveTriggerForObjectUuid(currentObjectUuid uuid)
     language plpgsql as $$
 declare
     existingObjectUuid uuid;

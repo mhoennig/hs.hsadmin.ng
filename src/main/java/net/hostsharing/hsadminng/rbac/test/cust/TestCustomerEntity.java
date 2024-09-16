@@ -5,19 +5,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView;
-import net.hostsharing.hsadminng.rbac.rbacdef.RbacView.SQL;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacView;
+import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 
 import jakarta.persistence.*;
 import java.io.IOException;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.GLOBAL;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Permission.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.RbacUserReference.UserRole.CREATOR;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.Role.*;
-import static net.hostsharing.hsadminng.rbac.rbacdef.RbacView.rbacViewFor;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.GLOBAL;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
+import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
 @Table(name = "test_customer_rv")
@@ -46,7 +46,7 @@ public class TestCustomerEntity implements BaseEntity<TestCustomerEntity> {
                 .withIdentityView(SQL.projection("prefix"))
                 .withRestrictedViewOrderBy(SQL.expression("reference"))
                 .withUpdatableColumns("reference", "prefix", "adminUserName")
-                .toRole("global", ADMIN).grantPermission(INSERT)
+                .toRole("rbac.global", ADMIN).grantPermission(INSERT)
 
                 .createRole(OWNER, (with) -> {
                     with.owningUser(CREATOR).unassumed();

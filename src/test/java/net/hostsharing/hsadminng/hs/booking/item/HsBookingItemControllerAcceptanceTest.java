@@ -72,7 +72,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items?projectUuid=" + givenProject.getUuid())
@@ -140,7 +140,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                             {
@@ -176,9 +176,9 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new bookingItem can be accessed under the generated UUID
-            final var newUserUuid = UUID.fromString(
+            final var newSubjectUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newUserUuid).isNotNull();
+            assertThat(newSubjectUuid).isNotNull();
         }
     }
 
@@ -198,7 +198,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -232,7 +232,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItemUuid)
@@ -250,7 +250,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:ADMIN")
                     .port(port)
                 .when()
@@ -294,7 +294,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .header("assumed-roles", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT")
                     .contentType(ContentType.JSON)
                     .body("""
@@ -350,7 +350,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())
@@ -369,7 +369,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())

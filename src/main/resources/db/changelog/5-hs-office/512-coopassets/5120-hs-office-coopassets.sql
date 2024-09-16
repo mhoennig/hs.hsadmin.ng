@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 -- ============================================================================
---changeset hs-office-coopassets-MAIN-TABLE:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 CREATE TYPE HsOfficeCoopAssetsTransactionType AS ENUM ('ADJUSTMENT',
@@ -17,7 +17,7 @@ CREATE CAST (character varying as HsOfficeCoopAssetsTransactionType) WITH INOUT 
 
 create table if not exists hs_office_coopassetstransaction
 (
-    uuid                uuid unique references RbacObject (uuid) initially deferred,
+    uuid                uuid unique references rbac.object (uuid) initially deferred,
     version             int not null default 0,
     membershipUuid      uuid not null references hs_office_membership(uuid),
     transactionType     HsOfficeCoopAssetsTransactionType not null,
@@ -31,7 +31,7 @@ create table if not exists hs_office_coopassetstransaction
 
 
 -- ============================================================================
---changeset hs-office-coopassets-BUSINESS-RULES:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-BUSINESS-RULES endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 alter table hs_office_coopassetstransaction
@@ -41,7 +41,7 @@ alter table hs_office_coopassetstransaction
 --//
 
 -- ============================================================================
---changeset hs-office-coopassets-ASSET-VALUE-CONSTRAINT:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-ASSET-VALUE-CONSTRAINT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 create or replace function checkAssetsByMembershipUuid(forMembershipUuid UUID, newAssetValue money)
@@ -69,8 +69,8 @@ alter table hs_office_coopassetstransaction
 
 
 -- ============================================================================
---changeset hs-office-coopassets-MAIN-TABLE-JOURNAL:1 endDelimiter:--//
+--changeset michael.hoennig:hs-office-coopassets-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call create_journal('hs_office_coopassetstransaction');
+call base.create_journal('hs_office_coopassetstransaction');
 --//

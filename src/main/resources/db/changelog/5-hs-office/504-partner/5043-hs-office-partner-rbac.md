@@ -87,16 +87,16 @@ subgraph partnerRel.holderPerson["`**partnerRel.holderPerson**`"]
 end
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.anchorPerson:OWNER
 role:partnerRel.anchorPerson:OWNER -.-> role:partnerRel.anchorPerson:ADMIN
 role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel.anchorPerson:REFERRER
-role:global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.holderPerson:OWNER
 role:partnerRel.holderPerson:OWNER -.-> role:partnerRel.holderPerson:ADMIN
 role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel.holderPerson:REFERRER
-role:global:ADMIN -.-> role:partnerRel.contact:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel.contact:OWNER
 role:partnerRel.contact:OWNER -.-> role:partnerRel.contact:ADMIN
 role:partnerRel.contact:ADMIN -.-> role:partnerRel.contact:REFERRER
-role:global:ADMIN -.-> role:partnerRel:OWNER
+role:rbac.global:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel:OWNER -.-> role:partnerRel:ADMIN
 role:partnerRel:ADMIN -.-> role:partnerRel:AGENT
 role:partnerRel:AGENT -.-> role:partnerRel:TENANT
@@ -108,7 +108,7 @@ role:partnerRel.anchorPerson:ADMIN -.-> role:partnerRel:OWNER
 role:partnerRel.holderPerson:ADMIN -.-> role:partnerRel:AGENT
 
 %% granting permissions to roles
-role:global:ADMIN ==> perm:partner:INSERT
+role:rbac.global:ADMIN ==> perm:partner:INSERT
 role:partnerRel:OWNER ==> perm:partner:DELETE
 role:partnerRel:ADMIN ==> perm:partner:UPDATE
 role:partnerRel:TENANT ==> perm:partner:SELECT

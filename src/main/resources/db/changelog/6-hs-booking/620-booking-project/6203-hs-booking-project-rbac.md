@@ -44,7 +44,7 @@ subgraph project["`**project**`"]
 end
 
 %% granting roles to roles
-role:global:ADMIN -.-> role:debitorRel:OWNER
+role:rbac.global:ADMIN -.-> role:debitorRel:OWNER
 role:debitorRel:OWNER -.-> role:debitorRel:ADMIN
 role:debitorRel:ADMIN -.-> role:debitorRel:AGENT
 role:debitorRel:AGENT -.-> role:debitorRel:TENANT
@@ -56,7 +56,7 @@ role:project:TENANT ==> role:debitorRel:TENANT
 
 %% granting permissions to roles
 role:debitorRel:ADMIN ==> perm:project:INSERT
-role:global:ADMIN ==> perm:project:DELETE
+role:rbac.global:ADMIN ==> perm:project:DELETE
 role:project:ADMIN ==> perm:project:UPDATE
 role:project:TENANT ==> perm:project:SELECT
 

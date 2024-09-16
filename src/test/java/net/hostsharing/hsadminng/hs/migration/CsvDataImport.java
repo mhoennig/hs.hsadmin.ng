@@ -6,7 +6,7 @@ import com.opencsv.CSVReaderBuilder;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
+import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -298,9 +298,9 @@ public class CsvDataImport extends ContextBasedTest {
     protected void deleteFromCommonTables() {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            em.createNativeQuery("delete from rbacuser_rv where name not like 'superuser-%'").executeUpdate();
-            em.createNativeQuery("delete from tx_journal where true").executeUpdate();
-            em.createNativeQuery("delete from tx_context where true").executeUpdate();
+            em.createNativeQuery("delete from rbac.subject_rv where name not like 'superuser-%'").executeUpdate();
+            em.createNativeQuery("delete from base.tx_journal where true").executeUpdate();
+            em.createNativeQuery("delete from base.tx_context where true").executeUpdate();
         }).assertSuccessful();
     }
 

@@ -1,12 +1,12 @@
 get:
     summary: Returns a list of (optionally filtered) memberships.
-    description: Returns the list of memberships which are visible to the current user or any of it's assumed roles.
+    description: Returns the list of memberships which are visible to the current subject or any of it's assumed roles.
         The list can optionally be filtered by either the `partnerUuid` or the `memberNumber` - not both at the same time.
     tags:
         - hs-office-memberships
     operationId: listMemberships
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: partnerUuid
           in: query
@@ -41,7 +41,7 @@ post:
         - hs-office-memberships
     operationId: addMembership
     parameters:
-        - $ref: 'auth.yaml#/components/parameters/currentUser'
+        - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
     requestBody:
         description: A JSON object describing the new membership.

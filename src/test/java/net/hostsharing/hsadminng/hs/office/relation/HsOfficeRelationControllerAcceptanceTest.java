@@ -66,7 +66,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations?personUuid=%s&relationType=%s"
@@ -129,7 +129,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                     .given()
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(ContentType.JSON)
                         .body("""
                                {
@@ -161,9 +161,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new relation can be accessed under the generated UUID
-            final var newUserUuid = toCleanup(HsOfficeRelationRealEntity.class, UUID.fromString(
+            final var newSubjectUuid = toCleanup(HsOfficeRelationRealEntity.class, UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1)));
-            assertThat(newUserUuid).isNotNull();
+            assertThat(newSubjectUuid).isNotNull();
         }
 
         @Test
@@ -176,7 +176,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -208,7 +208,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                                {
@@ -241,7 +241,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             final var location = RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -275,7 +275,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelationUuid)
@@ -298,7 +298,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelationUuid)
@@ -314,7 +314,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "contact-admin@firstcontact.example.com")
+                    .header("current-subject", "contact-admin@firstcontact.example.com")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -357,7 +357,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -400,7 +400,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "superuser-alex@hostsharing.net")
+                    .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -419,7 +419,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "contact-admin@seventhcontact.example.com")
+                    .header("current-subject", "contact-admin@seventhcontact.example.com")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())
@@ -438,7 +438,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
 
             RestAssured // @formatter:off
                 .given()
-                    .header("current-user", "selfregistered-user-drew@hostsharing.org")
+                    .header("current-subject", "selfregistered-user-drew@hostsharing.org")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())

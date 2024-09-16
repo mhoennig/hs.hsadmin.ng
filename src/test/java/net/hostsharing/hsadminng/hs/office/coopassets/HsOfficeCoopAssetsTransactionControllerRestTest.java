@@ -115,7 +115,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
         // when
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/hs/office/coopassetstransactions")
-                        .header("current-user", "superuser-alex@hostsharing.net")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(testCase.givenRequestBody())
                         .accept(MediaType.APPLICATION_JSON))

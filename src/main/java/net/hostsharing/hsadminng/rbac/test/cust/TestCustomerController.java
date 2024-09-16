@@ -32,11 +32,11 @@ public class TestCustomerController implements TestCustomersApi {
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<TestCustomerResource>> listCustomers(
-            String currentUser,
+            String currentSubject,
             String assumedRoles,
             String prefix
     ) {
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(prefix);
 
@@ -46,11 +46,11 @@ public class TestCustomerController implements TestCustomersApi {
     @Override
     @Transactional
     public ResponseEntity<TestCustomerResource> addCustomer(
-            final String currentUser,
+            final String currentSubject,
             final String assumedRoles,
             final TestCustomerResource customer) {
 
-        context.define(currentUser, assumedRoles);
+        context.define(currentSubject, assumedRoles);
 
         final var saved = testCustomerRepository.save(mapper.map(customer, TestCustomerEntity.class));
         final var uri =
