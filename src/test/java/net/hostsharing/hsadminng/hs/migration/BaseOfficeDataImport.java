@@ -17,7 +17,6 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType;
 import net.hostsharing.hsadminng.hs.office.sepamandate.HsOfficeSepaMandateEntity;
-import net.hostsharing.hsadminng.rbac.rbacobject.BaseEntity;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
@@ -615,7 +614,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             contacts.forEach(this::persist);
-            updateLegacyIds(contacts, "hs_office_contact_legacy_id", "contact_id");
+           updateLegacyIds(contacts, "hs_office_contact_legacy_id", "contact_id");
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -697,24 +696,6 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
 
     private static void assumeThatWeAreImportingControlledTestData() {
         assumeThat(partners.size()).isLessThanOrEqualTo(MAX_NUMBER_OF_TEST_DATA_PARTNERS);
-    }
-
-    private <E extends BaseEntity> void updateLegacyIds(
-            Map<Integer, E> entities,
-            final String legacyIdTable,
-            final String legacyIdColumn) {
-        em.flush();
-        entities.forEach((id, entity) -> em.createNativeQuery("""
-                            UPDATE ${legacyIdTable}
-                                SET ${legacyIdColumn} = :legacyId
-                                WHERE uuid = :uuid
-                        """
-                        .replace("${legacyIdTable}", legacyIdTable)
-                        .replace("${legacyIdColumn}", legacyIdColumn))
-                .setParameter("legacyId", id)
-                .setParameter("uuid", entity.getUuid())
-                .executeUpdate()
-        );
     }
 
     @Test

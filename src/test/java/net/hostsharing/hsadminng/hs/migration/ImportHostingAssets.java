@@ -47,12 +47,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.CLOUD_SERVER;
@@ -938,6 +938,132 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
     @Test
     @Order(19930)
+    void verifyCloudServerLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(CLOUD_SERVER)).isEqualTo("""
+                23611
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(CLOUD_SERVER)).isEmpty();
+    }
+
+    @Test
+    @Order(19931)
+    void verifyManagedServerLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(MANAGED_SERVER)).isEqualTo("""
+                10968
+                10978
+                11061
+                11447
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(MANAGED_SERVER)).isEmpty();
+    }
+
+    @Test
+    @Order(19932)
+    void verifyManagedWebspaceLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(MANAGED_WEBSPACE)).isEqualTo("""
+                10630
+                11094
+                11111
+                11112
+                19959
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(MANAGED_WEBSPACE)).isEmpty();
+    }
+
+    @Test
+    @Order(19933)
+    void verifyUnixUserLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(UNIX_USER)).isEqualTo("""
+                5803
+                5805
+                5809
+                5811
+                5813
+                5835
+                5961
+                5964
+                5966
+                5990
+                6705
+                6824
+                7846
+                9546
+                9596
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(UNIX_USER)).isEmpty();
+    }
+
+    @Test
+    @Order(19934)
+    void verifyPgSqlDbLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(PGSQL_DATABASE)).isEqualTo("""
+                1077
+                1858
+                1860
+                4931
+                4932
+                7522
+                7523
+                7605
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(PGSQL_DATABASE)).isEmpty();
+    }
+
+    @Test
+    @Order(19934)
+    void verifyPgSqlUserLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(PGSQL_USER)).isEqualTo("""
+                1857
+                1859
+                1860
+                1861
+                4931
+                7522
+                7605
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(PGSQL_USER)).isEmpty();
+    }
+
+    @Test
+    @Order(19935)
+    void verifyMariaDbLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(MARIADB_DATABASE)).isEqualTo("""
+                1786
+               1805
+               4908
+               4941
+               4942
+               7520
+               7521
+               7604
+               """.trim());
+        assertThat(missingHostingAsstLegacyIds(MARIADB_DATABASE)).isEmpty();
+    }
+
+    @Test
+    @Order(19936)
+    void verifyMariaDbUserLegacyIds() {
+        assumeThatWeAreImportingControlledTestData();
+        assertThat(fetchHosingAssetLegacyIds(MARIADB_USER)).isEqualTo("""
+                1858
+                4908
+                4909
+                4932
+                7520
+                7604
+                """.trim());
+        assertThat(missingHostingAsstLegacyIds(MARIADB_USER)).isEmpty();
+    }
+
+    @Test
+    @Order(19940)
     void verifyProjectAgentsCanViewEmailAddresses() {
         assumeThatWeAreImportingControlledTestData();
 
@@ -948,6 +1074,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                 }).assertSuccessful().returnedValue();
         assertThat(haCount).isEqualTo(68);
     }
+
 
     // ============================================================================================
 
@@ -1006,6 +1133,11 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                         }
                 ).assertSuccessful()
         );
+
+        jpaAttempt.transacted(() -> {
+            context(rbacSuperuser);
+            updateLegacyIds(assets, "hs_hosting_asset_legacy_id", "legacy_id");
+        }).assertSuccessful();
     }
 
     private void verifyActuallyPersistedHostingAssetCount(
@@ -1610,7 +1742,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
                     //noinspection unchecked
                     zoneData.put("user-RR", ((ArrayList<ArrayList<Object>>) zoneData.get("user-RR")).stream()
-                            .map(userRR -> userRR.stream().map(Object::toString).collect(Collectors.joining(" ")))
+                            .map(userRR -> userRR.stream().map(Object::toString).collect(joining(" ")))
                             .toArray(String[]::new)
                     );
                     domainDnsSetupAsset.getConfig().putAll(zoneData);
@@ -1757,5 +1889,36 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
     protected static void assumeThatWeAreImportingControlledTestData() {
         assumeThat(isImportingControlledTestData()).isTrue();
+    }
+
+    private String fetchHosingAssetLegacyIds(final HsHostingAssetType type) {
+        //noinspection unchecked
+        return ((List<List<?>>) em.createNativeQuery(
+                    """
+                     SELECT li.* FROM hs_hosting_asset_legacy_id li
+                     JOIN hs_hosting_asset ha ON ha.uuid=li.uuid
+                     WHERE CAST(ha.type AS text)=:type
+                     ORDER BY legacy_id
+                    """,
+                    List.class)
+                .setParameter("type", type.name())
+                .getResultList()
+        ).stream().map(row -> row.get(1).toString()).collect(joining("\n"));
+    }
+
+    private String missingHostingAsstLegacyIds(final HsHostingAssetType type) {
+        //noinspection unchecked
+        return ((List<List<?>>) em.createNativeQuery(
+                    """
+                    SELECT ha.uuid, ha.type, ha.identifier FROM hs_hosting_asset ha
+                             JOIN hs_hosting_asset_legacy_id li ON li.uuid=ha.uuid
+                             WHERE li.legacy_id is null AND CAST(ha.type AS text)=:type
+                             ORDER BY li.legacy_id
+                    """,
+                    List.class)
+                .setParameter("type", type.name())
+                .getResultList()).stream()
+                .map(row -> row.stream().map(Object::toString).collect(joining(", ")))
+                .collect(joining("\n"));
     }
 }

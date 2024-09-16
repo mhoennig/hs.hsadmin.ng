@@ -334,6 +334,24 @@ public class CsvDataImport extends ContextBasedTest {
         errors.clear();
         assertThat(errorsToLog).isEmpty();
     }
+
+    protected <E extends BaseEntity> void updateLegacyIds(
+            Map<Integer, E> entities,
+            final String legacyIdTable,
+            final String legacyIdColumn) {
+        em.flush();
+        entities.forEach((id, entity) -> em.createNativeQuery("""
+                            UPDATE ${legacyIdTable}
+                                SET ${legacyIdColumn} = :legacyId
+                                WHERE uuid = :uuid
+                        """
+                        .replace("${legacyIdTable}", legacyIdTable)
+                        .replace("${legacyIdColumn}", legacyIdColumn))
+                .setParameter("legacyId", id)
+                .setParameter("uuid", entity.getUuid())
+                .executeUpdate()
+        );
+    }
 }
 
 class Columns {
