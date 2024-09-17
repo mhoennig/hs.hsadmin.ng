@@ -100,7 +100,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy:ADMIN")
+                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid())
@@ -201,7 +201,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy:ADMIN")
+                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects")
@@ -275,12 +275,12 @@ class RbacSubjectControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_customer#yyy:TENANT"),
+                                    hasEntry("roleName", "rbactest.customer#yyy:TENANT"),
                                     hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER"),
+                                    hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER"),
                                     hasEntry("op", "DELETE"))
                     ))
                     // actual content tested in integration test, so this is enough for here:
@@ -296,7 +296,7 @@ class RbacSubjectControllerAcceptanceTest {
             RestAssured
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy:ADMIN")
+                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/subjects/" + givenUser.getUuid() + "/permissions")
@@ -305,12 +305,12 @@ class RbacSubjectControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_customer#yyy:TENANT"),
+                                    hasEntry("roleName", "rbactest.customer#yyy:TENANT"),
                                     hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER"),
+                                    hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER"),
                                     hasEntry("op", "DELETE"))
                     ))
                     // actual content tested in integration test, so this is enough for here:
@@ -334,12 +334,12 @@ class RbacSubjectControllerAcceptanceTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_customer#yyy:TENANT"),
+                                    hasEntry("roleName", "rbactest.customer#yyy:TENANT"),
                                     hasEntry("op", "SELECT"))
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER"),
+                                    hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER"),
                                     hasEntry("op", "DELETE"))
                     ))
                     // actual content tested in integration test, so this is enough for here:

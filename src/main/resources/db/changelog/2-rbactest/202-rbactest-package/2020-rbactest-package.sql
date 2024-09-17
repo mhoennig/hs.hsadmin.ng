@@ -4,11 +4,11 @@
 --changeset michael.hoennig:test-package-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table if not exists test_package
+create table if not exists rbactest.package
 (
     uuid         uuid unique references rbac.object (uuid),
     version      int not null default 0,
-    customerUuid uuid references test_customer (uuid),
+    customerUuid uuid references rbactest.customer (uuid),
     name         varchar(5),
     description  varchar(96)
 );

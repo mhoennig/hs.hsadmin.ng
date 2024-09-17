@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset RbacObjectGenerator:test-customer-rbac-OBJECT endDelimiter:--//
+--changeset RbacObjectGenerator:rbactest-customer-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('test_customer');
+call rbac.generateRelatedRbacObject('rbactest.customer');
 --//
 
 
 -- ============================================================================
---changeset RbacRoleDescriptorsGenerator:test-customer-rbac-ROLE-DESCRIPTORS endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:rbactest-customer-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('testCustomer', 'test_customer');
+call rbac.generateRbacRoleDescriptors('testCustomer', 'rbactest.customer');
 --//
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:test-customer-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-customer-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -25,7 +25,7 @@ call rbac.generateRbacRoleDescriptors('testCustomer', 'test_customer');
  */
 
 create or replace procedure buildRbacSystemForTestCustomer(
-    NEW test_customer
+    NEW rbactest.customer
 )
     language plpgsql as $$
 
@@ -57,7 +57,7 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new test_customer row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new rbactest.customer row.
  */
 
 create or replace function insertTriggerForTestCustomer_tf()
@@ -70,68 +70,68 @@ begin
 end; $$;
 
 create trigger insertTriggerForTestCustomer_tg
-    after insert on test_customer
+    after insert on rbactest.customer
     for each row
 execute procedure insertTriggerForTestCustomer_tf();
 --//
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:test-customer-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-customer-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 -- granting INSERT permission to rbac.global ----------------------------
 
 /*
-    Grants INSERT INTO test_customer permissions to specified role of pre-existing rbac.global rows.
+    Grants INSERT INTO rbactest.customer permissions to specified role of pre-existing rbac.global rows.
  */
 do language plpgsql $$
     declare
         row rbac.global;
     begin
-        call base.defineContext('create INSERT INTO test_customer permissions for pre-exising rbac.global rows');
+        call base.defineContext('create INSERT INTO rbactest.customer permissions for pre-exising rbac.global rows');
 
         FOR row IN SELECT * FROM rbac.global
             -- unconditional for all rows in that table
             LOOP
                 call rbac.grantPermissionToRole(
-                        rbac.createPermission(row.uuid, 'INSERT', 'test_customer'),
+                        rbac.createPermission(row.uuid, 'INSERT', 'rbactest.customer'),
                         rbac.globalADMIN());
             END LOOP;
     end;
 $$;
 
 /**
-    Grants test_customer INSERT permission to specified role of new global rows.
+    Grants rbactest.customer INSERT permission to specified role of new global rows.
 */
-create or replace function rbac.new_test_customer_grants_insert_to_global_tf()
+create or replace function rbactest.new_customer_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
-            rbac.createPermission(NEW.uuid, 'INSERT', 'test_customer'),
+            rbac.createPermission(NEW.uuid, 'INSERT', 'rbactest.customer'),
             rbac.globalADMIN());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_test_customer_grants_after_insert_tg
+create trigger z_new_customer_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure rbac.new_test_customer_grants_insert_to_global_tf();
+execute procedure rbactest.new_customer_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:test_customer-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-customer-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user respectively the assumed roles are allowed to insert a row to test_customer.
+    Checks if the user respectively the assumed roles are allowed to insert a row to rbactest.customer.
 */
-create or replace function test_customer_insert_permission_check_tf()
+create or replace function rbactest.customer_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
 declare
@@ -142,22 +142,22 @@ begin
         return NEW;
     end if;
 
-    raise exception '[403] insert into test_customer values(%) not allowed for current subjects % (%)',
+    raise exception '[403] insert into rbactest.customer values(%) not allowed for current subjects % (%)',
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger test_customer_insert_permission_check_tg
-    before insert on test_customer
+create trigger customer_insert_permission_check_tg
+    before insert on rbactest.customer
     for each row
-        execute procedure test_customer_insert_permission_check_tf();
+        execute procedure rbactest.customer_insert_permission_check_tf();
 --//
 
 
 -- ============================================================================
---changeset RbacIdentityViewGenerator:test-customer-rbac-IDENTITY-VIEW endDelimiter:--//
+--changeset RbacIdentityViewGenerator:rbactest-customer-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromProjection('test_customer',
+call rbac.generateRbacIdentityViewFromProjection('rbactest.customer',
     $idName$
         prefix
     $idName$);
@@ -165,9 +165,9 @@ call rbac.generateRbacIdentityViewFromProjection('test_customer',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:test-customer-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:rbactest-customer-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('test_customer',
+call rbac.generateRbacRestrictedView('rbactest.customer',
     $orderBy$
         reference
     $orderBy$,

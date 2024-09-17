@@ -516,7 +516,7 @@ class RolesGrantsAndPermissionsGenerator {
                 /*
                     AFTER INSERT TRIGGER to create the role+grant structure for a new ${rawTableName} row.
                  */
-                                
+
                 create or replace function insertTriggerFor${simpleEntityName}_tf()
                     returns trigger
                     language plpgsql
@@ -525,7 +525,7 @@ class RolesGrantsAndPermissionsGenerator {
                     call buildRbacSystemFor${simpleEntityName}(NEW);
                     return NEW;
                 end; $$;
-                                
+
                 create trigger insertTriggerFor${simpleEntityName}_tg
                     after insert on ${rawTableName}
                     for each row

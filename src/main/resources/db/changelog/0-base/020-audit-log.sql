@@ -77,9 +77,11 @@ create or replace function base.tx_journal_trigger()
 declare
     curTask text;
     curTxId xid8;
+    tableSchemaAndName text;
 begin
     curTask := base.currentTask();
     curTxId := pg_current_xact_id();
+    tableSchemaAndName := base.combine_table_schema_and_name(tg_table_schema, tg_table_name);
 
     insert
         into base.tx_context (txId, txTimestamp, currentSubject, assumedRoles, currentTask, currentRequest)
@@ -90,20 +92,20 @@ begin
     case tg_op
         when 'INSERT' then insert
                                into base.tx_journal
-                               values (curTxId,
-                                       tg_table_name, new.uuid, tg_op::base.tx_operation,
+                               values (curTxId, tableSchemaAndName,
+                                       new.uuid, tg_op::base.tx_operation,
                                        to_jsonb(new));
         when 'UPDATE' then insert
                                into base.tx_journal
-                               values (curTxId,
-                                       tg_table_name, old.uuid, tg_op::base.tx_operation,
+                               values (curTxId, tableSchemaAndName,
+                                       old.uuid, tg_op::base.tx_operation,
                                        base.jsonb_changes_delta(to_jsonb(old), to_jsonb(new)));
         when 'DELETE' then insert
                                into base.tx_journal
-                               values (curTxId,
-                                       tg_table_name, old.uuid, 'DELETE'::base.tx_operation,
+                               values (curTxId,tableSchemaAndName,
+                                       old.uuid, 'DELETE'::base.tx_operation,
                                        null::jsonb);
-        else raise exception 'Trigger op % not supported for %.', tg_op, tg_table_name;
+        else raise exception 'Trigger op % not supported for %.', tg_op, tableSchemaAndName;
         end case;
     return null;
 end; $$;

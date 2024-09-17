@@ -22,7 +22,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "test_package_rv")
+@Table(schema = "rbactest", name = "package_rv")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -69,6 +69,6 @@ public class TestPackageEntity implements BaseEntity<TestPackageEntity> {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("2-test/202-test-package/2023-test-package-rbac");
+        rbac().generateWithBaseFileName("2-rbactest/202-rbactest-package/2023-rbactest-package-rbac");
     }
 }

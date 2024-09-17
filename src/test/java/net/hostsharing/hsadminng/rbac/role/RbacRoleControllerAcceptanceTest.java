@@ -42,14 +42,14 @@ class RbacRoleControllerAcceptanceTest {
             .then().assertThat()
                 .statusCode(200)
                 .contentType("application/json")
-                .body("", hasItem(hasEntry("roleName", "test_customer#xxx:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_customer#xxx:OWNER")))
-                .body("", hasItem(hasEntry("roleName", "test_customer#xxx:TENANT")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.customer#xxx:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.customer#xxx:OWNER")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.customer#xxx:TENANT")))
                 // ...
                 .body("", hasItem(hasEntry("roleName", "rbac.global#global:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_customer#yyy:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_package#yyy00:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.customer#yyy:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.package#yyy00:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER")))
                 .body( "size()", greaterThanOrEqualTo(73)); // increases with new test data
         // @formatter:on
     }
@@ -61,7 +61,7 @@ class RbacRoleControllerAcceptanceTest {
         RestAssured
             .given()
                 .header("current-subject", "superuser-alex@hostsharing.net")
-                .header("assumed-roles", "test_package#yyy00:ADMIN")
+                .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
                 .port(port)
             .when()
                 .get("http://localhost/api/rbac/roles")
@@ -71,18 +71,18 @@ class RbacRoleControllerAcceptanceTest {
                 .statusCode(200)
                 .contentType("application/json")
 
-                .body("", hasItem(hasEntry("roleName", "test_customer#yyy:TENANT")))
-                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa:OWNER")))
-                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaab:OWNER")))
-                .body("", hasItem(hasEntry("roleName", "test_domain#yyy00-aaab:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_package#yyy00:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_package#yyy00:TENANT")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.customer#yyy:TENANT")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:OWNER")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaab:OWNER")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaab:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.package#yyy00:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.package#yyy00:TENANT")))
 
-                .body("", not(hasItem(hasEntry("roleName", "test_customer#xxx:TENANT"))))
-                .body("", not(hasItem(hasEntry("roleName", "test_domain#xxx00-aaaa:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "test_package#xxx00:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "test_package#xxx00:TENANT"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.customer#xxx:TENANT"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.domain#xxx00-aaaa:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#xxx00:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#xxx00:TENANT"))))
         ;
         // @formatter:on
     }
@@ -101,15 +101,15 @@ class RbacRoleControllerAcceptanceTest {
                 .statusCode(200)
                 .contentType("application/json")
 
-                .body("", hasItem(hasEntry("roleName", "test_customer#zzz:TENANT")))
-                .body("", hasItem(hasEntry("roleName", "test_domain#zzz00-aaaa:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_package#zzz00:ADMIN")))
-                .body("", hasItem(hasEntry("roleName", "test_package#zzz00:TENANT")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.customer#zzz:TENANT")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.domain#zzz00-aaaa:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.package#zzz00:ADMIN")))
+                .body("", hasItem(hasEntry("roleName", "rbactest.package#zzz00:TENANT")))
 
-                .body("", not(hasItem(hasEntry("roleName", "test_customer#yyy:TENANT"))))
-                .body("", not(hasItem(hasEntry("roleName", "test_domain#yyy00-aaaa:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "test_package#yyy00:ADMIN"))))
-                .body("", not(hasItem(hasEntry("roleName", "test_package#yyy00:TENANT"))));
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.customer#yyy:TENANT"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.domain#yyy00-aaaa:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#yyy00:ADMIN"))))
+                .body("", not(hasItem(hasEntry("roleName", "rbactest.package#yyy00:TENANT"))));
         // @formatter:on
     }
 }

@@ -20,7 +20,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "test_customer_rv")
+@Table(schema = "rbactest", name = "customer_rv")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -62,6 +62,6 @@ public class TestCustomerEntity implements BaseEntity<TestCustomerEntity> {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("2-test/201-test-customer/2013-test-customer-rbac");
+        rbac().generateWithBaseFileName("2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac");
     }
 }

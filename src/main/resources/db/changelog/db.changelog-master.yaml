@@ -22,6 +22,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/0-base/010-context.sql
     - include:
+        file: db/changelog/0-base/011-table-schema-and-name.sql
+    - include:
         file: db/changelog/0-base/020-audit-log.sql
     - include:
         file: db/changelog/0-base/030-historization.sql
@@ -48,23 +50,25 @@ databaseChangeLog:
     - include:
         file: db/changelog/1-rbac/1080-rbac-global.sql
     - include:
-        file: db/changelog/2-test/201-test-customer/2010-test-customer.sql
+        file: db/changelog/2-rbactest/200-rbactest-schema.sql
     - include:
-        file: db/changelog/2-test/201-test-customer/2013-test-customer-rbac.sql
+        file: db/changelog/2-rbactest/201-rbactest-customer/2010-rbactest-customer.sql
     - include:
-        file: db/changelog/2-test/201-test-customer/2018-test-customer-test-data.sql
+        file: db/changelog/2-rbactest/201-rbactest-customer/2013-rbactest-customer-rbac.sql
     - include:
-        file: db/changelog/2-test/202-test-package/2020-test-package.sql
+        file: db/changelog/2-rbactest/201-rbactest-customer/2018-rbactest-customer-test-data.sql
     - include:
-        file: db/changelog/2-test/202-test-package/2023-test-package-rbac.sql
+        file: db/changelog/2-rbactest/202-rbactest-package/2020-rbactest-package.sql
     - include:
-        file: db/changelog/2-test/202-test-package/2028-test-package-test-data.sql
+        file: db/changelog/2-rbactest/202-rbactest-package/2023-rbactest-package-rbac.sql
     - include:
-        file: db/changelog/2-test/203-test-domain/2030-test-domain.sql
+        file: db/changelog/2-rbactest/202-rbactest-package/2028-rbactest-package-test-data.sql
     - include:
-        file: db/changelog/2-test/203-test-domain/2033-test-domain-rbac.sql
+        file: db/changelog/2-rbactest/203-rbactest-domain/2030-rbactest-domain.sql
     - include:
-        file: db/changelog/2-test/203-test-domain/2038-test-domain-test-data.sql
+        file: db/changelog/2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac.sql
+    - include:
+        file: db/changelog/2-rbactest/203-rbactest-domain/2038-rbactest-domain-test-data.sql
     - include:
         file: db/changelog/5-hs-office/501-contact/5010-hs-office-contact.sql
     - include:

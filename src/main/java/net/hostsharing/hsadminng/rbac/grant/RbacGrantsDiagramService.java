@@ -79,10 +79,10 @@ public class RbacGrantsDiagramService {
                 return;
             }
             if ( !g.getDescendantIdName().startsWith("role:rbac.global")) {
-                if (!includes.contains(TEST_ENTITIES) && g.getDescendantIdName().contains(":test_")) {
+                if (!includes.contains(TEST_ENTITIES) && g.getDescendantIdName().contains(":rbactest.")) {
                     return;
                 }
-                if (!includes.contains(NON_TEST_ENTITIES) && !g.getDescendantIdName().contains(":test_")) {
+                if (!includes.contains(NON_TEST_ENTITIES) && !g.getDescendantIdName().contains(":rbactest.")) {
                     return;
                 }
             }

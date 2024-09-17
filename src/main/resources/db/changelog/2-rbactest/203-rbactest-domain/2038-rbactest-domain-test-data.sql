@@ -13,8 +13,8 @@ declare
     pacAdmin    varchar;
 begin
     select p.uuid, p.name, c.prefix as custPrefix
-        from test_package p
-        join test_customer c on p.customeruuid = c.uuid
+        from rbactest.package p
+        join rbactest.customer c on p.customeruuid = c.uuid
         where p.name = packageName
         into pac;
 
@@ -24,7 +24,7 @@ begin
             call base.defineContext('creating RBAC test domain', null, pacAdmin, null);
 
             insert
-                into test_domain (name, packageUuid)
+                into rbactest.domain (name, packageUuid)
                 values (pac.name || '-' || base.intToVarChar(t, 4), pac.uuid);
         end loop;
 end; $$;
@@ -41,8 +41,8 @@ declare
 begin
     for pac in
         (select p.uuid, p.name
-             from test_package p
-                      join test_customer c on p.customeruuid = c.uuid
+             from rbactest.package p
+                      join rbactest.customer c on p.customeruuid = c.uuid
              where c.reference < 90000) -- reserved for functional testing
         loop
             call createdomainTestData(pac.name, 2);

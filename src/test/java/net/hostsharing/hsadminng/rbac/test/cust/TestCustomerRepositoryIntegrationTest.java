@@ -54,7 +54,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerRole_cannotCreateNewCustomer() {
             // given
-            context("superuser-alex@hostsharing.net", "test_customer#xxx:ADMIN");
+            context("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
 
             // when
             final var result = attempt(em, () -> {
@@ -66,8 +66,8 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "ERROR: [403] insert into test_customer ",
-                    "not allowed for current subjects {test_customer#xxx:ADMIN}");
+                    "ERROR: [403] insert into rbactest.customer ",
+                    "not allowed for current subjects {rbactest.customer#xxx:ADMIN}");
         }
 
         @Test
@@ -85,7 +85,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
             // then
             result.assertExceptionWithRootCauseMessage(
                     PersistenceException.class,
-                    "ERROR: [403] insert into test_customer ",
+                    "ERROR: [403] insert into rbactest.customer ",
                     " not allowed for current subjects {customer-admin@xxx.example.com}");
 
         }
@@ -114,7 +114,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerOwnerRole_canViewExactlyThatCustomer() {
             given:
-            context("superuser-alex@hostsharing.net", "test_customer#yyy:OWNER");
+            context("superuser-alex@hostsharing.net", "rbactest.customer#yyy:OWNER");
 
             // when
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
@@ -139,7 +139,7 @@ class TestCustomerRepositoryIntegrationTest extends ContextBasedTest {
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnCustomer() {
             context("customer-admin@xxx.example.com");
 
-            context("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
+            context("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
 
             final var result = testCustomerRepository.findCustomerByOptionalPrefixLike(null);
 

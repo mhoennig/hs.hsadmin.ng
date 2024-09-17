@@ -17,7 +17,7 @@ public class RbacViewPostgresGenerator {
 
     public RbacViewPostgresGenerator(final RbacView forRbacDef) {
         rbacDef = forRbacDef;
-        liqibaseTagPrefix = rbacDef.getRootEntityAlias().getRawTableNameWithSchema().replace("_", "-");
+        liqibaseTagPrefix = rbacDef.getRootEntityAlias().getRawTableNameWithSchema().replace("_", "-").replace(".", "-");
         plPgSql.writeLn("""
                 --liquibase formatted sql
                 -- This code generated was by ${generator}, do not amend manually.

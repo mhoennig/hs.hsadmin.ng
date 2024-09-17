@@ -3,21 +3,21 @@
 
 
 -- ============================================================================
---changeset RbacObjectGenerator:test-package-rbac-OBJECT endDelimiter:--//
+--changeset RbacObjectGenerator:rbactest-package-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('test_package');
+call rbac.generateRelatedRbacObject('rbactest.package');
 --//
 
 
 -- ============================================================================
---changeset RbacRoleDescriptorsGenerator:test-package-rbac-ROLE-DESCRIPTORS endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:rbactest-package-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('testPackage', 'test_package');
+call rbac.generateRbacRoleDescriptors('testPackage', 'rbactest.package');
 --//
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:test-package-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-package-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -25,17 +25,17 @@ call rbac.generateRbacRoleDescriptors('testPackage', 'test_package');
  */
 
 create or replace procedure buildRbacSystemForTestPackage(
-    NEW test_package
+    NEW rbactest.package
 )
     language plpgsql as $$
 
 declare
-    newCustomer test_customer;
+    newCustomer rbactest.customer;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM test_customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
+    SELECT * FROM rbactest.customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
     assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
 
 
@@ -61,7 +61,7 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new test_package row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new rbactest.package row.
  */
 
 create or replace function insertTriggerForTestPackage_tf()
@@ -74,14 +74,14 @@ begin
 end; $$;
 
 create trigger insertTriggerForTestPackage_tg
-    after insert on test_package
+    after insert on rbactest.package
     for each row
 execute procedure insertTriggerForTestPackage_tf();
 --//
 
 
 -- ============================================================================
---changeset RolesGrantsAndPermissionsGenerator:test-package-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:rbactest-package-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
@@ -89,22 +89,22 @@ execute procedure insertTriggerForTestPackage_tf();
  */
 
 create or replace procedure updateRbacRulesForTestPackage(
-    OLD test_package,
-    NEW test_package
+    OLD rbactest.package,
+    NEW rbactest.package
 )
     language plpgsql as $$
 
 declare
-    oldCustomer test_customer;
-    newCustomer test_customer;
+    oldCustomer rbactest.customer;
+    newCustomer rbactest.customer;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM test_customer WHERE uuid = OLD.customerUuid    INTO oldCustomer;
+    SELECT * FROM rbactest.customer WHERE uuid = OLD.customerUuid    INTO oldCustomer;
     assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s', OLD.customerUuid);
 
-    SELECT * FROM test_customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
+    SELECT * FROM rbactest.customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
     assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
 
 
@@ -122,7 +122,7 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to re-wire the grant structure for a new test_package row.
+    AFTER INSERT TRIGGER to re-wire the grant structure for a new rbactest.package row.
  */
 
 create or replace function updateTriggerForTestPackage_tf()
@@ -135,94 +135,94 @@ begin
 end; $$;
 
 create trigger updateTriggerForTestPackage_tg
-    after update on test_package
+    after update on rbactest.package
     for each row
 execute procedure updateTriggerForTestPackage_tf();
 --//
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:test-package-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-package-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to test_customer ----------------------------
+-- granting INSERT permission to rbactest.customer ----------------------------
 
 /*
-    Grants INSERT INTO test_package permissions to specified role of pre-existing test_customer rows.
+    Grants INSERT INTO rbactest.package permissions to specified role of pre-existing rbactest.customer rows.
  */
 do language plpgsql $$
     declare
-        row test_customer;
+        row rbactest.customer;
     begin
-        call base.defineContext('create INSERT INTO test_package permissions for pre-exising test_customer rows');
+        call base.defineContext('create INSERT INTO rbactest.package permissions for pre-exising rbactest.customer rows');
 
-        FOR row IN SELECT * FROM test_customer
+        FOR row IN SELECT * FROM rbactest.customer
             -- unconditional for all rows in that table
             LOOP
                 call rbac.grantPermissionToRole(
-                        rbac.createPermission(row.uuid, 'INSERT', 'test_package'),
+                        rbac.createPermission(row.uuid, 'INSERT', 'rbactest.package'),
                         testCustomerADMIN(row));
             END LOOP;
     end;
 $$;
 
 /**
-    Grants test_package INSERT permission to specified role of new test_customer rows.
+    Grants rbactest.package INSERT permission to specified role of new customer rows.
 */
-create or replace function new_test_package_grants_insert_to_test_customer_tf()
+create or replace function rbactest.new_package_grants_insert_to_customer_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
-            rbac.createPermission(NEW.uuid, 'INSERT', 'test_package'),
+            rbac.createPermission(NEW.uuid, 'INSERT', 'rbactest.package'),
             testCustomerADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_test_package_grants_after_insert_tg
-    after insert on test_customer
+create trigger z_new_package_grants_after_insert_tg
+    after insert on rbactest.customer
     for each row
-execute procedure new_test_package_grants_insert_to_test_customer_tf();
+execute procedure rbactest.new_package_grants_insert_to_customer_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:test_package-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:rbactest-package-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user respectively the assumed roles are allowed to insert a row to test_package.
+    Checks if the user respectively the assumed roles are allowed to insert a row to rbactest.package.
 */
-create or replace function test_package_insert_permission_check_tf()
+create or replace function rbactest.package_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
 declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission via direct foreign key: NEW.customerUuid
-    if rbac.hasInsertPermission(NEW.customerUuid, 'test_package') then
+    if rbac.hasInsertPermission(NEW.customerUuid, 'rbactest.package') then
         return NEW;
     end if;
 
-    raise exception '[403] insert into test_package values(%) not allowed for current subjects % (%)',
+    raise exception '[403] insert into rbactest.package values(%) not allowed for current subjects % (%)',
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger test_package_insert_permission_check_tg
-    before insert on test_package
+create trigger package_insert_permission_check_tg
+    before insert on rbactest.package
     for each row
-        execute procedure test_package_insert_permission_check_tf();
+        execute procedure rbactest.package_insert_permission_check_tf();
 --//
 
 
 -- ============================================================================
---changeset RbacIdentityViewGenerator:test-package-rbac-IDENTITY-VIEW endDelimiter:--//
+--changeset RbacIdentityViewGenerator:rbactest-package-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromProjection('test_package',
+call rbac.generateRbacIdentityViewFromProjection('rbactest.package',
     $idName$
         name
     $idName$);
@@ -230,9 +230,9 @@ call rbac.generateRbacIdentityViewFromProjection('test_package',
 
 
 -- ============================================================================
---changeset RbacRestrictedViewGenerator:test-package-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:rbactest-package-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('test_package',
+call rbac.generateRbacRestrictedView('rbactest.package',
     $orderBy$
         name
     $orderBy$,

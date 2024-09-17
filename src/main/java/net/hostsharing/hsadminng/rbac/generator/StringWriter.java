@@ -19,9 +19,11 @@ public class StringWriter {
         writeLn();
     }
 
-    void writeLn(final String text, final VarDef... varDefs) {
-        string.append( indented( new VarReplacer(varDefs).apply(text) ));
+    String writeLn(final String text, final VarDef... varDefs) {
+        final var insertText = indented(new VarReplacer(varDefs).apply(text));
+        string.append(insertText);
         writeLn();
+        return insertText;
     }
 
     void writeLn() {

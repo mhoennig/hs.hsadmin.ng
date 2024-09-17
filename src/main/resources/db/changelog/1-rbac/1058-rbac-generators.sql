@@ -8,26 +8,40 @@
 create or replace procedure rbac.generateRelatedRbacObject(targetTable varchar)
     language plpgsql as $$
 declare
+    targetTableName text;
+    targetSchemaPrefix text;
     createInsertTriggerSQL text;
     createDeleteTriggerSQL text;
 begin
+    if POSITION('.' IN targetTable) > 0 then
+        targetSchemaPrefix := SPLIT_PART(targetTable, '.', 1) || '.';
+        targetTableName := SPLIT_PART(targetTable, '.', 2);
+    else
+        targetSchemaPrefix := '';
+        targetTableName := targetTable;
+    end if;
+
+    if targetSchemaPrefix = '' and targetTableName = 'customer' then
+        raise exception 'missing targetShemaPrefix: %', targetTable;
+    end if;
+
     createInsertTriggerSQL = format($sql$
-        create trigger createRbacObjectFor_%s_Trigger
-            before insert on %s
+        create trigger createRbacObjectFor_%s_insert_tg_1058_25
+            before insert on %s%s
             for each row
                 execute procedure rbac.insert_related_object();
-        $sql$, targetTable, targetTable);
+        $sql$, targetTableName, targetSchemaPrefix, targetTableName);
     execute createInsertTriggerSQL;
 
     createDeleteTriggerSQL = format($sql$
-        create trigger delete_related_rbac_rules_for_%s_tg
-            after delete
-            on %s
+        create trigger createRbacObjectFor_%s_delete_tg_1058_35
+            after delete on %s%s
             for each row
                 execute procedure rbac.delete_related_rbac_rules_tf();
-        $sql$, targetTable, targetTable);
+        $sql$, targetTableName, targetSchemaPrefix, targetTableName);
     execute createDeleteTriggerSQL;
-end; $$;
+end;
+$$;
 --//
 
 
@@ -176,7 +190,7 @@ begin
     */
     sql := format($sql$
         create or replace view %1$s_rv as
-            with accessible_%1$s_uuids as (
+            with accessible_uuids as (
                      with recursive
                           recursive_grants as
                               (select distinct rbac.grants.descendantuuid,
@@ -209,7 +223,7 @@ begin
             )
             select target.*
                 from %1$s as target
-                where target.uuid in (select * from accessible_%1$s_uuids)
+                where target.uuid in (select * from accessible_uuids)
                 order by %2$s;
 
         grant all privileges on %1$s_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
@@ -219,9 +233,9 @@ begin
     /**
         Instead of insert trigger function for the restricted view.
      */
-    newColumns := 'new.' || replace(columnNames, ',', ', new.');
+    newColumns := 'new.' || replace(columnNames, ', ', ', new.');
     sql := format($sql$
-    create or replace function %1$sInsert()
+    create function %1$s_instead_of_insert_tf()
         returns trigger
         language plpgsql as $f$
     declare
@@ -240,11 +254,11 @@ begin
         Creates an instead of insert trigger for the restricted view.
      */
     sql := format($sql$
-        create trigger %1$sInsert_tg
+        create trigger instead_of_insert_tg
             instead of insert
             on %1$s_rv
             for each row
-        execute function %1$sInsert();
+        execute function %1$s_instead_of_insert_tf();
     $sql$, targetTable);
     execute sql;
 
@@ -252,7 +266,7 @@ begin
         Instead of delete trigger function for the restricted view.
      */
     sql := format($sql$
-        create or replace function %1$sDelete()
+        create function %1$s_instead_of_delete_tf()
             returns trigger
             language plpgsql as $f$
         begin
@@ -269,11 +283,11 @@ begin
         Creates an instead of delete trigger for the restricted view.
      */
     sql := format($sql$
-        create trigger %1$sDelete_tg
+        create trigger instead_of_delete_tg
             instead of delete
             on %1$s_rv
             for each row
-        execute function %1$sDelete();
+        execute function %1$s_instead_of_delete_tf();
     $sql$, targetTable);
     execute sql;
 
@@ -283,7 +297,7 @@ begin
      */
     if columnUpdates is not null then
         sql := format($sql$
-            create or replace function %1$sUpdate()
+            create function %1$s_instead_of_update_tf()
                 returns trigger
                 language plpgsql as $f$
             begin
@@ -302,11 +316,11 @@ begin
             Creates an instead of delete trigger for the restricted view.
          */
         sql = format($sql$
-            create trigger %1$sUpdate_tg
+            create trigger instead_of_update_tg
                 instead of update
                 on %1$s_rv
                 for each row
-            execute function %1$sUpdate();
+            execute function %1$s_instead_of_update_tf();
         $sql$, targetTable);
         execute sql;
     end if;

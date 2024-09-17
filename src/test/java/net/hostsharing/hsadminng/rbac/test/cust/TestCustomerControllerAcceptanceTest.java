@@ -89,7 +89,7 @@ class TestCustomerControllerAcceptanceTest {
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#yyy:ADMIN")
+                    .header("assumed-roles", "rbactest.customer#yyy:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/test/customers")
@@ -148,7 +148,7 @@ class TestCustomerControllerAcceptanceTest {
             // finally, the new customer can be viewed by its own admin
             final var newSubjectUuid = UUID.fromString(
                     location.substring(location.lastIndexOf('/') + 1));
-            context.define("superuser-fran@hostsharing.net", "test_customer#uuu:ADMIN");
+            context.define("superuser-fran@hostsharing.net", "rbactest.customer#uuu:ADMIN");
             assertThat(testCustomerRepository.findByUuid(newSubjectUuid))
                     .hasValueSatisfying(c -> assertThat(c.getPrefix()).isEqualTo("uuu"));
         }
@@ -159,7 +159,7 @@ class TestCustomerControllerAcceptanceTest {
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_customer#xxx:ADMIN")
+                    .header("assumed-roles", "rbactest.customer#xxx:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                               {
@@ -175,8 +175,8 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("ERROR: [403] insert into test_customer "))
-                    .body("message", containsString(" not allowed for current subjects {test_customer#xxx:ADMIN}"));
+                    .body("message", containsString("ERROR: [403] insert into rbactest.customer "))
+                    .body("message", containsString(" not allowed for current subjects {rbactest.customer#xxx:ADMIN}"));
             // @formatter:on
 
             // finally, the new customer was not created
@@ -205,7 +205,7 @@ class TestCustomerControllerAcceptanceTest {
                     .statusCode(403)
                     .contentType(ContentType.JSON)
                     .statusCode(403)
-                    .body("message", containsString("ERROR: [403] insert into test_customer "))
+                    .body("message", containsString("ERROR: [403] insert into rbactest.customer "))
                     .body("message", containsString(" not allowed for current subjects"));
                 // @formatter:on
 

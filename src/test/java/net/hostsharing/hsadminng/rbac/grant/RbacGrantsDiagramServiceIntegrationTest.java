@@ -54,36 +54,36 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
 
     @Test
     void allGrantsTocurrentSubject() {
-        context("superuser-alex@hostsharing.net", "test_domain#xxx00-aaaa:OWNER");
+        context("superuser-alex@hostsharing.net", "rbactest.domain#xxx00-aaaa:OWNER");
         final var graph = grantsMermaidService.allGrantsTocurrentSubject(EnumSet.of(Include.TEST_ENTITIES));
 
         assertThat(graph).isEqualTo("""
                 flowchart TB
                        
-                role:test_domain#xxx00-aaaa:ADMIN --> role:test_package#xxx00:TENANT
-                role:test_domain#xxx00-aaaa:OWNER --> role:test_domain#xxx00-aaaa:ADMIN
-                role:test_domain#xxx00-aaaa:OWNER --> role:test_package#xxx00:TENANT
-                role:test_package#xxx00:TENANT --> role:test_customer#xxx:TENANT
+                role:rbactest.domain#xxx00-aaaa:ADMIN --> role:rbactest.package#xxx00:TENANT
+                role:rbactest.domain#xxx00-aaaa:OWNER --> role:rbactest.domain#xxx00-aaaa:ADMIN
+                role:rbactest.domain#xxx00-aaaa:OWNER --> role:rbactest.package#xxx00:TENANT
+                role:rbactest.package#xxx00:TENANT --> role:rbactest.customer#xxx:TENANT
                 """.trim());
     }
 
     @Test
     void allGrantsTocurrentSubjectIncludingPermissions() {
-        context("superuser-alex@hostsharing.net", "test_domain#xxx00-aaaa:OWNER");
+        context("superuser-alex@hostsharing.net", "rbactest.domain#xxx00-aaaa:OWNER");
         final var graph = grantsMermaidService.allGrantsTocurrentSubject(EnumSet.of(Include.TEST_ENTITIES, Include.PERMISSIONS));
 
         assertThat(graph).isEqualTo("""
                 flowchart TB
                       
-                role:test_customer#xxx:TENANT --> perm:test_customer#xxx:SELECT
-                role:test_domain#xxx00-aaaa:ADMIN --> perm:test_domain#xxx00-aaaa:SELECT
-                role:test_domain#xxx00-aaaa:ADMIN --> role:test_package#xxx00:TENANT
-                role:test_domain#xxx00-aaaa:OWNER --> perm:test_domain#xxx00-aaaa:DELETE
-                role:test_domain#xxx00-aaaa:OWNER --> perm:test_domain#xxx00-aaaa:UPDATE
-                role:test_domain#xxx00-aaaa:OWNER --> role:test_domain#xxx00-aaaa:ADMIN
-                role:test_domain#xxx00-aaaa:OWNER --> role:test_package#xxx00:TENANT
-                role:test_package#xxx00:TENANT --> perm:test_package#xxx00:SELECT
-                role:test_package#xxx00:TENANT --> role:test_customer#xxx:TENANT
+                role:rbactest.customer#xxx:TENANT --> perm:rbactest.customer#xxx:SELECT
+                role:rbactest.domain#xxx00-aaaa:ADMIN --> perm:rbactest.domain#xxx00-aaaa:SELECT
+                role:rbactest.domain#xxx00-aaaa:ADMIN --> role:rbactest.package#xxx00:TENANT
+                role:rbactest.domain#xxx00-aaaa:OWNER --> perm:rbactest.domain#xxx00-aaaa:DELETE
+                role:rbactest.domain#xxx00-aaaa:OWNER --> perm:rbactest.domain#xxx00-aaaa:UPDATE
+                role:rbactest.domain#xxx00-aaaa:OWNER --> role:rbactest.domain#xxx00-aaaa:ADMIN
+                role:rbactest.domain#xxx00-aaaa:OWNER --> role:rbactest.package#xxx00:TENANT
+                role:rbactest.package#xxx00:TENANT --> perm:rbactest.package#xxx00:SELECT
+                role:rbactest.package#xxx00:TENANT --> role:rbactest.customer#xxx:TENANT
                 """.trim());
     }
 

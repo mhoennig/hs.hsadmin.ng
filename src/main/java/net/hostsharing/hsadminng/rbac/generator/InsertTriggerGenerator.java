@@ -100,7 +100,7 @@ public class InsertTriggerGenerator {
                 /**
                     Grants ${rawSubTable} INSERT permission to specified role of new ${rawSuperTable} rows.
                 */
-                create or replace function ${rawSuperTableSchemaName}new_${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf()
+                create or replace function ${rawSubTableSchemaPrefix}new_${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf()
                     returns trigger
                     language plpgsql
                     strict as $$
@@ -114,10 +114,10 @@ public class InsertTriggerGenerator {
                 end; $$;
                 
                 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-                create trigger z_new_${rawSubTable}_grants_after_insert_tg
+                create trigger z_new_${rawSubTableName}_grants_after_insert_tg
                     after insert on ${rawSuperTableWithSchema}
                     for each row
-                execute procedure ${rawSuperTableSchemaName}new_${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf();
+                execute procedure ${rawSubTableSchemaPrefix}new_${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf();
                 """,
                     with("ifConditionThen", g.getSuperRoleDef().getEntityAlias().isCaseDependent()
                             // TODO.impl: .type needs to be dynamically generated
@@ -130,8 +130,9 @@ public class InsertTriggerGenerator {
                     with("rawSuperTableWithSchema", g.getSuperRoleDef().getEntityAlias().getRawTableNameWithSchema()),
                     with("rawSuperTableShortName", g.getSuperRoleDef().getEntityAlias().getRawTableShortName()),
                     with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableName()),
-                    with("rawSuperTableSchemaName", g.getSuperRoleDef().getEntityAlias().getRawTableSchemaPrefix()),
                     with("rawSubTable", g.getPermDef().getEntityAlias().getRawTableNameWithSchema()),
+                    with("rawSubTableSchemaPrefix", g.getPermDef().getEntityAlias().getRawTableSchemaPrefix()),
+                    with("rawSubTableName", g.getPermDef().getEntityAlias().getRawTableName()),
                     with("rawSubTableShortName", g.getPermDef().getEntityAlias().getRawTableShortName()));
 
         });
@@ -154,15 +155,16 @@ public class InsertTriggerGenerator {
                 returns trigger
                 language plpgsql as $$
             begin
-                raise exception '[403] insert into ${rawSubTable} values(%) not allowed regardless of current subject, no insert permissions granted at all', NEW;
+                raise exception '[403] insert into ${rawSubTableWithSchema} values(%) not allowed regardless of current subject, no insert permissions granted at all', NEW;
             end; $$;
 
             create trigger ${rawSubTable}_insert_permission_check_tg
                 before insert on ${rawSubTable}
                 for each row
-                    execute procedure ${rawSubTable}_insert_permission_missing_tf();
+                    execute procedure ${rawSubTableWithSchema}_insert_permission_missing_tf();
             """,
-            with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableNameWithSchema()));
+            with("rawSubTableWithSchema", rbacDef.getRootEntityAlias().getRawTableNameWithSchema()),
+            with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
 
         plPgSql.writeLn("--//");
     }
@@ -183,7 +185,7 @@ public class InsertTriggerGenerator {
     private void generateInsertPermissionsCheckHeader(final StringWriter plPgSql) {
         plPgSql.writeLn("""
             -- ============================================================================
-            --changeset InsertTriggerGenerator:${rawSubTable}-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+            --changeset InsertTriggerGenerator:${liquibaseTagPrefix}-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
             -- ----------------------------------------------------------------------------
 
             /**
@@ -196,6 +198,7 @@ public class InsertTriggerGenerator {
                 superObjectUuid uuid;
             begin
             """,
+                with("liquibaseTagPrefix", liquibaseTagPrefix),
                 with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableNameWithSchema()));
         plPgSql.chopEmptyLines();
     }
@@ -258,17 +261,18 @@ public class InsertTriggerGenerator {
     private void generateInsertPermissionsChecksFooter(final StringWriter plPgSql) {
         plPgSql.writeLn();
         plPgSql.writeLn("""
-                raise exception '[403] insert into ${rawSubTable} values(%) not allowed for current subjects % (%)',
+                raise exception '[403] insert into ${rawSubTableWithSchema} values(%) not allowed for current subjects % (%)',
                         NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
             end; $$;
             
             create trigger ${rawSubTable}_insert_permission_check_tg
-                before insert on ${rawSubTable}
+                before insert on ${rawSubTableWithSchema}
                 for each row
-                    execute procedure ${rawSubTable}_insert_permission_check_tf();
+                    execute procedure ${rawSubTableWithSchema}_insert_permission_check_tf();
             --//
             """,
-                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableNameWithSchema()));
+                with("rawSubTableWithSchema", rbacDef.getRootEntityAlias().getRawTableNameWithSchema()),
+                with("rawSubTable", rbacDef.getRootEntityAlias().getRawTableName()));
     }
 
     private String toStringList(final Set<RbacView.CaseDef> cases) {

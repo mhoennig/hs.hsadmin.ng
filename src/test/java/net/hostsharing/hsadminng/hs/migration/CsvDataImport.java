@@ -289,9 +289,9 @@ public class CsvDataImport extends ContextBasedTest {
     protected void deleteFromTestTables() {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            em.createNativeQuery("delete from test_domain where true").executeUpdate();
-            em.createNativeQuery("delete from test_package where true").executeUpdate();
-            em.createNativeQuery("delete from test_customer where true").executeUpdate();
+            em.createNativeQuery("delete from rbactest.domain where true").executeUpdate();
+            em.createNativeQuery("delete from rbactest.package where true").executeUpdate();
+            em.createNativeQuery("delete from rbactest.customer where true").executeUpdate();
         }).assertSuccessful();
     }
 

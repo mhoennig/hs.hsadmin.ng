@@ -3,9 +3,7 @@
 -- ============================================================================
 --changeset michael.hoennig:rbac-base-REFERENCE endDelimiter:--//
 -- ----------------------------------------------------------------------------
-/*
 
- */
 create type rbac.ReferenceType as enum ('rbac.subject', 'rbac.role', 'rbac.permission');
 
 create table rbac.reference
@@ -120,18 +118,20 @@ create or replace function rbac.insert_related_object()
     strict as $$
 declare
     objectUuid uuid;
+    tableSchemaAndName text;
 begin
+    tableSchemaAndName := base.combine_table_schema_and_name(TG_TABLE_SCHEMA, TG_TABLE_NAME);
     if TG_OP = 'INSERT' then
         if NEW.uuid is null then
             insert
                 into rbac.object (objectTable)
-                values (TG_TABLE_NAME)
+                values (tableSchemaAndName)
                 returning uuid into objectUuid;
             NEW.uuid = objectUuid;
         else
             insert
                 into rbac.object (uuid, objectTable)
-                values (NEW.uuid, TG_TABLE_NAME)
+                values (NEW.uuid, tableSchemaAndName)
                 returning uuid into objectUuid;
         end if;
         return NEW;

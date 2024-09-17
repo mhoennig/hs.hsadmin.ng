@@ -62,13 +62,13 @@ class ContextIntegrationTests {
     void defineWithoutcurrentSubjectButWithAssumedRoles() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define(null, "test_package#yyy00:ADMIN")
+                context.define(null, "rbactest.package#yyy00:ADMIN")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "ERROR: [403] undefined has no permission to assume role test_package#yyy00:ADMIN");
+                "ERROR: [403] undefined has no permission to assume role rbactest.package#yyy00:ADMIN");
     }
 
     @Test
@@ -88,7 +88,7 @@ class ContextIntegrationTests {
     @Transactional
     void defineWithcurrentSubjectAndAssumedRoles() {
         // given
-        context.define("superuser-alex@hostsharing.net", "test_customer#xxx:OWNER;test_customer#yyy:OWNER");
+        context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:OWNER;rbactest.customer#yyy:OWNER");
 
         // when
         final var currentSubject = context.fetchCurrentSubject();
@@ -96,7 +96,7 @@ class ContextIntegrationTests {
 
         // then
         assertThat(context.fetchAssumedRoles())
-                .isEqualTo(Array.of("test_customer#xxx:OWNER", "test_customer#yyy:OWNER"));
+                .isEqualTo(Array.of("rbactest.customer#xxx:OWNER", "rbactest.customer#yyy:OWNER"));
         assertThat(context.fetchCurrentSubjectOrAssumedRolesUuids()).hasSize(2);
     }
 
@@ -104,12 +104,12 @@ class ContextIntegrationTests {
     public void defineContextWithcurrentSubjectAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
-                context.define("customer-admin@xxx.example.com", "test_package#yyy00:ADMIN")
+                context.define("customer-admin@xxx.example.com", "rbactest.package#yyy00:ADMIN")
         );
 
         // then
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
-                "ERROR: [403] subject customer-admin@xxx.example.com has no permission to assume role test_package#yyy00:ADMIN");
+                "ERROR: [403] subject customer-admin@xxx.example.com has no permission to assume role rbactest.package#yyy00:ADMIN");
     }
 }

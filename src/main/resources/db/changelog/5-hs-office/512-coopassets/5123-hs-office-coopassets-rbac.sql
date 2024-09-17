@@ -113,7 +113,7 @@ execute procedure new_hsof_coopassettx_grants_insert_to_hsof_membership_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs_office_coopassetstransaction-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-coopassetstransaction-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**

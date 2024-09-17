@@ -71,16 +71,16 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .body("", hasItem(
                             allOf(
                                 // TODO: should there be a grantedByRole or just a grantedByTrigger?
-                                hasEntry("grantedByRoleIdName", "test_customer#xxx:OWNER"),
-                                hasEntry("grantedRoleIdName", "test_customer#xxx:ADMIN"),
+                                hasEntry("grantedByRoleIdName", "rbactest.customer#xxx:OWNER"),
+                                hasEntry("grantedRoleIdName", "rbactest.customer#xxx:ADMIN"),
                                 hasEntry("granteeSubjectName", "customer-admin@xxx.example.com")
                             )
                     ))
                     .body("", hasItem(
                             allOf(
                                     // TODO: should there be a grantedByRole or just a grantedByTrigger?
-                                    hasEntry("grantedByRoleIdName", "test_customer#yyy:OWNER"),
-                                    hasEntry("grantedRoleIdName", "test_customer#yyy:ADMIN"),
+                                    hasEntry("grantedByRoleIdName", "rbactest.customer#yyy:OWNER"),
+                                    hasEntry("grantedRoleIdName", "rbactest.customer#yyy:ADMIN"),
                                     hasEntry("granteeSubjectName", "customer-admin@yyy.example.com")
                             )
                     ))
@@ -93,15 +93,15 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "test_customer#xxx:ADMIN"),
-                                    hasEntry("grantedRoleIdName", "test_package#xxx00:ADMIN"),
+                                    hasEntry("grantedByRoleIdName", "rbactest.customer#xxx:ADMIN"),
+                                    hasEntry("grantedRoleIdName", "rbactest.package#xxx00:ADMIN"),
                                     hasEntry("granteeSubjectName", "pac-admin-xxx00@xxx.example.com")
                             )
                     ))
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "test_customer#zzz:ADMIN"),
-                                    hasEntry("grantedRoleIdName", "test_package#zzz02:ADMIN"),
+                                    hasEntry("grantedByRoleIdName", "rbactest.customer#zzz:ADMIN"),
+                                    hasEntry("grantedRoleIdName", "rbactest.package#zzz02:ADMIN"),
                                     hasEntry("granteeSubjectName", "pac-admin-zzz02@zzz.example.com")
                             )
                     ))
@@ -114,7 +114,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "test_package#yyy00:ADMIN")
+                    .header("assumed-roles", "rbactest.package#yyy00:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/rbac/grants")
@@ -123,8 +123,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "test_customer#yyy:ADMIN"),
-                                    hasEntry("grantedRoleIdName", "test_package#yyy00:ADMIN"),
+                                    hasEntry("grantedByRoleIdName", "rbactest.customer#yyy:ADMIN"),
+                                    hasEntry("grantedRoleIdName", "rbactest.package#yyy00:ADMIN"),
                                     hasEntry("granteeSubjectName", "pac-admin-yyy00@yyy.example.com")
                             )
                     ))
@@ -145,13 +145,13 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                     .contentType("application/json")
                     .body("", hasItem(
                             allOf(
-                                    hasEntry("grantedByRoleIdName", "test_customer#yyy:ADMIN"),
-                                    hasEntry("grantedRoleIdName", "test_package#yyy00:ADMIN"),
+                                    hasEntry("grantedByRoleIdName", "rbactest.customer#yyy:ADMIN"),
+                                    hasEntry("grantedRoleIdName", "rbactest.package#yyy00:ADMIN"),
                                     hasEntry("granteeSubjectName", "pac-admin-yyy00@yyy.example.com")
                             )
                     ))
-                    .body("[0].grantedByRoleIdName", is("test_customer#yyy:ADMIN"))
-                    .body("[0].grantedRoleIdName", is("test_package#yyy00:ADMIN"))
+                    .body("[0].grantedByRoleIdName", is("rbactest.customer#yyy:ADMIN"))
+                    .body("[0].grantedRoleIdName", is("rbactest.package#yyy00:ADMIN"))
                     .body("[0].granteeSubjectName", is("pac-admin-yyy00@yyy.example.com"));
             // @formatter:on
         }
@@ -165,7 +165,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // given
             final var givencurrentSubjectAsPackageAdmin = new Subject("customer-admin@xxx.example.com");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("test_package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // when
             final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
@@ -174,8 +174,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             grant.assertThat()
                     .statusCode(200)
-                    .body("grantedByRoleIdName", is("test_customer#xxx:ADMIN"))
-                    .body("grantedRoleIdName", is("test_package#xxx00:ADMIN"))
+                    .body("grantedByRoleIdName", is("rbactest.customer#xxx:ADMIN"))
+                    .body("grantedRoleIdName", is("rbactest.package#xxx00:ADMIN"))
                     .body("granteeSubjectName", is("pac-admin-xxx00@xxx.example.com"));
         }
 
@@ -184,7 +184,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // given
             final var givencurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("test_package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // when
             final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
@@ -193,8 +193,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             grant.assertThat()
                     .statusCode(200)
-                    .body("grantedByRoleIdName", is("test_customer#xxx:ADMIN"))
-                    .body("grantedRoleIdName", is("test_package#xxx00:ADMIN"))
+                    .body("grantedByRoleIdName", is("rbactest.customer#xxx:ADMIN"))
+                    .body("grantedRoleIdName", is("rbactest.package#xxx00:ADMIN"))
                     .body("granteeSubjectName", is("pac-admin-xxx00@xxx.example.com"));
         }
 
@@ -203,9 +203,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // given
             final var givencurrentSubjectAsPackageAdmin = new Subject(
                     "pac-admin-xxx00@xxx.example.com",
-                    "test_package#xxx00:ADMIN");
+                    "rbactest.package#xxx00:ADMIN");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("test_package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // when
             final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
@@ -214,8 +214,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             grant.assertThat()
                     .statusCode(200)
-                    .body("grantedByRoleIdName", is("test_customer#xxx:ADMIN"))
-                    .body("grantedRoleIdName", is("test_package#xxx00:ADMIN"))
+                    .body("grantedByRoleIdName", is("rbactest.customer#xxx:ADMIN"))
+                    .body("grantedRoleIdName", is("rbactest.package#xxx00:ADMIN"))
                     .body("granteeSubjectName", is("pac-admin-xxx00@xxx.example.com"));
         }
 
@@ -225,9 +225,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // given
             final var givencurrentSubjectAsPackageAdmin = new Subject(
                     "pac-admin-xxx00@xxx.example.com",
-                    "test_package#xxx00:TENANT");
+                    "rbactest.package#xxx00:TENANT");
             final var givenGranteeUser = findRbacSubjectByName("pac-admin-xxx00@xxx.example.com");
-            final var givenGrantedRole = getRbacRoleByName("test_package#xxx00:ADMIN");
+            final var givenGrantedRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
             final var grant = givencurrentSubjectAsPackageAdmin.getGrantById()
                     .forGrantedRole(givenGrantedRole).toGranteeUser(givenGranteeUser);
 
@@ -245,7 +245,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // given
             final var givenNewUser = createRbacSubject();
-            final var givenRoleToGrant = "test_package#xxx00:ADMIN";
+            final var givenRoleToGrant = "rbactest.package#xxx00:ADMIN";
             final var givencurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
             final var givenOwnPackageAdminRole =
                     getRbacRoleByName(givencurrentSubjectAsPackageAdmin.assumedRole);
@@ -258,9 +258,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             // then
             response.assertThat()
                     .statusCode(201)
-                    .body("grantedByRoleIdName", is("test_package#xxx00:ADMIN"))
+                    .body("grantedByRoleIdName", is("rbactest.package#xxx00:ADMIN"))
                     .body("assumed", is(true))
-                    .body("grantedRoleIdName", is("test_package#xxx00:ADMIN"))
+                    .body("grantedRoleIdName", is("rbactest.package#xxx00:ADMIN"))
                     .body("granteeSubjectName", is(givenNewUser.getName()));
             assertThat(findAllGrantsOf(givencurrentSubjectAsPackageAdmin))
                     .extracting(RbacGrantEntity::toDisplay)
@@ -274,9 +274,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // given
             final var givenNewUser = createRbacSubject();
-            final var givenRoleToGrant = "test_package#xxx00:ADMIN";
+            final var givenRoleToGrant = "rbactest.package#xxx00:ADMIN";
             final var givencurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
-            final var givenAlienPackageAdminRole = getRbacRoleByName("test_package#yyy00:ADMIN");
+            final var givenAlienPackageAdminRole = getRbacRoleByName("rbactest.package#yyy00:ADMIN");
 
             // when
             final var result = givencurrentSubjectAsPackageAdmin
@@ -287,7 +287,7 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
             result.assertThat()
                     .statusCode(403)
                     .body("message", containsString("Access to granted role"))
-                    .body("message", containsString("forbidden for test_package#xxx00:ADMIN"));
+                    .body("message", containsString("forbidden for rbactest.package#xxx00:ADMIN"));
             assertThat(findAllGrantsOf(givencurrentSubjectAsPackageAdmin))
                     .extracting(RbacGrantEntity::getGranteeSubjectName)
                     .doesNotContain(givenNewUser.getName());
@@ -303,9 +303,9 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
 
             // given
             final var givenArbitraryUser = createRbacSubject();
-            final var givenRoleToGrant = "test_package#xxx00:ADMIN";
+            final var givenRoleToGrant = "rbactest.package#xxx00:ADMIN";
             final var givenCurrentSubjectAsPackageAdmin = new Subject("pac-admin-xxx00@xxx.example.com", givenRoleToGrant);
-            final var givenOwnPackageAdminRole = getRbacRoleByName("test_package#xxx00:ADMIN");
+            final var givenOwnPackageAdminRole = getRbacRoleByName("rbactest.package#xxx00:ADMIN");
 
             // and given an existing grant
             assumeCreated(givenCurrentSubjectAsPackageAdmin

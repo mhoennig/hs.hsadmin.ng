@@ -3,14 +3,14 @@
 -- --------------------------------------------------------
 
 
-select rbac.isGranted(rbac.findRoleId('administrators'), rbac.findRoleId('test.package#aaa00:OWNER'));
-select rbac.isGranted(rbac.findRoleId('test.package#aaa00:OWNER'), rbac.findRoleId('administrators'));
--- call rbac.grantRoleToRole(findRoleId('test.package#aaa00:OWNER'), findRoleId('administrators'));
--- call rbac.grantRoleToRole(findRoleId('administrators'), findRoleId('test.package#aaa00:OWNER'));
+select rbac.isGranted(rbac.findRoleId('administrators'), rbac.findRoleId('rbactest.package#aaa00:OWNER'));
+select rbac.isGranted(rbac.findRoleId('rbactest.package#aaa00:OWNER'), rbac.findRoleId('administrators'));
+-- call rbac.grantRoleToRole(findRoleId('rbactest.package#aaa00:OWNER'), findRoleId('administrators'));
+-- call rbac.grantRoleToRole(findRoleId('administrators'), findRoleId('rbactest.package#aaa00:OWNER'));
 
 select count(*)
 FROM rbac.queryAllPermissionsOfSubjectIdForObjectUuids(rbac.findRbacSubject('superuser-fran@hostsharing.net'),
-                                                  ARRAY(select uuid from test.customer where reference < 1100000));
+                                                  ARRAY(select uuid from rbactest.customer where reference < 1100000));
 select count(*)
 FROM rbac.queryAllPermissionsOfSubjectId(findRbacSubject('superuser-fran@hostsharing.net'));
 select *

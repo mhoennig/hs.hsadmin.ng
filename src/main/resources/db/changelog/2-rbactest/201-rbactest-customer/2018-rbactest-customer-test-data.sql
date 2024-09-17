@@ -28,18 +28,18 @@ declare
     custRowId     uuid;
     custAdminName varchar;
     custAdminUuid uuid;
-    newCust       test_customer;
+    newCust       rbactest.customer;
 begin
     custRowId = uuid_generate_v4();
     custAdminName = 'customer-admin@' || custPrefix || '.example.com';
     custAdminUuid = rbac.create_subject(custAdminName);
 
     insert
-        into test_customer (reference, prefix, adminUserName)
+        into rbactest.customer (reference, prefix, adminUserName)
         values (custReference, custPrefix, custAdminName);
 
     select * into newCust
-             from test_customer where reference=custReference;
+             from rbactest.customer where reference=custReference;
     call rbac.grantRoleToSubject(
             rbac.getRoleId(testCustomerOwner(newCust)),
             rbac.getRoleId(testCustomerAdmin(newCust)),

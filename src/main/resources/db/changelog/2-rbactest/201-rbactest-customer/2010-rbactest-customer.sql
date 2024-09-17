@@ -4,7 +4,7 @@
 --changeset michael.hoennig:test-customer-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table if not exists test_customer
+create table if not exists rbactest.customer
 (
     uuid          uuid unique references rbac.object (uuid),
     version      int not null default 0,

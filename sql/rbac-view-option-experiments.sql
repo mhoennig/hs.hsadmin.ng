@@ -20,7 +20,7 @@ CREATE POLICY customer_policy ON customer
     TO restricted
     USING (
         -- id=1000
-        rbac.isPermissionGrantedToSubject(rbac.findEffectivePermissionId('test.customer', id, 'SELECT'), rbac.currentSubjectUuid())
+        rbac.isPermissionGrantedToSubject(rbac.findEffectivePermissionId('rbactest.customer', id, 'SELECT'), rbac.currentSubjectUuid())
     );
 
 SET SESSION AUTHORIZATION restricted;
@@ -31,28 +31,28 @@ SELECT * from customer;
 SET SESSION SESSION AUTHORIZATION DEFAULT;
 DROP VIEW cust_view;
 CREATE VIEW cust_view AS
-SELECT * FROM test.customer;
+SELECT * FROM rbactest.customer;
 CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
-    SELECT * FROM test.customer WHERE rbac.isPermissionGrantedToSubject(rbac.findEffectivePermissionId('test.customer', id, 'SELECT'), rbac.currentSubjectUuid());
+    SELECT * FROM rbactest.customer WHERE rbac.isPermissionGrantedToSubject(rbac.findEffectivePermissionId('rbactest.customer', id, 'SELECT'), rbac.currentSubjectUuid());
 SELECT * from cust_view LIMIT 10;
 
 select rbac.queryAllPermissionsOfSubjectId(findRbacSubject('superuser-alex@hostsharing.net'));
 
 -- access control via view-rule with join to recursive permissions - really fast (38ms for 1 million rows)
 SET SESSION SESSION AUTHORIZATION DEFAULT;
-ALTER TABLE test.customer ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rbactest.customer ENABLE ROW LEVEL SECURITY;
 DROP VIEW IF EXISTS cust_view;
 CREATE OR REPLACE VIEW cust_view AS
 SELECT *
-FROM test.customer;
+FROM rbactest.customer;
 CREATE OR REPLACE RULE "_RETURN" AS
     ON SELECT TO cust_view
     DO INSTEAD
-    SELECT c.uuid, c.reference, c.prefix FROM test.customer AS c
+    SELECT c.uuid, c.reference, c.prefix FROM rbactest.customer AS c
       JOIN rbac.queryAllPermissionsOfSubjectId(rbac.currentSubjectUuid()) AS p
-           ON p.objectTable='test.customer' AND p.objectUuid=c.uuid;
+           ON p.objectTable='rbactest.customer' AND p.objectUuid=c.uuid;
 GRANT ALL PRIVILEGES ON cust_view TO restricted;
 
 SET SESSION SESSION AUTHORIZATION restricted;
@@ -81,9 +81,9 @@ select rr.uuid, rr.type from rbac.RbacGrants g
     join rbac.RbacReference RR on g.ascendantUuid = RR.uuid
     where g.descendantUuid in (
         select uuid from rbac.queryAllPermissionsOfSubjectId(findRbacSubject('alex@example.com'))
-            where objectTable='test.customer');
+            where objectTable='rbactest.customer');
 
-call rbac.grantRoleToUser(rbac.findRoleId('test.customer#aaa:ADMIN'), rbac.findRbacSubject('aaaaouq@example.com'));
+call rbac.grantRoleToUser(rbac.findRoleId('rbactest.customer#aaa:ADMIN'), rbac.findRbacSubject('aaaaouq@example.com'));
 
 select rbac.queryAllPermissionsOfSubjectId(findRbacSubject('aaaaouq@example.com'));
 

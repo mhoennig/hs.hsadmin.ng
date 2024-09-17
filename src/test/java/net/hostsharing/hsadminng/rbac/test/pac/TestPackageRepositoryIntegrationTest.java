@@ -76,7 +76,7 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnPackages() {
-            context.define("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
+            context.define("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
 
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
@@ -90,17 +90,17 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void supportsOptimisticLocking() {
             // given
-            globalAdminWithAssumedRole("test_package#xxx00:ADMIN");
+            globalAdminWithAssumedRole("rbactest.package#xxx00:ADMIN");
             final var pac = testPackageRepository.findAllByOptionalNameLike("%").get(0);
 
             // when
             final var result1 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00:OWNER");
+                globalAdminWithAssumedRole("rbactest.package#xxx00:OWNER");
                 pac.setDescription("description set by thread 1");
                 testPackageRepository.save(pac);
             });
             final var result2 = jpaAttempt.transacted(() -> {
-                globalAdminWithAssumedRole("test_package#xxx00:OWNER");
+                globalAdminWithAssumedRole("rbactest.package#xxx00:OWNER");
                 pac.setDescription("description set by thread 2");
                 testPackageRepository.save(pac);
                 sleep(1500);

@@ -40,18 +40,18 @@ class RbacRoleRepositoryIntegrationTest {
         private static final String[] ALL_TEST_DATA_ROLES = Array.of(
             // @formatter:off
             "rbac.global#global:ADMIN",
-                "test_customer#xxx:ADMIN", "test_customer#xxx:OWNER", "test_customer#xxx:TENANT",
-                    "test_package#xxx00:ADMIN", "test_package#xxx00:OWNER", "test_package#xxx00:TENANT",
-                    "test_package#xxx01:ADMIN", "test_package#xxx01:OWNER", "test_package#xxx01:TENANT",
-                    "test_package#xxx02:ADMIN", "test_package#xxx02:OWNER", "test_package#xxx02:TENANT",
-                "test_customer#yyy:ADMIN", "test_customer#yyy:OWNER", "test_customer#yyy:TENANT",
-                    "test_package#yyy00:ADMIN", "test_package#yyy00:OWNER", "test_package#yyy00:TENANT",
-                    "test_package#yyy01:ADMIN", "test_package#yyy01:OWNER", "test_package#yyy01:TENANT",
-                    "test_package#yyy02:ADMIN", "test_package#yyy02:OWNER", "test_package#yyy02:TENANT",
-                "test_customer#zzz:ADMIN", "test_customer#zzz:OWNER", "test_customer#zzz:TENANT",
-                    "test_package#zzz00:ADMIN", "test_package#zzz00:OWNER", "test_package#zzz00:TENANT",
-                    "test_package#zzz01:ADMIN", "test_package#zzz01:OWNER", "test_package#zzz01:TENANT",
-                    "test_package#zzz02:ADMIN", "test_package#zzz02:OWNER", "test_package#zzz02:TENANT"
+                "rbactest.customer#xxx:ADMIN", "rbactest.customer#xxx:OWNER", "rbactest.customer#xxx:TENANT",
+                    "rbactest.package#xxx00:ADMIN", "rbactest.package#xxx00:OWNER", "rbactest.package#xxx00:TENANT",
+                    "rbactest.package#xxx01:ADMIN", "rbactest.package#xxx01:OWNER", "rbactest.package#xxx01:TENANT",
+                    "rbactest.package#xxx02:ADMIN", "rbactest.package#xxx02:OWNER", "rbactest.package#xxx02:TENANT",
+                "rbactest.customer#yyy:ADMIN", "rbactest.customer#yyy:OWNER", "rbactest.customer#yyy:TENANT",
+                    "rbactest.package#yyy00:ADMIN", "rbactest.package#yyy00:OWNER", "rbactest.package#yyy00:TENANT",
+                    "rbactest.package#yyy01:ADMIN", "rbactest.package#yyy01:OWNER", "rbactest.package#yyy01:TENANT",
+                    "rbactest.package#yyy02:ADMIN", "rbactest.package#yyy02:OWNER", "rbactest.package#yyy02:TENANT",
+                "rbactest.customer#zzz:ADMIN", "rbactest.customer#zzz:OWNER", "rbactest.customer#zzz:TENANT",
+                    "rbactest.package#zzz00:ADMIN", "rbactest.package#zzz00:OWNER", "rbactest.package#zzz00:TENANT",
+                    "rbactest.package#zzz01:ADMIN", "rbactest.package#zzz01:OWNER", "rbactest.package#zzz01:TENANT",
+                    "rbactest.package#zzz02:ADMIN", "rbactest.package#zzz02:OWNER", "rbactest.package#zzz02:TENANT"
             // @formatter:on
         );
 
@@ -91,49 +91,49 @@ class RbacRoleRepositoryIntegrationTest {
             allTheseRbacRolesAreReturned(
                     result,
                     // @formatter:off
-                "test_customer#xxx:ADMIN",
-                "test_customer#xxx:TENANT",
-                "test_package#xxx00:ADMIN",
-                "test_package#xxx00:OWNER",
-                "test_package#xxx00:TENANT",
-                "test_package#xxx01:ADMIN",
-                "test_package#xxx01:OWNER",
-                "test_package#xxx01:TENANT",
+                "rbactest.customer#xxx:ADMIN",
+                "rbactest.customer#xxx:TENANT",
+                "rbactest.package#xxx00:ADMIN",
+                "rbactest.package#xxx00:OWNER",
+                "rbactest.package#xxx00:TENANT",
+                "rbactest.package#xxx01:ADMIN",
+                "rbactest.package#xxx01:OWNER",
+                "rbactest.package#xxx01:TENANT",
                 // ...
-                "test_domain#xxx00-aaaa:ADMIN",
-                "test_domain#xxx00-aaaa:OWNER",
+                "rbactest.domain#xxx00-aaaa:ADMIN",
+                "rbactest.domain#xxx00-aaaa:OWNER",
                 // ..
-                "test_domain#xxx01-aaab:ADMIN",
-                "test_domain#xxx01-aaab:OWNER"
+                "rbactest.domain#xxx01-aaab:ADMIN",
+                "rbactest.domain#xxx01-aaab:OWNER"
                 // @formatter:on
             );
             noneOfTheseRbacRolesIsReturned(
                     result,
                     // @formatter:off
                 "rbac.global#global:ADMIN",
-                "test_customer#xxx:OWNER",
-                "test_package#yyy00:ADMIN",
-                "test_package#yyy00:OWNER",
-                "test_package#yyy00:TENANT"
+                "rbactest.customer#xxx:OWNER",
+                "rbactest.package#yyy00:ADMIN",
+                "rbactest.package#yyy00:OWNER",
+                "rbactest.package#yyy00:TENANT"
                 // @formatter:on
             );
         }
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyItsOwnRbacRole() {
-            context.define("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
+            context.define("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
 
             final var result = rbacRoleRepository.findAll();
 
             exactlyTheseRbacRolesAreReturned(
                     result,
-                    "test_customer#xxx:TENANT",
-                    "test_package#xxx00:ADMIN",
-                    "test_package#xxx00:TENANT",
-                    "test_domain#xxx00-aaaa:ADMIN",
-                    "test_domain#xxx00-aaaa:OWNER",
-                    "test_domain#xxx00-aaab:ADMIN",
-                    "test_domain#xxx00-aaab:OWNER");
+                    "rbactest.customer#xxx:TENANT",
+                    "rbactest.package#xxx00:ADMIN",
+                    "rbactest.package#xxx00:TENANT",
+                    "rbactest.domain#xxx00-aaaa:ADMIN",
+                    "rbactest.domain#xxx00-aaaa:OWNER",
+                    "rbactest.domain#xxx00-aaab:ADMIN",
+                    "rbactest.domain#xxx00-aaab:OWNER");
         }
 
         @Test
@@ -157,10 +157,10 @@ class RbacRoleRepositoryIntegrationTest {
         void customerAdmin_withoutAssumedRole_canFindItsOwnRolesByName() {
             context.define("customer-admin@xxx.example.com");
 
-            final var result = rbacRoleRepository.findByRoleName("test_customer#xxx:ADMIN");
+            final var result = rbacRoleRepository.findByRoleName("rbactest.customer#xxx:ADMIN");
 
             assertThat(result).isNotNull();
-            assertThat(result.getObjectTable()).isEqualTo("test_customer");
+            assertThat(result.getObjectTable()).isEqualTo("rbactest.customer");
             assertThat(result.getObjectIdName()).isEqualTo("xxx");
             assertThat(result.getRoleType()).isEqualTo(RbacRoleType.ADMIN);
         }
@@ -169,7 +169,7 @@ class RbacRoleRepositoryIntegrationTest {
         void customerAdmin_withoutAssumedRole_canNotFindAlienRolesByName() {
             context.define("customer-admin@xxx.example.com");
 
-            final var result = rbacRoleRepository.findByRoleName("test_customer#bbb:ADMIN");
+            final var result = rbacRoleRepository.findByRoleName("rbactest.customer#bbb:ADMIN");
 
             assertThat(result).isNull();
         }

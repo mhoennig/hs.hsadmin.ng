@@ -9,23 +9,23 @@
 create or replace procedure createPackageTestData(customerPrefix varchar, pacCount int)
     language plpgsql as $$
 declare
-    cust          test_customer;
+    cust          rbactest.customer;
     custAdminUser varchar;
     custAdminRole varchar;
     pacName       varchar;
-    pac           test_package;
+    pac           rbactest.package;
 begin
-    select * from test_customer where test_customer.prefix = customerPrefix into cust;
+    select * from rbactest.customer where rbactest.customer.prefix = customerPrefix into cust;
 
     for t in 0..(pacCount-1)
         loop
             pacName = cust.prefix || to_char(t, 'fm00');
             custAdminUser = 'customer-admin@' || cust.prefix || '.example.com';
-            custAdminRole = 'test_customer#' || cust.prefix || ':ADMIN';
+            custAdminRole = 'rbactest.customer#' || cust.prefix || ':ADMIN';
             call base.defineContext('creating RBAC test package', null, 'superuser-fran@hostsharing.net', custAdminRole);
 
             insert
-                into test_package (customerUuid, name, description)
+                into rbactest.package (customerUuid, name, description)
                 values (cust.uuid, pacName, 'Here you can add your own description of package ' || pacName || '.')
                 returning * into pac;
 
@@ -44,9 +44,9 @@ end; $$;
 create or replace procedure createPackageTestData()
     language plpgsql as $$
 declare
-    cust test_customer;
+    cust rbactest.customer;
 begin
-    for cust in (select * from test_customer)
+    for cust in (select * from rbactest.customer)
         loop
             continue when cust.reference >= 90000; -- reserved for functional testing
             call createPackageTestData(cust.prefix, 3);

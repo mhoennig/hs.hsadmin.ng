@@ -128,7 +128,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
         @Test
         public void globalAdmin_withAssumedCustomerAdminRole_canViewOnlyUsersHavingRolesInThatCustomersRealm() {
             given:
-            context("superuser-alex@hostsharing.net", "test_customer#xxx:ADMIN");
+            context("superuser-alex@hostsharing.net", "rbactest.customer#xxx:ADMIN");
 
             // when
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
@@ -159,7 +159,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
         @Test
         public void customerAdmin_withAssumedOwnedPackageAdminRole_canViewOnlyUsersHavingRolesInThatPackage() {
-            context("customer-admin@xxx.example.com", "test_package#xxx00:ADMIN");
+            context("customer-admin@xxx.example.com", "rbactest.package#xxx00:ADMIN");
 
             final var result = rbacSubjectRepository.findByOptionalNameLike(null);
 
@@ -182,47 +182,47 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
         private static final String[] ALL_USER_PERMISSIONS = Array.of(
                 // @formatter:off
-                "test_customer#xxx:ADMIN -> test_customer#xxx: SELECT",
-                "test_customer#xxx:OWNER -> test_customer#xxx: DELETE",
-                "test_customer#xxx:TENANT -> test_customer#xxx: SELECT",
-                "test_customer#xxx:ADMIN -> test_customer#xxx: INSERT:test_package",
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:TENANT -> test_package#xxx00: SELECT",
-                "test_package#xxx01:ADMIN -> test_package#xxx01: INSERT:test_domain",
-                "test_package#xxx01:ADMIN -> test_package#xxx01: INSERT:test_domain",
-                "test_package#xxx01:TENANT -> test_package#xxx01: SELECT",
-                "test_package#xxx02:ADMIN -> test_package#xxx02: INSERT:test_domain",
-                "test_package#xxx02:ADMIN -> test_package#xxx02: INSERT:test_domain",
-                "test_package#xxx02:TENANT -> test_package#xxx02: SELECT",
+                "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: SELECT",
+                "rbactest.customer#xxx:OWNER -> rbactest.customer#xxx: DELETE",
+                "rbactest.customer#xxx:TENANT -> rbactest.customer#xxx: SELECT",
+                "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: INSERT:rbactest.package",
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:TENANT -> rbactest.package#xxx00: SELECT",
+                "rbactest.package#xxx01:ADMIN -> rbactest.package#xxx01: INSERT:rbactest.domain",
+                "rbactest.package#xxx01:ADMIN -> rbactest.package#xxx01: INSERT:rbactest.domain",
+                "rbactest.package#xxx01:TENANT -> rbactest.package#xxx01: SELECT",
+                "rbactest.package#xxx02:ADMIN -> rbactest.package#xxx02: INSERT:rbactest.domain",
+                "rbactest.package#xxx02:ADMIN -> rbactest.package#xxx02: INSERT:rbactest.domain",
+                "rbactest.package#xxx02:TENANT -> rbactest.package#xxx02: SELECT",
 
-                "test_customer#yyy:ADMIN -> test_customer#yyy: SELECT",
-                "test_customer#yyy:OWNER -> test_customer#yyy: DELETE",
-                "test_customer#yyy:TENANT -> test_customer#yyy: SELECT",
-                "test_customer#yyy:ADMIN -> test_customer#yyy: INSERT:test_package",
-                "test_package#yyy00:ADMIN -> test_package#yyy00: INSERT:test_domain",
-                "test_package#yyy00:ADMIN -> test_package#yyy00: INSERT:test_domain",
-                "test_package#yyy00:TENANT -> test_package#yyy00: SELECT",
-                "test_package#yyy01:ADMIN -> test_package#yyy01: INSERT:test_domain",
-                "test_package#yyy01:ADMIN -> test_package#yyy01: INSERT:test_domain",
-                "test_package#yyy01:TENANT -> test_package#yyy01: SELECT",
-                "test_package#yyy02:ADMIN -> test_package#yyy02: INSERT:test_domain",
-                "test_package#yyy02:ADMIN -> test_package#yyy02: INSERT:test_domain",
-                "test_package#yyy02:TENANT -> test_package#yyy02: SELECT",
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: SELECT",
+                "rbactest.customer#yyy:OWNER -> rbactest.customer#yyy: DELETE",
+                "rbactest.customer#yyy:TENANT -> rbactest.customer#yyy: SELECT",
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: INSERT:rbactest.package",
+                "rbactest.package#yyy00:ADMIN -> rbactest.package#yyy00: INSERT:rbactest.domain",
+                "rbactest.package#yyy00:ADMIN -> rbactest.package#yyy00: INSERT:rbactest.domain",
+                "rbactest.package#yyy00:TENANT -> rbactest.package#yyy00: SELECT",
+                "rbactest.package#yyy01:ADMIN -> rbactest.package#yyy01: INSERT:rbactest.domain",
+                "rbactest.package#yyy01:ADMIN -> rbactest.package#yyy01: INSERT:rbactest.domain",
+                "rbactest.package#yyy01:TENANT -> rbactest.package#yyy01: SELECT",
+                "rbactest.package#yyy02:ADMIN -> rbactest.package#yyy02: INSERT:rbactest.domain",
+                "rbactest.package#yyy02:ADMIN -> rbactest.package#yyy02: INSERT:rbactest.domain",
+                "rbactest.package#yyy02:TENANT -> rbactest.package#yyy02: SELECT",
 
-                "test_customer#zzz:ADMIN -> test_customer#zzz: SELECT",
-                "test_customer#zzz:OWNER -> test_customer#zzz: DELETE",
-                "test_customer#zzz:TENANT -> test_customer#zzz: SELECT",
-                "test_customer#zzz:ADMIN -> test_customer#zzz: INSERT:test_package",
-                "test_package#zzz00:ADMIN -> test_package#zzz00: INSERT:test_domain",
-                "test_package#zzz00:ADMIN -> test_package#zzz00: INSERT:test_domain",
-                "test_package#zzz00:TENANT -> test_package#zzz00: SELECT",
-                "test_package#zzz01:ADMIN -> test_package#zzz01: INSERT:test_domain",
-                "test_package#zzz01:ADMIN -> test_package#zzz01: INSERT:test_domain",
-                "test_package#zzz01:TENANT -> test_package#zzz01: SELECT",
-                "test_package#zzz02:ADMIN -> test_package#zzz02: INSERT:test_domain",
-                "test_package#zzz02:ADMIN -> test_package#zzz02: INSERT:test_domain",
-                "test_package#zzz02:TENANT -> test_package#zzz02: SELECT"
+                "rbactest.customer#zzz:ADMIN -> rbactest.customer#zzz: SELECT",
+                "rbactest.customer#zzz:OWNER -> rbactest.customer#zzz: DELETE",
+                "rbactest.customer#zzz:TENANT -> rbactest.customer#zzz: SELECT",
+                "rbactest.customer#zzz:ADMIN -> rbactest.customer#zzz: INSERT:rbactest.package",
+                "rbactest.package#zzz00:ADMIN -> rbactest.package#zzz00: INSERT:rbactest.domain",
+                "rbactest.package#zzz00:ADMIN -> rbactest.package#zzz00: INSERT:rbactest.domain",
+                "rbactest.package#zzz00:TENANT -> rbactest.package#zzz00: SELECT",
+                "rbactest.package#zzz01:ADMIN -> rbactest.package#zzz01: INSERT:rbactest.domain",
+                "rbactest.package#zzz01:ADMIN -> rbactest.package#zzz01: INSERT:rbactest.domain",
+                "rbactest.package#zzz01:TENANT -> rbactest.package#zzz01: SELECT",
+                "rbactest.package#zzz02:ADMIN -> rbactest.package#zzz02: INSERT:rbactest.domain",
+                "rbactest.package#zzz02:ADMIN -> rbactest.package#zzz02: INSERT:rbactest.domain",
+                "rbactest.package#zzz02:TENANT -> rbactest.package#zzz02: SELECT"
                 // @formatter:on
         );
 
@@ -233,7 +233,7 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
 
             // when
             final var result = rbacSubjectRepository.findPermissionsOfUserByUuid(subjectUuid("superuser-fran@hostsharing.net"))
-                    .stream().filter(p -> p.getObjectTable().contains("test_"))
+                    .stream().filter(p -> p.getObjectTable().contains("rbactest."))
                     .sorted(comparing(RbacSubjectPermission::toString)).toList();
 
             // then
@@ -252,32 +252,32 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             allTheseRbacPermissionsAreReturned(
                     result,
                     // @formatter:off
-                "test_customer#xxx:ADMIN -> test_customer#xxx: INSERT:test_package",
-                "test_customer#xxx:ADMIN -> test_customer#xxx: SELECT",
-                "test_customer#xxx:TENANT -> test_customer#xxx: SELECT",
+                "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: INSERT:rbactest.package",
+                "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: SELECT",
+                "rbactest.customer#xxx:TENANT -> rbactest.customer#xxx: SELECT",
 
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:TENANT -> test_package#xxx00: SELECT",
-                "test_domain#xxx00-aaaa:OWNER -> test_domain#xxx00-aaaa: DELETE",
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:TENANT -> rbactest.package#xxx00: SELECT",
+                "rbactest.domain#xxx00-aaaa:OWNER -> rbactest.domain#xxx00-aaaa: DELETE",
 
-                "test_package#xxx01:ADMIN -> test_package#xxx01: INSERT:test_domain",
-                "test_package#xxx01:ADMIN -> test_package#xxx01: INSERT:test_domain",
-                "test_package#xxx01:TENANT -> test_package#xxx01: SELECT",
-                "test_domain#xxx01-aaaa:OWNER -> test_domain#xxx01-aaaa: DELETE",
+                "rbactest.package#xxx01:ADMIN -> rbactest.package#xxx01: INSERT:rbactest.domain",
+                "rbactest.package#xxx01:ADMIN -> rbactest.package#xxx01: INSERT:rbactest.domain",
+                "rbactest.package#xxx01:TENANT -> rbactest.package#xxx01: SELECT",
+                "rbactest.domain#xxx01-aaaa:OWNER -> rbactest.domain#xxx01-aaaa: DELETE",
 
-                "test_package#xxx02:ADMIN -> test_package#xxx02: INSERT:test_domain",
-                "test_package#xxx02:ADMIN -> test_package#xxx02: INSERT:test_domain",
-                "test_package#xxx02:TENANT -> test_package#xxx02: SELECT",
-                "test_domain#xxx02-aaaa:OWNER -> test_domain#xxx02-aaaa: DELETE"
+                "rbactest.package#xxx02:ADMIN -> rbactest.package#xxx02: INSERT:rbactest.domain",
+                "rbactest.package#xxx02:ADMIN -> rbactest.package#xxx02: INSERT:rbactest.domain",
+                "rbactest.package#xxx02:TENANT -> rbactest.package#xxx02: SELECT",
+                "rbactest.domain#xxx02-aaaa:OWNER -> rbactest.domain#xxx02-aaaa: DELETE"
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
                     result,
                     // @formatter:off
-                "test_customer#yyy:ADMIN -> test_customer#yyy: INSERT:test_package",
-                "test_customer#yyy:ADMIN -> test_customer#yyy: SELECT",
-                "test_customer#yyy:TENANT -> test_customer#yyy: SELECT"
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: INSERT:rbactest.package",
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: SELECT",
+                "rbactest.customer#yyy:TENANT -> rbactest.customer#yyy: SELECT"
                 // @formatter:on
             );
         }
@@ -312,26 +312,26 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             allTheseRbacPermissionsAreReturned(
                     result,
                     // @formatter:off
-                "test_customer#xxx:TENANT -> test_customer#xxx: SELECT",
-                // "test_customer#xxx:ADMIN -> test_customer#xxx: view" - Not permissions through the customer admin!
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:TENANT -> test_package#xxx00: SELECT",
-                "test_domain#xxx00-aaaa:OWNER -> test_domain#xxx00-aaaa: DELETE",
-                "test_domain#xxx00-aaab:OWNER -> test_domain#xxx00-aaab: DELETE"
+                "rbactest.customer#xxx:TENANT -> rbactest.customer#xxx: SELECT",
+                // "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: view" - Not permissions through the customer admin!
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:TENANT -> rbactest.package#xxx00: SELECT",
+                "rbactest.domain#xxx00-aaaa:OWNER -> rbactest.domain#xxx00-aaaa: DELETE",
+                "rbactest.domain#xxx00-aaab:OWNER -> rbactest.domain#xxx00-aaab: DELETE"
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
                     result,
                     // @formatter:off
-                "test_customer#yyy:ADMIN -> test_customer#yyy: INSERT:test_package",
-                "test_customer#yyy:ADMIN -> test_customer#yyy: SELECT",
-                "test_customer#yyy:TENANT -> test_customer#yyy: SELECT",
-                "test_package#yyy00:ADMIN -> test_package#yyy00: INSERT:test_domain",
-                "test_package#yyy00:ADMIN -> test_package#yyy00: INSERT:test_domain",
-                "test_package#yyy00:TENANT -> test_package#yyy00: SELECT",
-                "test_domain#yyy00-aaaa:OWNER -> test_domain#yyy00-aaaa: DELETE",
-                "test_domain#yyy00-aaab:OWNER -> test_domain#yyy00-aaab: DELETE"
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: INSERT:rbactest.package",
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: SELECT",
+                "rbactest.customer#yyy:TENANT -> rbactest.customer#yyy: SELECT",
+                "rbactest.package#yyy00:ADMIN -> rbactest.package#yyy00: INSERT:rbactest.domain",
+                "rbactest.package#yyy00:ADMIN -> rbactest.package#yyy00: INSERT:rbactest.domain",
+                "rbactest.package#yyy00:TENANT -> rbactest.package#yyy00: SELECT",
+                "rbactest.domain#yyy00-aaaa:OWNER -> rbactest.domain#yyy00-aaaa: DELETE",
+                "rbactest.domain#yyy00-aaab:OWNER -> rbactest.domain#yyy00-aaab: DELETE"
                 // @formatter:on
             );
         }
@@ -360,26 +360,26 @@ class RbacSubjectRepositoryIntegrationTest extends ContextBasedTest {
             allTheseRbacPermissionsAreReturned(
                     result,
                     // @formatter:off
-                "test_customer#xxx:TENANT -> test_customer#xxx: SELECT",
-                // "test_customer#xxx:ADMIN -> test_customer#xxx: view" - Not permissions through the customer admin!
-                "test_package#xxx00:ADMIN -> test_package#xxx00: INSERT:test_domain",
-                "test_package#xxx00:TENANT -> test_package#xxx00: SELECT"
+                "rbactest.customer#xxx:TENANT -> rbactest.customer#xxx: SELECT",
+                // "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: view" - Not permissions through the customer admin!
+                "rbactest.package#xxx00:ADMIN -> rbactest.package#xxx00: INSERT:rbactest.domain",
+                "rbactest.package#xxx00:TENANT -> rbactest.package#xxx00: SELECT"
                 // @formatter:on
             );
             noneOfTheseRbacPermissionsAreReturned(
                     result,
                     // @formatter:off
                 // no customer admin permissions
-                "test_customer#xxx:ADMIN -> test_customer#xxx: add-package",
+                "rbactest.customer#xxx:ADMIN -> rbactest.customer#xxx: add-package",
                 // no permissions on other customer's objects
-                "test_customer#yyy:ADMIN -> test_customer#yyy: add-package",
-                "test_customer#yyy:ADMIN -> test_customer#yyy: SELECT",
-                "test_customer#yyy:TENANT -> test_customer#yyy: SELECT",
-                "test_package#yyy00:ADMIN -> test_package#yyy00: INSERT:test_domain",
-                "test_package#yyy00:ADMIN -> test_package#yyy00: INSERT:test_domain",
-                "test_package#yyy00:TENANT -> test_package#yyy00: SELECT",
-                "test_domain#yyy00-aaaa:OWNER -> test_domain#yyy00-aaaa: DELETE",
-                "test_domain#yyy00-xxxb:OWNER -> test_domain#yyy00-xxxb: DELETE"
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: add-package",
+                "rbactest.customer#yyy:ADMIN -> rbactest.customer#yyy: SELECT",
+                "rbactest.customer#yyy:TENANT -> rbactest.customer#yyy: SELECT",
+                "rbactest.package#yyy00:ADMIN -> rbactest.package#yyy00: INSERT:rbactest.domain",
+                "rbactest.package#yyy00:ADMIN -> rbactest.package#yyy00: INSERT:rbactest.domain",
+                "rbactest.package#yyy00:TENANT -> rbactest.package#yyy00: SELECT",
+                "rbactest.domain#yyy00-aaaa:OWNER -> rbactest.domain#yyy00-aaaa: DELETE",
+                "rbactest.domain#yyy00-xxxb:OWNER -> rbactest.domain#yyy00-xxxb: DELETE"
                 // @formatter:on
             );
         }

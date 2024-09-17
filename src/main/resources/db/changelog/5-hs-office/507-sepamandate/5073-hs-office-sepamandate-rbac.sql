@@ -150,7 +150,7 @@ execute procedure new_hsof_sepamandate_grants_insert_to_hsof_relation_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs_office_sepamandate-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**

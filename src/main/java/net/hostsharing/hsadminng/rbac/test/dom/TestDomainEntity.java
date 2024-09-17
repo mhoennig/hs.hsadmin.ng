@@ -22,7 +22,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetc
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "test_domain_rv")
+@Table(schema = "rbactest", name = "domain_rv")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -68,6 +68,6 @@ public class TestDomainEntity implements BaseEntity<TestDomainEntity> {
     }
 
     public static void main(String[] args) throws IOException {
-        rbac().generateWithBaseFileName("2-test/203-test-domain/2033-test-domain-rbac");
+        rbac().generateWithBaseFileName("2-rbactest/203-rbactest-domain/2033-rbactest-domain-rbac");
     }
 }

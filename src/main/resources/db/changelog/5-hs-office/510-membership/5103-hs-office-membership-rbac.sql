@@ -116,7 +116,7 @@ $$;
 /**
     Grants hs_office_membership INSERT permission to specified role of new global rows.
 */
-create or replace function rbac.new_hsof_membership_grants_insert_to_global_tf()
+create or replace function new_hsof_membership_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -133,11 +133,11 @@ end; $$;
 create trigger z_new_hs_office_membership_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure rbac.new_hsof_membership_grants_insert_to_global_tf();
+execute procedure new_hsof_membership_grants_insert_to_global_tf();
 
 
 -- ============================================================================
---changeset InsertTriggerGenerator:hs_office_membership-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-membership-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**

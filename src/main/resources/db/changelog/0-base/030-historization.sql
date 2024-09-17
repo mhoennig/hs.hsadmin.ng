@@ -81,8 +81,8 @@ begin
         "alive" := false;
     end if;
 
-    sql := format('INSERT INTO %3$I_ex VALUES (DEFAULT, pg_current_xact_id(), %1$L, %2$L, $1.*)', TG_OP, alive, TG_TABLE_NAME);
-    raise notice 'sql: %', sql;
+    sql := format('INSERT INTO %3$I_ex VALUES (DEFAULT, pg_current_xact_id(), %1$L, %2$L, $1.*)',
+                  TG_OP, alive, base.combine_table_schema_and_name(tg_table_schema, tg_table_name)::name);
     execute sql using "row";
 
     return "row";

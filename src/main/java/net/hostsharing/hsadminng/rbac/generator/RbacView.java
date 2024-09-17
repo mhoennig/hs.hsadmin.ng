@@ -90,11 +90,11 @@ public class RbacView {
      * @param <E>
      *     a JPA entity class extending RbacObject
      */
-    public static <E extends BaseEntity> RbacView rbacViewFor(final String alias, final Class<E> entityClass) {
+    public static <E extends BaseEntity<?>> RbacView rbacViewFor(final String alias, final Class<E> entityClass) {
         return new RbacView(alias, entityClass);
     }
 
-    RbacView(final String alias, final Class<? extends BaseEntity> entityClass) {
+    RbacView(final String alias, final Class<? extends BaseEntity<?>> entityClass) {
         rootEntityAlias = new EntityAlias(alias, entityClass);
         entityAliases.put(alias, rootEntityAlias);
         new RbacSubjectReference(CREATOR);
@@ -121,7 +121,7 @@ public class RbacView {
      * <p>An identity view is a view which maps an objectUuid to an idName.
      * The idName should be a human-readable representation of the row, but as short as possible.
      * The idName must only consist of letters (A-Z, a-z), digits (0-9), dash (-), dot (.) and unserscore '_'.
-     * It's used to create the object-specific-role-names like test_customer#abc:ADMIN - here 'abc' is the idName.
+     * It's used to create the object-specific-role-names like rbactest.customer#abc:ADMIN - here 'abc' is the idName.
      * The idName not necessarily unique in a table, but it should be avoided.
      * </p>
      *
@@ -287,9 +287,9 @@ public class RbacView {
      * @param <EC>
      *     a JPA entity class extending RbacObject
      */
-    public <EC extends BaseEntity> RbacView importRootEntityAliasProxy(
+    public <EC extends BaseEntity<?>> RbacView importRootEntityAliasProxy(
             final String aliasName,
-            final Class<? extends BaseEntity> entityClass,
+            final Class<? extends BaseEntity<?>> entityClass,
             final ColumnValue forCase,
             final SQL fetchSql,
             final Column dependsOnColum) {
@@ -313,7 +313,7 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importSubEntityAlias(
-            final String aliasName, final Class<? extends BaseEntity> entityClass,
+            final String aliasName, final Class<? extends BaseEntity<?>> entityClass,
             final SQL fetchSql, final Column dependsOnColum) {
         importEntityAliasImpl(aliasName, entityClass, usingDefaultCase(), fetchSql, dependsOnColum, true, NOT_NULL);
         return this;
@@ -350,14 +350,14 @@ public class RbacView {
      *     a JPA entity class extending RbacObject
      */
     public RbacView importEntityAlias(
-            final String aliasName, final Class<? extends BaseEntity> entityClass, final ColumnValue usingCase,
+            final String aliasName, final Class<? extends BaseEntity<?>> entityClass, final ColumnValue usingCase,
             final Column dependsOnColum, final SQL fetchSql, final Nullable nullable) {
         importEntityAliasImpl(aliasName, entityClass, usingCase, fetchSql, dependsOnColum, false, nullable);
         return this;
     }
 
     private EntityAlias importEntityAliasImpl(
-            final String aliasName, final Class<? extends BaseEntity> entityClass, final ColumnValue usingCase,
+            final String aliasName, final Class<? extends BaseEntity<?>> entityClass, final ColumnValue usingCase,
             final SQL fetchSql, final Column dependsOnColum, boolean asSubEntity, final Nullable nullable) {
 
         final var entityAlias = ofNullable(entityAliases.get(aliasName))
@@ -911,13 +911,13 @@ public class RbacView {
         return distinctGrantDef;
     }
 
-    record EntityAlias(String aliasName, Class<? extends BaseEntity> entityClass, ColumnValue usingCase, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
+    record EntityAlias(String aliasName, Class<? extends BaseEntity<?>> entityClass, ColumnValue usingCase, SQL fetchSql, Column dependsOnColum, boolean isSubEntity, Nullable nullable) {
 
         public EntityAlias(final String aliasName) {
             this(aliasName, null, null, null, null, false, null);
         }
 
-        public EntityAlias(final String aliasName, final Class<? extends BaseEntity> entityClass) {
+        public EntityAlias(final String aliasName, final Class<? extends BaseEntity<?>> entityClass) {
             this(aliasName, entityClass, null, null, null, false, null);
         }
 
@@ -964,7 +964,7 @@ public class RbacView {
             if ( aliasName.equals("rbac.global")) {
                 return "rbac.global"; // TODO: maybe we should introduce a GlobalEntity class?
             }
-            return withoutRvSuffix(entityClass.getAnnotation(Table.class).name());
+            return qualifiedRealTableName(entityClass);
         }
 
         String getRawTableSchemaPrefix() {
@@ -1010,8 +1010,12 @@ public class RbacView {
         }
     }
 
-    public static String withoutRvSuffix(final String tableName) {
-        return tableName.substring(0, tableName.length() - "_rv".length());
+    public static String qualifiedRealTableName(final Class<? extends BaseEntity<?>> entityClass) {
+        final var tableAnnotation = entityClass.getAnnotation(Table.class);
+        final var schema = tableAnnotation.schema();
+        final var tableName = tableAnnotation.name();
+        final var realTableName = tableName.substring(0, tableName.length() - "_rv".length());
+        return (schema.isEmpty() ? "" : (schema + ".")) + realTableName;
     }
 
     public enum Role {
