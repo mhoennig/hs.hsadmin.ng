@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-contact-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table if not exists hs_office_contact
+create table if not exists hs_office.contact
 (
     uuid           uuid unique references rbac.object (uuid) initially deferred,
     version        int not null default 0,
@@ -20,5 +20,5 @@ create table if not exists hs_office_contact
 --changeset michael.hoennig:hs-office-contact-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call base.create_journal('hs_office_contact');
+call base.create_journal('hs_office.contact');
 --//

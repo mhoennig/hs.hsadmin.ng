@@ -88,7 +88,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -108,7 +108,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             "{ grant perm:coopsharestransaction#temprefB:SELECT to role:membership#M-1000101:AGENT by system and assume }",
@@ -197,7 +197,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void normalUser_canViewOnlyRelatedCoopSharesTransactions() {
             // given:
-            context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000101:ADMIN");
+            context("superuser-alex@hostsharing.net", "hs_office.membership#M-1000101:ADMIN");
 
             // when:
             final var result = coopSharesTransactionRepo.findCoopSharesTransactionByOptionalMembershipUuidAndDateRange(
@@ -221,7 +221,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'reference'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_coopsharestransaction';
+                    where targettable = 'hs_office.coopsharestransaction';
                     """);
 
         // when
@@ -229,18 +229,18 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000101-1]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000101-2]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000101-3]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000101-4]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000202-1]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000202-2]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000202-3]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000202-4]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000303-1]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000303-2]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000303-3]",
-                "[creating coopSharesTransaction test-data, hs_office_coopsharestransaction, INSERT, ref 1000303-4]");
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-1]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-2]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-3]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-4]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-1]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-2]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-3]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-4]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-1]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-2]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-3]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-4]");
     }
 
     @BeforeEach

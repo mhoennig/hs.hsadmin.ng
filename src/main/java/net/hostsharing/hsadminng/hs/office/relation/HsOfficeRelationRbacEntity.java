@@ -34,7 +34,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetc
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "hs_office_relation_rv")
+@Table(schema = "hs_office", name = "relation_rv")
 @NoArgsConstructor
 @Getter
 @Setter
@@ -45,12 +45,12 @@ public class HsOfficeRelationRbacEntity extends HsOfficeRelation {
     public static RbacView rbac() {
         return rbacViewFor("relation", HsOfficeRelationRbacEntity.class)
                 .withIdentityView(SQL.projection("""
-                             (select idName from hs_office_person_iv p where p.uuid = anchorUuid)
+                             (select idName from hs_office.person_iv p where p.uuid = anchorUuid)
                              || '-with-' || target.type || '-'
-                             || (select idName from hs_office_person_iv p where p.uuid = holderUuid)
+                             || (select idName from hs_office.person_iv p where p.uuid = holderUuid)
                         """))
                 .withRestrictedViewOrderBy(SQL.expression(
-                        "(select idName from hs_office_person_iv p where p.uuid = target.holderUuid)"))
+                        "(select idName from hs_office.person_iv p where p.uuid = target.holderUuid)"))
                 .withUpdatableColumns("contactUuid")
                 .importEntityAlias("anchorPerson", HsOfficePersonEntity.class, usingDefaultCase(),
                         dependsOnColumn("anchorUuid"),

@@ -14,14 +14,14 @@ create or replace procedure createHsBookingProjectTransactionTestData(
     )
     language plpgsql as $$
 declare
-    relatedDebitor      hs_office_debitor;
+    relatedDebitor      hs_office.debitor;
 begin
 
     select debitor.* into relatedDebitor
-                     from hs_office_debitor debitor
-                              join hs_office_relation debitorRel on debitorRel.uuid = debitor.debitorRelUuid
-                              join hs_office_relation partnerRel on partnerRel.holderUuid = debitorRel.anchorUuid
-                              join hs_office_partner partner on partner.partnerRelUuid = partnerRel.uuid
+                     from hs_office.debitor debitor
+                              join hs_office.relation debitorRel on debitorRel.uuid = debitor.debitorRelUuid
+                              join hs_office.relation partnerRel on partnerRel.holderUuid = debitorRel.anchorUuid
+                              join hs_office.partner partner on partner.partnerRelUuid = partnerRel.uuid
                      where partner.partnerNumber = givenPartnerNumber and debitor.debitorNumberSuffix = givenDebitorSuffix;
 
     raise notice 'creating test booking-project: %', givenDebitorSuffix::text;

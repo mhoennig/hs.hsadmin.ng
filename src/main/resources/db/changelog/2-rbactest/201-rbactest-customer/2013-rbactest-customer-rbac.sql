@@ -24,7 +24,7 @@ call rbac.generateRbacRoleDescriptors('testCustomer', 'rbactest.customer');
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForTestCustomer(
+create or replace procedure rbactest.customer_build_rbac_system(
     NEW rbactest.customer
 )
     language plpgsql as $$
@@ -60,19 +60,19 @@ end; $$;
     AFTER INSERT TRIGGER to create the role+grant structure for a new rbactest.customer row.
  */
 
-create or replace function insertTriggerForTestCustomer_tf()
+create or replace function rbactest.customer_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForTestCustomer(NEW);
+    call rbactest.customer_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForTestCustomer_tg
+create trigger build_rbac_system_after_insert_tg
     after insert on rbactest.customer
     for each row
-execute procedure insertTriggerForTestCustomer_tf();
+execute procedure rbactest.customer_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -137,7 +137,7 @@ create or replace function rbactest.customer_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if rbac.global ADMIN
+    -- check INSERT permission if rbac.global ADMIN
     if rbac.isGlobalAdmin() then
         return NEW;
     end if;

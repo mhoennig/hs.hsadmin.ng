@@ -33,7 +33,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_sepamandate_rv")
+@Table(schema = "hs_office", name = "sepamandate_rv")
 @Getter
 @Setter
 @Builder
@@ -104,8 +104,8 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, BaseEntity<HsOf
         return rbacViewFor("sepaMandate", HsOfficeSepaMandateEntity.class)
                 .withIdentityView(query("""
                         select sm.uuid as uuid, ba.iban || '-' || sm.validity as idName
-                            from hs_office_sepamandate sm
-                            join hs_office_bankaccount ba on ba.uuid = sm.bankAccountUuid
+                            from hs_office.sepamandate sm
+                            join hs_office.bankaccount ba on ba.uuid = sm.bankAccountUuid
                         """))
                 .withRestrictedViewOrderBy(expression("validity"))
                 .withUpdatableColumns("reference", "agreement", "validity")
@@ -114,8 +114,8 @@ public class HsOfficeSepaMandateEntity implements Stringifyable, BaseEntity<HsOf
                         dependsOnColumn("debitorUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}
-                                    FROM hs_office_relation debitorRel
-                                    JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+                                    FROM hs_office.relation debitorRel
+                                    JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
                                     WHERE debitor.uuid = ${REF}.debitorUuid
                                 """),
                         NOT_NULL)

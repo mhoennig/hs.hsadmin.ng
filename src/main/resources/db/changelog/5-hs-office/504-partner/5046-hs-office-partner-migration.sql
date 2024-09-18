@@ -7,9 +7,9 @@
 --changeset michael.hoennig:hs-office-partner-MIGRATION-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE hs_office_partner_legacy_id
+CREATE TABLE hs_office.partner_legacy_id
 (
-    uuid        uuid NOT NULL REFERENCES hs_office_partner(uuid),
+    uuid        uuid NOT NULL REFERENCES hs_office.partner(uuid),
     bp_id       integer NOT NULL
 );
 --//
@@ -19,10 +19,10 @@ CREATE TABLE hs_office_partner_legacy_id
 --changeset michael.hoennig:hs-office-partner-MIGRATION-sequence endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE SEQUENCE IF NOT EXISTS hs_office_partner_legacy_id_seq
+CREATE SEQUENCE IF NOT EXISTS hs_office.partner_legacy_id_seq
     AS integer
     START 1000000000
-    OWNED BY hs_office_partner_legacy_id.bp_id;
+    OWNED BY hs_office.partner_legacy_id.bp_id;
 --//
 
 
@@ -30,9 +30,9 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_partner_legacy_id_seq
 --changeset michael.hoennig:hs-office-partner-MIGRATION-default endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-ALTER TABLE hs_office_partner_legacy_id
+ALTER TABLE hs_office.partner_legacy_id
     ALTER COLUMN bp_id
-        SET DEFAULT nextVal('hs_office_partner_legacy_id_seq');
+        SET DEFAULT nextVal('hs_office.partner_legacy_id_seq');
 --/
 
 -- ============================================================================
@@ -40,8 +40,8 @@ ALTER TABLE hs_office_partner_legacy_id
 -- ----------------------------------------------------------------------------
 
 CALL base.defineContext('schema-migration');
-INSERT INTO hs_office_partner_legacy_id(uuid, bp_id)
-    SELECT uuid, nextVal('hs_office_partner_legacy_id_seq') FROM hs_office_partner;
+INSERT INTO hs_office.partner_legacy_id(uuid, bp_id)
+    SELECT uuid, nextVal('hs_office.partner_legacy_id_seq') FROM hs_office.partner;
 --/
 
 
@@ -57,14 +57,14 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    INSERT INTO hs_office_partner_legacy_id VALUES
-        (NEW.uuid, nextVal('hs_office_partner_legacy_id_seq'));
+    INSERT INTO hs_office.partner_legacy_id VALUES
+        (NEW.uuid, nextVal('hs_office.partner_legacy_id_seq'));
 
     return NEW;
 end; $$;
 
 create trigger createPartnerLegacyIdMapping
-    after insert on hs_office_partner
+    after insert on hs_office.partner
         for each row
             execute procedure insertPartnerLegacyIdMapping();
 --/
@@ -82,14 +82,14 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    DELETE FROM hs_office_partner_legacy_id
+    DELETE FROM hs_office.partner_legacy_id
         WHERE uuid = OLD.uuid;
 
     return OLD;
 end; $$;
 
 create trigger removePartnerLegacyIdMapping
-    before delete on hs_office_partner
+    before delete on hs_office.partner
     for each row
         execute procedure deletePartnerLegacyIdMapping();
 --/

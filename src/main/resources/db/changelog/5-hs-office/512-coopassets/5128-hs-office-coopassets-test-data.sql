@@ -14,12 +14,12 @@ create or replace procedure createHsOfficeCoopAssetsTransactionTestData(
     )
     language plpgsql as $$
 declare
-    membership              hs_office_membership;
+    membership              hs_office.membership;
     lossEntryUuid           uuid;
 begin
     select m.uuid
-        from hs_office_membership m
-                 join hs_office_partner p on p.uuid = m.partneruuid
+        from hs_office.membership m
+                 join hs_office.partner p on p.uuid = m.partneruuid
         where p.partnerNumber = givenPartnerNumber
           and m.memberNumberSuffix = givenMemberNumberSuffix
         into membership;
@@ -27,7 +27,7 @@ begin
     raise notice 'creating test coopAssetsTransaction: %', givenPartnerNumber || givenMemberNumberSuffix;
     lossEntryUuid := uuid_generate_v4();
     insert
-        into hs_office_coopassetstransaction(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, adjustedAssetTxUuid)
+        into hs_office.coopassetstransaction(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, adjustedAssetTxUuid)
         values
             (uuid_generate_v4(),  membership.uuid, 'DEPOSIT',    '2010-03-15',  320.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-1', 'initial deposit', null),
             (uuid_generate_v4(),  membership.uuid, 'DISBURSAL',  '2021-09-01', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-2', 'partial disbursal', null),

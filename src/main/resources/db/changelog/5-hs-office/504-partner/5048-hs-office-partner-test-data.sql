@@ -16,25 +16,25 @@ create or replace procedure createHsOfficePartnerTestData(
     language plpgsql as $$
 declare
     idName              varchar;
-    mandantPerson       hs_office_person;
-    partnerRel         hs_office_relation;
-    relatedPerson       hs_office_person;
+    mandantPerson       hs_office.person;
+    partnerRel         hs_office.relation;
+    relatedPerson       hs_office.person;
     relatedDetailsUuid  uuid;
 begin
     idName := base.cleanIdentifier( partnerPersonName|| '-' || contactCaption);
 
-    select p.* from hs_office_person p
+    select p.* from hs_office.person p
                where p.tradeName = mandantTradeName
                into mandantPerson;
     if mandantPerson is null then
         raise exception 'mandant "%" not found', mandantTradeName;
     end if;
 
-    select p.* from hs_office_person p
+    select p.* from hs_office.person p
                where p.tradeName = partnerPersonName or p.familyName = partnerPersonName
                into relatedPerson;
 
-    select r.* from hs_office_relation r
+    select r.* from hs_office.relation r
             where r.type = 'PARTNER'
                 and r.anchoruuid = mandantPerson.uuid and r.holderuuid = relatedPerson.uuid
             into partnerRel;
@@ -48,18 +48,18 @@ begin
 
     if relatedPerson.persontype = 'NP' then
         insert
-            into hs_office_partner_details (uuid, birthName, birthday, birthPlace)
+            into hs_office.partner_details (uuid, birthName, birthday, birthPlace)
             values (uuid_generate_v4(), 'Meyer', '1987-10-31', 'Hamburg')
             returning uuid into relatedDetailsUuid;
     else
         insert
-            into hs_office_partner_details (uuid, registrationOffice, registrationNumber)
+            into hs_office.partner_details (uuid, registrationOffice, registrationNumber)
             values (uuid_generate_v4(), 'Hamburg', 'RegNo123456789')
             returning uuid into relatedDetailsUuid;
     end if;
 
     insert
-        into hs_office_partner (uuid, partnerNumber, partnerRelUuid, detailsUuid)
+        into hs_office.partner (uuid, partnerNumber, partnerRelUuid, detailsUuid)
         values (uuid_generate_v4(), newPartnerNumber, partnerRel.uuid, relatedDetailsUuid);
 end; $$;
 --//

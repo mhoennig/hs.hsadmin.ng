@@ -5,14 +5,14 @@
 -- ============================================================================
 --changeset RbacObjectGenerator:hs-office-bankaccount-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('hs_office_bankaccount');
+call rbac.generateRelatedRbacObject('hs_office.bankaccount');
 --//
 
 
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-bankaccount-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office_bankaccount');
+call rbac.generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office.bankaccount');
 --//
 
 
@@ -24,8 +24,8 @@ call rbac.generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office_bankacco
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsOfficeBankAccount(
-    NEW hs_office_bankaccount
+create or replace procedure hs_office.bankaccount_build_rbac_system(
+    NEW hs_office.bankaccount
 )
     language plpgsql as $$
 
@@ -57,22 +57,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_bankaccount row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office.bankaccount row.
  */
 
-create or replace function insertTriggerForHsOfficeBankAccount_tf()
+create or replace function hs_office.bankaccount_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsOfficeBankAccount(NEW);
+    call hs_office.bankaccount_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsOfficeBankAccount_tg
-    after insert on hs_office_bankaccount
+create trigger build_rbac_system_after_insert_tg
+    after insert on hs_office.bankaccount
     for each row
-execute procedure insertTriggerForHsOfficeBankAccount_tf();
+execute procedure hs_office.bankaccount_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -80,7 +80,7 @@ execute procedure insertTriggerForHsOfficeBankAccount_tf();
 --changeset RbacIdentityViewGenerator:hs-office-bankaccount-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromProjection('hs_office_bankaccount',
+call rbac.generateRbacIdentityViewFromProjection('hs_office.bankaccount',
     $idName$
         iban
     $idName$);
@@ -90,7 +90,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office_bankaccount',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-bankaccount-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('hs_office_bankaccount',
+call rbac.generateRbacRestrictedView('hs_office.bankaccount',
     $orderBy$
         iban
     $orderBy$,

@@ -5,14 +5,14 @@
 -- ============================================================================
 --changeset RbacObjectGenerator:hs-office-partner-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('hs_office_partner');
+call rbac.generateRelatedRbacObject('hs_office.partner');
 --//
 
 
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-partner-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficePartner', 'hs_office_partner');
+call rbac.generateRbacRoleDescriptors('hsOfficePartner', 'hs_office.partner');
 --//
 
 
@@ -24,22 +24,22 @@ call rbac.generateRbacRoleDescriptors('hsOfficePartner', 'hs_office_partner');
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsOfficePartner(
-    NEW hs_office_partner
+create or replace procedure hs_office.partner_build_rbac_system(
+    NEW hs_office.partner
 )
     language plpgsql as $$
 
 declare
-    newPartnerRel hs_office_relation;
-    newPartnerDetails hs_office_partner_details;
+    newPartnerRel hs_office.relation;
+    newPartnerDetails hs_office.partner_details;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_office_relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
+    SELECT * FROM hs_office.relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
     assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s', NEW.partnerRelUuid);
 
-    SELECT * FROM hs_office_partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
+    SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
     assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
 
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newPartnerRel));
@@ -53,22 +53,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_partner row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office.partner row.
  */
 
-create or replace function insertTriggerForHsOfficePartner_tf()
+create or replace function hs_office.partner_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsOfficePartner(NEW);
+    call hs_office.partner_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsOfficePartner_tg
-    after insert on hs_office_partner
+create trigger build_rbac_system_after_insert_tg
+    after insert on hs_office.partner
     for each row
-execute procedure insertTriggerForHsOfficePartner_tf();
+execute procedure hs_office.partner_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -80,31 +80,31 @@ execute procedure insertTriggerForHsOfficePartner_tf();
     Called from the AFTER UPDATE TRIGGER to re-wire the grants.
  */
 
-create or replace procedure updateRbacRulesForHsOfficePartner(
-    OLD hs_office_partner,
-    NEW hs_office_partner
+create or replace procedure hs_office.partner_update_rbac_system(
+    OLD hs_office.partner,
+    NEW hs_office.partner
 )
     language plpgsql as $$
 
 declare
-    oldPartnerRel hs_office_relation;
-    newPartnerRel hs_office_relation;
-    oldPartnerDetails hs_office_partner_details;
-    newPartnerDetails hs_office_partner_details;
+    oldPartnerRel hs_office.relation;
+    newPartnerRel hs_office.relation;
+    oldPartnerDetails hs_office.partner_details;
+    newPartnerDetails hs_office.partner_details;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_office_relation WHERE uuid = OLD.partnerRelUuid    INTO oldPartnerRel;
+    SELECT * FROM hs_office.relation WHERE uuid = OLD.partnerRelUuid    INTO oldPartnerRel;
     assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.partnerRelUuid = %s', OLD.partnerRelUuid);
 
-    SELECT * FROM hs_office_relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
+    SELECT * FROM hs_office.relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
     assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s', NEW.partnerRelUuid);
 
-    SELECT * FROM hs_office_partner_details WHERE uuid = OLD.detailsUuid    INTO oldPartnerDetails;
+    SELECT * FROM hs_office.partner_details WHERE uuid = OLD.detailsUuid    INTO oldPartnerDetails;
     assert oldPartnerDetails.uuid is not null, format('oldPartnerDetails must not be null for OLD.detailsUuid = %s', OLD.detailsUuid);
 
-    SELECT * FROM hs_office_partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
+    SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
     assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
 
 
@@ -134,22 +134,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to re-wire the grant structure for a new hs_office_partner row.
+    AFTER UPDATE TRIGGER to re-wire the grant structure for a new hs_office.partner row.
  */
 
-create or replace function updateTriggerForHsOfficePartner_tf()
+create or replace function hs_office.partner_update_rbac_system_after_update_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call updateRbacRulesForHsOfficePartner(OLD, NEW);
+    call hs_office.partner_update_rbac_system(OLD, NEW);
     return NEW;
 end; $$;
 
-create trigger updateTriggerForHsOfficePartner_tg
-    after update on hs_office_partner
+create trigger update_rbac_system_after_update_tg
+    after update on hs_office.partner
     for each row
-execute procedure updateTriggerForHsOfficePartner_tf();
+execute procedure hs_office.partner_update_rbac_system_after_update_tf();
 --//
 
 
@@ -160,45 +160,45 @@ execute procedure updateTriggerForHsOfficePartner_tf();
 -- granting INSERT permission to rbac.global ----------------------------
 
 /*
-    Grants INSERT INTO hs_office_partner permissions to specified role of pre-existing rbac.global rows.
+    Grants INSERT INTO hs_office.partner permissions to specified role of pre-existing rbac.global rows.
  */
 do language plpgsql $$
     declare
         row rbac.global;
     begin
-        call base.defineContext('create INSERT INTO hs_office_partner permissions for pre-exising rbac.global rows');
+        call base.defineContext('create INSERT INTO hs_office.partner permissions for pre-exising rbac.global rows');
 
         FOR row IN SELECT * FROM rbac.global
             -- unconditional for all rows in that table
             LOOP
                 call rbac.grantPermissionToRole(
-                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_partner'),
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office.partner'),
                         rbac.globalADMIN());
             END LOOP;
     end;
 $$;
 
 /**
-    Grants hs_office_partner INSERT permission to specified role of new global rows.
+    Grants hs_office.partner INSERT permission to specified role of new global rows.
 */
-create or replace function new_hsof_partner_grants_insert_to_global_tf()
+create or replace function hs_office.new_partner_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
-            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_partner'),
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.partner'),
             rbac.globalADMIN());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_partner_grants_after_insert_tg
+create trigger z_new_partner_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure new_hsof_partner_grants_insert_to_global_tf();
+execute procedure hs_office.new_partner_grants_insert_to_global_tf();
 
 
 -- ============================================================================
@@ -206,27 +206,27 @@ execute procedure new_hsof_partner_grants_insert_to_global_tf();
 -- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office_partner.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office.partner.
 */
-create or replace function hs_office_partner_insert_permission_check_tf()
+create or replace function hs_office.partner_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if rbac.global ADMIN
+    -- check INSERT permission if rbac.global ADMIN
     if rbac.isGlobalAdmin() then
         return NEW;
     end if;
 
-    raise exception '[403] insert into hs_office_partner values(%) not allowed for current subjects % (%)',
+    raise exception '[403] insert into hs_office.partner values(%) not allowed for current subjects % (%)',
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger hs_office_partner_insert_permission_check_tg
-    before insert on hs_office_partner
+create trigger partner_insert_permission_check_tg
+    before insert on hs_office.partner
     for each row
-        execute procedure hs_office_partner_insert_permission_check_tf();
+        execute procedure hs_office.partner_insert_permission_check_tf();
 --//
 
 
@@ -234,7 +234,7 @@ create trigger hs_office_partner_insert_permission_check_tg
 --changeset RbacIdentityViewGenerator:hs-office-partner-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromProjection('hs_office_partner',
+call rbac.generateRbacIdentityViewFromProjection('hs_office.partner',
     $idName$
         'P-' || partnerNumber
     $idName$);
@@ -244,7 +244,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office_partner',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-partner-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('hs_office_partner',
+call rbac.generateRbacRestrictedView('hs_office.partner',
     $orderBy$
         'P-' || partnerNumber
     $orderBy$,

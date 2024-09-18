@@ -102,23 +102,23 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(
                     Array.from(
                             initialRoleNames,
-                            "hs_office_person#anothernewperson:OWNER",
-                            "hs_office_person#anothernewperson:ADMIN",
-                            "hs_office_person#anothernewperson:REFERRER"
+                            "hs_office.person#anothernewperson:OWNER",
+                            "hs_office.person#anothernewperson:ADMIN",
+                            "hs_office.person#anothernewperson:REFERRER"
                     ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(
                     Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm:hs_office_person#anothernewperson:INSERT>hs_office_relation to role:hs_office_person#anothernewperson:ADMIN by system and assume }",
+                            "{ grant perm:hs_office.person#anothernewperson:INSERT>hs_office.relation to role:hs_office.person#anothernewperson:ADMIN by system and assume }",
 
-                            "{ grant role:hs_office_person#anothernewperson:OWNER       to user:selfregistered-user-drew@hostsharing.org by hs_office_person#anothernewperson:OWNER and assume }",
-                            "{ grant role:hs_office_person#anothernewperson:OWNER       to role:rbac.global#global:ADMIN by system and assume }",
-                            "{ grant perm:hs_office_person#anothernewperson:UPDATE      to role:hs_office_person#anothernewperson:ADMIN by system and assume }",
-                            "{ grant perm:hs_office_person#anothernewperson:DELETE      to role:hs_office_person#anothernewperson:OWNER by system and assume }",
-                            "{ grant role:hs_office_person#anothernewperson:ADMIN       to role:hs_office_person#anothernewperson:OWNER by system and assume }",
+                            "{ grant role:hs_office.person#anothernewperson:OWNER       to user:selfregistered-user-drew@hostsharing.org by hs_office.person#anothernewperson:OWNER and assume }",
+                            "{ grant role:hs_office.person#anothernewperson:OWNER       to role:rbac.global#global:ADMIN by system and assume }",
+                            "{ grant perm:hs_office.person#anothernewperson:UPDATE      to role:hs_office.person#anothernewperson:ADMIN by system and assume }",
+                            "{ grant perm:hs_office.person#anothernewperson:DELETE      to role:hs_office.person#anothernewperson:OWNER by system and assume }",
+                            "{ grant role:hs_office.person#anothernewperson:ADMIN       to role:hs_office.person#anothernewperson:OWNER by system and assume }",
 
-                            "{ grant perm:hs_office_person#anothernewperson:SELECT      to role:hs_office_person#anothernewperson:REFERRER by system and assume }",
-                            "{ grant role:hs_office_person#anothernewperson:REFERRER    to role:hs_office_person#anothernewperson:ADMIN by system and assume }"
+                            "{ grant perm:hs_office.person#anothernewperson:SELECT      to role:hs_office.person#anothernewperson:REFERRER by system and assume }",
+                            "{ grant role:hs_office.person#anothernewperson:REFERRER    to role:hs_office.person#anothernewperson:ADMIN by system and assume }"
                     ));
         }
 
@@ -262,7 +262,7 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'tradename', targetdelta->>'lastname'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_person';
+                    where targettable = 'hs_office.person';
                     """);
 
         // when
@@ -270,10 +270,10 @@ class HsOfficePersonRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating person test-data, hs_office_person, INSERT, Hostsharing eG, null]",
-                "[creating person test-data, hs_office_person, INSERT, First GmbH, null]",
-                "[creating person test-data, hs_office_person, INSERT, Second e.K., null]",
-                "[creating person test-data, hs_office_person, INSERT, Third OHG, null]");
+                "[creating person test-data, hs_office.person, INSERT, Hostsharing eG, null]",
+                "[creating person test-data, hs_office.person, INSERT, First GmbH, null]",
+                "[creating person test-data, hs_office.person, INSERT, Second e.K., null]",
+                "[creating person test-data, hs_office.person, INSERT, Third OHG, null]");
     }
 
     private HsOfficePersonEntity givenSomeTemporaryPerson(

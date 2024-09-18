@@ -10,7 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "hs_office_contact")
+@Table(schema = "hs_office", name = "contact")
 @Getter
 @Setter
 @NoArgsConstructor

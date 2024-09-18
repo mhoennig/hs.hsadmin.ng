@@ -5,14 +5,14 @@
 -- ============================================================================
 --changeset RbacObjectGenerator:hs-office-person-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('hs_office_person');
+call rbac.generateRelatedRbacObject('hs_office.person');
 --//
 
 
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-person-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficePerson', 'hs_office_person');
+call rbac.generateRbacRoleDescriptors('hsOfficePerson', 'hs_office.person');
 --//
 
 
@@ -24,8 +24,8 @@ call rbac.generateRbacRoleDescriptors('hsOfficePerson', 'hs_office_person');
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsOfficePerson(
-    NEW hs_office_person
+create or replace procedure hs_office.person_build_rbac_system(
+    NEW hs_office.person
 )
     language plpgsql as $$
 
@@ -57,22 +57,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_person row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office.person row.
  */
 
-create or replace function insertTriggerForHsOfficePerson_tf()
+create or replace function hs_office.person_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsOfficePerson(NEW);
+    call hs_office.person_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsOfficePerson_tg
-    after insert on hs_office_person
+create trigger build_rbac_system_after_insert_tg
+    after insert on hs_office.person
     for each row
-execute procedure insertTriggerForHsOfficePerson_tf();
+execute procedure hs_office.person_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -80,7 +80,7 @@ execute procedure insertTriggerForHsOfficePerson_tf();
 --changeset RbacIdentityViewGenerator:hs-office-person-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromProjection('hs_office_person',
+call rbac.generateRbacIdentityViewFromProjection('hs_office.person',
     $idName$
         concat(tradeName, familyName, givenName)
     $idName$);
@@ -90,7 +90,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_office_person',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-person-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('hs_office_person',
+call rbac.generateRbacRestrictedView('hs_office.person',
     $orderBy$
         concat(tradeName, familyName, givenName)
     $orderBy$,

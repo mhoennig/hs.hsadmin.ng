@@ -13,15 +13,15 @@ create or replace procedure createHsOfficeMembershipTestData(
         newMemberNumberSuffix char(2) )
     language plpgsql as $$
 declare
-    relatedPartner          hs_office_partner;
+    relatedPartner          hs_office.partner;
 begin
-    select partner.* from hs_office_partner partner
+    select partner.* from hs_office.partner partner
                      where partner.partnerNumber = forPartnerNumber into relatedPartner;
 
     raise notice 'creating test Membership: M-% %', forPartnerNumber, newMemberNumberSuffix;
     raise notice '- using partner (%): %', relatedPartner.uuid, relatedPartner;
     insert
-        into hs_office_membership (uuid, partneruuid, memberNumberSuffix, validity, status)
+        into hs_office.membership (uuid, partneruuid, memberNumberSuffix, validity, status)
         values (uuid_generate_v4(), relatedPartner.uuid, newMemberNumberSuffix, daterange('20221001' , null, '[]'), 'ACTIVE');
 end; $$;
 --//

@@ -7,9 +7,9 @@
 --changeset michael.hoennig:hs-office-contact-MIGRATION-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE hs_office_contact_legacy_id
+CREATE TABLE hs_office.contact_legacy_id
 (
-    uuid        uuid NOT NULL REFERENCES hs_office_contact(uuid),
+    uuid        uuid NOT NULL REFERENCES hs_office.contact(uuid),
     contact_id  integer NOT NULL
 );
 --//
@@ -19,10 +19,10 @@ CREATE TABLE hs_office_contact_legacy_id
 --changeset michael.hoennig:hs-office-contact-MIGRATION-sequence endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE SEQUENCE IF NOT EXISTS hs_office_contact_legacy_id_seq
+CREATE SEQUENCE IF NOT EXISTS hs_office.contact_legacy_id_seq
     AS integer
     START 1000000000
-    OWNED BY hs_office_contact_legacy_id.contact_id;
+    OWNED BY hs_office.contact_legacy_id.contact_id;
 --//
 
 
@@ -30,9 +30,9 @@ CREATE SEQUENCE IF NOT EXISTS hs_office_contact_legacy_id_seq
 --changeset michael.hoennig:hs-office-contact-MIGRATION-default endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-ALTER TABLE hs_office_contact_legacy_id
+ALTER TABLE hs_office.contact_legacy_id
     ALTER COLUMN contact_id
-        SET DEFAULT nextVal('hs_office_contact_legacy_id_seq');
+        SET DEFAULT nextVal('hs_office.contact_legacy_id_seq');
 
 --/
 
@@ -41,8 +41,8 @@ ALTER TABLE hs_office_contact_legacy_id
 -- ----------------------------------------------------------------------------
 
 CALL base.defineContext('schema-migration');
-INSERT INTO hs_office_contact_legacy_id(uuid, contact_id)
-    SELECT uuid, nextVal('hs_office_contact_legacy_id_seq') FROM hs_office_contact;
+INSERT INTO hs_office.contact_legacy_id(uuid, contact_id)
+    SELECT uuid, nextVal('hs_office.contact_legacy_id_seq') FROM hs_office.contact;
 --/
 
 
@@ -58,14 +58,14 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    INSERT INTO hs_office_contact_legacy_id VALUES
-        (NEW.uuid, nextVal('hs_office_contact_legacy_id_seq'));
+    INSERT INTO hs_office.contact_legacy_id VALUES
+        (NEW.uuid, nextVal('hs_office.contact_legacy_id_seq'));
 
     return NEW;
 end; $$;
 
 create trigger createContactLegacyIdMapping
-    after insert on hs_office_contact
+    after insert on hs_office.contact
         for each row
             execute procedure insertContactLegacyIdMapping();
 --/
@@ -83,14 +83,14 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    DELETE FROM hs_office_contact_legacy_id
+    DELETE FROM hs_office.contact_legacy_id
            WHERE uuid = OLD.uuid;
 
     return OLD;
 end; $$;
 
 create trigger removeContactLegacyIdMapping
-    before delete on hs_office_contact
+    before delete on hs_office.contact
         for each row
             execute procedure deleteContactLegacyIdMapping();
 --/

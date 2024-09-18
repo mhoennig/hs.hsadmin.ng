@@ -89,7 +89,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -109,7 +109,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(initialRoleNames)); // no new roles created
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             "{ grant perm:coopassetstransaction#temprefB:SELECT to role:membership#M-1000101:AGENT by system and assume }",
@@ -198,7 +198,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
         @Test
         public void partnerPersonAdmin_canViewRelatedCoopAssetsTransactions() {
             // given:
-            context("superuser-alex@hostsharing.net", "hs_office_person#FirstGmbH:ADMIN");
+            context("superuser-alex@hostsharing.net", "hs_office.person#FirstGmbH:ADMIN");
 
             // when:
             final var result = coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(
@@ -222,7 +222,7 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'reference'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_coopassetstransaction';
+                    where targettable = 'hs_office.coopassetstransaction';
                     """);
 
         // when
@@ -230,18 +230,18 @@ class HsOfficeCoopAssetsTransactionRepositoryIntegrationTest extends ContextBase
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-1]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-2]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-3]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000101-3]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-1]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-2]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-3]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000202-3]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-1]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-2]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-3]",
-                "[creating coopAssetsTransaction test-data, hs_office_coopassetstransaction, INSERT, ref 1000303-3]");
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000101-1]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000101-2]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000101-3]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000101-3]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000202-1]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000202-2]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000202-3]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000202-3]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000303-1]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000303-2]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000303-3]",
+                "[creating coopAssetsTransaction test-data, hs_office.coopassetstransaction, INSERT, ref 1000303-3]");
     }
 
     @BeforeEach

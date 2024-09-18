@@ -102,21 +102,21 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_bankaccount#DE25500105176934832579:OWNER",
-                    "hs_office_bankaccount#DE25500105176934832579:ADMIN",
-                    "hs_office_bankaccount#DE25500105176934832579:REFERRER"
+                    "hs_office.bankaccount#DE25500105176934832579:OWNER",
+                    "hs_office.bankaccount#DE25500105176934832579:ADMIN",
+                    "hs_office.bankaccount#DE25500105176934832579:REFERRER"
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:DELETE   to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
-                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to role:rbac.global#global:ADMIN                                    by system and assume }",
-                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:OWNER    to user:selfregistered-user-drew@hostsharing.org               by hs_office_bankaccount#DE25500105176934832579:OWNER and assume }",
+                    "{ grant perm:hs_office.bankaccount#DE25500105176934832579:DELETE   to role:hs_office.bankaccount#DE25500105176934832579:OWNER     by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to role:rbac.global#global:ADMIN                                    by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:OWNER    to user:selfregistered-user-drew@hostsharing.org               by hs_office.bankaccount#DE25500105176934832579:OWNER and assume }",
 
-                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:ADMIN    to role:hs_office_bankaccount#DE25500105176934832579:OWNER     by system and assume }",
-                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:UPDATE   to role:hs_office_bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:ADMIN    to role:hs_office.bankaccount#DE25500105176934832579:OWNER     by system and assume }",
+                    "{ grant perm:hs_office.bankaccount#DE25500105176934832579:UPDATE   to role:hs_office.bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
 
-                    "{ grant perm:hs_office_bankaccount#DE25500105176934832579:SELECT   to role:hs_office_bankaccount#DE25500105176934832579:REFERRER  by system and assume }",
-                    "{ grant role:hs_office_bankaccount#DE25500105176934832579:REFERRER to role:hs_office_bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
+                    "{ grant perm:hs_office.bankaccount#DE25500105176934832579:SELECT   to role:hs_office.bankaccount#DE25500105176934832579:REFERRER  by system and assume }",
+                    "{ grant role:hs_office.bankaccount#DE25500105176934832579:REFERRER to role:hs_office.bankaccount#DE25500105176934832579:ADMIN     by system and assume }",
                     null
             ));
         }
@@ -273,7 +273,7 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'iban'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_bankaccount';
+                    where targettable = 'hs_office.bankaccount';
                     """);
 
         // when
@@ -281,9 +281,9 @@ class HsOfficeBankAccountRepositoryIntegrationTest extends ContextBasedTestWithC
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating bankaccount test-data, hs_office_bankaccount, INSERT, DE02120300000000202051]",
-                "[creating bankaccount test-data, hs_office_bankaccount, INSERT, DE02500105170137075030]",
-                "[creating bankaccount test-data, hs_office_bankaccount, INSERT, DE02100500000054540402]");
+                "[creating bankaccount test-data, hs_office.bankaccount, INSERT, DE02120300000000202051]",
+                "[creating bankaccount test-data, hs_office.bankaccount, INSERT, DE02500105170137075030]",
+                "[creating bankaccount test-data, hs_office.bankaccount, INSERT, DE02100500000054540402]");
     }
 
     private HsOfficeBankAccountEntity givenSomeTemporaryBankAccount(final String createdByUser) {

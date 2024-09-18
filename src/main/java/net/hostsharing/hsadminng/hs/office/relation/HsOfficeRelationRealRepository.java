@@ -17,13 +17,13 @@ public interface HsOfficeRelationRealRepository extends Repository<HsOfficeRelat
     }
 
     @Query(value = """
-            SELECT p.* FROM hs_office_relation AS p
+            SELECT p.* FROM hs_office.relation AS p
                 WHERE p.anchorUuid = :personUuid OR p.holderUuid = :personUuid
                """, nativeQuery = true)
     List<HsOfficeRelationRealEntity> findRelationRelatedToPersonUuid(@NotNull UUID personUuid);
 
     @Query(value = """
-            SELECT p.* FROM hs_office_relation AS p
+            SELECT p.* FROM hs_office.relation AS p
                 WHERE (:relationType IS NULL OR p.type = cast(:relationType AS HsOfficeRelationType))
                     AND ( p.anchorUuid = :personUuid OR p.holderUuid = :personUuid)
                """, nativeQuery = true)

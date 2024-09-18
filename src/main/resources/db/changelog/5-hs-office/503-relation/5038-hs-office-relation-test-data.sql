@@ -17,16 +17,16 @@ create or replace procedure createHsOfficeRelationTestData(
     language plpgsql as $$
 declare
     idName          varchar;
-    anchorPerson    hs_office_person;
-    holderPerson    hs_office_person;
-    contact         hs_office_contact;
+    anchorPerson    hs_office.person;
+    holderPerson    hs_office.person;
+    contact         hs_office.contact;
 
 begin
     idName := base.cleanIdentifier( anchorPersonName || '-' || holderPersonName);
 
     select p.*
             into anchorPerson
-            from hs_office_person p
+            from hs_office.person p
             where p.tradeName = anchorPersonName or p.familyName = anchorPersonName;
     if anchorPerson is null then
         raise exception 'anchorPerson "%" not found', anchorPersonName;
@@ -34,13 +34,13 @@ begin
 
     select p.*
             into holderPerson
-            from hs_office_person p
+            from hs_office.person p
             where p.tradeName = holderPersonName or p.familyName = holderPersonName;
     if holderPerson is null then
         raise exception 'holderPerson "%" not found', holderPersonName;
     end if;
 
-    select c.* into contact from hs_office_contact c where c.caption = contactCaption;
+    select c.* into contact from hs_office.contact c where c.caption = contactCaption;
     if contact is null then
         raise exception 'contact "%" not found', contactCaption;
     end if;
@@ -50,7 +50,7 @@ begin
     raise notice '- using holder person (%): %', holderPerson.uuid, holderPerson;
     raise notice '- using contact (%): %', contact.uuid, contact;
     insert
-        into hs_office_relation (uuid, anchoruuid, holderuuid, type, mark, contactUuid)
+        into hs_office.relation (uuid, anchoruuid, holderuuid, type, mark, contactUuid)
         values (uuid_generate_v4(), anchorPerson.uuid, holderPerson.uuid, relationType, mark, contact.uuid);
 end; $$;
 --//
@@ -64,13 +64,13 @@ create or replace procedure createHsOfficeRelationTestData(
 )
     language plpgsql as $$
 declare
-    person hs_office_person;
-    contact hs_office_contact;
+    person hs_office.person;
+    contact hs_office.contact;
 begin
     for t in startCount..endCount
         loop
-            select p.* from hs_office_person p where tradeName = base.intToVarChar(t, 4) into person;
-            select c.* from hs_office_contact c where c.caption = base.intToVarChar(t, 4) || '#' || t into contact;
+            select p.* from hs_office.person p where tradeName = base.intToVarChar(t, 4) into person;
+            select c.* from hs_office.contact c where c.caption = base.intToVarChar(t, 4) || '#' || t into contact;
 
             call createHsOfficeRelationTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
             commit;

@@ -14,12 +14,12 @@ create or replace procedure createHsOfficeCoopSharesTransactionTestData(
 )
     language plpgsql as $$
 declare
-    membership              hs_office_membership;
+    membership              hs_office.membership;
     subscriptionEntryUuid   uuid;
 begin
     select m.uuid
-        from hs_office_membership m
-        join hs_office_partner p on p.uuid = m.partneruuid
+        from hs_office.membership m
+        join hs_office.partner p on p.uuid = m.partneruuid
         where p.partnerNumber = givenPartnerNumber
             and m.memberNumberSuffix = givenMemberNumberSuffix
         into membership;
@@ -27,7 +27,7 @@ begin
     raise notice 'creating test coopSharesTransaction: %', givenPartnerNumber::text || givenMemberNumberSuffix;
     subscriptionEntryUuid := uuid_generate_v4();
     insert
-        into hs_office_coopsharestransaction(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment, adjustedShareTxUuid)
+        into hs_office.coopsharestransaction(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment, adjustedShareTxUuid)
         values
             (uuid_generate_v4(), membership.uuid, 'SUBSCRIPTION', '2010-03-15', 4, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-1', 'initial subscription', null),
             (uuid_generate_v4(), membership.uuid, 'CANCELLATION', '2021-09-01', -2, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-2', 'cancelling some', null),

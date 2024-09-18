@@ -3,28 +3,28 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-hosting-asset-rbac-OBJECT endDelimiter:--//
+--changeset RbacObjectGenerator:hs-hosting-asset-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRelatedRbacObject('hs_hosting_asset');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-hosting-asset-rbac-ROLE-DESCRIPTORS endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-hosting-asset-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRoleDescriptors('hsHostingAsset', 'hs_hosting_asset');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-hosting-asset-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsHostingAsset(
+create or replace procedure hs_hosting_asset_build_rbac_system(
     NEW hs_hosting_asset
 )
     language plpgsql as $$
@@ -32,7 +32,7 @@ create or replace procedure buildRbacSystemForHsHostingAsset(
 declare
     newBookingItem hs_booking_item;
     newAssignedToAsset hs_hosting_asset;
-    newAlarmContact hs_office_contact;
+    newAlarmContact hs_office.contact;
     newParentAsset hs_hosting_asset;
 
 begin
@@ -42,7 +42,7 @@ begin
 
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.assignedToAssetUuid    INTO newAssignedToAsset;
 
-    SELECT * FROM hs_office_contact WHERE uuid = NEW.alarmContactUuid    INTO newAlarmContact;
+    SELECT * FROM hs_office.contact WHERE uuid = NEW.alarmContactUuid    INTO newAlarmContact;
 
     SELECT * FROM hs_hosting_asset WHERE uuid = NEW.parentAssetUuid    INTO newParentAsset;
 
@@ -50,9 +50,9 @@ begin
         hsHostingAssetOWNER(NEW),
             permissions => array['DELETE'],
             incomingSuperRoles => array[
-            	rbac.globalADMIN(rbac.unassumed()),
             	hsBookingItemADMIN(newBookingItem),
-            	hsHostingAssetADMIN(newParentAsset)],
+            	hsHostingAssetADMIN(newParentAsset),
+            	rbac.globalADMIN(rbac.unassumed())],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
@@ -96,31 +96,31 @@ end; $$;
     AFTER INSERT TRIGGER to create the role+grant structure for a new hs_hosting_asset row.
  */
 
-create or replace function insertTriggerForHsHostingAsset_tf()
+create or replace function hs_hosting_asset_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsHostingAsset(NEW);
+    call hs_hosting_asset_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsHostingAsset_tg
+create trigger build_rbac_system_after_insert_tg
     after insert on hs_hosting_asset
     for each row
-execute procedure insertTriggerForHsHostingAsset_tf();
+execute procedure hs_hosting_asset_build_rbac_system_after_insert_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-hosting-asset-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-hosting-asset-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Called from the AFTER UPDATE TRIGGER to re-wire the grants.
  */
 
-create or replace procedure updateRbacRulesForHsHostingAsset(
+create or replace procedure hs_hosting_asset_update_rbac_system(
     OLD hs_hosting_asset,
     NEW hs_hosting_asset
 )
@@ -130,32 +130,32 @@ begin
     if NEW.assignedToAssetUuid is distinct from OLD.assignedToAssetUuid
     or NEW.alarmContactUuid is distinct from OLD.alarmContactUuid then
         delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
-        call buildRbacSystemForHsHostingAsset(NEW);
+        call hs_hosting_asset_build_rbac_system(NEW);
     end if;
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to re-wire the grant structure for a new hs_hosting_asset row.
+    AFTER UPDATE TRIGGER to re-wire the grant structure for a new hs_hosting_asset row.
  */
 
-create or replace function updateTriggerForHsHostingAsset_tf()
+create or replace function hs_hosting_asset_update_rbac_system_after_update_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call updateRbacRulesForHsHostingAsset(OLD, NEW);
+    call hs_hosting_asset_update_rbac_system(OLD, NEW);
     return NEW;
 end; $$;
 
-create trigger updateTriggerForHsHostingAsset_tg
+create trigger update_rbac_system_after_update_tg
     after update on hs_hosting_asset
     for each row
-execute procedure updateTriggerForHsHostingAsset_tf();
+execute procedure hs_hosting_asset_update_rbac_system_after_update_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-hosting-asset-rbac-IDENTITY-VIEW endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-hosting-asset-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 call rbac.generateRbacIdentityViewFromProjection('hs_hosting_asset',
@@ -166,7 +166,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_hosting_asset',
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-hosting-asset-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-hosting-asset-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_hosting_asset',
     $orderBy$

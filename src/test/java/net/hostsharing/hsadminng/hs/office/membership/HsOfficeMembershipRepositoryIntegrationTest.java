@@ -91,7 +91,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -110,11 +110,11 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_membership#M-1000117:OWNER",
-                    "hs_office_membership#M-1000117:ADMIN",
-                    "hs_office_membership#M-1000117:AGENT"));
+                    "hs_office.membership#M-1000117:OWNER",
+                    "hs_office.membership#M-1000117:ADMIN",
+                    "hs_office.membership#M-1000117:AGENT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             // insert
@@ -230,13 +230,13 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             assertThatMembershipExistsAndIsAccessibleToCurrentContext(givenMembership);
             assertThatMembershipIsVisibleForRole(
                     givenMembership,
-                    "hs_office_membership#M-1000113:AGENT");
+                    "hs_office.membership#M-1000113:AGENT");
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 // TODO: we should test with debitor- and partner-admin as well
-                context("superuser-alex@hostsharing.net", "hs_office_membership#M-1000113:AGENT");
+                context("superuser-alex@hostsharing.net", "hs_office.membership#M-1000113:AGENT");
                 givenMembership.setValidity(
                         Range.closedOpen(givenMembership.getValidity().lower(), newValidityEnd));
                 return membershipRepo.save(givenMembership);
@@ -244,7 +244,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update hs_office_membership uuid");
+                    "[403] Subject ", " is not allowed to update hs_office.membership uuid");
         }
 
         private void assertThatMembershipExistsAndIsAccessibleToCurrentContext(final HsOfficeMembershipEntity saved) {
@@ -294,7 +294,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
+                context("superuser-alex@hostsharing.net", "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT");
                 assertThat(membershipRepo.findByUuid(givenMembership.getUuid())).isPresent();
 
                 membershipRepo.deleteByUuid(givenMembership.getUuid());
@@ -303,7 +303,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " not allowed to delete hs_office_membership");
+                    "[403] Subject ", " not allowed to delete hs_office.membership");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return membershipRepo.findByUuid(givenMembership.getUuid());
@@ -338,7 +338,7 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'membernumbersuffix'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_membership';
+                    where targettable = 'hs_office.membership';
                     """);
 
         // when
@@ -346,9 +346,9 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating Membership test-data, hs_office_membership, INSERT, 01]",
-                "[creating Membership test-data, hs_office_membership, INSERT, 02]",
-                "[creating Membership test-data, hs_office_membership, INSERT, 03]");
+                "[creating Membership test-data, hs_office.membership, INSERT, 01]",
+                "[creating Membership test-data, hs_office.membership, INSERT, 02]",
+                "[creating Membership test-data, hs_office.membership, INSERT, 03]");
     }
 
     private HsOfficeMembershipEntity givenSomeTemporaryMembership(final String partnerTradeName, final String memberNumberSuffix) {

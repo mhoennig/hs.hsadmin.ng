@@ -125,33 +125,33 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER",
-                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN",
-                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT",
-                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT"));
+                    "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER",
+                    "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN",
+                    "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT",
+                    "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
 
-                    "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:DELETE to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to role:rbac.global#global:ADMIN by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to user:superuser-alex@hostsharing.net by hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER and assume }",
+                    "{ grant perm:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:DELETE to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to role:rbac.global#global:ADMIN by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to user:superuser-alex@hostsharing.net by hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER and assume }",
 
-                    "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:UPDATE to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to role:hs_office_person#BesslerBert:ADMIN by system and assume }",
-                    "{ grant role:hs_office_person#ErbenBesslerMelBessler:OWNER to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
+                    "{ grant perm:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:UPDATE to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:OWNER to role:hs_office.person#BesslerBert:ADMIN by system and assume }",
+                    "{ grant role:hs_office.person#ErbenBesslerMelBessler:OWNER to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
 
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office_person#ErbenBesslerMelBessler:ADMIN by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office.person#ErbenBesslerMelBessler:ADMIN by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:ADMIN by system and assume }",
 
-                    "{ grant perm:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:SELECT to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT by system and assume }",
-                    "{ grant role:hs_office_person#BesslerBert:REFERRER to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
-                    "{ grant role:hs_office_person#ErbenBesslerMelBessler:REFERRER to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
-                    "{ grant role:hs_office_contact#fourthcontact:REFERRER to role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
+                    "{ grant perm:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:SELECT to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:AGENT by system and assume }",
+                    "{ grant role:hs_office.person#BesslerBert:REFERRER to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
+                    "{ grant role:hs_office.person#ErbenBesslerMelBessler:REFERRER to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
+                    "{ grant role:hs_office.contact#fourthcontact:REFERRER to role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT by system and assume }",
 
                     // REPRESENTATIVE holder person -> (represented) anchor person
-                    "{ grant role:hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office_contact#fourthcontact:ADMIN by system and assume }",
+                    "{ grant role:hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerBert:TENANT to role:hs_office.contact#fourthcontact:ADMIN by system and assume }",
                     null)
             );
         }
@@ -217,7 +217,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             assertThatRelationActuallyInDatabase(givenRelation);
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
-                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
+                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
             context("superuser-alex@hostsharing.net");
             final var givenContact = contactrealRepo.findContactByOptionalCaptionLike("sixth contact").stream().findFirst().orElseThrow();
 
@@ -236,11 +236,11 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "rbac.global#global:ADMIN");
             assertThatRelationIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_contact#sixthcontact:ADMIN");
+                    "hs_office.contact#sixthcontact:ADMIN");
 
             assertThatRelationIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_contact#fifthcontact:ADMIN");
+                    "hs_office.contact#fifthcontact:ADMIN");
 
             relationRbacRepo.deleteByUuid(givenRelation.getUuid());
         }
@@ -253,19 +253,19 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "Anita", "eighth");
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
-                    "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
+                    "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
             assertThatRelationActuallyInDatabase(givenRelation);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
+                context("superuser-alex@hostsharing.net", "hs_office.relation#ErbenBesslerMelBessler-with-REPRESENTATIVE-BesslerAnita:AGENT");
                 givenRelation.setContact(null);
                 return relationRbacRepo.save(givenRelation);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update hs_office_relation uuid");
+                    "[403] Subject ", " is not allowed to update hs_office.relation uuid");
         }
 
         @Test
@@ -276,19 +276,19 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "Anita", "ninth");
             assertThatRelationIsVisibleForUserWithRole(
                     givenRelation,
-                    "hs_office_contact#ninthcontact:ADMIN");
+                    "hs_office.contact#ninthcontact:ADMIN");
             assertThatRelationActuallyInDatabase(givenRelation);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact:ADMIN");
+                context("superuser-alex@hostsharing.net", "hs_office.contact#ninthcontact:ADMIN");
                 givenRelation.setContact(null); // TODO
                 return relationRbacRepo.save(givenRelation);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update hs_office_relation uuid");
+                    "[403] Subject ", " is not allowed to update hs_office.relation uuid");
         }
 
         private void assertThatRelationActuallyInDatabase(final HsOfficeRelation saved) {
@@ -360,7 +360,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " not allowed to delete hs_office_relation");
+                    "[403] Subject ", " not allowed to delete hs_office.relation");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return relationRbacRepo.findByUuid(givenRelation.getUuid());
@@ -396,7 +396,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'mark'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_relation';
+                    where targettable = 'hs_office.relation';
                     """);
 
         // when
@@ -404,7 +404,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating relation test-data, hs_office_relation, INSERT, members-announce]");
+                "[creating relation test-data, hs_office.relation, INSERT, members-announce]");
     }
 
     private HsOfficeRelationRbacEntity givenSomeTemporaryRelationBessler(final String holderPerson, final String contact) {

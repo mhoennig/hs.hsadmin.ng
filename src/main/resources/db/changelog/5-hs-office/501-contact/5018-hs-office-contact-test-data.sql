@@ -23,7 +23,7 @@ begin
 
     raise notice 'creating test contact: %', contCaption;
     insert
-        into hs_office_contact (caption, postaladdress, emailaddresses, phonenumbers)
+        into hs_office.contact (caption, postaladdress, emailaddresses, phonenumbers)
         values (
             contCaption,
             postalAddr,

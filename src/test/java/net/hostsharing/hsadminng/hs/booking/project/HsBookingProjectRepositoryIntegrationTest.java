@@ -135,7 +135,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -157,7 +157,7 @@ class HsBookingProjectRepositoryIntegrationTest extends ContextBasedTestWithClea
                     "hs_booking_project#D-1000111-somenewbookingproject:OWNER",
                     "hs_booking_project#D-1000111-somenewbookingproject:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 

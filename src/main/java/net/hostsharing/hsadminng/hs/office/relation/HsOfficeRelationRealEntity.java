@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 
 @Entity
-@Table(name = "hs_office_relation")
+@Table(schema = "hs_office", name = "relation")
 @NoArgsConstructor
 @Getter
 @Setter

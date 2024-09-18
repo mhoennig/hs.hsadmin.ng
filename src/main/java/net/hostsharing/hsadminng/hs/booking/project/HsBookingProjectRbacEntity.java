@@ -44,7 +44,7 @@ public class HsBookingProjectRbacEntity extends HsBookingProject {
                 .withIdentityView(SQL.query("""
                         SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || base.cleanIdentifier(bookingProject.caption) as idName
                             FROM hs_booking_project bookingProject
-                            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
+                            JOIN hs_office.debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.expression("caption"))
                 .withUpdatableColumns("version", "caption")
@@ -58,8 +58,8 @@ public class HsBookingProjectRbacEntity extends HsBookingProject {
                         dependsOnColumn("debitorUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}
-                                    FROM hs_office_relation debitorRel
-                                    JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+                                    FROM hs_office.relation debitorRel
+                                    JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
                                     WHERE debitor.uuid = ${REF}.debitorUuid
                                 """),
                         NOT_NULL)

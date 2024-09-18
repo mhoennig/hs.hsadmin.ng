@@ -90,12 +90,12 @@ class RbacGrantsDiagramServiceIntegrationTest extends ContextBasedTestWithCleanu
     @Test
     @Disabled // enable to generate from a real database
     void print() throws IOException {
-        //context("superuser-alex@hostsharing.net", "hs_office_person#FirbySusan:ADMIN");
+        //context("superuser-alex@hostsharing.net", "hs_office.person#FirbySusan:ADMIN");
         context("superuser-alex@hostsharing.net");
 
         //final var graph = grantsMermaidService.allGrantsTocurrentSubject(EnumSet.of(Include.NON_TEST_ENTITIES, Include.PERMISSIONS));
 
-        final var targetObject = (UUID) em.createNativeQuery("SELECT uuid FROM hs_office_coopassetstransaction WHERE reference='ref 1000101-1'").getSingleResult();
+        final var targetObject = (UUID) em.createNativeQuery("SELECT uuid FROM hs_office.coopassetstransaction WHERE reference='ref 1000101-1'").getSingleResult();
         final var graph = grantsMermaidService.allGrantsFrom(targetObject, "view", EnumSet.of(Include.USERS));
 
         RbacGrantsDiagramService.writeToFile(join(";", context.fetchAssumedRoles()), graph, "doc/all-grants.md");

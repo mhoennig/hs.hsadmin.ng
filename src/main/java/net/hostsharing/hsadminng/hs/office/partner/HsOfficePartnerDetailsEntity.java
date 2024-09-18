@@ -20,7 +20,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_partner_details_rv")
+@Table(schema = "hs_office", name = "partner_details_rv")
 @Getter
 @Setter
 @Builder
@@ -71,9 +71,9 @@ public class HsOfficePartnerDetailsEntity implements BaseEntity<HsOfficePartnerD
         return rbacViewFor("partnerDetails", HsOfficePartnerDetailsEntity.class)
                 .withIdentityView(SQL.query("""
                         SELECT partnerDetails.uuid as uuid, partner_iv.idName as idName
-                            FROM hs_office_partner_details AS partnerDetails
-                            JOIN hs_office_partner partner ON partner.detailsUuid = partnerDetails.uuid
-                            JOIN hs_office_partner_iv partner_iv ON partner_iv.uuid = partner.uuid
+                            FROM hs_office.partner_details AS partnerDetails
+                            JOIN hs_office.partner partner ON partner.detailsUuid = partnerDetails.uuid
+                            JOIN hs_office.partner_iv partner_iv ON partner_iv.uuid = partner.uuid
                         """))
                 .withRestrictedViewOrderBy(SQL.expression("uuid"))
                 .withUpdatableColumns(

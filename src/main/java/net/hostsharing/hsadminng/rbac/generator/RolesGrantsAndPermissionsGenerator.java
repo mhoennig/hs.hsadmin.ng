@@ -29,7 +29,7 @@ class RolesGrantsAndPermissionsGenerator {
     private final String liquibaseTagPrefix;
     private final String simpleEntityName;
     private final String simpleEntityVarName;
-    private final String rawTableName;
+    private final String qualifiedRawTableName;
 
     RolesGrantsAndPermissionsGenerator(final RbacView rbacDef, final String liquibaseTagPrefix) {
         this.rbacDef = rbacDef;
@@ -40,7 +40,7 @@ class RolesGrantsAndPermissionsGenerator {
 
         simpleEntityVarName = rbacDef.getRootEntityAlias().simpleName();
         simpleEntityName = capitalize(simpleEntityVarName);
-        rawTableName = rbacDef.getRootEntityAlias().getRawTableNameWithSchema();
+        qualifiedRawTableName = rbacDef.getRootEntityAlias().getRawTableNameWithSchema();
     }
 
     void generateTo(final StringWriter plPgSql) {
@@ -66,13 +66,12 @@ class RolesGrantsAndPermissionsGenerator {
                     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
                  */
 
-                create or replace procedure buildRbacSystemFor${simpleEntityName}(
-                    NEW ${rawTableName}
+                create or replace procedure ${rawTableQualifiedName}_build_rbac_system(
+                    NEW ${rawTableQualifiedName}
                 )
                     language plpgsql as $$
                 """
-                .replace("${simpleEntityName}", simpleEntityName)
-                .replace("${rawTableName}", rawTableName));
+                .replace("${rawTableQualifiedName}", qualifiedRawTableName));
 
         plPgSql.writeLn("declare");
         plPgSql.indented(() -> {
@@ -106,21 +105,21 @@ class RolesGrantsAndPermissionsGenerator {
                         Called from the AFTER UPDATE TRIGGER to re-wire the grants.
                      */
     
-                    create or replace procedure updateRbacRulesFor${simpleEntityName}(
-                        OLD ${rawTableName},
-                        NEW ${rawTableName}
+                    create or replace procedure ${rawTableQualifiedName}_update_rbac_system(
+                        OLD ${rawTableQualifiedName},
+                        NEW ${rawTableQualifiedName}
                     )
                         language plpgsql as $$
                     begin
                     
                         if ${updateConditions} then
                             delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
-                            call buildRbacSystemFor${simpleEntityName}(NEW);
+                            call ${rawTableQualifiedName}_build_rbac_system(NEW);
                         end if;
                     end; $$;
                     """,
                 with("simpleEntityName", simpleEntityName),
-                with("rawTableName", rawTableName),
+                with("rawTableQualifiedName", qualifiedRawTableName),
                 with("updateConditions", updateConditions));
     }
 
@@ -130,16 +129,15 @@ class RolesGrantsAndPermissionsGenerator {
                     Called from the AFTER UPDATE TRIGGER to re-wire the grants.
                  */
 
-                create or replace procedure updateRbacRulesFor${simpleEntityName}(
-                    OLD ${rawTableName},
-                    NEW ${rawTableName}
+                create or replace procedure ${rawTableQualifiedName}_update_rbac_system(
+                    OLD ${rawTableQualifiedName},
+                    NEW ${rawTableQualifiedName}
                 )
                     language plpgsql as $$
 
                 declare
-                """
-                .replace("${simpleEntityName}", simpleEntityName)
-                .replace("${rawTableName}", rawTableName));
+                """,
+                with("rawTableQualifiedName", qualifiedRawTableName));
 
         plPgSql.chopEmptyLines();
         plPgSql.indented(() -> {
@@ -514,25 +512,25 @@ class RolesGrantsAndPermissionsGenerator {
 
         plPgSql.writeLn("""
                 /*
-                    AFTER INSERT TRIGGER to create the role+grant structure for a new ${rawTableName} row.
+                    AFTER INSERT TRIGGER to create the role+grant structure for a new ${rawTableQualifiedName} row.
                  */
 
-                create or replace function insertTriggerFor${simpleEntityName}_tf()
+                create or replace function ${rawTableQualifiedName}_build_rbac_system_after_insert_tf()
                     returns trigger
                     language plpgsql
                     strict as $$
                 begin
-                    call buildRbacSystemFor${simpleEntityName}(NEW);
+                    call ${rawTableQualifiedName}_build_rbac_system(NEW);
                     return NEW;
                 end; $$;
 
-                create trigger insertTriggerFor${simpleEntityName}_tg
-                    after insert on ${rawTableName}
+                create trigger build_rbac_system_after_insert_tg
+                    after insert on ${rawTableQualifiedName}
                     for each row
-                execute procedure insertTriggerFor${simpleEntityName}_tf();
+                execute procedure ${rawTableQualifiedName}_build_rbac_system_after_insert_tf();
                 """
-                .replace("${simpleEntityName}", simpleEntityName)
-                .replace("${rawTableName}", rawTableName)
+                .replace("${schemaPrefix}", schemaPrefix(qualifiedRawTableName))
+                .replace("${rawTableQualifiedName}", qualifiedRawTableName)
         );
 
         generateFooter(plPgSql);
@@ -549,28 +547,33 @@ class RolesGrantsAndPermissionsGenerator {
 
         plPgSql.writeLn("""
                 /*
-                    AFTER INSERT TRIGGER to re-wire the grant structure for a new ${rawTableName} row.
+                    AFTER UPDATE TRIGGER to re-wire the grant structure for a new ${rawTableQualifiedName} row.
                  */
-                                
-                create or replace function updateTriggerFor${simpleEntityName}_tf()
+
+                create or replace function ${rawTableQualifiedName}_update_rbac_system_after_update_tf()
                     returns trigger
                     language plpgsql
                     strict as $$
                 begin
-                    call updateRbacRulesFor${simpleEntityName}(OLD, NEW);
+                    call ${rawTableQualifiedName}_update_rbac_system(OLD, NEW);
                     return NEW;
                 end; $$;
-                                
-                create trigger updateTriggerFor${simpleEntityName}_tg
-                    after update on ${rawTableName}
+
+                create trigger update_rbac_system_after_update_tg
+                    after update on ${rawTableQualifiedName}
                     for each row
-                execute procedure updateTriggerFor${simpleEntityName}_tf();
+                execute procedure ${rawTableQualifiedName}_update_rbac_system_after_update_tf();
                 """
-                .replace("${simpleEntityName}", simpleEntityName)
-                .replace("${rawTableName}", rawTableName)
+                .replace("${rawTableQualifiedName}", qualifiedRawTableName)
         );
 
         generateFooter(plPgSql);
+    }
+
+    private String schemaPrefix(final String qualifiedIdentifier) {
+        return qualifiedIdentifier.contains(".")
+                ? qualifiedIdentifier.split("\\.")[0] + "."
+                : "";
     }
 
     private static void generateFooter(final StringWriter plPgSql) {

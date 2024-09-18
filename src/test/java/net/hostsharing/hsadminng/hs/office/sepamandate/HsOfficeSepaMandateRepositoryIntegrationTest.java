@@ -95,7 +95,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             context("superuser-alex@hostsharing.net");
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -117,12 +117,12 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN",
-                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT",
-                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER",
-                    "hs_office_sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER"));
+                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):ADMIN",
+                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):AGENT",
+                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):OWNER",
+                    "hs_office.sepamandate#DE02600501010002034304-[2020-01-01,2023-01-01):REFERRER"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
@@ -233,7 +233,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02600501010002034304");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
-                    "hs_office_bankaccount#DE02600501010002034304:ADMIN");
+                    "hs_office.bankaccount#DE02600501010002034304:ADMIN");
 
             // when
             final var result = jpaAttempt.transacted(() -> {
@@ -262,13 +262,13 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             final var givenSepaMandate = givenSomeTemporarySepaMandate("DE02300606010002474689");
             assertThatSepaMandateIsVisibleForUserWithRole(
                     givenSepaMandate,
-                    "hs_office_bankaccount#DE02300606010002474689:ADMIN");
+                    "hs_office.bankaccount#DE02300606010002474689:ADMIN");
             assertThatSepaMandateActuallyInDatabase(givenSepaMandate);
             final var newValidityEnd = LocalDate.now();
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_bankaccount#DE02300606010002474689:ADMIN");
+                context("superuser-alex@hostsharing.net", "hs_office.bankaccount#DE02300606010002474689:ADMIN");
 
                 givenSepaMandate.setValidity(Range.closedOpen(
                         givenSepaMandate.getValidity().lower(), newValidityEnd));
@@ -277,7 +277,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to update hs_office_sepamandate uuid");
+                    "[403] Subject ", " is not allowed to update hs_office.sepamandate uuid");
         }
 
         private void assertThatSepaMandateActuallyInDatabase(final HsOfficeSepaMandateEntity saved) {
@@ -346,7 +346,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " not allowed to delete hs_office_sepamandate");
+                    "[403] Subject ", " not allowed to delete hs_office.sepamandate");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return sepaMandateRepo.findByUuid(givenSepaMandate.getUuid());
@@ -381,7 +381,7 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'reference'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_sepamandate';
+                    where targettable = 'hs_office.sepamandate';
                     """);
 
         // when
@@ -389,9 +389,9 @@ class HsOfficeSepaMandateRepositoryIntegrationTest extends ContextBasedTestWithC
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating SEPA-mandate test-data, hs_office_sepamandate, INSERT, ref-10001-11]",
-                "[creating SEPA-mandate test-data, hs_office_sepamandate, INSERT, ref-10002-12]",
-                "[creating SEPA-mandate test-data, hs_office_sepamandate, INSERT, ref-10003-13]");
+                "[creating SEPA-mandate test-data, hs_office.sepamandate, INSERT, ref-10001-11]",
+                "[creating SEPA-mandate test-data, hs_office.sepamandate, INSERT, ref-10002-12]",
+                "[creating SEPA-mandate test-data, hs_office.sepamandate, INSERT, ref-10003-13]");
     }
 
     private HsOfficeSepaMandateEntity givenSomeTemporarySepaMandate(final String iban) {

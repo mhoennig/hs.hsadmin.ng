@@ -56,7 +56,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_membership_rv")
+@Table(schema = "hs_office", name = "membership_rv")
 @Getter
 @Setter
 @Builder
@@ -160,8 +160,8 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
                 .withIdentityView(SQL.query("""
                         SELECT m.uuid AS uuid,
                                 'M-' || p.partnerNumber || m.memberNumberSuffix as idName
-                        FROM hs_office_membership AS m
-                        JOIN hs_office_partner AS p ON p.uuid = m.partnerUuid
+                        FROM hs_office.membership AS m
+                        JOIN hs_office.partner AS p ON p.uuid = m.partnerUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.projection("validity"))
                 .withUpdatableColumns("validity", "membershipFeeBillable", "status")
@@ -170,8 +170,8 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
                         dependsOnColumn("partnerUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}
-                                    FROM hs_office_partner AS partner
-                                    JOIN hs_office_relation AS partnerRel ON partnerRel.uuid = partner.partnerRelUuid
+                                    FROM hs_office.partner AS partner
+                                    JOIN hs_office.relation AS partnerRel ON partnerRel.uuid = partner.partnerRelUuid
                                     WHERE partner.uuid = ${REF}.partnerUuid
                                 """),
                         NOT_NULL)

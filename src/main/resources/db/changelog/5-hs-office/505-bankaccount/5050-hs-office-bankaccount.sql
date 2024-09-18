@@ -3,7 +3,7 @@
 --changeset michael.hoennig:hs-office-bankaccount-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create table hs_office_bankaccount
+create table hs_office.bankaccount
 (
     uuid                uuid unique references rbac.object (uuid) initially deferred,
     version             int not null default 0,
@@ -18,5 +18,5 @@ create table hs_office_bankaccount
 --changeset michael.hoennig:hs-office-bankaccount-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call base.create_journal('hs_office_bankaccount');
+call base.create_journal('hs_office.bankaccount');
 --//

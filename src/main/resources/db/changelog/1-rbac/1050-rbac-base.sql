@@ -384,7 +384,7 @@ create index on rbac.permission (objectUuid, op);
 create index on rbac.permission (opTableName, op);
 
 ALTER TABLE rbac.permission
-    ADD CONSTRAINT RbacPermission_uc UNIQUE NULLS NOT DISTINCT (objectUuid, op, opTableName);
+    ADD CONSTRAINT unique_including_null_values UNIQUE NULLS NOT DISTINCT (objectUuid, op, opTableName);
 
 call base.create_journal('rbac.permission');
 

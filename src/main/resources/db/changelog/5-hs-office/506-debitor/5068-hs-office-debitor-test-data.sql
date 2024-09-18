@@ -24,21 +24,21 @@ begin
 
     select debitorRel.uuid
             into relatedDebitorRelUuid
-            from hs_office_relation debitorRel
-            join hs_office_person person on person.uuid = debitorRel.holderUuid
+            from hs_office.relation debitorRel
+            join hs_office.person person on person.uuid = debitorRel.holderUuid
                 and (person.tradeName = forPartnerPersonName or person.familyName = forPartnerPersonName)
             where debitorRel.type = 'DEBITOR';
 
     select b.uuid
             into relatedBankAccountUuid
-            from hs_office_bankaccount b
+            from hs_office.bankaccount b
             where b.holder = forPartnerPersonName;
 
     raise notice 'creating test debitor: % (#%)', idName, withDebitorNumberSuffix;
     -- raise exception 'creating test debitor: (uuid=%, debitorRelUuid=%, debitornumbersuffix=%, billable=%, vatbusiness=%, vatreversecharge=%, refundbankaccountuuid=%, defaultprefix=%)',
     --    uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            relatedBankAccountUuid, withDefaultPrefix;
     insert
-        into hs_office_debitor (uuid,   debitorRelUuid,        debitornumbersuffix,     billable, vatbusiness, vatreversecharge, refundbankaccountuuid,  defaultprefix)
+        into hs_office.debitor (uuid,   debitorRelUuid,        debitornumbersuffix,     billable, vatbusiness, vatreversecharge, refundbankaccountuuid,  defaultprefix)
             values (uuid_generate_v4(), relatedDebitorRelUuid, withDebitorNumberSuffix, true,     true,        false,            relatedBankAccountUuid, withDefaultPrefix);
 end; $$;
 --//

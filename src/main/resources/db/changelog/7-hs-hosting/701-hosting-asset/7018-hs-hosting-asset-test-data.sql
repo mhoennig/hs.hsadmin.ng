@@ -12,7 +12,7 @@ create or replace procedure createHsHostingAssetTestData(givenProjectCaption var
     language plpgsql as $$
 declare
     relatedProject                      hs_booking_project;
-    relatedDebitor                      hs_office_debitor;
+    relatedDebitor                      hs_office.debitor;
     privateCloudBI                      hs_booking_item;
     managedServerBI                     hs_booking_item;
     cloudServerBI                       hs_booking_item;
@@ -38,7 +38,7 @@ begin
     assert relatedProject.uuid is not null, 'relatedProject for "' || givenProjectCaption || '" must not be null';
 
     select debitor.* into relatedDebitor
-                     from hs_office_debitor debitor
+                     from hs_office.debitor debitor
                      where debitor.uuid = relatedProject.debitorUuid;
     assert relatedDebitor.uuid is not null, 'relatedDebitor for "' || givenProjectCaption || '" must not be null';
 

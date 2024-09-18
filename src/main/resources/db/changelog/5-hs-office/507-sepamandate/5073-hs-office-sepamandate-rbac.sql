@@ -5,14 +5,14 @@
 -- ============================================================================
 --changeset RbacObjectGenerator:hs-office-sepamandate-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('hs_office_sepamandate');
+call rbac.generateRelatedRbacObject('hs_office.sepamandate');
 --//
 
 
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-sepamandate-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office_sepamandate');
+call rbac.generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office.sepamandate');
 --//
 
 
@@ -24,24 +24,24 @@ call rbac.generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office_sepamand
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsOfficeSepaMandate(
-    NEW hs_office_sepamandate
+create or replace procedure hs_office.sepamandate_build_rbac_system(
+    NEW hs_office.sepamandate
 )
     language plpgsql as $$
 
 declare
-    newBankAccount hs_office_bankaccount;
-    newDebitorRel hs_office_relation;
+    newBankAccount hs_office.bankaccount;
+    newDebitorRel hs_office.relation;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_office_bankaccount WHERE uuid = NEW.bankAccountUuid    INTO newBankAccount;
+    SELECT * FROM hs_office.bankaccount WHERE uuid = NEW.bankAccountUuid    INTO newBankAccount;
     assert newBankAccount.uuid is not null, format('newBankAccount must not be null for NEW.bankAccountUuid = %s', NEW.bankAccountUuid);
 
     SELECT debitorRel.*
-        FROM hs_office_relation debitorRel
-        JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+        FROM hs_office.relation debitorRel
+        JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
         INTO newDebitorRel;
     assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
@@ -82,22 +82,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_sepamandate row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office.sepamandate row.
  */
 
-create or replace function insertTriggerForHsOfficeSepaMandate_tf()
+create or replace function hs_office.sepamandate_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsOfficeSepaMandate(NEW);
+    call hs_office.sepamandate_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsOfficeSepaMandate_tg
-    after insert on hs_office_sepamandate
+create trigger build_rbac_system_after_insert_tg
+    after insert on hs_office.sepamandate
     for each row
-execute procedure insertTriggerForHsOfficeSepaMandate_tf();
+execute procedure hs_office.sepamandate_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -105,48 +105,48 @@ execute procedure insertTriggerForHsOfficeSepaMandate_tf();
 --changeset InsertTriggerGenerator:hs-office-sepamandate-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to hs_office_relation ----------------------------
+-- granting INSERT permission to hs_office.relation ----------------------------
 
 /*
-    Grants INSERT INTO hs_office_sepamandate permissions to specified role of pre-existing hs_office_relation rows.
+    Grants INSERT INTO hs_office.sepamandate permissions to specified role of pre-existing hs_office.relation rows.
  */
 do language plpgsql $$
     declare
-        row hs_office_relation;
+        row hs_office.relation;
     begin
-        call base.defineContext('create INSERT INTO hs_office_sepamandate permissions for pre-exising hs_office_relation rows');
+        call base.defineContext('create INSERT INTO hs_office.sepamandate permissions for pre-exising hs_office.relation rows');
 
-        FOR row IN SELECT * FROM hs_office_relation
+        FOR row IN SELECT * FROM hs_office.relation
             WHERE type = 'DEBITOR'
             LOOP
                 call rbac.grantPermissionToRole(
-                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_sepamandate'),
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office.sepamandate'),
                         hsOfficeRelationADMIN(row));
             END LOOP;
     end;
 $$;
 
 /**
-    Grants hs_office_sepamandate INSERT permission to specified role of new hs_office_relation rows.
+    Grants hs_office.sepamandate INSERT permission to specified role of new relation rows.
 */
-create or replace function new_hsof_sepamandate_grants_insert_to_hsof_relation_tf()
+create or replace function hs_office.new_sepamandate_grants_insert_to_relation_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     if NEW.type = 'DEBITOR' then
         call rbac.grantPermissionToRole(
-            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_sepamandate'),
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.sepamandate'),
             hsOfficeRelationADMIN(NEW));
     end if;
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_sepamandate_grants_after_insert_tg
-    after insert on hs_office_relation
+create trigger z_new_sepamandate_grants_after_insert_tg
+    after insert on hs_office.relation
     for each row
-execute procedure new_hsof_sepamandate_grants_insert_to_hsof_relation_tf();
+execute procedure hs_office.new_sepamandate_grants_insert_to_relation_tf();
 
 
 -- ============================================================================
@@ -154,9 +154,9 @@ execute procedure new_hsof_sepamandate_grants_insert_to_hsof_relation_tf();
 -- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office_sepamandate.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office.sepamandate.
 */
-create or replace function hs_office_sepamandate_insert_permission_check_tf()
+create or replace function hs_office.sepamandate_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
 declare
@@ -164,23 +164,23 @@ declare
 begin
     -- check INSERT permission via indirect foreign key: NEW.debitorUuid
     superObjectUuid := (SELECT debitorRel.uuid
-        FROM hs_office_relation debitorRel
-        JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+        FROM hs_office.relation debitorRel
+        JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
     );
-    assert superObjectUuid is not null, 'object uuid fetched depending on hs_office_sepamandate.debitorUuid must not be null, also check fetchSql in RBAC DSL';
-    if rbac.hasInsertPermission(superObjectUuid, 'hs_office_sepamandate') then
+    assert superObjectUuid is not null, 'object uuid fetched depending on hs_office.sepamandate.debitorUuid must not be null, also check fetchSql in RBAC DSL';
+    if rbac.hasInsertPermission(superObjectUuid, 'hs_office.sepamandate') then
         return NEW;
     end if;
 
-    raise exception '[403] insert into hs_office_sepamandate values(%) not allowed for current subjects % (%)',
+    raise exception '[403] insert into hs_office.sepamandate values(%) not allowed for current subjects % (%)',
             NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger hs_office_sepamandate_insert_permission_check_tg
-    before insert on hs_office_sepamandate
+create trigger sepamandate_insert_permission_check_tg
+    before insert on hs_office.sepamandate
     for each row
-        execute procedure hs_office_sepamandate_insert_permission_check_tf();
+        execute procedure hs_office.sepamandate_insert_permission_check_tf();
 --//
 
 
@@ -188,11 +188,11 @@ create trigger hs_office_sepamandate_insert_permission_check_tg
 --changeset RbacIdentityViewGenerator:hs-office-sepamandate-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromQuery('hs_office_sepamandate',
+call rbac.generateRbacIdentityViewFromQuery('hs_office.sepamandate',
     $idName$
         select sm.uuid as uuid, ba.iban || '-' || sm.validity as idName
-            from hs_office_sepamandate sm
-            join hs_office_bankaccount ba on ba.uuid = sm.bankAccountUuid
+            from hs_office.sepamandate sm
+            join hs_office.bankaccount ba on ba.uuid = sm.bankAccountUuid
     $idName$);
 --//
 
@@ -200,7 +200,7 @@ call rbac.generateRbacIdentityViewFromQuery('hs_office_sepamandate',
 -- ============================================================================
 --changeset RbacRestrictedViewGenerator:hs-office-sepamandate-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('hs_office_sepamandate',
+call rbac.generateRbacRestrictedView('hs_office.sepamandate',
     $orderBy$
         validity
     $orderBy$,

@@ -14,7 +14,7 @@ CREATE TYPE HsOfficePersonType AS ENUM (
 
 CREATE CAST (character varying as HsOfficePersonType) WITH INOUT AS IMPLICIT;
 
-create table if not exists hs_office_person
+create table if not exists hs_office.person
 (
     uuid           uuid unique references rbac.object (uuid) initially deferred,
     version        int not null default 0,
@@ -31,5 +31,5 @@ create table if not exists hs_office_person
 --changeset michael.hoennig:hs-office-person-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call base.create_journal('hs_office_person');
+call base.create_journal('hs_office.person');
 --//

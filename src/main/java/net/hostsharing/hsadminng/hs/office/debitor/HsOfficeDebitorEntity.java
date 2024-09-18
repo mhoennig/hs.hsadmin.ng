@@ -54,7 +54,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_debitor_rv")
+@Table(schema = "hs_office", name = "debitor_rv")
 @Getter
 @Setter
 @Builder(toBuilder = true)
@@ -87,10 +87,10 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
         value = """
             (
                 SELECT DISTINCT partner.uuid
-                FROM hs_office_partner_rv partner
-                JOIN hs_office_relation_rv dRel
+                FROM hs_office.partner_rv partner
+                JOIN hs_office.relation_rv dRel
                     ON dRel.uuid = debitorreluuid AND dRel.type = 'DEBITOR'
-                JOIN hs_office_relation_rv pRel
+                JOIN hs_office.relation_rv pRel
                     ON pRel.uuid = partner.partnerRelUuid AND pRel.type = 'PARTNER'
                 WHERE pRel.holderUuid = dRel.anchorUuid
             )
@@ -170,14 +170,14 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
                 .withIdentityView(SQL.query("""
                         SELECT debitor.uuid AS uuid,
                                     'D-' || (SELECT partner.partnerNumber
-                                            FROM hs_office_partner partner
-                                            JOIN hs_office_relation partnerRel
+                                            FROM hs_office.partner partner
+                                            JOIN hs_office.relation partnerRel
                                                 ON partnerRel.uuid = partner.partnerRelUUid AND partnerRel.type = 'PARTNER'
-                                            JOIN hs_office_relation debitorRel
+                                            JOIN hs_office.relation debitorRel
                                                 ON debitorRel.anchorUuid = partnerRel.holderUuid AND debitorRel.type = 'DEBITOR'
                                             WHERE debitorRel.uuid = debitor.debitorRelUuid)
                                          || debitorNumberSuffix as idName
-                        FROM hs_office_debitor AS debitor
+                        FROM hs_office.debitor AS debitor
                         """))
                 .withRestrictedViewOrderBy(SQL.projection("defaultPrefix"))
                 .withUpdatableColumns(
@@ -209,8 +209,8 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
                         dependsOnColumn("debitorRelUuid"),
                         fetchedBySql("""
                                 SELECT ${columns}
-                                    FROM hs_office_relation AS partnerRel
-                                    JOIN hs_office_relation AS debitorRel
+                                    FROM hs_office.relation AS partnerRel
+                                    JOIN hs_office.relation AS debitorRel
                                         ON debitorRel.type = 'DEBITOR' AND debitorRel.anchorUuid = partnerRel.holderUuid
                                     WHERE partnerRel.type = 'PARTNER'
                                         AND ${REF}.debitorRelUuid = debitorRel.uuid

@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
+import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRbacEntity;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
@@ -47,7 +47,7 @@ public class HsHostingAssetRbacEntity extends HsHostingAsset {
                 .withUpdatableColumns("version", "caption", "config", "assignedToAssetUuid", "alarmContactUuid")
                 .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
 
-                .importEntityAlias("bookingItem", HsBookingItem.class, usingDefaultCase(),
+                .importEntityAlias("bookingItem", HsBookingItemRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("bookingItemUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)

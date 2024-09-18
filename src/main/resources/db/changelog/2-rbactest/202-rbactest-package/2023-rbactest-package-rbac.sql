@@ -24,7 +24,7 @@ call rbac.generateRbacRoleDescriptors('testPackage', 'rbactest.package');
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForTestPackage(
+create or replace procedure rbactest.package_build_rbac_system(
     NEW rbactest.package
 )
     language plpgsql as $$
@@ -64,19 +64,19 @@ end; $$;
     AFTER INSERT TRIGGER to create the role+grant structure for a new rbactest.package row.
  */
 
-create or replace function insertTriggerForTestPackage_tf()
+create or replace function rbactest.package_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForTestPackage(NEW);
+    call rbactest.package_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForTestPackage_tg
+create trigger build_rbac_system_after_insert_tg
     after insert on rbactest.package
     for each row
-execute procedure insertTriggerForTestPackage_tf();
+execute procedure rbactest.package_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -88,7 +88,7 @@ execute procedure insertTriggerForTestPackage_tf();
     Called from the AFTER UPDATE TRIGGER to re-wire the grants.
  */
 
-create or replace procedure updateRbacRulesForTestPackage(
+create or replace procedure rbactest.package_update_rbac_system(
     OLD rbactest.package,
     NEW rbactest.package
 )
@@ -122,22 +122,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to re-wire the grant structure for a new rbactest.package row.
+    AFTER UPDATE TRIGGER to re-wire the grant structure for a new rbactest.package row.
  */
 
-create or replace function updateTriggerForTestPackage_tf()
+create or replace function rbactest.package_update_rbac_system_after_update_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call updateRbacRulesForTestPackage(OLD, NEW);
+    call rbactest.package_update_rbac_system(OLD, NEW);
     return NEW;
 end; $$;
 
-create trigger updateTriggerForTestPackage_tg
+create trigger update_rbac_system_after_update_tg
     after update on rbactest.package
     for each row
-execute procedure updateTriggerForTestPackage_tf();
+execute procedure rbactest.package_update_rbac_system_after_update_tf();
 --//
 
 

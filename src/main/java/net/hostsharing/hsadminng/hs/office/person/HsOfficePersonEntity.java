@@ -22,7 +22,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_person_rv")
+@Table(schema = "hs_office", name = "person_rv")
 @Getter
 @Setter
 @Builder

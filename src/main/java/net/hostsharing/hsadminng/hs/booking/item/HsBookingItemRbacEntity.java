@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRbacEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 
@@ -49,7 +49,7 @@ public class HsBookingItemRbacEntity extends HsBookingItem {
                 .toRole(GLOBAL, ADMIN).grantPermission(INSERT) // TODO.impl: Why is this necessary to insert test data?
                 .toRole(GLOBAL, ADMIN).grantPermission(DELETE)
 
-                .importEntityAlias("project", HsBookingProject.class, usingDefaultCase(),
+                .importEntityAlias("project", HsBookingProjectRbacEntity.class, usingDefaultCase(),
                         dependsOnColumn("projectUuid"),
                         directlyFetchedByDependsOnColumn(),
                         NULLABLE)

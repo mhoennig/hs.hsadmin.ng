@@ -391,9 +391,9 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
     void cleanup() {
         jpaAttempt.transacted(() -> {
             context.define("superuser-alex@hostsharing.net", null);
-            // HsOfficeCoopAssetsTransactionEntity respectively hs_office_coopassetstransaction_rv
+            // HsOfficeCoopAssetsTransactionEntity respectively hs_office.coopassetstransaction_rv
             // cannot be deleted at all, but the underlying table record can be deleted.
-            em.createNativeQuery("delete from hs_office_coopassetstransaction where reference like 'temp %'")
+            em.createNativeQuery("delete from hs_office.coopassetstransaction where reference like 'temp %'")
                     .executeUpdate();
         }).assertSuccessful();
     }

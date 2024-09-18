@@ -141,7 +141,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // then
             result.assertExceptionWithRootCauseMessage(org.hibernate.exception.ConstraintViolationException.class,
-                    "ERROR: new row for relation \"hs_office_debitor\" violates check constraint \"check_default_prefix\"");
+                    "ERROR: new row for relation \"debitor\" violates check constraint \"check_default_prefix\"");
         }
 
         @Test
@@ -151,7 +151,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var initialRoleNames = distinctRoleNamesOf(rawRoleRepo.findAll());
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     // some search+replace to make the output fit into the screen width
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -176,12 +176,12 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER",
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN",
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT",
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT"));
+                    "hs_office.relation#FirstGmbH-with-DEBITOR-FourtheG:OWNER",
+                    "hs_office.relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN",
+                    "hs_office.relation#FirstGmbH-with-DEBITOR-FourtheG:AGENT",
+                    "hs_office.relation#FirstGmbH-with-DEBITOR-FourtheG:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
-                .map(s -> s.replace("hs_office_", ""))
+                .map(s -> s.replace("hs_office.", ""))
                 .containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
                     "{ grant perm:relation#FirstGmbH-with-DEBITOR-FourtheG:INSERT>sepamandate to role:relation#FirstGmbH-with-DEBITOR-FourtheG:ADMIN by system and assume }",
@@ -247,9 +247,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         @ParameterizedTest
         @Disabled // TODO: reactivate once partner.person + partner.contact  are removed
         @ValueSource(strings = {
-                "hs_office_partner#10001:FirstGmbH-firstcontact:ADMIN",
-                "hs_office_person#FirstGmbH:ADMIN",
-                "hs_office_contact#firstcontact:ADMIN",
+                "hs_office.partner#10001:FirstGmbH-firstcontact:ADMIN",
+                "hs_office.person#FirstGmbH:ADMIN",
+                "hs_office.contact#firstcontact:ADMIN",
         })
         public void relatedPersonAdmin_canViewRelatedDebitors(final String assumedRole) {
             // given:
@@ -321,7 +321,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
+                    "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
             final var givenNewPartnerPerson = one(personRepo.findPersonByOptionalNameLike("First"));
             final var givenNewBillingPerson = one(personRepo.findPersonByOptionalNameLike("Firby"));
             final var givenNewContact = one(contactrealRepo.findContactByOptionalCaptionLike("sixth contact"));
@@ -354,26 +354,26 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // ... partner role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
+                    "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_relation#FirstGmbH-with-DEBITOR-FirbySusan:AGENT", true);
+                    "hs_office.relation#FirstGmbH-with-DEBITOR-FirbySusan:AGENT", true);
 
             // ... contact role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_contact#fifthcontact:ADMIN");
+                    "hs_office.contact#fifthcontact:ADMIN");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_contact#sixthcontact:ADMIN", false);
+                    "hs_office.contact#sixthcontact:ADMIN", false);
 
             // ... bank-account role was reassigned:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02200505501015871393:ADMIN");
+                    "hs_office.bankaccount#DE02200505501015871393:ADMIN");
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02120300000000202051:ADMIN", true);
+                    "hs_office.bankaccount#DE02120300000000202051:ADMIN", true);
         }
 
         @Test
@@ -383,7 +383,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", null, "fig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
+                    "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN", true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
             final var givenNewBankAccount = one(bankAccountRepo.findByOptionalHolderLike("first"));
 
@@ -403,7 +403,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // ... bank-account role was assigned:
             assertThatDebitorIsVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02120300000000202051:ADMIN", true);
+                    "hs_office.bankaccount#DE02120300000000202051:ADMIN", true);
         }
 
         @Test
@@ -413,7 +413,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "fifth contact", "Fourth", "fih");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG:AGENT", true);
+                    "hs_office.relation#HostsharingeG-with-PARTNER-FourtheG:AGENT", true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
 
             // when
@@ -432,7 +432,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // ... bank-account role was removed from previous bank-account admin:
             assertThatDebitorIsNotVisibleForUserWithRole(
                     result.returnedValue(),
-                    "hs_office_bankaccount#DE02200505501015871393:ADMIN");
+                    "hs_office.bankaccount#DE02200505501015871393:ADMIN");
         }
 
         @Test
@@ -442,19 +442,19 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "eighth", "Fourth", "eig");
             assertThatDebitorIsVisibleForUserWithRole(
                     givenDebitor,
-                    "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG:AGENT", true);
+                    "hs_office.relation#HostsharingeG-with-PARTNER-FourtheG:AGENT", true);
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#HostsharingeG-with-PARTNER-FourtheG:AGENT");
+                context("superuser-alex@hostsharing.net", "hs_office.relation#HostsharingeG-with-PARTNER-FourtheG:AGENT");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 return toCleanup(debitorRepo.save(givenDebitor));
             });
 
             // then
           result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                 "[403] Subject ", " is not allowed to update hs_office_debitor uuid");
+                 "[403] Subject ", " is not allowed to update hs_office.debitor uuid");
         }
 
         @Test
@@ -463,11 +463,11 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             context("superuser-alex@hostsharing.net");
             final var givenDebitor = givenSomeTemporaryDebitor("Fourth", "ninth", "Fourth", "nin");
             assertThatDebitorActuallyInDatabase(givenDebitor, true);
-            assertThatDebitorIsVisibleForUserWithRole(givenDebitor, "hs_office_contact#ninthcontact:ADMIN", false);
+            assertThatDebitorIsVisibleForUserWithRole(givenDebitor, "hs_office.contact#ninthcontact:ADMIN", false);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_contact#ninthcontact:ADMIN");
+                context("superuser-alex@hostsharing.net", "hs_office.contact#ninthcontact:ADMIN");
                 givenDebitor.setVatId("NEW-VAT-ID");
                 final HsOfficeDebitorEntity entity = debitorRepo.save(givenDebitor);
                 return toCleanup(entity.load());
@@ -477,7 +477,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
                     "ERROR: [403]",
-                    "is not allowed to update hs_office_debitor uuid");
+                    "is not allowed to update hs_office.debitor uuid");
         }
 
         private void assertThatDebitorActuallyInDatabase(final HsOfficeDebitorEntity saved, final boolean withPartner) {
@@ -547,7 +547,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("superuser-alex@hostsharing.net", "hs_office_relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
+                context("superuser-alex@hostsharing.net", "hs_office.relation#FourtheG-with-DEBITOR-FourtheG:ADMIN");
                 assertThat(debitorRepo.findByUuid(givenDebitor.getUuid())).isPresent();
 
                 debitorRepo.deleteByUuid(givenDebitor.getUuid());
@@ -556,7 +556,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " not allowed to delete hs_office_debitor");
+                    "[403] Subject ", " not allowed to delete hs_office.debitor");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return debitorRepo.findByUuid(givenDebitor.getUuid());
@@ -591,7 +591,7 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'defaultprefix'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_debitor';
+                    where targettable = 'hs_office.debitor';
                     """);
 
         // when
@@ -599,9 +599,9 @@ class HsOfficeDebitorRepositoryIntegrationTest extends ContextBasedTestWithClean
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating debitor test-data, hs_office_debitor, INSERT, fir]",
-                "[creating debitor test-data, hs_office_debitor, INSERT, sec]",
-                "[creating debitor test-data, hs_office_debitor, INSERT, thi]");
+                "[creating debitor test-data, hs_office.debitor, INSERT, fir]",
+                "[creating debitor test-data, hs_office.debitor, INSERT, sec]",
+                "[creating debitor test-data, hs_office.debitor, INSERT, thi]");
     }
 
     private HsOfficeDebitorEntity givenSomeTemporaryDebitor(

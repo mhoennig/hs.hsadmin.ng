@@ -254,34 +254,34 @@ public class CsvDataImport extends ContextBasedTest {
             em.createNativeQuery("delete from hs_booking_item_ex where true").executeUpdate();
             em.createNativeQuery("delete from hs_booking_project where true").executeUpdate();
             em.createNativeQuery("delete from hs_booking_project_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_coopassetstransaction where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_coopassetstransaction_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_coopsharestransaction where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_coopsharestransaction_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_membership where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_sepamandate where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_sepamandate_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_debitor where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_bankaccount where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_partner where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_partner_details where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_relation where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_contact where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office_person where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopassetstransaction where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopassetstransaction_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopsharestransaction where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopsharestransaction_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.membership where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.sepamandate where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.sepamandate_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.debitor where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.bankaccount where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.partner where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.partner_details where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.relation where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.contact where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.person where true").executeUpdate();
         }).assertSuccessful();
     }
 
     protected void resetHsOfficeSequences() {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            em.createNativeQuery("alter sequence hs_office_contact_legacy_id_seq restart with 1000000000;").executeUpdate();
-            em.createNativeQuery("alter sequence hs_office_coopassetstransaction_legacy_id_seq restart with 1000000000;")
+            em.createNativeQuery("alter sequence hs_office.contact_legacy_id_seq restart with 1000000000;").executeUpdate();
+            em.createNativeQuery("alter sequence hs_office.coopassetstransaction_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office_coopsharestransaction_legacy_id_seq restart with 1000000000;")
+            em.createNativeQuery("alter sequence public.hs_office.coopsharestransaction_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office_partner_legacy_id_seq restart with 1000000000;")
+            em.createNativeQuery("alter sequence public.hs_office.partner_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office_sepamandate_legacy_id_seq restart with 1000000000;")
+            em.createNativeQuery("alter sequence public.hs_office.sepamandate_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
         });
     }

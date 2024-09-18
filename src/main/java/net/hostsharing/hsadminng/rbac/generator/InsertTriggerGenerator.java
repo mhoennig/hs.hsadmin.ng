@@ -213,7 +213,7 @@ public class InsertTriggerGenerator {
         if (g.getSuperRoleDef().isGlobal(GUEST)) {
             plPgSql.writeLn(
                     """
-                    -- check INSERT INSERT permission for rbac.global anyone
+                    -- check INSERT permission for rbac.global anyone
                     if ${caseCondition}true then
                         return NEW;
                     end if;
@@ -222,7 +222,7 @@ public class InsertTriggerGenerator {
         } else if (g.getSuperRoleDef().isGlobal(ADMIN)) {
             plPgSql.writeLn(
                     """
-                    -- check INSERT INSERT if rbac.global ADMIN
+                    -- check INSERT permission if rbac.global ADMIN
                     if ${caseCondition}rbac.isGlobalAdmin() then
                         return NEW;
                     end if;

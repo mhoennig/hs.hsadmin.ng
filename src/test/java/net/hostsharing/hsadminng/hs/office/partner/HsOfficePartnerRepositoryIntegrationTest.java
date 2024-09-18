@@ -103,7 +103,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll()).stream()
                     .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
                     .map(s -> s.replace("fourthcontact", "4th"))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .toList();
 
             // when
@@ -131,14 +131,14 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             assertThat(distinctRoleNamesOf(rawRoleRepo.findAll())).containsExactlyInAnyOrder(from(
                     initialRoleNames,
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:OWNER",
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:ADMIN",
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:AGENT",
-                    "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT"));
+                    "hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:OWNER",
+                    "hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:ADMIN",
+                    "hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:AGENT",
+                    "hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .map(s -> s.replace("ErbenBesslerMelBessler", "EBess"))
                     .map(s -> s.replace("fourthcontact", "4th"))
-                    .map(s -> s.replace("hs_office_", ""))
+                    .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(distinct(from(
                             initialGrantNames,
 
@@ -263,7 +263,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20036, "Erben Bessler", "fifth contact");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
+                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
@@ -281,10 +281,10 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
                     "rbac.global#global:ADMIN");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ThirdOHG:ADMIN");
+                    "hs_office.person#ThirdOHG:ADMIN");
             assertThatPartnerIsNotVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
+                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
         }
 
         @Test
@@ -294,13 +294,13 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
+                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net",
-                        "hs_office_person#ErbenBesslerMelBessler:ADMIN");
+                        "hs_office.person#ErbenBesslerMelBessler:ADMIN");
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
@@ -316,21 +316,21 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             final var givenPartner = givenSomeTemporaryHostsharingPartner(20037, "Erben Bessler", "ninth");
             assertThatPartnerIsVisibleForUserWithRole(
                     givenPartner,
-                    "hs_office_person#ErbenBesslerMelBessler:ADMIN");
+                    "hs_office.person#ErbenBesslerMelBessler:ADMIN");
             assertThatPartnerActuallyInDatabase(givenPartner);
 
             // when
             final var result = jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net",
-                        "hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT");
+                        "hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT");
                 givenPartner.getDetails().setBirthName("new birthname");
                 return partnerRepo.save(givenPartner);
             });
 
             // then
             result.assertExceptionWithRootCauseMessage(JpaSystemException.class,
-                    "ERROR: [403] insert into hs_office_partner_details ",
-                    " not allowed for current subjects {hs_office_relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT}");
+                    "ERROR: [403] insert into hs_office.partner_details ",
+                    " not allowed for current subjects {hs_office.relation#HostsharingeG-with-PARTNER-ErbenBesslerMelBessler:TENANT}");
         }
 
         private void assertThatPartnerActuallyInDatabase(final HsOfficePartnerEntity saved) {
@@ -398,7 +398,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " not allowed to delete hs_office_partner");
+                    "[403] Subject ", " not allowed to delete hs_office.partner");
             assertThat(jpaAttempt.transacted(() -> {
                 context("superuser-alex@hostsharing.net");
                 return partnerRepo.findByUuid(givenPartner.getUuid());
@@ -435,7 +435,7 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'partnernumber'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_partner';
+                    where targettable = 'hs_office.partner';
                     """);
 
         // when
@@ -443,11 +443,11 @@ class HsOfficePartnerRepositoryIntegrationTest extends ContextBasedTestWithClean
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating partner test-data , hs_office_partner, INSERT, 10001]",
-                "[creating partner test-data , hs_office_partner, INSERT, 10002]",
-                "[creating partner test-data , hs_office_partner, INSERT, 10003]",
-                "[creating partner test-data , hs_office_partner, INSERT, 10004]",
-                "[creating partner test-data , hs_office_partner, INSERT, 10010]");
+                "[creating partner test-data , hs_office.partner, INSERT, 10001]",
+                "[creating partner test-data , hs_office.partner, INSERT, 10002]",
+                "[creating partner test-data , hs_office.partner, INSERT, 10003]",
+                "[creating partner test-data , hs_office.partner, INSERT, 10004]",
+                "[creating partner test-data , hs_office.partner, INSERT, 10010]");
     }
 
     private HsOfficePartnerEntity givenSomeTemporaryHostsharingPartner(

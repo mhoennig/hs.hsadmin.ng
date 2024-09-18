@@ -263,7 +263,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-ThirdOHG:AGENT")
+                    .header("assumed-roles", "hs_office.relation#HostsharingeG-with-PARTNER-ThirdOHG:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/office/memberships/" + givenMembershipUuid)
@@ -331,7 +331,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         void partnerRelAdmin_canPatchValidityOfRelatedMembership() {
 
             // given
-            final var givenPartnerAdmin = "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN";
+            final var givenPartnerAdmin = "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:ADMIN";
             context.define("superuser-alex@hostsharing.net", givenPartnerAdmin);
             final var givenMembership = givenSomeTemporaryMembershipBessler("First");
 
@@ -392,7 +392,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT")
+                    .header("assumed-roles", "hs_office.relation#HostsharingeG-with-PARTNER-FirstGmbH:AGENT")
                     .port(port)
                 .when()
                     .delete("http://localhost/api/hs/office/memberships/" + givenMembership.getUuid())

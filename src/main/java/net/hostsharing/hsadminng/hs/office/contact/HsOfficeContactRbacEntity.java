@@ -16,7 +16,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "hs_office_contact_rv")
+@Table(schema = "hs_office", name = "contact_rv")
 @Getter
 @Setter
 @NoArgsConstructor

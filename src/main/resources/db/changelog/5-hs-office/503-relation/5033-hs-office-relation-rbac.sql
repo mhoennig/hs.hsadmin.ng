@@ -3,54 +3,54 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-OBJECT endDelimiter:--//
+--changeset RbacObjectGenerator:hs-office-relation-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRelatedRbacObject('hs_office_relation');
+call rbac.generateRelatedRbacObject('hs_office.relation');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-ROLE-DESCRIPTORS endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-office-relation-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeRelation', 'hs_office_relation');
+call rbac.generateRbacRoleDescriptors('hsOfficeRelation', 'hs_office.relation');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-relation-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsOfficeRelation(
-    NEW hs_office_relation
+create or replace procedure hs_office.relation_build_rbac_system(
+    NEW hs_office.relation
 )
     language plpgsql as $$
 
 declare
-    newHolderPerson hs_office_person;
-    newAnchorPerson hs_office_person;
-    newContact hs_office_contact;
+    newHolderPerson hs_office.person;
+    newAnchorPerson hs_office.person;
+    newContact hs_office.contact;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_office_person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
+    SELECT * FROM hs_office.person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
     assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s', NEW.holderUuid);
 
-    SELECT * FROM hs_office_person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
+    SELECT * FROM hs_office.person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
     assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s', NEW.anchorUuid);
 
-    SELECT * FROM hs_office_contact WHERE uuid = NEW.contactUuid    INTO newContact;
+    SELECT * FROM hs_office.contact WHERE uuid = NEW.contactUuid    INTO newContact;
     assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s', NEW.contactUuid);
 
 
     perform rbac.defineRoleWithGrants(
         hsOfficeRelationOWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.globalAdmin()],
+            incomingSuperRoles => array[rbac.globalADMIN()],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
@@ -90,162 +90,162 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office_relation row.
+    AFTER INSERT TRIGGER to create the role+grant structure for a new hs_office.relation row.
  */
 
-create or replace function insertTriggerForHsOfficeRelation_tf()
+create or replace function hs_office.relation_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsOfficeRelation(NEW);
+    call hs_office.relation_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsOfficeRelation_tg
-    after insert on hs_office_relation
+create trigger build_rbac_system_after_insert_tg
+    after insert on hs_office.relation
     for each row
-execute procedure insertTriggerForHsOfficeRelation_tf();
+execute procedure hs_office.relation_build_rbac_system_after_insert_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-update-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-office-relation-rbac-update-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Called from the AFTER UPDATE TRIGGER to re-wire the grants.
  */
 
-create or replace procedure updateRbacRulesForHsOfficeRelation(
-    OLD hs_office_relation,
-    NEW hs_office_relation
+create or replace procedure hs_office.relation_update_rbac_system(
+    OLD hs_office.relation,
+    NEW hs_office.relation
 )
     language plpgsql as $$
 begin
 
     if NEW.contactUuid is distinct from OLD.contactUuid then
         delete from rbac.grants g where g.grantedbytriggerof = OLD.uuid;
-        call buildRbacSystemForHsOfficeRelation(NEW);
+        call hs_office.relation_build_rbac_system(NEW);
     end if;
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to re-wire the grant structure for a new hs_office_relation row.
+    AFTER UPDATE TRIGGER to re-wire the grant structure for a new hs_office.relation row.
  */
 
-create or replace function updateTriggerForHsOfficeRelation_tf()
+create or replace function hs_office.relation_update_rbac_system_after_update_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call updateRbacRulesForHsOfficeRelation(OLD, NEW);
+    call hs_office.relation_update_rbac_system(OLD, NEW);
     return NEW;
 end; $$;
 
-create trigger updateTriggerForHsOfficeRelation_tg
-    after update on hs_office_relation
+create trigger update_rbac_system_after_update_tg
+    after update on hs_office.relation
     for each row
-execute procedure updateTriggerForHsOfficeRelation_tf();
+execute procedure hs_office.relation_update_rbac_system_after_update_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-relation-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to hs_office_person ----------------------------
+-- granting INSERT permission to hs_office.person ----------------------------
 
 /*
-    Grants INSERT INTO hs_office_relation permissions to specified role of pre-existing hs_office_person rows.
+    Grants INSERT INTO hs_office.relation permissions to specified role of pre-existing hs_office.person rows.
  */
 do language plpgsql $$
     declare
-        row hs_office_person;
+        row hs_office.person;
     begin
-        call base.defineContext('create INSERT INTO hs_office_relation permissions for pre-exising hs_office_person rows');
+        call base.defineContext('create INSERT INTO hs_office.relation permissions for pre-exising hs_office.person rows');
 
-        FOR row IN SELECT * FROM hs_office_person
+        FOR row IN SELECT * FROM hs_office.person
             -- unconditional for all rows in that table
             LOOP
                 call rbac.grantPermissionToRole(
-                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office_relation'),
+                        rbac.createPermission(row.uuid, 'INSERT', 'hs_office.relation'),
                         hsOfficePersonADMIN(row));
             END LOOP;
     end;
 $$;
 
 /**
-    Grants hs_office_relation INSERT permission to specified role of new hs_office_person rows.
+    Grants hs_office.relation INSERT permission to specified role of new person rows.
 */
-create or replace function new_hs_office_relation_grants_insert_to_hs_office_person_tf()
+create or replace function hs_office.new_relation_grants_insert_to_person_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
-            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office_relation'),
+            rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.relation'),
             hsOfficePersonADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_office_relation_grants_insert_to_hs_office_person_tg
-    after insert on hs_office_person
+create trigger z_new_relation_grants_after_insert_tg
+    after insert on hs_office.person
     for each row
-execute procedure new_hs_office_relation_grants_insert_to_hs_office_person_tf();
+execute procedure hs_office.new_relation_grants_insert_to_person_tf();
 
 
 -- ============================================================================
---changeset michael.hoennig:hs_office_relation-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-office-relation-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
-    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office_relation.
+    Checks if the user respectively the assumed roles are allowed to insert a row to hs_office.relation.
 */
-create or replace function hs_office_relation_insert_permission_check_tf()
+create or replace function hs_office.relation_insert_permission_check_tf()
     returns trigger
     language plpgsql as $$
 declare
     superObjectUuid uuid;
 begin
     -- check INSERT permission via direct foreign key: NEW.anchorUuid
-    if rbac.hasInsertPermission(NEW.anchorUuid, 'hs_office_relation') then
+    if rbac.hasInsertPermission(NEW.anchorUuid, 'hs_office.relation') then
         return NEW;
     end if;
 
-    raise exception '[403] insert into hs_office_relation not allowed for current subjects % (%)',
-            base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
+    raise exception '[403] insert into hs_office.relation values(%) not allowed for current subjects % (%)',
+            NEW, base.currentSubjects(), rbac.currentSubjectOrAssumedRolesUuids();
 end; $$;
 
-create trigger hs_office_relation_insert_permission_check_tg
-    before insert on hs_office_relation
+create trigger relation_insert_permission_check_tg
+    before insert on hs_office.relation
     for each row
-        execute procedure hs_office_relation_insert_permission_check_tf();
+        execute procedure hs_office.relation_insert_permission_check_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-IDENTITY-VIEW endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-office-relation-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call rbac.generateRbacIdentityViewFromProjection('hs_office_relation',
+call rbac.generateRbacIdentityViewFromProjection('hs_office.relation',
     $idName$
-             (select idName from hs_office_person_iv p where p.uuid = anchorUuid)
+             (select idName from hs_office.person_iv p where p.uuid = anchorUuid)
              || '-with-' || target.type || '-'
-             || (select idName from hs_office_person_iv p where p.uuid = holderUuid)
+             || (select idName from hs_office.person_iv p where p.uuid = holderUuid)
     $idName$);
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-office-relation-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-office-relation-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRestrictedView('hs_office_relation',
+call rbac.generateRbacRestrictedView('hs_office.relation',
     $orderBy$
-        (select idName from hs_office_person_iv p where p.uuid = target.holderUuid)
+        (select idName from hs_office.person_iv p where p.uuid = target.holderUuid)
     $orderBy$,
     $updates$
         contactUuid = new.contactUuid

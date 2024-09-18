@@ -19,7 +19,7 @@ begin
 
     raise notice 'creating test bankaccount: %', givenHolder;
     insert
-        into hs_office_bankaccount(uuid, holder, iban, bic)
+        into hs_office.bankaccount(uuid, holder, iban, bic)
         values (uuid_generate_v4(), givenHolder, givenIBAN, givenBIC);
 end; $$;
 --//

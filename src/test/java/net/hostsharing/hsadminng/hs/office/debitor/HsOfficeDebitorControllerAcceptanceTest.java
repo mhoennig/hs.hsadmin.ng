@@ -638,7 +638,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
             RestAssured // @formatter:off
                     .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_office_contact#fourthcontact:ADMIN")
+                    .header("assumed-roles", "hs_office.contact#fourthcontact:ADMIN")
                     .contentType(ContentType.JSON)
                     .body("""
                            {
@@ -651,7 +651,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .then().log().all().assertThat()
                     .statusCode(403)
                     .body("message", containsString("ERROR: [403] Subject"))
-                    .body("message", containsString("is not allowed to update hs_office_debitor uuid "));
+                    .body("message", containsString("is not allowed to update hs_office.debitor uuid "));
 
         }
     }

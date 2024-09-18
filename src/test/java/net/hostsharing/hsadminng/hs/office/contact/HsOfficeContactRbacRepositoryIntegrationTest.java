@@ -103,20 +103,20 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
             final var roles = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(roles)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_office_contact#anothernewcontact:OWNER",
-                    "hs_office_contact#anothernewcontact:ADMIN",
-                    "hs_office_contact#anothernewcontact:REFERRER"
+                    "hs_office.contact#anothernewcontact:OWNER",
+                    "hs_office.contact#anothernewcontact:ADMIN",
+                    "hs_office.contact#anothernewcontact:REFERRER"
             ));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll())).containsExactlyInAnyOrder(Array.fromFormatted(
                     initialGrantNames,
-                    "{ grant role:hs_office_contact#anothernewcontact:OWNER     to role:rbac.global#global:ADMIN                          by system and assume }",
-                    "{ grant perm:hs_office_contact#anothernewcontact:UPDATE    to role:hs_office_contact#anothernewcontact:ADMIN    by system and assume }",
-                    "{ grant role:hs_office_contact#anothernewcontact:OWNER     to user:selfregistered-user-drew@hostsharing.org     by hs_office_contact#anothernewcontact:OWNER and assume }",
-                    "{ grant perm:hs_office_contact#anothernewcontact:DELETE     to role:hs_office_contact#anothernewcontact:OWNER    by system and assume }",
-                    "{ grant role:hs_office_contact#anothernewcontact:ADMIN     to role:hs_office_contact#anothernewcontact:OWNER    by system and assume }",
+                    "{ grant role:hs_office.contact#anothernewcontact:OWNER     to role:rbac.global#global:ADMIN                          by system and assume }",
+                    "{ grant perm:hs_office.contact#anothernewcontact:UPDATE    to role:hs_office.contact#anothernewcontact:ADMIN    by system and assume }",
+                    "{ grant role:hs_office.contact#anothernewcontact:OWNER     to user:selfregistered-user-drew@hostsharing.org     by hs_office.contact#anothernewcontact:OWNER and assume }",
+                    "{ grant perm:hs_office.contact#anothernewcontact:DELETE     to role:hs_office.contact#anothernewcontact:OWNER    by system and assume }",
+                    "{ grant role:hs_office.contact#anothernewcontact:ADMIN     to role:hs_office.contact#anothernewcontact:OWNER    by system and assume }",
 
-                    "{ grant perm:hs_office_contact#anothernewcontact:SELECT    to role:hs_office_contact#anothernewcontact:REFERRER by system and assume }",
-                    "{ grant role:hs_office_contact#anothernewcontact:REFERRER  to role:hs_office_contact#anothernewcontact:ADMIN    by system and assume }"
+                    "{ grant perm:hs_office.contact#anothernewcontact:SELECT    to role:hs_office.contact#anothernewcontact:REFERRER by system and assume }",
+                    "{ grant role:hs_office.contact#anothernewcontact:REFERRER  to role:hs_office.contact#anothernewcontact:ADMIN    by system and assume }"
             ));
         }
 
@@ -258,17 +258,17 @@ class HsOfficeContactRbacRepositoryIntegrationTest extends ContextBasedTestWithC
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'caption'
                     from base.tx_journal_v
-                    where targettable = 'hs_office_contact';
-                    """);
+                    where targettable = 'hs_office.contact';
+                """);
 
         // when
         @SuppressWarnings("unchecked") final List<Object[]> customerLogEntries = query.getResultList();
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating contact test-data, hs_office_contact, INSERT, first contact]",
-                "[creating contact test-data, hs_office_contact, INSERT, second contact]",
-                "[creating contact test-data, hs_office_contact, INSERT, third contact]");
+                "[creating contact test-data, hs_office.contact, INSERT, first contact]",
+                "[creating contact test-data, hs_office.contact, INSERT, second contact]",
+                "[creating contact test-data, hs_office.contact, INSERT, third contact]");
     }
 
     private HsOfficeContactRbacEntity givenSomeTemporaryContact(

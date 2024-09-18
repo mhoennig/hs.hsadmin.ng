@@ -3,28 +3,28 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-item-rbac-OBJECT endDelimiter:--//
+--changeset RbacObjectGenerator:hs-booking-item-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRelatedRbacObject('hs_booking_item');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-item-rbac-ROLE-DESCRIPTORS endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-booking-item-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRoleDescriptors('hsBookingItem', 'hs_booking_item');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-item-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-booking-item-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsBookingItem(
+create or replace procedure hs_booking_item_build_rbac_system(
     NEW hs_booking_item
 )
     language plpgsql as $$
@@ -78,34 +78,34 @@ end; $$;
     AFTER INSERT TRIGGER to create the role+grant structure for a new hs_booking_item row.
  */
 
-create or replace function insertTriggerForHsBookingItem_tf()
+create or replace function hs_booking_item_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsBookingItem(NEW);
+    call hs_booking_item_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsBookingItem_tg
+create trigger build_rbac_system_after_insert_tg
     after insert on hs_booking_item
     for each row
-execute procedure insertTriggerForHsBookingItem_tf();
+execute procedure hs_booking_item_build_rbac_system_after_insert_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-item-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-booking-item-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to global ----------------------------
+-- granting INSERT permission to rbac.global ----------------------------
 
 /*
-    Grants INSERT INTO hs_booking_item permissions to specified role of pre-existing global rows.
+    Grants INSERT INTO hs_booking_item permissions to specified role of pre-existing rbac.global rows.
  */
 do language plpgsql $$
     declare
-        row rbac.global%ROWTYPE;
+        row rbac.global;
     begin
         call base.defineContext('create INSERT INTO hs_booking_item permissions for pre-exising rbac.global rows');
 
@@ -114,15 +114,15 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_booking_item'),
-                        rbac.globalAdmin());
+                        rbac.globalADMIN());
             END LOOP;
     end;
 $$;
 
 /**
-    Grants hs_booking_item INSERT permission to specified role of new rbac.global rows.
+    Grants hs_booking_item INSERT permission to specified role of new global rows.
 */
-create or replace function new_hs_booking_item_grants_insert_to_global_tf()
+create or replace function new_hsbk_item_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -130,16 +130,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_booking_item'),
-            rbac.globalAdmin());
+            rbac.globalADMIN());
     -- end.
     return NEW;
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_booking_item_grants_insert_to_global_tg
+create trigger z_new_hs_booking_item_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure new_hs_booking_item_grants_insert_to_global_tf();
+execute procedure new_hsbk_item_grants_insert_to_global_tf();
 
 -- granting INSERT permission to hs_booking_project ----------------------------
 
@@ -165,7 +165,7 @@ $$;
 /**
     Grants hs_booking_item INSERT permission to specified role of new hs_booking_project rows.
 */
-create or replace function new_hs_booking_item_grants_insert_to_hs_booking_project_tf()
+create or replace function new_hsbk_item_grants_insert_to_hsbk_project_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -179,10 +179,10 @@ begin
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_booking_item_grants_insert_to_hs_booking_project_tg
+create trigger z_new_hs_booking_item_grants_after_insert_tg
     after insert on hs_booking_project
     for each row
-execute procedure new_hs_booking_item_grants_insert_to_hs_booking_project_tf();
+execute procedure new_hsbk_item_grants_insert_to_hsbk_project_tf();
 
 -- granting INSERT permission to hs_booking_item ----------------------------
 
@@ -192,7 +192,7 @@ execute procedure new_hs_booking_item_grants_insert_to_hs_booking_project_tf();
 /**
     Grants hs_booking_item INSERT permission to specified role of new hs_booking_item rows.
 */
-create or replace function new_hs_booking_item_grants_insert_to_hs_booking_item_tf()
+create or replace function new_hsbk_item_grants_insert_to_hsbk_item_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -206,14 +206,14 @@ begin
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_booking_item_grants_insert_to_hs_booking_item_tg
+create trigger z_new_hs_booking_item_grants_after_insert_tg
     after insert on hs_booking_item
     for each row
-execute procedure new_hs_booking_item_grants_insert_to_hs_booking_item_tf();
+execute procedure new_hsbk_item_grants_insert_to_hsbk_item_tf();
 
 
 -- ============================================================================
---changeset michael.hoennig:hs_booking_item-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-booking-item-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -225,7 +225,7 @@ create or replace function hs_booking_item_insert_permission_check_tf()
 declare
     superObjectUuid uuid;
 begin
-    -- check INSERT INSERT if rbac.Global ADMIN
+    -- check INSERT permission if rbac.global ADMIN
     if rbac.isGlobalAdmin() then
         return NEW;
     end if;
@@ -250,7 +250,7 @@ create trigger hs_booking_item_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-item-rbac-IDENTITY-VIEW endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-booking-item-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 call rbac.generateRbacIdentityViewFromProjection('hs_booking_item',
@@ -261,7 +261,7 @@ call rbac.generateRbacIdentityViewFromProjection('hs_booking_item',
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-item-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-booking-item-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_booking_item',
     $orderBy$

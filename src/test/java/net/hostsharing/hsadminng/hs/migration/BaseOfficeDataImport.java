@@ -112,7 +112,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
     @Order(1)
     void verifyInitialDatabase() {
         // SQL DELETE for thousands of records takes too long, so we make sure, we only start with initial or test data
-        final var contactCount = (Integer) em.createNativeQuery("select count(*) from hs_office_contact", Integer.class)
+        final var contactCount = (Integer) em.createNativeQuery("select count(*) from hs_office.contact", Integer.class)
                 .getSingleResult();
         assertThat(contactCount).isLessThan(20);
     }
@@ -614,7 +614,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             contacts.forEach(this::persist);
-           updateLegacyIds(contacts, "hs_office_contact_legacy_id", "contact_id");
+           updateLegacyIds(contacts, "hs_office.contact_legacy_id", "contact_id");
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -640,7 +640,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                 partner.setPartnerRel(em.merge(partner.getPartnerRel()));
                 em.persist(partner);
             });
-            updateLegacyIds(partners, "hs_office_partner_legacy_id", "bp_id");
+            updateLegacyIds(partners, "hs_office.partner_legacy_id", "bp_id");
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
@@ -664,20 +664,20 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             sepaMandates.forEach(this::persist);
-            updateLegacyIds(sepaMandates, "hs_office_sepamandate_legacy_id", "sepa_mandate_id");
+            updateLegacyIds(sepaMandates, "hs_office.sepamandate_legacy_id", "sepa_mandate_id");
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             coopShares.forEach(this::persist);
-            updateLegacyIds(coopShares, "hs_office_coopsharestransaction_legacy_id", "member_share_id");
+            updateLegacyIds(coopShares, "hs_office.coopsharestransaction_legacy_id", "member_share_id");
 
         }).assertSuccessful();
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             coopAssets.forEach(this::persist);
-            updateLegacyIds(coopAssets, "hs_office_coopassetstransaction_legacy_id", "member_asset_id");
+            updateLegacyIds(coopAssets, "hs_office.coopassetstransaction_legacy_id", "member_asset_id");
         }).assertSuccessful();
 
     }
@@ -685,7 +685,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
     @Test
     @Order(9190)
     void verifyMembershipsActuallyPersisted() {
-        final var biCount = (Integer) em.createNativeQuery("select count(*) from hs_office_membership", Integer.class)
+        final var biCount = (Integer) em.createNativeQuery("select count(*) from hs_office.membership", Integer.class)
                 .getSingleResult();
         assertThat(biCount).isGreaterThan(isImportingControlledTestData() ? 5 : 300);
     }

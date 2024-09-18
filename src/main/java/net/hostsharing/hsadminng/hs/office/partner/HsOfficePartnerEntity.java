@@ -36,7 +36,7 @@ import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(name = "hs_office_partner_rv")
+@Table(schema = "hs_office", name = "partner_rv")
 @Getter
 @Setter
 @Builder

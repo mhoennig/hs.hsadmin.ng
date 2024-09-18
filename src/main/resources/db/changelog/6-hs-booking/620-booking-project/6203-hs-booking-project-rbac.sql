@@ -3,45 +3,45 @@
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-project-rbac-OBJECT endDelimiter:--//
+--changeset RbacObjectGenerator:hs-booking-project-rbac-OBJECT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRelatedRbacObject('hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-project-rbac-ROLE-DESCRIPTORS endDelimiter:--//
+--changeset RbacRoleDescriptorsGenerator:hs-booking-project-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRoleDescriptors('hsBookingProject', 'hs_booking_project');
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-project-rbac-insert-trigger endDelimiter:--//
+--changeset RolesGrantsAndPermissionsGenerator:hs-booking-project-rbac-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /*
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForHsBookingProject(
+create or replace procedure hs_booking_project_build_rbac_system(
     NEW hs_booking_project
 )
     language plpgsql as $$
 
 declare
-    newDebitor hs_office_debitor;
-    newDebitorRel hs_office_relation;
+    newDebitor hs_office.debitor;
+    newDebitorRel hs_office.relation;
 
 begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
-    SELECT * FROM hs_office_debitor WHERE uuid = NEW.debitorUuid    INTO newDebitor;
+    SELECT * FROM hs_office.debitor WHERE uuid = NEW.debitorUuid    INTO newDebitor;
     assert newDebitor.uuid is not null, format('newDebitor must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
 
     SELECT debitorRel.*
-        FROM hs_office_relation debitorRel
-        JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+        FROM hs_office.relation debitorRel
+        JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
         INTO newDebitorRel;
     assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
@@ -79,38 +79,38 @@ end; $$;
     AFTER INSERT TRIGGER to create the role+grant structure for a new hs_booking_project row.
  */
 
-create or replace function insertTriggerForHsBookingProject_tf()
+create or replace function hs_booking_project_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForHsBookingProject(NEW);
+    call hs_booking_project_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForHsBookingProject_tg
+create trigger build_rbac_system_after_insert_tg
     after insert on hs_booking_project
     for each row
-execute procedure insertTriggerForHsBookingProject_tf();
+execute procedure hs_booking_project_build_rbac_system_after_insert_tf();
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-project-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-booking-project-rbac-GRANTING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
--- granting INSERT permission to hs_office_relation ----------------------------
+-- granting INSERT permission to hs_office.relation ----------------------------
 
 /*
-    Grants INSERT INTO hs_booking_project permissions to specified role of pre-existing hs_office_relation rows.
+    Grants INSERT INTO hs_booking_project permissions to specified role of pre-existing hs_office.relation rows.
  */
 do language plpgsql $$
     declare
-        row hs_office_relation;
+        row hs_office.relation;
     begin
-        call base.defineContext('create INSERT INTO hs_booking_project permissions for pre-exising hs_office_relation rows');
+        call base.defineContext('create INSERT INTO hs_booking_project permissions for pre-exising hs_office.relation rows');
 
-        FOR row IN SELECT * FROM hs_office_relation
+        FOR row IN SELECT * FROM hs_office.relation
             WHERE type = 'DEBITOR'
             LOOP
                 call rbac.grantPermissionToRole(
@@ -121,9 +121,9 @@ do language plpgsql $$
 $$;
 
 /**
-    Grants hs_booking_project INSERT permission to specified role of new hs_office_relation rows.
+    Grants hs_booking_project INSERT permission to specified role of new relation rows.
 */
-create or replace function new_hs_booking_project_grants_insert_to_hs_office_relation_tf()
+create or replace function new_hsbk_project_grants_insert_to_relation_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -137,14 +137,14 @@ begin
 end; $$;
 
 -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_hs_booking_project_grants_insert_to_hs_office_relation_tg
-    after insert on hs_office_relation
+create trigger z_new_hs_booking_project_grants_after_insert_tg
+    after insert on hs_office.relation
     for each row
-execute procedure new_hs_booking_project_grants_insert_to_hs_office_relation_tf();
+execute procedure new_hsbk_project_grants_insert_to_relation_tf();
 
 
 -- ============================================================================
---changeset michael.hoennig:hs_booking_project-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
+--changeset InsertTriggerGenerator:hs-booking-project-rbac-CHECKING-INSERT-PERMISSION endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 /**
@@ -158,8 +158,8 @@ declare
 begin
     -- check INSERT permission via indirect foreign key: NEW.debitorUuid
     superObjectUuid := (SELECT debitorRel.uuid
-        FROM hs_office_relation debitorRel
-        JOIN hs_office_debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
+        FROM hs_office.relation debitorRel
+        JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
     );
     assert superObjectUuid is not null, 'object uuid fetched depending on hs_booking_project.debitorUuid must not be null, also check fetchSql in RBAC DSL';
@@ -179,20 +179,20 @@ create trigger hs_booking_project_insert_permission_check_tg
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-project-rbac-IDENTITY-VIEW endDelimiter:--//
+--changeset RbacIdentityViewGenerator:hs-booking-project-rbac-IDENTITY-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
 call rbac.generateRbacIdentityViewFromQuery('hs_booking_project',
     $idName$
         SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || base.cleanIdentifier(bookingProject.caption) as idName
             FROM hs_booking_project bookingProject
-            JOIN hs_office_debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
+            JOIN hs_office.debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
     $idName$);
 --//
 
 
 -- ============================================================================
---changeset michael.hoennig:hs-booking-project-rbac-RESTRICTED-VIEW endDelimiter:--//
+--changeset RbacRestrictedViewGenerator:hs-booking-project-rbac-RESTRICTED-VIEW endDelimiter:--//
 -- ----------------------------------------------------------------------------
 call rbac.generateRbacRestrictedView('hs_booking_project',
     $orderBy$

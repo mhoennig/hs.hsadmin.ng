@@ -27,7 +27,7 @@ begin
 
     raise notice 'creating test person: % by %', fullName, emailAddr;
     insert
-        into hs_office_person (persontype, tradename, givenname, familyname)
+        into hs_office.person (persontype, tradename, givenname, familyname)
         values (newPersonType, newTradeName, newGivenName, newFamilyName);
 end; $$;
 --//

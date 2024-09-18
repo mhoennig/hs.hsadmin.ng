@@ -12,7 +12,6 @@ import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
@@ -983,10 +982,10 @@ public class RbacView {
 
         String getRawTableShortName() {
             // TODO.impl: some combined function and trigger names are too long
-            // maybe we should shorten the table name e.g. hs_office_coopsharestransaction -> hsof.coopsharetx
+            // maybe we should shorten the table name e.g. hs_office.coopsharestransaction -> hsof.coopsharetx
             // this is just a workaround:
             return getRawTableName()
-                    .replace("hs_office_", "hsof_")
+                    .replace("hs_office.", "hsof.")
                     .replace("hs_booking_", "hsbk_")
                     .replace("hs_hosting_", "hsho_")
                     .replace("coopsharestransaction", "coopsharetx")
@@ -1274,13 +1273,14 @@ public class RbacView {
 
     public static Set<Class<? extends BaseEntity>> findRbacEntityClasses(String packageName) {
         final var reflections = new Reflections(packageName, TypeAnnotationsScanner.class);
-        return reflections.getTypesAnnotatedWith(Entity.class).stream()
-                .filter(c -> stream(c.getInterfaces()).anyMatch(i -> i== BaseEntity.class))
+        final Set<Class<? extends BaseEntity>> rbacEntityClasses = reflections.getTypesAnnotatedWith(Entity.class).stream()
+                .filter(BaseEntity.class::isAssignableFrom)
                 .filter(c -> stream(c.getDeclaredMethods())
-                        .anyMatch(m -> m.getName().equals("rbac") && Modifier.isStatic(m.getModifiers()))
+                        .anyMatch(m -> m.getName().equals("rbac") && isStatic(m.getModifiers()))
                 )
                 .map(RbacView::castToSubclassOfBaseEntity)
                 .collect(Collectors.toSet());
+        return rbacEntityClasses;
     }
 
     @SuppressWarnings("unchecked")

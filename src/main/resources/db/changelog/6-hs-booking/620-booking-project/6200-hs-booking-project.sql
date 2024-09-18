@@ -8,7 +8,7 @@ create table if not exists hs_booking_project
 (
     uuid                uuid unique references rbac.object (uuid),
     version             int not null default 0,
-    debitorUuid         uuid not null references hs_office_debitor(uuid),
+    debitorUuid         uuid not null references hs_office.debitor(uuid),
     caption             varchar(80) not null
 );
 --//

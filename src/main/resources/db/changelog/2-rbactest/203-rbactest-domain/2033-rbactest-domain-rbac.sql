@@ -24,7 +24,7 @@ call rbac.generateRbacRoleDescriptors('testDomain', 'rbactest.domain');
     Creates the roles, grants and permission for the AFTER INSERT TRIGGER.
  */
 
-create or replace procedure buildRbacSystemForTestDomain(
+create or replace procedure rbactest.domain_build_rbac_system(
     NEW rbactest.domain
 )
     language plpgsql as $$
@@ -60,19 +60,19 @@ end; $$;
     AFTER INSERT TRIGGER to create the role+grant structure for a new rbactest.domain row.
  */
 
-create or replace function insertTriggerForTestDomain_tf()
+create or replace function rbactest.domain_build_rbac_system_after_insert_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call buildRbacSystemForTestDomain(NEW);
+    call rbactest.domain_build_rbac_system(NEW);
     return NEW;
 end; $$;
 
-create trigger insertTriggerForTestDomain_tg
+create trigger build_rbac_system_after_insert_tg
     after insert on rbactest.domain
     for each row
-execute procedure insertTriggerForTestDomain_tf();
+execute procedure rbactest.domain_build_rbac_system_after_insert_tf();
 --//
 
 
@@ -84,7 +84,7 @@ execute procedure insertTriggerForTestDomain_tf();
     Called from the AFTER UPDATE TRIGGER to re-wire the grants.
  */
 
-create or replace procedure updateRbacRulesForTestDomain(
+create or replace procedure rbactest.domain_update_rbac_system(
     OLD rbactest.domain,
     NEW rbactest.domain
 )
@@ -121,22 +121,22 @@ begin
 end; $$;
 
 /*
-    AFTER INSERT TRIGGER to re-wire the grant structure for a new rbactest.domain row.
+    AFTER UPDATE TRIGGER to re-wire the grant structure for a new rbactest.domain row.
  */
 
-create or replace function updateTriggerForTestDomain_tf()
+create or replace function rbactest.domain_update_rbac_system_after_update_tf()
     returns trigger
     language plpgsql
     strict as $$
 begin
-    call updateRbacRulesForTestDomain(OLD, NEW);
+    call rbactest.domain_update_rbac_system(OLD, NEW);
     return NEW;
 end; $$;
 
-create trigger updateTriggerForTestDomain_tg
+create trigger update_rbac_system_after_update_tg
     after update on rbactest.domain
     for each row
-execute procedure updateTriggerForTestDomain_tf();
+execute procedure rbactest.domain_update_rbac_system_after_update_tf();
 --//
 
 
