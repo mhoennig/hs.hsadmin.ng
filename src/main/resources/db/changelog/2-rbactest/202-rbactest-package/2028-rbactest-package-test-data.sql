@@ -6,7 +6,7 @@
 /*
     Creates the given number of test packages for the given customer.
  */
-create or replace procedure createPackageTestData(customerPrefix varchar, pacCount int)
+create or replace procedure rbactest.package_create_test_data(customerPrefix varchar, pacCount int)
     language plpgsql as $$
 declare
     cust          rbactest.customer;
@@ -30,8 +30,8 @@ begin
                 returning * into pac;
 
             call rbac.grantRoleToSubject(
-                    rbac.getRoleId(testCustomerAdmin(cust)),
-                    rbac.findRoleId(testPackageAdmin(pac)),
+                    rbac.getRoleId(rbactest.customer_ADMIN(cust)),
+                    rbac.findRoleId(rbactest.package_ADMIN(pac)),
                     rbac.create_subject('pac-admin-' || pacName || '@' || cust.prefix || '.example.com'),
                     true);
 
@@ -41,7 +41,7 @@ end; $$;
 /*
     Creates a range of test packages for mass data generation.
  */
-create or replace procedure createPackageTestData()
+create or replace procedure rbactest.package_create_test_data()
     language plpgsql as $$
 declare
     cust rbactest.customer;
@@ -49,7 +49,7 @@ begin
     for cust in (select * from rbactest.customer)
         loop
             continue when cust.reference >= 90000; -- reserved for functional testing
-            call createPackageTestData(cust.prefix, 3);
+            call rbactest.package_create_test_data(cust.prefix, 3);
         end loop;
 
     commit;
@@ -64,9 +64,9 @@ $$;
 
 do language plpgsql $$
     begin
-        call createPackageTestData('xxx', 3);
-        call createPackageTestData('yyy', 3);
-        call createPackageTestData('zzz', 3);
+        call rbactest.package_create_test_data('xxx', 3);
+        call rbactest.package_create_test_data('yyy', 3);
+        call rbactest.package_create_test_data('zzz', 3);
     end;
 $$;
 --//

@@ -677,7 +677,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             coopAssets.forEach(this::persist);
-            updateLegacyIds(coopAssets, "hs_office.coopassetstransaction_legacy_id", "member_asset_id");
+            updateLegacyIds(coopAssets, "hs_office.coopassettx_legacy_id", "member_asset_id");
         }).assertSuccessful();
 
     }

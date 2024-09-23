@@ -111,8 +111,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     .map(s -> s.replace("hs_office.", ""))
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
-                            "{ grant perm:coopsharestransaction#temprefB:SELECT to role:membership#M-1000101:AGENT by system and assume }",
-                            "{ grant perm:coopsharestransaction#temprefB:UPDATE to role:membership#M-1000101:ADMIN by system and assume }",
+                            "{ grant perm:coopsharetx#temprefB:SELECT to role:membership#M-1000101:AGENT by system and assume }",
+                            "{ grant perm:coopsharetx#temprefB:UPDATE to role:membership#M-1000101:ADMIN by system and assume }",
                             null));
         }
 
@@ -221,7 +221,7 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'reference'
                     from base.tx_journal_v
-                    where targettable = 'hs_office.coopsharestransaction';
+                    where targettable = 'hs_office.coopsharetx';
                     """);
 
         // when
@@ -229,18 +229,18 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-1]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-2]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-3]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000101-4]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-1]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-2]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-3]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000202-4]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-1]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-2]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-3]",
-                "[creating coopSharesTransaction test-data, hs_office.coopsharestransaction, INSERT, ref 1000303-4]");
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000101-1]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000101-2]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000101-3]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000101-4]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000202-1]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000202-2]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000202-3]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000202-4]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000303-1]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000303-2]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000303-3]",
+                "[creating coopSharesTransaction test-data, hs_office.coopsharetx, INSERT, ref 1000303-4]");
     }
 
     @BeforeEach

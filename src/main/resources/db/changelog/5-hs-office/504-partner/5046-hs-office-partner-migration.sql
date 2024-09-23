@@ -48,7 +48,7 @@ INSERT INTO hs_office.partner_legacy_id(uuid, bp_id)
 -- ============================================================================
 --changeset michael.hoennig:hs-office-partner-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function insertPartnerLegacyIdMapping()
+create or replace function hs_office.partner_insert_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -63,17 +63,17 @@ begin
     return NEW;
 end; $$;
 
-create trigger createPartnerLegacyIdMapping
+create trigger insert_legacy_id_mapping_tf
     after insert on hs_office.partner
         for each row
-            execute procedure insertPartnerLegacyIdMapping();
+            execute procedure hs_office.partner_insert_legacy_id_mapping_tf();
 --/
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-partner-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function deletePartnerLegacyIdMapping()
+create or replace function hs_office.partner_delete_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -88,8 +88,8 @@ begin
     return OLD;
 end; $$;
 
-create trigger removePartnerLegacyIdMapping
+create trigger delete_legacy_id_mapping_tg
     before delete on hs_office.partner
     for each row
-        execute procedure deletePartnerLegacyIdMapping();
+        execute procedure hs_office.partner_delete_legacy_id_mapping_tf();
 --/

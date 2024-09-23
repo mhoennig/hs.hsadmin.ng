@@ -168,45 +168,6 @@ begin
     return cleanIdentifier;
 end; $$;
 
-create or replace function base.findObjectUuidByIdName(objectTable varchar, objectIdName varchar)
-    returns uuid
-    returns null on null input
-    language plpgsql as $$
-declare
-    sql  varchar;
-    uuid uuid;
-begin
-    objectTable := base.pureIdentifier(objectTable);
-    objectIdName := base.pureIdentifier(objectIdName);
-    sql := format('select * from %sUuidByIdName(%L);', objectTable, objectIdName);
-    begin
-        execute sql into uuid;
-    exception
-        when others then
-            raise exception 'function %UuidByIdName(...) not found, add identity view support for table %', objectTable, objectTable;
-    end;
-    return uuid;
-end ; $$;
-
-create or replace function base.findIdNameByObjectUuid(objectTable varchar, objectUuid uuid)
-    returns varchar
-    returns null on null input
-    language plpgsql as $$
-declare
-    sql    varchar;
-    idName varchar;
-begin
-    objectTable := base.pureIdentifier(objectTable);
-    sql := format('select * from %sIdNameByUuid(%L::uuid);', objectTable, objectUuid);
-    begin
-        execute sql into idName;
-    exception
-        when others then
-            raise exception 'function %IdNameByUuid(...) not found, add identity view support for table %', objectTable, objectTable;
-    end;
-    return idName;
-end ; $$;
-
 create or replace function base.currentSubjects()
     returns varchar(1023)[]
     stable -- leakproof

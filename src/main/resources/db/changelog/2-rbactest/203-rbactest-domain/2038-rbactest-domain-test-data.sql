@@ -6,7 +6,7 @@
 /*
     Creates the given count of test unix users for a single package.
  */
-create or replace procedure createdomainTestData( packageName varchar, domainCount int )
+create or replace procedure rbactest.domain_create_test_data( packageName varchar, domainCount int )
     language plpgsql as $$
 declare
     pac         record;
@@ -32,12 +32,10 @@ end; $$;
 /*
     Creates a range of unix users for mass data generation.
  */
-create or replace procedure createdomainTestData( domainPerPackage integer )
+create or replace procedure rbactest.domain_create_test_data( domainPerPackage integer )
     language plpgsql as $$
 declare
     pac         record;
-    pacAdmin    varchar;
-    currentTask varchar;
 begin
     for pac in
         (select p.uuid, p.name
@@ -45,7 +43,7 @@ begin
                       join rbactest.customer c on p.customeruuid = c.uuid
              where c.reference < 90000) -- reserved for functional testing
         loop
-            call createdomainTestData(pac.name, 2);
+            call rbactest.domain_create_test_data(pac.name, 2);
             commit;
         end loop;
 
@@ -59,17 +57,17 @@ end; $$;
 
 do language plpgsql $$
     begin
-        call createdomainTestData('xxx00', 2);
-        call createdomainTestData('xxx01', 2);
-        call createdomainTestData('xxx02', 2);
+        call rbactest.domain_create_test_data('xxx00', 2);
+        call rbactest.domain_create_test_data('xxx01', 2);
+        call rbactest.domain_create_test_data('xxx02', 2);
 
-        call createdomainTestData('yyy00', 2);
-        call createdomainTestData('yyy01', 2);
-        call createdomainTestData('yyy02', 2);
+        call rbactest.domain_create_test_data('yyy00', 2);
+        call rbactest.domain_create_test_data('yyy01', 2);
+        call rbactest.domain_create_test_data('yyy02', 2);
 
-        call createdomainTestData('zzz00', 2);
-        call createdomainTestData('zzz01', 2);
-        call createdomainTestData('zzz02', 2);
+        call rbactest.domain_create_test_data('zzz00', 2);
+        call rbactest.domain_create_test_data('zzz01', 2);
+        call rbactest.domain_create_test_data('zzz02', 2);
     end;
 $$;
 --//

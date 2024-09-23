@@ -168,7 +168,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "person-TuckerJack@example.com")
-                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:AGENT")
+                    .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/projects/" + givenBookingProjectUuid)

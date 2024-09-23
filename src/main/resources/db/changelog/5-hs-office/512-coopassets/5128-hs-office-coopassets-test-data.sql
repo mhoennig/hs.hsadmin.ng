@@ -8,7 +8,7 @@
 /*
     Creates a single coopAssetsTransaction test record.
  */
-create or replace procedure createHsOfficeCoopAssetsTransactionTestData(
+create or replace procedure hs_office.coopassettx_create_test_data(
     givenPartnerNumber numeric,
     givenMemberNumberSuffix char(2)
     )
@@ -27,7 +27,7 @@ begin
     raise notice 'creating test coopAssetsTransaction: %', givenPartnerNumber || givenMemberNumberSuffix;
     lossEntryUuid := uuid_generate_v4();
     insert
-        into hs_office.coopassetstransaction(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, adjustedAssetTxUuid)
+        into hs_office.coopassettx(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, adjustedAssetTxUuid)
         values
             (uuid_generate_v4(),  membership.uuid, 'DEPOSIT',    '2010-03-15',  320.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-1', 'initial deposit', null),
             (uuid_generate_v4(),  membership.uuid, 'DISBURSAL',  '2021-09-01', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-2', 'partial disbursal', null),
@@ -46,8 +46,8 @@ do language plpgsql $$
         call base.defineContext('creating coopAssetsTransaction test-data');
         SET CONSTRAINTS ALL DEFERRED;
 
-        call createHsOfficeCoopAssetsTransactionTestData(10001, '01');
-        call createHsOfficeCoopAssetsTransactionTestData(10002, '02');
-        call createHsOfficeCoopAssetsTransactionTestData(10003, '03');
+        call hs_office.coopassettx_create_test_data(10001, '01');
+        call hs_office.coopassettx_create_test_data(10002, '02');
+        call hs_office.coopassettx_create_test_data(10003, '03');
     end;
 $$;

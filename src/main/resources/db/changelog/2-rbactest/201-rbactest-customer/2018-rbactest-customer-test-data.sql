@@ -7,7 +7,7 @@
 /*
     Generates a customer reference number for a given test data counter.
  */
-create or replace function testCustomerReference(customerCount integer)
+create or replace function rbactest.customer_create_test_data(customerCount integer)
     returns integer
     returns null on null input
     language plpgsql as $$
@@ -19,7 +19,7 @@ end; $$;
 /*
     Creates a single customer test record with dist.
  */
-create or replace procedure createTestCustomerTestData(
+create or replace procedure rbactest.customer_create_test_data(
     custReference integer,
     custPrefix    varchar
 )
@@ -41,8 +41,8 @@ begin
     select * into newCust
              from rbactest.customer where reference=custReference;
     call rbac.grantRoleToSubject(
-            rbac.getRoleId(testCustomerOwner(newCust)),
-            rbac.getRoleId(testCustomerAdmin(newCust)),
+            rbac.getRoleId(rbactest.customer_OWNER(newCust)),
+            rbac.getRoleId(rbactest.customer_ADMIN(newCust)),
             custAdminUuid,
             true);
 end; $$;
@@ -51,7 +51,7 @@ end; $$;
 /*
     Creates a range of test customers for mass data generation.
  */
-create or replace procedure createTestCustomerTestData(
+create or replace procedure rbactest.customer_create_test_data(
     startCount integer,  -- count of auto generated rows before the run
     endCount integer     -- count of auto generated rows after the run
 )
@@ -59,7 +59,7 @@ create or replace procedure createTestCustomerTestData(
 begin
     for t in startCount..endCount
         loop
-            call createTestCustomerTestData(testCustomerReference(t), base.intToVarChar(t, 3));
+            call rbactest.customer_create_test_data(rbactest.testCustomerReference(t), base.intToVarChar(t, 3));
             commit;
         end loop;
 end; $$;
@@ -74,9 +74,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating RBAC test customer', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createTestCustomerTestData(99901, 'xxx');
-        call createTestCustomerTestData(99902, 'yyy');
-        call createTestCustomerTestData(99903, 'zzz');
+        call rbactest.customer_create_test_data(99901, 'xxx');
+        call rbactest.customer_create_test_data(99902, 'yyy');
+        call rbactest.customer_create_test_data(99903, 'zzz');
     end;
 $$;
 --//

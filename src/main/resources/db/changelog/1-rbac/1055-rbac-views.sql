@@ -13,7 +13,7 @@ select (objectTable || '#' || objectIdName || ':' || roleType) as roleIdName, *
        -- @formatter:off
     from (
              select r.*,
-                    o.objectTable, base.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                    o.objectTable, rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
                  from rbac.role as r
                           join rbac.object as o on o.uuid = r.objectuuid
          ) as unordered
@@ -34,7 +34,7 @@ select *
        -- @formatter:off
         from (
             select r.*, o.objectTable,
-                   base.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                   rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
                 from rbac.role as r
                 join rbac.object as o on o.uuid = r.objectuuid
                 where rbac.isGranted(rbac.currentSubjectOrAssumedRolesUuids(), r.uuid)
@@ -57,7 +57,7 @@ create or replace view rbac.grants_ev as
     -- @formatter:off
     select x.grantUuid as uuid,
            x.grantedByTriggerOf as grantedByTriggerOf,
-           go.objectTable || '#' || base.findIdNameByObjectUuid(go.objectTable, go.uuid) || ':' || r.roletype as grantedByRoleIdName,
+           go.objectTable || '#' || rbac.findIdNameByObjectUuid(go.objectTable, go.uuid) || ':' || r.roletype as grantedByRoleIdName,
            x.ascendingIdName as ascendantIdName,
            x.descendingIdName as descendantIdName,
            x.grantedByRoleUuid,
@@ -72,15 +72,15 @@ create or replace view rbac.grants_ev as
 
                     coalesce(
                         'user:' || au.name,
-                        'role:' || aro.objectTable || '#' || base.findIdNameByObjectUuid(aro.objectTable, aro.uuid) || ':' || ar.roletype
+                        'role:' || aro.objectTable || '#' || rbac.findIdNameByObjectUuid(aro.objectTable, aro.uuid) || ':' || ar.roletype
                         ) as ascendingIdName,
                     aro.objectTable, aro.uuid,
                     ( case
                             when dro is not null
-                                then ('role:' || dro.objectTable || '#' || base.findIdNameByObjectUuid(dro.objectTable, dro.uuid) || ':' || dr.roletype)
+                                then ('role:' || dro.objectTable || '#' || rbac.findIdNameByObjectUuid(dro.objectTable, dro.uuid) || ':' || dr.roletype)
                             when dp.op = 'INSERT'
-                                then 'perm:' || dpo.objecttable || '#' || base.findIdNameByObjectUuid(dpo.objectTable, dpo.uuid) || ':'  || dp.op || '>' || dp.opTableName
-                            else 'perm:' || dpo.objecttable || '#' || base.findIdNameByObjectUuid(dpo.objectTable, dpo.uuid) || ':' || dp.op
+                                then 'perm:' || dpo.objecttable || '#' || rbac.findIdNameByObjectUuid(dpo.objectTable, dpo.uuid) || ':'  || dp.op || '>' || dp.opTableName
+                            else 'perm:' || dpo.objecttable || '#' || rbac.findIdNameByObjectUuid(dpo.objectTable, dpo.uuid) || ':' || dp.op
                         end
                     ) as descendingIdName,
                     dro.objectTable, dro.uuid,
@@ -114,14 +114,14 @@ create or replace view rbac.grants_ev as
  */
 create or replace view rbac.grants_rv as
 -- @formatter:off
-select o.objectTable || '#' || base.findIdNameByObjectUuid(o.objectTable, o.uuid) || ':' || r.roletype as grantedByRoleIdName,
+select o.objectTable || '#' || rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) || ':' || r.roletype as grantedByRoleIdName,
        g.objectTable || '#' || g.objectIdName || ':' || g.roletype as grantedRoleIdName, g.userName, g.assumed,
        g.grantedByRoleUuid, g.descendantUuid as grantedRoleUuid, g.ascendantUuid as subjectUuid,
        g.objectTable, g.objectUuid, g.objectIdName, g.roleType as grantedRoleType
     from (
              select g.grantedbyroleuuid, g.ascendantuuid, g.descendantuuid, g.assumed,
                     u.name as userName, o.objecttable, r.objectuuid, r.roletype,
-                    base.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
+                    rbac.findIdNameByObjectUuid(o.objectTable, o.uuid) as objectIdName
                  from rbac.grants as g
                           join rbac.role as r on r.uuid = g.descendantUuid
                           join rbac.object o on o.uuid = r.objectuuid
@@ -363,10 +363,10 @@ begin
         xp.permissionObjectTable, xp.permissionObjectIdName, xp.permissionObjectUuid
         from (select
                   r.uuid as roleUuid, r.roletype, ro.objectTable as roleObjectTable,
-                  base.findIdNameByObjectUuid(ro.objectTable, ro.uuid) as roleObjectIdName,
+                  rbac.findIdNameByObjectUuid(ro.objectTable, ro.uuid) as roleObjectIdName,
                   p.uuid as permissionUuid, p.op, p.opTableName,
                   po.objecttable as permissionObjectTable,
-                  base.findIdNameByObjectUuid(po.objectTable, po.uuid) as permissionObjectIdName,
+                  rbac.findIdNameByObjectUuid(po.objectTable, po.uuid) as permissionObjectIdName,
                   po.uuid as permissionObjectUuid
               from rbac.queryPermissionsGrantedToSubjectId( targetSubjectUuid) as p
               join rbac.grants as g on g.descendantUuid = p.uuid

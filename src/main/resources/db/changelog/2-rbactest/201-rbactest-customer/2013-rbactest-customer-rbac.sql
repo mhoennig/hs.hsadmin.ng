@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('rbactest.customer');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:rbactest-customer-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('testCustomer', 'rbactest.customer');
+call rbac.generateRbacRoleDescriptors('rbactest.customer');
 --//
 
 
@@ -35,22 +35,22 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     perform rbac.defineRoleWithGrants(
-        testCustomerOWNER(NEW),
+        rbactest.customer_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.globalADMIN(rbac.unassumed())],
+            incomingSuperRoles => array[rbac.global_ADMIN(rbac.unassumed())],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
     perform rbac.defineRoleWithGrants(
-        testCustomerADMIN(NEW),
+        rbactest.customer_ADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[testCustomerOWNER(NEW)]
+            incomingSuperRoles => array[rbactest.customer_OWNER(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        testCustomerTENANT(NEW),
+        rbactest.customer_TENANT(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[testCustomerADMIN(NEW)]
+            incomingSuperRoles => array[rbactest.customer_ADMIN(NEW)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
@@ -96,7 +96,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'rbactest.customer'),
-                        rbac.globalADMIN());
+                        rbac.global_ADMIN());
             END LOOP;
     end;
 $$;
@@ -104,7 +104,7 @@ $$;
 /**
     Grants rbactest.customer INSERT permission to specified role of new global rows.
 */
-create or replace function rbactest.new_customer_grants_insert_to_global_tf()
+create or replace function rbactest.customer_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -112,16 +112,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'rbactest.customer'),
-            rbac.globalADMIN());
+            rbac.global_ADMIN());
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_customer_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger customer_z_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure rbactest.new_customer_grants_insert_to_global_tf();
+execute procedure rbactest.customer_grants_insert_to_global_tf();
 
 
 -- ============================================================================

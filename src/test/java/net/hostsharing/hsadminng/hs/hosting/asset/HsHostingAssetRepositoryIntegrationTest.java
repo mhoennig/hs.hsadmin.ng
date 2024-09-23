@@ -78,7 +78,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         final var query = em.createNativeQuery("""
                 select currentTask, targetTable, targetOp, targetdelta->>'caption'
                     from base.tx_journal_v
-                    where targettable = 'hs_hosting_asset';
+                    where targettable = 'hs_hosting.asset';
                 """);
 
         // when
@@ -86,24 +86,24 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
         // then
         assertThat(customerLogEntries).map(Arrays::toString).contains(
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, another CloudServer]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some Domain-DNS-Setup]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some Domain-HTTP-Setup]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some Domain-MBOX-Setup]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some Domain-SMTP-Setup]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some Domain-Setup]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some E-Mail-Address]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some E-Mail-Alias]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some ManagedServer]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some UnixUser for E-Mail]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some UnixUser for Website]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some Webspace]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some default MariaDB instance]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some default MariaDB user]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some default MariaDB database]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some default Postgresql instance]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some default Postgresql user]",
-                "[creating hosting-asset test-data, hs_hosting_asset, INSERT, some default Postgresql database]"
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, another CloudServer]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some Domain-DNS-Setup]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some Domain-HTTP-Setup]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some Domain-MBOX-Setup]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some Domain-SMTP-Setup]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some Domain-Setup]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some E-Mail-Address]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some E-Mail-Alias]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some ManagedServer]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some UnixUser for E-Mail]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some UnixUser for Website]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some Webspace]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some default MariaDB instance]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some default MariaDB user]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some default MariaDB database]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some default Postgresql instance]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some default Postgresql user]",
+                "[creating hosting-asset test-data, hs_hosting.asset, INSERT, some default Postgresql database]"
         );
     }
 
@@ -112,7 +112,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         // given
         final String nativeQuerySql = """
                 select count(*)
-                    from hs_hosting_asset_hv ha;
+                    from hs_hosting.asset_hv ha;
                 """;
 
         // when
@@ -121,7 +121,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @SuppressWarnings("unchecked") final var countBefore = (Integer) query.getSingleResult();
 
         // then
-        assertThat(countBefore).as("hs_hosting_asset_hv should not contain rows for a timestamp in the past").isEqualTo(0);
+        assertThat(countBefore).as("hs_hosting.asset_hv should not contain rows for a timestamp in the past").isEqualTo(0);
 
         // and when
         historicalContext(Timestamp.from(ZonedDateTime.now().plusHours(1).toInstant()));
@@ -129,7 +129,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @SuppressWarnings("unchecked") final var countAfter = (Integer) query.getSingleResult();
 
         // then
-        assertThat(countAfter).as("hs_hosting_asset_hv should contain rows for a timestamp in the future").isGreaterThan(1);
+        assertThat(countAfter).as("hs_hosting.asset_hv should contain rows for a timestamp in the future").isGreaterThan(1);
     }
 
     @Nested
@@ -167,7 +167,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         public void createsAndGrantsRoles() {
             // given
             // TODO.test: remove context(...) once all entities have real entities
-            context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
+            context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
             final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
             em.flush();
@@ -175,7 +175,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var initialGrantNames = distinctGrantDisplaysOf(rawGrantRepo.findAll());
 
             // when
-            context("superuser-alex@hostsharing.net", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
+            context("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var result = attempt(em, () -> {
                 final var newAsset = HsHostingAssetRbacEntity.builder()
                         .bookingItem(newWebspaceBookingItem)
@@ -192,37 +192,37 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             final var all = rawRoleRepo.findAll();
             assertThat(distinctRoleNamesOf(all)).containsExactlyInAnyOrder(Array.from(
                     initialRoleNames,
-                    "hs_hosting_asset#fir00:ADMIN",
-                    "hs_hosting_asset#fir00:AGENT",
-                    "hs_hosting_asset#fir00:OWNER",
-                    "hs_hosting_asset#fir00:TENANT"));
+                    "hs_hosting.asset#fir00:ADMIN",
+                    "hs_hosting.asset#fir00:AGENT",
+                    "hs_hosting.asset#fir00:OWNER",
+                    "hs_hosting.asset#fir00:TENANT"));
             assertThat(distinctGrantDisplaysOf(rawGrantRepo.findAll()))
                     .containsExactlyInAnyOrder(fromFormatted(
                             initialGrantNames,
 
                             // rbac.global-admin
-                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:rbac.global#global:ADMIN by system }", // workaround
+                            "{ grant role:hs_hosting.asset#fir00:OWNER to role:rbac.global#global:ADMIN by system }", // workaround
 
                             // owner
-                            "{ grant role:hs_hosting_asset#fir00:OWNER to user:superuser-alex@hostsharing.net by hs_hosting_asset#fir00:OWNER and assume }",
-                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_booking_item#fir01:ADMIN by system and assume }",
-                            "{ grant role:hs_hosting_asset#fir00:OWNER to role:hs_hosting_asset#vm1011:ADMIN by system and assume }",
-                            "{ grant perm:hs_hosting_asset#fir00:DELETE to role:hs_hosting_asset#fir00:OWNER by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:OWNER to user:superuser-alex@hostsharing.net by hs_hosting.asset#fir00:OWNER and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:OWNER to role:hs_booking.item#fir01:ADMIN by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:OWNER to role:hs_hosting.asset#vm1011:ADMIN by system and assume }",
+                            "{ grant perm:hs_hosting.asset#fir00:DELETE to role:hs_hosting.asset#fir00:OWNER by system and assume }",
 
                             // admin
-                            "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_hosting_asset#fir00:OWNER by system and assume }",
-                            "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_booking_item#fir01:AGENT by system and assume }",
-                            "{ grant perm:hs_hosting_asset#fir00:UPDATE to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:ADMIN to role:hs_hosting.asset#fir00:OWNER by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:ADMIN to role:hs_booking.item#fir01:AGENT by system and assume }",
+                            "{ grant perm:hs_hosting.asset#fir00:UPDATE to role:hs_hosting.asset#fir00:ADMIN by system and assume }",
 
                             // agent
-                            "{ grant role:hs_hosting_asset#fir00:ADMIN to role:hs_hosting_asset#vm1011:AGENT by system and assume }",
-                            "{ grant role:hs_hosting_asset#fir00:AGENT to role:hs_hosting_asset#fir00:ADMIN by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:ADMIN to role:hs_hosting.asset#vm1011:AGENT by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:AGENT to role:hs_hosting.asset#fir00:ADMIN by system and assume }",
 
                             // tenant
-                            "{ grant role:hs_booking_item#fir01:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
-                            "{ grant role:hs_hosting_asset#fir00:TENANT to role:hs_hosting_asset#fir00:AGENT by system and assume }",
-                            "{ grant role:hs_hosting_asset#vm1011:TENANT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
-                            "{ grant perm:hs_hosting_asset#fir00:SELECT to role:hs_hosting_asset#fir00:TENANT by system and assume }",
+                            "{ grant role:hs_booking.item#fir01:TENANT to role:hs_hosting.asset#fir00:TENANT by system and assume }",
+                            "{ grant role:hs_hosting.asset#fir00:TENANT to role:hs_hosting.asset#fir00:AGENT by system and assume }",
+                            "{ grant role:hs_hosting.asset#vm1011:TENANT to role:hs_hosting.asset#fir00:TENANT by system and assume }",
+                            "{ grant perm:hs_hosting.asset#fir00:SELECT to role:hs_hosting.asset#fir00:TENANT by system and assume }",
 
                             null));
         }
@@ -251,7 +251,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             assertThatAssetIsPersisted(result.returnedValue());
 
             // ... a rbac.global admin can see the new domain setup as well if the domain OWNER role is assumed
-            context("superuser-alex@hostsharing.net", "hs_hosting_asset#example.net:OWNER"); // only works with the assumed role
+            context("superuser-alex@hostsharing.net", "hs_hosting.asset#example.net:OWNER"); // only works with the assumed role
             assertThatAssetIsPersisted(result.returnedValue());
         }
 
@@ -287,7 +287,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
         @Test
         public void normalUser_canViewOnlyRelatedAssets() {
             // given:
-            context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
+            context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
             final var projectUuid = projectRepo.findByCaption("D-1000111 default project").stream()
                     .findAny().orElseThrow().getUuid();
 
@@ -309,7 +309,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
                     .findAny().orElseThrow().getUuid();
 
             // when
-            context("superuser-alex@hostsharing.net", "hs_hosting_asset#vm1012:AGENT");
+            context("superuser-alex@hostsharing.net", "hs_hosting.asset#vm1012:AGENT");
             final var result = rbacAssetRepo.findAllByCriteria(null, parentAssetUuid, null);
 
             // then
@@ -326,7 +326,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             context("superuser-alex@hostsharing.net");
 
             // when
-            context("superuser-alex@hostsharing.net", "hs_hosting_asset#sec01:AGENT");
+            context("superuser-alex@hostsharing.net", "hs_hosting.asset#sec01:AGENT");
             final var result = rbacAssetRepo.findAllByCriteria(null, null, EMAIL_ADDRESS);
 
             // then
@@ -397,7 +397,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT");
+                context("person-FirbySusan@example.com", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
                 assertThat(rbacAssetRepo.findByUuid(givenAsset.getUuid())).isPresent();
 
                 rbacAssetRepo.deleteByUuid(givenAsset.getUuid());
@@ -417,7 +417,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
 
             // when
             final var result = jpaAttempt.transacted(() -> {
-                context("person-FirbySusan@example.com", "hs_hosting_asset#vm1000:ADMIN");
+                context("person-FirbySusan@example.com", "hs_hosting.asset#vm1000:ADMIN");
                 assertThat(rbacAssetRepo.findByUuid(givenAsset.getUuid())).isPresent();
 
                 rbacAssetRepo.deleteByUuid(givenAsset.getUuid());
@@ -426,7 +426,7 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             // then
             result.assertExceptionWithRootCauseMessage(
                     JpaSystemException.class,
-                    "[403] Subject ", " is not allowed to delete hs_hosting_asset");
+                    "[403] Subject ", " is not allowed to delete hs_hosting.asset");
             assertThat(jpaAttempt.transacted(() -> {
                 return realAssetRepo.findByUuid(givenAsset.getUuid());
             }).assertSuccessful().returnedValue()).isPresent(); // still there

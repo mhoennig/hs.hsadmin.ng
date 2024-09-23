@@ -6,23 +6,23 @@
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates a single hs_hosting_asset test record.
+    Creates a single hs_hosting.asset test record.
  */
-create or replace procedure createHsHostingAssetTestData(givenProjectCaption varchar)
+create or replace procedure hs_hosting.asset_create_test_data(givenProjectCaption varchar)
     language plpgsql as $$
 declare
-    relatedProject                      hs_booking_project;
+    relatedProject                      hs_booking.project;
     relatedDebitor                      hs_office.debitor;
-    privateCloudBI                      hs_booking_item;
-    managedServerBI                     hs_booking_item;
-    cloudServerBI                       hs_booking_item;
-    managedWebspaceBI                   hs_booking_item;
+    privateCloudBI                      hs_booking.item;
+    managedServerBI                     hs_booking.item;
+    cloudServerBI                       hs_booking.item;
+    managedWebspaceBI                   hs_booking.item;
     debitorNumberSuffix                 varchar;
     defaultPrefix                       varchar;
     managedServerUuid                   uuid;
     managedWebspaceUuid                 uuid;
-    webUnixSubjectUuid                     uuid;
-    mboxUnixSubjectUuid                     uuid;
+    webUnixSubjectUuid                  uuid;
+    mboxUnixSubjectUuid                 uuid;
     domainSetupUuid                     uuid;
     domainMBoxSetupUuid                 uuid;
     mariaDbInstanceUuid                 uuid;
@@ -33,7 +33,7 @@ begin
     call base.defineContext('creating hosting-asset test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
     select project.* into relatedProject
-                  from hs_booking_project project
+                  from hs_booking.project project
                   where project.caption = givenProjectCaption;
     assert relatedProject.uuid is not null, 'relatedProject for "' || givenProjectCaption || '" must not be null';
 
@@ -43,25 +43,25 @@ begin
     assert relatedDebitor.uuid is not null, 'relatedDebitor for "' || givenProjectCaption || '" must not be null';
 
     select item.* into privateCloudBI
-        from hs_booking_item item
+        from hs_booking.item item
        where item.projectUuid = relatedProject.uuid
           and item.type = 'PRIVATE_CLOUD';
     assert privateCloudBI.uuid is not null, 'relatedPrivateCloudBookingItem for "' || givenProjectCaption|| '" must not be null';
 
     select item.* into managedServerBI
-          from hs_booking_item item
+          from hs_booking.item item
           where item.projectUuid = relatedProject.uuid
             and item.type = 'MANAGED_SERVER';
     assert managedServerBI.uuid is not null, 'relatedManagedServerBookingItem for "' || givenProjectCaption|| '" must not be null';
 
     select item.* into cloudServerBI
-          from hs_booking_item item
+          from hs_booking.item item
           where item.parentItemuuid = privateCloudBI.uuid
             and item.type = 'CLOUD_SERVER';
     assert cloudServerBI.uuid is not null, 'relatedCloudServerBookingItem for "' || givenProjectCaption|| '" must not be null';
 
     select item.* into managedWebspaceBI
-          from hs_booking_item item
+          from hs_booking.item item
           where item.projectUuid = relatedProject.uuid
             and item.type = 'MANAGED_WEBSPACE';
     assert managedWebspaceBI.uuid is not null, 'relatedManagedWebspaceBookingItem for "' || givenProjectCaption|| '" must not be null';
@@ -79,7 +79,7 @@ begin
     debitorNumberSuffix := relatedDebitor.debitorNumberSuffix;
     defaultPrefix := relatedDebitor.defaultPrefix;
 
-    insert into hs_hosting_asset
+    insert into hs_hosting.asset
        (uuid,                   bookingitemuuid,        type,                parentAssetUuid,     assignedToAssetUuid,   identifier,                                         caption,                        config)
        values
        (managedServerUuid,      managedServerBI.uuid,   'MANAGED_SERVER',    null,                null,                  'vm10' || debitorNumberSuffix,                       'some ManagedServer',           '{ "monit_max_cpu_usage": 90, "monit_max_ram_usage": 80, "monit_max_ssd_usage": 70 }'::jsonb),
@@ -112,9 +112,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating hosting-asset test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsHostingAssetTestData('D-1000111 default project');
-        call createHsHostingAssetTestData('D-1000212 default project');
-        call createHsHostingAssetTestData('D-1000313 default project');
+        call hs_hosting.asset_create_test_data('D-1000111 default project');
+        call hs_hosting.asset_create_test_data('D-1000212 default project');
+        call hs_hosting.asset_create_test_data('D-1000313 default project');
     end;
 $$;
 --//

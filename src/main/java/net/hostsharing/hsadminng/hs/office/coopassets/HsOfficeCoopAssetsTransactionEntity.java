@@ -34,7 +34,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(schema = "hs_office", name = "coopassetstransaction_rv")
+@Table(schema = "hs_office", name = "coopassettx_rv")
 @Getter
 @Setter
 @Builder

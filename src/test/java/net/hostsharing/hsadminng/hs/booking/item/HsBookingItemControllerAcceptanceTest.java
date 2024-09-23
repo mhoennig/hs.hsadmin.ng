@@ -251,7 +251,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:ADMIN")
+                    .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:ADMIN")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/booking/items/" + givenBookingItem.getUuid())
@@ -295,7 +295,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "superuser-alex@hostsharing.net")
-                    .header("assumed-roles", "hs_booking_project#D-1000111-D-1000111defaultproject:AGENT")
+                    .header("assumed-roles", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT")
                     .contentType(ContentType.JSON)
                     .body("""
                         {

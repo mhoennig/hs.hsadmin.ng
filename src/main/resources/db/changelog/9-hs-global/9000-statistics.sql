@@ -12,12 +12,12 @@ select *
               from rbac.object
               group by objecttable
           union all
-          select to_char(count(*)::int, '9 999 999 999'), 'objects', 'hs_hosting_asset', type::text
-              from hs_hosting_asset
+          select to_char(count(*)::int, '9 999 999 999'), 'objects', 'hs_hosting.asset', type::text
+              from hs_hosting.asset
               group by type
           union all
-          select to_char(count(*)::int, '9 999 999 999'), 'objects', 'hs_booking_item', type::text
-              from hs_booking_item
+          select to_char(count(*)::int, '9 999 999 999'), 'objects', 'hs_booking.item', type::text
+              from hs_booking.item
               group by type
          ) as totals order by replace(count, ' ', '')::int desc;
 --//

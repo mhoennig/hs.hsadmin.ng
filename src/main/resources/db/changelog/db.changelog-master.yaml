@@ -144,6 +144,8 @@ databaseChangeLog:
     - include:
         file: db/changelog/5-hs-office/512-coopassets/5128-hs-office-coopassets-test-data.sql
     - include:
+        file: db/changelog/6-hs-booking/600-hs-booking-schema.sql
+    - include:
         file: db/changelog/6-hs-booking/610-booking-debitor/6100-hs-booking-debitor.sql
     - include:
         file: db/changelog/6-hs-booking/620-booking-project/6200-hs-booking-project.sql
@@ -157,6 +159,8 @@ databaseChangeLog:
         file: db/changelog/6-hs-booking/630-booking-item/6303-hs-booking-item-rbac.sql
     - include:
         file: db/changelog/6-hs-booking/630-booking-item/6308-hs-booking-item-test-data.sql
+    - include:
+        file: db/changelog/7-hs-hosting/700-hs-hosting-schema.sql
     - include:
         file: db/changelog/7-hs-hosting/701-hosting-asset/7010-hs-hosting-asset.sql
     - include:

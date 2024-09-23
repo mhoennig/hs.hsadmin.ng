@@ -8,7 +8,7 @@
 /*
     Creates a single sepaMandate test record.
  */
-create or replace procedure createHsOfficeSepaMandateTestData(
+create or replace procedure hs_office.sepamandate_create_test_data(
         forPartnerNumber numeric(5),
         forDebitorSuffix char(2),
         forIban varchar,
@@ -45,9 +45,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating SEPA-mandate test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsOfficeSepaMandateTestData(10001, '11', 'DE02120300000000202051', 'ref-10001-11');
-        call createHsOfficeSepaMandateTestData(10002, '12', 'DE02100500000054540402', 'ref-10002-12');
-        call createHsOfficeSepaMandateTestData(10003, '13', 'DE02300209000106531065', 'ref-10003-13');
+        call hs_office.sepamandate_create_test_data(10001, '11', 'DE02120300000000202051', 'ref-10001-11');
+        call hs_office.sepamandate_create_test_data(10002, '12', 'DE02100500000054540402', 'ref-10002-12');
+        call hs_office.sepamandate_create_test_data(10003, '13', 'DE02300209000106531065', 'ref-10003-13');
     end;
 $$;
 --//

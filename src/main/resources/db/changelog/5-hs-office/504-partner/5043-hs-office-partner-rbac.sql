@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.partner');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-partner-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficePartner', 'hs_office.partner');
+call rbac.generateRbacRoleDescriptors('hs_office.partner');
 --//
 
 
@@ -42,12 +42,12 @@ begin
     SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
     assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
 
-    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newPartnerRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newPartnerRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationADMIN(newPartnerRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationOWNER(newPartnerRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAGENT(newPartnerRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAGENT(newPartnerRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hs_office.relation_OWNER(newPartnerRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.relation_TENANT(newPartnerRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hs_office.relation_ADMIN(newPartnerRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'DELETE'), hs_office.relation_OWNER(newPartnerRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'SELECT'), hs_office.relation_AGENT(newPartnerRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'UPDATE'), hs_office.relation_AGENT(newPartnerRel));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -110,23 +110,23 @@ begin
 
     if NEW.partnerRelUuid <> OLD.partnerRelUuid then
 
-        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'DELETE'), hsOfficeRelationOWNER(oldPartnerRel));
-        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newPartnerRel));
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'DELETE'), hs_office.relation_OWNER(oldPartnerRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hs_office.relation_OWNER(newPartnerRel));
 
-        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'UPDATE'), hsOfficeRelationADMIN(oldPartnerRel));
-        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationADMIN(newPartnerRel));
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'UPDATE'), hs_office.relation_ADMIN(oldPartnerRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hs_office.relation_ADMIN(newPartnerRel));
 
-        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'SELECT'), hsOfficeRelationTENANT(oldPartnerRel));
-        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newPartnerRel));
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(OLD.uuid, 'SELECT'), hs_office.relation_TENANT(oldPartnerRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.relation_TENANT(newPartnerRel));
 
-        call rbac.revokePermissionFromRole(rbac.getPermissionId(oldPartnerDetails.uuid, 'DELETE'), hsOfficeRelationOWNER(oldPartnerRel));
-        call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'DELETE'), hsOfficeRelationOWNER(newPartnerRel));
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(oldPartnerDetails.uuid, 'DELETE'), hs_office.relation_OWNER(oldPartnerRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'DELETE'), hs_office.relation_OWNER(newPartnerRel));
 
-        call rbac.revokePermissionFromRole(rbac.getPermissionId(oldPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAGENT(oldPartnerRel));
-        call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'UPDATE'), hsOfficeRelationAGENT(newPartnerRel));
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(oldPartnerDetails.uuid, 'UPDATE'), hs_office.relation_AGENT(oldPartnerRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'UPDATE'), hs_office.relation_AGENT(newPartnerRel));
 
-        call rbac.revokePermissionFromRole(rbac.getPermissionId(oldPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAGENT(oldPartnerRel));
-        call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'SELECT'), hsOfficeRelationAGENT(newPartnerRel));
+        call rbac.revokePermissionFromRole(rbac.getPermissionId(oldPartnerDetails.uuid, 'SELECT'), hs_office.relation_AGENT(oldPartnerRel));
+        call rbac.grantPermissionToRole(rbac.createPermission(newPartnerDetails.uuid, 'SELECT'), hs_office.relation_AGENT(newPartnerRel));
 
     end if;
 
@@ -173,7 +173,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_office.partner'),
-                        rbac.globalADMIN());
+                        rbac.global_ADMIN());
             END LOOP;
     end;
 $$;
@@ -181,7 +181,7 @@ $$;
 /**
     Grants hs_office.partner INSERT permission to specified role of new global rows.
 */
-create or replace function hs_office.new_partner_grants_insert_to_global_tf()
+create or replace function hs_office.partner_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -189,16 +189,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.partner'),
-            rbac.globalADMIN());
+            rbac.global_ADMIN());
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_partner_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger partner_z_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure hs_office.new_partner_grants_insert_to_global_tf();
+execute procedure hs_office.partner_grants_insert_to_global_tf();
 
 
 -- ============================================================================

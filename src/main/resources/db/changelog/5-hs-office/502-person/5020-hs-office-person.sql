@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-person-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficePersonType AS ENUM (
+CREATE TYPE hs_office.PersonType AS ENUM (
     '??',   -- unknown
     'NP',   -- natural person
     'LP',   -- legal person
@@ -12,13 +12,13 @@ CREATE TYPE HsOfficePersonType AS ENUM (
     'UF',   -- unincorporated firm
     'PI');  -- public institution
 
-CREATE CAST (character varying as HsOfficePersonType) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as hs_office.PersonType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office.person
 (
     uuid           uuid unique references rbac.object (uuid) initially deferred,
     version        int not null default 0,
-    personType     HsOfficePersonType not null,
+    personType     hs_office.PersonType not null,
     tradeName      varchar(96),
     salutation     varchar(30),
     title          varchar(20),

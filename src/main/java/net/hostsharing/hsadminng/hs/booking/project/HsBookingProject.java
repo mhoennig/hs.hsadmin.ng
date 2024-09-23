@@ -71,7 +71,7 @@ public abstract class HsBookingProject implements Stringifyable, BaseEntity<HsBo
         return rbacViewFor("project", HsBookingProjectRbacEntity.class)
                 .withIdentityView(SQL.query("""
                         SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || base.cleanIdentifier(bookingProject.caption) as idName
-                            FROM hs_booking_project bookingProject
+                            FROM hs_booking.project bookingProject
                             JOIN hs_office.debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.expression("caption"))

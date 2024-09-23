@@ -50,7 +50,7 @@ INSERT INTO hs_office.sepamandate_legacy_id(uuid, sepa_mandate_id)
 -- ============================================================================
 --changeset michael.hoennig:hs-office-sepamandate-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function insertSepaMandateLegacyIdMapping()
+create or replace function hs_office.sepamandate_insert_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -65,17 +65,17 @@ begin
     return NEW;
 end; $$;
 
-create trigger createSepaMandateLegacyIdMapping
+create trigger insert_legacy_id_mapping_tg
     after insert on hs_office.sepamandate
         for each row
-            execute procedure insertSepaMandateLegacyIdMapping();
+            execute procedure hs_office.sepamandate_insert_legacy_id_mapping_tf();
 --/
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-sepamandate-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function deleteSepaMandateLegacyIdMapping()
+create or replace function hs_office.sepamandate_delete_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -90,8 +90,8 @@ begin
     return OLD;
 end; $$;
 
-create trigger removeSepaMandateLegacyIdMapping
+create trigger delete_legacy_id_mapping_tf
     before delete on hs_office.sepamandate
         for each row
-            execute procedure deleteSepaMandateLegacyIdMapping();
+            execute procedure hs_office.sepamandate_delete_legacy_id_mapping_tf();
 --/

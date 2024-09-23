@@ -55,7 +55,7 @@ begin
             objectNameToAssume = split_part(roleNameParts, '#', 2);
             roleTypeToAssume = split_part(roleNameParts, '#', 3);
 
-            objectUuidToAssume = base.findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
+            objectUuidToAssume = rbac.findObjectUuidByIdName(objectTableToAssume, objectNameToAssume);
             if objectUuidToAssume is null then
                 raise exception '[401] object % cannot be found in table % (from roleNameParts=%)', objectNameToAssume, objectTableToAssume, roleNameParts;
             end if;

@@ -8,7 +8,7 @@
 /*
     Creates a single coopSharesTransaction test record.
  */
-create or replace procedure createHsOfficeCoopSharesTransactionTestData(
+create or replace procedure hs_office.coopsharetx_create_test_data(
         givenPartnerNumber numeric,
         givenMemberNumberSuffix char(2)
 )
@@ -27,7 +27,7 @@ begin
     raise notice 'creating test coopSharesTransaction: %', givenPartnerNumber::text || givenMemberNumberSuffix;
     subscriptionEntryUuid := uuid_generate_v4();
     insert
-        into hs_office.coopsharestransaction(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment, adjustedShareTxUuid)
+        into hs_office.coopsharetx(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment, adjustedShareTxUuid)
         values
             (uuid_generate_v4(), membership.uuid, 'SUBSCRIPTION', '2010-03-15', 4, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-1', 'initial subscription', null),
             (uuid_generate_v4(), membership.uuid, 'CANCELLATION', '2021-09-01', -2, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-2', 'cancelling some', null),
@@ -46,8 +46,8 @@ do language plpgsql $$
         call base.defineContext('creating coopSharesTransaction test-data');
         SET CONSTRAINTS ALL DEFERRED;
 
-        call createHsOfficeCoopSharesTransactionTestData(10001, '01');
-        call createHsOfficeCoopSharesTransactionTestData(10002, '02');
-        call createHsOfficeCoopSharesTransactionTestData(10003, '03');
+        call hs_office.coopsharetx_create_test_data(10001, '01');
+        call hs_office.coopsharetx_create_test_data(10002, '02');
+        call hs_office.coopsharetx_create_test_data(10003, '03');
     end;
 $$;

@@ -40,9 +40,6 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     Context context;
 
     @Autowired
-    Context contextMock;
-
-    @Autowired
     HsOfficeRelationRealRepository relationrealRepo;
 
     @Autowired

@@ -68,7 +68,7 @@ class HsUnixUserHostingAssetValidatorUnitTest {
     void initMocks() {
         final var nativeQueryMock = mock(Query.class);
         lenient().when(nativeQueryMock.getSingleResult()).thenReturn(12345678);
-        lenient().when(em.createNativeQuery("SELECT nextval('hs_hosting_asset_unixuser_system_id_seq')", Integer.class))
+        lenient().when(em.createNativeQuery("SELECT nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class))
                 .thenReturn(nativeQueryMock);
 
     }

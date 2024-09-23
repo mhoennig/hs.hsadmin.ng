@@ -7,9 +7,9 @@
 --changeset hs-hosting-asset-MIGRATION-mapping:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE hs_hosting_asset_legacy_id
+CREATE TABLE hs_hosting.asset_legacy_id
 (
-    uuid            uuid NOT NULL REFERENCES hs_hosting_asset(uuid),
+    uuid            uuid NOT NULL REFERENCES hs_hosting.asset(uuid),
     legacy_id       integer NOT NULL
 );
 --//
@@ -19,10 +19,10 @@ CREATE TABLE hs_hosting_asset_legacy_id
 --changeset hs-hosting-asset-MIGRATION-sequence:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_legacy_id_seq
+CREATE SEQUENCE IF NOT EXISTS hs_hosting.asset_legacy_id_seq
     AS integer
     START 1000000000
-    OWNED BY hs_hosting_asset_legacy_id.legacy_id;
+    OWNED BY hs_hosting.asset_legacy_id.legacy_id;
 --//
 
 
@@ -30,9 +30,9 @@ CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_legacy_id_seq
 --changeset hs-hosting-asset-MIGRATION-default:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-ALTER TABLE hs_hosting_asset_legacy_id
+ALTER TABLE hs_hosting.asset_legacy_id
     ALTER COLUMN legacy_id
-        SET DEFAULT nextVal('hs_hosting_asset_legacy_id_seq');
+        SET DEFAULT nextVal('hs_hosting.asset_legacy_id_seq');
 --/
 
 
@@ -41,15 +41,15 @@ ALTER TABLE hs_hosting_asset_legacy_id
 -- ----------------------------------------------------------------------------
 
 CALL base.defineContext('schema-migration');
-INSERT INTO hs_hosting_asset_legacy_id(uuid, legacy_id)
-    SELECT uuid, nextVal('hs_hosting_asset_legacy_id_seq') FROM hs_hosting_asset;
+INSERT INTO hs_hosting.asset_legacy_id(uuid, legacy_id)
+    SELECT uuid, nextVal('hs_hosting.asset_legacy_id_seq') FROM hs_hosting.asset;
 --/
 
 
 -- ============================================================================
 --changeset hs-hosting-asset-MIGRATION-insert-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function insertassetLegacyIdMapping()
+create or replace function hs_hosting.asset_insert_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -58,23 +58,23 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    INSERT INTO hs_hosting_asset_legacy_id VALUES
-        (NEW.uuid, nextVal('hs_hosting_asset_legacy_id_seq'));
+    INSERT INTO hs_hosting.asset_legacy_id VALUES
+        (NEW.uuid, nextVal('hs_hosting.asset_legacy_id_seq'));
 
     return NEW;
 end; $$;
 
-create trigger createassetLegacyIdMapping
-    after insert on hs_hosting_asset
+create trigger insert_legacy_id_mapping_tg
+    after insert on hs_hosting.asset
         for each row
-            execute procedure insertassetLegacyIdMapping();
+            execute procedure hs_hosting.asset_insert_legacy_id_mapping_tf();
 --/
 
 
 -- ============================================================================
 --changeset hs-hosting-asset-MIGRATION-delete-trigger:1 endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function deleteassetLegacyIdMapping_tf()
+create or replace function hs_hosting.asset_delete_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -83,14 +83,14 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    DELETE FROM hs_hosting_asset_legacy_id
+    DELETE FROM hs_hosting.asset_legacy_id
            WHERE uuid = OLD.uuid;
 
     return OLD;
 end; $$;
 
-create trigger deleteassetLegacyIdMapping_tg
-    before delete on hs_hosting_asset
+create trigger delete_legacy_id_mapping_tg
+    before delete on hs_hosting.asset
         for each row
-            execute procedure deleteassetLegacyIdMapping_tf();
+            execute procedure hs_hosting.asset_delete_legacy_id_mapping_tf();
 --/

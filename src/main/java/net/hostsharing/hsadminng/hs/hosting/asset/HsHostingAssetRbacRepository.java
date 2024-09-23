@@ -25,15 +25,15 @@ public interface HsHostingAssetRbacRepository extends HsHostingAssetRepository<H
                ha.parentassetuuid,
                ha.type,
                ha.version
-            from hs_hosting_asset_rv ha
-                left join hs_booking_item bi on bi.uuid = ha.bookingitemuuid
-                left join hs_hosting_asset pha on pha.uuid = ha.parentassetuuid
+            from hs_hosting.asset_rv ha
+                left join hs_booking.item bi on bi.uuid = ha.bookingitemuuid
+                left join hs_hosting.asset pha on pha.uuid = ha.parentassetuuid
             where (:projectUuid is null or bi.projectuuid=:projectUuid)
               and (:parentAssetUuid is null or pha.uuid=:parentAssetUuid)
               and (:type is null or :type=cast(ha.type as text))
     """, nativeQuery = true)
     // The JPQL query did not generate "left join" but just "join".
-    // I also optimized the query by not using the _rv for hs_booking_item and hs_hosting_asset, only for hs_hosting_asset_rv.
+    // I also optimized the query by not using the _rv for hs_booking.item and hs_hosting.asset, only for hs_hosting.asset_rv.
     List<HsHostingAssetRbacEntity> findAllByCriteriaImpl(UUID projectUuid, UUID parentAssetUuid, String type);
     default List<HsHostingAssetRbacEntity> findAllByCriteria(final UUID projectUuid, final UUID parentAssetUuid, final HsHostingAssetType type) {
         return findAllByCriteriaImpl(projectUuid, parentAssetUuid, HsHostingAssetType.asString(type));

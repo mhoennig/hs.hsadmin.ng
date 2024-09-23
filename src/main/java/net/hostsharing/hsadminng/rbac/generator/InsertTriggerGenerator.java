@@ -89,7 +89,7 @@ public class InsertTriggerGenerator {
                     with("superRoleRef", toRoleDescriptor(g.getSuperRoleDef(), "row")));
             } else {
                 plPgSql.writeLn("""
-                    -- Granting INSERT INTO hs_hosting_asset permissions to specified role of pre-existing hs_hosting_asset rows slipped,
+                    -- Granting INSERT INTO hs_hosting.asset permissions to specified role of pre-existing hs_hosting.asset rows slipped,
                     -- because there cannot yet be any pre-existing rows in the same table yet.
                     """,
                     with("rawSuperTable", g.getSuperRoleDef().getEntityAlias().getRawTableNameWithSchema()),
@@ -100,7 +100,7 @@ public class InsertTriggerGenerator {
                 /**
                     Grants ${rawSubTable} INSERT permission to specified role of new ${rawSuperTable} rows.
                 */
-                create or replace function ${rawSubTableSchemaPrefix}new_${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf()
+                create or replace function ${rawSubTableSchemaPrefix}${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf()
                     returns trigger
                     language plpgsql
                     strict as $$
@@ -113,11 +113,11 @@ public class InsertTriggerGenerator {
                     return NEW;
                 end; $$;
                 
-                -- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-                create trigger z_new_${rawSubTableName}_grants_after_insert_tg
+                -- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+                create trigger ${rawSubTableName}_z_grants_after_insert_tg
                     after insert on ${rawSuperTableWithSchema}
                     for each row
-                execute procedure ${rawSubTableSchemaPrefix}new_${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf();
+                execute procedure ${rawSubTableSchemaPrefix}${rawSubTableShortName}_grants_insert_to_${rawSuperTableShortName}_tf();
                 """,
                     with("ifConditionThen", g.getSuperRoleDef().getEntityAlias().isCaseDependent()
                             // TODO.impl: .type needs to be dynamically generated
@@ -325,7 +325,7 @@ public class InsertTriggerGenerator {
 
 
     private String toRoleDescriptor(final RbacView.RbacRoleDefinition roleDef, final String ref) {
-        final var functionName = toVar(roleDef);
+        final var functionName = roleDef.descriptorFunctionName();
         if (roleDef.getEntityAlias().isGlobal()) {
             return functionName + "()";
         }

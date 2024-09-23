@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.relation');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-relation-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeRelation', 'hs_office.relation');
+call rbac.generateRbacRoleDescriptors('hs_office.relation');
 --//
 
 
@@ -48,42 +48,42 @@ begin
 
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeRelationOWNER(NEW),
+        hs_office.relation_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.globalADMIN()],
+            incomingSuperRoles => array[rbac.global_ADMIN()],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeRelationADMIN(NEW),
+        hs_office.relation_ADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficeRelationOWNER(NEW)]
+            incomingSuperRoles => array[hs_office.relation_OWNER(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeRelationAGENT(NEW),
-            incomingSuperRoles => array[hsOfficeRelationADMIN(NEW)]
+        hs_office.relation_AGENT(NEW),
+            incomingSuperRoles => array[hs_office.relation_ADMIN(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeRelationTENANT(NEW),
+        hs_office.relation_TENANT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
-            	hsOfficeContactADMIN(newContact),
-            	hsOfficeRelationAGENT(NEW)],
+            	hs_office.contact_ADMIN(newContact),
+            	hs_office.relation_AGENT(NEW)],
             outgoingSubRoles => array[
-            	hsOfficeContactREFERRER(newContact),
-            	hsOfficePersonREFERRER(newAnchorPerson),
-            	hsOfficePersonREFERRER(newHolderPerson)]
+            	hs_office.contact_REFERRER(newContact),
+            	hs_office.person_REFERRER(newAnchorPerson),
+            	hs_office.person_REFERRER(newHolderPerson)]
     );
 
     IF NEW.type = 'REPRESENTATIVE' THEN
-        call rbac.grantRoleToRole(hsOfficePersonOWNER(newAnchorPerson), hsOfficeRelationADMIN(NEW));
-        call rbac.grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newAnchorPerson));
-        call rbac.grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newHolderPerson));
+        call rbac.grantRoleToRole(hs_office.person_OWNER(newAnchorPerson), hs_office.relation_ADMIN(NEW));
+        call rbac.grantRoleToRole(hs_office.relation_AGENT(NEW), hs_office.person_ADMIN(newAnchorPerson));
+        call rbac.grantRoleToRole(hs_office.relation_OWNER(NEW), hs_office.person_ADMIN(newHolderPerson));
     ELSE
-        call rbac.grantRoleToRole(hsOfficeRelationAGENT(NEW), hsOfficePersonADMIN(newHolderPerson));
-        call rbac.grantRoleToRole(hsOfficeRelationOWNER(NEW), hsOfficePersonADMIN(newAnchorPerson));
+        call rbac.grantRoleToRole(hs_office.relation_AGENT(NEW), hs_office.person_ADMIN(newHolderPerson));
+        call rbac.grantRoleToRole(hs_office.relation_OWNER(NEW), hs_office.person_ADMIN(newAnchorPerson));
     END IF;
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
@@ -170,7 +170,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_office.relation'),
-                        hsOfficePersonADMIN(row));
+                        hs_office.person_ADMIN(row));
             END LOOP;
     end;
 $$;
@@ -178,7 +178,7 @@ $$;
 /**
     Grants hs_office.relation INSERT permission to specified role of new person rows.
 */
-create or replace function hs_office.new_relation_grants_insert_to_person_tf()
+create or replace function hs_office.relation_grants_insert_to_person_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -186,16 +186,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.relation'),
-            hsOfficePersonADMIN(NEW));
+            hs_office.person_ADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_relation_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger relation_z_grants_after_insert_tg
     after insert on hs_office.person
     for each row
-execute procedure hs_office.new_relation_grants_insert_to_person_tf();
+execute procedure hs_office.relation_grants_insert_to_person_tf();
 
 
 -- ============================================================================

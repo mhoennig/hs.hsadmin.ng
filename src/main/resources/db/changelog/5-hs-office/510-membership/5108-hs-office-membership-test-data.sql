@@ -8,7 +8,7 @@
 /*
     Creates a single membership test record.
  */
-create or replace procedure createHsOfficeMembershipTestData(
+create or replace procedure hs_office.membership_create_test_data(
         forPartnerNumber numeric(5),
         newMemberNumberSuffix char(2) )
     language plpgsql as $$
@@ -35,9 +35,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating Membership test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsOfficeMembershipTestData(10001, '01');
-        call createHsOfficeMembershipTestData(10002, '02');
-        call createHsOfficeMembershipTestData(10003, '03');
+        call hs_office.membership_create_test_data(10001, '01');
+        call hs_office.membership_create_test_data(10002, '02');
+        call hs_office.membership_create_test_data(10003, '03');
     end;
 $$;
 --//

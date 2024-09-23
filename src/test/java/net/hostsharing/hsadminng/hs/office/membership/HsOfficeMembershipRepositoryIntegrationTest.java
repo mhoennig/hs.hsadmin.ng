@@ -118,8 +118,8 @@ class HsOfficeMembershipRepositoryIntegrationTest extends ContextBasedTestWithCl
                     .containsExactlyInAnyOrder(Array.fromFormatted(
                             initialGrantNames,
                             // insert
-                            "{ grant perm:membership#M-1000117:INSERT>coopassetstransaction to role:membership#M-1000117:ADMIN by system and assume }",
-                            "{ grant perm:membership#M-1000117:INSERT>coopsharestransaction to role:membership#M-1000117:ADMIN by system and assume }",
+                            "{ grant perm:membership#M-1000117:INSERT>coopassettx to role:membership#M-1000117:ADMIN by system and assume }",
+                            "{ grant perm:membership#M-1000117:INSERT>coopsharetx to role:membership#M-1000117:ADMIN by system and assume }",
 
                             // owner
                             "{ grant perm:membership#M-1000117:DELETE to role:membership#M-1000117:ADMIN by system and assume }",

@@ -305,7 +305,7 @@ public abstract class ContextBasedTestWithCleanup extends ContextBasedTest {
     protected String[] roleNames(final String sqlLikeExpression) {
         final var pattern = Pattern.compile(sqlLikeExpression);
         //noinspection unchecked
-        final List<Object[]> rows = (List<Object[]>) em.createNativeQuery("select * from rbac.role_ev where roleidname like 'hs_booking_project#%'")
+        final List<Object[]> rows = (List<Object[]>) em.createNativeQuery("select * from rbac.role_ev where roleidname like 'hs_booking.project#%'")
                 .getResultList();
         return rows.stream()
                 .map(row -> (row[0]).toString())

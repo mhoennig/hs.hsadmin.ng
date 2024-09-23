@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('rbactest.domain');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:rbactest-domain-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('testDomain', 'rbactest.domain');
+call rbac.generateRbacRoleDescriptors('rbactest.domain');
 --//
 
 
@@ -40,17 +40,17 @@ begin
 
 
     perform rbac.defineRoleWithGrants(
-        testDomainOWNER(NEW),
+        rbactest.domain_OWNER(NEW),
             permissions => array['DELETE', 'UPDATE'],
-            incomingSuperRoles => array[testPackageADMIN(newPackage)],
-            outgoingSubRoles => array[testPackageTENANT(newPackage)]
+            incomingSuperRoles => array[rbactest.package_ADMIN(newPackage)],
+            outgoingSubRoles => array[rbactest.package_TENANT(newPackage)]
     );
 
     perform rbac.defineRoleWithGrants(
-        testDomainADMIN(NEW),
+        rbactest.domain_ADMIN(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[testDomainOWNER(NEW)],
-            outgoingSubRoles => array[testPackageTENANT(newPackage)]
+            incomingSuperRoles => array[rbactest.domain_OWNER(NEW)],
+            outgoingSubRoles => array[rbactest.package_TENANT(newPackage)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
@@ -106,14 +106,14 @@ begin
 
     if NEW.packageUuid <> OLD.packageUuid then
 
-        call rbac.revokeRoleFromRole(testDomainOWNER(OLD), testPackageADMIN(oldPackage));
-        call rbac.grantRoleToRole(testDomainOWNER(NEW), testPackageADMIN(newPackage));
+        call rbac.revokeRoleFromRole(rbactest.domain_OWNER(OLD), rbactest.package_ADMIN(oldPackage));
+        call rbac.grantRoleToRole(rbactest.domain_OWNER(NEW), rbactest.package_ADMIN(newPackage));
 
-        call rbac.revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainOWNER(OLD));
-        call rbac.grantRoleToRole(testPackageTENANT(newPackage), testDomainOWNER(NEW));
+        call rbac.revokeRoleFromRole(rbactest.package_TENANT(oldPackage), rbactest.domain_OWNER(OLD));
+        call rbac.grantRoleToRole(rbactest.package_TENANT(newPackage), rbactest.domain_OWNER(NEW));
 
-        call rbac.revokeRoleFromRole(testPackageTENANT(oldPackage), testDomainADMIN(OLD));
-        call rbac.grantRoleToRole(testPackageTENANT(newPackage), testDomainADMIN(NEW));
+        call rbac.revokeRoleFromRole(rbactest.package_TENANT(oldPackage), rbactest.domain_ADMIN(OLD));
+        call rbac.grantRoleToRole(rbactest.package_TENANT(newPackage), rbactest.domain_ADMIN(NEW));
 
     end if;
 
@@ -160,7 +160,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'rbactest.domain'),
-                        testPackageADMIN(row));
+                        rbactest.package_ADMIN(row));
             END LOOP;
     end;
 $$;
@@ -168,7 +168,7 @@ $$;
 /**
     Grants rbactest.domain INSERT permission to specified role of new package rows.
 */
-create or replace function rbactest.new_domain_grants_insert_to_package_tf()
+create or replace function rbactest.domain_grants_insert_to_package_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -176,16 +176,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'rbactest.domain'),
-            testPackageADMIN(NEW));
+            rbactest.package_ADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_domain_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger domain_z_grants_after_insert_tg
     after insert on rbactest.package
     for each row
-execute procedure rbactest.new_domain_grants_insert_to_package_tf();
+execute procedure rbactest.domain_grants_insert_to_package_tf();
 
 
 -- ============================================================================

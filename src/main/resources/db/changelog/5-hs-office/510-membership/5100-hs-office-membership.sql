@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-membership-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficeMembershipStatus AS ENUM (
+CREATE TYPE hs_office.HsOfficeMembershipStatus AS ENUM (
     'INVALID',
     'ACTIVE',
     'CANCELLED',
@@ -15,7 +15,7 @@ CREATE TYPE HsOfficeMembershipStatus AS ENUM (
     'UNKNOWN'
 );
 
-CREATE CAST (character varying as HsOfficeMembershipStatus) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as hs_office.HsOfficeMembershipStatus) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office.membership
 (
@@ -24,7 +24,7 @@ create table if not exists hs_office.membership
     partnerUuid             uuid not null references hs_office.partner(uuid),
     memberNumberSuffix      char(2) not null check (memberNumberSuffix::text ~ '^[0-9][0-9]$'),
     validity                daterange not null,
-    status                  HsOfficeMembershipStatus not null default 'ACTIVE',
+    status                  hs_office.HsOfficeMembershipStatus not null default 'ACTIVE',
     membershipFeeBillable   boolean not null default true,
 
     UNIQUE(partnerUuid, memberNumberSuffix)

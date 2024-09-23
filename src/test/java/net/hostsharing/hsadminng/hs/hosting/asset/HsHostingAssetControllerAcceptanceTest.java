@@ -114,7 +114,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                     .given()
                         .header("current-subject", "superuser-alex@hostsharing.net")
-                        .header("assumed-roles", "hs_hosting_asset#fir01:AGENT")
+                        .header("assumed-roles", "hs_hosting.asset#fir01:AGENT")
                         .port(port)
                     .when()
                     .   get("http://localhost/api/hs/hosting/assets?type=" + EMAIL_ALIAS)
@@ -218,7 +218,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             final var location = RestAssured // @formatter:off
                     .given()
                         .header("current-subject", "superuser-alex@hostsharing.net")
-                        .header("assumed-roles", "hs_hosting_asset#vm1011:ADMIN")
+                        .header("assumed-roles", "hs_hosting.asset#vm1011:ADMIN")
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
@@ -454,7 +454,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                 .given()
                     .header("current-subject", "person-TuckerJack@example.com")
-                    .header("assumed-roles", "hs_booking_project#D-1000313-D-1000313defaultproject:AGENT")
+                    .header("assumed-roles", "hs_booking.project#D-1000313-D-1000313defaultproject:AGENT")
                     .port(port)
                 .when()
                     .get("http://localhost/api/hs/hosting/assets/" + givenAssetUuid)
@@ -574,7 +574,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             RestAssured // @formatter:off
                     .given()
                         .header("current-subject", "superuser-alex@hostsharing.net")
-                        //.header("assumed-roles", "hs_hosting_asset#vm2001:ADMIN")
+                        //.header("assumed-roles", "hs_hosting.asset#vm2001:ADMIN")
                         .contentType(ContentType.JSON)
                         .body("""
                             {

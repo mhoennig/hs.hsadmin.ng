@@ -8,9 +8,9 @@
 /*
     Creates a single relation test record.
  */
-create or replace procedure createHsOfficeRelationTestData(
+create or replace procedure hs_office.relation_create_test_data(
         holderPersonName varchar,
-        relationType HsOfficeRelationType,
+        relationType hs_office.RelationType,
         anchorPersonName varchar,
         contactCaption varchar,
         mark varchar default null)
@@ -58,7 +58,7 @@ end; $$;
 /*
     Creates a range of test relation for mass data generation.
  */
-create or replace procedure createHsOfficeRelationTestData(
+create or replace procedure hs_office.relation_create_test_data(
     startCount integer,  -- count of auto generated rows before the run
     endCount integer     -- count of auto generated rows after the run
 )
@@ -72,7 +72,7 @@ begin
             select p.* from hs_office.person p where tradeName = base.intToVarChar(t, 4) into person;
             select c.* from hs_office.contact c where c.caption = base.intToVarChar(t, 4) || '#' || t into contact;
 
-            call createHsOfficeRelationTestData(person.uuid, contact.uuid, 'REPRESENTATIVE');
+            call hs_office.relation_create_test_data(person.uuid, contact.uuid, 'REPRESENTATIVE');
             commit;
         end loop;
 end; $$;
@@ -87,25 +87,25 @@ do language plpgsql $$
     begin
         call base.defineContext('creating relation test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsOfficeRelationTestData('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
-        call createHsOfficeRelationTestData('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
-        call createHsOfficeRelationTestData('First GmbH', 'DEBITOR', 'First GmbH', 'first contact');
+        call hs_office.relation_create_test_data('First GmbH', 'PARTNER', 'Hostsharing eG', 'first contact');
+        call hs_office.relation_create_test_data('Firby', 'REPRESENTATIVE', 'First GmbH', 'first contact');
+        call hs_office.relation_create_test_data('First GmbH', 'DEBITOR', 'First GmbH', 'first contact');
 
-        call createHsOfficeRelationTestData('Second e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
-        call createHsOfficeRelationTestData('Smith', 'REPRESENTATIVE', 'Second e.K.', 'second contact');
-        call createHsOfficeRelationTestData('Second e.K.', 'DEBITOR', 'Second e.K.', 'second contact');
+        call hs_office.relation_create_test_data('Second e.K.', 'PARTNER', 'Hostsharing eG', 'second contact');
+        call hs_office.relation_create_test_data('Smith', 'REPRESENTATIVE', 'Second e.K.', 'second contact');
+        call hs_office.relation_create_test_data('Second e.K.', 'DEBITOR', 'Second e.K.', 'second contact');
 
-        call createHsOfficeRelationTestData('Third OHG', 'PARTNER', 'Hostsharing eG', 'third contact');
-        call createHsOfficeRelationTestData('Tucker', 'REPRESENTATIVE', 'Third OHG', 'third contact');
-        call createHsOfficeRelationTestData('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
+        call hs_office.relation_create_test_data('Third OHG', 'PARTNER', 'Hostsharing eG', 'third contact');
+        call hs_office.relation_create_test_data('Tucker', 'REPRESENTATIVE', 'Third OHG', 'third contact');
+        call hs_office.relation_create_test_data('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
 
-        call createHsOfficeRelationTestData('Fourth eG', 'PARTNER', 'Hostsharing eG', 'fourth contact');
-        call createHsOfficeRelationTestData('Fouler', 'REPRESENTATIVE', 'Third OHG', 'third contact');
-        call createHsOfficeRelationTestData('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
+        call hs_office.relation_create_test_data('Fourth eG', 'PARTNER', 'Hostsharing eG', 'fourth contact');
+        call hs_office.relation_create_test_data('Fouler', 'REPRESENTATIVE', 'Third OHG', 'third contact');
+        call hs_office.relation_create_test_data('Third OHG', 'DEBITOR', 'Third OHG', 'third contact');
 
-        call createHsOfficeRelationTestData('Smith', 'PARTNER', 'Hostsharing eG', 'sixth contact');
-        call createHsOfficeRelationTestData('Smith', 'DEBITOR', 'Smith', 'third contact');
-        call createHsOfficeRelationTestData('Smith', 'SUBSCRIBER', 'Third OHG', 'third contact', 'members-announce');
+        call hs_office.relation_create_test_data('Smith', 'PARTNER', 'Hostsharing eG', 'sixth contact');
+        call hs_office.relation_create_test_data('Smith', 'DEBITOR', 'Smith', 'third contact');
+        call hs_office.relation_create_test_data('Smith', 'SUBSCRIBER', 'Third OHG', 'third contact', 'members-announce');
     end;
 $$;
 --//

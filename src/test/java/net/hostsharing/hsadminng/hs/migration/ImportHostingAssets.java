@@ -913,7 +913,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     @Test
     @Order(19910)
     void verifyBookingItemsAreActuallyPersisted() {
-        final var biCount = (Integer) em.createNativeQuery("select count(*) from hs_booking_item", Integer.class)
+        final var biCount = (Integer) em.createNativeQuery("select count(*) from hs_booking.item", Integer.class)
                 .getSingleResult();
         assertThat(biCount).isGreaterThan(isImportingControlledTestData() ? 5 : 500);
     }
@@ -921,7 +921,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
     @Test
     @Order(19920)
     void verifyHostingAssetsAreActuallyPersisted() {
-        final var haCount = (Integer) em.createNativeQuery("select count(*) from hs_hosting_asset", Integer.class)
+        final var haCount = (Integer) em.createNativeQuery("select count(*) from hs_hosting.asset", Integer.class)
                 .getSingleResult();
         assertThat(haCount).isGreaterThan(isImportingControlledTestData() ? 40 : 15000);
 
@@ -1068,8 +1068,8 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
         assumeThatWeAreImportingControlledTestData();
 
         final var haCount = jpaAttempt.transacted(() -> {
-                    context(rbacSuperuser, "hs_booking_project#D-1000300-mimdefaultproject:AGENT");
-                    return (Integer) em.createNativeQuery("select count(*) from hs_hosting_asset_rv where type='EMAIL_ADDRESS'", Integer.class)
+                    context(rbacSuperuser, "hs_booking.project#D-1000300-mimdefaultproject:AGENT");
+                    return (Integer) em.createNativeQuery("select count(*) from hs_hosting.asset_rv where type='EMAIL_ADDRESS'", Integer.class)
                             .getSingleResult();
                 }).assertSuccessful().returnedValue();
         assertThat(haCount).isEqualTo(68);
@@ -1136,7 +1136,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
-            updateLegacyIds(assets, "hs_hosting_asset_legacy_id", "legacy_id");
+            updateLegacyIds(assets, "hs_hosting.asset_legacy_id", "legacy_id");
         }).assertSuccessful();
     }
 
@@ -1145,7 +1145,7 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
             final int expectedCountInTestDataCount,
             final int minCountExpectedInProdData) {
         final var q = em.createNativeQuery(
-                "select count(*) from hs_hosting_asset where type = cast(:type as HsHostingAssetType)",
+                "select count(*) from hs_hosting.asset where type = cast(:type as hs_hosting.AssetType)",
                 Integer.class);
         q.setParameter("type", assetType.name());
         final var count = (Integer) q.getSingleResult();
@@ -1895,8 +1895,8 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
         //noinspection unchecked
         return ((List<List<?>>) em.createNativeQuery(
                     """
-                     SELECT li.* FROM hs_hosting_asset_legacy_id li
-                     JOIN hs_hosting_asset ha ON ha.uuid=li.uuid
+                     SELECT li.* FROM hs_hosting.asset_legacy_id li
+                     JOIN hs_hosting.asset ha ON ha.uuid=li.uuid
                      WHERE CAST(ha.type AS text)=:type
                      ORDER BY legacy_id
                     """,
@@ -1910,8 +1910,8 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
         //noinspection unchecked
         return ((List<List<?>>) em.createNativeQuery(
                     """
-                    SELECT ha.uuid, ha.type, ha.identifier FROM hs_hosting_asset ha
-                             JOIN hs_hosting_asset_legacy_id li ON li.uuid=ha.uuid
+                    SELECT ha.uuid, ha.type, ha.identifier FROM hs_hosting.asset ha
+                             JOIN hs_hosting.asset_legacy_id li ON li.uuid=ha.uuid
                              WHERE li.legacy_id is null AND CAST(ha.type AS text)=:type
                              ORDER BY li.legacy_id
                     """,

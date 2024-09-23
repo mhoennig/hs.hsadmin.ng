@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.bankaccount');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-bankaccount-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeBankAccount', 'hs_office.bankaccount');
+call rbac.generateRbacRoleDescriptors('hs_office.bankaccount');
 --//
 
 
@@ -35,22 +35,22 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeBankAccountOWNER(NEW),
+        hs_office.bankaccount_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.globalADMIN()],
+            incomingSuperRoles => array[rbac.global_ADMIN()],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeBankAccountADMIN(NEW),
+        hs_office.bankaccount_ADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficeBankAccountOWNER(NEW)]
+            incomingSuperRoles => array[hs_office.bankaccount_OWNER(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeBankAccountREFERRER(NEW),
+        hs_office.bankaccount_REFERRER(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsOfficeBankAccountADMIN(NEW)]
+            incomingSuperRoles => array[hs_office.bankaccount_ADMIN(NEW)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);

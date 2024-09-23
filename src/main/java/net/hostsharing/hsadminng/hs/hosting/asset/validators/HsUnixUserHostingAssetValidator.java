@@ -53,7 +53,7 @@ class HsUnixUserHostingAssetValidator extends HostingAssetEntityValidator {
     }
 
     private static Integer computeUserId(final EntityManager em, final PropertiesProvider propertiesProvider) {
-        final Object result = em.createNativeQuery("SELECT nextval('hs_hosting_asset_unixuser_system_id_seq')", Integer.class)
+        final Object result = em.createNativeQuery("SELECT nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class)
                 .getSingleResult();
         return (Integer) result;
     }

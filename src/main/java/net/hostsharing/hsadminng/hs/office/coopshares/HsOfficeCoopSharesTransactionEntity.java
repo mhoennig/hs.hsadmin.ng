@@ -32,7 +32,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
 @Entity
-@Table(schema = "hs_office", name = "coopsharestransaction_rv")
+@Table(schema = "hs_office", name = "coopsharetx_rv")
 @Getter
 @Setter
 @Builder

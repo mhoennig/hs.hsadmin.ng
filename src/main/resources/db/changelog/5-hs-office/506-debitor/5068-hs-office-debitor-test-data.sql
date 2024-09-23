@@ -8,7 +8,7 @@
 /*
     Creates a single debitor test record.
  */
-create or replace procedure createHsOfficeDebitorTestData(
+create or replace procedure hs_office.debitor_create_test_data(
         withDebitorNumberSuffix numeric(5),
         forPartnerPersonName varchar,
         forBillingContactCaption varchar,
@@ -52,9 +52,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating debitor test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsOfficeDebitorTestData(11, 'First GmbH', 'first contact', 'fir');
-        call createHsOfficeDebitorTestData(12, 'Second e.K.', 'second contact', 'sec');
-        call createHsOfficeDebitorTestData(13, 'Third OHG', 'third contact', 'thi');
+        call hs_office.debitor_create_test_data(11, 'First GmbH', 'first contact', 'fir');
+        call hs_office.debitor_create_test_data(12, 'Second e.K.', 'second contact', 'sec');
+        call hs_office.debitor_create_test_data(13, 'Third OHG', 'third contact', 'thi');
     end;
 $$;
 --//

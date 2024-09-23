@@ -187,7 +187,7 @@ public class CsvDataImport extends ContextBasedTest {
         }
 
         final var query = em.createNativeQuery("""
-                         insert into hs_hosting_asset(
+                         insert into hs_hosting.asset(
                                     uuid,
                                     type,
                                     bookingitemuuid,
@@ -248,15 +248,15 @@ public class CsvDataImport extends ContextBasedTest {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             // TODO.perf: could we instead skip creating test-data based on an env var?
-            em.createNativeQuery("delete from hs_hosting_asset where true").executeUpdate();
-            em.createNativeQuery("delete from hs_hosting_asset_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking_item where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking_item_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking_project where true").executeUpdate();
-            em.createNativeQuery("delete from hs_booking_project_ex where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopassetstransaction where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopassetstransaction_legacy_id where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopsharestransaction where true").executeUpdate();
+            em.createNativeQuery("delete from hs_hosting.asset where true").executeUpdate();
+            em.createNativeQuery("delete from hs_hosting.asset_ex where true").executeUpdate();
+            em.createNativeQuery("delete from hs_booking.item where true").executeUpdate();
+            em.createNativeQuery("delete from hs_booking.item_ex where true").executeUpdate();
+            em.createNativeQuery("delete from hs_booking.project where true").executeUpdate();
+            em.createNativeQuery("delete from hs_booking.project_ex where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopassettx where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopassettx_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopsharetx where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.coopsharestransaction_legacy_id where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.membership where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.sepamandate where true").executeUpdate();
@@ -275,7 +275,7 @@ public class CsvDataImport extends ContextBasedTest {
         jpaAttempt.transacted(() -> {
             context(rbacSuperuser);
             em.createNativeQuery("alter sequence hs_office.contact_legacy_id_seq restart with 1000000000;").executeUpdate();
-            em.createNativeQuery("alter sequence hs_office.coopassetstransaction_legacy_id_seq restart with 1000000000;")
+            em.createNativeQuery("alter sequence hs_office.coopassettx_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
             em.createNativeQuery("alter sequence public.hs_office.coopsharestransaction_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();

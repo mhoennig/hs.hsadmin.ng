@@ -8,7 +8,7 @@
 /*
     Creates a single contact test record.
  */
-create or replace procedure createHsOfficeContactTestData(contCaption varchar)
+create or replace procedure hs_office.contact_create_test_data(contCaption varchar)
     language plpgsql as $$
 declare
     postalAddr      varchar;
@@ -36,7 +36,7 @@ end; $$;
 /*
     Creates a range of test contact for mass data generation.
  */
-create or replace procedure createHsOfficeContactTestData(
+create or replace procedure hs_office.contact_create_test_data(
     startCount integer,  -- count of auto generated rows before the run
     endCount integer     -- count of auto generated rows after the run
 )
@@ -44,7 +44,7 @@ create or replace procedure createHsOfficeContactTestData(
 begin
     for t in startCount..endCount
         loop
-            call createHsOfficeContactTestData(base.intToVarChar(t, 4) || '#' || t);
+            call hs_office.contact_create_test_data(base.intToVarChar(t, 4) || '#' || t);
             commit;
         end loop;
 end; $$;
@@ -58,18 +58,18 @@ end; $$;
 do language plpgsql $$
     begin
         -- TODO: use better names
-        call createHsOfficeContactTestData('first contact');
-        call createHsOfficeContactTestData('second contact');
-        call createHsOfficeContactTestData('third contact');
-        call createHsOfficeContactTestData('fourth contact');
-        call createHsOfficeContactTestData('fifth contact');
-        call createHsOfficeContactTestData('sixth contact');
-        call createHsOfficeContactTestData('seventh contact');
-        call createHsOfficeContactTestData('eighth contact');
-        call createHsOfficeContactTestData('ninth contact');
-        call createHsOfficeContactTestData('tenth contact');
-        call createHsOfficeContactTestData('eleventh contact');
-        call createHsOfficeContactTestData('twelfth contact');
+        call hs_office.contact_create_test_data('first contact');
+        call hs_office.contact_create_test_data('second contact');
+        call hs_office.contact_create_test_data('third contact');
+        call hs_office.contact_create_test_data('fourth contact');
+        call hs_office.contact_create_test_data('fifth contact');
+        call hs_office.contact_create_test_data('sixth contact');
+        call hs_office.contact_create_test_data('seventh contact');
+        call hs_office.contact_create_test_data('eighth contact');
+        call hs_office.contact_create_test_data('ninth contact');
+        call hs_office.contact_create_test_data('tenth contact');
+        call hs_office.contact_create_test_data('eleventh contact');
+        call hs_office.contact_create_test_data('twelfth contact');
     end;
 $$;
 --//

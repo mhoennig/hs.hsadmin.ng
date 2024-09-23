@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.sepamandate');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-sepamandate-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeSepaMandate', 'hs_office.sepamandate');
+call rbac.generateRbacRoleDescriptors('hs_office.sepamandate');
 --//
 
 
@@ -48,34 +48,34 @@ begin
 
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeSepaMandateOWNER(NEW),
+        hs_office.sepamandate_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.globalADMIN()],
+            incomingSuperRoles => array[rbac.global_ADMIN()],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeSepaMandateADMIN(NEW),
+        hs_office.sepamandate_ADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficeSepaMandateOWNER(NEW)]
+            incomingSuperRoles => array[hs_office.sepamandate_OWNER(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeSepaMandateAGENT(NEW),
-            incomingSuperRoles => array[hsOfficeSepaMandateADMIN(NEW)],
+        hs_office.sepamandate_AGENT(NEW),
+            incomingSuperRoles => array[hs_office.sepamandate_ADMIN(NEW)],
             outgoingSubRoles => array[
-            	hsOfficeBankAccountREFERRER(newBankAccount),
-            	hsOfficeRelationAGENT(newDebitorRel)]
+            	hs_office.bankaccount_REFERRER(newBankAccount),
+            	hs_office.relation_AGENT(newDebitorRel)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeSepaMandateREFERRER(NEW),
+        hs_office.sepamandate_REFERRER(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
-            	hsOfficeBankAccountADMIN(newBankAccount),
-            	hsOfficeRelationAGENT(newDebitorRel),
-            	hsOfficeSepaMandateAGENT(NEW)],
-            outgoingSubRoles => array[hsOfficeRelationTENANT(newDebitorRel)]
+            	hs_office.bankaccount_ADMIN(newBankAccount),
+            	hs_office.relation_AGENT(newDebitorRel),
+            	hs_office.sepamandate_AGENT(NEW)],
+            outgoingSubRoles => array[hs_office.relation_TENANT(newDebitorRel)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
@@ -121,7 +121,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_office.sepamandate'),
-                        hsOfficeRelationADMIN(row));
+                        hs_office.relation_ADMIN(row));
             END LOOP;
     end;
 $$;
@@ -129,7 +129,7 @@ $$;
 /**
     Grants hs_office.sepamandate INSERT permission to specified role of new relation rows.
 */
-create or replace function hs_office.new_sepamandate_grants_insert_to_relation_tf()
+create or replace function hs_office.sepamandate_grants_insert_to_relation_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -137,16 +137,16 @@ begin
     if NEW.type = 'DEBITOR' then
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.sepamandate'),
-            hsOfficeRelationADMIN(NEW));
+            hs_office.relation_ADMIN(NEW));
     end if;
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_sepamandate_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger sepamandate_z_grants_after_insert_tg
     after insert on hs_office.relation
     for each row
-execute procedure hs_office.new_sepamandate_grants_insert_to_relation_tf();
+execute procedure hs_office.sepamandate_grants_insert_to_relation_tf();
 
 
 -- ============================================================================

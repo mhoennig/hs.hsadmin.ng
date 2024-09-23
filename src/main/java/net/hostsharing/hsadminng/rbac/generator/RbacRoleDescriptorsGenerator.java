@@ -19,12 +19,11 @@ public class RbacRoleDescriptorsGenerator {
                 -- ============================================================================
                 --changeset RbacRoleDescriptorsGenerator:${liquibaseTagPrefix}-rbac-ROLE-DESCRIPTORS endDelimiter:--//
                 -- ----------------------------------------------------------------------------
-                call rbac.generateRbacRoleDescriptors('${simpleEntityVarName}', '${rawTableName}');
+                call rbac.generateRbacRoleDescriptors('${rawTableName}');
                 --//
 
                 """,
                 with("liquibaseTagPrefix", liquibaseTagPrefix),
-                with("simpleEntityVarName", simpleEntityVarName),
                 with("rawTableName", rawTableName));
     }
 }

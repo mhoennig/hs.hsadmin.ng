@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.debitor');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-debitor-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeDebitor', 'hs_office.debitor');
+call rbac.generateRbacRoleDescriptors('hs_office.debitor');
 --//
 
 
@@ -51,15 +51,15 @@ begin
 
     SELECT * FROM hs_office.bankaccount WHERE uuid = NEW.refundBankAccountUuid    INTO newRefundBankAccount;
 
-    call rbac.grantRoleToRole(hsOfficeBankAccountREFERRER(newRefundBankAccount), hsOfficeRelationAGENT(newDebitorRel));
-    call rbac.grantRoleToRole(hsOfficeRelationADMIN(newDebitorRel), hsOfficeRelationADMIN(newPartnerRel));
-    call rbac.grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeBankAccountADMIN(newRefundBankAccount));
-    call rbac.grantRoleToRole(hsOfficeRelationAGENT(newDebitorRel), hsOfficeRelationAGENT(newPartnerRel));
-    call rbac.grantRoleToRole(hsOfficeRelationTENANT(newPartnerRel), hsOfficeRelationAGENT(newDebitorRel));
+    call rbac.grantRoleToRole(hs_office.bankaccount_REFERRER(newRefundBankAccount), hs_office.relation_AGENT(newDebitorRel));
+    call rbac.grantRoleToRole(hs_office.relation_ADMIN(newDebitorRel), hs_office.relation_ADMIN(newPartnerRel));
+    call rbac.grantRoleToRole(hs_office.relation_AGENT(newDebitorRel), hs_office.bankaccount_ADMIN(newRefundBankAccount));
+    call rbac.grantRoleToRole(hs_office.relation_AGENT(newDebitorRel), hs_office.relation_AGENT(newPartnerRel));
+    call rbac.grantRoleToRole(hs_office.relation_TENANT(newPartnerRel), hs_office.relation_AGENT(newDebitorRel));
 
-    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hsOfficeRelationOWNER(newDebitorRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hsOfficeRelationTENANT(newDebitorRel));
-    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hsOfficeRelationADMIN(newDebitorRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hs_office.relation_OWNER(newDebitorRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.relation_TENANT(newDebitorRel));
+    call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hs_office.relation_ADMIN(newDebitorRel));
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
 end; $$;
@@ -146,7 +146,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_office.debitor'),
-                        rbac.globalADMIN());
+                        rbac.global_ADMIN());
             END LOOP;
     end;
 $$;
@@ -154,7 +154,7 @@ $$;
 /**
     Grants hs_office.debitor INSERT permission to specified role of new global rows.
 */
-create or replace function hs_office.new_debitor_grants_insert_to_global_tf()
+create or replace function hs_office.debitor_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -162,16 +162,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.debitor'),
-            rbac.globalADMIN());
+            rbac.global_ADMIN());
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_debitor_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger debitor_z_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure hs_office.new_debitor_grants_insert_to_global_tf();
+execute procedure hs_office.debitor_grants_insert_to_global_tf();
 
 
 -- ============================================================================

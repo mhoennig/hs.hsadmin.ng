@@ -33,7 +33,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetc
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "hs_hosting_asset_rv")
+@Table(schema = "hs_hosting", name = "asset_rv")
 @SuperBuilder(toBuilder = true)
 @Getter
 @Setter

@@ -24,7 +24,7 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
 
     @Query(value = """
             SELECT p.* FROM hs_office.relation_rv AS p
-                WHERE (:relationType IS NULL OR p.type = cast(:relationType AS HsOfficeRelationType))
+                WHERE (:relationType IS NULL OR p.type = cast(:relationType AS hs_office.RelationType))
                     AND ( p.anchorUuid = :personUuid OR p.holderUuid = :personUuid)
                """, nativeQuery = true)
     List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidAndRelationTypeString(@NotNull UUID personUuid, String relationType);

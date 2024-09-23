@@ -49,62 +49,62 @@ $$;
 --changeset michael.hoennig:rbac-generators-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create procedure rbac.generateRbacRoleDescriptors(prefix text, targetTable text)
+create procedure rbac.generateRbacRoleDescriptors(targetTable text)
     language plpgsql as $$
 declare
     sql text;
 begin
     sql = format($sql$
-        create or replace function %1$sOwner(entity %2$s, assumed boolean = true)
+        create or replace function %1$s_OWNER(entity %1$s, assumed boolean = true)
             returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'OWNER', assumed);
+            return rbac.roleDescriptorOf('%1$s', entity.uuid, 'OWNER', assumed);
         end; $f$;
 
-        create or replace function %1$sAdmin(entity %2$s, assumed boolean = true)
+        create or replace function %1$s_ADMIN(entity %1$s, assumed boolean = true)
             returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'ADMIN', assumed);
+            return rbac.roleDescriptorOf('%1$s', entity.uuid, 'ADMIN', assumed);
         end; $f$;
 
-        create or replace function %1$sAgent(entity %2$s, assumed boolean = true)
+        create or replace function %1$s_AGENT(entity %1$s, assumed boolean = true)
             returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'AGENT', assumed);
+            return rbac.roleDescriptorOf('%1$s', entity.uuid, 'AGENT', assumed);
         end; $f$;
 
-        create or replace function %1$sTenant(entity %2$s, assumed boolean = true)
+        create or replace function %1$s_TENANT(entity %1$s, assumed boolean = true)
             returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'TENANT', assumed);
+            return rbac.roleDescriptorOf('%1$s', entity.uuid, 'TENANT', assumed);
         end; $f$;
 
         -- TODO: remove guest role
-        create or replace function %1$sGuest(entity %2$s, assumed boolean = true)
+        create or replace function %1$s_GUEST(entity %1$s, assumed boolean = true)
             returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'GUEST', assumed);
+            return rbac.roleDescriptorOf('%1$s', entity.uuid, 'GUEST', assumed);
         end; $f$;
 
-        create or replace function %1$sReferrer(entity %2$s)
+        create or replace function %1$s_REFERRER(entity %1$s)
             returns rbac.RoleDescriptor
             language plpgsql
             strict as $f$
         begin
-            return rbac.roleDescriptorOf('%2$s', entity.uuid, 'REFERRER');
+            return rbac.roleDescriptorOf('%1$s', entity.uuid, 'REFERRER');
         end; $f$;
 
-        $sql$, prefix, targetTable);
+        $sql$, targetTable);
     execute sql;
 end; $$;
 --//
@@ -130,7 +130,7 @@ begin
 
     -- creates a function which maps an idName to the objectUuid
     sql = format($sql$
-        create or replace function %1$sUuidByIdName(givenIdName varchar)
+        create or replace function %1$s_uuid_by_id_name(givenIdName varchar)
             returns uuid
             language plpgsql as $f$
         declare
@@ -144,7 +144,7 @@ begin
 
     -- creates a function which maps an objectUuid to the related idName
     sql = format($sql$
-        create or replace function %1$sIdNameByUuid(givenUuid uuid)
+        create or replace function %1$s_id_name_by_uuid(givenUuid uuid)
             returns varchar
             language sql
             strict as $f$

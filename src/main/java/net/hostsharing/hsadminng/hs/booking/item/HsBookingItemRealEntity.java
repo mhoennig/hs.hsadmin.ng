@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 
 
 @Entity
-@Table(name = "hs_booking_item")
+@Table(schema = "hs_booking", name = "item")
 @SuperBuilder(toBuilder = true)
 @Getter
 @Setter

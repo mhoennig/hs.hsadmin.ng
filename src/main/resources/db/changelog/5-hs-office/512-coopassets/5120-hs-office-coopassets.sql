@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-coopassets-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficeCoopAssetsTransactionType AS ENUM ('ADJUSTMENT',
+CREATE TYPE hs_office.CoopAssetsTransactionType AS ENUM ('ADJUSTMENT',
                                                        'DEPOSIT',
                                                        'DISBURSAL',
                                                        'TRANSFER',
@@ -13,18 +13,18 @@ CREATE TYPE HsOfficeCoopAssetsTransactionType AS ENUM ('ADJUSTMENT',
                                                        'LOSS',
                                                        'LIMITATION');
 
-CREATE CAST (character varying as HsOfficeCoopAssetsTransactionType) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as hs_office.CoopAssetsTransactionType) WITH INOUT AS IMPLICIT;
 
-create table if not exists hs_office.coopassetstransaction
+create table if not exists hs_office.coopassettx
 (
     uuid                uuid unique references rbac.object (uuid) initially deferred,
     version             int not null default 0,
     membershipUuid      uuid not null references hs_office.membership(uuid),
-    transactionType     HsOfficeCoopAssetsTransactionType not null,
+    transactionType     hs_office.CoopAssetsTransactionType not null,
     valueDate           date not null,
     assetValue          money not null,
     reference           varchar(48) not null,
-    adjustedAssetTxUuid uuid unique REFERENCES hs_office.coopassetstransaction(uuid) DEFERRABLE INITIALLY DEFERRED,
+    adjustedAssetTxUuid uuid unique REFERENCES hs_office.coopassettx(uuid) DEFERRABLE INITIALLY DEFERRED,
     comment             varchar(512)
 );
 --//
@@ -34,7 +34,7 @@ create table if not exists hs_office.coopassetstransaction
 --changeset michael.hoennig:hs-office-coopassets-BUSINESS-RULES endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-alter table hs_office.coopassetstransaction
+alter table hs_office.coopassettx
     add constraint reverse_entry_missing
         check ( transactionType = 'ADJUSTMENT' and adjustedAssetTxUuid is not null
              or transactionType <> 'ADJUSTMENT' and adjustedAssetTxUuid is null);
@@ -44,7 +44,7 @@ alter table hs_office.coopassetstransaction
 --changeset michael.hoennig:hs-office-coopassets-ASSET-VALUE-CONSTRAINT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function checkAssetsByMembershipUuid(forMembershipUuid UUID, newAssetValue money)
+create or replace function hs_office.coopassetstx_check_positive_total(forMembershipUuid UUID, newAssetValue money)
 returns boolean
 language plpgsql as $$
 declare
@@ -52,7 +52,7 @@ declare
     totalAssetValue money;
 begin
     select sum(cat.assetValue)
-        from hs_office.coopassetstransaction cat
+        from hs_office.coopassettx cat
         where cat.membershipUuid = forMembershipUuid
         into currentAssetValue;
     totalAssetValue := currentAssetValue + newAssetValue;
@@ -62,9 +62,9 @@ begin
     return true;
 end; $$;
 
-alter table hs_office.coopassetstransaction
+alter table hs_office.coopassettx
     add constraint check_positive_total
-        check ( checkAssetsByMembershipUuid(membershipUuid, assetValue) );
+        check ( hs_office.coopassetstx_check_positive_total(membershipUuid, assetValue) );
 --//
 
 
@@ -72,5 +72,5 @@ alter table hs_office.coopassetstransaction
 --changeset michael.hoennig:hs-office-coopassets-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call base.create_journal('hs_office.coopassetstransaction');
+call base.create_journal('hs_office.coopassettx');
 --//

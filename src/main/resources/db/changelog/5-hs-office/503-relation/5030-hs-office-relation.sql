@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-relation-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficeRelationType AS ENUM (
+CREATE TYPE hs_office.RelationType AS ENUM (
     'UNKNOWN',
     'PARTNER',
     'EX_PARTNER',
@@ -14,7 +14,7 @@ CREATE TYPE HsOfficeRelationType AS ENUM (
     'OPERATIONS',
     'SUBSCRIBER');
 
-CREATE CAST (character varying as HsOfficeRelationType) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as hs_office.RelationType) WITH INOUT AS IMPLICIT;
 
 create table if not exists hs_office.relation
 (
@@ -23,7 +23,7 @@ create table if not exists hs_office.relation
     anchorUuid       uuid not null references hs_office.person(uuid),
     holderUuid       uuid not null references hs_office.person(uuid),
     contactUuid      uuid references hs_office.contact(uuid),
-    type             HsOfficeRelationType not null,
+    type             hs_office.RelationType not null,
     mark             varchar(24)
 );
 --//

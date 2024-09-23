@@ -32,7 +32,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.fetchedBySql
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 
 @Entity
-@Table(name = "hs_booking_project_rv")
+@Table(schema = "hs_booking", name = "project_rv")
 @SuperBuilder(toBuilder = true)
 @Getter
 @Setter
@@ -43,7 +43,7 @@ public class HsBookingProjectRbacEntity extends HsBookingProject {
         return rbacViewFor("project", HsBookingProjectRbacEntity.class)
                 .withIdentityView(SQL.query("""
                         SELECT bookingProject.uuid as uuid, debitorIV.idName || '-' || base.cleanIdentifier(bookingProject.caption) as idName
-                            FROM hs_booking_project bookingProject
+                            FROM hs_booking.project bookingProject
                             JOIN hs_office.debitor_iv debitorIV ON debitorIV.uuid = bookingProject.debitorUuid
                         """))
                 .withRestrictedViewOrderBy(SQL.expression("caption"))

@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.partner_details');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-partner-details-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficePartnerDetails', 'hs_office.partner_details');
+call rbac.generateRbacRoleDescriptors('hs_office.partner_details');
 --//
 
 
@@ -77,7 +77,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_office.partner_details'),
-                        rbac.globalADMIN());
+                        rbac.global_ADMIN());
             END LOOP;
     end;
 $$;
@@ -85,7 +85,7 @@ $$;
 /**
     Grants hs_office.partner_details INSERT permission to specified role of new global rows.
 */
-create or replace function hs_office.new_partner_details_grants_insert_to_global_tf()
+create or replace function hs_office.partner_details_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -93,16 +93,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.partner_details'),
-            rbac.globalADMIN());
+            rbac.global_ADMIN());
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_partner_details_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger partner_details_z_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure hs_office.new_partner_details_grants_insert_to_global_tf();
+execute procedure hs_office.partner_details_grants_insert_to_global_tf();
 
 
 -- ============================================================================

@@ -63,7 +63,6 @@ begin
     if (currentSubject is null or currentSubject = '') then
         raise exception 'hsadminng.currentSubject must be defined, please use "SET LOCAL ...;"';
     end if;
-    raise notice 'currentSubject: %', currentSubject;
 
     -- determine task
     currentTask = current_setting('hsadminng.currentTask');
@@ -81,8 +80,9 @@ begin
         "alive" := false;
     end if;
 
-    sql := format('INSERT INTO %3$I_ex VALUES (DEFAULT, pg_current_xact_id(), %1$L, %2$L, $1.*)',
+    sql := format('INSERT INTO %3$s_ex VALUES (DEFAULT, pg_current_xact_id(), %1$L, %2$L, $1.*)',
                   TG_OP, alive, base.combine_table_schema_and_name(tg_table_schema, tg_table_name)::name);
+    -- raise exception 'generated-SQL: %', sql;
     execute sql using "row";
 
     return "row";
@@ -117,12 +117,12 @@ begin
                          '       EXCLUDING CONSTRAINTS' ||
                          '       EXCLUDING STATISTICS' ||
                          ')';
-    raise notice 'sql: %', createHistTableSql;
+    -- raise notice 'sql: %', createHistTableSql;
     execute createHistTableSql;
 
     -- create the historical view
-    viewName = quote_ident(format('%s_hv', baseTable));
-    exVersionsTable = quote_ident(format('%s_ex', baseTable));
+    viewName = baseTable || '_hv';
+    exVersionsTable = baseTable || '_ex';
     baseCols = (select string_agg(quote_ident(column_name), ', ')
                     from information_schema.columns
                     where table_schema = 'public'
@@ -146,15 +146,14 @@ begin
             '         )' ||
             ')',
             viewName, baseCols, exVersionsTable
-                    );
-    raise notice 'sql: %', createViewSQL;
+        );
+    -- raise notice 'generated-sql: %', createViewSQL;
     execute createViewSQL;
 
     -- "-9-" to put the trigger execution after any alphabetically lesser tx-triggers
     createTriggerSQL = 'CREATE TRIGGER tx_9_historicize_tg' ||
                        ' AFTER INSERT OR DELETE OR UPDATE ON ' || baseTable ||
                        '   FOR EACH ROW EXECUTE PROCEDURE base.tx_historicize_tf()';
-    raise notice 'sql: %', createTriggerSQL;
     execute createTriggerSQL;
 
 end; $$;

@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hosting-asset-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create type HsHostingAssetType as enum (
+create type hs_hosting.AssetType as enum (
     'CLOUD_SERVER',
     'MANAGED_SERVER',
     'MANAGED_WEBSPACE',
@@ -26,22 +26,22 @@ create type HsHostingAssetType as enum (
     'IPV6_NUMBER'
 );
 
-CREATE CAST (character varying as HsHostingAssetType) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as hs_hosting.AssetType) WITH INOUT AS IMPLICIT;
 
-create table if not exists hs_hosting_asset
+create table if not exists hs_hosting.asset
 (
     uuid                uuid unique references rbac.object (uuid),
     version             int not null default 0,
-    bookingItemUuid     uuid null references hs_booking_item(uuid),
-    type                HsHostingAssetType not null,
-    parentAssetUuid     uuid null references hs_hosting_asset(uuid) initially deferred,
-    assignedToAssetUuid uuid null references hs_hosting_asset(uuid) initially deferred,
+    bookingItemUuid     uuid null references hs_booking.item(uuid),
+    type                hs_hosting.AssetType not null,
+    parentAssetUuid     uuid null references hs_hosting.asset(uuid) initially deferred,
+    assignedToAssetUuid uuid null references hs_hosting.asset(uuid) initially deferred,
     identifier          varchar(80) not null,
     caption             varchar(80),
     config              jsonb not null,
     alarmContactUuid    uuid null references hs_office.contact(uuid) initially deferred,
 
-    constraint chk_hs_hosting_asset_has_booking_item_or_parent_asset
+    constraint hosting_asset_has_booking_item_or_parent_asset
         check (bookingItemUuid is not null or parentAssetUuid is not null or type in ('DOMAIN_SETUP', 'IPV4_NUMBER', 'IPV6_NUMBER'))
 );
 --//
@@ -54,16 +54,16 @@ create table if not exists hs_hosting_asset
 -- TODO.impl: this could be generated from HsHostingAssetType
 --  also including a check for assignedToAssetUuud
 
-create or replace function hs_hosting_asset_type_hierarchy_check_tf()
+create or replace function hs_hosting.asset_type_hierarchy_check_tf()
     returns trigger
     language plpgsql as $$
 declare
-    actualParentType    HsHostingAssetType;
-    expectedParentType  HsHostingAssetType;
+    actualParentType    hs_hosting.AssetType;
+    expectedParentType  hs_hosting.AssetType;
 begin
     if NEW.parentAssetUuid is not null then
         actualParentType := (select type
-            from hs_hosting_asset
+            from hs_hosting.asset
             where NEW.parentAssetUuid = uuid);
     end if;
 
@@ -104,10 +104,10 @@ begin
     return NEW;
 end; $$;
 
-create trigger hs_hosting_asset_type_hierarchy_check_tg
-    before insert on hs_hosting_asset
+create trigger hosting_asset_type_hierarchy_check_tg
+    before insert on hs_hosting.asset
     for each row
-        execute procedure hs_hosting_asset_type_hierarchy_check_tf();
+        execute procedure hs_hosting.asset_type_hierarchy_check_tf();
 --//
 
 
@@ -116,7 +116,7 @@ create trigger hs_hosting_asset_type_hierarchy_check_tg
 --changeset michael.hoennig:hosting-asset-system-sequences endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_unixuser_system_id_seq
+CREATE SEQUENCE IF NOT EXISTS hs_hosting.asset_unixuser_system_id_seq
     AS integer
     MINVALUE 1000000
     MAXVALUE 9999999
@@ -130,15 +130,15 @@ CREATE SEQUENCE IF NOT EXISTS hs_hosting_asset_unixuser_system_id_seq
 --changeset michael.hoennig:hosting-asset-BOOKING-ITEM-HIERARCHY-CHECK endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function hs_hosting_asset_booking_item_hierarchy_check_tf()
+create or replace function hs_hosting.asset_booking_item_hierarchy_check_tf()
     returns trigger
     language plpgsql as $$
 declare
-    actualBookingItemType       HsBookingItemType;
-    expectedBookingItemType     HsBookingItemType;
+    actualBookingItemType       hs_booking.ItemType;
+    expectedBookingItemType     hs_booking.ItemType;
 begin
     actualBookingItemType := (select type
-                                 from hs_booking_item
+                                 from hs_booking.item
                                  where NEW.bookingItemUuid = uuid);
 
     if NEW.type = 'CLOUD_SERVER' then
@@ -156,24 +156,24 @@ begin
     return NEW;
 end; $$;
 
-create trigger hs_hosting_asset_booking_item_hierarchy_check_tg
-    before insert on hs_hosting_asset
+create trigger hosting_asset_booking_item_hierarchy_check_tg
+    before insert on hs_hosting.asset
     for each row
-execute procedure hs_hosting_asset_booking_item_hierarchy_check_tf();
+execute procedure hs_hosting.asset_booking_item_hierarchy_check_tf();
 --//
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-hosting-asset-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call base.create_journal('hs_hosting_asset');
+call base.create_journal('hs_hosting.asset');
 --//
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-hosting-asset-MAIN-TABLE-HISTORIZATION endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call base.tx_create_historicization('hs_hosting_asset');
+call base.tx_create_historicization('hs_hosting.asset');
 --//
 
 

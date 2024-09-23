@@ -9,7 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "hs_hosting_asset")
+@Table(schema = "hs_hosting", name = "asset")
 @SuperBuilder(builderMethodName = "genericBuilder", toBuilder = true)
 @Getter
 @Setter

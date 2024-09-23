@@ -49,7 +49,7 @@ INSERT INTO hs_office.contact_legacy_id(uuid, contact_id)
 -- ============================================================================
 --changeset michael.hoennig:hs-office-contact-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function insertContactLegacyIdMapping()
+create or replace function hs_office.contact_insert_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -64,17 +64,17 @@ begin
     return NEW;
 end; $$;
 
-create trigger createContactLegacyIdMapping
+create trigger insert_legacy_id_mapping_tg
     after insert on hs_office.contact
         for each row
-            execute procedure insertContactLegacyIdMapping();
+            execute procedure hs_office.contact_insert_legacy_id_mapping_tf();
 --/
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-contact-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function deleteContactLegacyIdMapping()
+create or replace function hs_office.contact_delete_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -89,8 +89,8 @@ begin
     return OLD;
 end; $$;
 
-create trigger removeContactLegacyIdMapping
+create trigger delete_legacy_id_mapping_tf
     before delete on hs_office.contact
         for each row
-            execute procedure deleteContactLegacyIdMapping();
+            execute procedure hs_office.contact_delete_legacy_id_mapping_tf();
 --/

@@ -9,7 +9,7 @@
 
 CREATE TABLE hs_office.coopsharestransaction_legacy_id
 (
-    uuid            uuid NOT NULL REFERENCES hs_office.coopsharestransaction(uuid),
+    uuid            uuid NOT NULL REFERENCES hs_office.coopsharetx(uuid),
     member_share_id  integer NOT NULL
 );
 --//
@@ -42,14 +42,14 @@ ALTER TABLE hs_office.coopsharestransaction_legacy_id
 
 CALL base.defineContext('schema-migration');
 INSERT INTO hs_office.coopsharestransaction_legacy_id(uuid, member_share_id)
-    SELECT uuid, nextVal('hs_office.coopsharestransaction_legacy_id_seq') FROM hs_office.coopsharestransaction;
+    SELECT uuid, nextVal('hs_office.coopsharestransaction_legacy_id_seq') FROM hs_office.coopsharetx;
 --/
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-coopShares-MIGRATION-insert-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function insertCoopSharesLegacyIdMapping()
+create or replace function hs_office.coopsharetx_insert_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -64,17 +64,17 @@ begin
     return NEW;
 end; $$;
 
-create trigger createCoopSharesLegacyIdMapping
-    after insert on hs_office.coopsharestransaction
+create trigger insert_legacy_id_mapping_tg
+    after insert on hs_office.coopsharetx
         for each row
-            execute procedure insertCoopSharesLegacyIdMapping();
+            execute procedure hs_office.coopsharetx_insert_legacy_id_mapping_tf();
 --/
 
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-coopShares-MIGRATION-delete-trigger endDelimiter:--//
 -- ----------------------------------------------------------------------------
-create or replace function deleteCoopSharesLegacyIdMapping()
+create or replace function hs_office.coopsharetx_delete_legacy_id_mapping_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -89,8 +89,8 @@ begin
     return OLD;
 end; $$;
 
-create trigger removeCoopSharesLegacyIdMapping
-    before delete on hs_office.coopsharestransaction
+create trigger delete_legacy_id_mapping_tg
+    before delete on hs_office.coopsharetx
         for each row
-            execute procedure deleteCoopSharesLegacyIdMapping();
+            execute procedure hs_office.coopsharetx_delete_legacy_id_mapping_tf();
 --/

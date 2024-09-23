@@ -20,7 +20,6 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinit
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.StringWriter.with;
 import static org.apache.commons.lang3.StringUtils.capitalize;
-import static org.apache.commons.lang3.StringUtils.uncapitalize;
 
 class RolesGrantsAndPermissionsGenerator {
 
@@ -362,11 +361,10 @@ class RolesGrantsAndPermissionsGenerator {
             System.out.println("null");
         }
         if (roleDef.getEntityAlias().isGlobal()) {
-            return "rbac.globalAdmin()";
+            return "rbac.global_ADMIN()";
         }
         final String entityRefVar = entityRefVar(rootRefVar, roleDef.getEntityAlias());
-        return roleDef.getEntityAlias().simpleName() + capitalize(roleDef.getRole().name())
-                + "(" + entityRefVar + ")";
+        return roleDef.descriptorFunctionName() + "(" + entityRefVar + ")";
     }
 
     private String entityRefVar(
@@ -389,8 +387,8 @@ class RolesGrantsAndPermissionsGenerator {
         plPgSql.writeLn();
         plPgSql.writeLn("perform rbac.defineRoleWithGrants(");
         plPgSql.indented(() -> {
-            plPgSql.writeLn("${simpleVarName)${roleSuffix}(NEW),"
-                    .replace("${simpleVarName)", simpleEntityVarName)
+            plPgSql.writeLn("${qualifiedRawTableName)_${roleSuffix}(NEW),"
+                    .replace("${qualifiedRawTableName)", qualifiedRawTableName)
                     .replace("${roleSuffix}", capitalize(role.name())));
 
             generatePermissionsForRole(plPgSql, role);
@@ -593,14 +591,10 @@ class RolesGrantsAndPermissionsGenerator {
             final RbacView.RbacRoleDefinition roleDef,
             final boolean assumed) {
         final var assumedArg = assumed ? "" : ", rbac.unassumed()";
-        return toRoleRef(roleDef) +
+        return roleDef.descriptorFunctionName() +
                 (roleDef.getEntityAlias().isGlobal() ? ( assumed ? "()" : "(rbac.unassumed())")
                         : rbacDef.isRootEntityAlias(roleDef.getEntityAlias()) ? ("(" + triggerRef.name() + ")")
                         : "(" + toTriggerReference(triggerRef, roleDef.getEntityAlias()) + assumedArg + ")");
-    }
-
-    private static String toRoleRef(final RbacView.RbacRoleDefinition roleDef) {
-        return uncapitalize(roleDef.getEntityAlias().simpleName()) + capitalize(roleDef.getRole().name());
     }
 
     private static String toTriggerReference(

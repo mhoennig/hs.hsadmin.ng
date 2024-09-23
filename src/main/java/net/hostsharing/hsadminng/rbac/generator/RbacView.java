@@ -29,6 +29,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacGrantDefinit
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.Part.AUTO_FETCH;
 import static org.apache.commons.collections4.SetUtils.hashSet;
+import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 
 @Getter
@@ -830,6 +831,10 @@ public class RbacView {
         public boolean isGlobal(final Role role) {
             return entityAlias.isGlobal() && this.role == role;
         }
+
+        public String descriptorFunctionName() {
+            return entityAlias.getRawTableNameWithSchema() + "_" + capitalize(role.name());
+        }
     }
 
     public RbacSubjectReference findUserRef(final RbacSubjectReference.UserRole userRole) {
@@ -982,14 +987,12 @@ public class RbacView {
 
         String getRawTableShortName() {
             // TODO.impl: some combined function and trigger names are too long
-            // maybe we should shorten the table name e.g. hs_office.coopsharestransaction -> hsof.coopsharetx
+            // maybe we should shorten the table name e.g. hs_office.coopsharetx -> hsof.coopsharetx
             // this is just a workaround:
             return getRawTableName()
                     .replace("hs_office.", "hsof.")
-                    .replace("hs_booking_", "hsbk_")
-                    .replace("hs_hosting_", "hsho_")
-                    .replace("coopsharestransaction", "coopsharetx")
-                    .replace("coopassetstransaction", "coopassettx");
+                    .replace("hs_booking.", "hsbk_")
+                    .replace("hs_hosting.", "hsho_");
         }
 
         String dependsOnColumName() {

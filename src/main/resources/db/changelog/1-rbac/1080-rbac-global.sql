@@ -30,7 +30,7 @@ create or replace function rbac.isGlobalAdmin()
     returns boolean
     language plpgsql as $$
 begin
-    return rbac.isGranted(rbac.currentSubjectOrAssumedRolesUuids(), rbac.findRoleId(rbac.globalAdmin()));
+    return rbac.isGranted(rbac.currentSubjectOrAssumedRolesUuids(), rbac.findRoleId(rbac.global_ADMIN()));
 end; $$;
 --//
 
@@ -66,21 +66,21 @@ grant all privileges on rbac.global_iv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNA
 /*
     Returns the objectUuid for a given identifying name (in this case the idName).
  */
-create or replace function rbac.globalUuidByIdName(idName varchar)
+create or replace function rbac.global_uuid_by_id_name(idName varchar)
     returns uuid
     language sql
     strict as $$
-select uuid from rbac.global_iv iv where iv.idName = globalUuidByIdName.idName;
+select uuid from rbac.global_iv iv where iv.idName = global_uuid_by_id_name.idName;
 $$;
 
 /*
     Returns the identifying name for a given objectUuid (in this case the idName).
  */
-create or replace function rbac.globalIdNameByUuid(uuid uuid)
+create or replace function rbac.global_id_name_by_uuid(uuid uuid)
     returns varchar
     language sql
     strict as $$
-select idName from rbac.global_iv iv where iv.uuid = globalIdNameByUuid.uuid;
+select idName from rbac.global_iv iv where iv.uuid = global_id_name_by_uuid.uuid;
 $$;
 --//
 
@@ -109,7 +109,7 @@ commit;
 /*
     A rbac.Global administrator role.
  */
-create or replace function rbac.globalAdmin(assumed boolean = true)
+create or replace function rbac.global_ADMIN(assumed boolean = true)
     returns rbac.RoleDescriptor
     returns null on null input
     stable -- leakproof
@@ -119,7 +119,7 @@ $$;
 
 begin transaction;
     call base.defineContext('creating role:rbac.global#global:ADMIN', null, null, null);
-    select rbac.createRole(rbac.globalAdmin());
+    select rbac.createRole(rbac.global_ADMIN());
 commit;
 --//
 
@@ -157,7 +157,7 @@ do language plpgsql $$
     begin
         call base.defineContext('creating fake test-realm admin users', null, null, null);
 
-        admins = rbac.findRoleId(rbac.globalAdmin());
+        admins = rbac.findRoleId(rbac.global_ADMIN());
         call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('superuser-alex@hostsharing.net'));
         call rbac.grantRoleToSubjectUnchecked(admins, admins, rbac.create_subject('superuser-fran@hostsharing.net'));
         perform rbac.create_subject('selfregistered-user-drew@hostsharing.org');

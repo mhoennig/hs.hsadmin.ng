@@ -6,20 +6,20 @@
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates a single hs_booking_item test record.
+    Creates a single hs_booking.item test record.
  */
-create or replace procedure createHsBookingItemTransactionTestData(
+create or replace procedure hs_booking.item_create_test_data(
     givenPartnerNumber numeric,
     givenDebitorSuffix char(2)
     )
     language plpgsql as $$
 declare
-    relatedProject      hs_booking_project;
+    relatedProject      hs_booking.project;
     privateCloudUuid    uuid;
     managedServerUuid   uuid;
 begin
     select project.* into relatedProject
-                     from hs_booking_project project
+                     from hs_booking.project project
                      where project.caption = 'D-' || givenPartnerNumber || givenDebitorSuffix || ' default project';
 
     raise notice 'creating test booking-item: %', givenPartnerNumber::text || givenDebitorSuffix::text;
@@ -27,7 +27,7 @@ begin
     privateCloudUuid := uuid_generate_v4();
     managedServerUuid := uuid_generate_v4();
     insert
-        into hs_booking_item (uuid, projectuuid,            type,               parentitemuuid,     caption,                    validity,                           resources)
+        into hs_booking.item (uuid, projectuuid,            type,               parentitemuuid,     caption,                    validity,                           resources)
         values (privateCloudUuid,   relatedProject.uuid,    'PRIVATE_CLOUD',    null,               'some PrivateCloud',        daterange('20240401', null, '[]'),  '{ "CPU": 10, "RAM": 32, "SSD": 4000, "HDD": 10000, "Traffic": 2000 }'::jsonb),
                (uuid_generate_v4(), null,                   'MANAGED_SERVER',   privateCloudUuid,   'some ManagedServer',       daterange('20230115', '20240415',   '[)'), '{ "CPU": 2, "RAM": 4, "SSD": 500, "Traffic": 500 }'::jsonb),
                (uuid_generate_v4(), null,                   'CLOUD_SERVER',     privateCloudUuid,   'test CloudServer',         daterange('20230115', '20240415',   '[)'), '{ "CPU": 2, "RAM": 4, "SSD": 750, "Traffic": 500 }'::jsonb),
@@ -49,9 +49,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating booking-item test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsBookingItemTransactionTestData(10001, '11');
-        call createHsBookingItemTransactionTestData(10002, '12');
-        call createHsBookingItemTransactionTestData(10003, '13');
+        call hs_booking.item_create_test_data(10001, '11');
+        call hs_booking.item_create_test_data(10002, '12');
+        call hs_booking.item_create_test_data(10003, '13');
     end;
 $$;
 --//

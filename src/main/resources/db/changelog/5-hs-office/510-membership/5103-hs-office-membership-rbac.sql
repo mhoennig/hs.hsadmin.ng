@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.membership');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-membership-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeMembership', 'hs_office.membership');
+call rbac.generateRbacRoleDescriptors('hs_office.membership');
 --//
 
 
@@ -44,25 +44,25 @@ begin
 
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeMembershipOWNER(NEW),
+        hs_office.membership_OWNER(NEW),
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeMembershipADMIN(NEW),
+        hs_office.membership_ADMIN(NEW),
             permissions => array['DELETE', 'UPDATE'],
             incomingSuperRoles => array[
-            	hsOfficeMembershipOWNER(NEW),
-            	hsOfficeRelationADMIN(newPartnerRel)]
+            	hs_office.membership_OWNER(NEW),
+            	hs_office.relation_ADMIN(newPartnerRel)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeMembershipAGENT(NEW),
+        hs_office.membership_AGENT(NEW),
             permissions => array['SELECT'],
             incomingSuperRoles => array[
-            	hsOfficeMembershipADMIN(NEW),
-            	hsOfficeRelationAGENT(newPartnerRel)],
-            outgoingSubRoles => array[hsOfficeRelationTENANT(newPartnerRel)]
+            	hs_office.membership_ADMIN(NEW),
+            	hs_office.relation_AGENT(newPartnerRel)],
+            outgoingSubRoles => array[hs_office.relation_TENANT(newPartnerRel)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
@@ -108,7 +108,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'hs_office.membership'),
-                        rbac.globalADMIN());
+                        rbac.global_ADMIN());
             END LOOP;
     end;
 $$;
@@ -116,7 +116,7 @@ $$;
 /**
     Grants hs_office.membership INSERT permission to specified role of new global rows.
 */
-create or replace function hs_office.new_membership_grants_insert_to_global_tf()
+create or replace function hs_office.membership_grants_insert_to_global_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -124,16 +124,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'hs_office.membership'),
-            rbac.globalADMIN());
+            rbac.global_ADMIN());
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_membership_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger membership_z_grants_after_insert_tg
     after insert on rbac.global
     for each row
-execute procedure hs_office.new_membership_grants_insert_to_global_tf();
+execute procedure hs_office.membership_grants_insert_to_global_tf();
 
 
 -- ============================================================================

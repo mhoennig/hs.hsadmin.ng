@@ -234,6 +234,50 @@ $$;
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-base-IDNAME-FUNCTIONS endDelimiter:--//
+-- ----------------------------------------------------------------------------
+create or replace function rbac.findObjectUuidByIdName(objectTable varchar, objectIdName varchar)
+    returns uuid
+    returns null on null input
+    language plpgsql as $$
+declare
+    sql  varchar;
+    uuid uuid;
+begin
+    objectTable := base.pureIdentifier(objectTable);
+    objectIdName := base.pureIdentifier(objectIdName);
+    sql := format('select * from %s_uuid_by_id_name(%L);', objectTable, objectIdName);
+    begin
+        execute sql into uuid;
+    exception
+        when others then
+            raise exception 'function %_uuid_by_id_name(...) not found, add identity view support for table %', objectTable, objectTable;
+    end;
+    return uuid;
+end ; $$;
+
+create or replace function rbac.findIdNameByObjectUuid(objectTable varchar, objectUuid uuid)
+    returns varchar
+    returns null on null input
+    language plpgsql as $$
+declare
+    sql    varchar;
+    idName varchar;
+begin
+    objectTable := base.pureIdentifier(objectTable);
+    sql := format('select * from %s_id_name_by_uuid(%L::uuid);', objectTable, objectUuid);
+    begin
+        execute sql into idName;
+    exception
+        when others then
+            raise exception 'function %_id_name_by_uuid(...) not found, add identity view support for table %', objectTable, objectTable;
+    end;
+    return idName;
+end ; $$;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-base-ROLE-FUNCTIONS endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
@@ -262,7 +306,7 @@ begin
     objectTableFromRoleIdName = split_part(roleParts, '#', 1);
     objectNameFromRoleIdName = split_part(roleParts, '#', 2);
     roleTypeFromRoleIdName = split_part(roleParts, '#', 3);
-    objectUuidOfRole = base.findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
+    objectUuidOfRole = rbac.findObjectUuidByIdName(objectTableFromRoleIdName, objectNameFromRoleIdName);
 
     select uuid
         from rbac.role

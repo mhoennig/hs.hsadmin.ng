@@ -6,9 +6,9 @@
 -- ----------------------------------------------------------------------------
 
 /*
-    Creates a single hs_booking_project test record.
+    Creates a single hs_booking.project test record.
  */
-create or replace procedure createHsBookingProjectTransactionTestData(
+create or replace procedure hs_booking.project_create_test_data(
     givenPartnerNumber numeric,
     givenDebitorSuffix char(2)
     )
@@ -27,7 +27,7 @@ begin
     raise notice 'creating test booking-project: %', givenDebitorSuffix::text;
     raise notice '- using debitor (%): %', relatedDebitor.uuid, relatedDebitor;
     insert
-        into hs_booking_project (uuid, debitoruuid, caption)
+        into hs_booking.project (uuid, debitoruuid, caption)
         values (uuid_generate_v4(), relatedDebitor.uuid, 'D-' || givenPartnerNumber::text || givenDebitorSuffix || ' default project');
 end; $$;
 --//
@@ -41,9 +41,9 @@ do language plpgsql $$
     begin
         call base.defineContext('creating booking-project test-data', null, 'superuser-alex@hostsharing.net', 'rbac.global#global:ADMIN');
 
-        call createHsBookingProjectTransactionTestData(10001, '11');
-        call createHsBookingProjectTransactionTestData(10002, '12');
-        call createHsBookingProjectTransactionTestData(10003, '13');
+        call hs_booking.project_create_test_data(10001, '11');
+        call hs_booking.project_create_test_data(10002, '12');
+        call hs_booking.project_create_test_data(10003, '13');
     end;
 $$;
 --//

@@ -8,7 +8,7 @@
 /*
     Creates a single bankaccount test record.
  */
-create or replace procedure createHsOfficeBankAccountTestData(givenHolder varchar, givenIBAN varchar, givenBIC varchar)
+create or replace procedure hs_office.bankaccount_create_test_data(givenHolder varchar, givenIBAN varchar, givenBIC varchar)
     language plpgsql as $$
 declare
     emailAddr varchar;
@@ -34,13 +34,13 @@ do language plpgsql $$
         call base.defineContext('creating bankaccount test-data');
 
         -- IBANs+BICs taken from https://ibanvalidieren.de/beispiele.html
-        call createHsOfficeBankAccountTestData('First GmbH', 'DE02120300000000202051', 'BYLADEM1001');
-        call createHsOfficeBankAccountTestData('Peter Smith', 'DE02500105170137075030', 'INGDDEFF');
-        call createHsOfficeBankAccountTestData('Second e.K.', 'DE02100500000054540402', 'BELADEBE');
-        call createHsOfficeBankAccountTestData('Third OHG', 'DE02300209000106531065', 'CMCIDEDD');
-        call createHsOfficeBankAccountTestData('Fourth eG', 'DE02200505501015871393', 'HASPDEHH');
-        call createHsOfficeBankAccountTestData('Mel Bessler', 'DE02100100100006820101', 'PBNKDEFF');
-        call createHsOfficeBankAccountTestData('Anita Bessler', 'DE02300606010002474689', 'DAAEDEDD');
-        call createHsOfficeBankAccountTestData('Paul Winkler', 'DE02600501010002034304', 'SOLADEST600');
+        call hs_office.bankaccount_create_test_data('First GmbH', 'DE02120300000000202051', 'BYLADEM1001');
+        call hs_office.bankaccount_create_test_data('Peter Smith', 'DE02500105170137075030', 'INGDDEFF');
+        call hs_office.bankaccount_create_test_data('Second e.K.', 'DE02100500000054540402', 'BELADEBE');
+        call hs_office.bankaccount_create_test_data('Third OHG', 'DE02300209000106531065', 'CMCIDEDD');
+        call hs_office.bankaccount_create_test_data('Fourth eG', 'DE02200505501015871393', 'HASPDEHH');
+        call hs_office.bankaccount_create_test_data('Mel Bessler', 'DE02100100100006820101', 'PBNKDEFF');
+        call hs_office.bankaccount_create_test_data('Anita Bessler', 'DE02300606010002474689', 'DAAEDEDD');
+        call hs_office.bankaccount_create_test_data('Paul Winkler', 'DE02600501010002034304', 'SOLADEST600');
     end;
 $$;

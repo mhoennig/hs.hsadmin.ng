@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('rbactest.package');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:rbactest-package-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('testPackage', 'rbactest.package');
+call rbac.generateRbacRoleDescriptors('rbactest.package');
 --//
 
 
@@ -40,21 +40,21 @@ begin
 
 
     perform rbac.defineRoleWithGrants(
-        testPackageOWNER(NEW),
+        rbactest.package_OWNER(NEW),
             permissions => array['DELETE', 'UPDATE'],
-            incomingSuperRoles => array[testCustomerADMIN(newCustomer)]
+            incomingSuperRoles => array[rbactest.customer_ADMIN(newCustomer)]
     );
 
     perform rbac.defineRoleWithGrants(
-        testPackageADMIN(NEW),
-            incomingSuperRoles => array[testPackageOWNER(NEW)]
+        rbactest.package_ADMIN(NEW),
+            incomingSuperRoles => array[rbactest.package_OWNER(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        testPackageTENANT(NEW),
+        rbactest.package_TENANT(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[testPackageADMIN(NEW)],
-            outgoingSubRoles => array[testCustomerTENANT(newCustomer)]
+            incomingSuperRoles => array[rbactest.package_ADMIN(NEW)],
+            outgoingSubRoles => array[rbactest.customer_TENANT(newCustomer)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);
@@ -110,11 +110,11 @@ begin
 
     if NEW.customerUuid <> OLD.customerUuid then
 
-        call rbac.revokeRoleFromRole(testPackageOWNER(OLD), testCustomerADMIN(oldCustomer));
-        call rbac.grantRoleToRole(testPackageOWNER(NEW), testCustomerADMIN(newCustomer));
+        call rbac.revokeRoleFromRole(rbactest.package_OWNER(OLD), rbactest.customer_ADMIN(oldCustomer));
+        call rbac.grantRoleToRole(rbactest.package_OWNER(NEW), rbactest.customer_ADMIN(newCustomer));
 
-        call rbac.revokeRoleFromRole(testCustomerTENANT(oldCustomer), testPackageTENANT(OLD));
-        call rbac.grantRoleToRole(testCustomerTENANT(newCustomer), testPackageTENANT(NEW));
+        call rbac.revokeRoleFromRole(rbactest.customer_TENANT(oldCustomer), rbactest.package_TENANT(OLD));
+        call rbac.grantRoleToRole(rbactest.customer_TENANT(newCustomer), rbactest.package_TENANT(NEW));
 
     end if;
 
@@ -161,7 +161,7 @@ do language plpgsql $$
             LOOP
                 call rbac.grantPermissionToRole(
                         rbac.createPermission(row.uuid, 'INSERT', 'rbactest.package'),
-                        testCustomerADMIN(row));
+                        rbactest.customer_ADMIN(row));
             END LOOP;
     end;
 $$;
@@ -169,7 +169,7 @@ $$;
 /**
     Grants rbactest.package INSERT permission to specified role of new customer rows.
 */
-create or replace function rbactest.new_package_grants_insert_to_customer_tf()
+create or replace function rbactest.package_grants_insert_to_customer_tf()
     returns trigger
     language plpgsql
     strict as $$
@@ -177,16 +177,16 @@ begin
     -- unconditional for all rows in that table
         call rbac.grantPermissionToRole(
             rbac.createPermission(NEW.uuid, 'INSERT', 'rbactest.package'),
-            testCustomerADMIN(NEW));
+            rbactest.customer_ADMIN(NEW));
     -- end.
     return NEW;
 end; $$;
 
--- z_... is to put it at the end of after insert triggers, to make sure the roles exist
-create trigger z_new_package_grants_after_insert_tg
+-- ..._z_... is to put it at the end of after insert triggers, to make sure the roles exist
+create trigger package_z_grants_after_insert_tg
     after insert on rbactest.customer
     for each row
-execute procedure rbactest.new_package_grants_insert_to_customer_tf();
+execute procedure rbactest.package_grants_insert_to_customer_tf();
 
 
 -- ============================================================================

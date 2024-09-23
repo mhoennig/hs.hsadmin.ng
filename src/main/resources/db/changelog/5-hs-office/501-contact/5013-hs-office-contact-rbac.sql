@@ -12,7 +12,7 @@ call rbac.generateRelatedRbacObject('hs_office.contact');
 -- ============================================================================
 --changeset RbacRoleDescriptorsGenerator:hs-office-contact-rbac-ROLE-DESCRIPTORS endDelimiter:--//
 -- ----------------------------------------------------------------------------
-call rbac.generateRbacRoleDescriptors('hsOfficeContact', 'hs_office.contact');
+call rbac.generateRbacRoleDescriptors('hs_office.contact');
 --//
 
 
@@ -35,22 +35,22 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeContactOWNER(NEW),
+        hs_office.contact_OWNER(NEW),
             permissions => array['DELETE'],
-            incomingSuperRoles => array[rbac.globalADMIN()],
+            incomingSuperRoles => array[rbac.global_ADMIN()],
             subjectUuids => array[rbac.currentSubjectUuid()]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeContactADMIN(NEW),
+        hs_office.contact_ADMIN(NEW),
             permissions => array['UPDATE'],
-            incomingSuperRoles => array[hsOfficeContactOWNER(NEW)]
+            incomingSuperRoles => array[hs_office.contact_OWNER(NEW)]
     );
 
     perform rbac.defineRoleWithGrants(
-        hsOfficeContactREFERRER(NEW),
+        hs_office.contact_REFERRER(NEW),
             permissions => array['SELECT'],
-            incomingSuperRoles => array[hsOfficeContactADMIN(NEW)]
+            incomingSuperRoles => array[hs_office.contact_ADMIN(NEW)]
     );
 
     call rbac.leaveTriggerForObjectUuid(NEW.uuid);

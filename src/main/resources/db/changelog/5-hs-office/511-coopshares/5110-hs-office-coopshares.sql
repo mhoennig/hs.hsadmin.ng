@@ -4,20 +4,20 @@
 --changeset michael.hoennig:hs-office-coopshares-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE HsOfficeCoopSharesTransactionType AS ENUM ('ADJUSTMENT', 'SUBSCRIPTION', 'CANCELLATION');
+CREATE TYPE hs_office.CoopSharesTransactionType AS ENUM ('ADJUSTMENT', 'SUBSCRIPTION', 'CANCELLATION');
 
-CREATE CAST (character varying as HsOfficeCoopSharesTransactionType) WITH INOUT AS IMPLICIT;
+CREATE CAST (character varying as hs_office.CoopSharesTransactionType) WITH INOUT AS IMPLICIT;
 
-create table if not exists hs_office.coopsharestransaction
+create table if not exists hs_office.coopsharetx
 (
     uuid            uuid unique references rbac.object (uuid) initially deferred,
     version         int not null default 0,
     membershipUuid  uuid not null references hs_office.membership(uuid),
-    transactionType HsOfficeCoopSharesTransactionType not null,
+    transactionType hs_office.CoopSharesTransactionType not null,
     valueDate       date not null,
     shareCount      integer not null,
     reference       varchar(48) not null,
-    adjustedShareTxUuid uuid unique REFERENCES hs_office.coopsharestransaction(uuid) DEFERRABLE INITIALLY DEFERRED,
+    adjustedShareTxUuid uuid unique REFERENCES hs_office.coopsharetx(uuid) DEFERRABLE INITIALLY DEFERRED,
     comment         varchar(512)
 );
 --//
@@ -26,7 +26,7 @@ create table if not exists hs_office.coopsharestransaction
 --changeset michael.hoennig:hs-office-coopshares-BUSINESS-RULES endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-alter table hs_office.coopsharestransaction
+alter table hs_office.coopsharetx
     add constraint reverse_entry_missing
         check ( transactionType = 'ADJUSTMENT' and adjustedShareTxUuid is not null
              or transactionType <> 'ADJUSTMENT' and adjustedShareTxUuid is null);
@@ -36,7 +36,7 @@ alter table hs_office.coopsharestransaction
 --changeset michael.hoennig:hs-office-coopshares-SHARE-COUNT-CONSTRAINT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function checkSharesByMembershipUuid(forMembershipUuid UUID, newShareCount integer)
+create or replace function hs_office.coopsharestx_check_positive_total(forMembershipUuid UUID, newShareCount integer)
 returns boolean
 language plpgsql as $$
 declare
@@ -44,7 +44,7 @@ declare
     totalShareCount integer;
 begin
     select sum(cst.shareCount)
-    from hs_office.coopsharestransaction cst
+    from hs_office.coopsharetx cst
     where cst.membershipUuid = forMembershipUuid
     into currentShareCount;
     totalShareCount := currentShareCount + newShareCount;
@@ -54,9 +54,9 @@ begin
     return true;
 end; $$;
 
-alter table hs_office.coopsharestransaction
+alter table hs_office.coopsharetx
     add constraint check_positive_total_shares_count
-        check ( checkSharesByMembershipUuid(membershipUuid, shareCount) );
+        check ( hs_office.coopsharestx_check_positive_total(membershipUuid, shareCount) );
 
 --//
 
@@ -64,5 +64,5 @@ alter table hs_office.coopsharestransaction
 --changeset michael.hoennig:hs-office-coopshares-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-call base.create_journal('hs_office.coopsharestransaction');
+call base.create_journal('hs_office.coopsharetx');
 --//
