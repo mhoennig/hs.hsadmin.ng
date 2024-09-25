@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.rbac.role.RawRbacRoleRepository;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -161,6 +162,31 @@ class HsHostingAssetRepositoryIntegrationTest extends ContextBasedTestWithCleanu
             assertThatAssetIsPersisted(result.returnedValue());
             assertThat(result.returnedValue().isLoaded()).isFalse();
             assertThat(realAssetRepo.count()).isEqualTo(count + 1);
+        }
+
+        @Test
+        public void identifiersForTheSameTypeAreUnique() {
+            // given
+            context("superuser-alex@hostsharing.net"); // TODO.test: remove context(...) once all entities have real entities
+            final var count = realAssetRepo.count();
+            final var givenManagedServer = givenHostingAsset("D-1000111 default project", MANAGED_SERVER);
+            final var newWebspaceBookingItem = newBookingItem(givenManagedServer.getBookingItem(), HsBookingItemType.MANAGED_WEBSPACE, "fir01");
+
+            // when
+            final var result = attempt(em, () -> {
+                final var newAsset = HsHostingAssetRbacEntity.builder()
+                        .bookingItem(newWebspaceBookingItem)
+                        .parentAsset(givenManagedServer)
+                        .caption("some managed webspace with existing identifier")
+                        .type(MANAGED_WEBSPACE)
+                        .identifier("fir01")
+                        .build();
+                return toCleanup(rbacAssetRepo.save(newAsset));
+            });
+
+            // then
+            result.assertExceptionWithRootCauseMessage(ConstraintViolationException.class,
+                    "duplicate key value violates unique constraint \"asset_type_identifier_key\"");
         }
 
         @Test
