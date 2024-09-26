@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.context;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.mapper.Array;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@ComponentScan(basePackageClasses = { Context.class, JpaAttempt.class, Mapper.class })
+@ComponentScan(basePackageClasses = { Context.class, JpaAttempt.class, StandardMapper.class })
 @DirtiesContext
 class ContextIntegrationTests {
 

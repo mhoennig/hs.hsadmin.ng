@@ -9,7 +9,7 @@ import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealRepository;
 import net.hostsharing.hsadminng.mapper.Array;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsHostingAssetController.class)
-@Import({Mapper.class, JsonObjectMapperConfiguration.class})
+@Import({ StandardMapper.class, JsonObjectMapperConfiguration.class})
 @RunWith(SpringRunner.class)
 public class HsHostingAssetControllerRestTest {
 
@@ -63,10 +63,11 @@ public class HsHostingAssetControllerRestTest {
     Context contextMock;
 
     @Autowired
-    Mapper mapper;
+    @SuppressWarnings("unused") // not used in test, but in controller class
+    StandardMapper mapper;
 
     @MockBean
-    private EntityManagerWrapper em;
+    EntityManagerWrapper em;
 
     @MockBean
     EntityManagerFactory emf;
@@ -90,6 +91,7 @@ public class HsHostingAssetControllerRestTest {
         }
 
     }
+
     enum ListTestCases {
         CLOUD_SERVER(
                 List.of(

@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.rbac.test.pac;
 
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.mapper.OptionalFromJson;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestPackagesApi;
@@ -21,7 +21,7 @@ public class TestPackageController implements TestPackagesApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private TestPackageRepository testPackageRepository;

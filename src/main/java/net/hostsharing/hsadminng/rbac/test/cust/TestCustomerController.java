@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.test.cust;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.test.generated.api.v1.api.TestCustomersApi;
 import net.hostsharing.hsadminng.test.generated.api.v1.model.TestCustomerResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ public class TestCustomerController implements TestCustomersApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private TestCustomerRepository testCustomerRepository;

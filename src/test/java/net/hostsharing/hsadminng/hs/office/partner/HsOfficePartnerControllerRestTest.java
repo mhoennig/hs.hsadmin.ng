@@ -5,7 +5,7 @@ import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRbacEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficePartnerController.class)
-@Import(Mapper.class)
+@Import(StandardMapper.class)
 class HsOfficePartnerControllerRestTest {
 
     static final UUID GIVEN_MANDANTE_UUID = UUID.randomUUID();

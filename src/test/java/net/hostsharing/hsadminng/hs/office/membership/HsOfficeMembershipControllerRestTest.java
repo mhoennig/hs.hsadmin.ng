@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.membership;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeMembershipController.class)
-@Import(Mapper.class)
+@Import(StandardMapper.class)
 public class HsOfficeMembershipControllerRestTest {
 
     @Autowired
@@ -115,7 +115,7 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", is("ERROR: [400] Unable to find Partner by uuid: " + givenPartnerUuid)));
+                    .andExpect(jsonPath("message", is("ERROR: [400] Unable to find Partner by partner.uuid: " + givenPartnerUuid)));
         }
 
         @ParameterizedTest

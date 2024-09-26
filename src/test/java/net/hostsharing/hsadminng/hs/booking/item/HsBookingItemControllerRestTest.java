@@ -1,17 +1,20 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
+import net.hostsharing.hsadminng.config.JsonObjectMapperConfiguration;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -28,13 +31,14 @@ import java.util.UUID;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.hamcrest.Matchers.matchesRegex;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsBookingItemController.class)
-@Import(Mapper.class)
+@Import({StrictMapper.class, JsonObjectMapperConfiguration.class})
 @RunWith(SpringRunner.class)
 class HsBookingItemControllerRestTest {
 
@@ -44,8 +48,12 @@ class HsBookingItemControllerRestTest {
     @MockBean
     Context contextMock;
 
-    @Mock
-    EntityManager em;
+    @Autowired
+    @SuppressWarnings("unused") // not used in test, but in controller class
+    StrictMapper mapper;
+
+    @MockBean
+    EntityManagerWrapper em;
 
     @MockBean
     EntityManagerFactory emf;
@@ -55,6 +63,16 @@ class HsBookingItemControllerRestTest {
 
     @MockBean
     HsBookingItemRbacRepository rbacBookingItemRepo;
+
+    @TestConfiguration
+    public static class TestConfig {
+
+        @Bean
+        public EntityManager entityManager() {
+            return mock(EntityManager.class);
+        }
+
+    }
 
     @BeforeEach
     void init() {

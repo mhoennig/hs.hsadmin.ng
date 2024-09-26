@@ -6,7 +6,7 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingProjec
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectPatchResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingProjectResource;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ public class HsBookingProjectController implements HsBookingProjectsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsBookingProjectRbacRepository bookingProjectRepo;

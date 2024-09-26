@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RbacSubjectController.class)
-@Import(Mapper.class)
+@Import(StandardMapper.class)
 @RunWith(SpringRunner.class)
 class RbacSubjectControllerRestTest {
 

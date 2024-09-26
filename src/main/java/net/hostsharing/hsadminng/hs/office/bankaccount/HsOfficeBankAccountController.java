@@ -4,7 +4,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeBankAccountsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountInsertResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeBankAccountResource;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.iban4j.BicUtil;
 import org.iban4j.IbanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ public class HsOfficeBankAccountController implements HsOfficeBankAccountsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsOfficeBankAccountRepository bankAccountRepo;

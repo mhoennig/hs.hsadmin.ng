@@ -130,7 +130,7 @@ public abstract class HsEntityValidator<E extends PropertiesProvider> {
     }
 
     public Map<String, Object> revampProperties(final EntityManager em, final E entity, final Map<String, Object> config) {
-        final var copy = new HashMap<>(config);
+        final var copy = config != null ? new HashMap<>(config) : new HashMap();
         stream(propertyValidators).forEach(p -> {
             if (p.isWriteOnly()) {
                 copy.remove(p.propertyName);

@@ -9,14 +9,24 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DisplayAs {
+
     class DisplayName {
+
         public static String of(final Class<?> clazz) {
-            final var displayNameAnnot = clazz.getAnnotation(DisplayAs.class);
+            final var displayNameAnnot = getDisplayNameAnnotation(clazz);
             return displayNameAnnot != null ? displayNameAnnot.value() : clazz.getSimpleName();
         }
 
         public static String of(@NotNull final Object instance) {
             return of(instance.getClass());
+        }
+
+        private static DisplayAs getDisplayNameAnnotation(final Class<?> clazz) {
+            if (clazz == null) {
+                return null;
+            }
+            final var annot = clazz.getAnnotation(DisplayAs.class);
+            return annot != null ? annot : getDisplayNameAnnotation(clazz.getSuperclass());
         }
     }
 

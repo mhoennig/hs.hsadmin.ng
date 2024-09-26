@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.contact;
 
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeContactsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeContactInsertResource;
@@ -26,7 +26,7 @@ public class HsOfficeContactController implements HsOfficeContactsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsOfficeContactRbacRepository contactRepo;

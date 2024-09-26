@@ -550,10 +550,35 @@ Dependency versions can be automatically upgraded to the latest available versio
 gw useLatestVersions
 ```
 
-Afterwards, `gw check` is automatically started.
+Afterward, `gw check` is automatically started.
 Please only commit+push to master if the check run shows no errors.
 
 More infos, e.g. on blacklists see on the [project's website](https://github.com/patrikerdes/gradle-use-latest-versions-plugin).
+
+
+## Biggest Flaws in our Architecture
+
+### The RBAC System is too Complicated
+
+Now, where we have a better experience with what we really need from the RBAC system, we have learned
+that and creates too many (grant- and role-) rows and too even tables which could be avoided completely.
+
+The basic idea is always to always have a fixed set of ordered role-types which apply for all DB-tables under RBAC,
+e.g. OWNER>ADMIN>AGENT\[>PROXY?\]>TENENT>REFERRER.
+Grants between these for the same DB-row would be implicit by order comparision.
+This way we would get rid of all explicit grants within the same DB-row
+and would not need the `rbac.role` table anymore.
+We would also reduce the depth of the expensive recursive CTE-query.
+
+This has to be explored further.
+For now, we just keep it in mind and  
+
+### The Mapper is Error-Prone
+
+Where `org.modelmapper.ModelMapper` reduces bloat-code a lot and has some nice features about recursive data-structure mappings,
+it often causes strange errors which are hard to fix.
+E.g. the uuid of the target main object is often taken from an uuid of a sub-subject.
+(For now, use `StrictMapper` to avoid this, for the case it happens.)
 
 
 ## How To ...

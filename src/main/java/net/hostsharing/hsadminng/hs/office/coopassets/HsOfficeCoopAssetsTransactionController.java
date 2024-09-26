@@ -4,7 +4,7 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficeCoopAssetsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.*;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -29,7 +29,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsOfficeCoopAssetsTransactionRepository coopAssetsTransactionRepo;

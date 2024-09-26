@@ -48,10 +48,11 @@ public class HsBookingItemEntityValidatorRegistry {
     }
 
     public static List<String> doValidate(final EntityManager em, final HsBookingItem bookingItem) {
+        final var bookingItemValidator = HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType());
         return HsEntityValidator.doWithEntityManager(em, () ->
             HsEntityValidator.sequentiallyValidate(
-                    () -> HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateEntity(bookingItem),
-                    () -> HsBookingItemEntityValidatorRegistry.forType(bookingItem.getType()).validateContext(bookingItem))
+                    () -> bookingItemValidator.validateEntity(bookingItem),
+                    () -> bookingItemValidator.validateContext(bookingItem))
         );
     }
 

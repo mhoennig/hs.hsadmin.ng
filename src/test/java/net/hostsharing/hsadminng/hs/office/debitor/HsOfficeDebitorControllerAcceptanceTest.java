@@ -433,7 +433,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .post("http://localhost/api/hs/office/debitors")
                 .then().log().all().assertThat()
                     .statusCode(400)
-                    .body("message", is("ERROR: [400] Unable to find RealRelation by uuid: 00000000-0000-0000-0000-000000000000"));
+                    .body("message", is("ERROR: [400] Unable to find RealRelation by debitorRelUuid: 00000000-0000-0000-0000-000000000000"));
                 // @formatter:on
         }
     }

@@ -11,7 +11,7 @@ import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAsse
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetResource;
 import net.hostsharing.hsadminng.hs.hosting.generated.api.v1.model.HsHostingAssetTypeResource;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +35,7 @@ public class HsHostingAssetController implements HsHostingAssetsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsHostingAssetRbacRepository rbacAssetRepo;

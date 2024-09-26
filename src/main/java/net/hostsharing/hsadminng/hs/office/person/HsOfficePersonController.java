@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.api.HsOfficePersonsApi;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficePersonInsertResource;
@@ -23,7 +23,7 @@ public class HsOfficePersonController implements HsOfficePersonsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsOfficePersonRepository personRepo;

@@ -4,7 +4,7 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipStatusResource;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -40,7 +40,7 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
     @Mock
     private EntityManager em;
 
-    private Mapper mapper = new Mapper();
+    private StandardMapper mapper = new StandardMapper();
 
     @BeforeEach
     void initMocks() {

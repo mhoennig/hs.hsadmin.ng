@@ -11,18 +11,20 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static java.util.Arrays.stream;
 import static net.hostsharing.hsadminng.errors.DisplayAs.DisplayName;
 
 /**
  * A nicer API for ModelMapper.
  */
-public class Mapper extends ModelMapper {
+abstract class Mapper extends ModelMapper {
 
     @PersistenceContext
     EntityManager em;
 
-    public Mapper() {
+    Mapper() {
         getConfiguration().setAmbiguityIgnored(true);
     }
 
@@ -45,8 +47,12 @@ public class Mapper extends ModelMapper {
 
     @Override
     public <D> D map(final Object source, final Class<D> destinationType) {
+        return map("", source, destinationType);
+    }
+
+    public <D> D map(final String namePrefix, final Object source, final Class<D> destinationType) {
         final var target = super.map(source, destinationType);
-        for (Field f : destinationType.getDeclaredFields()) {
+        for (Field f : getDeclaredFieldsIncludingSuperClasses(destinationType)) {
             if (f.getAnnotation(ManyToOne.class) == null) {
                 continue;
             }
@@ -64,21 +70,42 @@ public class Mapper extends ModelMapper {
             if (subEntityUuid == null) {
                 continue;
             }
-            ReflectionUtils.setField(f, target, findEntityById(f.getType(), subEntityUuid));
+            ReflectionUtils.setField(f, target, fetchEntity(namePrefix + f.getName() + ".uuid", f.getType(), subEntityUuid));
         }
         return target;
     }
 
-    private Object findEntityById(final Class<?> entityClass, final Object subEntityUuid) {
-        // using getReference would be more efficent, but results in very technical error messages
-        final var entity = em.find(entityClass, subEntityUuid);
+    private static <D> Field[] getDeclaredFieldsIncludingSuperClasses(final Class<D> destinationType) {
+        if (destinationType == null) {
+            return new Field[0];
+        }
+
+        return Stream.concat(
+                stream(destinationType.getDeclaredFields()),
+                stream(getDeclaredFieldsIncludingSuperClasses(destinationType.getSuperclass())))
+            .toArray(Field[]::new);
+    }
+
+    public <E> E fetchEntity(final String propertyName, final Class<E> entityClass, final Object subEntityUuid) {
+        final var entity = em.getReference(entityClass, subEntityUuid);
         if (entity != null) {
             return entity;
         }
-        throw new ValidationException("Unable to find " + DisplayName.of(entityClass) + " by uuid: " + subEntityUuid);
+        throw new ValidationException(
+                "Unable to find " + DisplayName.of(entityClass) +
+                " by " + propertyName + ": " + subEntityUuid);
     }
 
     public <S, T> T map(final S source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
+        if (source == null) {
+            return null;
+        }
+        final var target = map(source, targetClass);
+        postMapper.accept(source, target);
+        return target;
+    }
+
+    public <S, T> T map(final String namePrefix, final S source, final Class<T> targetClass, final BiConsumer<S, T> postMapper) {
         if (source == null) {
             return null;
         }

@@ -1680,13 +1680,19 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
                 final var relatedProject = domainSetup.getSubHostingAssets().stream()
                         .map(ha -> ha.getAssignedToAsset() != null ? ha.getAssignedToAsset().getRelatedProject() : null)
                         .findAny().orElseThrow();
+                final var targetUnixUser = domainSetup.getSubHostingAssets().stream()
+                        .filter(subAsset -> subAsset.getType() == DOMAIN_HTTP_SETUP)
+                        .map(domainHttpSetup -> domainHttpSetup.getAssignedToAsset().getIdentifier())
+                        .findAny().orElse(null);
                 final var bookingItem = HsBookingItemRealEntity.builder()
                         .type(HsBookingItemType.DOMAIN_SETUP)
                         .caption("BI " + domainSetup.getIdentifier())
                         .project((HsBookingProjectRealEntity) relatedProject)
                         //.validity(toPostgresDateRange(created, cancelled))
                         .resources(Map.ofEntries(
-                                entry("domainName", domainSetup.getIdentifier())))
+                                entry("domainName", domainSetup.getIdentifier()),
+                                entry("targetUnixUser", targetUnixUser)
+                        ))
                         .build();
                 domainSetup.setBookingItem(bookingItem);
                 bookingItems.put(nextAvailableBookingItemId(), bookingItem);

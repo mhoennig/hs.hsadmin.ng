@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.test;
 
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,7 +27,7 @@ class MapperUnitTest {
     EntityManager em;
 
     @InjectMocks
-    Mapper mapper;
+    StandardMapper mapper;
 
     final UUID GIVEN_UUID = UUID.randomUUID();
 
@@ -50,7 +50,7 @@ class MapperUnitTest {
     @Test
     void mapsBeanWithExistingSubEntity() {
         final SourceBean givenSource = SourceBean.builder().a("1234").b("Text").s1(new SubSourceBean1(GIVEN_UUID)).build();
-        when(em.find(SubTargetBean1.class, GIVEN_UUID)).thenReturn(new SubTargetBean1(GIVEN_UUID, "xxx"));
+        when(em.getReference(SubTargetBean1.class, GIVEN_UUID)).thenReturn(new SubTargetBean1(GIVEN_UUID, "xxx"));
 
         final var result = mapper.map(givenSource, TargetBean.class);
         assertThat(result).usingRecursiveComparison().isEqualTo(
@@ -81,27 +81,27 @@ class MapperUnitTest {
     @Test
     void mapsBeanWithSubEntityNotFound() {
         final SourceBean givenSource = SourceBean.builder().a("1234").b("Text").s1(new SubSourceBean1(GIVEN_UUID)).build();
-        when(em.find(SubTargetBean1.class, GIVEN_UUID)).thenReturn(null);
+        when(em.getReference(SubTargetBean1.class, GIVEN_UUID)).thenReturn(null);
 
         final var exception = catchThrowable(() ->
                 mapper.map(givenSource, TargetBean.class)
         );
 
         assertThat(exception).isInstanceOf(ValidationException.class)
-                .hasMessage("Unable to find SubTargetBean1 by uuid: " + GIVEN_UUID);
+                .hasMessage("Unable to find SubTargetBean1 by s1.uuid: " + GIVEN_UUID);
     }
 
     @Test
     void mapsBeanWithSubEntityNotFoundAndDisplayName() {
         final SourceBean givenSource = SourceBean.builder().a("1234").b("Text").s2(new SubSourceBean2(GIVEN_UUID)).build();
-        when(em.find(SubTargetBean2.class, GIVEN_UUID)).thenReturn(null);
+        when(em.getReference(SubTargetBean2.class, GIVEN_UUID)).thenReturn(null);
 
         final var exception = catchThrowable(() ->
                 mapper.map(givenSource, TargetBean.class)
         );
 
         assertThat(exception).isInstanceOf(ValidationException.class)
-                .hasMessage("Unable to find SomeDisplayName by uuid: " + GIVEN_UUID);
+                .hasMessage("Unable to find SomeDisplayName by s2.uuid: " + GIVEN_UUID);
     }
 
     @Test

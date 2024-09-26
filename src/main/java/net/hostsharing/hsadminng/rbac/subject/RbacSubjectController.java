@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.subject;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.api.RbacSubjectsApi;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectPermissionResource;
 import net.hostsharing.hsadminng.rbac.generated.api.v1.model.RbacSubjectResource;
@@ -21,7 +21,7 @@ public class RbacSubjectController implements RbacSubjectsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private RbacSubjectRepository rbacSubjectRepository;

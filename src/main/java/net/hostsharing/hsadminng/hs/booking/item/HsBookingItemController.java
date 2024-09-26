@@ -5,17 +5,18 @@ import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingItemsA
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemPatchResource;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemResource;
+import net.hostsharing.hsadminng.hs.booking.item.validators.BookingItemEntitySaveProcessor;
 import net.hostsharing.hsadminng.hs.booking.item.validators.HsBookingItemEntityValidatorRegistry;
+import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.mapper.KeyValueMap;
-import net.hostsharing.hsadminng.mapper.Mapper;
+import net.hostsharing.hsadminng.mapper.StrictMapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -30,13 +31,13 @@ public class HsBookingItemController implements HsBookingItemsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StrictMapper mapper;
 
     @Autowired
     private HsBookingItemRbacRepository bookingItemRepo;
 
-    @PersistenceContext
-    private EntityManager em;
+    @Autowired
+    private EntityManagerWrapper em;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,7 +49,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
         final var entities = bookingItemRepo.findAllByProjectUuid(projectUuid);
 
-        final var resources = mapper.mapList(entities, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var resources = mapper.mapList(entities, HsBookingItemResource.class, RBAC_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
 
@@ -62,15 +63,20 @@ public class HsBookingItemController implements HsBookingItemsApi {
         context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsBookingItemRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
-
-        final var saved = HsBookingItemEntityValidatorRegistry.validated(em, bookingItemRepo.save(entityToSave));
+        final var mapped = new BookingItemEntitySaveProcessor(em, entityToSave)
+                .preprocessEntity()
+                .validateEntity()
+                .prepareForSave()
+                .save()
+                .validateContext()
+                .mapUsing(e -> mapper.map(e, HsBookingItemResource.class, ITEM_TO_RESOURCE_POSTMAPPER))
+                .revampProperties();
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
                         .path("/api/hs/booking/items/{id}")
-                        .buildAndExpand(saved.getUuid())
+                        .buildAndExpand(mapped.getUuid())
                         .toUri();
-        final var mapped = mapper.map(saved, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
 
@@ -87,7 +93,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
         result.ifPresent(entity -> em.detach(entity)); // prevent further LAZY-loading
         return result
                 .map(bookingItemEntity -> ResponseEntity.ok(
-                        mapper.map(bookingItemEntity, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER)))
+                        mapper.map(bookingItemEntity, HsBookingItemResource.class, RBAC_ENTITY_TO_RESOURCE_POSTMAPPER)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -120,18 +126,21 @@ public class HsBookingItemController implements HsBookingItemsApi {
         new HsBookingItemEntityPatcher(current).apply(body);
 
         final var saved = bookingItemRepo.save(HsBookingItemEntityValidatorRegistry.validated(em, current));
-        final var mapped = mapper.map(saved, HsBookingItemResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var mapped = mapper.map(saved, HsBookingItemResource.class, RBAC_ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
 
-    final BiConsumer<HsBookingItemRbacEntity, HsBookingItemResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+    final BiConsumer<HsBookingItem, HsBookingItemResource> ITEM_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setValidFrom(entity.getValidity().lower());
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
     };
 
+    final BiConsumer<HsBookingItemRbacEntity, HsBookingItemResource> RBAC_ENTITY_TO_RESOURCE_POSTMAPPER = ITEM_TO_RESOURCE_POSTMAPPER::accept;
+
     final BiConsumer<HsBookingItemInsertResource, HsBookingItemRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
+        entity.setProject(em.find(HsBookingProjectRealEntity.class, resource.getProjectUuid()));
         entity.setValidity(toPostgresDateRange(LocalDate.now(), resource.getValidTo()));
         entity.putResources(KeyValueMap.from(resource.getResources()));
     };

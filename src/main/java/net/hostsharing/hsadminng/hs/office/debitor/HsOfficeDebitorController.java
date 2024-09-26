@@ -7,8 +7,8 @@ import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebito
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeDebitorResource;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
-import net.hostsharing.hsadminng.mapper.Mapper;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.persistence.EntityExistsValidator;
 import org.apache.commons.lang3.Validate;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,6 @@ import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.errors.DisplayAs.DisplayName;
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
 
 @RestController
@@ -34,13 +33,16 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
     private Context context;
 
     @Autowired
-    private Mapper mapper;
+    private StandardMapper mapper;
 
     @Autowired
     private HsOfficeDebitorRepository debitorRepo;
 
     @Autowired
     private HsOfficeRelationRealRepository relrealRepo;
+
+    @Autowired
+    private EntityExistsValidator entityValidator;
 
     @PersistenceContext
     private EntityManager em;
@@ -84,10 +86,10 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         final var entityToSave = mapper.map(body, HsOfficeDebitorEntity.class);
         if ( body.getDebitorRel() != null ) {
             body.getDebitorRel().setType(DEBITOR.name());
-            final var debitorRel = mapper.map(body.getDebitorRel(), HsOfficeRelationRealEntity.class);
-            validateEntityExists("debitorRel.anchorUuid", debitorRel.getAnchor());
-            validateEntityExists("debitorRel.holderUuid", debitorRel.getHolder());
-            validateEntityExists("debitorRel.contactUuid", debitorRel.getContact());
+            final var debitorRel = mapper.map("debitorRel.", body.getDebitorRel(), HsOfficeRelationRealEntity.class);
+            entityValidator.validateEntityExists("debitorRel.anchorUuid", debitorRel.getAnchor());
+            entityValidator.validateEntityExists("debitorRel.holderUuid", debitorRel.getHolder());
+            entityValidator.validateEntityExists("debitorRel.contactUuid", debitorRel.getContact());
             entityToSave.setDebitorRel(relrealRepo.save(debitorRel));
         } else {
             final var debitorRelOptional = relrealRepo.findByUuid(body.getDebitorRelUuid());
@@ -159,16 +161,5 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         Hibernate.initialize(saved);
         final var mapped = mapper.map(saved, HsOfficeDebitorResource.class);
         return ResponseEntity.ok(mapped);
-    }
-
-    // TODO.impl: extract this to some generally usable class?
-    private <T extends BaseEntity<T>> T validateEntityExists(final String property, final T entitySkeleton) {
-        final var foundEntity = em.find(entitySkeleton.getClass(), entitySkeleton.getUuid());
-        if ( foundEntity == null) {
-            throw new ValidationException("Unable to find " + DisplayName.of(entitySkeleton) + " by " + property + ": " + entitySkeleton.getUuid());
-        }
-
-        //noinspection unchecked
-        return (T) foundEntity;
     }
 }
