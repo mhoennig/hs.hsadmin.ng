@@ -12,6 +12,7 @@ import net.hostsharing.hsadminng.mapper.KeyValueMap;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Autowired
     private StrictMapper mapper;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
     private HsBookingItemRbacRepository bookingItemRepo;
@@ -63,7 +67,8 @@ public class HsBookingItemController implements HsBookingItemsApi {
         context.define(currentSubject, assumedRoles);
 
         final var entityToSave = mapper.map(body, HsBookingItemRbacEntity.class, RESOURCE_TO_ENTITY_POSTMAPPER);
-        final var mapped = new BookingItemEntitySaveProcessor(em, entityToSave)
+        final var saveProcessor = new BookingItemEntitySaveProcessor(em, entityToSave);
+        final var mapped = saveProcessor
                 .preprocessEntity()
                 .validateEntity()
                 .prepareForSave()
@@ -71,6 +76,8 @@ public class HsBookingItemController implements HsBookingItemsApi {
                 .validateContext()
                 .mapUsing(e -> mapper.map(e, HsBookingItemResource.class, ITEM_TO_RESOURCE_POSTMAPPER))
                 .revampProperties();
+
+        applicationEventPublisher.publishEvent(new BookingItemCreatedEvent(this, saveProcessor.getEntity()));
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())

@@ -14,6 +14,7 @@ import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.hs.booking.item.HsBookingItemType.DOMAIN_SETUP;
 import static org.apache.commons.lang3.StringUtils.right;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 class HsDomainSetupBookingItemValidatorUnitTest {
 
@@ -41,10 +42,12 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .build();
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, domainSetupBookingItemEntity);
+        final var thrown = catchThrowable(() -> {
+            new BookingItemEntitySaveProcessor(em, domainSetupBookingItemEntity).preprocessEntity().validateEntity();
+        });
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(thrown).isNull();
     }
 
     @Test
@@ -62,10 +65,12 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .build();
 
         // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, domainSetupBookingItemEntity);
+        final var thrown = catchThrowable(() -> {
+            new BookingItemEntitySaveProcessor(em, domainSetupBookingItemEntity).preprocessEntity().validateEntity();
+        });
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(thrown).isNull();
     }
 
     @Test

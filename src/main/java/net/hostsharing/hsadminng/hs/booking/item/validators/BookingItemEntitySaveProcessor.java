@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.booking.item.validators;
 
+import lombok.Getter;
 import net.hostsharing.hsadminng.errors.MultiValidationException;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemResource;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItem;
@@ -20,7 +21,11 @@ public class BookingItemEntitySaveProcessor {
     private final HsEntityValidator<HsBookingItem> validator;
     private String expectedStep = "preprocessEntity";
     private final EntityManager em;
+
+    @Getter
     private HsBookingItem entity;
+
+    @Getter
     private HsBookingItemResource resource;
 
     public BookingItemEntitySaveProcessor(final EntityManager em, final HsBookingItem entity) {

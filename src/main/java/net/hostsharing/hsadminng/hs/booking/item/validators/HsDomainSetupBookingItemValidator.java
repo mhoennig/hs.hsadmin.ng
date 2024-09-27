@@ -55,6 +55,11 @@ class HsDomainSetupBookingItemValidator extends HsBookingItemEntityValidator {
     }
 
     private static String generateVerificationCode(final EntityManager em, final PropertiesProvider propertiesProvider) {
+        final var userDefinedVerificationCode = propertiesProvider.getDirectValue(VERIFICATION_CODE_PROPERTY_NAME, String.class);
+        if (userDefinedVerificationCode != null) {
+            return userDefinedVerificationCode;
+        }
+
         final var alphaNumeric = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         final var secureRandom = new SecureRandom();
         final var sb = new StringBuilder();

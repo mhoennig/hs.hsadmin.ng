@@ -10,6 +10,7 @@ components:
                 - CLOUD_SERVER
                 - MANAGED_SERVER
                 - MANAGED_WEBSPACE
+                - DOMAIN_SETUP
 
         HsBookingItem:
             type: object

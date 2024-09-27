@@ -4,8 +4,11 @@ import io.hypersistence.utils.hibernate.type.range.Range;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorRepository;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
+import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealRepository;
+import net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.ClassOrderer;
@@ -50,7 +53,10 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
     HsBookingProjectRealRepository realProjectRepo;
 
     @Autowired
-    HsOfficeDebitorRepository debitorRepo;
+    HsBookingDebitorRepository debitorRepo;
+
+    @Autowired
+    HsHostingAssetRealRepository realHostingAssetRepo;
 
     @Autowired
     JpaAttempt jpaAttempt;
@@ -64,7 +70,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
             // given
             context("superuser-alex@hostsharing.net");
-            final var givenProject = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+            final var givenProject = debitorRepo.findByDebitorNumber(1000111).stream()
                             .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                             .flatMap(List::stream)
                             .findFirst()
@@ -132,7 +138,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
         void globalAdmin_canAddBookingItem() {
 
             context.define("superuser-alex@hostsharing.net");
-            final var givenProject = debitorRepo.findDebitorByDebitorNumber(1000111).stream()
+            final var givenProject = debitorRepo.findByDebitorNumber(1000111).stream()
                     .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
                     .flatMap(List::stream)
                     .findFirst()
@@ -176,9 +182,135 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .extract().header("Location");  // @formatter:on
 
             // finally, the new bookingItem can be accessed under the generated UUID
-            final var newSubjectUuid = UUID.fromString(
-                    location.substring(location.lastIndexOf('/') + 1));
-            assertThat(newSubjectUuid).isNotNull();
+            assertThat(fetchRealBookingItemFromURI(location)).isNotNull();
+        }
+
+        @Test
+        void projectAgent_canAddBookingItemWithHostingAsset() {
+
+            context.define("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            final var givenProject = debitorRepo.findByDebitorNumber(1000111).stream()
+                    .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .flatMap(List::stream)
+                    .findFirst()
+                    .orElseThrow();
+
+            Dns.fakeResultForDomain("example.org",
+                    Dns.Result.fromRecords("Hostsharing-domain-setup-verification-code=just-a-fake-verification-code"));
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .contentType(ContentType.JSON)
+                    .body("""
+                            {
+                                "projectUuid": "{projectUuid}",
+                                "type": "DOMAIN_SETUP",
+                                "caption": "some new domain-setup booking",
+                                "resources": {
+                                    "domainName": "example.org",
+                                    "targetUnixUser": "fir01-web",
+                                    "verificationCode": "just-a-fake-verification-code"
+                                }
+                            }
+                            """
+                            .replace("{projectUuid}", givenProject.getUuid().toString())
+                    )
+                    .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/booking/items")
+                    .then().log().all().assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("", lenientlyEquals("""
+                                {
+                                    "type": "DOMAIN_SETUP",
+                                    "caption": "some new domain-setup booking",
+                                    "validFrom": "{today}",
+                                    "validTo": null,
+                                    "resources": { "domainName": "example.org", "targetUnixUser": "fir01-web" }
+                                 }
+                                """
+                                .replace("{today}", LocalDate.now().toString())
+                                .replace("{todayPlus1Month}", LocalDate.now().plusMonths(1).toString()))
+                        )
+                        .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/booking/items/[^/]*"))
+                        .extract().header("Location");  // @formatter:on
+
+            // then, the new BookingItem can be accessed under the generated UUID
+            final var newBookingItem = fetchRealBookingItemFromURI(location);
+            assertThat(newBookingItem)
+                    .extracting(bi -> bi.getDirectValue("domainName", String.class))
+                    .isEqualTo("example.org");
+
+            // and the related HostingAsset also got created
+            assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isNotEmpty()
+                    .map(HsHostingAsset::getBookingItem)
+                    .contains(newBookingItem);
+        }
+
+        @Test
+        void projectAgent_canAddBookingItemEvenIfHostingAssetCreationFails() {
+
+            context.define("superuser-alex@hostsharing.net", "hs_booking.project#D-1000111-D-1000111defaultproject:AGENT");
+            final var givenProject = debitorRepo.findByDebitorNumber(1000111).stream()
+                    .map(d -> realProjectRepo.findAllByDebitorUuid(d.getUuid()))
+                    .flatMap(List::stream)
+                    .findFirst()
+                    .orElseThrow();
+
+            Dns.fakeResultForDomain("example.org", Dns.Result.fromRecords()); // without valid verificationCode
+
+            final var location = RestAssured // @formatter:off
+                    .given()
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .contentType(ContentType.JSON)
+                        .body("""
+                                {
+                                    "projectUuid": "{projectUuid}",
+                                    "type": "DOMAIN_SETUP",
+                                    "caption": "some new domain-setup booking",
+                                    "resources": {
+                                        "domainName": "example.org",
+                                        "targetUnixUser": "fir01-web",
+                                        "verificationCode": "just-a-fake-verification-code"
+                                    }
+                                }
+                                """
+                                .replace("{projectUuid}", givenProject.getUuid().toString())
+                        )
+                        .port(port)
+                    .when()
+                        .post("http://localhost/api/hs/booking/items")
+                    .then().log().all().assertThat()
+                        .statusCode(201)
+                        .contentType(ContentType.JSON)
+                        .body("", lenientlyEquals("""
+                                {
+                                    "type": "DOMAIN_SETUP",
+                                    "caption": "some new domain-setup booking",
+                                    "validFrom": "{today}",
+                                    "validTo": null,
+                                    "resources": { "domainName": "example.org", "targetUnixUser": "fir01-web" }
+                                 }
+                                """
+                                .replace("{today}", LocalDate.now().toString())
+                                .replace("{todayPlus1Month}", LocalDate.now().plusMonths(1).toString()))
+                        )
+                        .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/booking/items/[^/]*"))
+                        .extract().header("Location");  // @formatter:on
+
+            // then, the new BookingItem can be accessed under the generated UUID
+            final var newBookingItem = fetchRealBookingItemFromURI(location);
+            assertThat(newBookingItem)
+                    .extracting(bi -> bi.getDirectValue("domainName", String.class))
+                    .isEqualTo("example.org");
+            assertThat(newBookingItem)
+                    .extracting(bi -> bi.getDirectValue("status", String.class))
+                    .isEqualTo("[[DNS] no TXT record 'Hostsharing-domain-setup-verification-code=just-a-fake-verification-code' found for domain name 'example.org' (nor in its super-domain)]");
+
+            // but the related HostingAsset did not get created
+            assertThat(realHostingAssetRepo.findByIdentifier("example.org")).isEmpty();
         }
     }
 
@@ -404,5 +536,14 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
 
     private Map.Entry<String, Object> resource(final String key, final Object value) {
         return entry(key, value);
+    }
+
+    private HsBookingItemRealEntity fetchRealBookingItemFromURI(final String location) {
+        final var newBookingItemUuid = UUID.fromString(
+                location.substring(location.lastIndexOf('/') + 1));
+        assertThat(newBookingItemUuid).isNotNull();
+        final var optional = realBookingItemRepo.findByUuid(newBookingItemUuid);
+        assertThat(optional).isNotEmpty();
+        return optional.get();
     }
 }
