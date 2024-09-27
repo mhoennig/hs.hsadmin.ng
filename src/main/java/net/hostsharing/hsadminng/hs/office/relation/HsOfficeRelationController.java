@@ -52,7 +52,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
         context.define(currentSubject, assumedRoles);
 
         final var entities = relationRbacRepo.findRelationRelatedToPersonUuidAndRelationType(personUuid,
-                mapper.map(relationType, HsOfficeRelationType.class));
+               relationType == null ? null : HsOfficeRelationType.valueOf(relationType.name()));
 
         final var resources = mapper.mapList(entities, HsOfficeRelationResource.class,
                 RELATION_ENTITY_TO_RESOURCE_POSTMAPPER);

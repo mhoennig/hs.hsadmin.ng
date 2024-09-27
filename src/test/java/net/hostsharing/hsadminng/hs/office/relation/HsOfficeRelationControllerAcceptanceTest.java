@@ -55,7 +55,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     class ListRelations {
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canViewAllRelationsOfGivenPersonAndType_ifNoCriteriaGiven() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canViewAllRelationsOfGivenPersonAndType() throws JSONException {
 
             // given
             context.define("superuser-alex@hostsharing.net");
@@ -110,6 +110,64 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     ]
                     """));
                 // @formatter:on
+        }
+
+        @Test
+        void personAdmin_canViewAllRelationsOfGivenRelatedPersonAndAnyType() throws JSONException {
+
+            // given
+            context.define("contact-admin@firstcontact.example.com");
+            final var givenPerson = personRepo.findPersonByOptionalNameLike("First GmbH").get(0);
+
+            RestAssured // @formatter:off
+                    .given()
+                    .header("current-subject", "superuser-alex@hostsharing.net")
+                    .port(port)
+                    .when()
+                    .get("http://localhost/api/hs/office/relations?personUuid=%s"
+                            .formatted(givenPerson.getUuid(), HsOfficeRelationTypeResource.PARTNER))
+                    .then().log().all().assertThat()
+                    .statusCode(200)
+                    .contentType("application/json")
+                    .body("", lenientlyEquals("""
+                    [
+                         {
+                             "anchor": {
+                                 "tradeName": "First GmbH"
+                             },
+                             "holder": {
+                                 "givenName": "Susan",
+                                 "familyName": "Firby"
+                             },
+                             "type": "REPRESENTATIVE",
+                             "mark": null,
+                             "contact": { "caption": "first contact" }
+                         },
+                         {
+                             "anchor": {
+                                 "tradeName": "Hostsharing eG"
+                             },
+                             "holder": {
+                                 "tradeName": "First GmbH"
+                             },
+                             "type": "PARTNER",
+                             "mark": null,
+                             "contact": { "caption": "first contact" }
+                         },
+                         {
+                             "anchor": {
+                                 "tradeName": "First GmbH"
+                             },
+                             "holder": {
+                                 "tradeName": "First GmbH"
+                             },
+                             "type": "DEBITOR",
+                             "mark": null,
+                             "contact": { "caption": "first contact" }
+                         }
+                     ]
+                    """));
+            // @formatter:on
         }
     }
 

@@ -21,6 +21,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
 
+// TODO.refa: split HsOfficePersonEntity into Real+Rbac-Entity
 @Entity
 @Table(schema = "hs_office", name = "person_rv")
 @Getter

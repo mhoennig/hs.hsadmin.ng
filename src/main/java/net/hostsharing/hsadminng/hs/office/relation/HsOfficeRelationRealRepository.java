@@ -13,7 +13,7 @@ public interface HsOfficeRelationRealRepository extends Repository<HsOfficeRelat
     Optional<HsOfficeRelationRealEntity> findByUuid(UUID id);
 
     default List<HsOfficeRelationRealEntity> findRelationRelatedToPersonUuidAndRelationType(@NotNull UUID personUuid, HsOfficeRelationType relationType) {
-        return findRelationRelatedToPersonUuidAndRelationTypeString(personUuid, relationType.toString());
+        return findRelationRelatedToPersonUuidAndRelationTypeString(personUuid, relationType == null ? null : relationType.toString());
     }
 
     @Query(value = """

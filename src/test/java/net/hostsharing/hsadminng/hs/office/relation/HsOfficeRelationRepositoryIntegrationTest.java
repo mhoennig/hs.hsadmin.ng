@@ -163,7 +163,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
     }
 
     @Nested
-    class FindAllRelations {
+    class FindRelations {
 
         @Test
         public void globalAdmin_withoutAssumedRole_canViewAllRelationsOfArbitraryPerson() {
@@ -193,7 +193,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     .findFirst().orElseThrow();
 
             // when:
-            final var result = relationRbacRepo.findRelationRelatedToPersonUuid(person.getUuid());
+            final var result = relationRbacRepo.findRelationRelatedToPersonUuidAndRelationType(person.getUuid(), null);
 
             // then:
             exactlyTheseRelationsAreReturned(
