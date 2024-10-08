@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.booking.item;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.api.HsBookingItemsApi;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsBookingItemInsertResource;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static java.util.Optional.ofNullable;
 import static net.hostsharing.hsadminng.mapper.PostgresDateRange.toPostgresDateRange;
 
 @RestController
@@ -39,6 +42,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     @Autowired
     private HsBookingItemRbacRepository bookingItemRepo;
+
+    @Autowired
+    private ObjectMapper jsonMapper;
 
     @Autowired
     private EntityManagerWrapper em;
@@ -76,8 +82,7 @@ public class HsBookingItemController implements HsBookingItemsApi {
                 .validateContext()
                 .mapUsing(e -> mapper.map(e, HsBookingItemResource.class, ITEM_TO_RESOURCE_POSTMAPPER))
                 .revampProperties();
-
-        applicationEventPublisher.publishEvent(new BookingItemCreatedEvent(this, saveProcessor.getEntity()));
+        publishSavedEvent(saveProcessor, body);
 
         final var uri =
                 MvcUriComponentsBuilder.fromController(getClass())
@@ -137,6 +142,16 @@ public class HsBookingItemController implements HsBookingItemsApi {
         return ResponseEntity.ok(mapped);
     }
 
+    private void publishSavedEvent(final BookingItemEntitySaveProcessor saveProcessor, final HsBookingItemInsertResource body) {
+        try {
+            final var bookingItemRealEntity = em.getReference(HsBookingItemRealEntity.class, saveProcessor.getEntity().getUuid());
+            applicationEventPublisher.publishEvent(new BookingItemCreatedAppEvent(
+                    this, bookingItemRealEntity, jsonMapper.writeValueAsString(body.getHostingAsset())));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     final BiConsumer<HsBookingItem, HsBookingItemResource> ITEM_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setValidFrom(entity.getValidity().lower());
         if (entity.getValidity().hasUpperBound()) {
@@ -148,6 +163,9 @@ public class HsBookingItemController implements HsBookingItemsApi {
 
     final BiConsumer<HsBookingItemInsertResource, HsBookingItemRbacEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
         entity.setProject(em.find(HsBookingProjectRealEntity.class, resource.getProjectUuid()));
+        ofNullable(resource.getParentItemUuid())
+                .map(parentItemUuid -> em.find(HsBookingItemRealEntity.class, parentItemUuid))
+                .ifPresent(entity::setParentItem);
         entity.setValidity(toPostgresDateRange(LocalDate.now(), resource.getValidTo()));
         entity.putResources(KeyValueMap.from(resource.getResources()));
     };

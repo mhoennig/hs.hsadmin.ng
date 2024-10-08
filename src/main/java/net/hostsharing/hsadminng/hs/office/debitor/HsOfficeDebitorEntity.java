@@ -11,7 +11,7 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
 import net.hostsharing.hsadminng.stringify.Stringify;

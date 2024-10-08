@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipPatchResource;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeMembershipStatusResource;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.PatchUnitTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -38,9 +38,9 @@ class HsOfficeMembershipEntityPatcherUnitTest extends PatchUnitTestBase<
     private static final Boolean PATCHED_MEMBERSHIP_FEE_BILLABLE = false;
 
     @Mock
-    private EntityManager em;
+    private EntityManagerWrapper em;
 
-    private StandardMapper mapper = new StandardMapper();
+    private StandardMapper mapper = new StandardMapper(em);
 
     @BeforeEach
     void initMocks() {

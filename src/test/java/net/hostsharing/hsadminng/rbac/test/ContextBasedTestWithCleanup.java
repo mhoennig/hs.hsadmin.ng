@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.rbac.test;
 
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantEntity;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantRepository;
 import net.hostsharing.hsadminng.rbac.grant.RbacGrantsDiagramService;

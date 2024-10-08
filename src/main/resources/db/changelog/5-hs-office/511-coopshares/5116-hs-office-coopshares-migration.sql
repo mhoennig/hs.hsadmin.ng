@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
--- TODO: These changesets are just for the external remote views to simulate the legacy tables.
+-- TODO.legacy: These changesets are just for the external remote views to simulate the legacy tables.
 --  Once we don't need the external remote views anymore, create revert changesets.
 
 -- ============================================================================

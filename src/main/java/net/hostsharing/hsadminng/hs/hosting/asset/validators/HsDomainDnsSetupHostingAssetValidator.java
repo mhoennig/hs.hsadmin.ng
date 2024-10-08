@@ -15,7 +15,7 @@ import static net.hostsharing.hsadminng.hs.validation.BooleanProperty.booleanPro
 import static net.hostsharing.hsadminng.hs.validation.IntegerProperty.integerProperty;
 import static net.hostsharing.hsadminng.hs.validation.StringProperty.stringProperty;
 
-// TODO.impl: make package private once we've migrated the legacy data
+// TODO.legacy: make package private once we've migrated the legacy data
 public class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityValidator {
 
     // according to  RFC 1035 (section 5) and RFC 1034
@@ -33,7 +33,7 @@ public class HsDomainDnsSetupHostingAssetValidator extends HostingAssetEntityVal
             RR_REGEX_NAME  + RR_REGEX_IN + RR_REGEX_TTL + RR_RECORD_TYPE + RR_RECORD_DATA + RR_COMMENT;
     public static final String IDENTIFIER_SUFFIX = "|DNS";
 
-    private static List<String> zoneFileErrors = null; // TODO.impl: remove once legacy data is migrated
+    private static List<String> zoneFileErrors = null; // TODO.legacy: remove once legacy data is migrated
 
     HsDomainDnsSetupHostingAssetValidator() {
         super(

@@ -4,12 +4,11 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionRepository;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
-import org.junit.jupiter.api.BeforeEach;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -18,15 +17,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.SynchronizationType;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -47,19 +41,8 @@ public class HsOfficeMembershipControllerRestTest {
     @MockBean
     HsOfficeMembershipRepository membershipRepo;
 
-    @Mock
-    EntityManager em;
-
     @MockBean
-    EntityManagerFactory emf;
-
-    @BeforeEach
-    void init() {
-        when(emf.createEntityManager()).thenReturn(em);
-        when(emf.createEntityManager(any(Map.class))).thenReturn(em);
-        when(emf.createEntityManager(any(SynchronizationType.class))).thenReturn(em);
-        when(emf.createEntityManager(any(SynchronizationType.class), any(Map.class))).thenReturn(em);
-    }
+    EntityManagerWrapper em;
 
     @Nested
     class AddMembership {

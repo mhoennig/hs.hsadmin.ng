@@ -42,7 +42,7 @@ public class HostingAssetEntitySaveProcessor {
         return this;
     }
 
-    // TODO.impl: remove once the migration of legacy data is done
+    // TODO.legacy: remove once the migration of legacy data is done
     /// validates the entity itself including its properties, but ignoring some error messages for import of legacy data
     public HostingAssetEntitySaveProcessor validateEntityIgnoring(final String... ignoreRegExp) {
         step("validateEntity", "prepareForSave");

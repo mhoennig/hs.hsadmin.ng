@@ -94,7 +94,68 @@ components:
                 - type
                 - identifier
                 - caption
-                - config
+            additionalProperties: false
+
+        HsHostingAssetAutoInsert:
+            type: object
+            properties:
+                parentAssetUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                assignedToAssetUuid:
+                    type: string
+                    format: uuid
+                type:
+                    $ref: '#/components/schemas/HsHostingAssetType'
+                identifier:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+                caption:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+                alarmContactUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                config:
+                    $ref: '#/components/schemas/HsHostingAssetConfiguration'
+                subHostingAssets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/HsHostingAssetSubInsert'
+            required:
+                - identifier
+            additionalProperties: false
+
+        HsHostingAssetSubInsert:
+            type: object
+            properties:
+                type:
+                    $ref: '#/components/schemas/HsHostingAssetType'
+                identifier:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+                caption:
+                    type: string
+                    minLength: 3
+                    maxLength: 80
+                    nullable: false
+                assignedToAssetUuid:
+                    type: string
+                    format: uuid
+                alarmContactUuid:
+                    type: string
+                    format: uuid
+                    nullable: true
+                config:
+                    $ref: '#/components/schemas/HsHostingAssetConfiguration'
             additionalProperties: false
 
         HsHostingAssetConfiguration:

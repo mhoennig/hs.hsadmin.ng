@@ -3,7 +3,7 @@ package net.hostsharing.hsadminng.hs.office.bankaccount;
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayAs;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;

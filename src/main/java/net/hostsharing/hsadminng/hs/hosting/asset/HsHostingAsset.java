@@ -14,7 +14,7 @@ import net.hostsharing.hsadminng.hs.booking.project.HsBookingProject;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.validation.PropertiesProvider;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.stringify.Stringify;
 import net.hostsharing.hsadminng.stringify.Stringifyable;
 import org.hibernate.annotations.Type;
@@ -89,10 +89,9 @@ public abstract class HsHostingAsset implements Stringifyable, BaseEntity<HsHost
     @JoinColumn(name = "alarmcontactuuid")
     private HsOfficeContactRealEntity alarmContact;
 
-    @Builder.Default
     @OneToMany(cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "parentassetuuid", referencedColumnName = "uuid")
-    private List<HsHostingAssetRealEntity> subHostingAssets = new ArrayList<>();
+    private List<HsHostingAssetRealEntity> subHostingAssets;
 
     @Column(name = "identifier")
     private String identifier; // e.g. vm1234, xyz00, example.org, xyz00_abc
@@ -123,6 +122,13 @@ public abstract class HsHostingAsset implements Stringifyable, BaseEntity<HsHost
 
     public void putConfig(Map<String, Object> newConfig) {
         PatchableMapWrapper.of(configWrapper, (newWrapper) -> {configWrapper = newWrapper;}, config).assign(newConfig);
+    }
+
+    public List<HsHostingAssetRealEntity> getSubHostingAssets() {
+        if (subHostingAssets == null) {
+            subHostingAssets = new ArrayList<>();
+        }
+        return subHostingAssets;
     }
 
     @Override

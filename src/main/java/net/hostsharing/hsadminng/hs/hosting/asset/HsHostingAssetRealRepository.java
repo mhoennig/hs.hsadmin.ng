@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.hosting.asset;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,6 +13,18 @@ public interface HsHostingAssetRealRepository extends HsHostingAssetRepository<H
     Optional<HsHostingAssetRealEntity> findByUuid(final UUID serverUuid);
 
     List<HsHostingAssetRealEntity> findByIdentifier(String assetIdentifier);
+
+    default List<HsHostingAssetRealEntity> findByTypeAndIdentifier(@NotNull HsHostingAssetType type,  @NotNull String identifier) {
+        return findByTypeAndIdentifierImpl(type.name(), identifier);
+    }
+
+    @Query("""
+            select ha
+              from HsHostingAssetRealEntity ha
+             where cast(ha.type as String) = :type
+               and ha.identifier = :identifier
+            """)
+    List<HsHostingAssetRealEntity> findByTypeAndIdentifierImpl(@NotNull String type, @NotNull String identifier);
 
     @Query(value = """
         select ha.uuid,

@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.persistence;
 
-import net.hostsharing.hsadminng.mapper.Array;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -53,9 +52,9 @@ class EntityManagerWrapperUnitTest {
         if (type == double.class) return 0.0;
         if (type == char.class) return '\0';
         if (type == String.class) return "dummy";
-        if (type == String[].class) return Array.of("dummy");
+        if (type == String[].class) return new String[]{"dummy"};
         if (type == Class.class) return String.class;
-        if (type == Class[].class) return Array.of(String.class);
+        if (type == Class[].class) return new Class[0];
         return mock(type);
     }
 }

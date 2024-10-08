@@ -3,13 +3,13 @@ package net.hostsharing.hsadminng.rbac.test;
 import lombok.*;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.ValidationException;
 import java.util.List;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class MapperUnitTest {
 
     @Mock
-    EntityManager em;
+    EntityManagerWrapper em;
 
     @InjectMocks
     StandardMapper mapper;

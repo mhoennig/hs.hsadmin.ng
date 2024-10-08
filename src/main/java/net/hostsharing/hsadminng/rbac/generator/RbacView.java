@@ -2,7 +2,7 @@ package net.hostsharing.hsadminng.rbac.generator;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import org.reflections.Reflections;
 import org.reflections.scanners.TypeAnnotationsScanner;
 

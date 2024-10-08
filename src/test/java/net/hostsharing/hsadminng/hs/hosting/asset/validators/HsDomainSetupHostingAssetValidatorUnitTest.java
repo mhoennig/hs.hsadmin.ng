@@ -42,8 +42,7 @@ class HsDomainSetupHostingAssetValidatorUnitTest {
                         .project(project)
                         .type(HsBookingItemType.DOMAIN_SETUP)
                         .resources(new HashMap<>(ofEntries(
-                                entry("domainName", domainName),
-                                entry("targetUnixUser", "xyz00")
+                                entry("domainName", domainName)
                         ))));
         HsBookingItemEntityValidatorRegistry.forType(HsBookingItemType.DOMAIN_SETUP).prepareProperties(null, bookingItem);
         return HsHostingAssetRbacEntity.builder()

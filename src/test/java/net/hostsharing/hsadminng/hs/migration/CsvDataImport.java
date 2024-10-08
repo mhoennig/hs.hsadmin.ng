@@ -6,7 +6,7 @@ import com.opencsv.CSVReaderBuilder;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAsset;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
+import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;

@@ -31,7 +31,7 @@ public class PasswordProperty extends StringProperty<PasswordProperty> {
 
     @Override
     protected void validate(final List<String> result, final String propValue, final PropertiesProvider propProvider) {
-        // TODO.impl: remove after legacy data is migrated
+        // TODO.legacy: remove after legacy data is migrated
         if (HashGenerator.using(hashedUsing).couldBeHash(propValue) && propValue.length() > this.maxLength()) {
             // already hashed => do not validate
             return;

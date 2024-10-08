@@ -32,6 +32,20 @@ create table if not exists hs_booking.item
 
 
 -- ============================================================================
+--changeset michael.hoennig:hs-booking-item-EVENT-TABLE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+
+create table if not exists hs_booking.item_created_event
+(
+    bookingItemUuid     uuid unique references hs_booking.item (uuid),
+    version             int not null default 0,
+    assetJson           text,
+    statusMessage       text
+);
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:hs-booking-item-MAIN-TABLE-JOURNAL endDelimiter:--//
 -- ----------------------------------------------------------------------------
 

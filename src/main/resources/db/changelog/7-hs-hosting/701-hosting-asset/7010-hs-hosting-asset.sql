@@ -41,7 +41,7 @@ create table if not exists hs_hosting.asset
     config              jsonb not null,
     alarmContactUuid    uuid null references hs_office.contact(uuid) initially deferred,
 
-    unique (type, identifier), -- at least as long as we need to be compatible to the legacy system
+    unique (type, identifier), -- TODO.legacy: at least as long as we need to be compatible to the legacy system
 
     constraint hosting_asset_has_booking_item_or_parent_asset
         check (bookingItemUuid is not null or parentAssetUuid is not null or type in ('DOMAIN_SETUP', 'IPV4_NUMBER', 'IPV6_NUMBER'))

@@ -1,11 +1,11 @@
 package net.hostsharing.hsadminng.mapper;
 
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ReflectionUtils;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PersistenceContext;
 import jakarta.validation.ValidationException;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -21,10 +21,10 @@ import static net.hostsharing.hsadminng.errors.DisplayAs.DisplayName;
  */
 abstract class Mapper extends ModelMapper {
 
-    @PersistenceContext
-    EntityManager em;
+    EntityManagerWrapper em;
 
-    Mapper() {
+    Mapper(@Autowired final EntityManagerWrapper em) {
+        this.em = em;
         getConfiguration().setAmbiguityIgnored(true);
     }
 

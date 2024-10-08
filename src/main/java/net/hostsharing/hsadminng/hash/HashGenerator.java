@@ -27,7 +27,7 @@ public final class HashGenerator {
             "abcdefghijklmnopqrstuvwxyz" +
                     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                     "0123456789/.";
-    private static boolean couldBeHashEnabled; // TODO.impl: remove after legacy data is migrated
+    private static boolean couldBeHashEnabled; // TODO.legacy: remove after legacy data is migrated
 
     public enum Algorithm {
         LINUX_SHA512(LinuxEtcShadowHashGenerator::hash, "6"),

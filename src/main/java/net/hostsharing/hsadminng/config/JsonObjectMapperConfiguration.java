@@ -17,7 +17,7 @@ public class JsonObjectMapperConfiguration {
     public Jackson2ObjectMapperBuilder customObjectMapper() {
         return new Jackson2ObjectMapperBuilder()
                 .modules(new JsonNullableModule(), new JavaTimeModule())
-                .featuresToEnable(JsonParser.Feature.ALLOW_COMMENTS)
+                .featuresToEnable(JsonParser.Feature.ALLOW_COMMENTS, JsonParser.Feature.ALLOW_COMMENTS)
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 }

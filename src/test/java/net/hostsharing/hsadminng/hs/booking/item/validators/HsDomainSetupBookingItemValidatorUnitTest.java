@@ -36,8 +36,7 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
-                        entry("domainName", "example.org"),
-                        entry("targetUnixUser", "xyz00")
+                        entry("domainName", "example.org")
                 ))
                 .build();
 
@@ -59,7 +58,6 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
                         entry("domainName", "example.org"),
-                        entry("targetUnixUser", "xyz00"),
                         entry("verificationCode", "1234-5678-9100")
                 ))
                 .build();
@@ -80,8 +78,7 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
-                        entry("domainName", right(TOO_LONG_DOMAIN_NAME, 253)),
-                        entry("targetUnixUser", "xyz00")
+                        entry("domainName", right(TOO_LONG_DOMAIN_NAME, 253))
                 ))
                 .build();
 
@@ -99,8 +96,7 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
-                        entry("domainName", right(TOO_LONG_DOMAIN_NAME, 254)),
-                        entry("targetUnixUser", "xyz00")
+                        entry("domainName", right(TOO_LONG_DOMAIN_NAME, 254))
                 ))
                 .build();
 
@@ -118,8 +114,7 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
-                        entry("domainName", "example.com"),
-                        entry("targetUnixUser", "xyz00-test")
+                        entry("domainName", "example.com")
                 ))
                 .build();
 
@@ -128,25 +123,6 @@ class HsDomainSetupBookingItemValidatorUnitTest {
 
         // then
         assertThat(result).isEmpty();
-    }
-
-    @Test
-    void rejectsInvalidUnixUser() {
-        final var domainSetupBookingItemEntity = HsBookingItemRealEntity.builder()
-                .type(DOMAIN_SETUP)
-                .project(project)
-                .caption("Test-Domain")
-                .resources(Map.ofEntries(
-                        entry("domainName", "example.com"),
-                        entry("targetUnixUser", "xyz00test")
-                ))
-                .build();
-
-        // when
-        final var result = HsBookingItemEntityValidatorRegistry.doValidate(em, domainSetupBookingItemEntity);
-
-        // then
-        assertThat(result).contains("'D-12345:Test-Project:Test-Domain.resources.targetUnixUser' = 'xyz00test' is not a valid unix-user name");
     }
 
     @ParameterizedTest
@@ -196,8 +172,7 @@ class HsDomainSetupBookingItemValidatorUnitTest {
                 .project(project)
                 .caption("Test-Domain")
                 .resources(Map.ofEntries(
-                        entry("domainName", secondLevelRegistrarDomain),
-                        entry("targetUnixUser", "xyz00")
+                        entry("domainName", secondLevelRegistrarDomain)
                 ))
                 .build();
 
@@ -219,7 +194,6 @@ class HsDomainSetupBookingItemValidatorUnitTest {
         // then
         assertThat(validator.properties()).map(Map::toString).containsExactlyInAnyOrder(
                 "{type=string, propertyName=domainName, matchesRegEx=[^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,12}], matchesRegExDescription=is not a (non-top-level) fully qualified domain name, notMatchesRegEx=[[^.]+, (co|org|gov|ac|sch)\\.uk, (com|net|org|edu|gov|asn|id)\\.au, (co|ne|or|ac|go)\\.jp, (com|net|org|gov|edu|ac)\\.cn, (com|net|org|gov|edu|mil|art)\\.br, (co|net|org|gen|firm|ind)\\.in, (com|net|org|gob|edu)\\.mx, (gov|edu)\\.it, (co|net|org|govt|ac|school|geek|kiwi)\\.nz, (co|ne|or|go|re|pe)\\.kr], notMatchesRegExDescription=is a forbidden registrar-level domain name, maxLength=253, required=true, writeOnce=true}",
-                "{type=string, propertyName=targetUnixUser, matchesRegEx=[^[a-z][a-z0-9]{2}[0-9]{2}$|^[a-z][a-z0-9]{2}[0-9]{2}-[a-z0-9\\._-]+$], matchesRegExDescription=is not a valid unix-user name, maxLength=253, required=true, writeOnce=true}",
                 "{type=string, propertyName=verificationCode, minLength=12, maxLength=64, computed=IN_INIT}");
     }
 }

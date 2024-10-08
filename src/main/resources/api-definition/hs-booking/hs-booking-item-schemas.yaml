@@ -56,6 +56,10 @@ components:
                     type: string
                     format: uuid
                     nullable: false
+                parentItemUuid:
+                    type: string
+                    format: uuid
+                    nullable: false
                 type:
                     $ref: '#/components/schemas/HsBookingItemType'
                 caption:
@@ -69,6 +73,8 @@ components:
                     nullable: true
                 resources:
                     $ref: '#/components/schemas/BookingResources'
+                hostingAsset:
+                    $ref: '../hs-hosting/hs-hosting-asset-schemas.yaml#/components/schemas/HsHostingAssetAutoInsert'
             required:
                 - caption
                 - projectUuid

@@ -1,11 +1,10 @@
-package net.hostsharing.hsadminng.rbac.object;
+package net.hostsharing.hsadminng.persistence;
 
 
 import org.hibernate.Hibernate;
 
 import java.util.UUID;
 
-// TODO.impl: this class does not really belong into this package, but there is no right place yet
 public interface BaseEntity<T extends BaseEntity<?>> {
     UUID getUuid();
 

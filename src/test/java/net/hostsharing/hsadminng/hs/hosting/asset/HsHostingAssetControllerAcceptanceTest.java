@@ -157,6 +157,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     )
             );
             final var givenParentAsset = givenParentAsset(MANAGED_SERVER, "vm1011");
+            final var expectedUnixUserId = nextUnixUserId();
 
             final var location = RestAssured // @formatter:off
                     .given()
@@ -184,10 +185,12 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                                 "identifier": "fir10",
                                 "caption": "some separate ManagedWebspace HA",
                                 "config": {
-                                    "groupid": 1000000
+                                    "groupid": {lastUnixUserId}
                                 }
                             }
-                            """))
+                            """
+                                .replace("{lastUnixUserId}", expectedUnixUserId.toString())
+                        ))
                         .header("Location", matchesRegex("http://localhost:[1-9][0-9]*/api/hs/hosting/assets/[^/]*"))
                     .extract().header("Location");  // @formatter:on
 
@@ -205,9 +208,11 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .isEqualTo("""
                             HsHostingAsset(UNIX_USER, fir10, fir10 webspace user, MANAGED_WEBSPACE:fir10, {
                               "password" : null,
-                              "userid" : 1000000
+                              "userid" : {lastUnixUserId}
                             })
-                            """.trim());
+                            """
+                            .replace("{lastUnixUserId}", expectedUnixUserId.toString())
+                            .trim());
         }
 
         @Test
@@ -775,6 +780,13 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
             context.define("superuser-alex@hostsharing.net"); // needed to determine creator
             return realContactRepo.findContactByOptionalCaptionLike("second").stream().findFirst().orElseThrow();
         }).returnedValue();
+    }
+
+
+    private Integer nextUnixUserId() {
+        final Object result = em.createNativeQuery("SELECT nextval('hs_hosting.asset_unixuser_system_id_seq')", Integer.class)
+                .getSingleResult();
+        return (Integer) result + 1;
     }
 
 }

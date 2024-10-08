@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.persistence;
 
 import net.hostsharing.hsadminng.errors.DisplayAs.DisplayName;
-import net.hostsharing.hsadminng.rbac.object.BaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

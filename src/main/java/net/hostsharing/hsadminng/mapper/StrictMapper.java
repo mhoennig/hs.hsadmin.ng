@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.mapper;
 
+import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static org.modelmapper.convention.MatchingStrategies.STRICT;
@@ -13,7 +15,8 @@ import static org.modelmapper.convention.MatchingStrategies.STRICT;
 @Component
 public class StrictMapper extends Mapper {
 
-    public StrictMapper() {
+    public StrictMapper(@Autowired final EntityManagerWrapper em) {
+        super(em);
         getConfiguration().setMatchingStrategy(STRICT);
     }
 }
