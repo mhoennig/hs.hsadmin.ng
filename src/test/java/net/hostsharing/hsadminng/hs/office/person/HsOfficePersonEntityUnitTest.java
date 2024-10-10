@@ -1,5 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
+import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
+import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -155,6 +157,7 @@ class HsOfficePersonEntityUnitTest {
 
         assertThat(actualDisplay).isEqualTo("person(salutation='Herr', familyName='some family name', givenName='some given name')");
     }
+
     @Test
     void toStringWithoutSalutationAndWithTitleSkipsSalutation() {
         final var givenPersonEntity = HsOfficePersonEntity.builder()
@@ -168,4 +171,48 @@ class HsOfficePersonEntityUnitTest {
         assertThat(actualDisplay).isEqualTo("person(title='some title', familyName='some family name', givenName='some given name')");
     }
 
+    @Test
+    void definesRbac() {
+        final var rbacFlowchart = new RbacViewMermaidFlowchartGenerator(HsOfficePersonEntity.rbac()).toString();
+        assertThat(rbacFlowchart).isEqualTo("""
+                %%{init:{'flowchart':{'htmlLabels':false}}}%%
+                flowchart TB
+                
+                subgraph person["`**person**`"]
+                    direction TB
+                    style person fill:#dd4901,stroke:#274d6e,stroke-width:8px
+                
+                    subgraph person:roles[ ]
+                        style person:roles fill:#dd4901,stroke:white
+                
+                        role:person:OWNER[[person:OWNER]]
+                        role:person:ADMIN[[person:ADMIN]]
+                        role:person:REFERRER[[person:REFERRER]]
+                    end
+                
+                    subgraph person:permissions[ ]
+                        style person:permissions fill:#dd4901,stroke:white
+                
+                        perm:person:INSERT{{person:INSERT}}
+                        perm:person:DELETE{{person:DELETE}}
+                        perm:person:UPDATE{{person:UPDATE}}
+                        perm:person:SELECT{{person:SELECT}}
+                    end
+                end
+                
+                %% granting roles to users
+                user:creator ==> role:person:OWNER
+                
+                %% granting roles to roles
+                role:rbac.global:ADMIN ==> role:person:OWNER
+                role:person:OWNER ==> role:person:ADMIN
+                role:person:ADMIN ==> role:person:REFERRER
+                
+                %% granting permissions to roles
+                role:rbac.global:GUEST ==> perm:person:INSERT
+                role:person:OWNER ==> perm:person:DELETE
+                role:person:ADMIN ==> perm:person:UPDATE
+                role:person:REFERRER ==> perm:person:SELECT
+                """);
+    }
 }

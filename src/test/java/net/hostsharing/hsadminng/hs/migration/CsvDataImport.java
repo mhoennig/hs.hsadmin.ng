@@ -15,6 +15,7 @@ import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import jakarta.persistence.EntityManager;
@@ -24,7 +25,6 @@ import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
@@ -33,6 +33,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -123,13 +124,10 @@ public class CsvDataImport extends ContextBasedTest {
         }
     }
 
-    protected String resourceAsString(@NotNull final String resourcePath) {
-        try (InputStream inputStream = requireNonNull(getClass().getClassLoader().getResourceAsStream(resourcePath));
-             final var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        } catch (Exception exc) {
-            throw new AssertionFailedError("cannot open '" + resourcePath + "'");
-        }
+    @SneakyThrows
+    protected String resourceAsString(final Resource resource) {
+        final var lines = Files.readAllLines(resource.getFile().toPath(), StandardCharsets.UTF_8);
+        return String.join("\n", lines);
     }
 
     protected List<String[]> withoutHeader(final List<String[]> records) {

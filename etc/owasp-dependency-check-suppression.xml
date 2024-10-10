@@ -2,16 +2,15 @@
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <suppress>
         <notes><![CDATA[
-           Cyclic references are not possible if file comes in JSON text format.
-       ]]></notes>
-        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
-        <cpe>cpe:/a:fasterxml:jackson-databind</cpe>
-    </suppress>
-    <suppress>
-        <notes><![CDATA[
            Internal tooling, not exposed to the Internet.
        ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.pitest/pitest\-command\-line@.*$</packageUrl>
         <cpe>cpe:/a:line:line</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+           Malicious HTTP redirect in JAXB on a REST-endpoint is not that dangerous.
+        ]]></notes>
+        <cve>CVE-2024-9329</cve>
     </suppress>
 </suppressions>

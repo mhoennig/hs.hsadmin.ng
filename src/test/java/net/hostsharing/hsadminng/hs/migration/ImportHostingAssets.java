@@ -2,6 +2,7 @@ package net.hostsharing.hsadminng.hs.migration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hash.HashGenerator;
 import net.hostsharing.hsadminng.hash.HashGenerator.Algorithm;
@@ -26,10 +27,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -46,7 +46,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static java.util.Arrays.stream;
 import static java.util.Map.entry;
@@ -497,13 +496,14 @@ public class ImportHostingAssets extends BaseOfficeDataImport {
 
     @Test
     @Order(16020)
+    @SneakyThrows
     void importZonenfiles() {
-        final var reflections = new Reflections(MIGRATION_DATA_PATH + "/hosting/zonefiles", new ResourcesScanner());
-        final var zonefileFiles = reflections.getResources(Pattern.compile(".*\\.json")).stream().sorted().toList();
-        zonefileFiles.forEach(zonenfileName -> {
-            System.out.println("Processing zonenfile: " + zonenfileName);
-            importZonefiles(vmName(zonenfileName), resourceAsString(zonenfileName));
-        });
+        final var resolver = new PathMatchingResourcePatternResolver();
+            final var resources = resolver.getResources("/" + MIGRATION_DATA_PATH + "/hosting/zonefiles/*.json");
+            for (var resource : resources) {
+                System.out.println("Processing zonenfile: " + resource);
+                importZonefiles(vmName(resource.getFilename()), resourceAsString(resource));
+            }
     }
 
     @Test

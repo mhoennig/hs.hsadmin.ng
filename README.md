@@ -497,9 +497,19 @@ We'll see if this changes when the project progresses and more validations are a
 
 ### OWASP Security Vulnerability Check
 
-An OWASP security vulnerability is configured and can be utilized by running:
+An OWASP security vulnerability is configured, but you need an API key.
+Fetch it from https://nvd.nist.gov/developers/request-an-api-key.
+
+Then add it to your `~/.gradle/gradle.properties` file:
+
+```
+OWASP_API_KEY=........-....-....-....-............
+```
+
+Now you can run the dependency vulnerability check:
 
 ```shell
+gw dependencyCheckUpdate
 gw dependencyCheckAnalyze
 ```
 

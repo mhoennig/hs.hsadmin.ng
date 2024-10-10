@@ -1,8 +1,10 @@
 {
     "allowedLicenses": [
-        { "moduleLicense": "Apache 2.0" },
         { "moduleLicense": "Apache 2" },
+        { "moduleLicense": "Apache 2.0" },
+        { "moduleLicense": "Apache-2.0" },
         { "moduleLicense": "Apache License 2.0" },
+        { "moduleLicense": "Apache License v2.0" },
         { "moduleLicense": "Apache License, Version 2.0" },
         { "moduleLicense": "The Apache Software License, Version 2.0" },
 
@@ -10,6 +12,8 @@
         { "moduleLicense": "BSD-2-Clause" },
         { "moduleLicense": "BSD-3-Clause" },
         { "moduleLicense": "The BSD License" },
+
+        { "moduleLicense": "The New BSD License" },
 
         { "moduleLicense": "CDDL 1.1" },
         { "moduleLicense": "CDDL/GPLv2+CE" },
@@ -29,11 +33,22 @@
         { "moduleLicense": "GNU General Public License, version 2 with the GNU Classpath Exception" },
         { "moduleLicense": "GPL2 w/ CPE" },
 
+        { "moduleLicense": "LGPL, version 2.1"},
+        { "moduleLicense": "LGPL-2.1-or-later"},
+
         { "moduleLicense": "MIT License" },
         { "moduleLicense": "MIT" },
         { "moduleLicense": "The MIT License (MIT)" },
         { "moduleLicense": "The MIT License" },
 
-        { "moduleName": "org.springdoc:springdoc-openapi" }
+        { "moduleLicense": "WTFPL" },
+
+        {
+            "moduleLicense": null,
+            "#moduleLicense": "Apache License 2.0, see https://github.com/springdoc/springdoc-openapi/blob/main/LICENSE",
+            "moduleVersion": "2.4.0",
+            "moduleName": "org.springdoc:springdoc-openapi"
+        }
+
     ]
 }
