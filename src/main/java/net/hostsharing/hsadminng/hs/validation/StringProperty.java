@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.validation;
 import lombok.AccessLevel;
 import lombok.Setter;
 import net.hostsharing.hsadminng.mapper.Array;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -83,9 +84,13 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
     }
 
     /// predefined values, similar to fixed values in a combobox
-    public P provided(final String... provided) {
-        this.provided = provided;
+    public P provided(final String firstProvidedValue, final String... moreProvidedValues) {
+        this.provided = ArrayUtils.addAll(new String[]{firstProvidedValue}, moreProvidedValues);
         return self();
+    }
+
+    public String[] provided() {
+        return this.provided;
     }
 
     /**
@@ -109,7 +114,11 @@ public class StringProperty<P extends StringProperty<P>> extends ValidatableProp
 
     @Override
     protected String display(final String propValue) {
-        return undisclosed ? "provided value" : ("'" + propValue + "'");
+        return undisclosed
+            ? "provided value"
+            : propValue != null
+                ? ("'" + propValue + "'")
+                : null;
     }
 
     @Override

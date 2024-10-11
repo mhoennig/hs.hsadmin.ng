@@ -9,7 +9,6 @@ import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeRelationTypeResource;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import org.json.JSONException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +54,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
     class ListRelations {
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canViewAllRelationsOfGivenPersonAndType() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canViewAllRelationsOfGivenPersonAndType() {
 
             // given
             context.define("superuser-alex@hostsharing.net");
@@ -113,7 +112,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
         }
 
         @Test
-        void personAdmin_canViewAllRelationsOfGivenRelatedPersonAndAnyType() throws JSONException {
+        void personAdmin_canViewAllRelationsOfGivenRelatedPersonAndAnyType() {
 
             // given
             context.define("contact-admin@firstcontact.example.com");
@@ -125,7 +124,7 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .port(port)
                     .when()
                     .get("http://localhost/api/hs/office/relations?personUuid=%s"
-                            .formatted(givenPerson.getUuid(), HsOfficeRelationTypeResource.PARTNER))
+                            .formatted(givenPerson.getUuid()))
                     .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
@@ -167,6 +166,50 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                          }
                      ]
                     """));
+            // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canViewAllRelationsWithGivenContactData() {
+
+            // given
+            context.define("superuser-alex@hostsharing.net");
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/relations?personData=firby&contactData=Contact-Admin@FirstContact.Example.COM")
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .body("", lenientlyEquals("""
+                        [
+                            {
+                                "anchor": {
+                                    "personType": "LEGAL_PERSON",
+                                    "tradeName": "First GmbH"
+                                },
+                                "holder": {
+                                    "personType": "NATURAL_PERSON",
+                                    "givenName": "Susan",
+                                    "familyName": "Firby"
+                                },
+                                "type": "REPRESENTATIVE",
+                                "contact": {
+                                    "caption": "first contact",
+                                    "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
+                                    "emailAddresses": {
+                                        "main": "contact-admin@firstcontact.example.com"
+                                    },
+                                    "phoneNumbers": {
+                                        "phone_office": "+49 123 1234567"
+                                    }
+                                }
+                            }
+                        ]
+                        """));
             // @formatter:on
         }
     }

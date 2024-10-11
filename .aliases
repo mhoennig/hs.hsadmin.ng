@@ -30,13 +30,13 @@ postgresAutodoc () {
     fi
 	postgresql_autodoc -d postgres -f build/postgres-autodoc -h localhost -u postgres --password=password \
 		-m '(rbacobject|hs).*' \
-		-l /usr/share/postgresql-autodoc -t neato && 
+		-l /usr/share/postgresql-autodoc -t neato &&
 	dot -Tsvg build/postgres-autodoc.neato >build/postgres-autodoc-hs.svg && \
 	echo "generated: $PWD/build/postgres-autodoc-hs.svg"
 
 	postgresql_autodoc -d postgres -f build/postgres-autodoc -h localhost -u postgres --password=password \
 		-m '(global|rbac).*' \
-		-l /usr/share/postgresql-autodoc -t neato && 
+		-l /usr/share/postgresql-autodoc -t neato &&
 	dot -Tsvg build/postgres-autodoc.neato >build/postgres-autodoc-rbac.svg && \
 	echo "generated $PWD/build/postgres-autodoc-rbac.svg"
 }
@@ -83,7 +83,7 @@ alias fp='grep -r '@Accepts' src | sed -e 's/^.*@/@/g' | sort -u | wc -l'
 
 alias gw-spotless='./gradlew spotlessApply -x pitest -x test -x :processResources'
 alias gw-test='. .aliases; ./gradlew test'
-alias gw-check='. .aliases; gw test importOfficeData check -x pitest -x :dependencyCheckAnalyze'
+alias gw-check='. .aliases; gw test check -x pitest'
 
 # etc/docker-compose.yml limits CPUs+MEM and includes a PostgreSQL config for analysing slow queries
 alias gw-importOfficeData-in-docker-compose='

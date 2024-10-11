@@ -10,12 +10,14 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.mapper.StandardMapper;
+import net.hostsharing.hsadminng.mapper.ToStringConverter;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 
 import jakarta.validation.ValidationException;
 import java.net.IDN;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetType.DOMAIN_DNS_SETUP;
@@ -109,8 +111,8 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
         final var subAssetResourceOptional = findSubHostingAssetResource(resourceType);
 
         subAssetResourceOptional.ifPresentOrElse(
-                subAssetResource -> verifyNotOverspecified(subAssetResource),
-                () -> { throw new ValidationException("sub-asset of type " + resourceType.name() + " required in legacy mode, but missing"); }
+            this::verifyNotOverspecified,
+            () -> { throw new ValidationException("sub-asset of type " + resourceType.name() + " required in legacy mode, but missing"); }
         );
 
         return builderTransformer.apply(
@@ -149,5 +151,9 @@ public class DomainSetupHostingAssetFactory extends HostingAssetFactory {
     protected void persist(final HsHostingAsset newHostingAsset) {
         super.persist(newHostingAsset);
         newHostingAsset.getSubHostingAssets().forEach(super::persist);
+    }
+
+    private <T> T ref(final Class<T> entityClass, final UUID uuid) {
+        return uuid != null ? emw.getReference(entityClass, uuid) : null;
     }
 }

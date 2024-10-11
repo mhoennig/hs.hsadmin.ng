@@ -1,6 +1,5 @@
 package net.hostsharing.hsadminng.hs.office.person;
 
-import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
 

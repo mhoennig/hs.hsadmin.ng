@@ -1,6 +1,8 @@
 get:
     summary: Returns a list of (optionally filtered) person relations for a given person.
-    description: Returns the list of (optionally filtered) person relations of a given person and which are visible to the current subject or any of it's assumed roles.
+    description:
+        Returns the list of (optionally filtered) person relations of a given person and which are visible to the current subject or any of it's assumed roles.
+        To match data, all given query parameters must be fulfilled ('and' / logical conjunction).
     tags:
         - hs-office-relations
     operationId: listRelations
@@ -9,7 +11,7 @@ get:
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
         - name: personUuid
           in: query
-          required: true
+          required: false
           schema:
               type: string
               format: uuid
@@ -20,6 +22,18 @@ get:
           schema:
               $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationType'
           description: Prefix of name properties from holder or contact to filter the results.
+        - name: personData
+          in: query
+          required: false
+          schema:
+              type: string
+          description: 'Data from any of these text field in the anchor or holder person: tradeName, familyName, givenName'
+        - name: contactData
+          in: query
+          required: false
+          schema:
+              type: string
+          description: 'Data from any of these text field in the contact: caption, postalAddress, emailAddresses, phoneNumbers'
     responses:
         "200":
             description: OK

@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.membership;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
-import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;

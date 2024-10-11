@@ -1,36 +1,38 @@
 #!/bin/bash
+# waits for commits on any branch on origin, checks it out and builds it
 
-# get the current branch name
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
+. .aliases
 
 while true; do
+    git fetch origin >/dev/null
+    branch_with_new_commits=`git fetch origin >/dev/null; git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads | grep '\[behind' | cut -d' ' -f1 | head -n1`
 
-  # get the latest commit hashes from origin and local
-  git fetch origin
-  LOCAL=$(git rev-parse HEAD)
-  REMOTE=$(git rev-parse origin/$BRANCH)
+    if [ -n "$branch_with_new_commits" ]; then
+          echo "checking out branch: $branch_with_new_commits"
+          if git show-ref --quiet --heads "$branch_with_new_commits"; then
+              echo "Branch $branch_with_new_commits already exists. Checking it out and pulling latest changes."
+              git checkout "$branch_with_new_commits"
+              git pull origin "$branch_with_new_commits"
+          else
+              echo "Creating and checking out new branch: $branch_with_new_commits"
+              git checkout -b "$branch_with_new_commits" "origin/$branch_with_new_commits"
+          fi
 
-  # check if the local branch differs from the remote branch
-  if [ "$LOCAL" != "$REMOTE" ]; then
-    echo "local $LOCAL differs from remote $REMOTE => pulling changes from origin"
-    git pull origin $BRANCH
+          echo "building ..."
+          ./gradlew gw clean test check -x pitest
+    fi
 
-    # run the command
-    echo "Running ./gradlew test"
-    source .aliases # only variables, aliases are not expanded in scripts
-    ./gradlew test
-  fi
-
-  # wait 10s with a little animation
-  echo -e -n " waiting for changes (/) ..."
-  sleep 2
-  echo -e -n "\r\033[K waiting for changes (-) ..."
-  sleep 2
-  echo -e -n "\r\033[K waiting for changes (\) ..."
-  sleep 2
-  echo -e -n "\r\033[K waiting for changes (|) ..."
-  sleep 2
-  echo -e -n "\r\033[K waiting for changes ( ) ... "
-  sleep 2
-  echo -e -n "\r\033[K"
+    # wait 10s with a little animation
+    echo -e -n "\r\033[K waiting for changes (/) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes (-) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes (\) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes (|) ..."
+    sleep 2
+    echo -e -n "\r\033[K waiting for changes ( ) ... "
+    sleep 2
+    echo -e -n "\r\033[K checking for changes"
 done
+

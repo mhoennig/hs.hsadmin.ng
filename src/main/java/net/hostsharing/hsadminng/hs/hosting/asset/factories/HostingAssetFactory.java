@@ -1,5 +1,6 @@
 package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetAutoInsertResource;
 import net.hostsharing.hsadminng.hs.booking.item.HsBookingItemRealEntity;
@@ -8,7 +9,6 @@ import net.hostsharing.hsadminng.hs.hosting.asset.validators.HostingAssetEntityS
 import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 
-import java.util.UUID;
 
 @RequiredArgsConstructor
 abstract class HostingAssetFactory {
@@ -20,13 +20,13 @@ abstract class HostingAssetFactory {
 
     protected abstract HsHostingAsset create();
 
-    public String performSaveProcess() {
+    public String createAndPersist() {
         try {
-            final var newHostingAsset = create();
+            final HsHostingAsset newHostingAsset = create();
             persist(newHostingAsset);
             return null;
-        } catch (final Exception e) {
-            return e.getMessage();
+        } catch (final ValidationException exc) {
+            return exc.getMessage();
         }
     }
 
@@ -37,9 +37,5 @@ abstract class HostingAssetFactory {
                 .prepareForSave()
                 .save()
                 .validateContext();
-    }
-
-    protected <T> T ref(final Class<T> entityClass, final UUID uuid) {
-        return uuid != null ? emw.getReference(entityClass, uuid) : null;
     }
 }

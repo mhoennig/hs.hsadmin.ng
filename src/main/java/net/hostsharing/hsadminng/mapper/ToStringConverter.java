@@ -1,9 +1,6 @@
-package net.hostsharing.hsadminng.hs.hosting.asset.factories;
+package net.hostsharing.hsadminng.mapper;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.stream.Collectors.joining;
 
@@ -16,8 +13,7 @@ public class ToStringConverter {
         return this;
     }
 
-    public String from(Object obj) {
-        StringBuilder result = new StringBuilder();
+    public String from(final Object obj) {
         return "{ " +
             Arrays.stream(obj.getClass().getDeclaredFields())
                     .filter(f -> !ignoredFields.contains(f.getName()))
@@ -33,5 +29,16 @@ public class ToStringConverter {
                     .filter(Objects::nonNull)
                     .collect(joining(", "))
         + " }";
+    }
+
+    public String from(final Map<?, ?> map) {
+        return "{ "
+            + map.keySet().stream()
+                .filter(key -> !ignoredFields.contains(key.toString()))
+                .sorted()
+                .map(k -> Map.entry(k, map.get(k)))
+                .map(e -> e.getKey() + ": " + e.getValue())
+                .collect(joining(", "))
+            + " }";
     }
 }

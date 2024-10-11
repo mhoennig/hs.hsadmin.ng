@@ -37,7 +37,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
     private HsOfficePersonRepository holderRepo;
 
     @Autowired
-    private HsOfficeContactRealRepository contactrealRepo;
+    private HsOfficeContactRealRepository realContactRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -48,11 +48,16 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
             final String currentSubject,
             final String assumedRoles,
             final UUID personUuid,
-            final HsOfficeRelationTypeResource relationType) {
+            final HsOfficeRelationTypeResource relationType,
+            final String personData,
+            final String contactData) {
         context.define(currentSubject, assumedRoles);
 
-        final var entities = relationRbacRepo.findRelationRelatedToPersonUuidAndRelationType(personUuid,
-               relationType == null ? null : HsOfficeRelationType.valueOf(relationType.name()));
+        final List<HsOfficeRelationRbacEntity> entities =
+                relationRbacRepo.findRelationRelatedToPersonUuidRelationTypePersonAndContactData(
+                        personUuid,
+                        relationType == null ? null : HsOfficeRelationType.valueOf(relationType.name()),
+                        personData, contactData);
 
         final var resources = mapper.mapList(entities, HsOfficeRelationResource.class,
                 RELATION_ENTITY_TO_RESOURCE_POSTMAPPER);
@@ -77,7 +82,7 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
         entityToSave.setHolder(holderRepo.findByUuid(body.getHolderUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find Person by holderUuid: " + body.getHolderUuid())
         ));
-        entityToSave.setContact(contactrealRepo.findByUuid(body.getContactUuid()).orElseThrow(
+        entityToSave.setContact(realContactRepo.findByUuid(body.getContactUuid()).orElseThrow(
                 () -> new NoSuchElementException("cannot find Contact by contactUuid: " + body.getContactUuid())
         ));
 
@@ -143,7 +148,6 @@ public class HsOfficeRelationController implements HsOfficeRelationsApi {
         final var mapped = mapper.map(saved, HsOfficeRelationResource.class);
         return ResponseEntity.ok(mapped);
     }
-
 
     final BiConsumer<HsOfficeRelationRbacEntity, HsOfficeRelationResource> RELATION_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setAnchor(mapper.map(entity.getAnchor(), HsOfficePersonResource.class));

@@ -1,7 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.sepamandate;
 
 import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountEntity;
-import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacViewMermaidFlowchartGenerator;
 import org.junit.jupiter.api.Test;
 

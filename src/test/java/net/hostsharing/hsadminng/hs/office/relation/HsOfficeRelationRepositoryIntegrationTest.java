@@ -193,7 +193,7 @@ class HsOfficeRelationRepositoryIntegrationTest extends ContextBasedTestWithClea
                     .findFirst().orElseThrow();
 
             // when:
-            final var result = relationRbacRepo.findRelationRelatedToPersonUuidAndRelationType(person.getUuid(), null);
+            final var result = relationRbacRepo.findRelationRelatedToPersonUuidRelationTypePersonAndContactData(person.getUuid(), null, null, null);
 
             // then:
             exactlyTheseRelationsAreReturned(

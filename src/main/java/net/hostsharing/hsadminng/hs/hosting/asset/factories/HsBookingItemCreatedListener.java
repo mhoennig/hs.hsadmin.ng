@@ -2,6 +2,8 @@ package net.hostsharing.hsadminng.hs.hosting.asset.factories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.NotNull;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.booking.generated.api.v1.model.HsHostingAssetAutoInsertResource;
 import net.hostsharing.hsadminng.hs.booking.item.BookingItemCreatedAppEvent;
@@ -12,7 +14,6 @@ import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
-
 
 @Component
 public class HsBookingItemCreatedListener implements ApplicationListener<BookingItemCreatedAppEvent> {
@@ -28,7 +29,7 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
 
     @Override
     @SneakyThrows
-    public void onApplicationEvent(final BookingItemCreatedAppEvent bookingItemCreatedAppEvent) {
+    public void onApplicationEvent(@NotNull BookingItemCreatedAppEvent bookingItemCreatedAppEvent) {
         if (containsAssetJson(bookingItemCreatedAppEvent)) {
             createRelatedHostingAsset(bookingItemCreatedAppEvent);
         }
@@ -48,7 +49,7 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
             case DOMAIN_SETUP -> new DomainSetupHostingAssetFactory(emw, newBookingItemRealEntity, asset, standardMapper);
         };
         if (factory != null) {
-            final var statusMessage = factory.performSaveProcess();
+            final var statusMessage = factory.createAndPersist();
             // TODO.impl: once we implement retry, we need to amend this code (persist/merge/delete)
             if (statusMessage != null) {
                 event.getEntity().setStatusMessage(statusMessage);
@@ -68,12 +69,7 @@ public class HsBookingItemCreatedListener implements ApplicationListener<Booking
             @Override
             protected HsHostingAsset create() {
                 // TODO.impl: we should validate the asset JSON, but some violations are un-avoidable at that stage
-                return null;
-            }
-
-            @Override
-            public String performSaveProcess() {
-                return "waiting for manual setup of hosting asset for booking item of type " + fromBookingItem.getType();
+                throw new ValidationException("waiting for manual setup of hosting asset for booking item of type " + fromBookingItem.getType());
             }
         };
     }

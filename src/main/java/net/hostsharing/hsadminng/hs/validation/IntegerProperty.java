@@ -56,6 +56,10 @@ public class IntegerProperty<P extends IntegerProperty<P>> extends ValidatablePr
         return unit;
     }
 
+    public Integer min() {
+        return min;
+    }
+
     public Integer max() {
         return max;
     }

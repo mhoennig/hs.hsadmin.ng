@@ -30,7 +30,7 @@ public class RbacGrantsDiagramService {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             writer.write("""
                     ### all grants to %s
-                                        
+
                     ```mermaid
                     %s
                     ```
@@ -62,7 +62,7 @@ public class RbacGrantsDiagramService {
     @PersistenceContext
     private EntityManager em;
 
-    private Map<UUID, List<RawRbacGrantEntity>> descendantsByUuid = new HashMap<>();
+    private final Map<UUID, List<RawRbacGrantEntity>> descendantsByUuid = new HashMap<>();
 
     public String allGrantsTocurrentSubject(final EnumSet<Include> includes) {
         final var graph = new LimitedHashSet<RawRbacGrantEntity>();
@@ -231,8 +231,7 @@ public class RbacGrantsDiagramService {
         }
     }
 
-}
+    record Node(String idName, UUID uuid) {
 
-record Node(String idName, UUID uuid) {
-
+    }
 }
