@@ -33,3 +33,11 @@ logging:
     level:
         liquibase: WARN
         net.ttddyy.dsproxy.listener: DEBUG # HOWTO: log meaningful SQL statements
+        # just for the case there are problems with Testcontainers/Docker integration
+        # org.testcontainers: DEBUG
+        # com.github.dockerjava: DEBUG
+
+testcontainers:
+    network:
+        mode: host
+

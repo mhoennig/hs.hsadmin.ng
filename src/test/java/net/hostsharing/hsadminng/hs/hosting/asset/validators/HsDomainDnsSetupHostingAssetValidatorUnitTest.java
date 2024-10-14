@@ -176,6 +176,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
         // given
         final var givenEntity = validEntityBuilder().build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        Dns.fakeResultForDomain(givenEntity.getIdentifier(), Dns.Result.fromRecords());
 
         // when
         final var errors = validator.validateContext(givenEntity);
@@ -317,6 +318,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
                     ))
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        Dns.fakeResultForDomain("example.org", Dns.Result.fromRecords());
 
         // when
         final var errors = validator.validateContext(givenEntity);
@@ -340,6 +342,7 @@ class HsDomainDnsSetupHostingAssetValidatorUnitTest {
                 ))
                 .build();
         final var validator = HostingAssetEntityValidatorRegistry.forType(givenEntity.getType());
+        Dns.fakeResultForDomain("example.org", Dns.Result.fromRecords());
 
         // when
         final var zonefileErrors = new ArrayList<String>();

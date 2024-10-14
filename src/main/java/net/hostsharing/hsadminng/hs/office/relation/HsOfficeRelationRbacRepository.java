@@ -28,10 +28,10 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
      * @return a list of (accessible) relations which match all given criteria
      */
     default List<HsOfficeRelationRbacEntity> findRelationRelatedToPersonUuidRelationTypePersonAndContactData(
-            UUID personUuid,
-            HsOfficeRelationType relationType,
-            String personData,
-            String contactData) {
+            final UUID personUuid,
+            final HsOfficeRelationType relationType,
+            final String personData,
+            final String contactData) {
         return findRelationRelatedToPersonUuidRelationTypePersonAndContactDataImpl(
                 personUuid, toStringOrNull(relationType), toSqlLikeOperand(personData), toSqlLikeOperand(contactData));
     }
