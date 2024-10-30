@@ -90,6 +90,20 @@ Acceptance-tests, are blackbox-tests and do <u>not</u> count into test-code-cove
 TODO.test: Complete the Acceptance-Tests test concept.
 
 
+#### Scenario-Tests
+
+Our Scenario-tests are induced by business use-cases.
+They test from the REST API all the way down to the database.
+
+Most scenario-tests are positive tests, they test if business scenarios do work.
+But few might be negative tests, which test if specific forbidden data gets rejected.
+
+Our scenario tests also generate test-reports which contain the REST-API calls needed for each scenario.
+These reports can be used as examples for the API usage from a business perspective.
+
+There is an extra document regarding scenario-test, see [Scenario-Tests README](../src/test/java/net/hostsharing/hsadminng/hs/office/scenarios/README.md). 
+
+
 #### Performance-Tests
 
 Performance-critical scenarios have to be identified and a special performance-test has to be implemented.

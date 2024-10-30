@@ -40,7 +40,7 @@ begin
         JOIN hs_office.relation AS partnerRel ON partnerRel.uuid = partner.partnerRelUuid
         WHERE partner.uuid = NEW.partnerUuid
         INTO newPartnerRel;
-    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerUuid = %s', NEW.partnerUuid);
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerUuid = %s of membership', NEW.partnerUuid);
 
 
     perform rbac.defineRoleWithGrants(

@@ -77,16 +77,13 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
                 "ERROR: [400] exactly one of debitorRel and debitorRelUuid must be supplied, but found both");
         Validate.isTrue(body.getDebitorRel() != null || body.getDebitorRelUuid() != null,
                 "ERROR: [400] exactly one of debitorRel and debitorRelUuid must be supplied, but found none");
-        Validate.isTrue(body.getDebitorRel() == null ||
-                    body.getDebitorRel().getType() == null || DEBITOR.name().equals(body.getDebitorRel().getType()),
-                "ERROR: [400] debitorRel.type must be '"+DEBITOR.name()+"' or null for default");
         Validate.isTrue(body.getDebitorRel() == null || body.getDebitorRel().getMark() == null,
                 "ERROR: [400] debitorRel.mark must be null");
 
         final var entityToSave = mapper.map(body, HsOfficeDebitorEntity.class);
-        if ( body.getDebitorRel() != null ) {
-            body.getDebitorRel().setType(DEBITOR.name());
+        if (body.getDebitorRel() != null) {
             final var debitorRel = mapper.map("debitorRel.", body.getDebitorRel(), HsOfficeRelationRealEntity.class);
+            debitorRel.setType(DEBITOR);
             entityValidator.validateEntityExists("debitorRel.anchorUuid", debitorRel.getAnchor());
             entityValidator.validateEntityExists("debitorRel.holderUuid", debitorRel.getHolder());
             entityValidator.validateEntityExists("debitorRel.contactUuid", debitorRel.getContact());
@@ -95,7 +92,10 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
             final var debitorRelOptional = relrealRepo.findByUuid(body.getDebitorRelUuid());
             debitorRelOptional.ifPresentOrElse(
                     debitorRel -> {entityToSave.setDebitorRel(relrealRepo.save(debitorRel));},
-                    () -> { throw new ValidationException("Unable to find RealRelation by debitorRelUuid: " + body.getDebitorRelUuid());});
+                    () -> {
+                        throw new ValidationException(
+                                "Unable to find RealRelation by debitorRelUuid: " + body.getDebitorRelUuid());
+                    });
         }
 
         final var savedEntity = debitorRepo.save(entityToSave);

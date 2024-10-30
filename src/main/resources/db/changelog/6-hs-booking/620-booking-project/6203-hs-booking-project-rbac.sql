@@ -37,14 +37,14 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.debitor WHERE uuid = NEW.debitorUuid    INTO newDebitor;
-    assert newDebitor.uuid is not null, format('newDebitor must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
+    assert newDebitor.uuid is not null, format('newDebitor must not be null for NEW.debitorUuid = %s of project', NEW.debitorUuid);
 
     SELECT debitorRel.*
         FROM hs_office.relation debitorRel
         JOIN hs_office.debitor debitor ON debitor.debitorRelUuid = debitorRel.uuid
         WHERE debitor.uuid = NEW.debitorUuid
         INTO newDebitorRel;
-    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s', NEW.debitorUuid);
+    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorUuid = %s or project', NEW.debitorUuid);
 
 
     perform rbac.defineRoleWithGrants(

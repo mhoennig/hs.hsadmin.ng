@@ -44,10 +44,10 @@ begin
         WHERE partnerRel.type = 'PARTNER'
             AND NEW.debitorRelUuid = debitorRel.uuid
         INTO newPartnerRel;
-    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.debitorRelUuid = %s', NEW.debitorRelUuid);
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.debitorRelUuid = %s of debitor', NEW.debitorRelUuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = NEW.debitorRelUuid    INTO newDebitorRel;
-    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorRelUuid = %s', NEW.debitorRelUuid);
+    assert newDebitorRel.uuid is not null, format('newDebitorRel must not be null for NEW.debitorRelUuid = %s of debitor', NEW.debitorRelUuid);
 
     SELECT * FROM hs_office.bankaccount WHERE uuid = NEW.refundBankAccountUuid    INTO newRefundBankAccount;
 

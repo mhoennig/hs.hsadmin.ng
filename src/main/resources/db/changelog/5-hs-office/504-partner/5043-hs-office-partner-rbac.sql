@@ -37,10 +37,10 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
-    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s', NEW.partnerRelUuid);
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s of partner', NEW.partnerRelUuid);
 
     SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
-    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
+    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s of partner', NEW.detailsUuid);
 
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'DELETE'), hs_office.relation_OWNER(newPartnerRel));
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.relation_TENANT(newPartnerRel));
@@ -96,16 +96,16 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = OLD.partnerRelUuid    INTO oldPartnerRel;
-    assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.partnerRelUuid = %s', OLD.partnerRelUuid);
+    assert oldPartnerRel.uuid is not null, format('oldPartnerRel must not be null for OLD.partnerRelUuid = %s of partner', OLD.partnerRelUuid);
 
     SELECT * FROM hs_office.relation WHERE uuid = NEW.partnerRelUuid    INTO newPartnerRel;
-    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s', NEW.partnerRelUuid);
+    assert newPartnerRel.uuid is not null, format('newPartnerRel must not be null for NEW.partnerRelUuid = %s of partner', NEW.partnerRelUuid);
 
     SELECT * FROM hs_office.partner_details WHERE uuid = OLD.detailsUuid    INTO oldPartnerDetails;
-    assert oldPartnerDetails.uuid is not null, format('oldPartnerDetails must not be null for OLD.detailsUuid = %s', OLD.detailsUuid);
+    assert oldPartnerDetails.uuid is not null, format('oldPartnerDetails must not be null for OLD.detailsUuid = %s of partner', OLD.detailsUuid);
 
     SELECT * FROM hs_office.partner_details WHERE uuid = NEW.detailsUuid    INTO newPartnerDetails;
-    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s', NEW.detailsUuid);
+    assert newPartnerDetails.uuid is not null, format('newPartnerDetails must not be null for NEW.detailsUuid = %s of partner', NEW.detailsUuid);
 
 
     if NEW.partnerRelUuid <> OLD.partnerRelUuid then

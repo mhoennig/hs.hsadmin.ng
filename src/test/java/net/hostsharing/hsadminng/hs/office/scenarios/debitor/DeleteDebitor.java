@@ -1,0 +1,31 @@
+package net.hostsharing.hsadminng.hs.office.scenarios.debitor;
+
+import net.hostsharing.hsadminng.hs.office.scenarios.UseCase;
+import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
+import org.springframework.http.HttpStatus;
+
+public class DeleteDebitor extends UseCase<DeleteDebitor> {
+
+    public DeleteDebitor(final ScenarioTest testSuite) {
+        super(testSuite);
+
+        requires("Debitor: Test AG - delete debitor", alias -> new CreateSelfDebitorForPartner(testSuite, alias)
+                .given("partnerPersonTradeName", "Test AG")
+                .given("billingContactCaption", "Test AG - billing department")
+                .given("billingContactEmailAddress", "billing@test-ag.example.org")
+                .given("debitorNumberSuffix", "%{debitorSuffix}")
+                .given("billable", true)
+                .given("vatId", "VAT123456")
+                .given("vatCountryCode", "DE")
+                .given("vatBusiness", true)
+                .given("vatReverseCharge", false)
+                .given("defaultPrefix", "tsy"));
+    }
+
+    @Override
+    protected HttpResponse run() {
+        httpDelete("/api/hs/office/debitors/" + uuid("Debitor: Test AG - delete debitor"))
+                .expecting(HttpStatus.NO_CONTENT);
+        return null;
+    }
+}

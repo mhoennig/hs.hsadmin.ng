@@ -38,13 +38,13 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.person WHERE uuid = NEW.holderUuid    INTO newHolderPerson;
-    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s', NEW.holderUuid);
+    assert newHolderPerson.uuid is not null, format('newHolderPerson must not be null for NEW.holderUuid = %s of relation', NEW.holderUuid);
 
     SELECT * FROM hs_office.person WHERE uuid = NEW.anchorUuid    INTO newAnchorPerson;
-    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s', NEW.anchorUuid);
+    assert newAnchorPerson.uuid is not null, format('newAnchorPerson must not be null for NEW.anchorUuid = %s of relation', NEW.anchorUuid);
 
     SELECT * FROM hs_office.contact WHERE uuid = NEW.contactUuid    INTO newContact;
-    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s', NEW.contactUuid);
+    assert newContact.uuid is not null, format('newContact must not be null for NEW.contactUuid = %s of relation', NEW.contactUuid);
 
 
     perform rbac.defineRoleWithGrants(

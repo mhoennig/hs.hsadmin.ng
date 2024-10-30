@@ -41,6 +41,7 @@ components:
                     format: uuid
                     nullable: true
 
+        # arbitrary relation with explicit type
         HsOfficeRelationInsert:
             type: object
             properties:
@@ -64,3 +65,24 @@ components:
               - holderUuid
               - type
               - contactUuid
+
+        # relation created as a sub-element with implicitly known type
+        HsOfficeRelationSubInsert:
+            type: object
+            properties:
+                anchorUuid:
+                    type: string
+                    format: uuid
+                holderUuid:
+                    type: string
+                    format: uuid
+                mark:
+                    type: string
+                    nullable: true
+                contactUuid:
+                    type: string
+                    format: uuid
+            required:
+                - anchorUuid
+                - holderUuid
+                - contactUuid

@@ -12,7 +12,6 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRealRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -76,7 +75,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     class ListDebitors {
 
         @Test
-        void globalAdmin_withoutAssumedRoles_canViewAllDebitors_ifNoCriteriaGiven() throws JSONException {
+        void globalAdmin_withoutAssumedRoles_canViewAllDebitors_ifNoCriteriaGiven() {
 
             RestAssured // @formatter:off
                 .given()
@@ -112,7 +111,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                           }
                         },
                         "debitorNumber": 1000111,
-                        "debitorNumberSuffix": 11,
+                        "debitorNumberSuffix": "11",
                         "partner": {
                           "partnerNumber": 10001,
                           "partnerRel": {
@@ -167,7 +166,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                            }
                         },
                         "debitorNumber": 1000212,
-                        "debitorNumberSuffix": 12,
+                        "debitorNumberSuffix": "12",
                         "partner": {
                           "partnerNumber": 10002,
                           "partnerRel": {
@@ -201,7 +200,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             }
                         },
                         "debitorNumber": 1000313,
-                        "debitorNumberSuffix": 13,
+                        "debitorNumberSuffix": "13",
                         "partner": {
                           "partnerNumber": 10003,
                           "partnerRel": {
@@ -334,7 +333,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                             {
                                "debitorRel": {
-                                    "type": "DEBITOR",
                                     "anchorUuid": "%s",
                                     "holderUuid": "%s",
                                     "contactUuid": "%s"
@@ -386,7 +384,6 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                             {
                                "debitorRel": {
-                                    "type": "DEBITOR",
                                     "anchorUuid": "%s",
                                     "holderUuid": "%s",
                                     "contactUuid": "%s"
@@ -469,7 +466,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                              }
                          },
                          "debitorNumber": 1000111,
-                         "debitorNumberSuffix": 11,
+                         "debitorNumberSuffix": "11",
                          "partner": {
                              "partnerNumber": 10001,
                              "partnerRel": {
@@ -581,7 +578,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                     "contact": { "caption": "fourth contact" }
                                 },
                                 "debitorNumber": 10004${debitorNumberSuffix},
-                                "debitorNumberSuffix": ${debitorNumberSuffix},
+                                "debitorNumberSuffix": "${debitorNumberSuffix}",
                                 "partner": {
                                     "partnerNumber": 10004,
                                     "partnerRel": {

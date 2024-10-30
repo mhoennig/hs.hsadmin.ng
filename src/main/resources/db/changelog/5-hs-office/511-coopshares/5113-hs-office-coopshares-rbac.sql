@@ -36,7 +36,7 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM hs_office.membership WHERE uuid = NEW.membershipUuid    INTO newMembership;
-    assert newMembership.uuid is not null, format('newMembership must not be null for NEW.membershipUuid = %s', NEW.membershipUuid);
+    assert newMembership.uuid is not null, format('newMembership must not be null for NEW.membershipUuid = %s of coopshares', NEW.membershipUuid);
 
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'SELECT'), hs_office.membership_AGENT(newMembership));
     call rbac.grantPermissionToRole(rbac.createPermission(NEW.uuid, 'UPDATE'), hs_office.membership_ADMIN(newMembership));

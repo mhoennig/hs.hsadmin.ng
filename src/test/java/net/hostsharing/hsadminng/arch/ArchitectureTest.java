@@ -46,6 +46,7 @@ public class ArchitectureTest {
                     "..lambda",
                     "..generated..",
                     "..persistence..",
+                    "..reflection",
                     "..system..",
                     "..validation..",
                     "..hs.office.bankaccount",
@@ -54,6 +55,7 @@ public class ArchitectureTest {
                     "..hs.office.coopshares",
                     "..hs.office.debitor",
                     "..hs.office.membership",
+                    "..hs.office.scenarios..",
                     "..hs.migration",
                     "..hs.office.partner",
                     "..hs.office.person",
@@ -96,7 +98,7 @@ public class ArchitectureTest {
     public static final ArchRule testClassesAreProperlyNamed = classes()
             .that().haveSimpleNameEndingWith("Test")
             .and().doNotHaveModifier(ABSTRACT)
-            .should().haveNameMatching(".*(UnitTest|RestTest|IntegrationTest|AcceptanceTest|ArchitectureTest)$");
+            .should().haveNameMatching(".*(UnitTest|RestTest|IntegrationTest|AcceptanceTest|ScenarioTest|ArchitectureTest)$");
 
     @ArchTest
     @SuppressWarnings("unused")

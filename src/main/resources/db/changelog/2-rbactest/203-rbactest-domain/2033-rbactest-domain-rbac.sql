@@ -36,7 +36,7 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM rbactest.package WHERE uuid = NEW.packageUuid    INTO newPackage;
-    assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s', NEW.packageUuid);
+    assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s of domain', NEW.packageUuid);
 
 
     perform rbac.defineRoleWithGrants(
@@ -98,10 +98,10 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM rbactest.package WHERE uuid = OLD.packageUuid    INTO oldPackage;
-    assert oldPackage.uuid is not null, format('oldPackage must not be null for OLD.packageUuid = %s', OLD.packageUuid);
+    assert oldPackage.uuid is not null, format('oldPackage must not be null for OLD.packageUuid = %s of domain', OLD.packageUuid);
 
     SELECT * FROM rbactest.package WHERE uuid = NEW.packageUuid    INTO newPackage;
-    assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s', NEW.packageUuid);
+    assert newPackage.uuid is not null, format('newPackage must not be null for NEW.packageUuid = %s of domain', NEW.packageUuid);
 
 
     if NEW.packageUuid <> OLD.packageUuid then

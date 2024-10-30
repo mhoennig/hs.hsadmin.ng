@@ -36,7 +36,7 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM rbactest.customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
-    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
+    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s of package', NEW.customerUuid);
 
 
     perform rbac.defineRoleWithGrants(
@@ -102,10 +102,10 @@ begin
     call rbac.enterTriggerForObjectUuid(NEW.uuid);
 
     SELECT * FROM rbactest.customer WHERE uuid = OLD.customerUuid    INTO oldCustomer;
-    assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s', OLD.customerUuid);
+    assert oldCustomer.uuid is not null, format('oldCustomer must not be null for OLD.customerUuid = %s of package', OLD.customerUuid);
 
     SELECT * FROM rbactest.customer WHERE uuid = NEW.customerUuid    INTO newCustomer;
-    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s', NEW.customerUuid);
+    assert newCustomer.uuid is not null, format('newCustomer must not be null for NEW.customerUuid = %s of package', NEW.customerUuid);
 
 
     if NEW.customerUuid <> OLD.customerUuid then
