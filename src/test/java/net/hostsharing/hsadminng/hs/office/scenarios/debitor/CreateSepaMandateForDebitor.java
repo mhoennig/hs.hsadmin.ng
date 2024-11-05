@@ -5,6 +5,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDebitor> {
 
@@ -14,12 +15,19 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
 
     @Override
     protected HttpResponse run() {
+
+        obtain("Debitor: Test AG - main debitor", () ->
+            httpGet("/api/hs/office/debitors?debitorNumber=&{debitorNumber}")
+                    .expecting(OK).expecting(JSON),
+            response -> response.expectArrayElements(1).getFromBody("[0].uuid")
+        );
+
         obtain("BankAccount: Test AG - debit bank account", () ->
             httpPost("/api/hs/office/bankaccounts", usingJsonBody("""
                      {
-                         "holder": "Test AG - debit bank account",
-                         "iban": "DE02701500000000594937",
-                         "bic": "SSKMDEMM"
+                         "holder": ${bankAccountHolder},
+                         "iban": ${bankAccountIBAN},
+                         "bic": ${bankAccountBIC}
                     }
                     """))
                     .expecting(CREATED).expecting(JSON)
@@ -29,9 +37,9 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
                 {
                    "debitorUuid": ${Debitor: Test AG - main debitor},
                    "bankAccountUuid": ${BankAccount: Test AG - debit bank account},
-                   "reference": "Test AG - main debitor",
-                   "agreement": "2022-10-12",
-                   "validFrom": "2022-10-13"
+                   "reference": ${mandateReference},
+                   "agreement": ${mandateAgreement},
+                   "validFrom": ${mandateValidFrom}
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);

@@ -26,9 +26,35 @@ pipeline {
             }
         }
 
-        stage ('Compile & Test') {
+        stage ('Compile') {
             steps {
-                sh './gradlew clean check --no-daemon -x pitest -x dependencyCheckAnalyze'
+                sh './gradlew clean processSpring compileJava compileTestJava --no-daemon'
+            }
+        }
+
+        stage ('Tests') {
+            parallel {
+                stage('Unit-/Integration/Acceptance-Tests') {
+                    steps {
+                        sh './gradlew check --no-daemon -x pitest -x dependencyCheckAnalyze -x importOfficeData -x importHostingAssets'
+                    }
+                }
+                stage('Import-Tests') {
+                    steps {
+                        sh './gradlew importOfficeData importHostingAssets --no-daemon'
+                    }
+                }
+                stage ('Scenario-Tests') {
+                    steps {
+                        sh './gradlew scenarioTests --no-daemon'
+                    }
+                }
+            }
+        }
+
+        stage ('Check') {
+            steps {
+                sh './gradlew check -x pitest -x dependencyCheckAnalyze --no-daemon'
             }
         }
     }
@@ -44,6 +70,12 @@ pipeline {
                 classPattern: 'build/classes/java/main',
                 sourcePattern: 'src/main/java'
             )
+
+            // archive scenario-test reports in HTML format
+            sh '''
+                ./gradlew convertMarkdownToHtml
+            '''
+            archiveArtifacts artifacts: 'doc/scenarios/*.html', allowEmptyArchive: true
 
             // cleanup workspace
             cleanWs()

@@ -19,8 +19,7 @@ public class CreateSelfDebitorForPartner extends UseCase<CreateSelfDebitorForPar
                 httpGet("/api/hs/office/relations?relationType=PARTNER&personData=" + uriEncoded("%{partnerPersonTradeName}"))
                         .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].holder.uuid"),
-                "In production data this query could result in multiple outputs. In that case, you have to find out which is the right one.",
-                "**HINT**: With production data, you might get multiple results and have to decide which is the right one."
+                "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
         obtain("BankAccount: Test AG - refund bank account", () ->

@@ -1,10 +1,14 @@
 package net.hostsharing.hsadminng.hs.office.scenarios;
 
 import net.hostsharing.hsadminng.HsadminNgApplication;
+import net.hostsharing.hsadminng.hs.office.scenarios.contact.AddPhoneNumberToContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.contact.AmendContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.contact.RemovePhoneNumberFromContactData;
+import net.hostsharing.hsadminng.hs.office.scenarios.contact.ReplaceContactData;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateExternalDebitorForPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSelfDebitorForPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSepaMandateForDebitor;
-import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DeleteSepaMandateForDebitor;
+import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FinallyDeleteSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
@@ -43,14 +47,39 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1010)
-    @Produces(explicitly = "Partner: Test AG", implicitly = {"Person: Test AG", "Contact: Test AG - Board of Directors"})
-    void shouldCreatePartner() {
+    @Produces(explicitly = "Partner: Test AG", implicitly = {"Person: Test AG", "Contact: Test AG - Hamburg"})
+    void shouldCreateLegalPersonAsPartner() {
         new CreatePartner(this)
                 .given("partnerNumber", 31010)
                 .given("personType", "LEGAL_PERSON")
                 .given("tradeName", "Test AG")
-                .given("contactCaption", "Test AG - Board of Directors")
-                .given("emailAddress", "board-of-directors@test-ag.example.org")
+                .given("contactCaption", "Test AG - Hamburg")
+                .given("postalAddress", """
+                        Shanghai-Allee 1
+                        20123 Hamburg
+                        """)
+                .given("officePhoneNumber", "+49 40 654321-0")
+                .given("emailAddress", "hamburg@test-ag.example.org")
+                .doRun()
+                .keep();
+    }
+
+    @Test
+    @Order(1011)
+    @Produces(explicitly = "Partner: Michelle Matthieu", implicitly = {"Person: Michelle Matthieu", "Contact: Michelle Matthieu"})
+    void shouldCreateNaturalPersonAsPartner() {
+        new CreatePartner(this)
+                .given("partnerNumber", 31011)
+                .given("personType", "NATURAL_PERSON")
+                .given("givenName", "Michelle")
+                .given("familyName", "Matthieu")
+                .given("contactCaption", "Michelle Matthieu")
+                .given("postalAddress", """
+                        An der Wandse 34
+                        22123 Hamburg
+                        """)
+                .given("officePhoneNumber", "+49 40 123456")
+                .given("emailAddress", "michelle.matthieu@example.org")
                 .doRun()
                 .keep();
     }
@@ -103,6 +132,53 @@ class HsOfficeScenarioTests extends ScenarioTest {
     void shouldDeletePartner() {
         new DeletePartner(this)
                 .given("partnerNumber", 31020)
+                .doRun();
+    }
+
+    @Test
+    @Order(1100)
+    @Requires("Partner: Michelle Matthieu")
+    void shouldAmendContactData() {
+        new AmendContactData(this)
+                .given("partnerName", "Matthieu")
+                .given("newEmailAddress", "michelle@matthieu.example.org")
+                .doRun();
+    }
+
+    @Test
+    @Order(1101)
+    @Requires("Partner: Michelle Matthieu")
+    void shouldAddPhoneNumberToContactData() {
+        new AddPhoneNumberToContactData(this)
+                .given("partnerName", "Matthieu")
+                .given("phoneNumberKeyToAdd", "mobile")
+                .given("phoneNumberToAdd", "+49 152 1234567")
+                .doRun();
+    }
+
+    @Test
+    @Order(1102)
+    @Requires("Partner: Michelle Matthieu")
+    void shouldRemovePhoneNumberFromContactData() {
+        new RemovePhoneNumberFromContactData(this)
+                .given("partnerName", "Matthieu")
+                .given("phoneNumberKeyToRemove", "office")
+                .doRun();
+    }
+
+    @Test
+    @Order(1103)
+    @Requires("Partner: Test AG")
+    void shouldReplaceContactData() {
+        new ReplaceContactData(this)
+                .given("partnerName", "Test AG")
+                .given("newContactCaption", "Test AG - Norden")
+                .given("newPostalAddress", """
+                        Am Hafen 11
+                        26506 Norden
+                        """)
+                .given("newOfficePhoneNumber", "+49 4931 654321-0")
+                .given("newEmailAddress", "norden@test-ag.example.org")
                 .doRun();
     }
 
@@ -173,10 +249,18 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Produces("SEPA-Mandate: Test AG")
     void shouldCreateSepaMandateForDebitor() {
         new CreateSepaMandateForDebitor(this)
-                .given("debitor", "Test AG")
-                .given("memberNumberSuffix", "00")
-                .given("validFrom", "2024-10-15")
-                .given("membershipFeeBillable", "true")
+                // existing debitor
+                .given("debitorNumber", "3101000")
+
+                // new sepa-mandate
+                .given("mandateReference", "Test AG - main debitor")
+                .given("mandateAgreement", "2022-10-12")
+                .given("mandateValidFrom", "2024-10-15")
+
+                // new bank-account
+                .given("bankAccountHolder", "Test AG - debit bank account")
+                .given("bankAccountIBAN", "DE02701500000000594937")
+                .given("bankAccountBIC", "SSKMDEMM")
                 .doRun()
                 .keep();
     }
@@ -186,17 +270,17 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Requires("SEPA-Mandate: Test AG")
     void shouldInvalidateSepaMandateForDebitor() {
         new InvalidateSepaMandateForDebitor(this)
-                .given("sepaMandateUuid", "%{SEPA-Mandate: Test AG}")
-                .given("validUntil", "2025-09-30")
+                .given("bankAccountIBAN", "DE02701500000000594937")
+                .given("mandateValidUntil", "2025-09-30")
                 .doRun();
     }
 
     @Test
     @Order(3109)
     @Requires("SEPA-Mandate: Test AG")
-    void shouldDeleteSepaMandateForDebitor() {
-        new DeleteSepaMandateForDebitor(this)
-                .given("sepaMandateUuid", "%{SEPA-Mandate: Test AG}")
+    void shouldFinallyDeleteSepaMandateForDebitor() {
+        new FinallyDeleteSepaMandateForDebitor(this)
+                .given("bankAccountIBAN", "DE02701500000000594937")
                 .doRun();
     }
 

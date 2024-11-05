@@ -12,7 +12,7 @@ public class DontDeleteDefaultDebitor extends UseCase<DontDeleteDefaultDebitor> 
 
     @Override
     protected HttpResponse run() {
-        httpDelete("/api/hs/office/debitors/" + uuid("Debitor: Test AG - main debitor"))
+        httpDelete("/api/hs/office/debitors/&{Debitor: Test AG - main debitor}")
                 // TODO.spec: should be CONFLICT or CLIENT_ERROR for Debitor "00"  - but how to delete Partners?
                 .expecting(HttpStatus.NO_CONTENT);
         return null;

@@ -22,7 +22,7 @@ public class AddRepresentativeToPartner extends UseCase<AddRepresentativeToPartn
                 httpGet("/api/hs/office/persons?name=" + uriEncoded("%{partnerPersonTradeName}"))
                         .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
-                "In production data this query could result in multiple outputs. In that case, you have to find out which is the right one."
+                "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
         obtain("Person: %{representativeGivenName} %{representativeFamilyName}", () ->
@@ -64,5 +64,15 @@ public class AddRepresentativeToPartner extends UseCase<AddRepresentativeToPartn
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);
+    }
+
+    @Override
+    protected void verify() {
+        verify(
+                "Verify the REPRESENTATIVE Relation Got Removed",
+                () -> httpGet("/api/hs/office/relations?relationType=REPRESENTATIVE&personData=" + uriEncoded("%{representativeFamilyName}"))
+                        .expecting(OK).expecting(JSON).expectArrayElements(1),
+                path("[0].contact.caption").contains("%{representativeGivenName} %{representativeFamilyName}")
+        );
     }
 }

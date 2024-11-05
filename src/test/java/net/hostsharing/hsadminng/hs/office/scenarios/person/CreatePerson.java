@@ -14,12 +14,14 @@ public class CreatePerson extends UseCase<CreatePerson> {
     @Override
     protected HttpResponse run() {
 
-        return httpPost("/api/hs/office/persons", usingJsonBody("""
+        return withTitle("Create the Person", () ->
+                httpPost("/api/hs/office/persons", usingJsonBody("""
                     {
                         "personType": ${personType},
                         "tradeName": ${tradeName}
                     }
                     """))
-                    .expecting(HttpStatus.CREATED).expecting(ContentType.JSON);
+                    .expecting(HttpStatus.CREATED).expecting(ContentType.JSON)
+        );
     }
 }

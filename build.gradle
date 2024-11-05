@@ -255,7 +255,7 @@ test {
             'net.hostsharing.hsadminng.**.generated.**',
     ]
     useJUnitPlatform {
-        excludeTags 'import'
+        excludeTags 'importOfficeData', 'importHostingData', 'scenarioTest'
     }
 }
 jacocoTestReport {
@@ -344,6 +344,17 @@ tasks.register('importHostingAssets', Test) {
     mustRunAfter spotlessJava
 }
 
+tasks.register('scenarioTests', Test) {
+    useJUnitPlatform {
+        includeTags 'scenarioTest'
+    }
+
+    group 'verification'
+    description 'run the import jobs as tests'
+
+    mustRunAfter spotlessJava
+}
+
 // pitest mutation testing
 pitest {
     targetClasses = ['net.hostsharing.hsadminng.**']
@@ -389,5 +400,47 @@ def isNonStable = { String version ->
 tasks.named("dependencyUpdates").configure {
     rejectVersionIf {
         isNonStable(it.candidate.version)
+    }
+}
+
+
+// Generate HTML from Markdown scenario-test-reports using Pandoc:
+tasks.register('convertMarkdownToHtml') {
+    description = 'Generates HTML from Markdown scenario-test-reports using Pandoc.'
+    group = 'Conversion'
+
+    // Define the template file and input directory
+    def templateFile = file('doc/scenarios/template.html')
+
+    // Task configuration and execution
+    doFirst {
+        // Check if pandoc is installed
+        try {
+            exec {
+                commandLine 'pandoc', '--version'
+            }
+        } catch (Exception) {
+            throw new GradleException("Pandoc is not installed or not found in the system path.")
+        }
+
+        // Check if the template file exists
+        if (!templateFile.exists()) {
+            throw new GradleException("Template file 'doc/scenarios/template.html' not found.")
+        }
+    }
+
+    doLast {
+        // Gather all Markdown files in the current directory
+        fileTree(dir: '.', include: 'doc/scenarios/*.md').each { file ->
+            // Corrected way to create the output file path
+            def outputFile = new File(file.parent, file.name.replaceAll(/\.md$/, '.html'))
+
+            // Execute pandoc for each markdown file
+            exec {
+                commandLine 'pandoc', file.absolutePath, '--template', templateFile.absolutePath, '-o', outputFile.absolutePath
+            }
+
+            println "Converted ${file.name} to ${outputFile.name}"
+        }
     }
 }

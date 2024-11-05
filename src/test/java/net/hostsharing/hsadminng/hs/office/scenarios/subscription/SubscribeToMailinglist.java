@@ -22,7 +22,7 @@ public class SubscribeToMailinglist extends UseCase<SubscribeToMailinglist> {
                         httpGet("/api/hs/office/persons?name=" + uriEncoded("%{partnerPersonTradeName}"))
                                 .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
-                "In production data this query could result in multiple outputs. In that case, you have to find out which is the right one."
+                "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
         obtain("Person: %{subscriberGivenName} %{subscriberFamilyName}", () ->

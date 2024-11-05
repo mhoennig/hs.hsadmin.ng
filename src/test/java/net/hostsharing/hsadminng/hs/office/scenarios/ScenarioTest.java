@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.testcontainers.shaded.org.apache.commons.lang3.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ public abstract class ScenarioTest extends ContextBasedTest {
 
         @Override
         public String toString() {
-            return uuid.toString();
+            return ObjectUtils.toString(uuid);
         }
     }
 
@@ -68,7 +69,6 @@ public abstract class ScenarioTest extends ContextBasedTest {
     @AfterEach
     void cleanup() { // final TestInfo testInfo
         properties.clear();
-        // FIXME: Delete all aliases as well to force HTTP GET queries in each scenario?
         testReport.close();
     }
 

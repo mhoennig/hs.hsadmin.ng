@@ -2,13 +2,14 @@ package net.hostsharing.hsadminng.hs.office.scenarios.debitor;
 
 import net.hostsharing.hsadminng.hs.office.scenarios.UseCase;
 import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
+import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.OK;
 
-public class InvalidateSepaMandateForDebitor extends UseCase<InvalidateSepaMandateForDebitor> {
+public class FinallyDeleteSepaMandateForDebitor extends UseCase<FinallyDeleteSepaMandateForDebitor> {
 
-    public InvalidateSepaMandateForDebitor(final ScenarioTest testSuite) {
+    public FinallyDeleteSepaMandateForDebitor(final ScenarioTest testSuite) {
         super(testSuite);
     }
 
@@ -16,19 +17,15 @@ public class InvalidateSepaMandateForDebitor extends UseCase<InvalidateSepaManda
     protected HttpResponse run() {
 
         obtain("SEPA-Mandate: %{bankAccountIBAN}", () ->
-                httpGet("/api/hs/office/sepamandates?iban=&{bankAccountIBAN}")
-                        .expecting(OK).expecting(JSON),
+                        httpGet("/api/hs/office/sepamandates?iban=&{bankAccountIBAN}")
+                                .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
                 "With production data, the bank-account could be used in multiple SEPA-mandates, make sure to use the right one!"
         );
 
-        return withTitle("Patch the End of the Mandate into the SEPA-Mandate", () ->
-                httpPatch("/api/hs/office/sepamandates/&{SEPA-Mandate: %{bankAccountIBAN}}", usingJsonBody("""
-                {
-                   "validUntil": ${mandateValidUntil}
-                }
-                """))
-                .expecting(OK).expecting(JSON)
+        // TODO.spec: When to allow actual deletion of SEPA-mandates? Add constraint accordingly.
+        return withTitle("Delete the SEPA-Mandate by its UUID", () -> httpDelete("/api/hs/office/sepamandates/&{SEPA-Mandate: %{bankAccountIBAN}}")
+                .expecting(HttpStatus.NO_CONTENT)
         );
     }
 }

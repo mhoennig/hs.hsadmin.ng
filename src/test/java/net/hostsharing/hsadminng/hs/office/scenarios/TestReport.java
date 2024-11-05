@@ -57,7 +57,9 @@ public class TestReport {
     }
 
     public void close() {
-        markdownReport.close();
+        if (markdownReport != null) {
+            markdownReport.close();
+        }
     }
 
     private static Object orderNumber(final Method method) {

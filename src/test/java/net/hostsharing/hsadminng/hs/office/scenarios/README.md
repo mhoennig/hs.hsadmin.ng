@@ -63,4 +63,34 @@ Here, use-cases can be re-used, usually with different data.
 
 ### The Use-Case Itself
 
-The use-case
+The use-case is implemented by the `run()`-method which contains HTTP-calls.
+
+Each HTTP-call is wrapped into either `obtain(...)` to keep the result in a placeholder variable,
+the variable name is also used as a title.
+Or it's wrapped into a `withTitle(...)` to assign a title.
+
+The HTTP-call is followed by some assertions, e.g. the HTTP status and JSON-path-expression-matchers.
+
+Use `${...}` for placeholders which need to be replaced with JSON quotes
+(e.g. strings are quoted, numbers are not),
+`%{...}` for placeholders which need to be rendered raw
+and `&{...}` for placeholders which need to get URI-encoded.
+
+If `???` is added before the closing brace, the property is optional.
+This means, if it's not available in the properties, `null` is used.
+
+Properties with null-values are removed from the JSON.
+If you need to keep a null-value, e.g. to delete a property,
+use `NULL` (all caps) in the template (not the variable value).
+
+A special syntax is the infix `???`-operator like in: `${%{var1???}???%{var2???}%{var3???}}`.
+In this case the first non-null value is used.
+
+
+
+### The Use-Case Verification
+
+The verification-step is implemented by the `verify()`-method which usually contains a HTTP-HTTP-call.
+
+It can also contain a JSON-path verification to check if a certain value is in the result.
+

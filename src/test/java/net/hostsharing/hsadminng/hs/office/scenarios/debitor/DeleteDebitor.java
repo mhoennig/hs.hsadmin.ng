@@ -24,8 +24,10 @@ public class DeleteDebitor extends UseCase<DeleteDebitor> {
 
     @Override
     protected HttpResponse run() {
-        httpDelete("/api/hs/office/debitors/" + uuid("Debitor: Test AG - delete debitor"))
-                .expecting(HttpStatus.NO_CONTENT);
+        withTitle("Delete the Debitor using its UUID", () ->
+            httpDelete("/api/hs/office/debitors/&{Debitor: Test AG - delete debitor}")
+                .expecting(HttpStatus.NO_CONTENT)
+        );
         return null;
     }
 }

@@ -7,7 +7,7 @@ get:
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
-        - name: name
+        - name: iban
           in: query
           required: false
           schema:

@@ -8,7 +8,6 @@ import net.hostsharing.hsadminng.hs.office.bankaccount.HsOfficeBankAccountReposi
 import net.hostsharing.hsadminng.hs.office.debitor.HsOfficeDebitorRepository;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +57,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
     class ListSepaMandates {
 
         @Test
-        void globalAdmin_canViewAllSepaMandates_ifNoCriteriaGiven() throws JSONException {
+        void globalAdmin_canViewAllSepaMandates_ifNoCriteriaGiven() {
 
             RestAssured // @formatter:off
                 .given()
@@ -96,6 +95,36 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                      ]
                     """));
                 // @formatter:on
+        }
+
+        @Test
+        void globalAdmin_canFindSepaMandateByName() {
+
+            RestAssured // @formatter:off
+                    .given()
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .port(port)
+                    .when()
+                        .get("http://localhost/api/hs/office/sepamandates?iban=DE02120300000000202051")
+                    .then().log().all().assertThat()
+                        .statusCode(200)
+                        .contentType("application/json")
+                        .log().all()
+                        .body("", lenientlyEquals("""
+                        [
+                             {
+                                 "debitor": { "debitorNumber": 1000111 },
+                                 "bankAccount": {
+                                    "iban": "DE02120300000000202051",
+                                    "holder": "First GmbH"
+                                 },
+                                 "reference": "ref-10001-11",
+                                 "validFrom": "2022-10-01",
+                                 "validTo": "2026-12-31"
+                             }
+                         ]
+                        """));
+                        // @formatter:on
         }
     }
 

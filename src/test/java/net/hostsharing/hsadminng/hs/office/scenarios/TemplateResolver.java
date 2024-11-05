@@ -1,8 +1,56 @@
 package net.hostsharing.hsadminng.hs.office.scenarios;
 
+import org.apache.commons.lang3.StringUtils;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class TemplateResolver {
+
+    private final static Pattern pattern = Pattern.compile(",(\\s*})", Pattern.MULTILINE);
+    private static final String IF_NOT_FOUND_SYMBOL = "???";
+
+    enum PlaceholderPrefix {
+        RAW('%') {
+            @Override
+            String convert(final Object value) {
+                return value != null ? value.toString() : "";
+            }
+        },
+        JSON_QUOTED('$'){
+            @Override
+            String convert(final Object value) {
+                return jsonQuoted(value);
+            }
+        },
+        URI_ENCODED('&'){
+            @Override
+            String convert(final Object value) {
+                return value != null ? URLEncoder.encode(value.toString(), StandardCharsets.UTF_8) : "";
+            }
+        };
+
+        private final char prefixChar;
+
+        PlaceholderPrefix(final char prefixChar) {
+            this.prefixChar = prefixChar;
+        }
+
+        static boolean contains(final char givenChar) {
+           return Arrays.stream(values()).anyMatch(p -> p.prefixChar == givenChar);
+        }
+
+        static PlaceholderPrefix ofPrefixChar(final char givenChar) {
+            return Arrays.stream(values()).filter(p -> p.prefixChar == givenChar).findFirst().orElseThrow();
+        }
+
+        abstract String convert(final Object value);
+    }
 
     private final String template;
     private final Map<String, Object> properties;
@@ -15,18 +63,41 @@ public class TemplateResolver {
     }
 
     String resolve() {
-        copy();
-        return resolved.toString();
+        final var resolved = copy();
+        final var withoutDroppedLines = dropLinesWithNullProperties(resolved);
+        final var result = removeDanglingCommas(withoutDroppedLines);
+        return result;
     }
 
-    private void copy() {
+    private static String removeDanglingCommas(final String withoutDroppedLines) {
+        return pattern.matcher(withoutDroppedLines).replaceAll("$1");
+    }
+
+    private String dropLinesWithNullProperties(final String text) {
+        return Arrays.stream(text.split("\n"))
+                .filter(TemplateResolver::keepLine)
+                .map(TemplateResolver::keptNullValues)
+                .collect(Collectors.joining("\n"));
+    }
+
+    private static boolean keepLine(final String line) {
+        final var trimmed = line.trim();
+        return !trimmed.endsWith("null,") && !trimmed.endsWith("null");
+    }
+
+    private static String keptNullValues(final String line) {
+        return line.replace(": NULL", ": null");
+    }
+
+    private String copy() {
         while (hasMoreChars()) {
-            if ((currentChar() == '$' || currentChar() == '%') && nextChar() == '{') {
+            if (PlaceholderPrefix.contains(currentChar()) && nextChar() == '{') {
                 startPlaceholder(currentChar());
             } else {
                 resolved.append(fetchChar());
             }
         }
+        return resolved.toString();
     }
 
     private boolean hasMoreChars() {
@@ -41,7 +112,7 @@ public class TemplateResolver {
             if (currentChar() == '}') {
                 --nested;
                 placeholder.append(fetchChar());
-            } else if ((currentChar() == '$' || currentChar() == '%') && nextChar() == '{') {
+            } else if (PlaceholderPrefix.contains (currentChar()) && nextChar() == '{') {
                 ++nested;
                 placeholder.append(fetchChar());
             } else {
@@ -50,20 +121,33 @@ public class TemplateResolver {
         }
         final var name = new TemplateResolver(placeholder.toString(), properties).resolve();
         final var value = propVal(name);
-        if ( intro == '%') {
-            resolved.append(value);
-        } else {
-            resolved.append(optionallyQuoted(value));
-        }
+        resolved.append(
+                PlaceholderPrefix.ofPrefixChar(intro).convert(value)
+        );
         skipChar('}');
     }
 
-    private Object propVal(final String name) {
-        final var val = properties.get(name);
-        if (val == null) {
-            throw new IllegalStateException("Missing required property: " + name);
+    private Object propVal(final String nameExpression) {
+        if (nameExpression.endsWith(IF_NOT_FOUND_SYMBOL)) {
+            final String pureName = nameExpression.substring(0, nameExpression.length() - IF_NOT_FOUND_SYMBOL.length());
+            return properties.get(pureName);
+        } else if (nameExpression.contains(IF_NOT_FOUND_SYMBOL)) {
+            final var parts = StringUtils.split(nameExpression, IF_NOT_FOUND_SYMBOL);
+            return Arrays.stream(parts).filter(Objects::nonNull).findFirst().orElseGet(() -> {
+                    if ( parts[parts.length-1].isEmpty() ) {
+                        // => whole expression ends with IF_NOT_FOUND_SYMBOL, thus last null element was optional
+                        return null;
+                    }
+                    // => last alternative element in expression was null and not optional
+                    throw new IllegalStateException("Missing required value in property-chain: " + nameExpression);
+            });
+        } else {
+            final var val = properties.get(nameExpression);
+            if (val == null) {
+                throw new IllegalStateException("Missing required property: " + nameExpression);
+            }
+            return val;
         }
-        return val;
     }
 
     private void skipChar(final char expectedChar) {
@@ -104,35 +188,13 @@ public class TemplateResolver {
         return template.charAt(position+1);
     }
 
-    private static String optionallyQuoted(final Object value) {
+    private static String jsonQuoted(final Object value) {
         return switch (value) {
+            case null -> null;
             case Boolean bool -> bool.toString();
             case Number number -> number.toString();
             case String string -> "\"" + string.replace("\n", "\\n") + "\"";
             default -> "\"" + value + "\"";
         };
-    }
-
-    public static void main(String[] args) {
-        System.out.println(
-                new TemplateResolver("""
-                        etwas davor,
-                        
-                        ${einfacher Platzhalter},
-                        ${verschachtelter %{Name}},
-                        
-                        und nochmal ohne Quotes:
-                        
-                        %{einfacher Platzhalter},
-                        %{verschachtelter %{Name}},
-                        
-                        etwas danach.
-                        """,
-                        Map.ofEntries(
-                                Map.entry("Name", "placeholder"),
-                                Map.entry("einfacher Platzhalter", "simple placeholder"),
-                                Map.entry("verschachtelter placeholder", "nested placeholder")
-                        )).resolve());
-
     }
 }

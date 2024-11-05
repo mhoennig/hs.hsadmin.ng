@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.reflection.AnnotationFinder;
 import org.apache.commons.collections4.map.LinkedMap;
+import org.assertj.core.api.OptionalAssert;
 import org.hibernate.AssertionFailure;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -19,17 +20,21 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.net.URLEncoder.encode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.platform.commons.util.StringUtils.isBlank;
 import static org.junit.platform.commons.util.StringUtils.isNotBlank;
 
@@ -80,10 +85,15 @@ public abstract class UseCase<T extends UseCase<?>> {
                     }
                 })
         );
-        return run();
+        final var response = run();
+        verify();
+        return response;
     }
 
     protected abstract HttpResponse run();
+
+    protected void verify() {
+    }
 
     public final UseCase<T> given(final String propName, final Object propValue) {
         givenProperties.put(propName, propValue);
@@ -101,26 +111,30 @@ public abstract class UseCase<T extends UseCase<?>> {
             final Function<HttpResponse, String> extractor,
             final String... extraInfo) {
         withTitle(ScenarioTest.resolve(alias), () -> {
-            http.get().keep(extractor);
+            final var response = http.get().keep(extractor);
             Arrays.stream(extraInfo).forEach(testReport::printPara);
+            return response;
         });
     }
 
     public final void obtain(final String alias, final Supplier<HttpResponse> http, final String... extraInfo) {
         withTitle(ScenarioTest.resolve(alias), () -> {
-            http.get().keep();
+            final var response = http.get().keep();
             Arrays.stream(extraInfo).forEach(testReport::printPara);
+            return response;
         });
     }
 
-    private void withTitle(final String title, final Runnable code) {
+    public HttpResponse withTitle(final String title, final Supplier<HttpResponse> code) {
         this.nextTitle = title;
-        code.run();
+        final var response = code.get();
         this.nextTitle = null;
+        return response;
     }
 
     @SneakyThrows
-    public final HttpResponse httpGet(final String uriPath) {
+    public final HttpResponse httpGet(final String uriPathWithPlaceholders) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
         final var request = HttpRequest.newBuilder()
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
@@ -132,7 +146,8 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpPost(final String uriPath, final JsonTemplate bodyJsonTemplate) {
+    public final HttpResponse httpPost(final String uriPathWithPlaceholders, final JsonTemplate bodyJsonTemplate) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
         final var request = HttpRequest.newBuilder()
                 .POST(BodyPublishers.ofString(requestBody))
@@ -146,7 +161,8 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpPatch(final String uriPath, final JsonTemplate bodyJsonTemplate) {
+    public final HttpResponse httpPatch(final String uriPathWithPlaceholders, final JsonTemplate bodyJsonTemplate) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
         final var request = HttpRequest.newBuilder()
                 .method(HttpMethod.PATCH.toString(), BodyPublishers.ofString(requestBody))
@@ -160,7 +176,8 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     @SneakyThrows
-    public final HttpResponse httpDelete(final String uriPath) {
+    public final HttpResponse httpDelete(final String uriPathWithPlaceholders) {
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
         final var request = HttpRequest.newBuilder()
                 .DELETE()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
@@ -172,12 +189,27 @@ public abstract class UseCase<T extends UseCase<?>> {
         return new HttpResponse(HttpMethod.DELETE, uriPath, null, response);
     }
 
+    protected PathAssertion path(final String path) {
+        return new PathAssertion(path);
+    }
+
+    protected void verify(
+            final String title,
+            final Supplier<UseCase.HttpResponse> http,
+            final Consumer<UseCase.HttpResponse>... assertions) {
+        withTitle(ScenarioTest.resolve(title), () -> {
+            final var response = http.get();
+            Arrays.stream(assertions).forEach(assertion ->  assertion.accept(response));
+            return response;
+        });
+    }
+
     public final UUID uuid(final String alias) {
         return ScenarioTest.uuid(alias);
     }
 
     public String uriEncoded(final String text) {
-        return encode(ScenarioTest.resolve(text));
+        return encode(ScenarioTest.resolve(text), StandardCharsets.UTF_8);
     }
 
     public static class JsonTemplate {
@@ -193,7 +225,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
     }
 
-    public class HttpResponse {
+    public final class HttpResponse {
 
         @Getter
         private final java.net.http.HttpResponse<String> response;
@@ -232,7 +264,7 @@ public abstract class UseCase<T extends UseCase<?>> {
             return this;
         }
 
-        public void keep(final Function<HttpResponse, String> extractor) {
+        public HttpResponse keep(final Function<HttpResponse, String> extractor) {
             final var alias = nextTitle != null ? nextTitle : resultAlias;
             assertThat(alias).as("cannot keep result, no alias found").isNotNull();
 
@@ -240,14 +272,16 @@ public abstract class UseCase<T extends UseCase<?>> {
             ScenarioTest.putAlias(
                     alias,
                     new ScenarioTest.Alias<>(UseCase.this.getClass(), UUID.fromString(value)));
+            return this;
         }
 
-        public void keep() {
+        public HttpResponse keep() {
             final var alias = nextTitle != null ? nextTitle : resultAlias;
             assertThat(alias).as("cannot keep result, no alias found").isNotNull();
             ScenarioTest.putAlias(
                     alias,
                     new ScenarioTest.Alias<>(UseCase.this.getClass(), locationUuid));
+            return this;
         }
 
         @SneakyThrows
@@ -263,7 +297,21 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         @SneakyThrows
         public String getFromBody(final String path) {
-            return JsonPath.parse(response.body()).read(path);
+            return JsonPath.parse(response.body()).read(ScenarioTest.resolve(path));
+        }
+
+        @SneakyThrows
+        public Optional<String> getFromBodyAsOptional(final String path) {
+            try {
+                return Optional.ofNullable(JsonPath.parse(response.body()).read(ScenarioTest.resolve(path)));
+            } catch (final Exception e) {
+                return null; // means the property did not exist at all, not that it was there with value null
+            }
+        }
+
+        @SneakyThrows
+        public OptionalAssert<String> path(final String path) {
+            return assertThat(getFromBodyAsOptional(path));
         }
 
         @SneakyThrows
@@ -274,6 +322,8 @@ public abstract class UseCase<T extends UseCase<?>> {
                 testReport.printLine("\n### " + nextTitle + "\n");
             } else if (resultAlias != null) {
                 testReport.printLine("\n### " + resultAlias + "\n");
+            } else {
+                fail("please wrap the http...-call in the UseCase using `withTitle(...)`");
             }
 
             // the request

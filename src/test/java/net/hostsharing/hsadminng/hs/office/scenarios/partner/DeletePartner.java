@@ -18,8 +18,10 @@ public class DeletePartner extends UseCase<DeletePartner> {
 
     @Override
     protected HttpResponse run() {
-        httpDelete("/api/hs/office/partners/" + uuid("Partner: Delete AG"))
-                .expecting(HttpStatus.NO_CONTENT);
+        withTitle("Delete Partner by its UUID", () ->
+            httpDelete("/api/hs/office/partners/&{Partner: Delete AG}")
+                .expecting(HttpStatus.NO_CONTENT)
+        );
         return null;
     }
 }

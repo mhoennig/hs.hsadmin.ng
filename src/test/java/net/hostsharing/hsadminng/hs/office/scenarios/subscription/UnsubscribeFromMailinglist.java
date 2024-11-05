@@ -22,10 +22,12 @@ public class UnsubscribeFromMailinglist extends UseCase<UnsubscribeFromMailingli
                             "&contactData=" + uriEncoded("%{subscriberEMailAddress}"))
                         .expecting(OK).expecting(JSON),
                 response -> response.expectArrayElements(1).getFromBody("[0].uuid"),
-                "In production data this query could result in multiple outputs. In that case, you have to find out which is the right one."
+                "In production, data this query could result in multiple outputs. In that case, you have to find out which is the right one."
         );
 
-        return httpDelete("/api/hs/office/relations/" + uuid("Subscription: %{subscriberEMailAddress}"))
-                .expecting(NO_CONTENT);
+        return withTitle("Delete the Subscriber-Relation by its UUID", () ->
+                httpDelete("/api/hs/office/relations/&{Subscription: %{subscriberEMailAddress}}")
+                .expecting(NO_CONTENT)
+        );
     }
 }
