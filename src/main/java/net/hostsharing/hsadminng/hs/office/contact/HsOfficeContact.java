@@ -54,8 +54,14 @@ public class HsOfficeContact implements Stringifyable, BaseEntity<HsOfficeContac
     @Column(name = "caption")
     private String caption;
 
+    @Builder.Default
+    @Setter(AccessLevel.NONE)
+    @Type(JsonType.class)
     @Column(name = "postaladdress")
-    private String postalAddress; // multiline free-format text
+    private Map<String, String> postalAddress = new HashMap<>();
+
+    @Transient
+    private PatchableMapWrapper<String> postalAddressWrapper;
 
     @Builder.Default
     @Setter(AccessLevel.NONE)
@@ -74,6 +80,17 @@ public class HsOfficeContact implements Stringifyable, BaseEntity<HsOfficeContac
 
     @Transient
     private PatchableMapWrapper<String> phoneNumbersWrapper;
+
+    public PatchableMapWrapper<String> getPostalAddress() {
+        return PatchableMapWrapper.of(
+                postalAddressWrapper,
+                (newWrapper) -> {postalAddressWrapper = newWrapper;},
+                postalAddress);
+    }
+
+    public void putPostalAddress(Map<String, String> newPostalAddress) {
+        getPostalAddress().assign(newPostalAddress);
+    }
 
     public PatchableMapWrapper<String> getEmailAddresses() {
         return PatchableMapWrapper.of(

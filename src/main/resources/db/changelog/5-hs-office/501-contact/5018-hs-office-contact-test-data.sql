@@ -11,7 +11,6 @@
 create or replace procedure hs_office.contact_create_test_data(contCaption varchar)
     language plpgsql as $$
 declare
-    postalAddr      varchar;
     emailAddr       varchar;
 begin
     emailAddr = 'contact-admin@' || base.cleanIdentifier(contCaption) || '.example.com';
@@ -19,14 +18,18 @@ begin
     perform rbac.create_subject(emailAddr);
     call base.defineContext('creating contact test-data', null, emailAddr);
 
-    postalAddr := E'Vorname Nachname\nStraße Hnr\nPLZ Stadt';
-
     raise notice 'creating test contact: %', contCaption;
     insert
         into hs_office.contact (caption, postaladdress, emailaddresses, phonenumbers)
         values (
             contCaption,
-            postalAddr,
+            ( '{ ' ||
+--                 '"name": "' || contCaption || '",' ||
+--                 '"street": "Somewhere 1",' ||
+--                 '"zipcode": "12345",' ||
+--                 '"city": "Where-Ever",' ||
+                '"country": "Germany"' ||
+              '}')::jsonb,
             ('{ "main": "' || emailAddr || '" }')::jsonb,
             ('{ "phone_office": "+49 123 1234567" }')::jsonb
         );

@@ -42,7 +42,9 @@ public class AddRepresentativeToPartner extends UseCase<AddRepresentativeToPartn
             httpPost("/api/hs/office/contacts", usingJsonBody("""
                     {
                         "caption": "%{representativeGivenName} %{representativeFamilyName}",
-                        "postalAddress": ${representativePostalAddress},
+                        "postalAddress": {
+                            %{representativePostalAddress}
+                        },
                         "phoneNumbers": {
                             "main": ${representativePhoneNumber}
                         },

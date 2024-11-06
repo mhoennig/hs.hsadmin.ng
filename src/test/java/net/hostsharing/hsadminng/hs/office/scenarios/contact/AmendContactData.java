@@ -27,7 +27,9 @@ public class AmendContactData extends UseCase<AmendContactData> {
             httpPatch("/api/hs/office/contacts/%{partnerContactUuid}", usingJsonBody("""
             {
                 "caption": ${newContactCaption???},
-                "postalAddress": ${newPostalAddress???},
+                "postalAddress": {
+                    %{newPostalAddress???}
+                },
                 "phoneNumbers": {
                     "office": ${newOfficePhoneNumber???}
                 },

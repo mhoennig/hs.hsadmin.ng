@@ -1111,7 +1111,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                 contactRecord.getString("last_name"),
                 contactRecord.getString("firma")));
         contact.putEmailAddresses(Map.of("main", contactRecord.getString("email")));
-        contact.setPostalAddress(toAddress(contactRecord));
+        contact.putPostalAddress(toAddress(contactRecord));
         contact.putPhoneNumbers(toPhoneNumbers(contactRecord));
 
         contacts.put(contactRecord.getInteger("contact_id"), contact);
@@ -1131,36 +1131,23 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         return phoneNumbers;
     }
 
-    private String toAddress(final Record rec) {
-        final var result = new StringBuilder();
+    private Map<String, String> toAddress(final Record rec) {
+        final var result = new LinkedHashMap<String, String>();
         final var name = toName(
                 rec.getString("salut"),
                 rec.getString("title"),
                 rec.getString("first_name"),
                 rec.getString("last_name"));
         if (isNotBlank(name))
-            result.append(name + "\n");
+            result.put("name", name);
         if (isNotBlank(rec.getString("firma")))
-            result.append(rec.getString("firma") + "\n");
-        if (isNotBlank(rec.getString("co")))
-            result.append("c/o " + rec.getString("co") + "\n");
-        if (isNotBlank(rec.getString("street")))
-            result.append(rec.getString("street") + "\n");
-        final var zipcodeAndCity = toZipcodeAndCity(rec);
-        if (isNotBlank(zipcodeAndCity))
-            result.append(zipcodeAndCity + "\n");
-        return result.toString();
-    }
+            result.put("firm", name);
 
-    private String toZipcodeAndCity(final Record rec) {
-        final var result = new StringBuilder();
-        if (isNotBlank(rec.getString("country")))
-            result.append(rec.getString("country") + " ");
-        if (isNotBlank(rec.getString("zipcode")))
-            result.append(rec.getString("zipcode") + " ");
-        if (isNotBlank(rec.getString("city")))
-            result.append(rec.getString("city"));
-        return result.toString();
+        List.of("co", "street", "zipcode", "city", "country").forEach(key -> {
+            if (isNotBlank(rec.getString(key)))
+                result.put(key, rec.getString(key));
+        });
+        return result;
     }
 
     private String toCaption(

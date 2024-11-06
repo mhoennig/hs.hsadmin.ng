@@ -27,7 +27,9 @@ public class ReplaceContactData extends UseCase<ReplaceContactData> {
             httpPost("/api/hs/office/contacts", usingJsonBody("""
                 {
                     "caption": ${newContactCaption},
-                    "postalAddress": ${newPostalAddress???},
+                    "postalAddress": {
+                        %{newPostalAddress???}
+                    },
                     "phoneNumbers": {
                         "phone": ${newOfficePhoneNumber???}
                     },
@@ -37,16 +39,18 @@ public class ReplaceContactData extends UseCase<ReplaceContactData> {
                 }
                 """))
                 .expecting(CREATED).expecting(JSON),
-            "Please check first if that contact already exists, if so, use it's UUID below."
-        );
+                "Please check first if that contact already exists, if so, use it's UUID below.",
+                "If any `postalAddress` sub-properties besides those specified in the API " +
+                        "(currently `firm`, `name`, `co`, `street`, `zipcode`, `city`, `country`) " +
+                        "its values might not appear in external systems.");
 
         withTitle("Replace the Contact-Reference in the Partner-Relation", () ->
-            httpPatch("/api/hs/office/relations/%{partnerRelationUuid}", usingJsonBody("""
-                    {
-                        "contactUuid": ${Contact: %{newContactCaption}}
-                    }
-                    """))
-            .expecting(OK)
+                httpPatch("/api/hs/office/relations/%{partnerRelationUuid}", usingJsonBody("""
+                        {
+                            "contactUuid": ${Contact: %{newContactCaption}}
+                        }
+                        """))
+                        .expecting(OK)
         );
 
         return null;

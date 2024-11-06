@@ -44,7 +44,9 @@ public class CreatePartner extends UseCase<CreatePartner> {
             httpPost("/api/hs/office/contacts", usingJsonBody("""
                     {
                         "caption": ${contactCaption},
-                        "postalAddress": ${postalAddress???},
+                        "postalAddress": {
+                            %{postalAddress???}
+                        },
                         "phoneNumbers": {
                             "office": ${officePhoneNumber???}
                         },

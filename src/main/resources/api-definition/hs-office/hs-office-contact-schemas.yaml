@@ -12,7 +12,7 @@ components:
                 caption:
                     type: string
                 postalAddress:
-                    type: string
+                    $ref: '#/components/schemas/HsOfficeContactPostalAddress'
                 emailAddresses:
                     $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
@@ -24,7 +24,7 @@ components:
                 caption:
                     type: string
                 postalAddress:
-                    type: string
+                    $ref: '#/components/schemas/HsOfficeContactPostalAddress'
                 emailAddresses:
                     $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
@@ -39,21 +39,48 @@ components:
                     type: string
                     nullable: true
                 postalAddress:
-                    type: string
-                    nullable: true
+                    $ref: '#/components/schemas/HsOfficeContactPostalAddress'
                 emailAddresses:
                     $ref: '#/components/schemas/HsOfficeContactEmailAddresses'
                 phoneNumbers:
                     $ref: '#/components/schemas/HsOfficeContactPhoneNumbers'
 
+        HsOfficeContactPostalAddress:
+            # forces generating a java.lang.Object containing a Map, instead of a class with fixed properties
+            anyOf:
+                - type: object
+                  properties:
+                      firm:
+                          type: string
+                          nullable: true
+                      name:
+                          type: string
+                          nullable: true
+                      co:
+                          type: string
+                          nullable: true
+                      street:
+                          type: string
+                          nullable: true
+                      zipcode:
+                          type: string
+                          nullable: true
+                      city:
+                          type: string
+                          nullable: true
+                      country:
+                          type: string
+                          nullable: true
+                  additionalProperties: true
+
         HsOfficeContactEmailAddresses:
-            # forces generating a java.lang.Object containing a Map, instead of class HsOfficeContactEmailAddresses
+            # forces generating a java.lang.Object containing a Map, instead of a class with fixed properties
             anyOf:
                 - type: object
                   additionalProperties: true
 
         HsOfficeContactPhoneNumbers:
-            # forces generating a java.lang.Object containing a Map, instead of class HsOfficeContactEmailAddresses
+            # forces generating a java.lang.Object containing a Map, instead of a class with fixed properties
             anyOf:
                 - type: object
                   properties:

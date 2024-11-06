@@ -47,7 +47,7 @@ public interface HsOfficeRelationRbacRepository extends Repository<HsOfficeRelat
                             OR lower(rel.anchor.givenName) LIKE :personData OR lower(rel.holder.givenName) LIKE :personData )
                     AND ( :contactData IS NULL
                             OR lower(rel.contact.caption) LIKE :contactData
-                            OR lower(rel.contact.postalAddress) LIKE :contactData
+                            OR lower(CAST(rel.contact.postalAddress AS String)) LIKE :contactData
                             OR lower(CAST(rel.contact.emailAddresses AS String)) LIKE :contactData
                             OR lower(CAST(rel.contact.phoneNumbers AS String)) LIKE :contactData )
             """)

@@ -110,7 +110,6 @@ public class HsHostingAssetControllerRestTest {
                             "caption": "some fake cloud-server",
                             "alarmContact": {
                                 "caption": "some contact",
-                                "postalAddress": "address of some contact",
                                 "emailAddresses": {
                                     "main": "some-contact@example.com"
                                 }
@@ -141,7 +140,6 @@ public class HsHostingAssetControllerRestTest {
                             "caption": "some fake managed-server",
                             "alarmContact": {
                                 "caption": "some contact",
-                                "postalAddress": "address of some contact",
                                 "emailAddresses": {
                                     "main": "some-contact@example.com"
                                 }

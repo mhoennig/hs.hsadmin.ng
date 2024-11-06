@@ -21,10 +21,13 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
+import static java.util.Map.entry;
 import static net.hostsharing.hsadminng.rbac.test.IsValidUuidMatcher.isUuidValid;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 
@@ -214,7 +217,11 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                            "emailAddresses": {
                                 "main": "patched@example.org"
                            },
-                           "postalAddress": "Patched Address",
+                           "postalAddress": {
+                                "extra": "Extra Property",
+                                "co": "P. Patcher",
+                                "street": "Patchstraße 5"
+                           },
                            "phoneNumbers": {
                                 "phone_office": "+01 100 123456"
                             }
@@ -229,7 +236,10 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("uuid", isUuidValid())
                     .body("caption", is("Temp patched contact"))
                     .body("emailAddresses", is(Map.of("main", "patched@example.org")))
-                    .body("postalAddress", is("Patched Address"))
+                    .body("postalAddress", hasEntry("name", givenContact.getPostalAddress().get("name"))) // unchanged
+                    .body("postalAddress", hasEntry("extra", "Extra Property")) // unchanged
+                    .body("postalAddress", hasEntry("co", "P. Patcher")) // patched
+                    .body("postalAddress", hasEntry("street", "Patchstraße 5")) // patched
                     .body("phoneNumbers", is(Map.of("phone_office", "+01 100 123456")));
                 // @formatter:on
 
@@ -239,7 +249,11 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .matches(person -> {
                         assertThat(person.getCaption()).isEqualTo("Temp patched contact");
                         assertThat(person.getEmailAddresses()).containsExactlyEntriesOf(Map.of("main", "patched@example.org"));
-                        assertThat(person.getPostalAddress()).isEqualTo("Patched Address");
+                        assertThat(person.getPostalAddress()).containsAllEntriesOf(Map.ofEntries(
+                                entry("name", givenContact.getPostalAddress().get("name")),
+                                entry("co", "P. Patcher"),
+                                entry("street", "Patchstraße 5")
+                        ));
                         assertThat(person.getPhoneNumbers()).containsExactlyEntriesOf(Map.of("phone_office", "+01 100 123456"));
                         return true;
                     });
@@ -264,7 +278,7 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                 "phone_office": "+01 100 123456"
                             }
                        }
-                            """)
+                       """)
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/office/contacts/" + givenContact.getUuid())
@@ -274,7 +288,6 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("uuid", isUuidValid())
                     .body("caption", is(givenContact.getCaption()))
                     .body("emailAddresses", is(Map.of("main", "patched@example.org")))
-                    .body("postalAddress", is(givenContact.getPostalAddress()))
                     .body("phoneNumbers", is(Map.of("phone_office", "+01 100 123456")));
             // @formatter:on
 
@@ -283,12 +296,11 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .matches(person -> {
                         assertThat(person.getCaption()).isEqualTo(givenContact.getCaption());
                         assertThat(person.getEmailAddresses()).containsExactlyEntriesOf(Map.of("main", "patched@example.org"));
-                        assertThat(person.getPostalAddress()).isEqualTo(givenContact.getPostalAddress());
+                        assertThat(person.getPostalAddress()).containsExactlyInAnyOrderEntriesOf(givenContact.getPostalAddress());
                         assertThat(person.getPhoneNumbers()).containsExactlyEntriesOf(Map.of("phone_office", "+01 100 123456"));
                         return true;
                     });
         }
-
     }
 
     @Nested
@@ -361,8 +373,13 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             final var newContact = HsOfficeContactRbacEntity.builder()
                     .uuid(UUID.randomUUID())
                     .caption("Temp from " + Context.getCallerMethodNameFromStackFrame(1) )
+                    .postalAddress(Map.ofEntries(
+                            entry("name", RandomStringUtils.randomAlphabetic(6) + " " + RandomStringUtils.randomAlphabetic(10)),
+                            entry("street", RandomStringUtils.randomAlphabetic(10) + randomInt(1, 99)),
+                            entry("zipcode", "D-" + randomInt(10000, 99999)),
+                            entry("city", RandomStringUtils.randomAlphabetic(10))
+                    ))
                     .emailAddresses(Map.of("main", RandomStringUtils.randomAlphabetic(10) + "@example.org"))
-                    .postalAddress("Postal Address " + RandomStringUtils.randomAlphabetic(10))
                     .phoneNumbers(Map.of("phone_office", "+01 200 " + RandomStringUtils.randomNumeric(8)))
                     .build();
 
@@ -377,5 +394,9 @@ class HsOfficeContactControllerAcceptanceTest extends ContextBasedTestWithCleanu
             context.define("superuser-alex@hostsharing.net", null);
             em.createQuery("DELETE FROM HsOfficeContactRbacEntity c WHERE c.caption LIKE 'Temp %'").executeUpdate();
         }).assertSuccessful();
+    }
+
+    private int randomInt(final int min, final int max) {
+        return ThreadLocalRandom.current().nextInt(min, max);
     }
 }

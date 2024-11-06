@@ -460,9 +460,12 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                              "type": "DEBITOR",
                              "contact": {
                                  "caption": "first contact",
-                                 "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
-                                 "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
-                                 "phoneNumbers": { "phone_office":  "+49 123 1234567" }
+                                     "postalAddress": {
+                                        "country": "Germany"
+                                     },
+                                     "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
+                                     "phoneNumbers": { "phone_office":  "+49 123 1234567" }
+                                 }
                              }
                          },
                          "debitorNumber": 1000111,
@@ -476,10 +479,11 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                  "mark": null,
                                  "contact": {
                                      "caption": "first contact",
-                                     "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
-                                     "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
-                                     "phoneNumbers": { "phone_office": "+49 123 1234567" }
-                                 }
+                                 "postalAddress": {
+                                    "country": "Germany"
+                                 },
+                                 "emailAddresses": { "main": "contact-admin@firstcontact.example.com" },
+                                 "phoneNumbers": { "phone_office": "+49 123 1234567" }
                              },
                              "details": {
                                  "registrationOffice": "Hamburg",

@@ -55,8 +55,11 @@ class HsOfficeScenarioTests extends ScenarioTest {
                 .given("tradeName", "Test AG")
                 .given("contactCaption", "Test AG - Hamburg")
                 .given("postalAddress", """
-                        Shanghai-Allee 1
-                        20123 Hamburg
+                                "firm": "Test AG",
+                                "street": "Shanghai-Allee 1",
+                                "zipcode": "20123",
+                                "city": "Hamburg",
+                                "country": "Germany"
                         """)
                 .given("officePhoneNumber", "+49 40 654321-0")
                 .given("emailAddress", "hamburg@test-ag.example.org")
@@ -75,8 +78,11 @@ class HsOfficeScenarioTests extends ScenarioTest {
                 .given("familyName", "Matthieu")
                 .given("contactCaption", "Michelle Matthieu")
                 .given("postalAddress", """
-                        An der Wandse 34
-                        22123 Hamburg
+                                "name": "Michelle Matthieu",
+                                "street": "An der Wandse 34",
+                                "zipcode": "22123",
+                                "city": "Hamburg",
+                                "country": "Germany"
                         """)
                 .given("officePhoneNumber", "+49 40 123456")
                 .given("emailAddress", "michelle.matthieu@example.org")
@@ -94,8 +100,11 @@ class HsOfficeScenarioTests extends ScenarioTest {
                 .given("representativeFamilyName", "Trust")
                 .given("representativeGivenName", "Tracy")
                 .given("representativePostalAddress", """
-                        An der Alster 100
-                        20000 Hamburg
+                                "name": "Michelle Matthieu",
+                                "street": "An der Alster 100",
+                                "zipcode": "20000",
+                                "city": "Hamburg",
+                                "country": "Germany"
                         """)
                 .given("representativePhoneNumber", "+49 40 123456")
                 .given("representativeEMailAddress", "tracy.trust@example.org")
@@ -172,12 +181,18 @@ class HsOfficeScenarioTests extends ScenarioTest {
     void shouldReplaceContactData() {
         new ReplaceContactData(this)
                 .given("partnerName", "Test AG")
-                .given("newContactCaption", "Test AG - Norden")
+                .given("newContactCaption", "Test AG - China")
                 .given("newPostalAddress", """
-                        Am Hafen 11
-                        26506 Norden
-                        """)
-                .given("newOfficePhoneNumber", "+49 4931 654321-0")
+                                "firm": "Test AG",
+                                "name": "Fi Zhong-Kha",
+                                "building": "Thi Chi Koh Building",
+                                "street": "No.2 Commercial Second Street",
+                                "district": "Niushan Wei Wu",
+                                "city": "Dongguan City",
+                                "province": "Guangdong Province",
+                                "country": "China"
+                       """)
+                .given("newOfficePhoneNumber", "++15 999 654321" )
                 .given("newEmailAddress", "norden@test-ag.example.org")
                 .doRun();
     }

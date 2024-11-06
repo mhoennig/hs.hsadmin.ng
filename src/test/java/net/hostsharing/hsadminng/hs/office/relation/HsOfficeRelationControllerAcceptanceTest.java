@@ -199,7 +199,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                                 "type": "REPRESENTATIVE",
                                 "contact": {
                                     "caption": "first contact",
-                                    "postalAddress": "Vorname Nachname\\nStraße Hnr\\nPLZ Stadt",
+                                    "postalAddress": {
+                                        "country": "Germany"
+                                    },
                                     "emailAddresses": {
                                         "main": "contact-admin@firstcontact.example.com"
                                     },

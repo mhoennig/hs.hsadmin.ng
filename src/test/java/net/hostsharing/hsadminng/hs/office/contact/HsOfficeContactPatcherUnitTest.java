@@ -19,6 +19,19 @@ class HsOfficeContactPatcherUnitTest extends PatchUnitTestBase<
         > {
 
     private static final UUID INITIAL_CONTACT_UUID = UUID.randomUUID();
+
+    private static final  Map<String, String> PATCH_POSTAL_ADDRESS = patchMap(
+            entry("name", "Patty Patch"),
+            entry("street", "Patchstreet 10"),
+            entry("zipcode", null),
+            entry("city", "Hamburg")
+    );
+    private static final  Map<String, String> PATCHED_POSTAL_ADDRESS = patchMap(
+            entry("name", "Patty Patch"),
+            entry("street", "Patchstreet 10"),
+            entry("city", "Hamburg")
+    );
+
     private static final  Map<String, String> PATCH_EMAIL_ADDRESSES = patchMap(
             entry("main", "patched@example.com"),
             entry("paul", null),
@@ -46,6 +59,11 @@ class HsOfficeContactPatcherUnitTest extends PatchUnitTestBase<
         final var entity = new HsOfficeContactRbacEntity();
         entity.setUuid(INITIAL_CONTACT_UUID);
         entity.setCaption("initial caption");
+        entity.putPostalAddress(Map.ofEntries(
+                entry("name", "Ina Initial"),
+                entry("street", "Initialstraße 50"),
+                entry("zipcode", "20000"),
+                entry("city", "Hamburg")));
         entity.putEmailAddresses(Map.ofEntries(
                 entry("main", "initial@example.org"),
                 entry("paul", "paul@example.com"),
@@ -54,7 +72,6 @@ class HsOfficeContactPatcherUnitTest extends PatchUnitTestBase<
                 entry("phone_office", "+49 40 12345-00"),
                 entry("phone_mobile", "+49 1555 1234567"),
                 entry("fax",  "+49 40 12345-90")));
-        entity.setPostalAddress("Initialstraße 50\n20000 Hamburg");
         return entity;
     }
 
@@ -77,24 +94,26 @@ class HsOfficeContactPatcherUnitTest extends PatchUnitTestBase<
                         "patched caption",
                         HsOfficeContactRbacEntity::setCaption),
                 new SimpleProperty<>(
-                        "resources",
+                        "postalAddress",
+                        HsOfficeContactPatchResource::setPostalAddress,
+                        PATCH_POSTAL_ADDRESS,
+                        HsOfficeContactRbacEntity::putPostalAddress,
+                        PATCHED_POSTAL_ADDRESS)
+                        .notNullable(),
+                new SimpleProperty<>(
+                        "emailAddresses",
                         HsOfficeContactPatchResource::setEmailAddresses,
                         PATCH_EMAIL_ADDRESSES,
                         HsOfficeContactRbacEntity::putEmailAddresses,
                         PATCHED_EMAIL_ADDRESSES)
                         .notNullable(),
                 new SimpleProperty<>(
-                        "resources",
+                        "phoneNumbers",
                         HsOfficeContactPatchResource::setPhoneNumbers,
                         PATCH_PHONE_NUMBERS,
                         HsOfficeContactRbacEntity::putPhoneNumbers,
                         PATCHED_PHONE_NUMBERS)
-                        .notNullable(),
-                new JsonNullableProperty<>(
-                        "patched given name",
-                        HsOfficeContactPatchResource::setPostalAddress,
-                        "patched given name",
-                        HsOfficeContactRbacEntity::setPostalAddress)
+                        .notNullable()
         );
     }
 }
