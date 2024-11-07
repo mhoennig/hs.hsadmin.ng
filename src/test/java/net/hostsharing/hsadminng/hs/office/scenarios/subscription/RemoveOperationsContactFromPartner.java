@@ -33,7 +33,7 @@ public class RemoveOperationsContactFromPartner extends UseCase<RemoveOperations
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<RemoveOperationsContactFromPartner>.HttpResponse response) {
         verify(
                 "Verify the New OPERATIONS Relation",
                 () -> httpGet("/api/hs/office/relations/&{Operations-Contact: %{operationsContactPerson}}")

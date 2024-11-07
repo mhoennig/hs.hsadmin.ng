@@ -57,7 +57,7 @@ public class ReplaceContactData extends UseCase<ReplaceContactData> {
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<ReplaceContactData>.HttpResponse response) {
         verify(
                 "Verify if the Contact-Relation Got Replaced in the Partner-Relation",
                 () -> httpGet("/api/hs/office/relations?relationType=PARTNER&personData=" + uriEncoded("%{partnerName}"))

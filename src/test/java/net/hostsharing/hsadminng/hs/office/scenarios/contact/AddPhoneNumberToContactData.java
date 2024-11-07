@@ -40,7 +40,7 @@ public class AddPhoneNumberToContactData extends UseCase<AddPhoneNumberToContact
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<AddPhoneNumberToContactData>.HttpResponse response) {
         verify(
                 "Verify if the New Phone Number Got Added",
                 () -> httpGet("/api/hs/office/relations?relationType=PARTNER&personData=" + uriEncoded("%{partnerName}"))

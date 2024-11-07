@@ -34,8 +34,8 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     public ResponseEntity<List<HsOfficeMembershipResource>> listMemberships(
             final String currentSubject,
             final String assumedRoles,
-            UUID partnerUuid,
-            Integer memberNumber) {
+            final UUID partnerUuid,
+            final Integer memberNumber) {
         context.define(currentSubject, assumedRoles);
 
         final var entities = ( memberNumber != null)

@@ -69,7 +69,7 @@ public class AddRepresentativeToPartner extends UseCase<AddRepresentativeToPartn
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<AddRepresentativeToPartner>.HttpResponse response) {
         verify(
                 "Verify the REPRESENTATIVE Relation Got Removed",
                 () -> httpGet("/api/hs/office/relations?relationType=REPRESENTATIVE&personData=" + uriEncoded("%{representativeFamilyName}"))

@@ -11,12 +11,14 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.CreateSepaMandateFo
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.FinallyDeleteSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.AddOperationsContactToPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.CreatePartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DeleteDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.DeletePartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.AddRepresentativeToPartner;
+import net.hostsharing.hsadminng.hs.office.scenarios.person.ShouldUpdatePersonData;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.RemoveOperationsContactFromPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeToMailinglist;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.UnsubscribeFromMailinglist;
@@ -198,6 +200,16 @@ class HsOfficeScenarioTests extends ScenarioTest {
     }
 
     @Test
+    @Order(1201)
+    @Requires("Partner: Michelle Matthieu")
+    void shouldUpdatePersonData() {
+        new ShouldUpdatePersonData(this)
+                .given("oldFamilyName", "Matthieu")
+                .given("newFamilyName", "Matthieu-Zhang")
+                .doRun();
+    }
+
+    @Test
     @Order(2010)
     @Requires("Partner: Test AG")
     @Produces("Debitor: Test AG - main debitor")
@@ -302,12 +314,26 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Test
     @Order(4000)
     @Requires("Partner: Test AG")
+    @Produces("Membership: Test AG 00")
     void shouldCreateMembershipForPartner() {
         new CreateMembership(this)
                 .given("partnerName", "Test AG")
                 .given("memberNumberSuffix", "00")
                 .given("validFrom", "2024-10-15")
+                .given("newStatus", "ACTIVE")
                 .given("membershipFeeBillable", "true")
+                .doRun()
+                .keep();
+    }
+
+    @Test
+    @Order(4900)
+    @Requires("Membership: Test AG 00")
+    void shouldCancelMembershipOfPartner() {
+        new CancelMembership(this)
+                .given("memberNumber", "3101000")
+                .given("validTo", "2025-12-30")
+                .given("newStatus", "CANCELLED")
                 .doRun();
     }
 

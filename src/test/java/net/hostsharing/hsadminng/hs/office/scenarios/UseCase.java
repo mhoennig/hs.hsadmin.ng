@@ -86,13 +86,13 @@ public abstract class UseCase<T extends UseCase<?>> {
                 })
         );
         final var response = run();
-        verify();
+        verify(response);
         return response;
     }
 
     protected abstract HttpResponse run();
 
-    protected void verify() {
+    protected void verify(final HttpResponse response) {
     }
 
     public final UseCase<T> given(final String propName, final Object propValue) {
@@ -233,6 +233,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         @Getter
         private final HttpStatus status;
 
+        @Getter
         private UUID locationUuid;
 
         @SneakyThrows

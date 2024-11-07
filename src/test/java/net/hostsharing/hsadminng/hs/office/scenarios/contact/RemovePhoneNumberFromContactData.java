@@ -39,7 +39,7 @@ public class RemovePhoneNumberFromContactData extends UseCase<RemovePhoneNumberF
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<RemovePhoneNumberFromContactData>.HttpResponse response) {
         verify(
                 "Verify if the New Phone Number Got Added",
                 () -> httpGet("/api/hs/office/relations?relationType=PARTNER&personData=" + uriEncoded("%{partnerName}"))

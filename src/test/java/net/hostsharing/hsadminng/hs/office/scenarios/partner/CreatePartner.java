@@ -76,7 +76,7 @@ public class CreatePartner extends UseCase<CreatePartner> {
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<CreatePartner>.HttpResponse response) {
         verify(
                 "Verify the New Partner Relation",
                 () -> httpGet("/api/hs/office/relations?relationType=PARTNER&contactData=&{contactCaption}")

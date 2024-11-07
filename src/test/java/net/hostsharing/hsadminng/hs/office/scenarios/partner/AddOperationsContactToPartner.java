@@ -66,7 +66,7 @@ public class AddOperationsContactToPartner extends UseCase<AddOperationsContactT
     }
 
     @Override
-    protected void verify() {
+    protected void verify(final UseCase<AddOperationsContactToPartner>.HttpResponse response) {
         verify(
                 "Verify the New OPERATIONS Relation",
                 () -> httpGet("/api/hs/office/relations?relationType=OPERATIONS&personData=" + uriEncoded(
