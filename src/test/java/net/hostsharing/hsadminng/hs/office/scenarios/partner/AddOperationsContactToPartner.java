@@ -57,9 +57,9 @@ public class AddOperationsContactToPartner extends UseCase<AddOperationsContactT
         return httpPost("/api/hs/office/relations", usingJsonBody("""
                 {
                    "type": "OPERATIONS",
-                   "anchorUuid": ${Person: %{partnerPersonTradeName}},
-                   "holderUuid": ${Person: %{operationsContactGivenName} %{operationsContactFamilyName}},
-                   "contactUuid": ${Contact: %{operationsContactGivenName} %{operationsContactFamilyName}}
+                   "anchor.uuid": ${Person: %{partnerPersonTradeName}},
+                   "holder.uuid": ${Person: %{operationsContactGivenName} %{operationsContactFamilyName}},
+                   "contact.uuid": ${Contact: %{operationsContactGivenName} %{operationsContactFamilyName}}
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);

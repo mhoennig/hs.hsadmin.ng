@@ -48,9 +48,9 @@ public class CreateSelfDebitorForPartner extends UseCase<CreateSelfDebitorForPar
         return httpPost("/api/hs/office/debitors", usingJsonBody("""
                 {
                     "debitorRel": {
-                        "anchorUuid": ${partnerPersonUuid},
-                        "holderUuid": ${partnerPersonUuid},
-                        "contactUuid": ${Contact: Test AG - billing department}
+                        "anchor.uuid": ${partnerPersonUuid},
+                        "holder.uuid": ${partnerPersonUuid},
+                        "contact.uuid": ${Contact: Test AG - billing department}
                      },
                     "debitorNumberSuffix": ${debitorNumberSuffix},
                     "billable": ${billable},
@@ -58,7 +58,7 @@ public class CreateSelfDebitorForPartner extends UseCase<CreateSelfDebitorForPar
                     "vatCountryCode": ${vatCountryCode},
                     "vatBusiness": ${vatBusiness},
                     "vatReverseCharge": ${vatReverseCharge},
-                    "refundBankAccountUuid": ${BankAccount: Test AG - refund bank account},
+                    "refundBankAccount.uuid": ${BankAccount: Test AG - refund bank account},
                     "defaultPrefix": ${defaultPrefix}
                 }
                 """))

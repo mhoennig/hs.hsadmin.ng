@@ -180,7 +180,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "membershipUuid": "%s",
+                                   "membership.uuid": "%s",
                                    "transactionType": "DEPOSIT",
                                    "assetValue": 1024.00,
                                    "valueDate": "2022-10-13",
@@ -237,13 +237,13 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                         .contentType(ContentType.JSON)
                         .body("""
                                    {
-                                       "membershipUuid": "%s",
+                                       "membership.uuid": "%s",
                                        "transactionType": "ADJUSTMENT",
                                        "assetValue": %s,
                                        "valueDate": "2022-10-30",
                                        "reference": "test ref adjustment",
                                        "comment": "some coop assets adjustment transaction",
-                                       "reverseEntryUuid": "%s"
+                                       "reverseEntry.uuid": "%s"
                                      }
                                 """.formatted(
                                     givenMembership.getUuid(),
@@ -270,7 +270,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                     "reference": "test ref"
                                 }
                             }
-                            """.formatted(givenTransaction.getUuid())))
+                            """))
                     .header("Location", startsWith("http://localhost"))
                     .extract().header("Location");  // @formatter:on
 
@@ -293,14 +293,14 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "membershipUuid": "%s",
+                               "membership.uuid": "%s",
                                "transactionType": "DISBURSAL",
                                "assetValue": -10240.00,
                                "valueDate": "2022-10-13",
                                "reference": "temp ref X",
                                "comment": "just some test coop assets transaction"
                              }
-                            """.formatted(givenMembership.getUuid()))
+                           """.formatted(givenMembership.getUuid()))
                     .port(port)
                 .when()
                     .post("http://localhost/api/hs/office/coopassetstransactions")

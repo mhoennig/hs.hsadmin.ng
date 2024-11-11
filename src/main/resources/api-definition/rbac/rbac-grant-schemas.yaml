@@ -8,21 +8,21 @@ components:
             properties:
                 grantedByRoleIdName:
                     type: string
-                grantedByRoleUuid:
+                grantedByRole.uuid:
                     type: string
                     format: uuid
                 assumed:
                     type: boolean
                 grantedRoleIdName:
                     type: string
-                grantedRoleUuid:
+                grantedRole.uuid:
                     type: string
                     format: uuid
                 granteeSubjectName:
                     type: string
-                granteeSubjectUuid:
+                granteeSubject.uuid:
                     type: string
                     format: uuid
             required:
-                - grantedRoleUuid
-                - granteeSubjectUuid
+                - grantedRole.uuid
+                - granteeSubject.uuid

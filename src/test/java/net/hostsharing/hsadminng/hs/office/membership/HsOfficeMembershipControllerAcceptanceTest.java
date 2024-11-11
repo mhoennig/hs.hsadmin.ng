@@ -182,7 +182,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "partnerUuid": "%s",
+                                   "partner.uuid": "%s",
                                    "memberNumberSuffix": "%s",
                                    "validFrom": "2022-10-13",
                                    "membershipFeeBillable": "true"

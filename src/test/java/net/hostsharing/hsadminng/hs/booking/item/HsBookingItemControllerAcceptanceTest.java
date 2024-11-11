@@ -150,7 +150,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "projectUuid": "{projectUuid}",
+                                "project.uuid": "{projectUuid}",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validTo": "{validTo}",
@@ -200,8 +200,8 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                     .contentType(ContentType.JSON)
                     .body("""
                                 {
-                                    "projectUuid": "{projectUuid}",
-                                    "parentItemUuid": "{managedServerUuid}",
+                                    "project.uuid": "{projectUuid}",
+                                    "parentItem.uuid": "{managedServerUuid}",
                                     "type": "MANAGED_WEBSPACE",
                                     "caption": "some managed webspace",
                                     "resources": {
@@ -270,7 +270,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                    "projectUuid": "{projectUuid}",
+                                    "project.uuid": "{projectUuid}",
                                     "type": "DOMAIN_SETUP",
                                     "caption": "Domain-Setup for example.org",
                                     "resources": {
@@ -285,7 +285,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                             },
                                             {
                                                 "type": "DOMAIN_HTTP_SETUP",
-                                                "assignedToAssetUuid": "{unixUserUuid}"
+                                                "assignedToAsset.uuid": "{unixUserUuid}"
                                             },
                                             {
                                                 "type": "DOMAIN_MBOX_SETUP"
@@ -360,7 +360,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                    "projectUuid": "{projectUuid}",
+                                    "project.uuid": "{projectUuid}",
                                     "type": "DOMAIN_SETUP",
                                     "caption": "some new domain-setup booking",
                                     "resources": {
@@ -375,7 +375,7 @@ class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup 
                                             },
                                             {
                                                 "type": "DOMAIN_HTTP_SETUP",
-                                                "assignedToAssetUuid": "{unixUserUuid}"
+                                                "assignedToAsset.uuid": "{unixUserUuid}"
                                             },
                                             {
                                                 "type": "DOMAIN_MBOX_SETUP"

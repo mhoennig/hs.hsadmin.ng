@@ -388,8 +388,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .body("""
                                 {
                                   "assumed": true,
-                                  "grantedRoleUuid": "%s",
-                                  "granteeSubjectUuid": "%s"
+                                  "grantedRole.uuid": "%s",
+                                  "granteeSubject.uuid": "%s"
                                 }
                                 """.formatted(
                                 grantedRole.getUuid(),
@@ -424,8 +424,8 @@ class RbacGrantControllerAcceptanceTest extends ContextBasedTest {
                         .body("""
                                 {
                                   "assumed": true,
-                                  "grantedRoleUuid": "%s",
-                                  "granteeSubjectUuid": "%s"
+                                  "grantedRole.uuid": "%s",
+                                  "granteeSubject.uuid": "%s"
                                 }
                                 """.formatted(
                                 grantedRole.getUuid(),

@@ -37,7 +37,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
 
     static final String VALID_INSERT_REQUEST_BODY = """
             {
-               "membershipUuid": "%s",
+               "membership.uuid": "%s",
                "transactionType": "SUBSCRIPTION",
                "shareCount": 8,
                "valueDate": "2022-10-13",
@@ -48,7 +48,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
 
     enum BadRequestTestCases {
         MEMBERSHIP_UUID_MISSING(
-                requestBody -> requestBody.without("membershipUuid"),
+                requestBody -> requestBody.without("membership.uuid"),
                 "[membershipUuid must not be null but is \"null\"]"),
 
         TRANSACTION_TYPE_MISSING(

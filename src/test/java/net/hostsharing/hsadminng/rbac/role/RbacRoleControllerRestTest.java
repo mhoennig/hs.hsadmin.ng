@@ -76,8 +76,8 @@ class RbacRoleControllerRestTest {
                 .andExpect(jsonPath("$[1].roleName", is("rbactest.customer#xxx:OWNER")))
                 .andExpect(jsonPath("$[2].roleName", is("rbactest.customer#xxx:ADMIN")))
                 .andExpect(jsonPath("$[2].uuid", is(customerXxxAdmin.getUuid().toString())))
-                .andExpect(jsonPath("$[2].objectUuid", is(customerXxxAdmin.getObjectUuid().toString())))
-                .andExpect(jsonPath("$[2].objectTable", is(customerXxxAdmin.getObjectTable().toString())))
-                .andExpect(jsonPath("$[2].objectIdName", is(customerXxxAdmin.getObjectIdName().toString())));
+                .andExpect(jsonPath("$[2].['object.uuid']", is(customerXxxAdmin.getObjectUuid().toString())))
+                .andExpect(jsonPath("$[2].objectTable", is(customerXxxAdmin.getObjectTable())))
+                .andExpect(jsonPath("$[2].objectIdName", is(customerXxxAdmin.getObjectIdName())));
     }
 }

@@ -56,7 +56,7 @@ components:
         HsOfficeCoopSharesTransactionInsert:
             type: object
             properties:
-                membershipUuid:
+                membership.uuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -73,11 +73,11 @@ components:
                     maxLength: 48
                 comment:
                     type: string
-                adjustedShareTxUuid:
+                adjustedShareTx.uuid:
                     type: string
                     format: uuid
             required:
-                - membershipUuid
+                - membership.uuid
                 - transactionType
                 - shareCount
                 - valueDate

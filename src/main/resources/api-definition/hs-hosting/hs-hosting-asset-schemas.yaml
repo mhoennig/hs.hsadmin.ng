@@ -54,7 +54,7 @@ components:
                 caption:
                     type: string
                     nullable: true
-                alarmContactUuid:
+                alarmContact.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -64,11 +64,11 @@ components:
         HsHostingAssetInsert:
             type: object
             properties:
-                bookingItemUuid:
+                bookingItem.uuid:
                     type: string
                     format: uuid
                     nullable: true
-                parentAssetUuid:
+                parentAsset.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -84,7 +84,7 @@ components:
                     minLength: 3
                     maxLength: 80
                     nullable: false
-                alarmContactUuid:
+                alarmContact.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -99,11 +99,11 @@ components:
         HsHostingAssetAutoInsert:
             type: object
             properties:
-                parentAssetUuid:
+                parentAsset.uuid:
                     type: string
                     format: uuid
                     nullable: true
-                assignedToAssetUuid:
+                assignedToAsset.uuid:
                     type: string
                     format: uuid
                 type:
@@ -118,7 +118,7 @@ components:
                     minLength: 3
                     maxLength: 80
                     nullable: false
-                alarmContactUuid:
+                alarmContact.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -147,10 +147,10 @@ components:
                     minLength: 3
                     maxLength: 80
                     nullable: false
-                assignedToAssetUuid:
+                assignedToAsset.uuid:
                     type: string
                     format: uuid
-                alarmContactUuid:
+                alarmContact.uuid:
                     type: string
                     format: uuid
                     nullable: true

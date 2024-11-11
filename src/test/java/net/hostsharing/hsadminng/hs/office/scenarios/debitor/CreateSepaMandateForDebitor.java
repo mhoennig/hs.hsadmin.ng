@@ -35,8 +35,8 @@ public class CreateSepaMandateForDebitor extends UseCase<CreateSepaMandateForDeb
 
         return httpPost("/api/hs/office/sepamandates", usingJsonBody("""
                 {
-                   "debitorUuid": ${Debitor: Test AG - main debitor},
-                   "bankAccountUuid": ${BankAccount: Test AG - debit bank account},
+                   "debitor.uuid": ${Debitor: Test AG - main debitor},
+                   "bankAccount.uuid": ${BankAccount: Test AG - debit bank account},
                    "reference": ${mandateReference},
                    "agreement": ${mandateAgreement},
                    "validFrom": ${mandateValidFrom}

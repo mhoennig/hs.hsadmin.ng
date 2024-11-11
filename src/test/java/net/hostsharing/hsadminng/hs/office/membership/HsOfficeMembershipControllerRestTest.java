@@ -56,12 +56,12 @@ public class HsOfficeMembershipControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
-                                           "partnerUuid": null,
+                                           "partner.uuid": null,
                                            "memberNumberSuffix": "01",
                                            "validFrom": "2022-10-13",
                                            "membershipFeeBillable": "true"
                                          }
-                                    """.formatted(UUID.randomUUID()))
+                                    """)
                             .accept(MediaType.APPLICATION_JSON))
 
                     // then
@@ -86,7 +86,7 @@ public class HsOfficeMembershipControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
-                                           "partnerUuid": "%s",
+                                           "partner.uuid": "%s",
                                            "memberNumberSuffix": "01",
                                            "validFrom": "2022-10-13",
                                            "membershipFeeBillable": "true"
@@ -112,7 +112,7 @@ public class HsOfficeMembershipControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                        {
-                                           "partnerUuid": "%s",
+                                           "partner.uuid": "%s",
                                            %s
                                            "validFrom": "2022-10-13",
                                            "membershipFeeBillable": "true"

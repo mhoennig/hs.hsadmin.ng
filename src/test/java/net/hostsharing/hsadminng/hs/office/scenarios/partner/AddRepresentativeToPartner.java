@@ -60,9 +60,9 @@ public class AddRepresentativeToPartner extends UseCase<AddRepresentativeToPartn
         return httpPost("/api/hs/office/relations", usingJsonBody("""
                 {
                    "type": "REPRESENTATIVE",
-                   "anchorUuid": ${Person: %{partnerPersonTradeName}},
-                   "holderUuid": ${Person: %{representativeGivenName} %{representativeFamilyName}},
-                   "contactUuid": ${Contact: %{representativeGivenName} %{representativeFamilyName}}
+                   "anchor.uuid": ${Person: %{partnerPersonTradeName}},
+                   "holder.uuid": ${Person: %{representativeGivenName} %{representativeFamilyName}},
+                   "contact.uuid": ${Contact: %{representativeGivenName} %{representativeFamilyName}}
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);

@@ -55,9 +55,9 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
         return httpPost("/api/hs/office/debitors", usingJsonBody("""
                 {
                     "debitorRel": {
-                        "anchorUuid": ${Person: %{partnerPersonTradeName}},
-                        "holderUuid": ${Person: Billing GmbH},
-                        "contactUuid": ${Contact: Billing GmbH - Test AG billing}
+                        "anchor.uuid": ${Person: %{partnerPersonTradeName}},
+                        "holder.uuid": ${Person: Billing GmbH},
+                        "contact.uuid": ${Contact: Billing GmbH - Test AG billing}
                      },
                     "debitorNumberSuffix": ${debitorNumberSuffix},
                     "billable": ${billable},
@@ -65,7 +65,7 @@ public class CreateExternalDebitorForPartner extends UseCase<CreateExternalDebit
                     "vatCountryCode": ${vatCountryCode},
                     "vatBusiness": ${vatBusiness},
                     "vatReverseCharge": ${vatReverseCharge},
-                    "refundBankAccountUuid": ${BankAccount: Billing GmbH - refund bank account},
+                    "refundBankAccount.uuid": ${BankAccount: Billing GmbH - refund bank account},
                     "defaultPrefix": ${defaultPrefix}
                 }
                 """))

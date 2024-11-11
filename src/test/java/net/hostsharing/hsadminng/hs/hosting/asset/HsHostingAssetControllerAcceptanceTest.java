@@ -165,10 +165,10 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "bookingItemUuid": "%s",
+                                "bookingItem.uuid": "%s",
                                 "type": "MANAGED_WEBSPACE",
                                 "identifier": "fir10",
-                                "parentAssetUuid": "%s",
+                                "parentAsset.uuid": "%s",
                                 "caption": "some separate ManagedWebspace HA",
                                 "config": {}
                             }
@@ -227,7 +227,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                    "parentAssetUuid": "%s",
+                                    "parentAsset.uuid": "%s",
                                     "type": "UNIX_USER",
                                     "identifier": "fir01-temp",
                                     "caption": "some new UnixUser in client's ManagedWebspace",
@@ -280,7 +280,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .contentType(ContentType.JSON)
                     .body("""
                             {
-                                "bookingItemUuid": "%s",
+                                "bookingItem.uuid": "%s",
                                 "type": "DOMAIN_SETUP",
                                 "identifier": "example.com",
                                 "caption": "some unrelated domain-setup",
@@ -326,7 +326,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                    "bookingItemUuid": "%s",
+                                    "bookingItem.uuid": "%s",
                                     "type": "MANAGED_SERVER",
                                     "identifier": "vm1400",
                                     "caption": "some new ManagedServer",
@@ -381,7 +381,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                         .contentType(ContentType.JSON)
                         .body("""
                                     {
-                                        "parentAssetUuid": "%s",
+                                        "parentAsset.uuid": "%s",
                                         "type": "UNIX_USER",
                                         "identifier": "fir01-extra",
                                         "caption": "some extra UnixUser",
@@ -508,7 +508,7 @@ class HsHostingAssetControllerAcceptanceTest extends ContextBasedTestWithCleanup
                     .contentType(ContentType.JSON)
                     .body("""
                         {
-                            "alarmContactUuid": "%s",
+                            "alarmContact.uuid": "%s",
                             "config": {
                                 "monit_max_ssd_usage": 85,
                                 "monit_max_hdd_usage": null,

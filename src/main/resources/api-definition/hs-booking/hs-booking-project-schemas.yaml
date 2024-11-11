@@ -25,7 +25,7 @@ components:
         HsBookingProjectInsert:
             type: object
             properties:
-                debitorUuid:
+                debitor.uuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -35,6 +35,6 @@ components:
                     maxLength: 80
                     nullable: false
             required:
-                - debitorUuid
+                - debitor.uuid
                 - caption
             additionalProperties: false

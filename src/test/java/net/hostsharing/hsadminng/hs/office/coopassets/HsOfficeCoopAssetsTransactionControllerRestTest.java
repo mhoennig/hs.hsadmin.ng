@@ -37,7 +37,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
     static final String VALID_INSERT_REQUEST_BODY = """
             {
-               "membershipUuid": "%s",
+               "membership.uuid": "%s",
                "transactionType": "DEPOSIT",
                "assetValue": 128.00,
                "valueDate": "2022-10-13",
@@ -48,8 +48,8 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
     enum BadRequestTestCases {
         MEMBERSHIP_UUID_MISSING(
-                requestBody -> requestBody.without("membershipUuid"),
-                "[membershipUuid must not be null but is \"null\"]"),
+                requestBody -> requestBody.without("membership.uuid"),
+                "[membershipUuid must not be null but is \"null\"]"), // TODO.impl: should be membership.uuid, Spring validation-problem?
 
         TRANSACTION_TYPE_MISSING(
                 requestBody -> requestBody.without("transactionType"),
@@ -121,10 +121,10 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
-                .andExpect(status().is4xxClientError())
+                .andExpect(jsonPath("message", is("ERROR: [400] " + testCase.expectedErrorMessage)))
                 .andExpect(jsonPath("statusCode", is(400)))
                 .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                .andExpect(jsonPath("message", is("ERROR: [400] " + testCase.expectedErrorMessage)));
+                .andExpect(status().is4xxClientError());
     }
 
 }

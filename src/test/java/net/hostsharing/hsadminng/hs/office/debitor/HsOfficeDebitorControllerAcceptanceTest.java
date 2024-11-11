@@ -287,14 +287,14 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "debitorRelUuid": "%s",
+                                   "debitorRel.uuid": "%s",
                                    "debitorNumberSuffix": "%s",
                                    "billable": "true",
                                    "vatId": "VAT123456",
                                    "vatCountryCode": "DE",
                                    "vatBusiness": true,
                                    "vatReverseCharge": "false",
-                                   "refundBankAccountUuid": "%s",
+                                   "refundBankAccount.uuid": "%s",
                                    "defaultPrefix": "for"
                                  }
                             """.formatted( givenDebitorRelUUid, ++nextDebitorSuffix, givenBankAccount.getUuid()))
@@ -333,9 +333,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                             {
                                "debitorRel": {
-                                    "anchorUuid": "%s",
-                                    "holderUuid": "%s",
-                                    "contactUuid": "%s"
+                                    "anchor.uuid": "%s",
+                                    "holder.uuid": "%s",
+                                    "contact.uuid": "%s"
                                 },
                                 "debitorNumberSuffix": "%s",
                                 "defaultPrefix": "for",
@@ -384,9 +384,9 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                             {
                                "debitorRel": {
-                                    "anchorUuid": "%s",
-                                    "holderUuid": "%s",
-                                    "contactUuid": "%s"
+                                    "anchor.uuid": "%s",
+                                    "holder.uuid": "%s",
+                                    "contact.uuid": "%s"
                                 },
                                 "debitorNumberSuffix": "%s",
                                 "defaultPrefix": "for",
@@ -418,7 +418,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                             {
-                                "debitorRelUuid": "%s",
+                                "debitorRel.uuid": "%s",
                                 "debitorNumberSuffix": "%s",
                                 "defaultPrefix": "for",
                                 "billable": "true",

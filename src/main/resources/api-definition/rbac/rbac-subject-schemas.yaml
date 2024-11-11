@@ -14,7 +14,7 @@ components:
         RbacSubjectPermission:
             type: object
             properties:
-                objectUuid:
+                object.uuid:
                     type: string
                     format: uuid
                 objectTable:
@@ -23,10 +23,10 @@ components:
                     type: string
                 roleName:
                     type: string
-                roleUuid:
+                role.uuid:
                     type: string
                     format: uuid
-                permissionUuid:
+                permission.uuid:
                     type: string
                     format: uuid
                 op:

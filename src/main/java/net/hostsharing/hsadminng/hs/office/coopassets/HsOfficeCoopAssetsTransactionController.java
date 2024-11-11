@@ -77,7 +77,6 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional(readOnly = true)
-
     public ResponseEntity<HsOfficeCoopAssetsTransactionResource> getCoopAssetTransactionByUuid(
         final String currentSubject, final String assumedRoles, final UUID assetTransactionUuid) {
 

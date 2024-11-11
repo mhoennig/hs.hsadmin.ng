@@ -41,7 +41,7 @@ components:
         HsOfficeDebitorPatch:
             type: object
             properties:
-                debitorRelUuid:
+                debitorRel.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -61,7 +61,7 @@ components:
                 vatReverseCharge:
                     type: boolean
                     nullable: false
-                refundBankAccountUuid:
+                refundBankAccount.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -75,7 +75,7 @@ components:
             properties:
                 debitorRel:
                     $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelationSubInsert'
-                debitorRelUuid:
+                debitorRel.uuid:
                     type: string
                     format: uuid
                 debitorNumberSuffix:
@@ -92,7 +92,7 @@ components:
                     type: boolean
                 vatReverseCharge:
                     type: boolean
-                refundBankAccountUuid:
+                refundBankAccount.uuid:
                     type: string
                     format: uuid
                 defaultPrefix:

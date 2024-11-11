@@ -102,9 +102,9 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             {
                                 "partnerNumber": "20002",
                                 "partnerRel": {
-                                     "anchorUuid": "%s",
-                                     "holderUuid": "%s",
-                                     "contactUuid": "%s"
+                                     "anchor.uuid": "%s",
+                                     "holder.uuid": "%s",
+                                     "contact.uuid": "%s"
                                 },
                                 "details": {
                                     "registrationOffice": "Temp Registergericht Aurich",
@@ -161,12 +161,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             {
                                 "partnerNumber": "20003",
                                 "partnerRel": {
-                                     "anchorUuid": "%s",
-                                     "holderUuid": "%s",
-                                     "contactUuid": "%s"
+                                     "anchor.uuid": "%s",
+                                     "holder.uuid": "%s",
+                                     "contact.uuid": "%s"
                                 },
-                                "personUuid": "%s",
-                                "contactUuid": "%s",
+                                "person.uuid": "%s",
+                                "contact.uuid": "%s",
                                 "details": {}
                             }
                             """.formatted(
@@ -199,12 +199,12 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             {
                                 "partnerNumber": "20004",
                                 "partnerRel": {
-                                    "anchorUuid": "%s",
-                                    "holderUuid": "%s",
-                                    "contactUuid": "%s"
+                                    "anchor.uuid": "%s",
+                                    "holder.uuid": "%s",
+                                    "contact.uuid": "%s"
                                 },
-                                "personUuid": "%s",
-                                "contactUuid": "%s",
+                                "person.uuid": "%s",
+                                "contact.uuid": "%s",
                                 "details": {}
                             }
                             """.formatted(
@@ -321,7 +321,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .body("""
                            {
                                "partnerNumber": "20011",
-                               "partnerRelUuid": "%s",
+                               "partnerRel.uuid": "%s",
                                "details": {
                                    "registrationOffice": "Temp Registergericht Aurich",
                                    "registrationNumber": "222222",
@@ -330,7 +330,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                    "dateOfDeath": "2022-01-12"
                                }
                              }
-                            """.formatted(givenPartnerRel.getUuid()))
+                           """.formatted(givenPartnerRel.getUuid()))
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/office/partners/" + givenPartner.getUuid())
@@ -387,7 +387,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("""
                                 {
-                                   "partnerRelUuid": "%s"
+                                   "partnerRel.uuid": "%s"
                                 }
                                 """.formatted(givenPartnerRel.getUuid()))
                         .port(port)

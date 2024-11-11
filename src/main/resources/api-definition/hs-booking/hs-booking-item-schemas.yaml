@@ -52,11 +52,11 @@ components:
         HsBookingItemInsert:
             type: object
             properties:
-                projectUuid:
+                project.uuid:
                     type: string
                     format: uuid
                     nullable: false
-                parentItemUuid:
+                parentItem.uuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -77,7 +77,7 @@ components:
                     $ref: '../hs-hosting/hs-hosting-asset-schemas.yaml#/components/schemas/HsHostingAssetAutoInsert'
             required:
                 - caption
-                - projectUuid
+                - project.uuid
                 - validFrom
                 - resources
             additionalProperties: false

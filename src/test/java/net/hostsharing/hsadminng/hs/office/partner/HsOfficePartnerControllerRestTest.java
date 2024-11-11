@@ -101,12 +101,12 @@ class HsOfficePartnerControllerRestTest {
                                      {
                                         "partnerNumber": "20002",
                                         "partnerRel": {
-                                             "anchorUuid": "%s",
-                                             "holderUuid": "%s",
-                                             "contactUuid": "%s"
+                                             "anchor.uuid": "%s",
+                                             "holder.uuid": "%s",
+                                             "contact.uuid": "%s"
                                         },
-                                        "personUuid": "%s",
-                                        "contactUuid": "%s",
+                                        "person.uuid": "%s",
+                                        "contact.uuid": "%s",
                                         "details": {
                                             "registrationOffice": "Temp Registergericht Aurich",
                                             "registrationNumber": "111111"
@@ -138,12 +138,12 @@ class HsOfficePartnerControllerRestTest {
                                      {
                                         "partnerNumber": "20002",
                                         "partnerRel": {
-                                             "anchorUuid": "%s",
-                                             "holderUuid": "%s",
-                                             "contactUuid": "%s"
+                                             "anchor.uuid": "%s",
+                                             "holder.uuid": "%s",
+                                             "contact.uuid": "%s"
                                         },
-                                        "personUuid": "%s",
-                                        "contactUuid": "%s",
+                                        "person.uuid": "%s",
+                                        "contact.uuid": "%s",
                                         "details": {
                                             "registrationOffice": "Temp Registergericht Aurich",
                                             "registrationNumber": "111111"

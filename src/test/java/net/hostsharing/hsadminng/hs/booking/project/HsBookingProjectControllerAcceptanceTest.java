@@ -92,7 +92,7 @@ class HsBookingProjectControllerAcceptanceTest extends ContextBasedTestWithClean
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "debitorUuid": "%s",
+                                "debitor.uuid": "%s",
                                 "caption": "some new project"
                             }
                             """.formatted(givenDebitor.getUuid()))

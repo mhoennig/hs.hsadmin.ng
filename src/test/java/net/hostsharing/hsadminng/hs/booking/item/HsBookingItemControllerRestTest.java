@@ -105,7 +105,7 @@ class HsBookingItemControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                             {
-                                "projectUuid": "{projectUuid}",
+                                "project.uuid": "{projectUuid}",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validTo": "{validTo}",
@@ -155,7 +155,7 @@ class HsBookingItemControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                             {
-                                "projectUuid": "{projectUuid}",
+                                "project.uuid": "{projectUuid}",
                                 "type": "MANAGED_SERVER",
                                 "caption": "some new booking",
                                 "validFrom": "{validFrom}",

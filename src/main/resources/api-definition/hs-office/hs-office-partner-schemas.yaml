@@ -50,7 +50,7 @@ components:
         HsOfficePartnerPatch:
             type: object
             properties:
-                partnerRelUuid:
+                partnerRel.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -103,19 +103,19 @@ components:
             type: object
             nullable: false
             properties:
-                anchorUuid:
+                anchor.uuid:
                     type: string
                     format: uuid
-                holderUuid:
+                holder.uuid:
                     type: string
                     format: uuid
-                contactUuid:
+                contact.uuid:
                     type: string
                     format: uuid
             required:
-                - anchorUuid
-                - holderUuid
-                - relContactUuid
+                - anchor.uuid
+                - holder.uuid
+                - relContact.uuid
 
         HsOfficePartnerDetailsInsert:
             type: object

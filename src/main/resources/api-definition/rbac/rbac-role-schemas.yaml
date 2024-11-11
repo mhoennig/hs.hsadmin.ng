@@ -9,7 +9,7 @@ components:
                 uuid:
                     type: string
                     format: uuid
-                objectUuid:
+                object.uuid:
                     type: string
                     format: uuid
                 objectTable:

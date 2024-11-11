@@ -83,7 +83,7 @@ class DomainSetupHostingAssetFactoryUnitTest {
                     "subHostingAssets": [
                         {
                             "type": "DOMAIN_HTTP_SETUP",
-                            "assignedToAssetUuid": "{unixUserHostingAssetUuid}"
+                            "assignedToAsset.uuid": "{unixUserHostingAssetUuid}"
                         },
                         {
                             "type": "DOMAIN_DNS_SETUP"
@@ -124,7 +124,7 @@ class DomainSetupHostingAssetFactoryUnitTest {
                     "subHostingAssets": [
                         {
                             "type": "DOMAIN_HTTP_SETUP",
-                            "assignedToAssetUuid": "{unixUserHostingAssetUuid}"
+                            "assignedToAsset.uuid": "{unixUserHostingAssetUuid}"
                         },
                         {
                             "type": "DOMAIN_DNS_SETUP"
@@ -164,7 +164,7 @@ class DomainSetupHostingAssetFactoryUnitTest {
                 "subHostingAssets": [
                     {
                         "type": "DOMAIN_HTTP_SETUP",
-                        "assignedToAssetUuid": "{unixUserHostingAssetUuid}"
+                        "assignedToAsset.uuid": "{unixUserHostingAssetUuid}"
                     },
                     {
                         "type": "DOMAIN_DNS_SETUP"
@@ -206,7 +206,7 @@ class DomainSetupHostingAssetFactoryUnitTest {
                 "subHostingAssets": [
                     {
                         "type": "DOMAIN_HTTP_SETUP",
-                        "assignedToAssetUuid": "{unixUserHostingAssetUuid}"
+                        "assignedToAsset.uuid": "{unixUserHostingAssetUuid}"
                     },
                     {
                         "type": "DOMAIN_DNS_SETUP"

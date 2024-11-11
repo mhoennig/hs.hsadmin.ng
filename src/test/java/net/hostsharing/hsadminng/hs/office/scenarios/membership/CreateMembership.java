@@ -18,7 +18,7 @@ public class CreateMembership extends UseCase<CreateMembership> {
     protected HttpResponse run() {
         return httpPost("/api/hs/office/memberships", usingJsonBody("""
                 {
-                   "partnerUuid": ${Partner: Test AG},
+                   "partner.uuid": ${Partner: Test AG},
                    "memberNumberSuffix": ${memberNumberSuffix},
                    "status": "ACTIVE",
                    "validFrom": ${validFrom},

@@ -235,9 +235,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                                {
                                    "type": "%s",
                                    "mark": "%s",
-                                   "anchorUuid": "%s",
-                                   "holderUuid": "%s",
-                                   "contactUuid": "%s"
+                                   "anchor.uuid": "%s",
+                                   "holder.uuid": "%s",
+                                   "contact.uuid": "%s"
                                  }
                             """.formatted(
                                 HsOfficeRelationTypeResource.SUBSCRIBER,
@@ -281,9 +281,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .body("""
                                {
                                    "type": "%s",
-                                   "anchorUuid": "%s",
-                                   "holderUuid": "%s",
-                                   "contactUuid": "%s"
+                                   "anchor.uuid": "%s",
+                                   "holder.uuid": "%s",
+                                   "contact.uuid": "%s"
                                  }
                             """.formatted(
                             HsOfficeRelationTypeResource.DEBITOR,
@@ -313,9 +313,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .body("""
                                {
                                    "type": "%s",
-                                   "anchorUuid": "%s",
-                                   "holderUuid": "%s",
-                                   "contactUuid": "%s"
+                                   "anchor.uuid": "%s",
+                                   "holder.uuid": "%s",
+                                   "contact.uuid": "%s"
                                  }
                             """.formatted(
                             HsOfficeRelationTypeResource.DEBITOR,
@@ -346,9 +346,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .body("""
                            {
                                "type": "%s",
-                               "anchorUuid": "%s",
-                               "holderUuid": "%s",
-                               "contactUuid": "%s"
+                               "anchor.uuid": "%s",
+                               "holder.uuid": "%s",
+                               "contact.uuid": "%s"
                              }
                            """.formatted(
                                     HsOfficeRelationTypeResource.DEBITOR,
@@ -461,9 +461,9 @@ class HsOfficeRelationControllerAcceptanceTest extends ContextBasedTestWithClean
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                              "contactUuid": "%s"
+                              "contact.uuid": "%s"
                            }
-                            """.formatted(givenContact.getUuid()))
+                           """.formatted(givenContact.getUuid()))
                     .port(port)
                 .when()
                     .patch("http://localhost/api/hs/office/relations/" + givenRelation.getUuid())

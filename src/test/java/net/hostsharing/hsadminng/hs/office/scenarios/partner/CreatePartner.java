@@ -62,9 +62,9 @@ public class CreatePartner extends UseCase<CreatePartner> {
                 {
                     "partnerNumber": ${partnerNumber},
                     "partnerRel": {
-                         "anchorUuid": ${Person: Hostsharing eG},
-                         "holderUuid": ${Person: %{%{tradeName???}???%{givenName???} %{familyName???}}},
-                         "contactUuid": ${Contact: %{contactCaption}}
+                         "anchor.uuid": ${Person: Hostsharing eG},
+                         "holder.uuid": ${Person: %{%{tradeName???}???%{givenName???} %{familyName???}}},
+                         "contact.uuid": ${Contact: %{contactCaption}}
                     },
                     "details": {
                         "registrationOffice": "Registergericht Hamburg",

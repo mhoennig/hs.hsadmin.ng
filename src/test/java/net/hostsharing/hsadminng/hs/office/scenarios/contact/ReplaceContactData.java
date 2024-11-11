@@ -47,7 +47,7 @@ public class ReplaceContactData extends UseCase<ReplaceContactData> {
         withTitle("Replace the Contact-Reference in the Partner-Relation", () ->
                 httpPatch("/api/hs/office/relations/%{partnerRelationUuid}", usingJsonBody("""
                         {
-                            "contactUuid": ${Contact: %{newContactCaption}}
+                            "contact.uuid": ${Contact: %{newContactCaption}}
                         }
                         """))
                         .expecting(OK)

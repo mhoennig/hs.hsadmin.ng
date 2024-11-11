@@ -36,7 +36,7 @@ components:
         HsOfficeRelationPatch:
             type: object
             properties:
-                contactUuid:
+                contact.uuid:
                     type: string
                     format: uuid
                     nullable: true
@@ -45,10 +45,10 @@ components:
         HsOfficeRelationInsert:
             type: object
             properties:
-                anchorUuid:
+                anchor.uuid:
                     type: string
                     format: uuid
-                holderUuid:
+                holder.uuid:
                     type: string
                     format: uuid
                 type:
@@ -57,32 +57,32 @@ components:
                 mark:
                     type: string
                     nullable: true
-                contactUuid:
+                contact.uuid:
                     type: string
                     format: uuid
             required:
-              - anchorUuid
-              - holderUuid
+              - anchor.uuid
+              - holder.uuid
               - type
-              - contactUuid
+              - contact.uuid
 
         # relation created as a sub-element with implicitly known type
         HsOfficeRelationSubInsert:
             type: object
             properties:
-                anchorUuid:
+                anchor.uuid:
                     type: string
                     format: uuid
-                holderUuid:
+                holder.uuid:
                     type: string
                     format: uuid
                 mark:
                     type: string
                     nullable: true
-                contactUuid:
+                contact.uuid:
                     type: string
                     format: uuid
             required:
-                - anchorUuid
-                - holderUuid
-                - contactUuid
+                - anchor.uuid
+                - holder.uuid
+                - contact.uuid

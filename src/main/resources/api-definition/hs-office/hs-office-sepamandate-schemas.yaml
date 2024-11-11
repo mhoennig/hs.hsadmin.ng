@@ -48,11 +48,11 @@ components:
         HsOfficeSepaMandateInsert:
             type: object
             properties:
-                debitorUuid:
+                debitor.uuid:
                     type: string
                     format: uuid
                     nullable: false
-                bankAccountUuid:
+                bankAccount.uuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -72,8 +72,8 @@ components:
                     format: date
                     nullable: true
             required:
-                - debitorUuid
-                - bankAccountUuid
+                - debitor.uuid
+                - bankAccount.uuid
                 - reference
                 - agreement
                 - validFrom

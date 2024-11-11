@@ -168,7 +168,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             final var location = RestAssured // @formatter:off
                 .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
                        {
-                           "membershipUuid": "%s",
+                           "membership.uuid": "%s",
                            "transactionType": "SUBSCRIPTION",
                            "shareCount": 8,
                            "valueDate": "2022-10-13",
@@ -214,13 +214,13 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                 .contentType(ContentType.JSON)
                 .body("""
                                    {
-                                       "membershipUuid": "%s",
+                                       "membership.uuid": "%s",
                                        "transactionType": "ADJUSTMENT",
                                        "shareCount": %s,
                                        "valueDate": "2022-10-30",
                                        "reference": "test ref adjustment",
                                        "comment": "some coop shares adjustment transaction",
-                                       "adjustedShareTxUuid": "%s"
+                                       "adjustedShareTx.uuid": "%s"
                                      }
                                 """.formatted(
                     givenMembership.getUuid(),
@@ -267,7 +267,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
             RestAssured // @formatter:off
                 .given().header("current-subject", "superuser-alex@hostsharing.net").contentType(ContentType.JSON).body("""
                     {
-                        "membershipUuid": "%s",
+                        "membership.uuid": "%s",
                         "transactionType": "CANCELLATION",
                         "shareCount": -80,
                         "valueDate": "2022-10-13",

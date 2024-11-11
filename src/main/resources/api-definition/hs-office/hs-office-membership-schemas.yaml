@@ -62,7 +62,7 @@ components:
         HsOfficeMembershipInsert:
             type: object
             properties:
-                partnerUuid:
+                partner.uuid:
                     type: string
                     format: uuid
                     nullable: false
@@ -86,7 +86,7 @@ components:
                     nullable: false
                     type: boolean
             required:
-                - partnerUuid
+                - partner.uuid
                 - memberNumberSuffix
                 - validFrom
                 - membershipFeeBillable

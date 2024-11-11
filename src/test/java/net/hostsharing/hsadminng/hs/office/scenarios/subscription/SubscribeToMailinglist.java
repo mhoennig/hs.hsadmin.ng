@@ -52,9 +52,9 @@ public class SubscribeToMailinglist extends UseCase<SubscribeToMailinglist> {
                 {
                    "type": "SUBSCRIBER",
                    "mark": ${mailingList},
-                   "anchorUuid": ${Person: %{partnerPersonTradeName}},
-                   "holderUuid": ${Person: %{subscriberGivenName} %{subscriberFamilyName}},
-                   "contactUuid": ${Contact: %{subscriberGivenName} %{subscriberFamilyName}}
+                   "anchor.uuid": ${Person: %{partnerPersonTradeName}},
+                   "holder.uuid": ${Person: %{subscriberGivenName} %{subscriberFamilyName}},
+                   "contact.uuid": ${Contact: %{subscriberGivenName} %{subscriberFamilyName}}
                 }
                 """))
                 .expecting(CREATED).expecting(JSON);

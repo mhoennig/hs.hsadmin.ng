@@ -144,8 +144,8 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                         .contentType(ContentType.JSON)
                         .body("""
                                {
-                                   "debitorUuid": "%s",
-                                   "bankAccountUuid": "%s",
+                                   "debitor.uuid": "%s",
+                                   "bankAccount.uuid": "%s",
                                    "reference": "temp ref CAT A",
                                    "agreement": "2020-01-02",
                                    "validFrom": "2022-10-13"
@@ -186,7 +186,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "bankAccountUuid": "%s",
+                                   "bankAccount.uuid": "%s",
                                    "reference": "temp ref CAT B",
                                    "validFrom": "2022-10-13"
                                  }
@@ -211,8 +211,8 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "debitorUuid": "%s",
-                                   "bankAccountUuid": "%s",
+                                   "debitor.uuid": "%s",
+                                   "bankAccount.uuid": "%s",
                                    "reference": "temp ref CAT C",
                                    "agreement": "2022-10-12",
                                    "validFrom": "2022-10-13",
@@ -241,8 +241,8 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType(ContentType.JSON)
                     .body("""
                                {
-                                   "debitorUuid": "%s",
-                                   "bankAccountUuid": "%s",
+                                   "debitor.uuid": "%s",
+                                   "bankAccount.uuid": "%s",
                                    "reference": "temp refCAT D",
                                    "agreement": "2022-10-12",
                                    "validFrom": "2022-10-13",
