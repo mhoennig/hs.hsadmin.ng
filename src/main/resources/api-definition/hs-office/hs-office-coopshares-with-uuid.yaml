@@ -2,7 +2,7 @@ get:
     tags:
         - hs-office-coopShares
     description: 'Fetch a single share transaction by its uuid, if visible for the current subject.'
-    operationId: getCoopShareTransactionByUuid
+    operationId: getSingleCoopShareTransactionByUuid
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

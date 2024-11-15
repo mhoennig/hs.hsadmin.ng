@@ -73,7 +73,7 @@ class HsOfficeCoopSharesTransactionControllerRestTest {
 
         SHARES_COUNT_MUST_NOT_BE_NULL(
                 requestBody -> requestBody
-                        .with("transactionType", "ADJUSTMENT")
+                        .with("transactionType", "REVERSAL")
                         .with("shareCount", 0),
                 "[shareCount must not be 0 but is \"0\"]"),
 

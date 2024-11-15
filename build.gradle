@@ -410,7 +410,7 @@ tasks.register('convertMarkdownToHtml') {
     group = 'Conversion'
 
     // Define the template file and input directory
-    def templateFile = file('doc/scenarios/template.html')
+    def templateFile = file('doc/scenarios/.template.html')
 
     // Task configuration and execution
     doFirst {
@@ -425,13 +425,13 @@ tasks.register('convertMarkdownToHtml') {
 
         // Check if the template file exists
         if (!templateFile.exists()) {
-            throw new GradleException("Template file 'doc/scenarios/template.html' not found.")
+            throw new GradleException("Template file 'doc/scenarios/.template.html' not found.")
         }
     }
 
     doLast {
         // Gather all Markdown files in the current directory
-        fileTree(dir: '.', include: 'doc/scenarios/*.md').each { file ->
+        fileTree(dir: '.', include: 'build/doc/scenarios/*.md').each { file ->
             // Corrected way to create the output file path
             def outputFile = new File(file.parent, file.name.replaceAll(/\.md$/, '.html'))
 
@@ -444,3 +444,4 @@ tasks.register('convertMarkdownToHtml') {
         }
     }
 }
+convertMarkdownToHtml.dependsOn scenarioTests

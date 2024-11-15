@@ -3,7 +3,7 @@ get:
   description: Returns the list of (optionally filtered) cooperative share transactions which are visible to the current subject or any of it's assumed roles.
   tags:
     - hs-office-coopShares
-  operationId: listCoopShares
+  operationId: getListOfCoopShares
   parameters:
     - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -46,7 +46,7 @@ post:
   summary: Adds a new cooperative share transaction.
   tags:
     - hs-office-coopShares
-  operationId: addCoopSharesTransaction
+  operationId: postNewCoopSharesTransaction
   parameters:
     - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'

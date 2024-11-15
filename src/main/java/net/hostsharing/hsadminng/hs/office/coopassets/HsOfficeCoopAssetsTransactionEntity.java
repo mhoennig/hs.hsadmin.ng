@@ -50,8 +50,8 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
             .withProp(HsOfficeCoopAssetsTransactionEntity::getAssetValue)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getReference)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getComment)
-            .withProp(at -> ofNullable(at.getAdjustedAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
-            .withProp(at -> ofNullable(at.getAdjustmentAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
+            .withProp(at -> ofNullable(at.getRevertedAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
+            .withProp(at -> ofNullable(at.getReversalAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
             .quotedValues(false);
 
     @Id
@@ -77,7 +77,7 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
      * The signed value which directly affects the booking balance.
      *
      * <p>This means, that a DEPOSIT is always positive, a DISBURSAL is always negative,
-     * but an ADJUSTMENT can bei either positive or negative.
+     * but an REVERSAL can bei either positive or negative.
      * See {@link HsOfficeCoopAssetsTransactionType} for</p> more information.
      */
     @Column(name = "assetvalue")
@@ -96,14 +96,14 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
     private String comment;
 
     /**
-     * Optionally, the UUID of the corresponding transaction for an adjustment transaction.
+     * Optionally, the UUID of the corresponding transaction for an reversal transaction.
      */
     @OneToOne
-    @JoinColumn(name = "adjustedassettxuuid")
-    private HsOfficeCoopAssetsTransactionEntity adjustedAssetTx;
+    @JoinColumn(name = "revertedassettxuuid")
+    private HsOfficeCoopAssetsTransactionEntity revertedAssetTx;
 
-    @OneToOne(mappedBy = "adjustedAssetTx")
-    private HsOfficeCoopAssetsTransactionEntity adjustmentAssetTx;
+    @OneToOne(mappedBy = "revertedAssetTx")
+    private HsOfficeCoopAssetsTransactionEntity reversalAssetTx;
 
     @Override
     public HsOfficeCoopAssetsTransactionEntity load() {

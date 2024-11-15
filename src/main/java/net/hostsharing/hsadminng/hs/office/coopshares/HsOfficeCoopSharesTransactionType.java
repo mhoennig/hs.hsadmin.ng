@@ -2,9 +2,9 @@ package net.hostsharing.hsadminng.hs.office.coopshares;
 
 public enum HsOfficeCoopSharesTransactionType {
     /**
-     * correction of wrong bookings, with either positive or negative value
+     * reversal of wrong bookings, with either positive or negative value identical to reversed transaction
      */
-    ADJUSTMENT,
+    REVERSAL,
 
     /**
      * shares signed, e.g. with the declaration of accession, value >0

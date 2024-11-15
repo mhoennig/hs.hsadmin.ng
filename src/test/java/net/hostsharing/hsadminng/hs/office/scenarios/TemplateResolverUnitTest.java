@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateResolverUnitTest {
@@ -42,7 +43,7 @@ class TemplateResolverUnitTest {
                         Map.entry("simple placeholder", "einfach"),
                         Map.entry("nested placeholder", "verschachtelt"),
                         Map.entry("with-special-chars", "3&3 AG")
-                )).resolve();
+                )).resolve(DROP_COMMENTS);
 
         assertThat(resolved).isEqualTo("""
                 with optional JSON quotes:

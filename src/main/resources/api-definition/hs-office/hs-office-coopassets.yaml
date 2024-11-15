@@ -3,7 +3,7 @@ get:
   description: Returns the list of (optionally filtered) cooperative asset transactions which are visible to the current subject or any of it's assumed roles.
   tags:
     - hs-office-coopAssets
-  operationId: listCoopAssets
+  operationId: getListOfCoopAssets
   parameters:
     - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -46,7 +46,7 @@ post:
   summary: Adds a new cooperative asset transaction.
   tags:
     - hs-office-coopAssets
-  operationId: addCoopAssetsTransaction
+  operationId: postNewCoopAssetTransaction
   parameters:
     - $ref: 'auth.yaml#/components/parameters/currentSubject'
     - $ref: 'auth.yaml#/components/parameters/assumedRoles'

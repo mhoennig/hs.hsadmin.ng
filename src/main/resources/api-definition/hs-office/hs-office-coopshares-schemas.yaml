@@ -6,7 +6,7 @@ components:
         HsOfficeCoopSharesTransactionType:
             type: string
             enum:
-                - ADJUSTMENT
+                - REVERSAL
                 - SUBSCRIPTION
                 - CANCELLATION
 
@@ -27,15 +27,15 @@ components:
                     type: string
                 comment:
                     type: string
-                adjustedShareTx:
+                revertedShareTx:
                     $ref: '#/components/schemas/HsOfficeReferencedCoopSharesTransaction'
-                adjustmentShareTx:
+                reversalShareTx:
                     $ref: '#/components/schemas/HsOfficeReferencedCoopSharesTransaction'
 
         HsOfficeReferencedCoopSharesTransaction:
             description:
                 Similar to `HsOfficeCoopSharesTransaction` but without the self-referencing properties
-                (`adjustedShareTx` and `adjustmentShareTx`), to avoid recursive JSON.
+                (`revertedShareTx` and `reversalShareTx`), to avoid recursive JSON.
             type: object
             properties:
                 uuid:
@@ -73,7 +73,7 @@ components:
                     maxLength: 48
                 comment:
                     type: string
-                adjustedShareTx.uuid:
+                revertedShareTx.uuid:
                     type: string
                     format: uuid
             required:

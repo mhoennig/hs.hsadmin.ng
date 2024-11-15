@@ -4,6 +4,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import java.util.stream.Stream;
 
+// HOWTO: convert data types for exchange between PostgreSQL and Java/Hibernate/JPA-Entities
 @Converter(autoApply = true)
 public class HsOfficePersonTypeConverter implements AttributeConverter<HsOfficePersonType, String> {
 

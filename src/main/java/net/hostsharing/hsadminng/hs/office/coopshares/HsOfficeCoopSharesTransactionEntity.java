@@ -48,8 +48,8 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, BaseE
             .withProp(HsOfficeCoopSharesTransactionEntity::getShareCount)
             .withProp(HsOfficeCoopSharesTransactionEntity::getReference)
             .withProp(HsOfficeCoopSharesTransactionEntity::getComment)
-            .withProp(at -> ofNullable(at.getAdjustedShareTx()).map(HsOfficeCoopSharesTransactionEntity::toShortString).orElse(null))
-            .withProp(at -> ofNullable(at.getAdjustmentShareTx()).map(HsOfficeCoopSharesTransactionEntity::toShortString).orElse(null))
+            .withProp(at -> ofNullable(at.getRevertedShareTx()).map(HsOfficeCoopSharesTransactionEntity::toShortString).orElse(null))
+            .withProp(at -> ofNullable(at.getReversalShareTx()).map(HsOfficeCoopSharesTransactionEntity::toShortString).orElse(null))
         .quotedValues(false);
 
     @Id
@@ -71,7 +71,7 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, BaseE
      * The signed value which directly affects the booking balance.
      *
      * <p>This means, that a SUBSCRIPTION is always positive, a CANCELLATION is always negative,
-     * but an ADJUSTMENT can bei either positive or negative.
+     * but an REVERSAL can bei either positive or negative.
      * See {@link HsOfficeCoopSharesTransactionType} for</p> more information.
      */
     @Column(name = "valuedate")
@@ -93,14 +93,14 @@ public class HsOfficeCoopSharesTransactionEntity implements Stringifyable, BaseE
     private String comment;
 
     /**
-     * Optionally, the UUID of the corresponding transaction for an adjustment transaction.
+     * Optionally, the UUID of the corresponding transaction for a REVERSAL transaction.
      */
     @OneToOne
-    @JoinColumn(name = "adjustedsharetxuuid")
-    private HsOfficeCoopSharesTransactionEntity adjustedShareTx;
+    @JoinColumn(name = "revertedsharetxuuid")
+    private HsOfficeCoopSharesTransactionEntity revertedShareTx;
 
-    @OneToOne(mappedBy = "adjustedShareTx")
-    private HsOfficeCoopSharesTransactionEntity adjustmentShareTx;
+    @OneToOne(mappedBy = "revertedShareTx")
+    private HsOfficeCoopSharesTransactionEntity reversalShareTx;
 
     @Override
     public HsOfficeCoopSharesTransactionEntity load() {

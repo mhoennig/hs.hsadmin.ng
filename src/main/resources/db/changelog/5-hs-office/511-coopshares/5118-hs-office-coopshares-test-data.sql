@@ -27,12 +27,12 @@ begin
     raise notice 'creating test coopSharesTransaction: %', givenPartnerNumber::text || givenMemberNumberSuffix;
     subscriptionEntryUuid := uuid_generate_v4();
     insert
-        into hs_office.coopsharetx(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment, adjustedShareTxUuid)
+        into hs_office.coopsharetx(uuid, membershipuuid, transactiontype, valuedate, sharecount, reference, comment, revertedShareTxUuid)
         values
             (uuid_generate_v4(), membership.uuid, 'SUBSCRIPTION', '2010-03-15', 4, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-1', 'initial subscription', null),
             (uuid_generate_v4(), membership.uuid, 'CANCELLATION', '2021-09-01', -2, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-2', 'cancelling some', null),
             (subscriptionEntryUuid,       membership.uuid, 'SUBSCRIPTION',    '2022-10-20',  2, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-3', 'some subscription', null),
-            (uuid_generate_v4(), membership.uuid, 'ADJUSTMENT', '2022-10-21', -2, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-4', 'some adjustment', subscriptionEntryUuid);
+            (uuid_generate_v4(), membership.uuid, 'REVERSAL', '2022-10-21', -2, 'ref '||givenPartnerNumber::text || givenMemberNumberSuffix||'-4', 'some reversal', subscriptionEntryUuid);
 end; $$;
 --//
 

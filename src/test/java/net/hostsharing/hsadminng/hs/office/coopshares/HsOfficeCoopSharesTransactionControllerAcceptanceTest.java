@@ -62,7 +62,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    class ListCoopSharesTransactions {
+    class getListOfCoopSharesTransactions {
 
         @Test
         void globalAdmin_canViewAllCoopSharesTransactions() {
@@ -108,21 +108,21 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                                 "valueDate": "2022-10-20",
                                 "reference": "ref 1000202-3",
                                 "comment": "some subscription",
-                                "adjustmentShareTx": {
-                                    "transactionType": "ADJUSTMENT",
+                                "reversalShareTx": {
+                                    "transactionType": "REVERSAL",
                                     "shareCount": -2,
                                     "valueDate": "2022-10-21",
                                     "reference": "ref 1000202-4",
-                                    "comment": "some adjustment"
+                                    "comment": "some reversal"
                                 }
                             },
                         {
-                            "transactionType": "ADJUSTMENT",
+                            "transactionType": "REVERSAL",
                             "shareCount": -2,
                             "valueDate": "2022-10-21",
                             "reference": "ref 1000202-4",
-                            "comment": "some adjustment",
-                            "adjustedShareTx": {
+                            "comment": "some reversal",
+                            "revertedShareTx": {
                                     "transactionType": "SUBSCRIPTION",
                                     "shareCount": 2,
                                     "valueDate": "2022-10-20",
@@ -191,7 +191,7 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
         }
 
         @Test
-        void globalAdmin_canAddCoopSharesAdjustmentTransaction() {
+        void globalAdmin_canAddCoopSharesReversalTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
@@ -213,16 +213,16 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                 .header("current-subject", "superuser-alex@hostsharing.net")
                 .contentType(ContentType.JSON)
                 .body("""
-                                   {
-                                       "membership.uuid": "%s",
-                                       "transactionType": "ADJUSTMENT",
-                                       "shareCount": %s,
-                                       "valueDate": "2022-10-30",
-                                       "reference": "test ref adjustment",
-                                       "comment": "some coop shares adjustment transaction",
-                                       "adjustedShareTx.uuid": "%s"
-                                     }
-                                """.formatted(
+                           {
+                               "membership.uuid": "%s",
+                               "transactionType": "REVERSAL",
+                               "shareCount": %s,
+                               "valueDate": "2022-10-30",
+                               "reference": "test reversal ref",
+                               "comment": "some coop shares reversal transaction",
+                               "revertedShareTx.uuid": "%s"
+                           }
+                           """.formatted(
                     givenMembership.getUuid(),
                     -givenTransaction.getShareCount(),
                     givenTransaction.getUuid()))
@@ -235,12 +235,12 @@ class HsOfficeCoopSharesTransactionControllerAcceptanceTest extends ContextBased
                 .body("uuid", isUuidValid())
                 .body("", lenientlyEquals("""
                             {
-                                "transactionType": "ADJUSTMENT",
+                                "transactionType": "REVERSAL",
                                 "shareCount": -13,
                                 "valueDate": "2022-10-30",
-                                "reference": "test ref adjustment",
-                                "comment": "some coop shares adjustment transaction",
-                                "adjustedShareTx": {
+                                "reference": "test reversal ref",
+                                "comment": "some coop shares reversal transaction",
+                                "revertedShareTx": {
                                     "transactionType": "SUBSCRIPTION",
                                     "shareCount": 13,
                                     "valueDate": "2022-10-20",

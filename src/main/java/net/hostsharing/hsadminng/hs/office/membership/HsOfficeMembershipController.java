@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import static java.util.Optional.ofNullable;
+
 @RestController
 
 public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
@@ -39,7 +41,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
         context.define(currentSubject, assumedRoles);
 
         final var entities = ( memberNumber != null)
-                    ? List.of(membershipRepo.findMembershipByMemberNumber(memberNumber))
+                    ? ofNullable(membershipRepo.findMembershipByMemberNumber(memberNumber)).stream().toList()
                     : membershipRepo.findMembershipsByOptionalPartnerUuid(partnerUuid);
 
         final var resources = mapper.mapList(entities, HsOfficeMembershipResource.class,

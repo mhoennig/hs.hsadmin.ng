@@ -141,18 +141,18 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     result,
                     "CoopShareTransaction(M-1000101: 2010-03-15, SUBSCRIPTION, 4, ref 1000101-1, initial subscription)",
                     "CoopShareTransaction(M-1000101: 2021-09-01, CANCELLATION, -2, ref 1000101-2, cancelling some)",
-                    "CoopShareTransaction(M-1000101: 2022-10-20, SUBSCRIPTION, 2, ref 1000101-3, some subscription, M-1000101:ADJ:-2)",
-                    "CoopShareTransaction(M-1000101: 2022-10-21, ADJUSTMENT, -2, ref 1000101-4, some adjustment, M-1000101:SUB:+2)",
+                    "CoopShareTransaction(M-1000101: 2022-10-20, SUBSCRIPTION, 2, ref 1000101-3, some subscription, M-1000101:REV:-2)",
+                    "CoopShareTransaction(M-1000101: 2022-10-21, REVERSAL, -2, ref 1000101-4, some reversal, M-1000101:SUB:+2)",
 
                     "CoopShareTransaction(M-1000202: 2010-03-15, SUBSCRIPTION, 4, ref 1000202-1, initial subscription)",
                     "CoopShareTransaction(M-1000202: 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)",
-                    "CoopShareTransaction(M-1000202: 2022-10-20, SUBSCRIPTION, 2, ref 1000202-3, some subscription, M-1000202:ADJ:-2)",
-                    "CoopShareTransaction(M-1000202: 2022-10-21, ADJUSTMENT, -2, ref 1000202-4, some adjustment, M-1000202:SUB:+2)",
+                    "CoopShareTransaction(M-1000202: 2022-10-20, SUBSCRIPTION, 2, ref 1000202-3, some subscription, M-1000202:REV:-2)",
+                    "CoopShareTransaction(M-1000202: 2022-10-21, REVERSAL, -2, ref 1000202-4, some reversal, M-1000202:SUB:+2)",
 
                     "CoopShareTransaction(M-1000303: 2010-03-15, SUBSCRIPTION, 4, ref 1000303-1, initial subscription)",
                     "CoopShareTransaction(M-1000303: 2021-09-01, CANCELLATION, -2, ref 1000303-2, cancelling some)",
-                    "CoopShareTransaction(M-1000303: 2022-10-20, SUBSCRIPTION, 2, ref 1000303-3, some subscription, M-1000303:ADJ:-2)",
-                    "CoopShareTransaction(M-1000303: 2022-10-21, ADJUSTMENT, -2, ref 1000303-4, some adjustment, M-1000303:SUB:+2)");
+                    "CoopShareTransaction(M-1000303: 2022-10-20, SUBSCRIPTION, 2, ref 1000303-3, some subscription, M-1000303:REV:-2)",
+                    "CoopShareTransaction(M-1000303: 2022-10-21, REVERSAL, -2, ref 1000303-4, some reversal, M-1000303:SUB:+2)");
         }
 
         @Test
@@ -172,8 +172,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     result,
                     "CoopShareTransaction(M-1000202: 2010-03-15, SUBSCRIPTION, 4, ref 1000202-1, initial subscription)",
                     "CoopShareTransaction(M-1000202: 2021-09-01, CANCELLATION, -2, ref 1000202-2, cancelling some)",
-                    "CoopShareTransaction(M-1000202: 2022-10-20, SUBSCRIPTION, 2, ref 1000202-3, some subscription, M-1000202:ADJ:-2)",
-                    "CoopShareTransaction(M-1000202: 2022-10-21, ADJUSTMENT, -2, ref 1000202-4, some adjustment, M-1000202:SUB:+2)");
+                    "CoopShareTransaction(M-1000202: 2022-10-20, SUBSCRIPTION, 2, ref 1000202-3, some subscription, M-1000202:REV:-2)",
+                    "CoopShareTransaction(M-1000202: 2022-10-21, REVERSAL, -2, ref 1000202-4, some reversal, M-1000202:SUB:+2)");
         }
 
         @Test
@@ -210,8 +210,8 @@ class HsOfficeCoopSharesTransactionRepositoryIntegrationTest extends ContextBase
                     result,
                     "CoopShareTransaction(M-1000101: 2010-03-15, SUBSCRIPTION, 4, ref 1000101-1, initial subscription)",
                     "CoopShareTransaction(M-1000101: 2021-09-01, CANCELLATION, -2, ref 1000101-2, cancelling some)",
-                    "CoopShareTransaction(M-1000101: 2022-10-20, SUBSCRIPTION, 2, ref 1000101-3, some subscription, M-1000101:ADJ:-2)",
-                    "CoopShareTransaction(M-1000101: 2022-10-21, ADJUSTMENT, -2, ref 1000101-4, some adjustment, M-1000101:SUB:+2)");
+                    "CoopShareTransaction(M-1000101: 2022-10-20, SUBSCRIPTION, 2, ref 1000101-3, some subscription, M-1000101:REV:-2)",
+                    "CoopShareTransaction(M-1000101: 2022-10-21, REVERSAL, -2, ref 1000101-4, some reversal, M-1000101:SUB:+2)");
         }
     }
 

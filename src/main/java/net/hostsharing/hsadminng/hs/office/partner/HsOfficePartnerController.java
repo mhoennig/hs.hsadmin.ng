@@ -143,6 +143,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     private void optionallyCreateExPartnerRelation(final HsOfficePartnerEntity saved, final HsOfficeRelationRealEntity previousPartnerRel) {
         if (!saved.getPartnerRel().getUuid().equals(previousPartnerRel.getUuid())) {
+            // TODO.impl: we also need to use the new partner-person as the anchor
             relationRepo.save(previousPartnerRel.toBuilder().uuid(null).type(EX_PARTNER).build());
         }
     }

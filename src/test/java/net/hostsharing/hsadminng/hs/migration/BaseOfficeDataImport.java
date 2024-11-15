@@ -442,7 +442,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, 1002000, for cancellation D),
                    34003=CoopAssetsTransaction(M-1002000: 2016-12-31, LOSS, -20.00, 1002000, for cancellation D),
                    35001=CoopAssetsTransaction(M-1909000: 2024-01-15, DEPOSIT, 128.00, 1909000, for subscription E),
-                   35002=CoopAssetsTransaction(M-1909000: 2024-01-20, ADJUSTMENT, -128.00, 1909000, chargeback for subscription E, M-1909000:DEP:+128.00),
+                   35002=CoopAssetsTransaction(M-1909000: 2024-01-20, REVERSAL, -128.00, 1909000, chargeback for subscription E, M-1909000:DEP:+128.00),
                    358=CoopAssetsTransaction(M-1000300: 2000-12-06, DEPOSIT, 5120, 1000300, for subscription A),
                    442=CoopAssetsTransaction(M-1015200: 2003-07-07, DEPOSIT, 64, 1015200),
                    577=CoopAssetsTransaction(M-1000300: 2011-12-12, DEPOSIT, 1024, 1000300),
@@ -795,23 +795,23 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                                             ? HsOfficeCoopSharesTransactionType.SUBSCRIPTION
                                             : "UNSUBSCRIPTION".equals(rec.getString("action"))
                                             ? HsOfficeCoopSharesTransactionType.CANCELLATION
-                                            : HsOfficeCoopSharesTransactionType.ADJUSTMENT
+                                            : HsOfficeCoopSharesTransactionType.REVERSAL
                             )
                             .shareCount(rec.getInteger("quantity"))
                             .comment(rec.getString("comment"))
                             .reference(member.getMemberNumber().toString())
                             .build();
 
-                    if (shareTransaction.getTransactionType() == HsOfficeCoopSharesTransactionType.ADJUSTMENT) {
+                    if (shareTransaction.getTransactionType() == HsOfficeCoopSharesTransactionType.REVERSAL) {
                         final var negativeValue = -shareTransaction.getShareCount();
-                        final var adjustedShareTx = coopShares.values().stream().filter(a ->
-                                        a.getTransactionType() != HsOfficeCoopSharesTransactionType.ADJUSTMENT &&
+                        final var revertedShareTx = coopShares.values().stream().filter(a ->
+                                        a.getTransactionType() != HsOfficeCoopSharesTransactionType.REVERSAL &&
                                                 a.getMembership() == shareTransaction.getMembership() &&
                                                 a.getShareCount() == negativeValue)
                                 .findAny()
                                 .orElseThrow(() -> new IllegalStateException(
-                                        "cannot determine share reverse entry for adjustment " + shareTransaction));
-                        shareTransaction.setAdjustedShareTx(adjustedShareTx);
+                                        "cannot determine share reverse entry for reversal " + shareTransaction));
+                        shareTransaction.setRevertedShareTx(revertedShareTx);
                     }
                     coopShares.put(rec.getInteger("member_share_id"), shareTransaction);
                 });
@@ -837,7 +837,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                     final var assetTypeMapping = new HashMap<String, HsOfficeCoopAssetsTransactionType>() {
 
                         {
-                            put("ADJUSTMENT", HsOfficeCoopAssetsTransactionType.ADJUSTMENT);
+                            put("ADJUSTMENT", HsOfficeCoopAssetsTransactionType.REVERSAL);
                             put("HANDOVER", HsOfficeCoopAssetsTransactionType.TRANSFER);
                             put("ADOPTION", HsOfficeCoopAssetsTransactionType.ADOPTION);
                             put("LOSS", HsOfficeCoopAssetsTransactionType.LOSS);
@@ -865,16 +865,16 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                             .reference(member.getMemberNumber().toString())
                             .build();
 
-                    if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.ADJUSTMENT) {
+                    if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.REVERSAL) {
                         final var negativeValue = assetTransaction.getAssetValue().negate();
-                        final var adjustedAssetTx = coopAssets.values().stream().filter(a ->
-                                        a.getTransactionType() != HsOfficeCoopAssetsTransactionType.ADJUSTMENT &&
+                        final var revertedAssetTx = coopAssets.values().stream().filter(a ->
+                                        a.getTransactionType() != HsOfficeCoopAssetsTransactionType.REVERSAL &&
                                                 a.getMembership() == assetTransaction.getMembership() &&
                                                 a.getAssetValue().equals(negativeValue))
                                 .findAny()
                                 .orElseThrow(() -> new IllegalStateException(
-                                        "cannot determine asset reverse entry for adjustment " + assetTransaction));
-                        assetTransaction.setAdjustedAssetTx(adjustedAssetTx);
+                                        "cannot determine asset reverse entry for reversal " + assetTransaction));
+                        assetTransaction.setRevertedAssetTx(revertedAssetTx);
                     }
 
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);

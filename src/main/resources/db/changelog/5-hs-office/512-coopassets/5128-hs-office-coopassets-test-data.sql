@@ -27,12 +27,12 @@ begin
     raise notice 'creating test coopAssetsTransaction: %', givenPartnerNumber || givenMemberNumberSuffix;
     lossEntryUuid := uuid_generate_v4();
     insert
-        into hs_office.coopassettx(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, adjustedAssetTxUuid)
+        into hs_office.coopassettx(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, revertedAssetTxUuid)
         values
             (uuid_generate_v4(),  membership.uuid, 'DEPOSIT',    '2010-03-15',  320.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-1', 'initial deposit', null),
             (uuid_generate_v4(),  membership.uuid, 'DISBURSAL',  '2021-09-01', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-2', 'partial disbursal', null),
             (lossEntryUuid,       membership.uuid, 'DEPOSIT',    '2022-10-20',  128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some loss', null),
-            (uuid_generate_v4(),  membership.uuid, 'ADJUSTMENT', '2022-10-21', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some adjustment', lossEntryUuid);
+            (uuid_generate_v4(),  membership.uuid, 'REVERSAL', '2022-10-21', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some reversal', lossEntryUuid);
 end; $$;
 --//
 

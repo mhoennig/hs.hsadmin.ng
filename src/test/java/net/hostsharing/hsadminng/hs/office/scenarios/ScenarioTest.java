@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.scenarios;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonRepository;
+import net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver;
 import net.hostsharing.hsadminng.lambda.Reducer;
 import net.hostsharing.hsadminng.rbac.context.ContextBasedTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class ScenarioTest extends ContextBasedTest {
@@ -38,11 +41,11 @@ public abstract class ScenarioTest extends ContextBasedTest {
         public String toString() {
             return ObjectUtils.toString(uuid);
         }
+
     }
-
     private final static Map<String, Alias<?>> aliases = new HashMap<>();
-    private final static Map<String, Object> properties = new HashMap<>();
 
+    private final static Map<String, Object> properties = new HashMap<>();
     public final TestReport testReport = new TestReport(aliases);
 
     @LocalServerPort
@@ -139,9 +142,9 @@ public abstract class ScenarioTest extends ContextBasedTest {
     }
 
     static UUID uuid(final String nameWithPlaceholders) {
-        final var resoledName = resolve(nameWithPlaceholders);
-        final UUID alias = ofNullable(knowVariables().get(resoledName)).filter(v -> v instanceof UUID).map(UUID.class::cast).orElse(null);
-        assertThat(alias).as("alias '" + resoledName + "' not found in aliases nor in properties [" +
+        final var resolvedName = resolve(nameWithPlaceholders, DROP_COMMENTS);
+        final UUID alias = ofNullable(knowVariables().get(resolvedName)).filter(v -> v instanceof UUID).map(UUID.class::cast).orElse(null);
+        assertThat(alias).as("alias '" + resolvedName + "' not found in aliases nor in properties [" +
                 knowVariables().keySet().stream().map(v -> "'" + v + "'").collect(Collectors.joining(", ")) + "]"
         ).isNotNull();
         return alias;
@@ -162,13 +165,13 @@ public abstract class ScenarioTest extends ContextBasedTest {
         return map;
     }
 
-    public static String resolve(final String text) {
-        final var resolved = new TemplateResolver(text, ScenarioTest.knowVariables()).resolve();
+    public static String resolve(final String text, final Resolver resolver) {
+        final var resolved = new TemplateResolver(text, ScenarioTest.knowVariables()).resolve(resolver);
         return resolved;
     }
 
     public static Object resolveTyped(final String text) {
-        final var resolved = resolve(text);
+        final var resolved = resolve(text, DROP_COMMENTS);
         try {
             return UUID.fromString(resolved);
         } catch (final IllegalArgumentException e) {

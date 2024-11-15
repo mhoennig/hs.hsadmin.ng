@@ -16,6 +16,8 @@ public class CreatePartner extends UseCase<CreatePartner> {
 
     public CreatePartner(final ScenarioTest testSuite) {
         super(testSuite);
+
+        introduction("A partner can be a client or a vendor, currently we only use them for clients.");
     }
 
     @Override

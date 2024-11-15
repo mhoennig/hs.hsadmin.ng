@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,7 +46,35 @@ public class HsOfficeMembershipControllerRestTest {
     EntityManagerWrapper em;
 
     @Nested
+    class GetMemberships {
+
+        @Test
+        void findMembershipByNonExistingMemberNumberReturnsEmptyList() throws Exception {
+
+            // when
+            mockMvc.perform(MockMvcRequestBuilders
+                            .get("/api/hs/office/memberships?memberNumber=12345")
+                            .header("current-subject", "superuser-alex@hostsharing.net")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                       {
+                                           "partner.uuid": null,
+                                           "memberNumberSuffix": "01",
+                                           "validFrom": "2022-10-13",
+                                           "membershipFeeBillable": "true"
+                                         }
+                                    """)
+                            .accept(MediaType.APPLICATION_JSON))
+
+                    // then
+                    .andExpect(status().is2xxSuccessful())
+                    .andExpect(jsonPath("$", hasSize(0)));
+        }
+    }
+
+    @Nested
     class AddMembership {
+
         @Test
         void respondBadRequest_ifPartnerUuidIsMissing() throws Exception {
 
@@ -98,7 +127,9 @@ public class HsOfficeMembershipControllerRestTest {
                     .andExpect(status().is4xxClientError())
                     .andExpect(jsonPath("statusCode", is(400)))
                     .andExpect(jsonPath("statusPhrase", is("Bad Request")))
-                    .andExpect(jsonPath("message", is("ERROR: [400] Unable to find Partner by partner.uuid: " + givenPartnerUuid)));
+                    .andExpect(jsonPath(
+                            "message",
+                            is("ERROR: [400] Unable to find Partner by partner.uuid: " + givenPartnerUuid)));
         }
 
         @ParameterizedTest

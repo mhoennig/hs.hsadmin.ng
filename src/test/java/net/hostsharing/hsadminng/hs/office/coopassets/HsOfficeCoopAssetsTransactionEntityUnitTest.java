@@ -21,14 +21,14 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
             .build();
 
 
-    final HsOfficeCoopAssetsTransactionEntity givenCoopAssetAdjustmentTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
+    final HsOfficeCoopAssetsTransactionEntity givenCoopAssetReversalTransaction = HsOfficeCoopAssetsTransactionEntity.builder()
             .membership(TEST_MEMBERSHIP)
             .reference("some-ref")
             .valueDate(LocalDate.parse("2020-01-15"))
-            .transactionType(HsOfficeCoopAssetsTransactionType.ADJUSTMENT)
+            .transactionType(HsOfficeCoopAssetsTransactionType.REVERSAL)
             .assetValue(new BigDecimal("-128.00"))
             .comment("some comment")
-            .adjustedAssetTx(givenCoopAssetTransaction)
+            .revertedAssetTx(givenCoopAssetTransaction)
             .build();
 
     final HsOfficeCoopAssetsTransactionEntity givenEmptyCoopAssetsTransaction = HsOfficeCoopAssetsTransactionEntity.builder().build();
@@ -41,12 +41,12 @@ class HsOfficeCoopAssetsTransactionEntityUnitTest {
     }
 
     @Test
-    void toStringWithReverseEntryContainsReverseEntry() {
-        givenCoopAssetTransaction.setAdjustedAssetTx(givenCoopAssetAdjustmentTransaction);
+    void toStringWithRevertedAssetTxContainsRevertedAssetTx() {
+        givenCoopAssetTransaction.setRevertedAssetTx(givenCoopAssetReversalTransaction);
 
         final var result = givenCoopAssetTransaction.toString();
 
-        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref, some comment, M-1000101:ADJ:-128.00)");
+        assertThat(result).isEqualTo("CoopAssetsTransaction(M-1000101: 2020-01-01, DEPOSIT, 128.00, some-ref, some comment, M-1000101:REV:-128.00)");
     }
 
     @Test

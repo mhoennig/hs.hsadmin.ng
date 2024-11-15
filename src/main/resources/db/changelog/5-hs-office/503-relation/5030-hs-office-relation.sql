@@ -28,6 +28,9 @@ create table if not exists hs_office.relation
 );
 --//
 
+-- TODO.impl: unique constraint, to prevent using the same person multiple times as a partner, or better:
+--          ( anchorUuid,  holderUuid, type)
+
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-relation-MAIN-TABLE-JOURNAL endDelimiter:--//

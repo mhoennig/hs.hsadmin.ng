@@ -36,7 +36,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeCoopAssetsTransactionResource>> listCoopAssets(
+    public ResponseEntity<List<HsOfficeCoopAssetsTransactionResource>> getListOfCoopAssets(
             final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid,
@@ -55,7 +55,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeCoopAssetsTransactionResource> addCoopAssetsTransaction(
+    public ResponseEntity<HsOfficeCoopAssetsTransactionResource> postNewCoopAssetTransaction(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeCoopAssetsTransactionInsertResource requestBody) {
@@ -77,7 +77,7 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeCoopAssetsTransactionResource> getCoopAssetTransactionByUuid(
+    public ResponseEntity<HsOfficeCoopAssetsTransactionResource> getSingleCoopAssetTransactionByUuid(
         final String currentSubject, final String assumedRoles, final UUID assetTransactionUuid) {
 
         context.define(currentSubject, assumedRoles);
@@ -128,9 +128,9 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     }
 
     final BiConsumer<HsOfficeCoopAssetsTransactionInsertResource, HsOfficeCoopAssetsTransactionEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        if ( resource.getReverseEntryUuid() != null ) {
-            entity.setAdjustedAssetTx(coopAssetsTransactionRepo.findByUuid(resource.getReverseEntryUuid())
-                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] reverseEntityUuid %s not found".formatted(resource.getReverseEntryUuid()))));
+        if ( resource.getRevertedAssetTxUuid() != null ) {
+            entity.setRevertedAssetTx(coopAssetsTransactionRepo.findByUuid(resource.getRevertedAssetTxUuid())
+                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] reverseEntityUuid %s not found".formatted(resource.getRevertedAssetTxUuid()))));
         }
     };
 };

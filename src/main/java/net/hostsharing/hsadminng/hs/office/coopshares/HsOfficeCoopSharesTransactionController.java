@@ -38,7 +38,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeCoopSharesTransactionResource>> listCoopShares(
+    public ResponseEntity<List<HsOfficeCoopSharesTransactionResource>> getListOfCoopShares(
             final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid,
@@ -57,7 +57,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeCoopSharesTransactionResource> addCoopSharesTransaction(
+    public ResponseEntity<HsOfficeCoopSharesTransactionResource> postNewCoopSharesTransaction(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeCoopSharesTransactionInsertResource requestBody) {
@@ -80,7 +80,7 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeCoopSharesTransactionResource> getCoopShareTransactionByUuid(
+    public ResponseEntity<HsOfficeCoopSharesTransactionResource> getSingleCoopShareTransactionByUuid(
         final String currentSubject, final String assumedRoles, final UUID shareTransactionUuid) {
 
             context.define(currentSubject, assumedRoles);
@@ -131,9 +131,9 @@ public class HsOfficeCoopSharesTransactionController implements HsOfficeCoopShar
     }
 
     final BiConsumer<HsOfficeCoopSharesTransactionInsertResource, HsOfficeCoopSharesTransactionEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
-        if ( resource.getAdjustedShareTxUuid() != null ) {
-            entity.setAdjustedShareTx(coopSharesTransactionRepo.findByUuid(resource.getAdjustedShareTxUuid())
-                .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] adjustedShareTxUuid %s not found".formatted(resource.getAdjustedShareTxUuid()))));
+        if ( resource.getRevertedShareTxUuid() != null ) {
+            entity.setRevertedShareTx(coopSharesTransactionRepo.findByUuid(resource.getRevertedShareTxUuid())
+                .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] revertedShareTxUuid %s not found".formatted(resource.getRevertedShareTxUuid()))));
         }
     };
 }

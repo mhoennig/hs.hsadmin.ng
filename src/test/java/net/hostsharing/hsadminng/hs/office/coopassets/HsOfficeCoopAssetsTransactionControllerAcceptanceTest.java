@@ -55,7 +55,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
     EntityManager em;
 
     @Nested
-    class ListCoopAssetsTransactions {
+    class GetListOfCoopAssetsTransactions {
 
         @Test
         void globalAdmin_canViewAllCoopAssetsTransactions() {
@@ -109,21 +109,21 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 "valueDate": "2022-10-20",
                                 "reference": "ref 1000202-3",
                                 "comment": "some loss",
-                                "adjustmentAssetTx": {
-                                    "transactionType": "ADJUSTMENT",
+                                "reversalAssetTx": {
+                                    "transactionType": "REVERSAL",
                                     "assetValue": -128.00,
                                     "valueDate": "2022-10-21",
                                     "reference": "ref 1000202-3",
-                                    "comment": "some adjustment"
+                                    "comment": "some reversal"
                                 }
                             },
                             {
-                                "transactionType": "ADJUSTMENT",
+                                "transactionType": "REVERSAL",
                                 "assetValue": -128.00,
                                 "valueDate": "2022-10-21",
                                 "reference": "ref 1000202-3",
-                                "comment": "some adjustment",
-                                "adjustedAssetTx": {
+                                "comment": "some reversal",
+                                "revertedAssetTx": {
                                     "transactionType": "DEPOSIT",
                                     "assetValue": 128.00,
                                     "valueDate": "2022-10-20",
@@ -166,10 +166,10 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
     }
 
     @Nested
-    class AddCoopAssetsTransaction {
+    class PostNewCoopAssetTransaction {
 
         @Test
-        void globalAdmin_canAddCoopAssetsTransaction() {
+        void globalAdmin_canPostNewCoopAssetTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
@@ -214,7 +214,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
         }
 
         @Test
-        void globalAdmin_canAddCoopAssetsAdjustmentTransaction() {
+        void globalAdmin_canAddCoopAssetsReversalTransaction() {
 
             context.define("superuser-alex@hostsharing.net");
             final var givenMembership = membershipRepo.findMembershipByMemberNumber(1000101);
@@ -238,12 +238,12 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                         .body("""
                                    {
                                        "membership.uuid": "%s",
-                                       "transactionType": "ADJUSTMENT",
+                                       "transactionType": "REVERSAL",
                                        "assetValue": %s,
                                        "valueDate": "2022-10-30",
-                                       "reference": "test ref adjustment",
-                                       "comment": "some coop assets adjustment transaction",
-                                       "reverseEntry.uuid": "%s"
+                                       "reference": "test ref reversal",
+                                       "comment": "some coop assets reversal transaction",
+                                       "revertedAssetTx.uuid": "%s"
                                      }
                                 """.formatted(
                                     givenMembership.getUuid(),
@@ -258,12 +258,12 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                         .body("uuid", isUuidValid())
                         .body("", lenientlyEquals("""
                             {
-                                "transactionType": "ADJUSTMENT",
+                                "transactionType": "REVERSAL",
                                 "assetValue": -256.00,
                                 "valueDate": "2022-10-30",
-                                "reference": "test ref adjustment",
-                                "comment": "some coop assets adjustment transaction",
-                                "adjustedAssetTx": {
+                                "reference": "test ref reversal",
+                                "comment": "some coop assets reversal transaction",
+                                "revertedAssetTx": {
                                     "transactionType": "DEPOSIT",
                                     "assetValue": 256.00,
                                     "valueDate": "2022-10-20",

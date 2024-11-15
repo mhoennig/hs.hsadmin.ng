@@ -46,6 +46,7 @@ public class CustomErrorResponse {
         this.path = path;
         this.statusCode = status.value();
         this.statusPhrase = status.getReasonPhrase();
+        // HOWTO: debug serverside error response - set a breakpoint here
         this.message = message.startsWith("ERROR: [") ? message : "ERROR: [" + statusCode + "] " + message;
     }
 }

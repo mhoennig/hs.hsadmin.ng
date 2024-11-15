@@ -14,13 +14,13 @@ public class SystemProcess {
 
     @Getter
     private String stdOut;
+
     @Getter
     private String stdErr;
 
     public SystemProcess(final String... command) {
         this.processBuilder = new ProcessBuilder(command);
     }
-
 
     public String getCommand() {
         return processBuilder.command().toString();

@@ -10,28 +10,38 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+
 public class TemplateResolver {
 
-    private final static Pattern pattern = Pattern.compile(",(\\s*})", Pattern.MULTILINE);
-    private static final String IF_NOT_FOUND_SYMBOL = "???";
+    public enum Resolver {
+        DROP_COMMENTS,  // deletes comments ('#{whatever}' -> '')
+        KEEP_COMMENTS   // keep comments ('#{whatever}' -> 'whatever')
+    }
 
     enum PlaceholderPrefix {
         RAW('%') {
             @Override
-            String convert(final Object value) {
+            String convert(final Object value, final Resolver resolver) {
                 return value != null ? value.toString() : "";
             }
         },
         JSON_QUOTED('$'){
             @Override
-            String convert(final Object value) {
+            String convert(final Object value, final Resolver resolver) {
                 return jsonQuoted(value);
             }
         },
         URI_ENCODED('&'){
             @Override
-            String convert(final Object value) {
+            String convert(final Object value, final Resolver resolver) {
                 return value != null ? URLEncoder.encode(value.toString(), StandardCharsets.UTF_8) : "";
+            }
+        },
+        COMMENT('#'){
+            @Override
+            String convert(final Object value, final Resolver resolver) {
+                return resolver == DROP_COMMENTS ? "" : value.toString();
             }
         };
 
@@ -42,19 +52,24 @@ public class TemplateResolver {
         }
 
         static boolean contains(final char givenChar) {
-           return Arrays.stream(values()).anyMatch(p -> p.prefixChar == givenChar);
+            return Arrays.stream(values()).anyMatch(p -> p.prefixChar == givenChar);
         }
 
         static PlaceholderPrefix ofPrefixChar(final char givenChar) {
             return Arrays.stream(values()).filter(p -> p.prefixChar == givenChar).findFirst().orElseThrow();
         }
 
-        abstract String convert(final Object value);
+        abstract String convert(final Object value, final Resolver resolver);
     }
+
+    private static final Pattern COMMA_RIGHT_BEFORE_CLOSING_BRACE = Pattern.compile(",(\\s*})", Pattern.MULTILINE);
+    private static final String IF_NOT_FOUND_SYMBOL = "???";
 
     private final String template;
     private final Map<String, Object> properties;
     private final StringBuilder resolved = new StringBuilder();
+
+    private Resolver resolver;
     private int position = 0;
 
     public TemplateResolver(final String template, final Map<String, Object> properties) {
@@ -62,7 +77,8 @@ public class TemplateResolver {
         this.properties = properties;
     }
 
-    String resolve() {
+    String resolve(final Resolver resolver) {
+        this.resolver = resolver;
         final var resolved = copy();
         final var withoutDroppedLines = dropLinesWithNullProperties(resolved);
         final var result = removeDanglingCommas(withoutDroppedLines);
@@ -70,7 +86,7 @@ public class TemplateResolver {
     }
 
     private static String removeDanglingCommas(final String withoutDroppedLines) {
-        return pattern.matcher(withoutDroppedLines).replaceAll("$1");
+        return COMMA_RIGHT_BEFORE_CLOSING_BRACE.matcher(withoutDroppedLines).replaceAll("$1");
     }
 
     private String dropLinesWithNullProperties(final String text) {
@@ -119,10 +135,10 @@ public class TemplateResolver {
                 placeholder.append(fetchChar());
             }
         }
-        final var name = new TemplateResolver(placeholder.toString(), properties).resolve();
-        final var value = propVal(name);
+        final var content = new TemplateResolver(placeholder.toString(), properties).resolve(resolver);
+        final var value = intro != '#' ? propVal(content) : content;
         resolved.append(
-                PlaceholderPrefix.ofPrefixChar(intro).convert(value)
+                PlaceholderPrefix.ofPrefixChar(intro).convert(value, resolver)
         );
         skipChar('}');
     }
@@ -134,12 +150,12 @@ public class TemplateResolver {
         } else if (nameExpression.contains(IF_NOT_FOUND_SYMBOL)) {
             final var parts = StringUtils.split(nameExpression, IF_NOT_FOUND_SYMBOL);
             return Arrays.stream(parts).filter(Objects::nonNull).findFirst().orElseGet(() -> {
-                    if ( parts[parts.length-1].isEmpty() ) {
-                        // => whole expression ends with IF_NOT_FOUND_SYMBOL, thus last null element was optional
-                        return null;
-                    }
-                    // => last alternative element in expression was null and not optional
-                    throw new IllegalStateException("Missing required value in property-chain: " + nameExpression);
+                if ( parts[parts.length-1].isEmpty() ) {
+                    // => whole expression ends with IF_NOT_FOUND_SYMBOL, thus last null element was optional
+                    return null;
+                }
+                // => last alternative element in expression was null and not optional
+                throw new IllegalStateException("Missing required value in property-chain: " + nameExpression);
             });
         } else {
             final var val = properties.get(nameExpression);

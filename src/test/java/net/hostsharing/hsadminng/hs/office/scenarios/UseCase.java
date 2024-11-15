@@ -3,6 +3,7 @@ package net.hostsharing.hsadminng.hs.office.scenarios;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 import io.restassured.http.ContentType;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -33,6 +34,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.net.URLEncoder.encode;
+import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.platform.commons.util.StringUtils.isBlank;
@@ -50,6 +53,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     private final Map<String, Object> givenProperties = new LinkedHashMap<>();
 
     private String nextTitle; // just temporary to override resultAlias for sub-use-cases
+    private String introduction;
 
     public UseCase(final ScenarioTest testSuite) {
         this(testSuite, getResultAliasFromProducesAnnotationInCallStack());
@@ -71,6 +75,9 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final HttpResponse doRun() {
+        if (introduction != null) {
+            testReport.printPara(introduction);
+        }
         testReport.printPara("### Given Properties");
         testReport.printLine("""
                 | name | value |
@@ -81,7 +88,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         testReport.silent(() ->
                 requirements.forEach((alias, factory) -> {
                     if (!ScenarioTest.containsAlias(alias)) {
-                        factory.apply(alias).run().keep();
+                        factory.apply(alias).run().keepAs(alias);
                     }
                 })
         );
@@ -95,6 +102,11 @@ public abstract class UseCase<T extends UseCase<?>> {
     protected void verify(final HttpResponse response) {
     }
 
+    public UseCase<T> introduction(final String introduction) {
+        this.introduction = introduction;
+        return this;
+    }
+
     public final UseCase<T> given(final String propName, final Object propValue) {
         givenProperties.put(propName, propValue);
         ScenarioTest.putProperty(propName, propValue);
@@ -106,11 +118,11 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final void obtain(
-            final String alias,
+            final String title,
             final Supplier<HttpResponse> http,
             final Function<HttpResponse, String> extractor,
             final String... extraInfo) {
-        withTitle(ScenarioTest.resolve(alias), () -> {
+        withTitle(title, () -> {
             final var response = http.get().keep(extractor);
             Arrays.stream(extraInfo).forEach(testReport::printPara);
             return response;
@@ -118,15 +130,15 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final void obtain(final String alias, final Supplier<HttpResponse> http, final String... extraInfo) {
-        withTitle(ScenarioTest.resolve(alias), () -> {
+        withTitle(alias, () -> {
             final var response = http.get().keep();
             Arrays.stream(extraInfo).forEach(testReport::printPara);
             return response;
         });
     }
 
-    public HttpResponse withTitle(final String title, final Supplier<HttpResponse> code) {
-        this.nextTitle = title;
+    public HttpResponse withTitle(final String resolvableTitle, final Supplier<HttpResponse> code) {
+        this.nextTitle = resolvableTitle;
         final var response = code.get();
         this.nextTitle = null;
         return response;
@@ -134,7 +146,7 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     @SneakyThrows
     public final HttpResponse httpGet(final String uriPathWithPlaceholders) {
-        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var request = HttpRequest.newBuilder()
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
@@ -147,7 +159,7 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     @SneakyThrows
     public final HttpResponse httpPost(final String uriPathWithPlaceholders, final JsonTemplate bodyJsonTemplate) {
-        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
         final var request = HttpRequest.newBuilder()
                 .POST(BodyPublishers.ofString(requestBody))
@@ -162,7 +174,7 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     @SneakyThrows
     public final HttpResponse httpPatch(final String uriPathWithPlaceholders, final JsonTemplate bodyJsonTemplate) {
-        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var requestBody = bodyJsonTemplate.resolvePlaceholders();
         final var request = HttpRequest.newBuilder()
                 .method(HttpMethod.PATCH.toString(), BodyPublishers.ofString(requestBody))
@@ -177,7 +189,7 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     @SneakyThrows
     public final HttpResponse httpDelete(final String uriPathWithPlaceholders) {
-        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders);
+        final var uriPath = ScenarioTest.resolve(uriPathWithPlaceholders, DROP_COMMENTS);
         final var request = HttpRequest.newBuilder()
                 .DELETE()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
@@ -197,7 +209,7 @@ public abstract class UseCase<T extends UseCase<?>> {
             final String title,
             final Supplier<UseCase.HttpResponse> http,
             final Consumer<UseCase.HttpResponse>... assertions) {
-        withTitle(ScenarioTest.resolve(title), () -> {
+        withTitle(title, () -> {
             final var response = http.get();
             Arrays.stream(assertions).forEach(assertion ->  assertion.accept(response));
             return response;
@@ -209,7 +221,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public String uriEncoded(final String text) {
-        return encode(ScenarioTest.resolve(text), StandardCharsets.UTF_8);
+        return encode(ScenarioTest.resolve(text, DROP_COMMENTS), StandardCharsets.UTF_8);
     }
 
     public static class JsonTemplate {
@@ -221,7 +233,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
 
         String resolvePlaceholders() {
-            return ScenarioTest.resolve(template);
+            return ScenarioTest.resolve(template, DROP_COMMENTS);
         }
     }
 
@@ -266,7 +278,7 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
 
         public HttpResponse keep(final Function<HttpResponse, String> extractor) {
-            final var alias = nextTitle != null ? nextTitle : resultAlias;
+            final var alias = nextTitle != null ? ScenarioTest.resolve(nextTitle, DROP_COMMENTS) : resultAlias;
             assertThat(alias).as("cannot keep result, no alias found").isNotNull();
 
             final var value = extractor.apply(this);
@@ -276,13 +288,18 @@ public abstract class UseCase<T extends UseCase<?>> {
             return this;
         }
 
-        public HttpResponse keep() {
-            final var alias = nextTitle != null ? nextTitle : resultAlias;
-            assertThat(alias).as("cannot keep result, no alias found").isNotNull();
+        public HttpResponse keepAs(final String alias) {
             ScenarioTest.putAlias(
-                    alias,
+                    nonNullAlias(alias),
                     new ScenarioTest.Alias<>(UseCase.this.getClass(), locationUuid));
             return this;
+        }
+
+        public HttpResponse keep() {
+            final var alias = nextTitle != null ? ScenarioTest.resolve(nextTitle, DROP_COMMENTS) : resultAlias;
+            assertThat(alias).as("cannot keep result, no title or alias found for locationUuid: " + locationUuid).isNotNull();
+
+            return keepAs(alias);
         }
 
         @SneakyThrows
@@ -298,20 +315,20 @@ public abstract class UseCase<T extends UseCase<?>> {
 
         @SneakyThrows
         public String getFromBody(final String path) {
-            return JsonPath.parse(response.body()).read(ScenarioTest.resolve(path));
+            return JsonPath.parse(response.body()).read(ScenarioTest.resolve(path, DROP_COMMENTS));
         }
 
         @SneakyThrows
-        public Optional<String> getFromBodyAsOptional(final String path) {
+        public <T> Optional<T> getFromBodyAsOptional(final String path) {
             try {
-                return Optional.ofNullable(JsonPath.parse(response.body()).read(ScenarioTest.resolve(path)));
-            } catch (final Exception e) {
+                return Optional.ofNullable(JsonPath.parse(response.body()).read(ScenarioTest.resolve(path, DROP_COMMENTS)));
+            } catch (final PathNotFoundException e) {
                 return null; // means the property did not exist at all, not that it was there with value null
             }
         }
 
         @SneakyThrows
-        public OptionalAssert<String> path(final String path) {
+        public <T> OptionalAssert<T> path(final String path) {
             return assertThat(getFromBodyAsOptional(path));
         }
 
@@ -320,9 +337,9 @@ public abstract class UseCase<T extends UseCase<?>> {
 
             // the title
             if (nextTitle != null) {
-                testReport.printLine("\n### " + nextTitle + "\n");
+                testReport.printLine("\n### " + ScenarioTest.resolve(nextTitle, KEEP_COMMENTS) + "\n");
             } else if (resultAlias != null) {
-                testReport.printLine("\n### " + resultAlias + "\n");
+                testReport.printLine("\n### Create " + resultAlias + "\n");
             } else {
                 fail("please wrap the http...-call in the UseCase using `withTitle(...)`");
             }
@@ -341,6 +358,13 @@ public abstract class UseCase<T extends UseCase<?>> {
             }
             testReport.printLine("```");
             testReport.printLine("");
+        }
+
+        private String nonNullAlias(final String alias) {
+            // This marker tag should not appear in the source-code, as here is nothing to fix.
+            // But if it appears in generated Markdown files, it should show up when that marker tag is searched.
+            final var onlyVisibleInGeneratedMarkdownNotInSource = new String(new char[]{'F', 'I', 'X', 'M', 'E'});
+            return alias == null ? "unknown alias -- " + onlyVisibleInGeneratedMarkdownNotInSource : alias;
         }
     }
 

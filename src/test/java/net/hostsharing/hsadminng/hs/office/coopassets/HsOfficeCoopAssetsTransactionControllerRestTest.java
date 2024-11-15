@@ -77,7 +77,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
         ASSETS_VALUE_MUST_NOT_BE_NULL(
                 requestBody -> requestBody
-                        .with("transactionType", "ADJUSTMENT")
+                        .with("transactionType", "REVERSAL")
                         .with("assetValue", 0.00),
                 "[assetValue must not be 0 but is \"0.00\"]"),
 

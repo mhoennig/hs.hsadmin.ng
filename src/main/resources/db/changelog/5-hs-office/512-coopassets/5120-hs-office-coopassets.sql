@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-coopassets-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE hs_office.CoopAssetsTransactionType AS ENUM ('ADJUSTMENT',
+CREATE TYPE hs_office.CoopAssetsTransactionType AS ENUM ('REVERSAL',
                                                        'DEPOSIT',
                                                        'DISBURSAL',
                                                        'TRANSFER',
@@ -22,9 +22,9 @@ create table if not exists hs_office.coopassettx
     membershipUuid      uuid not null references hs_office.membership(uuid),
     transactionType     hs_office.CoopAssetsTransactionType not null,
     valueDate           date not null,
-    assetValue          money not null,
+    assetValue          numeric(12,2) not null, -- https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_money
     reference           varchar(48) not null,
-    adjustedAssetTxUuid uuid unique REFERENCES hs_office.coopassettx(uuid) DEFERRABLE INITIALLY DEFERRED,
+    revertedAssetTxUuid uuid unique REFERENCES hs_office.coopassettx(uuid) DEFERRABLE INITIALLY DEFERRED,
     comment             varchar(512)
 );
 --//
@@ -36,20 +36,20 @@ create table if not exists hs_office.coopassettx
 
 alter table hs_office.coopassettx
     add constraint reverse_entry_missing
-        check ( transactionType = 'ADJUSTMENT' and adjustedAssetTxUuid is not null
-             or transactionType <> 'ADJUSTMENT' and adjustedAssetTxUuid is null);
+        check ( transactionType = 'REVERSAL' and revertedAssetTxUuid is not null
+             or transactionType <> 'REVERSAL' and revertedAssetTxUuid is null);
 --//
 
 -- ============================================================================
 --changeset michael.hoennig:hs-office-coopassets-ASSET-VALUE-CONSTRAINT endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-create or replace function hs_office.coopassetstx_check_positive_total(forMembershipUuid UUID, newAssetValue money)
+create or replace function hs_office.coopassetstx_check_positive_total(forMembershipUuid UUID, newAssetValue numeric(12, 5))
 returns boolean
 language plpgsql as $$
 declare
-    currentAssetValue money;
-    totalAssetValue money;
+    currentAssetValue numeric(12,2);
+    totalAssetValue numeric(12,2);
 begin
     select sum(cat.assetValue)
         from hs_office.coopassettx cat

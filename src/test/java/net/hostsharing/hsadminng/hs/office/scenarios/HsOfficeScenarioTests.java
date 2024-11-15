@@ -13,6 +13,12 @@ import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DontDeleteDefaultDe
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.InvalidateSepaMandateForDebitor;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDepositTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDisbursalTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesCancellationTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesRevertTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesSubscriptionTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.AddOperationsContactToPartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.CreatePartner;
 import net.hostsharing.hsadminng.hs.office.scenarios.debitor.DeleteDebitor;
@@ -49,7 +55,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1010)
-    @Produces(explicitly = "Partner: Test AG", implicitly = {"Person: Test AG", "Contact: Test AG - Hamburg"})
+    @Produces(explicitly = "Partner: P-31010 - Test AG", implicitly = {"Person: Test AG", "Contact: Test AG - Hamburg"})
     void shouldCreateLegalPersonAsPartner() {
         new CreatePartner(this)
                 .given("partnerNumber", 31010)
@@ -71,7 +77,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1011)
-    @Produces(explicitly = "Partner: Michelle Matthieu", implicitly = {"Person: Michelle Matthieu", "Contact: Michelle Matthieu"})
+    @Produces(explicitly = "Partner: P-31011 - Michelle Matthieu", implicitly = {"Person: Michelle Matthieu", "Contact: Michelle Matthieu"})
     void shouldCreateNaturalPersonAsPartner() {
         new CreatePartner(this)
                 .given("partnerNumber", 31011)
@@ -148,7 +154,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1100)
-    @Requires("Partner: Michelle Matthieu")
+    @Requires("Partner: P-31011 - Michelle Matthieu")
     void shouldAmendContactData() {
         new AmendContactData(this)
                 .given("partnerName", "Matthieu")
@@ -158,7 +164,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1101)
-    @Requires("Partner: Michelle Matthieu")
+    @Requires("Partner: P-31011 - Michelle Matthieu")
     void shouldAddPhoneNumberToContactData() {
         new AddPhoneNumberToContactData(this)
                 .given("partnerName", "Matthieu")
@@ -169,7 +175,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1102)
-    @Requires("Partner: Michelle Matthieu")
+    @Requires("Partner: P-31011 - Michelle Matthieu")
     void shouldRemovePhoneNumberFromContactData() {
         new RemovePhoneNumberFromContactData(this)
                 .given("partnerName", "Matthieu")
@@ -179,7 +185,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1103)
-    @Requires("Partner: Test AG")
+    @Requires("Partner: P-31010 - Test AG")
     void shouldReplaceContactData() {
         new ReplaceContactData(this)
                 .given("partnerName", "Test AG")
@@ -201,7 +207,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1201)
-    @Requires("Partner: Michelle Matthieu")
+    @Requires("Partner: P-31011 - Michelle Matthieu")
     void shouldUpdatePersonData() {
         new ShouldUpdatePersonData(this)
                 .given("oldFamilyName", "Matthieu")
@@ -211,7 +217,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(2010)
-    @Requires("Partner: Test AG")
+    @Requires("Partner: P-31010 - Test AG")
     @Produces("Debitor: Test AG - main debitor")
     void shouldCreateSelfDebitorForPartner() {
         new CreateSelfDebitorForPartner(this, "Debitor: Test AG - main debitor")
@@ -261,18 +267,18 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(2020)
-    @Requires("Debitor: Test AG - main debitor")
+    @Requires("Debitor: D-3101000 - Test AG - main debitor")
     @Disabled("see TODO.spec in DontDeleteDefaultDebitor")
     void shouldNotDeleteDefaultDebitor() {
         new DontDeleteDefaultDebitor(this)
-                .given("partnerNumber", 31020)
+                .given("partnerNumber", 31010)
                 .given("debitorSuffix", "00")
                 .doRun();
     }
 
     @Test
     @Order(3100)
-    @Requires("Debitor: Test AG - main debitor")
+    @Requires("Debitor: D-3101000 - Test AG - main debitor")
     @Produces("SEPA-Mandate: Test AG")
     void shouldCreateSepaMandateForDebitor() {
         new CreateSepaMandateForDebitor(this)
@@ -313,12 +319,11 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(4000)
-    @Requires("Partner: Test AG")
-    @Produces("Membership: Test AG 00")
+    @Requires("Partner: P-31010 - Test AG")
+    @Produces("Membership: M-3101000 - Test AG")
     void shouldCreateMembershipForPartner() {
         new CreateMembership(this)
                 .given("partnerName", "Test AG")
-                .given("memberNumberSuffix", "00")
                 .given("validFrom", "2024-10-15")
                 .given("newStatus", "ACTIVE")
                 .given("membershipFeeBillable", "true")
@@ -327,8 +332,86 @@ class HsOfficeScenarioTests extends ScenarioTest {
     }
 
     @Test
+    @Order(4201)
+    @Requires("Membership: M-3101000 - Test AG")
+    @Produces("Coop-Shares SUBSCRIPTION Transaction")
+    void shouldSubscribeCoopShares() {
+        new CreateCoopSharesSubscriptionTransaction(this)
+                .given("memberNumber", "3101000")
+                .given("reference", "sign 2024-01-15")
+                .given("shareCount", 100)
+                .given("comment", "Signing the Membership")
+                .given("transactionDate", "2024-01-15")
+                .doRun();
+    }
+
+    @Test
+    @Order(4202)
+    @Requires("Membership: M-3101000 - Test AG")
+    void shouldRevertCoopSharesSubscription() {
+        new CreateCoopSharesRevertTransaction(this)
+                .given("memberNumber", "3101000")
+                .given("comment", "reverting some incorrect transaction")
+                .given("dateOfIncorrectTransaction", "2024-02-15")
+                .doRun();
+    }
+
+    @Test
+    @Order(4202)
+    @Requires("Coop-Shares SUBSCRIPTION Transaction")
+    @Produces("Coop-Shares CANCELLATION Transaction")
+    void shouldCancelCoopSharesSubscription() {
+        new CreateCoopSharesCancellationTransaction(this)
+                .given("memberNumber", "3101000")
+                .given("reference", "cancel 2024-01-15")
+                .given("sharesToCancel", 8)
+                .given("comment", "Cancelling 8 Shares")
+                .given("transactionDate", "2024-02-15")
+                .doRun();
+    }
+
+    @Test
+    @Order(4301)
+    @Requires("Membership: M-3101000 - Test AG")
+    @Produces("Coop-Assets DEPOSIT Transaction")
+    void shouldSubscribeCoopAssets() {
+        new CreateCoopAssetsDepositTransaction(this)
+                .given("memberNumber", "3101000")
+                .given("reference", "sign 2024-01-15")
+                .given("assetValue", 100*64)
+                .given("comment", "disposal for initial shares")
+                .given("transactionDate", "2024-01-15")
+                .doRun();
+    }
+
+    @Test
+    @Order(4302)
+    @Requires("Membership: M-3101000 - Test AG")
+    void shouldRevertCoopAssetsSubscription() {
+        new CreateCoopAssetsRevertTransaction(this)
+                .given("memberNumber", "3101000")
+                .given("comment", "reverting some incorrect transaction")
+                .given("dateOfIncorrectTransaction", "2024-02-15")
+                .doRun();
+    }
+
+    @Test
+    @Order(4302)
+    @Requires("Coop-Assets DEPOSIT Transaction")
+    @Produces("Coop-Assets DISBURSAL Transaction")
+    void shouldDisburseCoopAssets() {
+        new CreateCoopAssetsDisbursalTransaction(this)
+                .given("memberNumber", "3101000")
+                .given("reference", "cancel 2024-01-15")
+                .given("valueToDisburse", 8*64)
+                .given("comment", "disbursal according to shares cancellation")
+                .given("transactionDate", "2024-02-15")
+                .doRun();
+    }
+
+    @Test
     @Order(4900)
-    @Requires("Membership: Test AG 00")
+    @Requires("Membership: M-3101000 - Test AG")
     void shouldCancelMembershipOfPartner() {
         new CancelMembership(this)
                 .given("memberNumber", "3101000")

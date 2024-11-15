@@ -4,7 +4,7 @@ public enum HsOfficeCoopAssetsTransactionType {
     /**
      * correction of wrong bookings, value can be positive or negative
      */
-    ADJUSTMENT,
+    REVERSAL,
 
     /**
      * payment received from member after signing shares, value >0

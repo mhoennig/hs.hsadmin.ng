@@ -6,7 +6,7 @@ components:
         HsOfficeCoopAssetsTransactionType:
             type: string
             enum:
-                - ADJUSTMENT
+                - REVERSAL
                 - DEPOSIT
                 - DISBURSAL
                 - TRANSFER
@@ -32,15 +32,15 @@ components:
                     type: string
                 comment:
                     type: string
-                adjustedAssetTx:
+                revertedAssetTx:
                     $ref: '#/components/schemas/HsOfficeReferencedCoopAssetsTransaction'
-                adjustmentAssetTx:
+                reversalAssetTx:
                     $ref: '#/components/schemas/HsOfficeReferencedCoopAssetsTransaction'
 
         HsOfficeReferencedCoopAssetsTransaction:
             description:
                 Similar to `HsOfficeCoopAssetsTransaction` but without the self-referencing properties 
-                (`adjustedAssetTx` and `adjustmentAssetTx`), to avoid recursive JSON.
+                (`revertedAssetTx` and `reversalAssetTx`), to avoid recursive JSON.
             type: object
             properties:
                 uuid:
@@ -80,7 +80,7 @@ components:
                     maxLength: 48
                 comment:
                     type: string
-                reverseEntry.uuid:
+                revertedAssetTx.uuid:
                     type: string
                     format: uuid
             required:

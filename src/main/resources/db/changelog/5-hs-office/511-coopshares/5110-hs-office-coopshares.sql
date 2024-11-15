@@ -4,7 +4,7 @@
 --changeset michael.hoennig:hs-office-coopshares-MAIN-TABLE endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE hs_office.CoopSharesTransactionType AS ENUM ('ADJUSTMENT', 'SUBSCRIPTION', 'CANCELLATION');
+CREATE TYPE hs_office.CoopSharesTransactionType AS ENUM ('REVERSAL', 'SUBSCRIPTION', 'CANCELLATION');
 
 CREATE CAST (character varying as hs_office.CoopSharesTransactionType) WITH INOUT AS IMPLICIT;
 
@@ -17,7 +17,7 @@ create table if not exists hs_office.coopsharetx
     valueDate       date not null,
     shareCount      integer not null,
     reference       varchar(48) not null,
-    adjustedShareTxUuid uuid unique REFERENCES hs_office.coopsharetx(uuid) DEFERRABLE INITIALLY DEFERRED,
+    revertedShareTxUuid uuid unique REFERENCES hs_office.coopsharetx(uuid) DEFERRABLE INITIALLY DEFERRED,
     comment         varchar(512)
 );
 --//
@@ -28,8 +28,8 @@ create table if not exists hs_office.coopsharetx
 
 alter table hs_office.coopsharetx
     add constraint reverse_entry_missing
-        check ( transactionType = 'ADJUSTMENT' and adjustedShareTxUuid is not null
-             or transactionType <> 'ADJUSTMENT' and adjustedShareTxUuid is null);
+        check ( transactionType = 'REVERSAL' and revertedShareTxUuid is not null
+             or transactionType <> 'REVERSAL' and revertedShareTxUuid is null);
 --//
 
 -- ============================================================================
