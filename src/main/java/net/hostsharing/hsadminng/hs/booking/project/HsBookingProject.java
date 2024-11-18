@@ -4,14 +4,14 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.booking.debitor.HsBookingDebitorEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 
 import jakarta.persistence.*;
 import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @MappedSuperclass
 @Getter

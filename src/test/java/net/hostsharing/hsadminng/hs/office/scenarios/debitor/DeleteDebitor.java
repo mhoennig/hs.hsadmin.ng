@@ -9,7 +9,7 @@ public class DeleteDebitor extends UseCase<DeleteDebitor> {
     public DeleteDebitor(final ScenarioTest testSuite) {
         super(testSuite);
 
-        requires("Debitor: Test AG - delete debitor", alias -> new CreateSelfDebitorForPartner(testSuite, alias)
+        requires("Debitor: Test AG - delete debitor", alias -> new CreateSelfDebitorForPartner(testSuite)
                 .given("partnerPersonTradeName", "Test AG")
                 .given("billingContactCaption", "Test AG - billing department")
                 .given("billingContactEmailAddress", "billing@test-ag.example.org")

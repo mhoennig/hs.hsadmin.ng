@@ -118,8 +118,8 @@ openapiProcessor {
     springRoot {
         processorName 'spring'
         processor 'io.openapiprocessor:openapi-processor-spring:2022.5'
-        apiPath "$projectDir/src/main/resources/api-definition.yaml"
-        mapping "$projectDir/src/main/resources/api-mappings.yaml"
+        apiPath "$projectDir/src/main/resources/api-definition/api-definition.yaml"
+        mapping "$projectDir/src/main/resources/api-definition/api-mappings.yaml"
         targetDir "$buildDir/generated/sources/openapi-javax"
         showWarnings true
         openApiNullable true

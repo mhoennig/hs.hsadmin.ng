@@ -12,8 +12,8 @@ import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.mapper.PatchableMapWrapper;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @MappedSuperclass
 @Getter

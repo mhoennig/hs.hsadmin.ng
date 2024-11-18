@@ -71,11 +71,11 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                         [
-                            { partnerNumber: 10001 },
-                            { partnerNumber: 10002 },
-                            { partnerNumber: 10003 },
-                            { partnerNumber: 10004 },
-                            { partnerNumber: 10010 }
+                            { partnerNumber: "P-10001" },
+                            { partnerNumber: "P-10002" },
+                            { partnerNumber: "P-10003" },
+                            { partnerNumber: "P-10004" },
+                            { partnerNumber: "P-10010" }
                         ]
                         """));
                 // @formatter:on
@@ -100,7 +100,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("""
                             {
-                                "partnerNumber": "20002",
+                                "partnerNumber": "P-20002",
                                 "partnerRel": {
                                      "anchor.uuid": "%s",
                                      "holder.uuid": "%s",
@@ -123,7 +123,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                         .contentType(ContentType.JSON)
                         .body("", lenientlyEquals("""
                         {
-                            "partnerNumber": 20002,
+                            "partnerNumber": "P-20002",
                             "partnerRel": {
                                 "anchor": { "tradeName": "Hostsharing eG" },
                                 "holder": { "tradeName": "Third OHG" },
@@ -159,7 +159,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                             {
-                                "partnerNumber": "20003",
+                                "partnerNumber": "P-20003",
                                 "partnerRel": {
                                      "anchor.uuid": "%s",
                                      "holder.uuid": "%s",
@@ -197,7 +197,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                             {
-                                "partnerNumber": "20004",
+                                "partnerNumber": "P-20004",
                                 "partnerRel": {
                                     "anchor.uuid": "%s",
                                     "holder.uuid": "%s",
@@ -247,7 +247,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "partnerNumber": 10001,
+                        "partnerNumber": "P-10001",
                              "partnerRel": {
                                  "anchor": { "tradeName": "Hostsharing eG" },
                                  "holder": { "tradeName": "First GmbH" },
@@ -320,7 +320,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("""
                            {
-                               "partnerNumber": "20011",
+                               "partnerNumber": "P-20011",
                                "partnerRel.uuid": "%s",
                                "details": {
                                    "registrationOffice": "Temp Registergericht Aurich",
@@ -339,7 +339,7 @@ class HsOfficePartnerControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType(ContentType.JSON)
                     .body("", lenientlyEquals("""
                     {
-                        "partnerNumber": 20011,
+                        "partnerNumber": "P-20011",
                         "partnerRel": {
                             "anchor": { "tradeName": "Hostsharing eG" },
                             "holder": { "tradeName": "Third OHG" },

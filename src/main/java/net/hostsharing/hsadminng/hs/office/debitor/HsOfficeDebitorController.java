@@ -22,8 +22,10 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.DEBITOR;
+import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
 
@@ -49,24 +51,24 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeDebitorResource>> listDebitors(
+    public ResponseEntity<List<HsOfficeDebitorResource>> getListOfDebitors(
             final String currentSubject,
             final String assumedRoles,
             final String name,
-            final Integer debitorNumber) {
+            final String debitorNumber) {
         context.define(currentSubject, assumedRoles);
 
         final var entities = debitorNumber != null
-                ? debitorRepo.findDebitorByDebitorNumber(debitorNumber)
+                ? debitorRepo.findDebitorByDebitorNumber(cropTag("D-", debitorNumber))
                 : debitorRepo.findDebitorByOptionalNameLike(name);
 
-        final var resources = mapper.mapList(entities, HsOfficeDebitorResource.class);
+        final var resources = mapper.mapList(entities, HsOfficeDebitorResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeDebitorResource> addDebitor(
+    public ResponseEntity<HsOfficeDebitorResource> postNewDebitor(
             String currentSubject,
             String assumedRoles,
             HsOfficeDebitorInsertResource body) {
@@ -107,13 +109,13 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
                         .path("/api/hs/office/debitors/{id}")
                         .buildAndExpand(savedEntity.getUuid())
                         .toUri();
-        final var mapped = mapper.map(savedEntity, HsOfficeDebitorResource.class);
+        final var mapped = mapper.map(savedEntity, HsOfficeDebitorResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.created(uri).body(mapped);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeDebitorResource> getDebitorByUuid(
+    public ResponseEntity<HsOfficeDebitorResource> getSingleDebitorByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID debitorUuid) {
@@ -124,7 +126,7 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeDebitorResource.class));
+        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeDebitorResource.class, ENTITY_TO_RESOURCE_POSTMAPPER));
     }
 
     @Override
@@ -159,7 +161,11 @@ public class HsOfficeDebitorController implements HsOfficeDebitorsApi {
 
         final var saved = debitorRepo.save(current);
         Hibernate.initialize(saved);
-        final var mapped = mapper.map(saved, HsOfficeDebitorResource.class);
+        final var mapped = mapper.map(saved, HsOfficeDebitorResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(mapped);
     }
+
+    final BiConsumer<HsOfficeDebitorEntity, HsOfficeDebitorResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
+        resource.setDebitorNumber(entity.getTaggedDebitorNumber());
+    };
 }

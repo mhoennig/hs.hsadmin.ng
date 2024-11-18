@@ -99,7 +99,7 @@ class HsOfficePartnerControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
-                                        "partnerNumber": "20002",
+                                        "partnerNumber": "P-20002",
                                         "partnerRel": {
                                              "anchor.uuid": "%s",
                                              "holder.uuid": "%s",
@@ -136,7 +136,7 @@ class HsOfficePartnerControllerRestTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
                                      {
-                                        "partnerNumber": "20002",
+                                        "partnerNumber": "P-20002",
                                         "partnerRel": {
                                              "anchor.uuid": "%s",
                                              "holder.uuid": "%s",

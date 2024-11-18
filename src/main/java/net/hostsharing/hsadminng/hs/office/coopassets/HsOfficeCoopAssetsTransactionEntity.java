@@ -10,8 +10,8 @@ import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.hs.office.membership.HsOfficeMembershipEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 
 import jakarta.persistence.*;
@@ -31,7 +31,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.ADMIN;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.AGENT;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
 @Table(schema = "hs_office", name = "coopassettx_rv")

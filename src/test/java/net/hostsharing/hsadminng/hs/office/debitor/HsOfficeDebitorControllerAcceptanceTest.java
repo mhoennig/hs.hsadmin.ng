@@ -72,7 +72,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     EntityManager em;
 
     @Nested
-    class ListDebitors {
+    class GetListOfDebitors {
 
         @Test
         void globalAdmin_withoutAssumedRoles_canViewAllDebitors_ifNoCriteriaGiven() {
@@ -110,10 +110,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "phoneNumbers": { "phone_office": "+49 123 1234567" }
                           }
                         },
-                        "debitorNumber": 1000111,
+                        "debitorNumber": "D-1000111",
                         "debitorNumberSuffix": "11",
                         "partner": {
-                          "partnerNumber": 10001,
+                          "partnerNumber": "P-10001",
                           "partnerRel": {
                             "anchor": {
                               "personType": "LEGAL_PERSON",
@@ -165,10 +165,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                             "emailAddresses": { "main": "contact-admin@secondcontact.example.com" }
                            }
                         },
-                        "debitorNumber": 1000212,
+                        "debitorNumber": "D-1000212",
                         "debitorNumberSuffix": "12",
                         "partner": {
-                          "partnerNumber": 10002,
+                          "partnerNumber": "P-10002",
                           "partnerRel": {
                             "anchor": {"tradeName": "Hostsharing eG"},
                             "holder": {"tradeName": "Second e.K."},
@@ -199,10 +199,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                 "emailAddresses": { "main": "contact-admin@thirdcontact.example.com" }
                             }
                         },
-                        "debitorNumber": 1000313,
+                        "debitorNumber": "D-1000313",
                         "debitorNumberSuffix": "13",
                         "partner": {
-                          "partnerNumber": 10003,
+                          "partnerNumber": "P-10003",
                           "partnerRel": {
                             "anchor": {"tradeName": "Hostsharing eG"},
                             "holder": {"tradeName": "Third OHG"},
@@ -237,15 +237,15 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                     .when()
-                    .get("http://localhost/api/hs/office/debitors?debitorNumber=1000212")
+                    .get("http://localhost/api/hs/office/debitors?debitorNumber=D-1000212")
                     .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                      [
                          {
-                             "debitorNumber": 1000212,
-                             "partner": { "partnerNumber": 10002 },
+                             "debitorNumber": "D-1000212",
+                             "partner": { "partnerNumber": "P-10002" },
                              "debitorRel": {
                                 "contact": { "caption": "second contact" }
                              },
@@ -260,7 +260,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    class AddDebitor {
+    class PostNewDebitor {
 
         @Test
         void globalAdmin_withoutAssumedRole_canAddDebitorWithBankAccount() {
@@ -436,7 +436,7 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
     }
 
     @Nested
-    class GetDebitor {
+    class GetSingleDebitorByUuid {
 
         @Test
         void globalAdmin_withoutAssumedRole_canGetArbitraryDebitor() {
@@ -534,8 +534,8 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                        "debitorNumber": 1000111,
-                        "partner": { "partnerNumber": 10001 },
+                        "debitorNumber": "D-1000111",
+                        "partner": { "partnerNumber": "P-10001" },
                         "debitorRel": { "contact": { "caption": "first contact" } },
                         "refundBankAccount": null
                     }
@@ -581,10 +581,10 @@ class HsOfficeDebitorControllerAcceptanceTest extends ContextBasedTestWithCleanu
                                     "mark": null,
                                     "contact": { "caption": "fourth contact" }
                                 },
-                                "debitorNumber": 10004${debitorNumberSuffix},
+                                "debitorNumber": "D-10004${debitorNumberSuffix}",
                                 "debitorNumberSuffix": "${debitorNumberSuffix}",
                                 "partner": {
-                                    "partnerNumber": 10004,
+                                    "partnerNumber": "P-10004",
                                     "partnerRel": {
                                         "anchor": { "tradeName": "Hostsharing eG" },
                                         "holder": { "tradeName": "Fourth eG" },

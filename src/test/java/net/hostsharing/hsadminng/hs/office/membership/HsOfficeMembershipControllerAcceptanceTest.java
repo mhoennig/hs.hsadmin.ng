@@ -77,24 +77,24 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("", lenientlyEquals("""
                       [
                           {
-                              "partner": { "partnerNumber": 10001 },
-                              "memberNumber": 1000101,
+                              "partner": { "partnerNumber": "P-10001" },
+                              "memberNumber": "M-1000101",
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": null,
                               "status": "ACTIVE"
                           },
                           {
-                              "partner": { "partnerNumber": 10002 },
-                              "memberNumber": 1000202,
+                              "partner": { "partnerNumber": "P-10002" },
+                              "memberNumber": "M-1000202",
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
                               "validTo": null,
                               "status": "ACTIVE"
                           },
                           {
-                              "partner": { "partnerNumber": 10003 },
-                              "memberNumber": 1000303,
+                              "partner": { "partnerNumber": "P-10003" },
+                              "memberNumber": "M-1000303",
                               "memberNumberSuffix": "03",
                               "validFrom": "2022-10-01",
                               "validTo": null,
@@ -124,8 +124,8 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("", lenientlyEquals("""
                       [
                           {
-                              "partner": { "partnerNumber": 10001 },
-                              "memberNumber": 1000101,
+                              "partner": { "partnerNumber": "P-10001" },
+                              "memberNumber": "M-1000101",
                               "memberNumberSuffix": "01",
                               "validFrom": "2022-10-01",
                               "validTo": null,
@@ -144,7 +144,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .header("current-subject", "superuser-alex@hostsharing.net")
                     .port(port)
                     .when()
-                    .queryParam("memberNumber", 1000202 )
+                    .queryParam("memberNumber", "M-1000202" )
                     .get("http://localhost/api/hs/office/memberships")
                     .then().log().all().assertThat()
                     .statusCode(200)
@@ -152,8 +152,8 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .body("", lenientlyEquals("""
                       [
                           {
-                              "partner": { "partnerNumber": 10002 },
-                              "memberNumber": 1000202,
+                              "partner": { "partnerNumber": "P-10002" },
+                              "memberNumber": "M-1000202",
                               "memberNumberSuffix": "02",
                               "validFrom": "2022-10-01",
                               "validTo": null,
@@ -195,8 +195,8 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("partner.partnerNumber", is(10003))
-                        .body("memberNumber", is(expectedMemberNumber))
+                        .body("partner.partnerNumber", is("P-10003"))
+                        .body("memberNumber", is("M-" + expectedMemberNumber))
                         .body("memberNumberSuffix", is(givenMemberSuffix))
                         .body("validFrom", is("2022-10-13"))
                         .body("validTo", equalTo(null))
@@ -230,8 +230,8 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "partner": { "partnerNumber": 10001 },
-                         "memberNumber": 1000101,
+                         "partner": { "partnerNumber": "P-10001" },
+                         "memberNumber": "M-1000101",
                          "memberNumberSuffix": "01",
                          "validFrom": "2022-10-01",
                          "validTo": null,
@@ -256,7 +256,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
         }
 
         @Test
-        void parnerRelAgent_canGetRelatedMembership() {
+        void partnerRelAgent_canGetRelatedMembership() {
             context.define("superuser-alex@hostsharing.net");
             final var givenMembershipUuid = membershipRepo.findMembershipByMemberNumber(1000303).getUuid();
 
@@ -272,8 +272,8 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "partner": { "partnerNumber": 10003 },
-                         "memberNumber": 1000303,
+                         "partner": { "partnerNumber": "P-10003" },
+                         "memberNumber": "M-1000303",
                          "memberNumberSuffix": "03",
                          "validFrom": "2022-10-01",
                          "validTo": null,
@@ -309,7 +309,7 @@ class HsOfficeMembershipControllerAcceptanceTest extends ContextBasedTestWithCle
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("partner.partnerNumber", is(givenMembership.getPartner().getPartnerNumber()))
+                    .body("partner.partnerNumber", is("P-" + givenMembership.getPartner().getPartnerNumber()))
                     .body("memberNumberSuffix", is(givenMembership.getMemberNumberSuffix()))
                     .body("validFrom", is("2022-11-01"))
                     .body("validTo", is("2023-12-31"))

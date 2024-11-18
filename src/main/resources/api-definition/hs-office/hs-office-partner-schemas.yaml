@@ -10,10 +10,10 @@ components:
                     type: string
                     format: uuid
                 partnerNumber:
-                    type: integer
-                    format: int8
-                    minimum: 10000
-                    maximum: 99999
+                    type: string
+                    minLength: 7
+                    maxLength: 7
+                    pattern: 'P-[0-9]{5}'
                 partnerRel:
                     $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 details:
@@ -86,10 +86,10 @@ components:
             type: object
             properties:
                 partnerNumber:
-                    type: integer
-                    format: int8
-                    minimum: 10000
-                    maximum: 99999
+                    type: string
+                    minLength: 7
+                    maxLength: 7
+                    pattern: 'P-[0-9]{5}'
                 partnerRel:
                     $ref: '#/components/schemas/HsOfficePartnerRelInsert'
                 details:

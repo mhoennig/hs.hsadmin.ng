@@ -13,8 +13,8 @@ import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.Column;
@@ -53,7 +53,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.OWNER;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.TENANT;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
 @Table(schema = "hs_office", name = "membership_rv")
@@ -130,12 +130,17 @@ public class HsOfficeMembershipEntity implements BaseEntity<HsOfficeMembershipEn
         }
         return validity;
     }
+
     public Integer getMemberNumber() {
         if (partner == null || partner.getPartnerNumber() == null || memberNumberSuffix == null ) {
             return null;
         }
 
         return getPartner().getPartnerNumber() * 100 + Integer.parseInt(memberNumberSuffix, 10);
+    }
+
+    public String getTaggedMemberNumber() {
+        return MEMBER_NUMBER_TAG + getMemberNumber();
     }
 
     @Override

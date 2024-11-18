@@ -14,8 +14,8 @@ import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelation;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
@@ -33,7 +33,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
 import static java.util.Optional.ofNullable;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
 @Table(schema = "hs_office", name = "partner_rv")

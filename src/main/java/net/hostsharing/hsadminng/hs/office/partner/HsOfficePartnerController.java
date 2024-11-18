@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationType.EX_PARTNER;
+import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
 
@@ -150,7 +151,7 @@ public class HsOfficePartnerController implements HsOfficePartnersApi {
 
     private HsOfficePartnerEntity createPartnerEntity(final HsOfficePartnerInsertResource body) {
         final var entityToSave = new HsOfficePartnerEntity();
-        entityToSave.setPartnerNumber(body.getPartnerNumber());
+        entityToSave.setPartnerNumber(cropTag(HsOfficePartnerEntity.PARTNER_NUMBER_TAG, body.getPartnerNumber()));
         entityToSave.setPartnerRel(persistPartnerRel(body.getPartnerRel()));
         entityToSave.setDetails(mapper.map(body.getDetails(), HsOfficePartnerDetailsEntity.class));
         return entityToSave;

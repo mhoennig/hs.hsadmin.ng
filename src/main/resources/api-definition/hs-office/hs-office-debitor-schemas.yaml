@@ -12,10 +12,10 @@ components:
                 debitorRel:
                     $ref: 'hs-office-relation-schemas.yaml#/components/schemas/HsOfficeRelation'
                 debitorNumber:
-                    type: integer
-                    format: int32
-                    minimum: 1000000
-                    maximum: 9999999
+                    type: string
+                    minLength: 9
+                    maxLength: 9
+                    pattern: 'D-[0-9]{7}'
                 debitorNumberSuffix:
                     type: string
                     pattern: '^[0-9][0-9]$'

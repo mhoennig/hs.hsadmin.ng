@@ -14,8 +14,8 @@ import net.hostsharing.hsadminng.hs.office.relation.HsOfficeRelationRbacEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
 import net.hostsharing.hsadminng.rbac.generator.RbacView.SQL;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JoinFormula;
 import org.hibernate.annotations.NotFound;
@@ -51,7 +51,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.directlyFetchedByDependsOnColumn;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.SQL.fetchedBySql;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.rbacViewFor;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
 @Table(schema = "hs_office", name = "debitor_rv")
@@ -142,17 +142,12 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
         return this;
     }
 
-    private String getDebitorNumberString() {
+    public String getTaggedDebitorNumber() {
         return ofNullable(partner)
                 .filter(partner -> debitorNumberSuffix != null)
                 .map(HsOfficePartnerEntity::getPartnerNumber)
-                .map(Object::toString)
-                .map(partnerNumber -> partnerNumber + debitorNumberSuffix)
+                .map(partnerNumber -> DEBITOR_NUMBER_TAG + partnerNumber + debitorNumberSuffix)
                 .orElse(null);
-    }
-
-    public Integer getDebitorNumber() {
-        return ofNullable(getDebitorNumberString()).map(Integer::parseInt).orElse(null);
     }
 
     @Override
@@ -162,7 +157,7 @@ public class HsOfficeDebitorEntity implements BaseEntity<HsOfficeDebitorEntity>,
 
     @Override
     public String toShortString() {
-        return DEBITOR_NUMBER_TAG + getDebitorNumberString();
+        return getTaggedDebitorNumber();
     }
 
     public static RbacView rbac() {

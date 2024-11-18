@@ -9,7 +9,7 @@ public class CreateCoopSharesRevertTransaction extends CreateCoopSharesTransacti
 
         requires("CoopShares-Transaction with incorrect shareCount", alias ->
                 new CreateCoopSharesSubscriptionTransaction(testSuite)
-                        .given("memberNumber", "3101000")
+                        .given("memberNumber", "%{memberNumber}")
                         .given("reference", "sign %{dateOfIncorrectTransaction}") // same as revertedShareTx
                         .given("shareCount", 100)
                         .given("comment", "coop-shares subscription transaction with wrong share count")

@@ -2,13 +2,13 @@ package net.hostsharing.hsadminng.rbac.test;
 
 import lombok.*;
 import lombok.experimental.FieldNameConstants;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StringifyUnitTest {

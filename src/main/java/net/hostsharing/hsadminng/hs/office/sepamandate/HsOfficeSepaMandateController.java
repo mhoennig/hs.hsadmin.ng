@@ -131,7 +131,7 @@ public class HsOfficeSepaMandateController implements HsOfficeSepaMandatesApi {
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));
         }
-        resource.getDebitor().setDebitorNumber(entity.getDebitor().getDebitorNumber());
+        resource.getDebitor().setDebitorNumber(entity.getDebitor().getTaggedDebitorNumber());
     };
 
     final BiConsumer<HsOfficeSepaMandateInsertResource, HsOfficeSepaMandateEntity> SEPA_MANDATE_RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {

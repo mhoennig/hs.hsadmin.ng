@@ -9,8 +9,8 @@ import static org.springframework.http.HttpStatus.OK;
 
 public class CreateSelfDebitorForPartner extends UseCase<CreateSelfDebitorForPartner> {
 
-    public CreateSelfDebitorForPartner(final ScenarioTest testSuite, final String resultAlias) {
-        super(testSuite, resultAlias);
+    public CreateSelfDebitorForPartner(final ScenarioTest testSuite) {
+        super(testSuite);
     }
 
     @Override

@@ -46,14 +46,14 @@ public class HsOfficeMembershipControllerRestTest {
     EntityManagerWrapper em;
 
     @Nested
-    class GetMemberships {
+    class GetListOfMemberships {
 
         @Test
         void findMembershipByNonExistingMemberNumberReturnsEmptyList() throws Exception {
 
             // when
             mockMvc.perform(MockMvcRequestBuilders
-                            .get("/api/hs/office/memberships?memberNumber=12345")
+                            .get("/api/hs/office/memberships?memberNumber=M-1234501")
                             .header("current-subject", "superuser-alex@hostsharing.net")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
@@ -73,7 +73,7 @@ public class HsOfficeMembershipControllerRestTest {
     }
 
     @Nested
-    class AddMembership {
+    class PostNewMembership {
 
         @Test
         void respondBadRequest_ifPartnerUuidIsMissing() throws Exception {

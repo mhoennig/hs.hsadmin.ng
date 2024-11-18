@@ -5,8 +5,8 @@ import lombok.experimental.FieldNameConstants;
 import net.hostsharing.hsadminng.errors.DisplayAs;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
 import net.hostsharing.hsadminng.rbac.generator.RbacView;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 
 import jakarta.persistence.*;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import static net.hostsharing.hsadminng.rbac.generator.RbacView.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.Permission.*;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.RbacSubjectReference.UserRole.CREATOR;
 import static net.hostsharing.hsadminng.rbac.generator.RbacView.Role.*;
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @Entity
 @Table(schema = "hs_office", name = "bankaccount_rv")

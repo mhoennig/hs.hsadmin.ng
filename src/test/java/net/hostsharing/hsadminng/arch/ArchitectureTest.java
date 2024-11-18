@@ -77,7 +77,7 @@ public class ArchitectureTest {
                     "..rbac.grant",
                     "..rbac.role",
                     "..rbac.object",
-                    "..stringify"
+                    "..repr"
                     // ATTENTION: Don't simply add packages here, also add arch rules for the new package!
             );
 

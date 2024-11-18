@@ -65,9 +65,9 @@ class HsOfficeDebitorEntityUnitTest {
                         .build())
                 .build();
 
-        final var result = given.getDebitorNumber();
+        final var result = given.getTaggedDebitorNumber();
 
-        assertThat(result).isEqualTo(1234567);
+        assertThat(result).isEqualTo("D-1234567");
     }
 
     @Test
@@ -78,7 +78,7 @@ class HsOfficeDebitorEntityUnitTest {
                 .partner(null)
                 .build();
 
-        final var result = given.getDebitorNumber();
+        final var result = given.getTaggedDebitorNumber();
 
         assertThat(result).isNull();
     }
@@ -91,7 +91,7 @@ class HsOfficeDebitorEntityUnitTest {
                 .partner(HsOfficePartnerEntity.builder().build())
                 .build();
 
-        final var result = given.getDebitorNumber();
+        final var result = given.getTaggedDebitorNumber();
 
         assertThat(result).isNull();
     }
@@ -106,7 +106,7 @@ class HsOfficeDebitorEntityUnitTest {
                         .build())
                 .build();
 
-        final var result = given.getDebitorNumber();
+        final var result = given.getTaggedDebitorNumber();
 
         assertThat(result).isNull();
     }

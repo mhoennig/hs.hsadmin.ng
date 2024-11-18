@@ -6,14 +6,14 @@ import lombok.experimental.SuperBuilder;
 import net.hostsharing.hsadminng.hs.office.contact.HsOfficeContactRealEntity;
 import net.hostsharing.hsadminng.hs.office.person.HsOfficePersonEntity;
 import net.hostsharing.hsadminng.persistence.BaseEntity;
-import net.hostsharing.hsadminng.stringify.Stringify;
-import net.hostsharing.hsadminng.stringify.Stringifyable;
+import net.hostsharing.hsadminng.repr.Stringify;
+import net.hostsharing.hsadminng.repr.Stringifyable;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Column;
 import java.util.UUID;
 
-import static net.hostsharing.hsadminng.stringify.Stringify.stringify;
+import static net.hostsharing.hsadminng.repr.Stringify.stringify;
 
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

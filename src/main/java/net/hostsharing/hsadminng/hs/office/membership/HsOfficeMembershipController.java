@@ -17,9 +17,9 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.repr.TaggedNumber.cropTag;
 
 @RestController
-
 public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Autowired
@@ -33,16 +33,18 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<HsOfficeMembershipResource>> listMemberships(
+    public ResponseEntity<List<HsOfficeMembershipResource>> getListOfMemberships(
             final String currentSubject,
             final String assumedRoles,
             final UUID partnerUuid,
-            final Integer memberNumber) {
+            final String memberNumber) {
         context.define(currentSubject, assumedRoles);
 
-        final var entities = ( memberNumber != null)
-                    ? ofNullable(membershipRepo.findMembershipByMemberNumber(memberNumber)).stream().toList()
-                    : membershipRepo.findMembershipsByOptionalPartnerUuid(partnerUuid);
+        final var entities = (memberNumber != null)
+                ? ofNullable(membershipRepo.findMembershipByMemberNumber(
+                    cropTag(HsOfficeMembershipEntity.MEMBER_NUMBER_TAG, memberNumber))).stream()
+                    .toList()
+                : membershipRepo.findMembershipsByOptionalPartnerUuid(partnerUuid);
 
         final var resources = mapper.mapList(entities, HsOfficeMembershipResource.class,
                 SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER);
@@ -51,7 +53,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional
-    public ResponseEntity<HsOfficeMembershipResource> addMembership(
+    public ResponseEntity<HsOfficeMembershipResource> postNewMembership(
             final String currentSubject,
             final String assumedRoles,
             final HsOfficeMembershipInsertResource body) {
@@ -74,7 +76,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<HsOfficeMembershipResource> getMembershipByUuid(
+    public ResponseEntity<HsOfficeMembershipResource> getSingleMembershipByUuid(
             final String currentSubject,
             final String assumedRoles,
             final UUID membershipUuid) {
@@ -125,7 +127,7 @@ public class HsOfficeMembershipController implements HsOfficeMembershipsApi {
     }
 
     final BiConsumer<HsOfficeMembershipEntity, HsOfficeMembershipResource> SEPA_MANDATE_ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
-        // TODO.refa: this should be possible via ModelMapper config
+        resource.setMemberNumber(entity.getTaggedMemberNumber());
         resource.setValidFrom(entity.getValidity().lower());
         if (entity.getValidity().hasUpperBound()) {
             resource.setValidTo(entity.getValidity().upper().minusDays(1));

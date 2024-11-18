@@ -113,6 +113,8 @@ public abstract class ScenarioTest extends ContextBasedTest {
                          // and it does not produce anything we already have (would cause errors)
                          SetUtils.intersection(testMethodProduces, knowVariables().keySet()).isEmpty()
                     ) {
+                        assertThat(producesAnnot.permanent()).as("cannot depend on non-permanent producer: " + potentialProducerMethod);
+
                         // then we recursively produce the pre-requisites of the producer method
                         callRequiredProducers(potentialProducerMethod);
 

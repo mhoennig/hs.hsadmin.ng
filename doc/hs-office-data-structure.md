@@ -64,7 +64,7 @@ classDiagram
     }
 
     class partner-MeierGmbH {
-        +Numeric partnerNumber: 12345
+        +Numeric partnerNumber: P-12345
         +Relation partnerRel
     }
     partner-MeierGmbH *-- rel-MeierGmbH

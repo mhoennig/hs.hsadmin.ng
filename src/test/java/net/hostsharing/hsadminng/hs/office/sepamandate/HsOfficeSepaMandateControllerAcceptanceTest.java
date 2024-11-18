@@ -72,21 +72,21 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .body("", lenientlyEquals("""
                     [
                          {
-                             "debitor": { "debitorNumber": 1000111 },
+                             "debitor": { "debitorNumber": "D-1000111" },
                              "bankAccount": { "holder": "First GmbH" },
                              "reference": "ref-10001-11",
                              "validFrom": "2022-10-01",
                              "validTo": "2026-12-31"
                          },
                          {
-                             "debitor": { "debitorNumber": 1000212 },
+                             "debitor": { "debitorNumber": "D-1000212" },
                              "bankAccount": { "holder": "Second e.K." },
                              "reference": "ref-10002-12",
                              "validFrom": "2022-10-01",
                              "validTo": "2026-12-31"
                          },
                          {
-                             "debitor": { "debitorNumber": 1000313 },
+                             "debitor": { "debitorNumber": "D-1000313" },
                              "bankAccount": { "holder": "Third OHG" },
                              "reference": "ref-10003-13",
                              "validFrom": "2022-10-01",
@@ -113,7 +113,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                         .body("", lenientlyEquals("""
                         [
                              {
-                                 "debitor": { "debitorNumber": 1000111 },
+                                 "debitor": { "debitorNumber": "D-1000111" },
                                  "bankAccount": {
                                     "iban": "DE02120300000000202051",
                                     "holder": "First GmbH"
@@ -158,7 +158,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                         .statusCode(201)
                         .contentType(ContentType.JSON)
                         .body("uuid", isUuidValid())
-                        .body("debitor.partner.partnerNumber", is(10003))
+                        .body("debitor.partner.partnerNumber", is("P-10003"))
                         .body("bankAccount.iban", is("DE02200505501015871393"))
                         .body("reference", is("temp ref CAT A"))
                         .body("validFrom", is("2022-10-13"))
@@ -280,7 +280,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "debitor": { "debitorNumber": 1000111 },
+                         "debitor": { "debitorNumber": "D-1000111" },
                          "bankAccount": {
                             "holder": "First GmbH",
                             "iban": "DE02120300000000202051"
@@ -327,7 +327,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .contentType("application/json")
                     .body("", lenientlyEquals("""
                     {
-                         "debitor": { "debitorNumber": 1000111 },
+                         "debitor": { "debitorNumber": "D-1000111" },
                          "bankAccount": {
                             "holder": "First GmbH",
                             "iban": "DE02120300000000202051"
@@ -367,7 +367,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("debitor.debitorNumber", is(1000111))
+                    .body("debitor.debitorNumber", is("D-1000111"))
                     .body("bankAccount.iban", is("DE02120300000000202051"))
                     .body("reference", is("temp ref CAT Z - patched"))
                     .body("agreement", is("2020-06-01"))
@@ -410,7 +410,7 @@ class HsOfficeSepaMandateControllerAcceptanceTest extends ContextBasedTestWithCl
                     .statusCode(200)
                     .contentType(ContentType.JSON)
                     .body("uuid", isUuidValid())
-                    .body("debitor.debitorNumber", is(1000111))
+                    .body("debitor.debitorNumber", is("D-1000111"))
                     .body("bankAccount.iban", is("DE02120300000000202051"))
                     .body("reference", is("temp ref CAT Z"))
                     .body("validFrom", is("2022-11-01"))

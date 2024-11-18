@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.stringify;
+package net.hostsharing.hsadminng.repr;
 
 import net.hostsharing.hsadminng.errors.DisplayAs;
 

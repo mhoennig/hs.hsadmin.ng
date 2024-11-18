@@ -4,7 +4,7 @@ get:
         The list can optionally be filtered by either the `partnerUuid` or the `memberNumber` - not both at the same time.
     tags:
         - hs-office-memberships
-    operationId: listMemberships
+    operationId: getListOfMemberships
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -19,7 +19,10 @@ get:
           in: query
           required: false
           schema:
-              type: integer
+              type: string
+              minLength: 9
+              maxLength: 9
+              pattern: 'M-[0-9]{7}'
           description: Member number, exclusive to `partnerUuid`.
     responses:
         "200":
@@ -39,7 +42,7 @@ post:
     summary: Adds a new membership.
     tags:
         - hs-office-memberships
-    operationId: addMembership
+    operationId: postNewMembership
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

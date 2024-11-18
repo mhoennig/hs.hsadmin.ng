@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.stringify;
+package net.hostsharing.hsadminng.repr;
 
 public interface Stringifyable {
 

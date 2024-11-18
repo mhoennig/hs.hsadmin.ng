@@ -9,7 +9,7 @@ public class CreateCoopAssetsRevertTransaction extends CreateCoopAssetsTransacti
 
         requires("CoopAssets-Transaction with incorrect assetValue", alias ->
                 new CreateCoopAssetsDepositTransaction(testSuite)
-                        .given("memberNumber", "3101000")
+                        .given("memberNumber", "%{memberNumber}")
                         .given("reference", "sign %{dateOfIncorrectTransaction}") // same as revertedAssetTx
                         .given("assetValue", 10)
                         .given("comment", "coop-assets deposit transaction with wrong asset value")

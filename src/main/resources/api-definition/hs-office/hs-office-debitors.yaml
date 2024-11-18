@@ -3,7 +3,7 @@ get:
     description: Returns the list of (optionally filtered) debitors which are visible to the current subject or any of it's assumed roles.
     tags:
         - hs-office-debitors
-    operationId: listDebitors
+    operationId: getListOfDebitors
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'
@@ -17,7 +17,10 @@ get:
           in: query
           required: false
           schema:
-              type: integer
+              type: string
+              minLength: 9
+              maxLength: 9
+              pattern: 'D-[0-9]{7}'
           description: Debitor number of the requested debitor.
     responses:
         "200":
@@ -37,7 +40,7 @@ post:
     summary: Adds a new debitor.
     tags:
         - hs-office-debitors
-    operationId: addDebitor
+    operationId: postNewDebitor
     parameters:
         - $ref: 'auth.yaml#/components/parameters/currentSubject'
         - $ref: 'auth.yaml#/components/parameters/assumedRoles'

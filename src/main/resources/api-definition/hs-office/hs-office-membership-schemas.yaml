@@ -26,9 +26,10 @@ components:
                 mainDebitor:
                     $ref: 'hs-office-debitor-schemas.yaml#/components/schemas/HsOfficeDebitor'
                 memberNumber:
-                    type: integer
-                    minimum: 1000000
-                    maximum: 9999999
+                    type: string
+                    minLength: 9
+                    maxLength: 9
+                    pattern: 'M-[0-9]{7}'
                 memberNumberSuffix:
                     type: string
                     minLength: 2

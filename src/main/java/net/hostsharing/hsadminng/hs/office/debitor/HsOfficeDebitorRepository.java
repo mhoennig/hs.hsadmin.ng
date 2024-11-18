@@ -16,13 +16,16 @@ public interface HsOfficeDebitorRepository extends Repository<HsOfficeDebitorEnt
             JOIN HsOfficePartnerEntity partner
                     ON partner.partnerRel.holder = debitor.debitorRel.anchor
                         AND partner.partnerRel.type = 'PARTNER' AND debitor.debitorRel.type = 'DEBITOR'
-                WHERE cast(partner.partnerNumber as integer) = :partnerNumber
-                  AND cast(debitor.debitorNumberSuffix as integer) = :debitorNumberSuffix
-               """)
-     List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int partnerNumber, byte debitorNumberSuffix);
+                WHERE partner.partnerNumber = :partnerNumber
+                  AND debitor.debitorNumberSuffix = :debitorNumberSuffix
+            """)
+     List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int partnerNumber, String debitorNumberSuffix);
 
     default List<HsOfficeDebitorEntity> findDebitorByDebitorNumber(int debitorNumber) {
-        return  findDebitorByDebitorNumber( debitorNumber/100, (byte) (debitorNumber%100));
+        final var partnerNumber = debitorNumber / 100;
+        final String suffix = String.format("%02d", debitorNumber % 100);
+        final var result = findDebitorByDebitorNumber(partnerNumber, suffix);
+        return result;
     }
 
     @Query("""
