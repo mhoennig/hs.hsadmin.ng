@@ -8,8 +8,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /*
  * This 'test' includes the complete legacy 'office' data import.
  *
@@ -58,9 +56,4 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(OrderedDependedTestsExtension.class)
 public class ImportOfficeData extends BaseOfficeDataImport {
-
-    @BeforeEach
-    void check() {
-        assertThat(jdbcUrl).isEqualTo("jdbc:tc:postgresql:15.5-bookworm:///importOfficeDataTC");
-    }
 }

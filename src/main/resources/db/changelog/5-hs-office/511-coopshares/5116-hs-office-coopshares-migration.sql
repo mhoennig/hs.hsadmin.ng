@@ -7,7 +7,7 @@
 --changeset michael.hoennig:hs-office-coopshares-MIGRATION-mapping endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE TABLE hs_office.coopsharestransaction_legacy_id
+CREATE TABLE hs_office.coopsharetx_legacy_id
 (
     uuid            uuid NOT NULL REFERENCES hs_office.coopsharetx(uuid),
     member_share_id  integer NOT NULL
@@ -19,10 +19,10 @@ CREATE TABLE hs_office.coopsharestransaction_legacy_id
 --changeset michael.hoennig:hs-office-coopshares-MIGRATION-sequence endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-CREATE SEQUENCE IF NOT EXISTS hs_office.coopsharestransaction_legacy_id_seq
+CREATE SEQUENCE IF NOT EXISTS hs_office.coopsharetx_legacy_id_seq
     AS integer
     START 1000000000
-    OWNED BY hs_office.coopsharestransaction_legacy_id.member_share_id;
+    OWNED BY hs_office.coopsharetx_legacy_id.member_share_id;
 --//
 
 
@@ -30,9 +30,9 @@ CREATE SEQUENCE IF NOT EXISTS hs_office.coopsharestransaction_legacy_id_seq
 --changeset michael.hoennig:hs-office-coopshares-MIGRATION-default endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-ALTER TABLE hs_office.coopsharestransaction_legacy_id
+ALTER TABLE hs_office.coopsharetx_legacy_id
     ALTER COLUMN member_share_id
-        SET DEFAULT nextVal('hs_office.coopsharestransaction_legacy_id_seq');
+        SET DEFAULT nextVal('hs_office.coopsharetx_legacy_id_seq');
 
 --/
 
@@ -41,8 +41,8 @@ ALTER TABLE hs_office.coopsharestransaction_legacy_id
 -- ----------------------------------------------------------------------------
 
 CALL base.defineContext('schema-migration');
-INSERT INTO hs_office.coopsharestransaction_legacy_id(uuid, member_share_id)
-    SELECT uuid, nextVal('hs_office.coopsharestransaction_legacy_id_seq') FROM hs_office.coopsharetx;
+INSERT INTO hs_office.coopsharetx_legacy_id(uuid, member_share_id)
+    SELECT uuid, nextVal('hs_office.coopsharetx_legacy_id_seq') FROM hs_office.coopsharetx;
 --/
 
 
@@ -58,8 +58,8 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    INSERT INTO hs_office.coopsharestransaction_legacy_id VALUES
-        (NEW.uuid, nextVal('hs_office.coopsharestransaction_legacy_id_seq'));
+    INSERT INTO hs_office.coopsharetx_legacy_id VALUES
+        (NEW.uuid, nextVal('hs_office.coopsharetx_legacy_id_seq'));
 
     return NEW;
 end; $$;
@@ -83,7 +83,7 @@ begin
         raise exception 'invalid usage of trigger';
     end if;
 
-    DELETE FROM hs_office.coopsharestransaction_legacy_id
+    DELETE FROM hs_office.coopsharetx_legacy_id
            WHERE uuid = OLD.uuid;
 
     return OLD;

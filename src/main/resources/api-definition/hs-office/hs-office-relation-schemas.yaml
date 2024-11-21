@@ -13,6 +13,7 @@ components:
                 - REPRESENTATIVE
                 - VIP_CONTACT
                 - OPERATIONS
+                - OPERATIONS_ALERT
                 - SUBSCRIBER
 
         HsOfficeRelation:

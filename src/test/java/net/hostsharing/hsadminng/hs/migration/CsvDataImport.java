@@ -255,7 +255,7 @@ public class CsvDataImport extends ContextBasedTest {
             em.createNativeQuery("delete from hs_office.coopassettx where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.coopassettx_legacy_id where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.coopsharetx where true").executeUpdate();
-            em.createNativeQuery("delete from hs_office.coopsharestransaction_legacy_id where true").executeUpdate();
+            em.createNativeQuery("delete from hs_office.coopsharetx_legacy_id where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.membership where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.sepamandate where true").executeUpdate();
             em.createNativeQuery("delete from hs_office.sepamandate_legacy_id where true").executeUpdate();
@@ -275,7 +275,7 @@ public class CsvDataImport extends ContextBasedTest {
             em.createNativeQuery("alter sequence hs_office.contact_legacy_id_seq restart with 1000000000;").executeUpdate();
             em.createNativeQuery("alter sequence hs_office.coopassettx_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
-            em.createNativeQuery("alter sequence public.hs_office.coopsharestransaction_legacy_id_seq restart with 1000000000;")
+            em.createNativeQuery("alter sequence public.hs_office.coopsharetx_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();
             em.createNativeQuery("alter sequence public.hs_office.partner_legacy_id_seq restart with 1000000000;")
                     .executeUpdate();

@@ -79,10 +79,24 @@ der Person des VIP-Contact (_Holder_) zur repräsentierten Person (_Anchor_) dar
 
 ### Operations-Contact
 
-Ein _Operations-_Contact_ ist_ eine natürliche Person, die für einen Geschäftspartner technischer Ansprechpartner ist
+Ein _Operations-_Contact_ ist_ eine natürliche Person, die für einen Geschäftspartner technischer Ansprechpartner ist.
+
+Ein Seiteneffekt ist, dass diese Person im Ticketsystem Znuny direkt dem Geschäftspartner zugeordnet werden kann.
+
+Im Legacy System waren das die Kontakte mit der Rolle `operation` und `silent`.
 
 Implementiert ist der _Operations-Contact_ als eine besondere Form der [Relation](#Relation)
 der Person des _Operations-Contact_ (_Holder_) zur repräsentierten Person (_Anchor_) dargestellt.
+
+
+### OperationsAlert-Contact
+
+Ein _OperationsAlert-_Contact_ ist_ eine natürliche Person, die für einen Geschäftspartner bei technischen Probleme kontaktiert werden soll.
+
+Im Legacy System waren das die Kontakte mit der Rolle `operation`.
+
+Implementiert ist der _OperationsAlert-Contact_ als eine besondere Form der [Relation](#Relation)
+der Person des _OperationsAlert-Contact_ (_Holder_) zur repräsentierten Person (_Anchor_) dargestellt.
 
 
 ### Subscriber-Contact

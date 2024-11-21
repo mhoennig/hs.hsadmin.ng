@@ -8,5 +8,6 @@ public enum HsOfficeRelationType {
     VIP_CONTACT,
     DEBITOR,
     OPERATIONS,
+    OPERATIONS_ALERT,
     SUBSCRIBER
 }

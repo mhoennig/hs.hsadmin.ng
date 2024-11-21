@@ -36,13 +36,11 @@ dump "select sepa_mandat_id, bp_id, bank_customer, bank_name, bank_iban, bank_bi
 
 dump "select member_asset_id, bp_id, date, action, amount, comment
      from member_asset
-     WHERE bp_id NOT IN (511912)
      order by member_asset_id" \
      "office/asset_transactions.csv"
 
 dump "select member_share_id, bp_id, date, action, quantity, comment
       from member_share
-     WHERE bp_id NOT IN (511912)
       order by member_share_id" \
      "office/share_transactions.csv"
 
@@ -85,7 +83,7 @@ dump "select domain_id, domain_name, domain_since, domain_dns_master, domain_own
 dump "select emailaddr_id, domain_id, localpart, subdomain, target
       from emailaddr
       order by emailaddr_id" \
-     "emailaddr.csv"
+     "hosting/emailaddr.csv"
 
 dump "select emailalias_id, pac_id, name, target
       from emailalias

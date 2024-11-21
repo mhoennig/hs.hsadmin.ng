@@ -12,6 +12,7 @@ CREATE TYPE hs_office.RelationType AS ENUM (
     'DEBITOR',
     'VIP_CONTACT',
     'OPERATIONS',
+    'OPERATIONS_ALERT',
     'SUBSCRIBER');
 
 CREATE CAST (character varying as hs_office.RelationType) WITH INOUT AS IMPLICIT;
