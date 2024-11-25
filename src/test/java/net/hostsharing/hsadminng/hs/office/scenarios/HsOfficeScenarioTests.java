@@ -17,6 +17,7 @@ import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDepositTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDisbursalTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsTransferTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesCancellationTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesRevertTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesSubscriptionTransaction;
@@ -29,12 +30,15 @@ import net.hostsharing.hsadminng.hs.office.scenarios.subscription.RemoveOperatio
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeToMailinglist;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.UnsubscribeFromMailinglist;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.test.IgnoreOnFailure;
+import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 
@@ -51,6 +55,7 @@ import org.springframework.test.annotation.DirtiesContext;
 )
 @DirtiesContext
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ExtendWith(IgnoreOnFailureExtension.class)
 class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
@@ -77,8 +82,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(1011)
-    @Produces(explicitly = "Partner: P-31011 - Michelle Matthieu", implicitly = { "Person: Michelle Matthieu",
-                                                                                  "Contact: Michelle Matthieu" })
+    @Produces(explicitly = "Partner: P-31011 - Michelle Matthieu",
+            implicitly = { "Person: Michelle Matthieu", "Contact: Michelle Matthieu" })
     void shouldCreateNaturalPersonAsPartner() {
         new CreatePartner(this)
                 .given("partnerNumber", "P-31011")
@@ -336,7 +341,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Test
     @Order(4201)
     @Requires("Membership: M-3101000 - Test AG")
-    @Produces("Coop-Shares SUBSCRIPTION Transaction")
+    @Produces("Coop-Shares M-3101000 - Test AG - SUBSCRIPTION Transaction")
     void shouldSubscribeCoopShares() {
         new CreateCoopSharesSubscriptionTransaction(this)
                 .given("memberNumber", "M-3101000")
@@ -360,8 +365,8 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(4202)
-    @Requires("Coop-Shares SUBSCRIPTION Transaction")
-    @Produces("Coop-Shares CANCELLATION Transaction")
+    @Requires("Coop-Shares M-3101000 - Test AG - SUBSCRIPTION Transaction")
+    @Produces("Coop-Shares M-3101000 - Test AG - CANCELLATION Transaction")
     void shouldCancelCoopSharesSubscription() {
         new CreateCoopSharesCancellationTransaction(this)
                 .given("memberNumber", "M-3101000")
@@ -375,7 +380,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Test
     @Order(4301)
     @Requires("Membership: M-3101000 - Test AG")
-    @Produces("Coop-Assets DEPOSIT Transaction")
+    @Produces("Coop-Assets M-3101000 - Test AG - DEPOSIT Transaction")
     void shouldSubscribeCoopAssets() {
         new CreateCoopAssetsDepositTransaction(this)
                 .given("memberNumber", "M-3101000")
@@ -388,7 +393,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(4302)
-    @Requires("Coop-Assets DEPOSIT Transaction")
+    @Requires("Membership: M-3101000 - Test AG")
     void shouldRevertCoopAssetsSubscription() {
         new CreateCoopAssetsRevertTransaction(this)
                 .given("memberNumber", "M-3101000")
@@ -398,9 +403,9 @@ class HsOfficeScenarioTests extends ScenarioTest {
     }
 
     @Test
-    @Order(4302)
-    @Requires("Coop-Assets DEPOSIT Transaction")
-    @Produces("Coop-Assets DISBURSAL Transaction")
+    @Order(4303)
+    @Requires("Coop-Assets M-3101000 - Test AG - DEPOSIT Transaction")
+    @Produces("Coop-Assets M-3101000 - Test AG - DISBURSAL Transaction")
     void shouldDisburseCoopAssets() {
         new CreateCoopAssetsDisbursalTransaction(this)
                 .given("memberNumber", "M-3101000")
@@ -408,6 +413,33 @@ class HsOfficeScenarioTests extends ScenarioTest {
                 .given("valueToDisburse", 8 * 64)
                 .given("comment", "disbursal according to shares cancellation")
                 .given("transactionDate", "2024-02-15")
+                .doRun();
+    }
+
+    @Test
+    @Order(4304)
+    @Requires("Coop-Assets M-3101000 - Test AG - DEPOSIT Transaction")
+    @Produces("Coop-Assets M-3101000 - Test AG - TRANSFER Transaction")
+    void shouldTransferCoopAssets() {
+        new CreateCoopAssetsTransferTransaction(this)
+                .given("transferringMemberNumber", "M-3101000")
+                .given("adoptingMemberNumber", "M-4303000")
+                .given("reference", "transfer 2024-12-31")
+                .given("valueToDisburse", 2 * 64)
+                .given("comment", "transfer assets from M-3101000 to M-4303000")
+                .given("transactionDate", "2024-12-31")
+                .doRun();
+    }
+
+    @Test
+    @Order(4305)
+    @Requires("Coop-Assets M-3101000 - Test AG - TRANSFER Transaction")
+    @IgnoreOnFailure("TODO.impl: reverting transfers is not implemented yet")
+    void shouldRevertCoopAssetsTransfer() {
+        new CreateCoopAssetsRevertTransaction(this)
+                .given("memberNumber", "M-3101000")
+                .given("comment", "reverting some incorrect transfer transaction")
+                .given("dateOfIncorrectTransaction", "2024-02-15")
                 .doRun();
     }
 

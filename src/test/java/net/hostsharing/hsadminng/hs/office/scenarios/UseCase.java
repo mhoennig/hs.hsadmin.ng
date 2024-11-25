@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 import static java.net.URLEncoder.encode;
 import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
+import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.platform.commons.util.StringUtils.isBlank;
@@ -151,7 +152,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .GET()
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("current-subject", ScenarioTest.RUN_AS_USER)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.GET, uriPath, null, response);
@@ -166,7 +167,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("current-subject", ScenarioTest.RUN_AS_USER)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.POST, uriPath, requestBody, response);
@@ -181,7 +182,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("current-subject", ScenarioTest.RUN_AS_USER)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.PATCH, uriPath, requestBody, response);
@@ -195,7 +196,7 @@ public abstract class UseCase<T extends UseCase<?>> {
                 .uri(new URI("http://localhost:" + testSuite.port + uriPath))
                 .header("Content-Type", "application/json")
                 .header("current-subject", ScenarioTest.RUN_AS_USER)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(seconds(10))
                 .build();
         final var response = client.send(request, BodyHandlers.ofString());
         return new HttpResponse(HttpMethod.DELETE, uriPath, null, response);
@@ -235,6 +236,10 @@ public abstract class UseCase<T extends UseCase<?>> {
         String resolvePlaceholders() {
             return ScenarioTest.resolve(template, DROP_COMMENTS);
         }
+    }
+
+    private static Duration seconds(final int secondsIfNoDebuggerAttached) {
+        return isDebuggerAttached() ? Duration.ofHours(1) : Duration.ofSeconds(secondsIfNoDebuggerAttached);
     }
 
     public final class HttpResponse {

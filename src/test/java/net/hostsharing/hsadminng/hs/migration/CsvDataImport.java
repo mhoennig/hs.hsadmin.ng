@@ -173,8 +173,13 @@ public class CsvDataImport extends ContextBasedTest {
         //System.out.println("persisting #" + entity.hashCode() + ": " + entity);
         em.persist(entity);
         // uncomment for debugging purposes
-        // em.flush(); // makes it slow, but produces better error messages
-        // System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
+        // try {
+        //     em.flush(); // makes it slow, but produces better error messages
+        //     System.out.println("persisted #" + entity.hashCode() + " as " + entity.getUuid());
+        //     return entity;
+        // } catch (final Exception exc) {
+        //     throw exc; // for breakpoints
+        // }
         return entity;
     }
 

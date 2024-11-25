@@ -20,6 +20,15 @@ components:
                 uuid:
                     type: string
                     format: uuid
+                membership.uuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                membership.memberNumber:
+                    type: string
+                    minLength: 9
+                    maxLength: 9
+                    pattern: 'M-[0-9]{7}'
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
                 assetValue:
@@ -32,20 +41,36 @@ components:
                     type: string
                 comment:
                     type: string
+                adoptionAssetTx:
+                    # a TRANSFER tx must refer to the related ADOPTION tx
+                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
+                transferAssetTx:
+                    # an ADOPTION tx must refer to the related TRANSFER tx
+                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
                 revertedAssetTx:
-                    $ref: '#/components/schemas/HsOfficeReferencedCoopAssetsTransaction'
+                    # a REVERSAL tx must refer to the related tx, which can be of any type but REVERSAL
+                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
                 reversalAssetTx:
-                    $ref: '#/components/schemas/HsOfficeReferencedCoopAssetsTransaction'
+                    # a reverted tx, which can be any but REVERSAL, must refer to the related REVERSAL tx
+                    $ref: '#/components/schemas/HsOfficeRelatedCoopAssetsTransaction'
 
-        HsOfficeReferencedCoopAssetsTransaction:
+        HsOfficeRelatedCoopAssetsTransaction:
             description:
-                Similar to `HsOfficeCoopAssetsTransaction` but without the self-referencing properties 
-                (`revertedAssetTx` and `reversalAssetTx`), to avoid recursive JSON.
+                Similar to `HsOfficeCoopAssetsTransaction` but just the UUID of the related property, to avoid recursive JSON.
             type: object
             properties:
                 uuid:
                     type: string
                     format: uuid
+                membership.uuid:
+                    type: string
+                    format: uuid
+                    nullable: false
+                membership.memberNumber:
+                    type: string
+                    minLength: 9
+                    maxLength: 9
+                    pattern: 'M-[0-9]{7}'
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopAssetsTransactionType'
                 assetValue:
@@ -58,6 +83,22 @@ components:
                     type: string
                 comment:
                     type: string
+                adoptionAssetTx.uuid:
+                    description: a TRANSFER tx must refer to the related ADOPTION tx
+                    type: string
+                    format: uuid
+                transferAssetTx.uuid:
+                    description: an ADOPTION tx must refer to the related TRANSFER tx
+                    type: string
+                    format: uuid
+                revertedAssetTx.uuid:
+                    description: a REVERSAL tx must refer to the related tx, which can be of any type but REVERSAL
+                    type: string
+                    format: uuid
+                reversalAssetTx.uuid:
+                    description: a reverted tx, which can be any but REVERSAL, must refer to the related REVERSAL tx
+                    type: string
+                    format: uuid
 
         HsOfficeCoopAssetsTransactionInsert:
             type: object
@@ -83,6 +124,14 @@ components:
                 revertedAssetTx.uuid:
                     type: string
                     format: uuid
+                adoptingMembership.uuid:
+                    type: string
+                    format: uuid
+                adoptingMembership.memberNumber:
+                    type: string
+                    minLength: 9
+                    maxLength: 9
+                    pattern: 'M-[0-9]{7}'
             required:
                 - membership.uuid
                 - transactionType

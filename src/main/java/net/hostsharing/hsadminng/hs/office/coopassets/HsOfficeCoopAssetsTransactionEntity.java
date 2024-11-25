@@ -50,8 +50,10 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
             .withProp(HsOfficeCoopAssetsTransactionEntity::getAssetValue)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getReference)
             .withProp(HsOfficeCoopAssetsTransactionEntity::getComment)
-            .withProp(at -> ofNullable(at.getRevertedAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
-            .withProp(at -> ofNullable(at.getReversalAssetTx()).map(HsOfficeCoopAssetsTransactionEntity::toShortString).orElse(null))
+            .withProp(HsOfficeCoopAssetsTransactionEntity::getRevertedAssetTx)
+            .withProp(HsOfficeCoopAssetsTransactionEntity::getReversalAssetTx)
+            .withProp(HsOfficeCoopAssetsTransactionEntity::getAdoptionAssetTx)
+            .withProp(HsOfficeCoopAssetsTransactionEntity::getTransferAssetTx)
             .quotedValues(false);
 
     @Id
@@ -95,15 +97,23 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
     @Column(name = "comment")
     private String comment;
 
-    /**
-     * Optionally, the UUID of the corresponding transaction for an reversal transaction.
-     */
-    @OneToOne
+    // Optionally, the UUID of the corresponding transaction for a reversal transaction.
+    @OneToOne(cascade = CascadeType.PERSIST) // TODO.impl: can probably be removed after office data migration
     @JoinColumn(name = "revertedassettxuuid")
     private HsOfficeCoopAssetsTransactionEntity revertedAssetTx;
 
+    // and the other way around
     @OneToOne(mappedBy = "revertedAssetTx")
     private HsOfficeCoopAssetsTransactionEntity reversalAssetTx;
+
+    // Optionally, the UUID of the corresponding transaction for a transfer transaction.
+    @OneToOne(cascade = CascadeType.PERSIST) // TODO.impl: can probably be removed after office data migration
+    @JoinColumn(name = "assetadoptiontxuuid")
+    private HsOfficeCoopAssetsTransactionEntity adoptionAssetTx;
+
+    // and the other way around
+    @OneToOne(mappedBy = "adoptionAssetTx")
+    private HsOfficeCoopAssetsTransactionEntity transferAssetTx;
 
     @Override
     public HsOfficeCoopAssetsTransactionEntity load() {

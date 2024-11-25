@@ -69,7 +69,7 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                 .then().log().all().assertThat()
                     .statusCode(200)
                     .contentType("application/json")
-                    .body("", hasSize(12));  // @formatter:on
+                    .body("", hasSize(3*6)); // @formatter:on
         }
 
         @Test
@@ -94,14 +94,22 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 "assetValue": 320.00,
                                 "valueDate": "2010-03-15",
                                 "reference": "ref 1000202-1",
-                                "comment": "initial deposit"
+                                "comment": "initial deposit",
+                                "adoptionAssetTx": null,
+                                "transferAssetTx": null,
+                                "revertedAssetTx": null,
+                                "reversalAssetTx": null
                             },
                             {
                                 "transactionType": "DISBURSAL",
                                 "assetValue": -128.00,
                                 "valueDate": "2021-09-01",
                                 "reference": "ref 1000202-2",
-                                "comment": "partial disbursal"
+                                "comment": "partial disbursal",
+                                "adoptionAssetTx": null,
+                                "transferAssetTx": null,
+                                "revertedAssetTx": null,
+                                "reversalAssetTx": null
                             },
                             {
                                 "transactionType": "DEPOSIT",
@@ -109,12 +117,18 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 "valueDate": "2022-10-20",
                                 "reference": "ref 1000202-3",
                                 "comment": "some loss",
+                                "adoptionAssetTx": null,
+                                "transferAssetTx": null,
+                                "revertedAssetTx": null,
                                 "reversalAssetTx": {
                                     "transactionType": "REVERSAL",
                                     "assetValue": -128.00,
                                     "valueDate": "2022-10-21",
                                     "reference": "ref 1000202-3",
-                                    "comment": "some reversal"
+                                    "comment": "some reversal",
+                                    "adoptionAssetTx.uuid": null,
+                                    "transferAssetTx.uuid": null,
+                                    "reversalAssetTx.uuid": null
                                 }
                             },
                             {
@@ -123,13 +137,59 @@ class HsOfficeCoopAssetsTransactionControllerAcceptanceTest extends ContextBased
                                 "valueDate": "2022-10-21",
                                 "reference": "ref 1000202-3",
                                 "comment": "some reversal",
+                                "adoptionAssetTx": null,
+                                "transferAssetTx": null,
                                 "revertedAssetTx": {
                                     "transactionType": "DEPOSIT",
                                     "assetValue": 128.00,
                                     "valueDate": "2022-10-20",
                                     "reference": "ref 1000202-3",
-                                    "comment": "some loss"
-                                }
+                                    "comment": "some loss",
+                                    "adoptionAssetTx.uuid": null,
+                                    "transferAssetTx.uuid": null,
+                                    "revertedAssetTx.uuid": null
+                                },
+                                "reversalAssetTx": null
+                            },
+                            {
+                                "transactionType": "TRANSFER",
+                                "assetValue": -192.00,
+                                "valueDate": "2023-12-31",
+                                "reference": "ref 1000202-3",
+                                "comment": "some reversal",
+                                "adoptionAssetTx": {
+                                    "transactionType": "ADOPTION",
+                                    "assetValue": 192.00,
+                                    "valueDate": "2023-12-31",
+                                    "reference": "ref 1000202-3",
+                                    "comment": "some reversal",
+                                    "adoptionAssetTx.uuid": null,
+                                    "revertedAssetTx.uuid": null,
+                                    "reversalAssetTx.uuid": null
+                                },
+                                "transferAssetTx": null,
+                                "revertedAssetTx": null,
+                                "reversalAssetTx": null
+                            },
+                            {
+                                "transactionType": "ADOPTION",
+                                "assetValue": 192.00,
+                                "valueDate": "2023-12-31",
+                                "reference": "ref 1000202-3",
+                                "comment": "some reversal",
+                                "adoptionAssetTx": null,
+                                "transferAssetTx": {
+                                    "transactionType": "TRANSFER",
+                                    "assetValue": -192.00,
+                                    "valueDate": "2023-12-31",
+                                    "reference": "ref 1000202-3",
+                                    "comment": "some reversal",
+                                    "transferAssetTx.uuid": null,
+                                    "revertedAssetTx.uuid": null,
+                                    "reversalAssetTx.uuid": null
+                                },
+                                "revertedAssetTx": null,
+                                "reversalAssetTx": null
                             }
                         ]
                         """)); // @formatter:on

@@ -25,6 +25,7 @@ class HsOfficeBankAccountControllerRestTest {
     Context contextMock;
 
     @MockBean
+    @SuppressWarnings("unused") // not used in test, but in controller class
     StandardMapper mapper;
 
     @MockBean

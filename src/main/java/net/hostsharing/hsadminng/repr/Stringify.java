@@ -80,12 +80,6 @@ public final class Stringify<B> {
                 .map(prop -> PropertyValue.of(prop, prop.getter.apply(object)))
                 .filter(Objects::nonNull)
                 .filter(PropertyValue::nonEmpty)
-                .map(propVal -> {
-                    if (propVal.rawValue instanceof Stringifyable stringifyable) {
-                        return new PropertyValue<>(propVal.prop, propVal.rawValue, stringifyable.toShortString());
-                    }
-                    return propVal;
-                })
                 .map(propVal -> propName(propVal, "=") + optionallyQuoted(propVal))
                 .collect(Collectors.joining(separator));
         return idProp != null
@@ -131,7 +125,11 @@ public final class Stringify<B> {
     private record PropertyValue<B>(Property<B> prop, Object rawValue, String value) {
 
         static <B> PropertyValue<B> of(Property<B> prop, Object rawValue) {
-            return rawValue != null ? new PropertyValue<>(prop, rawValue, rawValue.toString()) : null;
+            return rawValue != null ? new PropertyValue<>(prop, rawValue, toStringOrShortString(rawValue)) : null;
+        }
+
+        private static String toStringOrShortString(final Object rawValue) {
+            return rawValue instanceof Stringifyable stringifyable ? stringifyable.toShortString() : rawValue.toString();
         }
 
         boolean nonEmpty() {

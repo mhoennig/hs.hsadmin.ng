@@ -445,3 +445,8 @@ tasks.register('convertMarkdownToHtml') {
     }
 }
 convertMarkdownToHtml.dependsOn scenarioTests
+
+// shortcut for compiling all files
+tasks.register('compile') {
+    dependsOn 'compileJava', 'compileTestJava'
+}

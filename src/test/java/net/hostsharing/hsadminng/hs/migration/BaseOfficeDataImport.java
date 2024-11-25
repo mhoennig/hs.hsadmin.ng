@@ -449,7 +449,7 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                    1094=CoopAssetsTransaction(M-1000300: 2023-10-06, DEPOSIT, 3072, 1000300, Kapitalerhoehung - Ueberweisung),
                    31000=CoopAssetsTransaction(M-1002000: 2000-12-06, DEPOSIT, 128.00, 1002000, for subscription B),
                    32000=CoopAssetsTransaction(M-1000300: 2005-01-10, DEPOSIT, 2560.00, 1000300, for subscription C),
-                   33001=CoopAssetsTransaction(M-1000300: 2005-01-10, TRANSFER, -512.00, 1000300, for transfer to 10),
+                   33001=CoopAssetsTransaction(M-1000300: 2005-01-10, TRANSFER, -512.00, 1000300, for transfer to 10, M-1002000:ADO:+512.00),
                    33002=CoopAssetsTransaction(M-1002000: 2005-01-10, ADOPTION, 512.00, 1002000, for transfer from 7),
                    34001=CoopAssetsTransaction(M-1002000: 2016-12-31, CLEARING, -8.00, 1002000, for cancellation D),
                    34002=CoopAssetsTransaction(M-1002000: 2016-12-31, DISBURSAL, -100.00, 1002000, for cancellation D),
@@ -877,21 +877,44 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                             .comment(rec.getString("comment"))
                             .reference(member.getMemberNumber().toString())
                             .build();
-
-                    if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.REVERSAL) {
-                        final var negativeValue = assetTransaction.getAssetValue().negate();
-                        final var revertedAssetTx = coopAssets.values().stream().filter(a ->
-                                        a.getTransactionType() != HsOfficeCoopAssetsTransactionType.REVERSAL &&
-                                                a.getMembership() == assetTransaction.getMembership() &&
-                                                a.getAssetValue().equals(negativeValue))
-                                .findAny()
-                                .orElseThrow(() -> new IllegalStateException(
-                                        "cannot determine asset reverse entry for reversal " + assetTransaction));
-                        assetTransaction.setRevertedAssetTx(revertedAssetTx);
-                    }
-
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
                 });
+
+        coopAssets.values().forEach(assetTransaction -> {
+            if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.REVERSAL) {
+                connectToRelatedRevertedAssetTx(assetTransaction);
+            }
+            if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.TRANSFER) {
+                connectToRelatedAdoptionAssetTx(assetTransaction);
+            }
+        });
+    }
+
+    private static void connectToRelatedRevertedAssetTx(final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
+        final var negativeValue = assetTransaction.getAssetValue().negate();
+        final var revertedAssetTx = coopAssets.values().stream().filter(a ->
+                        a.getTransactionType() != HsOfficeCoopAssetsTransactionType.REVERSAL &&
+                                a.getMembership() == assetTransaction.getMembership() &&
+                                a.getAssetValue().equals(negativeValue))
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(
+                        "cannot determine asset reverse entry for reversal " + assetTransaction));
+        assetTransaction.setRevertedAssetTx(revertedAssetTx);
+        //revertedAssetTx.setAssetReversalTx(assetTransaction);
+    }
+
+    private static void connectToRelatedAdoptionAssetTx(final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
+        final var negativeValue = assetTransaction.getAssetValue().negate();
+        final var adoptionAssetTx = coopAssets.values().stream().filter(a ->
+                        a.getTransactionType() == HsOfficeCoopAssetsTransactionType.ADOPTION &&
+                                a.getMembership() != assetTransaction.getMembership() &&
+                                a.getValueDate().equals(assetTransaction.getValueDate()) &&
+                                a.getAssetValue().equals(negativeValue))
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(
+                        "cannot determine asset adoption entry for reversal " + assetTransaction));
+        assetTransaction.setAdoptionAssetTx(adoptionAssetTx);
+        //adoptionAssetTx.setAssetTransferTx(assetTransaction);
     }
 
     private static HsOfficeMembershipEntity createOnDemandMembership(final Integer bpId) {

@@ -15,7 +15,9 @@ create or replace procedure hs_office.coopassettx_create_test_data(
     language plpgsql as $$
 declare
     membership              hs_office.membership;
-    lossEntryUuid           uuid;
+    invalidLossTx           uuid;
+    transferTx              uuid;
+    adoptionTx              uuid;
 begin
     select m.uuid
         from hs_office.membership m
@@ -25,14 +27,18 @@ begin
         into membership;
 
     raise notice 'creating test coopAssetsTransaction: %', givenPartnerNumber || givenMemberNumberSuffix;
-    lossEntryUuid := uuid_generate_v4();
+    invalidLossTx := uuid_generate_v4();
+    transferTx := uuid_generate_v4();
+    adoptionTx := uuid_generate_v4();
     insert
-        into hs_office.coopassettx(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, revertedAssetTxUuid)
+        into hs_office.coopassettx(uuid, membershipuuid, transactiontype, valuedate, assetvalue, reference, comment, revertedAssetTxUuid, assetAdoptionTxUuid)
         values
-            (uuid_generate_v4(),  membership.uuid, 'DEPOSIT',    '2010-03-15',  320.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-1', 'initial deposit', null),
-            (uuid_generate_v4(),  membership.uuid, 'DISBURSAL',  '2021-09-01', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-2', 'partial disbursal', null),
-            (lossEntryUuid,       membership.uuid, 'DEPOSIT',    '2022-10-20',  128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some loss', null),
-            (uuid_generate_v4(),  membership.uuid, 'REVERSAL', '2022-10-21', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some reversal', lossEntryUuid);
+            (uuid_generate_v4(),  membership.uuid, 'DEPOSIT',    '2010-03-15',  320.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-1', 'initial deposit', null, null),
+            (uuid_generate_v4(),  membership.uuid, 'DISBURSAL',  '2021-09-01', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-2', 'partial disbursal', null, null),
+            (invalidLossTx,       membership.uuid, 'DEPOSIT',    '2022-10-20',  128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some loss', null, null),
+            (uuid_generate_v4(),  membership.uuid, 'REVERSAL', '2022-10-21', -128.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some reversal', invalidLossTx, null),
+            (transferTx,          membership.uuid, 'TRANSFER', '2023-12-31', -192.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some reversal', null, adoptionTx),
+            (adoptionTx,            membership.uuid, 'ADOPTION', '2023-12-31', 192.00, 'ref '||givenPartnerNumber || givenMemberNumberSuffix||'-3', 'some reversal', null, null);
 end; $$;
 --//
 

@@ -575,7 +575,7 @@ that and creates too many (grant- and role-) rows and too even tables which coul
 
 The basic idea is always to always have a fixed set of ordered role-types which apply for all DB-tables under RBAC,
 e.g. OWNER>ADMIN>AGENT\[>PROXY?\]>TENENT>REFERRER.
-Grants between these for the same DB-row would be implicit by order comparision.
+Grants between these for the same DB-row would be implicit by order comparison.
 This way we would get rid of all explicit grants within the same DB-row
 and would not need the `rbac.role` table anymore.
 We would also reduce the depth of the expensive recursive CTE-query.
@@ -591,7 +591,19 @@ E.g. the uuid of the target main object is often taken from an uuid of a sub-sub
 (For now, use `StrictMapper` to avoid this, for the case it happens.)
 
 
+### Too Many Business-Rules Implemented in Controllers
+
+Some REST-Controllers implement too much code for business-roles.
+This should be extracted to services.
+
+
 ## How To ...
+
+Besides the following *How Tos* you can also find several *How Tos* in the source code:
+
+```sh
+grep -r HOWTO src
+```
 
 ### How to Configure .pgpass for the Default PostgreSQL Database?
 

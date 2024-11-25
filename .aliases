@@ -8,12 +8,20 @@ gradleWrapper () {
         return 1
     fi
 
-    TEMPFILE=$(mktemp /tmp/gw.XXXXXX)
-    unbuffer ./gradlew "$@" | tee $TEMPFILE
+    if command -v unbuffer >/dev/null 2>&1; then
+        # if `unbuffer` is available in PATH, use it to print report file-URIs at the end
+        TEMPFILE=$(mktemp /tmp/gw.XXXXXX)
+        unbuffer ./gradlew "$@" | tee $TEMPFILE
+        echo
+        grep --color=never "Report:" $TEMPFILE
+        rm $TEMPFILE
+    else
+        # if `unbuffer` is not in PATH, simply run gradle
+        ./gradlew "$@"
+        echo "HINT: it's suggested to install 'unbuffer' to print report URIs at the end of a gradle run"
+    fi
 
-    echo
-    grep --color=never "Report:" $TEMPFILE
-    rm $TEMPFILE
+
 }
 
 postgresAutodoc () {

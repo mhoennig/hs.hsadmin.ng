@@ -25,6 +25,7 @@ create table if not exists hs_office.coopassettx
     assetValue          numeric(12,2) not null, -- https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_money
     reference           varchar(48) not null,
     revertedAssetTxUuid uuid unique REFERENCES hs_office.coopassettx(uuid) DEFERRABLE INITIALLY DEFERRED,
+    assetAdoptionTxUuid uuid unique REFERENCES hs_office.coopassettx(uuid) DEFERRABLE INITIALLY DEFERRED,
     comment             varchar(512)
 );
 --//
@@ -35,9 +36,20 @@ create table if not exists hs_office.coopassettx
 -- ----------------------------------------------------------------------------
 
 alter table hs_office.coopassettx
-    add constraint reverse_entry_missing
-        check ( transactionType = 'REVERSAL' and revertedAssetTxUuid is not null
-             or transactionType <> 'REVERSAL' and revertedAssetTxUuid is null);
+    add constraint reversal_asset_tx_must_have_reverted_asset_tx
+        check (transactionType <> 'REVERSAL' or revertedAssetTxUuid is not null);
+
+alter table hs_office.coopassettx
+    add constraint non_reversal_asset_tx_must_not_have_reverted_asset_tx
+        check (transactionType = 'REVERSAL' or revertedAssetTxUuid is null or transactionType = 'REVERSAL');
+
+alter table hs_office.coopassettx
+    add constraint transfer_asset_tx_must_have_adopted_asset_tx
+        check (transactionType <> 'TRANSFER' or assetAdoptionTxUuid is not null);
+
+alter table hs_office.coopassettx
+    add constraint non_transfer_asset_tx_must_not_have_adopted_asset_tx
+        check (transactionType = 'TRANSFER' or assetAdoptionTxUuid is null);
 --//
 
 -- ============================================================================

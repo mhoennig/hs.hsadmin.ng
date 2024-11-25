@@ -16,6 +16,10 @@ components:
                 uuid:
                     type: string
                     format: uuid
+                membership.uuid:
+                    type: string
+                    format: uuid
+                    nullable: false
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
                 shareCount:
@@ -41,6 +45,10 @@ components:
                 uuid:
                     type: string
                     format: uuid
+                membership.uuid:
+                    type: string
+                    format: uuid
+                    nullable: false
                 transactionType:
                     $ref: '#/components/schemas/HsOfficeCoopSharesTransactionType'
                 shareCount:

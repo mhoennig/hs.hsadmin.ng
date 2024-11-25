@@ -40,7 +40,7 @@ class HsOfficeCoopSharesTransactionEntityUnitTest {
     }
 
     @Test
-    void toStringWithRevertedAssetTxContainsRevertedAssetTx() {
+    void toStringWithRelatedAssetTxContainsRelatedAssetTx() {
         givenCoopSharesTransaction.setRevertedShareTx(givenCoopShareReversalTransaction);
 
         final var result = givenCoopSharesTransaction.toString();

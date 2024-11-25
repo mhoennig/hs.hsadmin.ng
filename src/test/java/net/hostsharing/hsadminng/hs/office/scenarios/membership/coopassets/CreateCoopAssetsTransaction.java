@@ -32,7 +32,8 @@ public abstract class CreateCoopAssetsTransaction extends UseCase<CreateCoopAsse
                     "assetValue": ${assetValue},
                     "comment": ${comment},
                     "valueDate": ${transactionDate},
-                    "revertedAssetTx.uuid": ${revertedAssetTx???}
+                    "revertedAssetTx.uuid": ${revertedAssetTx???},
+                    "adoptingMembership.memberNumber": ${adoptingMemberNumber???}
                 }
                 """))
                 .expecting(HttpStatus.CREATED).expecting(ContentType.JSON)
