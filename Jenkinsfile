@@ -3,8 +3,9 @@ pipeline {
         dockerfile {
             filename 'etc/jenkinsAgent.Dockerfile'
             // additionalBuildArgs  ...
-            args '--network=bridge --user root -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock --group-add 984'
-            reuseNode true
+            args '--network=bridge --user root -v $PWD:$PWD \
+                    -v /var/run/docker.sock:/var/run/docker.sock --group-add 984 \
+                    --memory=6g --cpus=3'
        }
     }
 

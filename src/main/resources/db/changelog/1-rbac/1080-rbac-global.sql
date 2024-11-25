@@ -36,6 +36,30 @@ end; $$;
 
 
 -- ============================================================================
+--changeset michael.hoennig:rbac-global-HAS-GLOBAL-ADMIN-ROLE endDelimiter:--//
+-- ----------------------------------------------------------------------------
+/*
+    Returns true if the current user is a global admin and has no assumed role.
+ */
+create or replace function rbac.hasGlobalAdminRole()
+    returns boolean
+    stable -- leakproof
+    language plpgsql as $$
+declare
+    currentSubjectOrAssumedRolesUuids text;
+begin
+    begin
+        currentSubjectOrAssumedRolesUuids := current_setting('hsadminng.currentSubjectOrAssumedRolesUuids');
+    exception
+        when others then
+            currentSubjectOrAssumedRolesUuids := null;
+    end;
+    return  currentSubjectOrAssumedRolesUuids is null or length(currentSubjectOrAssumedRolesUuids) = 0;
+end; $$;
+--//
+
+
+-- ============================================================================
 --changeset michael.hoennig:rbac-global-HAS-GLOBAL-PERMISSION endDelimiter:--//
 -- ------------------------------------------------------------------
 

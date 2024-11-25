@@ -223,7 +223,7 @@ begin
             )
             select target.*
                 from %1$s as target
-                where target.uuid in (select * from accessible_uuids)
+                where rbac.hasGlobalAdminRole() or target.uuid in (select * from accessible_uuids)
                 order by %2$s;
 
         grant all privileges on %1$s_rv to ${HSADMINNG_POSTGRES_RESTRICTED_USERNAME};
