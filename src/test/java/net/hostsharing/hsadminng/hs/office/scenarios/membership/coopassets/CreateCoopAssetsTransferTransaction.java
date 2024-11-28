@@ -20,7 +20,7 @@ public class CreateCoopAssetsTransferTransaction extends CreateCoopAssetsTransac
         );
 
         requires("Membership: New AG", alias -> new CreateMembership(testSuite)
-                .given("partnerNumber", toPartnerNumber("%{adoptingMemberNumber}"))
+                .given("memberNumber", toPartnerNumber("%{adoptingMemberNumber}"))
                 .given("partnerName", "New AG")
                 .given("validFrom", "2024-11-15")
                 .given("newStatus", "ACTIVE")
@@ -34,8 +34,7 @@ public class CreateCoopAssetsTransferTransaction extends CreateCoopAssetsTransac
 
         given("memberNumber", "%{transferringMemberNumber}");
         given("transactionType", "TRANSFER");
-        given("assetValue", "-%{valueToDisburse}");
-        given("assetValue", "-%{valueToDisburse}");
+        given("assetValue", "-%{valueToTransfer}");
         return super.run();
     }
 

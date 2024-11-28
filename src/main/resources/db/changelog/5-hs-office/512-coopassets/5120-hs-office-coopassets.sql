@@ -35,21 +35,41 @@ create table if not exists hs_office.coopassettx
 --changeset michael.hoennig:hs-office-coopassets-BUSINESS-RULES endDelimiter:--//
 -- ----------------------------------------------------------------------------
 
-alter table hs_office.coopassettx
-    add constraint reversal_asset_tx_must_have_reverted_asset_tx
-        check (transactionType <> 'REVERSAL' or revertedAssetTxUuid is not null);
+-- Not as CHECK constraints because those cannot be deferrable,
+-- but we need these constraints deferrable because the rows are linked to each other.
 
-alter table hs_office.coopassettx
-    add constraint non_reversal_asset_tx_must_not_have_reverted_asset_tx
-        check (transactionType = 'REVERSAL' or revertedAssetTxUuid is null or transactionType = 'REVERSAL');
+CREATE OR REPLACE FUNCTION validate_transaction_type()
+    RETURNS TRIGGER AS $$
+BEGIN
+    -- REVERSAL transactions must have revertedAssetTxUuid
+    IF NEW.transactionType = 'REVERSAL' AND NEW.revertedAssetTxUuid IS NULL THEN
+        RAISE EXCEPTION 'REVERSAL transactions must have revertedAssetTxUuid';
+    END IF;
 
-alter table hs_office.coopassettx
-    add constraint transfer_asset_tx_must_have_adopted_asset_tx
-        check (transactionType <> 'TRANSFER' or assetAdoptionTxUuid is not null);
+    -- Non-REVERSAL transactions must not have revertedAssetTxUuid
+    IF NEW.transactionType != 'REVERSAL' AND NEW.revertedAssetTxUuid IS NOT NULL THEN
+        RAISE EXCEPTION 'Non-REVERSAL transactions must not have revertedAssetTxUuid';
+    END IF;
 
-alter table hs_office.coopassettx
-    add constraint non_transfer_asset_tx_must_not_have_adopted_asset_tx
-        check (transactionType = 'TRANSFER' or assetAdoptionTxUuid is null);
+    -- TRANSFER transactions must have assetAdoptionTxUuid
+    IF NEW.transactionType = 'TRANSFER' AND NEW.assetAdoptionTxUuid IS NULL THEN
+        RAISE EXCEPTION 'TRANSFER transactions must have assetAdoptionTxUuid';
+    END IF;
+
+    -- Non-TRANSFER transactions must not have assetAdoptionTxUuid
+    IF NEW.transactionType != 'TRANSFER' AND NEW.assetAdoptionTxUuid IS NOT NULL THEN
+        RAISE EXCEPTION 'Non-TRANSFER transactions must not have assetAdoptionTxUuid';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach the trigger to the table
+CREATE TRIGGER enforce_transaction_constraints
+    AFTER INSERT OR UPDATE ON hs_office.coopassettx
+    FOR EACH ROW EXECUTE FUNCTION validate_transaction_type();
+
 --//
 
 -- ============================================================================

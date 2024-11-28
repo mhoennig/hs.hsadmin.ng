@@ -98,21 +98,21 @@ public class HsOfficeCoopAssetsTransactionEntity implements Stringifyable, BaseE
     private String comment;
 
     // Optionally, the UUID of the corresponding transaction for a reversal transaction.
-    @OneToOne(cascade = CascadeType.PERSIST) // TODO.impl: can probably be removed after office data migration
+    @OneToOne
     @JoinColumn(name = "revertedassettxuuid")
     private HsOfficeCoopAssetsTransactionEntity revertedAssetTx;
 
     // and the other way around
-    @OneToOne(mappedBy = "revertedAssetTx")
+    @OneToOne(mappedBy = "revertedAssetTx", cascade = CascadeType.PERSIST)
     private HsOfficeCoopAssetsTransactionEntity reversalAssetTx;
 
     // Optionally, the UUID of the corresponding transaction for a transfer transaction.
-    @OneToOne(cascade = CascadeType.PERSIST) // TODO.impl: can probably be removed after office data migration
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "assetadoptiontxuuid")
     private HsOfficeCoopAssetsTransactionEntity adoptionAssetTx;
 
     // and the other way around
-    @OneToOne(mappedBy = "adoptionAssetTx")
+    @OneToOne(mappedBy = "adoptionAssetTx", cascade = CascadeType.PERSIST)
     private HsOfficeCoopAssetsTransactionEntity transferAssetTx;
 
     @Override

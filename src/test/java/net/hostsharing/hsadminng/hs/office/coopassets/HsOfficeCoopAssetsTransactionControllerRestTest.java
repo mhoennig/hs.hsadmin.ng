@@ -10,6 +10,7 @@ import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
 import net.hostsharing.hsadminng.test.TestUuidGenerator;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.runner.RunWith;
@@ -24,12 +25,20 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.ADOPTION;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DEPOSIT;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.DISBURSAL;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.REVERSAL;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.TRANSFER;
 import static net.hostsharing.hsadminng.rbac.test.JsonBuilder.jsonObject;
 import static net.hostsharing.hsadminng.rbac.test.JsonMatcher.lenientlyEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,7 +51,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 class HsOfficeCoopAssetsTransactionControllerRestTest {
 
-    private static final UUID UNAVAILABLE_MEMBERSHIP_UUID = TestUuidGenerator.use(0);
+    // If you need to run just a single test-case in this data-driven test-method, set SINGLE_TEST_CASE_EXECUTION to true!
+    // There is a test which fails if single test-case execution active to avoid merging this to master.
+    private static final boolean SINGLE_TEST_CASE_EXECUTION = false;
+
+    private static final int DYNAMIC_UUID_START_INDEX = 13;
+
+    private static final UUID UNAVAILABLE_UUID = TestUuidGenerator.use(0);
     private static final String UNAVAILABLE_MEMBER_NUMBER = "M-1234699";
 
     private static final UUID ORIGIN_MEMBERSHIP_UUID = TestUuidGenerator.use(1);
@@ -65,9 +80,11 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
             .memberNumberSuffix(suffixOf(AVAILABLE_TARGET_MEMBER_NUMBER))
             .build();
 
-    // the following refs might change if impl changes
-    private static final UUID NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID = TestUuidGenerator.ref(4);
-    private static final UUID NEW_EXPLICITLY_CREATED_TRANSFER_ASSET_TX_UUID = TestUuidGenerator.ref(5);
+    // The following refs depend on the implementation of the respective implementation and might change if it changes.
+    // The same TestUuidGenerator.ref(#) does NOT mean the UUIDs refer to the same entity,
+    // its rather coincidence because different test-cases have different execution paths in the production code.
+    private static final UUID NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID = TestUuidGenerator.ref(DYNAMIC_UUID_START_INDEX);
+    private static final UUID NEW_EXPLICITLY_CREATED_TRANSFER_ASSET_TX_UUID = TestUuidGenerator.ref(DYNAMIC_UUID_START_INDEX);
 
     private static final UUID SOME_EXISTING_LOSS_ASSET_TX_UUID = TestUuidGenerator.use(3);
     public final HsOfficeCoopAssetsTransactionEntity SOME_EXISTING_LOSS_ASSET_TX_ENTITY = HsOfficeCoopAssetsTransactionEntity.builder()
@@ -79,6 +96,402 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
             .comment("some loss asset tx comment")
             .valueDate(LocalDate.parse("2024-10-15"))
             .build();
+
+    private static final UUID SOME_EXISTING_TRANSFER_ASSET_TX_UUID = TestUuidGenerator.use(4);
+    public final HsOfficeCoopAssetsTransactionEntity SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY = HsOfficeCoopAssetsTransactionEntity.builder()
+            .uuid(SOME_EXISTING_TRANSFER_ASSET_TX_UUID)
+            .membership(ORIGIN_TARGET_MEMBER_ENTITY)
+            .transactionType(HsOfficeCoopAssetsTransactionType.TRANSFER)
+            .assetValue(BigDecimal.valueOf(-256))
+            .reference("some transfer asset tx ref")
+            .comment("some transfer asset tx comment")
+            .valueDate(LocalDate.parse("2024-10-15"))
+            .build();
+
+    private static final UUID SOME_EXISTING_ADOPTION_ASSET_TX_UUID = TestUuidGenerator.use(5);
+    public final HsOfficeCoopAssetsTransactionEntity SOME_EXISTING_ADOPTION_ASSET_TX_ENTITY = HsOfficeCoopAssetsTransactionEntity.builder()
+            .uuid(SOME_EXISTING_ADOPTION_ASSET_TX_UUID)
+            .membership(ORIGIN_TARGET_MEMBER_ENTITY)
+            .transactionType(HsOfficeCoopAssetsTransactionType.TRANSFER)
+            .assetValue(SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY.getAssetValue().negate())
+            .reference("some adoption asset tx ref")
+            .comment("some adoption asset tx comment")
+            .valueDate(LocalDate.parse("2024-10-15"))
+            .transferAssetTx(SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY)
+            .build();
+    {
+        SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY.setAdoptionAssetTx(SOME_EXISTING_ADOPTION_ASSET_TX_ENTITY);
+    }
+
+    private final static UUID SOME_REVERTED_DISBURSAL_ASSET_TX_UUID = TestUuidGenerator.use(7);
+    private final static UUID SOME_DISBURSAL_REVERSAL_ASSET_TX_UUID = TestUuidGenerator.use(8);
+    private final HsOfficeCoopAssetsTransactionEntity SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY = HsOfficeCoopAssetsTransactionEntity.builder()
+            .uuid(SOME_REVERTED_DISBURSAL_ASSET_TX_UUID)
+            .membership(ORIGIN_TARGET_MEMBER_ENTITY)
+            .transactionType(DISBURSAL)
+            .assetValue(BigDecimal.valueOf(-128.00))
+            .valueDate(LocalDate.parse("2024-10-15"))
+            .reference("some disbursal")
+            .comment("some disbursal to get reverted")
+            .reversalAssetTx(
+                    HsOfficeCoopAssetsTransactionEntity.builder()
+                            .uuid(SOME_DISBURSAL_REVERSAL_ASSET_TX_UUID)
+                            .membership(ORIGIN_TARGET_MEMBER_ENTITY)
+                            .transactionType(REVERSAL)
+                            .assetValue(BigDecimal.valueOf(128.00))
+                            .valueDate(LocalDate.parse("2024-10-20"))
+                            .reference("some reversal")
+                            .comment("some reversal of a disbursal asset tx")
+                            .build()
+            )
+            .build();
+    {
+        SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY.getReversalAssetTx().setRevertedAssetTx(SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY);
+    }
+
+    private final static UUID SOME_REVERTED_TRANSFER_ASSET_TX_UUID = TestUuidGenerator.use(9);
+    private final static UUID SOME_TRANSFER_REVERSAL_ASSET_TX_UUID = TestUuidGenerator.use(10);
+    private final static UUID SOME_REVERTED_ADOPTION_ASSET_TX_UUID = TestUuidGenerator.use(11);
+    private final static UUID SOME_ADOPTION_REVERSAL_ASSET_TX_UUID = TestUuidGenerator.use(12);
+    final HsOfficeCoopAssetsTransactionEntity SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY = HsOfficeCoopAssetsTransactionEntity.builder()
+            .uuid(SOME_REVERTED_TRANSFER_ASSET_TX_UUID)
+            .membership(ORIGIN_TARGET_MEMBER_ENTITY)
+            .transactionType(TRANSFER)
+            .assetValue(BigDecimal.valueOf(-1024))
+            .valueDate(LocalDate.parse("2024-11-10"))
+            .reference("some transfer")
+            .comment("some transfer to get reverted")
+            .adoptionAssetTx(
+                    HsOfficeCoopAssetsTransactionEntity.builder()
+                            .uuid(SOME_REVERTED_ADOPTION_ASSET_TX_UUID)
+                            .membership(AVAILABLE_MEMBER_ENTITY)
+                            .transactionType(ADOPTION)
+                            .assetValue(BigDecimal.valueOf(1024))
+                            .valueDate(LocalDate.parse("2024-11-10"))
+                            .reference("related adoption")
+                            .comment("some reversal of a transfer asset tx")
+                            .reversalAssetTx(
+                                    HsOfficeCoopAssetsTransactionEntity.builder()
+                                            .uuid(SOME_ADOPTION_REVERSAL_ASSET_TX_UUID)
+                                            .membership(AVAILABLE_MEMBER_ENTITY)
+                                            .transactionType(REVERSAL)
+                                            .assetValue(BigDecimal.valueOf(1024))
+                                            .valueDate(LocalDate.parse("2024-11-11"))
+                                            .reference("some reversal")
+                                            .comment("some adoption asset tx reversal")
+                                            .build()
+                            )
+                            .build()
+            )
+            .reversalAssetTx(
+                    HsOfficeCoopAssetsTransactionEntity.builder()
+                            .uuid(SOME_TRANSFER_REVERSAL_ASSET_TX_UUID)
+                            .membership(ORIGIN_TARGET_MEMBER_ENTITY)
+                            .transactionType(REVERSAL)
+                            .assetValue(BigDecimal.valueOf(1024))
+                            .valueDate(LocalDate.parse("2024-11-11"))
+                            .reference("some transfer")
+                            .comment("some transfer asset tx reversal")
+                            .build()
+            )
+            .build();
+    {
+        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx()
+                .setTransferAssetTx(SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY);
+        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getReversalAssetTx()
+                .setRevertedAssetTx(SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY);
+        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx().getReversalAssetTx()
+                .setRevertedAssetTx(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx());
+    }
+
+    private static final String EXPECTED_RESULT_FROM_GET_SINGLE = """
+            {
+                 "uuid": "99999999-9999-9999-9999-999999999999",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "TRANSFER",
+                 "assetValue": -1024,
+                 "valueDate": "2024-11-10",
+                 "reference": "some transfer",
+                 "comment": "some transfer to get reverted",
+                 "adoptionAssetTx": {
+                   "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                   "membership.uuid": "22222222-2222-2222-2222-222222222222",
+                   "membership.memberNumber": "M-1234500",
+                   "transactionType": "ADOPTION",
+                   "assetValue": 1024,
+                   "valueDate": "2024-11-10",
+                   "reference": "related adoption",
+                   "comment": "some reversal of a transfer asset tx",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": "99999999-9999-9999-9999-999999999999",
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                }
+            }
+            """;
+
+
+    private static final String EXPECTED_RESULT_FROM_GET_LIST = """
+            [
+               {
+                 "uuid": "33333333-3333-3333-3333-333333333333",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "LOSS",
+                 "assetValue": -64,
+                 "valueDate": "2024-10-15",
+                 "reference": "some loss asset tx ref",
+                 "comment": "some loss asset tx comment",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": null,
+                 "revertedAssetTx": null,
+                 "reversalAssetTx": null
+               },
+               {
+                 "uuid": "44444444-4444-4444-4444-444444444444",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "TRANSFER",
+                 "assetValue": -256,
+                 "valueDate": "2024-10-15",
+                 "reference": "some transfer asset tx ref",
+                 "comment": "some transfer asset tx comment",
+                 "adoptionAssetTx": {
+                   "uuid": "55555555-5555-5555-5555-555555555555",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "TRANSFER",
+                   "assetValue": 256,
+                   "valueDate": "2024-10-15",
+                   "reference": "some adoption asset tx ref",
+                   "comment": "some adoption asset tx comment",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": "44444444-4444-4444-4444-444444444444",
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": null
+                 },
+                 "transferAssetTx": null,
+                 "revertedAssetTx": null,
+                 "reversalAssetTx": null
+               },
+               {
+                 "uuid": "55555555-5555-5555-5555-555555555555",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "TRANSFER",
+                 "assetValue": 256,
+                 "valueDate": "2024-10-15",
+                 "reference": "some adoption asset tx ref",
+                 "comment": "some adoption asset tx comment",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": {
+                   "uuid": "44444444-4444-4444-4444-444444444444",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "TRANSFER",
+                   "assetValue": -256,
+                   "valueDate": "2024-10-15",
+                   "reference": "some transfer asset tx ref",
+                   "comment": "some transfer asset tx comment",
+                   "adoptionAssetTx.uuid": "55555555-5555-5555-5555-555555555555",
+                   "transferAssetTx.uuid": null,
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": null
+                 },
+                 "revertedAssetTx": null,
+                 "reversalAssetTx": null
+               },
+               {
+                 "uuid": "77777777-7777-7777-7777-777777777777",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "DISBURSAL",
+                 "assetValue": -128.0,
+                 "valueDate": "2024-10-15",
+                 "reference": "some disbursal",
+                 "comment": "some disbursal to get reverted",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": null,
+                 "revertedAssetTx": null,
+                 "reversalAssetTx": {
+                   "uuid": "88888888-8888-8888-8888-888888888888",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "REVERSAL",
+                   "assetValue": 128.0,
+                   "valueDate": "2024-10-20",
+                   "reference": "some reversal",
+                   "comment": "some reversal of a disbursal asset tx",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": null,
+                   "revertedAssetTx.uuid": "77777777-7777-7777-7777-777777777777",
+                   "reversalAssetTx.uuid": null
+                 }
+               },
+               {
+                 "uuid": "88888888-8888-8888-8888-888888888888",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "REVERSAL",
+                 "assetValue": 128.0,
+                 "valueDate": "2024-10-20",
+                 "reference": "some reversal",
+                 "comment": "some reversal of a disbursal asset tx",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": null,
+                 "revertedAssetTx": {
+                   "uuid": "77777777-7777-7777-7777-777777777777",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "DISBURSAL",
+                   "assetValue": -128.0,
+                   "valueDate": "2024-10-15",
+                   "reference": "some disbursal",
+                   "comment": "some disbursal to get reverted",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": null,
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": "88888888-8888-8888-8888-888888888888"
+                 },
+                 "reversalAssetTx": null
+               },
+               {
+                 "uuid": "99999999-9999-9999-9999-999999999999",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "TRANSFER",
+                 "assetValue": -1024,
+                 "valueDate": "2024-11-10",
+                 "reference": "some transfer",
+                 "comment": "some transfer to get reverted",
+                 "adoptionAssetTx": {
+                   "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                   "membership.uuid": "22222222-2222-2222-2222-222222222222",
+                   "membership.memberNumber": "M-1234500",
+                   "transactionType": "ADOPTION",
+                   "assetValue": 1024,
+                   "valueDate": "2024-11-10",
+                   "reference": "related adoption",
+                   "comment": "some reversal of a transfer asset tx",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": "99999999-9999-9999-9999-999999999999",
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                 },
+                 "transferAssetTx": null,
+                 "revertedAssetTx": null,
+                 "reversalAssetTx": {
+                   "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "REVERSAL",
+                   "assetValue": 1024,
+                   "valueDate": "2024-11-11",
+                   "reference": "some transfer",
+                   "comment": "some transfer asset tx reversal",
+                   "adoptionAssetTx.uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                   "transferAssetTx.uuid": null,
+                   "revertedAssetTx.uuid": "99999999-9999-9999-9999-999999999999",
+                   "reversalAssetTx.uuid": null
+                 }
+               },
+               {
+                 "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                 "membership.uuid": "22222222-2222-2222-2222-222222222222",
+                 "membership.memberNumber": "M-1234500",
+                 "transactionType": "ADOPTION",
+                 "assetValue": 1024,
+                 "valueDate": "2024-11-10",
+                 "reference": "related adoption",
+                 "comment": "some reversal of a transfer asset tx",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": {
+                   "uuid": "77777777-7777-7777-7777-777777777777",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "DISBURSAL",
+                   "assetValue": -128.0,
+                   "valueDate": "2024-10-15",
+                   "reference": "some disbursal",
+                   "comment": "some disbursal to get reverted",
+                   "adoptionAssetTx.uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                   "transferAssetTx.uuid": null,
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": "88888888-8888-8888-8888-888888888888"
+                 },
+                 "revertedAssetTx": null,
+                 "reversalAssetTx": {
+                   "uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                   "membership.uuid": "22222222-2222-2222-2222-222222222222",
+                   "membership.memberNumber": "M-1234500",
+                   "transactionType": "REVERSAL",
+                   "assetValue": 1024,
+                   "valueDate": "2024-11-11",
+                   "reference": "some reversal",
+                   "comment": "some adoption asset tx reversal",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": "77777777-7777-7777-7777-777777777777",
+                   "revertedAssetTx.uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                   "reversalAssetTx.uuid": null
+                 }
+               },
+               {
+                 "uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                 "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                 "membership.memberNumber": "M-1111100",
+                 "transactionType": "REVERSAL",
+                 "assetValue": 1024,
+                 "valueDate": "2024-11-11",
+                 "reference": "some transfer",
+                 "comment": "some transfer asset tx reversal",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": null,
+                 "revertedAssetTx": {
+                   "uuid": "77777777-7777-7777-7777-777777777777",
+                   "membership.uuid": "11111111-1111-1111-1111-111111111111",
+                   "membership.memberNumber": "M-1111100",
+                   "transactionType": "DISBURSAL",
+                   "assetValue": -128.0,
+                   "valueDate": "2024-10-15",
+                   "reference": "some disbursal",
+                   "comment": "some disbursal to get reverted",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": null,
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+                 },
+                 "reversalAssetTx": null
+               },
+               {
+                 "uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                 "membership.uuid": "22222222-2222-2222-2222-222222222222",
+                 "membership.memberNumber": "M-1234500",
+                 "transactionType": "REVERSAL",
+                 "assetValue": 1024,
+                 "valueDate": "2024-11-11",
+                 "reference": "some reversal",
+                 "comment": "some adoption asset tx reversal",
+                 "adoptionAssetTx": null,
+                 "transferAssetTx": null,
+                 "revertedAssetTx": {
+                   "uuid": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                   "membership.uuid": "22222222-2222-2222-2222-222222222222",
+                   "membership.memberNumber": "M-1234500",
+                   "transactionType": "ADOPTION",
+                   "assetValue": 1024,
+                   "valueDate": "2024-11-10",
+                   "reference": "related adoption",
+                   "comment": "some reversal of a transfer asset tx",
+                   "adoptionAssetTx.uuid": null,
+                   "transferAssetTx.uuid": "77777777-7777-7777-7777-777777777777",
+                   "revertedAssetTx.uuid": null,
+                   "reversalAssetTx.uuid": "cccccccc-cccc-cccc-cccc-cccccccccccc"
+                 },
+                 "reversalAssetTx": null
+               }
+            ]
+            """;
 
     @Autowired
     MockMvc mockMvc;
@@ -117,6 +530,44 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                 requestBody -> requestBody.without("membership.uuid"),
                 "[membershipUuid must not be null but is \"null\"]"), // TODO.impl: should be membership.uuid, Spring validation-problem?
 
+        MEMBERSHIP_UUID_NOT_FOUND_OR_NOT_ACCESSIBLE(
+                requestBody -> requestBody.with("membership.uuid", UNAVAILABLE_UUID),
+                "membership.uuid " + UNAVAILABLE_UUID + " not found"),
+
+        MEMBERSHIP_UUID_AND_MEMBER_NUMBER_MUST_NOT_BE_GIVEN_BOTH(
+                requestBody -> requestBody
+                        .with("transactionType", TRANSFER.name())
+                        .with("assetValue", "-128.00")
+                        .with("adoptingMembership.uuid", UNAVAILABLE_UUID)
+                        .with("adoptingMembership.memberNumber", UNAVAILABLE_MEMBER_NUMBER),
+                "either adoptingMembership.uuid or adoptingMembership.memberNumber can be given, not both"),
+
+        MEMBERSHIP_UUID_OR_MEMBER_NUMBER_MUST_BE_GIVEN(
+                requestBody -> requestBody
+                        .with("transactionType", TRANSFER)
+                        .with("assetValue", "-128.00"),
+                "either adoptingMembership.uuid or adoptingMembership.memberNumber must be given for transactionType=TRANSFER"),
+
+        REVERSAL_ASSET_TRANSACTION_REQUIRES_REVERTED_ASSET_TX_UUID(
+                requestBody -> requestBody
+                            .with("transactionType", REVERSAL)
+                            .with("assetValue", "-128.00"),
+                "REVERSAL asset transaction requires revertedAssetTx.uuid"),
+
+        REVERSAL_ASSET_TRANSACTION_REQUIRES_AVAILABLE_REVERTED_ASSET_TX_UUID(
+                requestBody -> requestBody
+                        .with("transactionType", REVERSAL)
+                        .with("assetValue", "-128.00")
+                        .with("revertedAssetTx.uuid", UNAVAILABLE_UUID),
+                "revertedAssetTx.uuid " + UNAVAILABLE_UUID + " not found"),
+
+        REVERSAL_ASSET_TRANSACTION_MUST_NEGATE_VALUE_OF_REVERTED_ASSET_TX(
+                requestBody -> requestBody
+                        .with("transactionType", REVERSAL)
+                        .with("assetValue", "128.00")
+                        .with("revertedAssetTx.uuid", SOME_EXISTING_LOSS_ASSET_TX_UUID),
+                "given assetValue=128.00 but must be negative value from reverted asset tx: -64"),
+
         TRANSACTION_TYPE_MISSING(
                 requestBody -> requestBody.without("transactionType"),
                 "[transactionType must not be null but is \"null\"]"),
@@ -127,35 +578,40 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
         ASSETS_VALUE_FOR_DEPOSIT_MUST_BE_POSITIVE(
                 requestBody -> requestBody
-                        .with("transactionType", "DEPOSIT")
+                        .with("transactionType", DEPOSIT)
                         .with("assetValue", -64.00),
                 "[for DEPOSIT, assetValue must be positive but is \"-64.00\"]"),
 
         ASSETS_VALUE_FOR_DISBURSAL_MUST_BE_NEGATIVE(
                 requestBody -> requestBody
-                        .with("transactionType", "DISBURSAL")
+                        .with("transactionType", DISBURSAL)
                         .with("assetValue", 64.00),
                 "[for DISBURSAL, assetValue must be negative but is \"64.00\"]"),
 
-        //TODO: other transaction types
+        ADOPTING_MEMBERSHIP_MUST_NOT_BE_THE_SAME(
+                requestBody -> requestBody
+                        .with("transactionType", TRANSFER)
+                        .with("assetValue", -64.00)
+                        .with("adoptingMembership.uuid", ORIGIN_MEMBERSHIP_UUID),
+                "transferring and adopting membership must be different, but both are M-1111100"),
 
         ADOPTING_MEMBERSHIP_NUMBER_FOR_TRANSFER_MUST_BE_GIVEN_AND_AVAILABLE(
                 requestBody -> requestBody
-                        .with("transactionType", "TRANSFER")
+                        .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
                         .with("adoptingMembership.memberNumber", UNAVAILABLE_MEMBER_NUMBER),
                 "adoptingMembership.memberNumber='M-1234699' not found or not accessible"),
 
         ADOPTING_MEMBERSHIP_UUID_FOR_TRANSFER_MUST_BE_GIVEN_AND_AVAILABLE(
                 requestBody -> requestBody
-                        .with("transactionType", "TRANSFER")
+                        .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
-                        .with("adoptingMembership.uuid", UNAVAILABLE_MEMBERSHIP_UUID.toString()),
-                "adoptingMembership.uuid='" + UNAVAILABLE_MEMBERSHIP_UUID + "' not found or not accessible"),
+                        .with("adoptingMembership.uuid", UNAVAILABLE_UUID),
+                "adoptingMembership.uuid='" + UNAVAILABLE_UUID + "' not found or not accessible"),
 
         ASSETS_VALUE_MUST_NOT_BE_NULL(
                 requestBody -> requestBody
-                        .with("transactionType", "REVERSAL")
+                        .with("transactionType", REVERSAL)
                         .with("assetValue", 0.00),
                 "[assetValue must not be 0 but is \"0.00\"]"),
 
@@ -190,8 +646,10 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     @EnumSource(BadRequestTestCases.class)
     void respondWithBadRequest(final BadRequestTestCases testCase) throws Exception {
         // HOWTO: run just a single test-case in a data-driven test-method
-        // org.assertj.core.api.Assumptions.assumeThat(
-        //      testCase == ADOPTING_MEMBERSHIP_NUMBER_FOR_TRANSFER_MUST_BE_GIVEN_AND_AVAILABLE).isTrue();
+        //  - set SINGLE_TEST_CASE_EXECUTION to true - see above
+        //  - select the test case enum value you want to run
+        assumeThat(!SINGLE_TEST_CASE_EXECUTION ||
+                testCase == BadRequestTestCases.ADOPTING_MEMBERSHIP_MUST_NOT_BE_THE_SAME).isTrue();
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -202,9 +660,9 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                         .accept(MediaType.APPLICATION_JSON))
 
                 // then
-                .andExpect(jsonPath("message", is("ERROR: [400] " + testCase.expectedErrorMessage)))
                 .andExpect(jsonPath("statusCode", is(400)))
                 .andExpect(jsonPath("statusPhrase", is("Bad Request")))
+                .andExpect(jsonPath("message", is("ERROR: [400] " + testCase.expectedErrorMessage)))
                 .andExpect(status().is4xxClientError());
     }
 
@@ -212,28 +670,38 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
         REVERTING_SIMPLE_ASSET_TRANSACTION(
                 requestBody -> requestBody
-                        .with("transactionType", "REVERSAL")
+                        .with("transactionType", REVERSAL)
                         .with("assetValue", "64.00")
                         .with("valueDate", "2024-10-15")
-                        .with("reference", "reversal ref")
-                        .with("comment", "reversal comment")
-                        .with("revertedAssetTx.uuid", SOME_EXISTING_LOSS_ASSET_TX_UUID.toString()),
-                Expected.REVERT_RESPONSE),
+                        .with("reference", "reversal of loss ref")
+                        .with("comment", "reversal of loss asset tx comment")
+                        .with("revertedAssetTx.uuid", SOME_EXISTING_LOSS_ASSET_TX_UUID),
+                Expected.REVERT_LOSS_RESPONSE),
 
         TRANSFER_TO_GIVEN_AVAILABLE_MEMBERSHIP_NUMBER(
                 requestBody -> requestBody
-                        .with("transactionType", "TRANSFER")
+                        .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
                         .with("adoptingMembership.memberNumber", AVAILABLE_TARGET_MEMBER_NUMBER),
                 Expected.TRANSFER_RESPONSE),
 
         TRANSFER_TO_GIVEN_AVAILABLE_MEMBERSHIP_UUID(
                 requestBody -> requestBody
-                        .with("transactionType", "TRANSFER")
+                        .with("transactionType", TRANSFER)
                         .with("assetValue", -64.00)
-                        .with("membership.uuid", ORIGIN_MEMBERSHIP_UUID.toString())
-                        .with("adoptingMembership.uuid", AVAILABLE_TARGET_MEMBERSHIP_UUID.toString()),
-                Expected.TRANSFER_RESPONSE);
+                        .with("membership.uuid", ORIGIN_MEMBERSHIP_UUID)
+                        .with("adoptingMembership.uuid", AVAILABLE_TARGET_MEMBERSHIP_UUID),
+                Expected.TRANSFER_RESPONSE),
+
+        REVERTING_TRANSFER_ASSET_TRANSACTION_IMPLICITLY_REVERTS_ADOPTING_ASSET_TRANSACTION(
+                requestBody -> requestBody
+                        .with("transactionType", REVERSAL)
+                        .with("assetValue", "256.00")
+                        .with("valueDate", "2024-10-15")
+                        .with("reference", "reversal of transfer ref")
+                        .with("comment", "reversal of transfer asset tx comment")
+                        .with("revertedAssetTx.uuid", SOME_EXISTING_TRANSFER_ASSET_TX_UUID),
+                Expected.REVERT_TRANSFER_RESPONSE);
 
         private final Function<JsonBuilder, JsonBuilder> givenBodyTransformation;
         private final String expectedResponseBody;
@@ -251,7 +719,7 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
         private static class Expected {
 
-            public static final String REVERT_RESPONSE = """
+            public static final String REVERT_LOSS_RESPONSE = """
                     {
                          "uuid": "%{NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID}",
                          "membership.uuid": "%{ORIGIN_MEMBERSHIP_UUID}",
@@ -259,9 +727,10 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                          "transactionType": "REVERSAL",
                          "assetValue": 64.00,
                          "valueDate": "2024-10-15",
-                         "reference": "reversal ref",
-                         "comment": "reversal comment",
+                         "reference": "reversal of loss ref",
+                         "comment": "reversal of loss asset tx comment",
                          "adoptionAssetTx": null,
+                         "reversalAssetTx": null,
                          "transferAssetTx": null,
                          "revertedAssetTx": {
                            "uuid": "%{SOME_EXISTING_LOSS_ASSET_TX_UUID}",
@@ -279,7 +748,9 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                          }
                     }
                     """
-                    .replace("%{NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID}", NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID.toString())
+                    .replace(
+                            "%{NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID}",
+                            NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID.toString())
                     .replace("%{ORIGIN_MEMBERSHIP_UUID}", ORIGIN_MEMBERSHIP_UUID.toString())
                     .replace("%{ORIGIN_MEMBER_NUMBER}", ORIGIN_MEMBER_NUMBER)
                     .replace("%{SOME_EXISTING_LOSS_ASSET_TX_UUID}", SOME_EXISTING_LOSS_ASSET_TX_UUID.toString());
@@ -303,20 +774,57 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                         "reversalAssetTx": null
                     }
                     """
-                    .replace("%{NEW_EXPLICITLY_CREATED_TRANSFER_ASSET_TX_UUID}", NEW_EXPLICITLY_CREATED_TRANSFER_ASSET_TX_UUID.toString())
+                    .replace(
+                            "%{NEW_EXPLICITLY_CREATED_TRANSFER_ASSET_TX_UUID}",
+                            NEW_EXPLICITLY_CREATED_TRANSFER_ASSET_TX_UUID.toString())
                     .replace("%{ORIGIN_MEMBERSHIP_UUID}", ORIGIN_MEMBERSHIP_UUID.toString())
                     .replace("%{ORIGIN_MEMBER_NUMBER}", ORIGIN_MEMBER_NUMBER)
                     .replace("%{AVAILABLE_MEMBERSHIP_UUID}", AVAILABLE_TARGET_MEMBERSHIP_UUID.toString())
                     .replace("%{AVAILABLE_TARGET_MEMBER_NUMBER}", AVAILABLE_TARGET_MEMBER_NUMBER);
+
+            public static final String REVERT_TRANSFER_RESPONSE = """
+                    {
+                         "uuid": "%{NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID}",
+                         "membership.uuid": "%{ORIGIN_MEMBERSHIP_UUID}",
+                         "membership.memberNumber": "%{ORIGIN_MEMBER_NUMBER}",
+                         "transactionType": "REVERSAL",
+                         "assetValue": 256.00,
+                         "valueDate": "2024-10-15",
+                         "reference": "reversal of transfer ref",
+                         "comment": "reversal of transfer asset tx comment",
+                         "adoptionAssetTx": null,
+                         "transferAssetTx": null,
+                         "revertedAssetTx": {
+                           "uuid": "%{SOME_EXISTING_TRANSFER_ASSET_TX_UUID}",
+                           "membership.uuid": "%{ORIGIN_MEMBERSHIP_UUID}",
+                           "membership.memberNumber": "%{ORIGIN_MEMBER_NUMBER}",
+                           "transactionType": "TRANSFER",
+                           "assetValue": -256.00,
+                           "valueDate": "2024-10-15",
+                           "reference": "some transfer asset tx ref",
+                           "comment": "some transfer asset tx comment",
+                           "adoptionAssetTx.uuid": "%{SOME_EXISTING_ADOPTION_ASSET_TX_UUID}",
+                           "transferAssetTx.uuid": null,
+                           "revertedAssetTx.uuid": null,
+                           "reversalAssetTx.uuid": "%{NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID}"
+                         }
+                    }
+                    """
+                    .replace(
+                            "%{NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID}",
+                            NEW_EXPLICITLY_CREATED_REVERSAL_ASSET_TX_UUID.toString())
+                    .replace("%{ORIGIN_MEMBERSHIP_UUID}", ORIGIN_MEMBERSHIP_UUID.toString())
+                    .replace("%{ORIGIN_MEMBER_NUMBER}", ORIGIN_MEMBER_NUMBER)
+                    .replace("%{SOME_EXISTING_TRANSFER_ASSET_TX_UUID}", SOME_EXISTING_TRANSFER_ASSET_TX_UUID.toString())
+                    .replace("%{SOME_EXISTING_ADOPTION_ASSET_TX_UUID}", SOME_EXISTING_ADOPTION_ASSET_TX_UUID.toString());
         }
     }
 
     @ParameterizedTest
     @EnumSource(SuccessfullyCreatedTestCases.class)
     void respondWithSuccessfullyCreated(final SuccessfullyCreatedTestCases testCase) throws Exception {
-        // uncomment, if you need to run just a single test-case in this data-driven test-method
-        // org.assertj.core.api.Assumptions.assumeThat(
-        //        testCase == ADOPTING_MEMBERSHIP_UUID_FOR_TRANSFER_MUST_BE_GIVEN_AND_AVAILABLE).isTrue();
+        assumeThat(!SINGLE_TEST_CASE_EXECUTION ||
+                testCase == SuccessfullyCreatedTestCases.REVERTING_TRANSFER_ASSET_TRANSACTION_IMPLICITLY_REVERTS_ADOPTING_ASSET_TRANSACTION).isTrue();
 
         // when
         mockMvc.perform(MockMvcRequestBuilders
@@ -331,12 +839,77 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
                 .andExpect(jsonPath("$", lenientlyEquals(testCase.expectedResponseBody)));
     }
 
+    @Test
+    void getSingleGeneratesProperJsonForAvailableUuid() throws Exception {
+        // given
+        when(coopAssetsTransactionRepo.findByUuid(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getUuid()))
+                .thenReturn(Optional.of(SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/office/coopassetstransactions/" + SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getUuid())
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$", lenientlyEquals(EXPECTED_RESULT_FROM_GET_SINGLE)));
+    }
+
+    @Test
+    void getSingleGeneratesNotFoundForUnavailableUuid() throws Exception {
+        // given
+        when(coopAssetsTransactionRepo.findByUuid(UNAVAILABLE_UUID)).thenReturn(Optional.empty());
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/office/coopassetstransactions/" + UNAVAILABLE_UUID)
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getListGeneratesProperJson() throws Exception {
+        // given
+        when(coopAssetsTransactionRepo.findCoopAssetsTransactionByOptionalMembershipUuidAndDateRange(null, null, null))
+                .thenReturn(List.of(
+                        SOME_EXISTING_LOSS_ASSET_TX_ENTITY,
+                        SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY,
+                        SOME_EXISTING_ADOPTION_ASSET_TX_ENTITY,
+                        SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY,
+                        SOME_REVERTED_DISBURSAL_ASSET_TX_ENTITY.getReversalAssetTx(),
+                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY,
+                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx(),
+                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getReversalAssetTx(),
+                        SOME_REVERTED_TRANSFER_ASSET_TX_ENTITY.getAdoptionAssetTx().getReversalAssetTx()
+                ));
+
+        // when
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/hs/office/coopassetstransactions")
+                        .header("current-subject", "superuser-alex@hostsharing.net")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                // then
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$", lenientlyEquals(EXPECTED_RESULT_FROM_GET_LIST)));
+    }
+
+    @Test
+    void singleTestCaseExecutionMustBeDisabled() {
+        assertThat(SINGLE_TEST_CASE_EXECUTION).isFalse();
+    }
+
     @BeforeEach
     void initMocks() {
-        TestUuidGenerator.start(4);
+        TestUuidGenerator.start(DYNAMIC_UUID_START_INDEX);
 
         when(emw.find(eq(HsOfficeMembershipEntity.class), eq(ORIGIN_MEMBERSHIP_UUID))).thenReturn(ORIGIN_TARGET_MEMBER_ENTITY);
-        when(emw.find(eq(HsOfficeMembershipEntity.class), eq(AVAILABLE_TARGET_MEMBERSHIP_UUID))).thenReturn(AVAILABLE_MEMBER_ENTITY);
+        when(emw.find(eq(HsOfficeMembershipEntity.class), eq(AVAILABLE_TARGET_MEMBERSHIP_UUID))).thenReturn(
+                AVAILABLE_MEMBER_ENTITY);
 
         final var availableMemberNumber = Integer.valueOf(AVAILABLE_TARGET_MEMBER_NUMBER.substring("M-".length()));
         when(membershipRepo.findMembershipByMemberNumber(eq(availableMemberNumber))).thenReturn(AVAILABLE_MEMBER_ENTITY);
@@ -346,6 +919,10 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
 
         when(coopAssetsTransactionRepo.findByUuid(SOME_EXISTING_LOSS_ASSET_TX_UUID))
                 .thenReturn(Optional.of(SOME_EXISTING_LOSS_ASSET_TX_ENTITY));
+        when(coopAssetsTransactionRepo.findByUuid(SOME_EXISTING_TRANSFER_ASSET_TX_UUID))
+                .thenReturn(Optional.of(SOME_EXISTING_TRANSFER_ASSET_TX_ENTITY));
+        when(coopAssetsTransactionRepo.findByUuid(SOME_EXISTING_ADOPTION_ASSET_TX_UUID))
+                .thenReturn(Optional.of(SOME_EXISTING_ADOPTION_ASSET_TX_ENTITY));
         when(coopAssetsTransactionRepo.save(any(HsOfficeCoopAssetsTransactionEntity.class)))
                 .thenAnswer(invocation -> {
                             final var entity = (HsOfficeCoopAssetsTransactionEntity) invocation.getArgument(0);
@@ -358,10 +935,10 @@ class HsOfficeCoopAssetsTransactionControllerRestTest {
     }
 
     private int partnerNumberOf(final String memberNumber) {
-        return Integer.parseInt(memberNumber.substring("M-".length(), memberNumber.length()-2));
+        return Integer.parseInt(memberNumber.substring("M-".length(), memberNumber.length() - 2));
     }
 
     private String suffixOf(final String memberNumber) {
-        return memberNumber.substring("M-".length()+5);
+        return memberNumber.substring("M-".length() + 5);
     }
 }

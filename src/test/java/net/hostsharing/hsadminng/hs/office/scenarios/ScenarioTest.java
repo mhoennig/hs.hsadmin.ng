@@ -16,6 +16,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.testcontainers.shaded.org.apache.commons.lang3.ObjectUtils;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -160,6 +161,10 @@ public abstract class ScenarioTest extends ContextBasedTest {
         properties.put(name, (value instanceof String string) ? resolveTyped(string) : value);
     }
 
+    static void removeProperty(final String propName) {
+        properties.remove(propName);
+    }
+
     static Map<String, Object> knowVariables() {
         final var map = new LinkedHashMap<String, Object>();
         ScenarioTest.aliases.forEach((key, value) -> map.put(key, value.uuid()));
@@ -172,14 +177,24 @@ public abstract class ScenarioTest extends ContextBasedTest {
         return resolved;
     }
 
-    public static Object resolveTyped(final String text) {
-        final var resolved = resolve(text, DROP_COMMENTS);
+    public static Object resolveTyped(final String resolvableText) {
+        final var resolved = resolve(resolvableText, DROP_COMMENTS);
         try {
             return UUID.fromString(resolved);
         } catch (final IllegalArgumentException e) {
             // ignore and just use the String value
         }
         return resolved;
+    }
+
+    public static <T> T resolveTyped(final String resolvableText, final Class<T> valueType) {
+        final var resolvedValue = resolve(resolvableText, DROP_COMMENTS);
+        if (valueType == BigDecimal.class) {
+            //noinspection unchecked
+            return (T) new BigDecimal(resolvedValue);
+        }
+        //noinspection unchecked
+        return (T) resolvedValue;
     }
 
 }

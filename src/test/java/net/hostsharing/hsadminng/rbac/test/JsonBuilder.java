@@ -27,7 +27,7 @@ public class JsonBuilder {
      * @param value JSON value
      * @return this JsonBuilder
      */
-    public JsonBuilder with(final String key, final String value) {
+    public JsonBuilder with(final String key, final Object value) {
         try {
             jsonObject.put(key, value);
         } catch (JSONException e) {

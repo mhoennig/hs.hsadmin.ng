@@ -19,7 +19,7 @@ public class PathAssertion {
     public Consumer<UseCase.HttpResponse> contains(final String resolvableValue) {
         return response -> {
             try {
-                response.path(path).map(this::asString).contains(ScenarioTest.resolve(resolvableValue, DROP_COMMENTS));
+                response.path(path).isEqualTo(ScenarioTest.resolve(resolvableValue, DROP_COMMENTS));
             } catch (final AssertionError e) {
                 // without this, the error message is often lacking important context
                 fail(e.getMessage() + " in `path(\"" + path +  "\").contains(\"" + resolvableValue + "\")`" );
@@ -36,16 +36,5 @@ public class PathAssertion {
                 fail(e.getMessage() + " in `path(\"" + path +  "\").doesNotExist()`" );
             }
         };
-    }
-
-    private String asString(final Object value) {
-        if (value instanceof Double doubleValue) {
-            if (doubleValue % 1 == 0) {
-                return String.valueOf(doubleValue.intValue()); // avoid trailing ".0"
-            } else {
-                return doubleValue.toString();
-            }
-        }
-        return value.toString();
     }
 }

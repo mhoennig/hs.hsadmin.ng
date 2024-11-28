@@ -63,6 +63,9 @@ public class TestUuidGenerator {
      * @return a constant UUID related to the given index
      */
     public static UUID use(final int index) {
+        if (staticallyUsedIndexes.contains(index)) {
+            throw new IllegalArgumentException("index " + index + " already used statically");
+        }
         staticallyUsedIndexes.add(index);
         return GIVEN_UUIDS.get(index);
     }

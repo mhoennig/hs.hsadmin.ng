@@ -27,11 +27,13 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static java.util.Optional.ofNullable;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.REVERSAL;
+import static net.hostsharing.hsadminng.hs.office.coopassets.HsOfficeCoopAssetsTransactionType.TRANSFER;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.CLEARING;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.DEPOSIT;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.DISBURSAL;
 import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.LOSS;
-import static net.hostsharing.hsadminng.hs.office.generated.api.v1.model.HsOfficeCoopAssetsTransactionTypeResource.TRANSFER;
+import static net.hostsharing.hsadminng.lambda.WithNonNull.withNonNull;
 
 @RestController
 public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAssetsApi {
@@ -66,7 +68,10 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
                 fromValueDate,
                 toValueDate);
 
-        final var resources = mapper.mapList(entities, HsOfficeCoopAssetsTransactionResource.class, ENTITY_TO_RESOURCE_POSTMAPPER);
+        final var resources = mapper.mapList(
+                entities,
+                HsOfficeCoopAssetsTransactionResource.class,
+                ENTITY_TO_RESOURCE_POSTMAPPER);
         return ResponseEntity.ok(resources);
     }
 
@@ -106,7 +111,11 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         if (result.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapper.map(result.get(), HsOfficeCoopAssetsTransactionResource.class));
+        final var resource = mapper.map(
+                result.get(),
+                HsOfficeCoopAssetsTransactionResource.class,
+                ENTITY_TO_RESOURCE_POSTMAPPER);
+        return ResponseEntity.ok(resource);
 
     }
 
@@ -131,7 +140,8 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
     private static void validateCreditTransaction(
             final HsOfficeCoopAssetsTransactionInsertResource requestBody,
             final ArrayList<String> violations) {
-        if (List.of(DISBURSAL, TRANSFER, CLEARING, LOSS).contains(requestBody.getTransactionType())
+        if (List.of(DISBURSAL, HsOfficeCoopAssetsTransactionTypeResource.TRANSFER, CLEARING, LOSS)
+                .contains(requestBody.getTransactionType())
                 && requestBody.getAssetValue().signum() > 0) {
             violations.add("for %s, assetValue must be negative but is \"%.2f\"".formatted(
                     requestBody.getTransactionType(), requestBody.getAssetValue()));
@@ -147,57 +157,108 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         }
     }
 
+    // TODO.refa: this logic needs to get extracted to a service
     final BiConsumer<HsOfficeCoopAssetsTransactionEntity, HsOfficeCoopAssetsTransactionResource> ENTITY_TO_RESOURCE_POSTMAPPER = (entity, resource) -> {
         resource.setMembershipUuid(entity.getMembership().getUuid());
         resource.setMembershipMemberNumber(entity.getMembership().getTaggedMemberNumber());
 
-        if (entity.getReversalAssetTx() != null) {
-            resource.getReversalAssetTx().setRevertedAssetTxUuid(entity.getUuid());
-            resource.getReversalAssetTx().setMembershipUuid(entity.getMembership().getUuid());
-            resource.getReversalAssetTx().setMembershipMemberNumber(entity.getTaggedMemberNumber());
-        }
+        withNonNull(
+                resource.getReversalAssetTx(), reversalAssetTxResource -> {
+                    reversalAssetTxResource.setMembershipUuid(entity.getMembership().getUuid());
+                    reversalAssetTxResource.setMembershipMemberNumber(entity.getTaggedMemberNumber());
+                    reversalAssetTxResource.setRevertedAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getAdoptionAssetTx(), adoptionAssetTx ->
+                                    reversalAssetTxResource.setAdoptionAssetTxUuid(adoptionAssetTx.getUuid()));
+                    withNonNull(
+                            entity.getTransferAssetTx(), transferAssetTxResource ->
+                                    reversalAssetTxResource.setTransferAssetTxUuid(transferAssetTxResource.getUuid()));
+                });
 
-        if (entity.getRevertedAssetTx() != null) {
-            resource.getRevertedAssetTx().setReversalAssetTxUuid(entity.getUuid());
-            resource.getRevertedAssetTx().setMembershipUuid(entity.getMembership().getUuid());
-            resource.getRevertedAssetTx().setMembershipMemberNumber(entity.getTaggedMemberNumber());
-        }
+        withNonNull(
+                resource.getRevertedAssetTx(), revertAssetTxResource -> {
+                    revertAssetTxResource.setMembershipUuid(entity.getMembership().getUuid());
+                    revertAssetTxResource.setMembershipMemberNumber(entity.getTaggedMemberNumber());
+                    revertAssetTxResource.setReversalAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getRevertedAssetTx().getAdoptionAssetTx(), adoptionAssetTx ->
+                                    revertAssetTxResource.setAdoptionAssetTxUuid(adoptionAssetTx.getUuid()));
+                    withNonNull(
+                            entity.getRevertedAssetTx().getTransferAssetTx(), transferAssetTxResource ->
+                                    revertAssetTxResource.setTransferAssetTxUuid(transferAssetTxResource.getUuid()));
+                });
 
-        if (entity.getAdoptionAssetTx() != null) {
-            resource.getAdoptionAssetTx().setTransferAssetTxUuid(entity.getUuid());
-            resource.getAdoptionAssetTx().setMembershipUuid(entity.getAdoptionAssetTx().getMembership().getUuid());
-            resource.getAdoptionAssetTx().setMembershipMemberNumber(entity.getAdoptionAssetTx().getTaggedMemberNumber());
-        }
+        withNonNull(
+                resource.getAdoptionAssetTx(), adoptionAssetTxResource -> {
+                    adoptionAssetTxResource.setMembershipUuid(entity.getAdoptionAssetTx().getMembership().getUuid());
+                    adoptionAssetTxResource.setMembershipMemberNumber(entity.getAdoptionAssetTx().getTaggedMemberNumber());
+                    adoptionAssetTxResource.setTransferAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getAdoptionAssetTx().getReversalAssetTx(), reversalAssetTx ->
+                                    adoptionAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
+                });
 
-        if (entity.getTransferAssetTx() != null) {
-            resource.getTransferAssetTx().setAdoptionAssetTxUuid(entity.getUuid());
-            resource.getTransferAssetTx().setMembershipUuid(entity.getTransferAssetTx().getMembership().getUuid());
-            resource.getTransferAssetTx().setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
-        }
+        withNonNull(
+                resource.getTransferAssetTx(), transferAssetTxResource -> {
+                    resource.getTransferAssetTx().setMembershipUuid(entity.getTransferAssetTx().getMembership().getUuid());
+                    resource.getTransferAssetTx()
+                            .setMembershipMemberNumber(entity.getTransferAssetTx().getTaggedMemberNumber());
+                    resource.getTransferAssetTx().setAdoptionAssetTxUuid(entity.getUuid());
+                    withNonNull(
+                            entity.getTransferAssetTx().getReversalAssetTx(), reversalAssetTx ->
+                                    transferAssetTxResource.setReversalAssetTxUuid(reversalAssetTx.getUuid()));
+                });
     };
 
+    // TODO.refa: this logic needs to get extracted to a service
     final BiConsumer<HsOfficeCoopAssetsTransactionInsertResource, HsOfficeCoopAssetsTransactionEntity> RESOURCE_TO_ENTITY_POSTMAPPER = (resource, entity) -> {
 
         if (resource.getMembershipUuid() != null) {
-            final HsOfficeMembershipEntity membership = ofNullable(emw.find(HsOfficeMembershipEntity.class, resource.getMembershipUuid()))
-                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] membership.uuid %s not found".formatted(
+            final HsOfficeMembershipEntity membership = ofNullable(emw.find(
+                    HsOfficeMembershipEntity.class,
+                    resource.getMembershipUuid()))
+                    .orElseThrow(() -> new EntityNotFoundException("membership.uuid %s not found".formatted(
                             resource.getMembershipUuid())));
             entity.setMembership(membership);
         }
-        if (resource.getRevertedAssetTxUuid() != null) {
+
+        if (entity.getTransactionType() == REVERSAL) {
+            if (resource.getRevertedAssetTxUuid() == null) {
+                throw new ValidationException("REVERSAL asset transaction requires revertedAssetTx.uuid");
+            }
             final var revertedAssetTx = coopAssetsTransactionRepo.findByUuid(resource.getRevertedAssetTxUuid())
-                    .orElseThrow(() -> new EntityNotFoundException("ERROR: [400] revertedEntityUuid %s not found".formatted(
+                    .orElseThrow(() -> new EntityNotFoundException("revertedAssetTx.uuid %s not found".formatted(
                             resource.getRevertedAssetTxUuid())));
+            revertedAssetTx.setReversalAssetTx(entity);
             entity.setRevertedAssetTx(revertedAssetTx);
             if (resource.getAssetValue().negate().compareTo(revertedAssetTx.getAssetValue()) != 0) {
                 throw new ValidationException("given assetValue=" + resource.getAssetValue() +
                         " but must be negative value from reverted asset tx: " + revertedAssetTx.getAssetValue());
             }
+
+            if (revertedAssetTx.getTransactionType() == TRANSFER) {
+                final var adoptionAssetTx = revertedAssetTx.getAdoptionAssetTx();
+                final var adoptionReversalAssetTx = HsOfficeCoopAssetsTransactionEntity.builder()
+                        .transactionType(REVERSAL)
+                        .membership(adoptionAssetTx.getMembership())
+                        .revertedAssetTx(adoptionAssetTx)
+                        .assetValue(adoptionAssetTx.getAssetValue().negate())
+                        .comment(resource.getComment())
+                        .reference(resource.getReference())
+                        .valueDate(resource.getValueDate())
+                        .build();
+                adoptionAssetTx.setReversalAssetTx(adoptionReversalAssetTx);
+                adoptionReversalAssetTx.setRevertedAssetTx(adoptionAssetTx);
+            }
         }
 
-        final var adoptingMembership = determineAdoptingMembership(resource);
-        if (adoptingMembership != null) {
-            final var adoptingAssetTx = coopAssetsTransactionRepo.save(createAdoptingAssetTx(entity, adoptingMembership));
+        if (resource.getTransactionType() == HsOfficeCoopAssetsTransactionTypeResource.TRANSFER) {
+            final var adoptingMembership = determineAdoptingMembership(resource);
+            if ( entity.getMembership() == adoptingMembership) {
+                throw new ValidationException("transferring and adopting membership must be different, but both are " +
+                        adoptingMembership.getTaggedMemberNumber());
+            }
+            final var adoptingAssetTx = createAdoptingAssetTx(entity, adoptingMembership);
             entity.setAdoptionAssetTx(adoptingAssetTx);
         }
     };
@@ -206,11 +267,11 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
         final var adoptingMembershipUuid = resource.getAdoptingMembershipUuid();
         final var adoptingMembershipMemberNumber = resource.getAdoptingMembershipMemberNumber();
         if (adoptingMembershipUuid != null && adoptingMembershipMemberNumber != null) {
-            throw new IllegalArgumentException(
-                // @formatter:off
-                resource.getTransactionType() == TRANSFER
-                    ? "[400] either adoptingMembership.uuid or adoptingMembership.memberNumber can be given, not both"
-                    : "[400] adoptingMembership.uuid and adoptingMembership.memberNumber must not be given for transactionType="
+            throw new ValidationException(
+                    // @formatter:off
+                resource.getTransactionType() == HsOfficeCoopAssetsTransactionTypeResource.TRANSFER
+                    ? "either adoptingMembership.uuid or adoptingMembership.memberNumber can be given, not both"
+                    : "adoptingMembership.uuid and adoptingMembership.memberNumber must not be given for transactionType="
                             + resource.getTransactionType());
                 // @formatter:on
         }
@@ -232,13 +293,9 @@ public class HsOfficeCoopAssetsTransactionController implements HsOfficeCoopAsse
                     + "' not found or not accessible");
         }
 
-        if (resource.getTransactionType() == TRANSFER) {
-            throw new ValidationException(
-                    "either adoptingMembership.uuid or adoptingMembership.memberNumber must be given for transactionType="
-                            + TRANSFER);
-        }
-
-        return null;
+        throw new ValidationException(
+                "either adoptingMembership.uuid or adoptingMembership.memberNumber must be given for transactionType="
+                        + HsOfficeCoopAssetsTransactionTypeResource.TRANSFER);
     }
 
     private HsOfficeCoopAssetsTransactionEntity createAdoptingAssetTx(

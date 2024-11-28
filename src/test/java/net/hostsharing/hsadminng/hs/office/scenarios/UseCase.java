@@ -9,13 +9,14 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.reflection.AnnotationFinder;
 import org.apache.commons.collections4.map.LinkedMap;
-import org.assertj.core.api.OptionalAssert;
+import org.assertj.core.api.AbstractStringAssert;
 import org.hibernate.AssertionFailure;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
+import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -27,13 +28,13 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.net.URLEncoder.encode;
+import static java.util.stream.Collectors.joining;
 import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
@@ -95,6 +96,9 @@ public abstract class UseCase<T extends UseCase<?>> {
         );
         final var response = run();
         verify(response);
+
+        resetProperties();
+
         return response;
     }
 
@@ -109,7 +113,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final UseCase<T> given(final String propName, final Object propValue) {
-        givenProperties.put(propName, propValue);
+        givenProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), KEEP_COMMENTS));
         ScenarioTest.putProperty(propName, propValue);
         return this;
     }
@@ -206,7 +210,8 @@ public abstract class UseCase<T extends UseCase<?>> {
         return new PathAssertion(path);
     }
 
-    protected void verify(
+    @SafeVarargs
+    protected final void verify(
             final String title,
             final Supplier<UseCase.HttpResponse> http,
             final Consumer<UseCase.HttpResponse>... assertions) {
@@ -236,10 +241,15 @@ public abstract class UseCase<T extends UseCase<?>> {
         String resolvePlaceholders() {
             return ScenarioTest.resolve(template, DROP_COMMENTS);
         }
+
     }
 
     private static Duration seconds(final int secondsIfNoDebuggerAttached) {
         return isDebuggerAttached() ? Duration.ofHours(1) : Duration.ofSeconds(secondsIfNoDebuggerAttached);
+    }
+
+    private void resetProperties() {
+        givenProperties.forEach((propName, val) -> ScenarioTest.removeProperty(propName));
     }
 
     public final class HttpResponse {
@@ -319,22 +329,25 @@ public abstract class UseCase<T extends UseCase<?>> {
         }
 
         @SneakyThrows
-        public String getFromBody(final String path) {
-            return JsonPath.parse(response.body()).read(ScenarioTest.resolve(path, DROP_COMMENTS));
+        public <V> V getFromBody(final String path) {
+            final var body = response.body();
+            final var resolvedPath = ScenarioTest.resolve(path, DROP_COMMENTS);
+            return JsonPath.parse(body).read(resolvedPath);
         }
 
+        @NotNull
         @SneakyThrows
-        public <T> Optional<T> getFromBodyAsOptional(final String path) {
+        public <V> JsonOptional<V> getFromBodyAsOptional(final String path) {
             try {
-                return Optional.ofNullable(JsonPath.parse(response.body()).read(ScenarioTest.resolve(path, DROP_COMMENTS)));
+                return JsonOptional.ofValue(getFromBody(path));
             } catch (final PathNotFoundException e) {
-                return null; // means the property did not exist at all, not that it was there with value null
+                return JsonOptional.notGiven();
             }
         }
 
         @SneakyThrows
-        public <T> OptionalAssert<T> path(final String path) {
-            return assertThat(getFromBodyAsOptional(path));
+        public AbstractStringAssert<?> path(final String path) {
+            return assertThat(getFromBodyAsOptional(path).givenAsString());
         }
 
         @SneakyThrows
@@ -395,5 +408,13 @@ public abstract class UseCase<T extends UseCase<?>> {
 
     private String title(String resultAlias) {
         return getClass().getSimpleName().replaceAll("([a-z])([A-Z]+)", "$1 $2") + " => " + resultAlias;
+    }
+
+    @Override
+    public String toString() {
+        final var properties = givenProperties.entrySet().stream()
+                .map(e -> "\t" + e.getKey() + "=" + e.getValue())
+                .collect(joining("\n"));
+        return getClass().getSimpleName() + "(\n\t" + properties + "\n)";
     }
 }

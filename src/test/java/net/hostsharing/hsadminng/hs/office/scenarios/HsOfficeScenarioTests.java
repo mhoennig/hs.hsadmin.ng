@@ -16,7 +16,8 @@ import net.hostsharing.hsadminng.hs.office.scenarios.membership.CancelMembership
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDepositTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsDisbursalTransaction;
-import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertSimpleTransaction;
+import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsRevertTransferTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets.CreateCoopAssetsTransferTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesCancellationTransaction;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.coopshares.CreateCoopSharesRevertTransaction;
@@ -30,7 +31,6 @@ import net.hostsharing.hsadminng.hs.office.scenarios.subscription.RemoveOperatio
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.SubscribeToMailinglist;
 import net.hostsharing.hsadminng.hs.office.scenarios.subscription.UnsubscribeFromMailinglist;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
-import net.hostsharing.hsadminng.test.IgnoreOnFailure;
 import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
@@ -395,7 +395,7 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Order(4302)
     @Requires("Membership: M-3101000 - Test AG")
     void shouldRevertCoopAssetsSubscription() {
-        new CreateCoopAssetsRevertTransaction(this)
+        new CreateCoopAssetsRevertSimpleTransaction(this)
                 .given("memberNumber", "M-3101000")
                 .given("comment", "reverting some incorrect transaction")
                 .given("dateOfIncorrectTransaction", "2024-02-15")
@@ -419,13 +419,13 @@ class HsOfficeScenarioTests extends ScenarioTest {
     @Test
     @Order(4304)
     @Requires("Coop-Assets M-3101000 - Test AG - DEPOSIT Transaction")
-    @Produces("Coop-Assets M-3101000 - Test AG - TRANSFER Transaction")
+    @Produces(explicitly = "Coop-Assets M-3101000 - Test AG - TRANSFER Transaction", implicitly = "Membership M-4303000")
     void shouldTransferCoopAssets() {
         new CreateCoopAssetsTransferTransaction(this)
                 .given("transferringMemberNumber", "M-3101000")
                 .given("adoptingMemberNumber", "M-4303000")
                 .given("reference", "transfer 2024-12-31")
-                .given("valueToDisburse", 2 * 64)
+                .given("valueToTransfer", 2 * 64)
                 .given("comment", "transfer assets from M-3101000 to M-4303000")
                 .given("transactionDate", "2024-12-31")
                 .doRun();
@@ -433,11 +433,12 @@ class HsOfficeScenarioTests extends ScenarioTest {
 
     @Test
     @Order(4305)
-    @Requires("Coop-Assets M-3101000 - Test AG - TRANSFER Transaction")
-    @IgnoreOnFailure("TODO.impl: reverting transfers is not implemented yet")
-    void shouldRevertCoopAssetsTransfer() {
-        new CreateCoopAssetsRevertTransaction(this)
-                .given("memberNumber", "M-3101000")
+    @Requires("Membership M-4303000")
+    void shouldRevertCoopAssetsTransferIncludingRelatedAssetAdoption() {
+        new CreateCoopAssetsRevertTransferTransaction(this)
+                .given("transferringMemberNumber", "M-3101000")
+                .given("adoptingMemberNumber", "M-4303000")
+                .given("transferredValue", 2*64)
                 .given("comment", "reverting some incorrect transfer transaction")
                 .given("dateOfIncorrectTransaction", "2024-02-15")
                 .doRun();

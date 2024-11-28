@@ -12,9 +12,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import static java.lang.String.join;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestReport {
@@ -41,9 +44,12 @@ public class TestReport {
     }
 
     public void createTestLogMarkdownFile(final TestInfo testInfo) throws IOException {
-        final var testMethodName = testInfo.getTestMethod().map(Method::getName).orElseThrow();
+        final var testMethodName = testInfo.getTestMethod().map(Method::getName)
+                .map(TestReport::chopShouldPrefix)
+                .map(TestReport::splitMixedCaseIntoSeparateWords)
+                .orElseThrow();
         final var testMethodOrder = testInfo.getTestMethod().map(m -> m.getAnnotation(Order.class).value()).orElseThrow();
-        markdownReportFile = new File(BUILD_DOC_SCENARIOS, testMethodOrder + "-" + testMethodName + ".md");
+        markdownReportFile = new File(BUILD_DOC_SCENARIOS, testMethodOrder + ": " + testMethodName + ".md");
         markdownReport = new PrintWriter(new FileWriter(markdownReportFile));
         print("## Scenario #" + determineScenarioTitle(testInfo));
     }
@@ -117,6 +123,20 @@ public class TestReport {
             result.append(line).append("\n");
         }
         return result.toString();
+    }
+
+    private static String chopShouldPrefix(final String text) {
+        return text.replaceAll("^should", "");
+    }
+
+    private static String splitMixedCaseIntoSeparateWords(final String text) {
+        final var WORD_FINDER = Pattern.compile("(([A-Z]?[a-z]+)|([A-Z]))");
+        final var matcher = WORD_FINDER.matcher(text);
+        final var words = new ArrayList<String>();
+        while (matcher.find()) {
+            words.add(matcher.group(0));
+        }
+        return join(" ", words);
     }
 
     @SneakyThrows
