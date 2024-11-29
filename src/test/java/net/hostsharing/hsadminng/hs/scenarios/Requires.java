@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.scenarios;
+package net.hostsharing.hsadminng.hs.scenarios;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.scenarios;
+package net.hostsharing.hsadminng.hs.scenarios;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +35,8 @@ import java.util.function.Supplier;
 
 import static java.net.URLEncoder.encode;
 import static java.util.stream.Collectors.joining;
-import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
-import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.KEEP_COMMENTS;
 import static net.hostsharing.hsadminng.test.DebuggerDetection.isDebuggerAttached;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -71,9 +71,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final void requires(final String alias, final Function<String, UseCase<?>> useCaseFactory) {
-        if (!ScenarioTest.containsAlias(alias)) {
-            requirements.put(alias, useCaseFactory);
-        }
+        requirements.put(alias, useCaseFactory);
     }
 
     public final HttpResponse doRun() {
@@ -89,13 +87,15 @@ public abstract class UseCase<T extends UseCase<?>> {
         testReport.printLine("");
         testReport.silent(() ->
                 requirements.forEach((alias, factory) -> {
-                    if (!ScenarioTest.containsAlias(alias)) {
-                        factory.apply(alias).run().keepAs(alias);
+                    final var resolvedAlias = ScenarioTest.resolve(alias, DROP_COMMENTS);
+                    if (!ScenarioTest.containsAlias(resolvedAlias)) {
+                        factory.apply(resolvedAlias).run().keepAs(resolvedAlias);
                     }
                 })
         );
         final var response = run();
         verify(response);
+        keepInProduceAlias(response);
 
         resetProperties();
 
@@ -113,7 +113,7 @@ public abstract class UseCase<T extends UseCase<?>> {
     }
 
     public final UseCase<T> given(final String propName, final Object propValue) {
-        givenProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), KEEP_COMMENTS));
+        givenProperties.put(propName, ScenarioTest.resolve(propValue == null ? null : propValue.toString(), TemplateResolver.Resolver.KEEP_COMMENTS));
         ScenarioTest.putProperty(propName, propValue);
         return this;
     }
@@ -242,6 +242,13 @@ public abstract class UseCase<T extends UseCase<?>> {
             return ScenarioTest.resolve(template, DROP_COMMENTS);
         }
 
+    }
+
+    private void keepInProduceAlias(final HttpResponse response) {
+        final var producedAlias = testSuite.takeProducedAlias();
+        if (response != null) {
+            producedAlias.ifPresent(response::keepAs);
+        }
     }
 
     private static Duration seconds(final int secondsIfNoDebuggerAttached) {

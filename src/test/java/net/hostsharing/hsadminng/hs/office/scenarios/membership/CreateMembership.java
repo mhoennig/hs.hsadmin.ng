@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.membership;
 
 import io.restassured.http.ContentType;
-import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
-import net.hostsharing.hsadminng.hs.office.scenarios.UseCase;
+import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
+import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.http.ContentType.JSON;

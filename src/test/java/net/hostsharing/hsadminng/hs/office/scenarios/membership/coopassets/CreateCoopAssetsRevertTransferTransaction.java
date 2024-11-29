@@ -1,13 +1,13 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets;
 
 import io.restassured.http.ContentType;
-import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
-import net.hostsharing.hsadminng.hs.office.scenarios.UseCase;
+import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
+import net.hostsharing.hsadminng.hs.scenarios.UseCase;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 
-import static net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest.resolveTyped;
+import static net.hostsharing.hsadminng.hs.scenarios.ScenarioTest.resolveTyped;
 
 public class CreateCoopAssetsRevertTransferTransaction extends CreateCoopAssetsTransaction {
 

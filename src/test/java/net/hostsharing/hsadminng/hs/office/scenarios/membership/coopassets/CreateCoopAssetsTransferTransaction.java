@@ -1,10 +1,10 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets;
 
-import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
+import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.hs.office.scenarios.membership.CreateMembership;
 import net.hostsharing.hsadminng.hs.office.scenarios.partner.CreatePartner;
 
-import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 
 public class CreateCoopAssetsTransferTransaction extends CreateCoopAssetsTransaction {
 
@@ -19,7 +19,7 @@ public class CreateCoopAssetsTransferTransaction extends CreateCoopAssetsTransac
                 .given("emailAddress", "board-of-directors@new-ag.example.org")
         );
 
-        requires("Membership: New AG", alias -> new CreateMembership(testSuite)
+        requires("Membership: %{adoptingMemberNumber} - New AG", alias -> new CreateMembership(testSuite)
                 .given("memberNumber", toPartnerNumber("%{adoptingMemberNumber}"))
                 .given("partnerName", "New AG")
                 .given("validFrom", "2024-11-15")

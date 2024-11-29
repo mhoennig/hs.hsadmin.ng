@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.scenarios;
+package net.hostsharing.hsadminng.hs.scenarios;
 
 import static org.assertj.core.api.Assumptions.assumeThat;
 

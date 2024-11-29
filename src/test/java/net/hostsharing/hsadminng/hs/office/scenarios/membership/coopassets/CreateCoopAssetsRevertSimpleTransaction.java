@@ -1,6 +1,6 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.membership.coopassets;
 
-import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
+import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 
 public class CreateCoopAssetsRevertSimpleTransaction extends CreateCoopAssetsTransaction {
 

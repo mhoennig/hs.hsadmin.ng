@@ -68,6 +68,7 @@ public class ArchitectureTest {
                     "..hs.hosting.asset",
                     "..hs.hosting.asset.validators",
                     "..hs.hosting.asset.factories",
+                    "..hs.scenarios",
                     "..errors",
                     "..mapper",
                     "..ping",
@@ -161,8 +162,10 @@ public class ArchitectureTest {
             .should().onlyBeAccessed().byClassesThat()
             .resideInAnyPackage(
                     "..hs.office.(*)..",
+                    "..hs.office.(*)..",
                     "..hs.booking.(*)..",
                     "..hs.hosting.(*)..",
+                    "..hs.scenarios",
                     "..hs.migration",
                     "..rbacgrant" // TODO.test: just because of RbacGrantsDiagramServiceIntegrationTest
             );

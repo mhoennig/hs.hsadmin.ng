@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.debitor;
 
-import net.hostsharing.hsadminng.hs.office.scenarios.UseCase;
-import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
+import net.hostsharing.hsadminng.hs.scenarios.UseCase;
+import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.springframework.http.HttpStatus.CREATED;

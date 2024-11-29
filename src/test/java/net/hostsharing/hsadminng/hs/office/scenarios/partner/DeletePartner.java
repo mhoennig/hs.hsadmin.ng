@@ -1,7 +1,7 @@
 package net.hostsharing.hsadminng.hs.office.scenarios.partner;
 
-import net.hostsharing.hsadminng.hs.office.scenarios.UseCase;
-import net.hostsharing.hsadminng.hs.office.scenarios.ScenarioTest;
+import net.hostsharing.hsadminng.hs.scenarios.UseCase;
+import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import org.springframework.http.HttpStatus;
 
 public class DeletePartner extends UseCase<DeletePartner> {

@@ -880,7 +880,9 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
                     coopAssets.put(rec.getInteger("member_asset_id"), assetTransaction);
                 });
 
-        coopAssets.values().forEach(assetTransaction -> {
+        coopAssets.entrySet().forEach(entry -> {
+            final var legacyId = entry.getKey();
+            final var assetTransaction = entry.getValue();
             if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.REVERSAL) {
                 connectToRelatedRevertedAssetTx(assetTransaction);
             }

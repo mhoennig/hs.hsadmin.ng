@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.scenarios;
+package net.hostsharing.hsadminng.hs.scenarios;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 
 public class TemplateResolver {
 

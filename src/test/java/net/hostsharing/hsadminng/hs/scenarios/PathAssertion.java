@@ -1,10 +1,10 @@
-package net.hostsharing.hsadminng.hs.office.scenarios;
+package net.hostsharing.hsadminng.hs.scenarios;
 
-import net.hostsharing.hsadminng.hs.office.scenarios.UseCase.HttpResponse;
+import net.hostsharing.hsadminng.hs.scenarios.UseCase.HttpResponse;
 
 import java.util.function.Consumer;
 
-import static net.hostsharing.hsadminng.hs.office.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
+import static net.hostsharing.hsadminng.hs.scenarios.TemplateResolver.Resolver.DROP_COMMENTS;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class PathAssertion {

@@ -1,4 +1,4 @@
-package net.hostsharing.hsadminng.hs.office.scenarios;
+package net.hostsharing.hsadminng.hs.scenarios;
 
 import lombok.SneakyThrows;
 import net.hostsharing.hsadminng.system.SystemProcess;
