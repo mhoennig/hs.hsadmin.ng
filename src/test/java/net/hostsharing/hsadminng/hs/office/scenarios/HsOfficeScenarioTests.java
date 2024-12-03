@@ -34,6 +34,7 @@ import net.hostsharing.hsadminng.hs.scenarios.Produces;
 import net.hostsharing.hsadminng.hs.scenarios.Requires;
 import net.hostsharing.hsadminng.hs.scenarios.ScenarioTest;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import net.hostsharing.hsadminng.test.IgnoreOnFailureExtension;
 import org.junit.jupiter.api.ClassOrderer;
 import org.junit.jupiter.api.Disabled;
@@ -46,11 +47,12 @@ import org.junit.jupiter.api.TestClassOrder;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @Tag("scenarioTest")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, JpaAttempt.class },
+        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class },
         properties = {
                 "spring.datasource.url=${HSADMINNG_POSTGRES_JDBC_URL:jdbc:tc:postgresql:15.5-bookworm:///scenariosTC}",
                 "spring.datasource.username=${HSADMINNG_POSTGRES_ADMIN_USERNAME:ADMIN}",
@@ -58,6 +60,7 @@ import org.springframework.boot.test.context.SpringBootTest;
                 "hsadminng.superuser=${HSADMINNG_SUPERUSER:superuser-alex@hostsharing.net}"
         }
 )
+@ActiveProfiles("test")
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @ExtendWith(IgnoreOnFailureExtension.class)
 class HsOfficeScenarioTests extends ScenarioTest {

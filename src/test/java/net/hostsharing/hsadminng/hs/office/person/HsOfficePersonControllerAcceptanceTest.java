@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
@@ -26,8 +28,9 @@ import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, JpaAttempt.class }
+        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
 )
+@ActiveProfiles("test")
 class HsOfficePersonControllerAcceptanceTest extends ContextBasedTestWithCleanup {
 
     @LocalServerPort

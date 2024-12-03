@@ -46,15 +46,15 @@ create or replace function rbac.hasGlobalAdminRole()
     stable -- leakproof
     language plpgsql as $$
 declare
-    currentSubjectOrAssumedRolesUuids text;
+    assumedRoles text;
 begin
     begin
-        currentSubjectOrAssumedRolesUuids := current_setting('hsadminng.currentSubjectOrAssumedRolesUuids');
+        assumedRoles := current_setting('hsadminng.assumedRoles');
     exception
         when others then
-            currentSubjectOrAssumedRolesUuids := null;
+            assumedRoles := null;
     end;
-    return  currentSubjectOrAssumedRolesUuids is null or length(currentSubjectOrAssumedRolesUuids) = 0;
+    return TRIM(COALESCE(assumedRoles, '')) = '' and rbac.isGlobalAdmin();
 end; $$;
 --//
 

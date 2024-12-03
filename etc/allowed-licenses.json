@@ -44,6 +44,11 @@
         { "moduleLicense": "WTFPL" },
 
         {
+            "moduleLicense": "Public Domain, per Creative Commons CC0",
+            "moduleVersion": "2.0.3"
+        },
+
+        {
             "moduleLicense": null,
             "#moduleLicense": "Apache License 2.0, see https://github.com/springdoc/springdoc-openapi/blob/main/LICENSE",
             "moduleVersion": "2.4.0",

@@ -60,36 +60,40 @@ If you have at least Docker and the Java JDK installed in appropriate versions a
 
     cd your-hsadmin-ng-directory
     
-    source .aliases # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
-    gw              # initially downloads the configured Gradle version into the project
+    source .aliases     # creates some comfortable bash aliases, e.g. 'gw'='./gradlew'
+    gw                  # initially downloads the configured Gradle version into the project
 
-    gw test         # compiles and runs unit- and integration-tests
+    gw test             # compiles and runs unit- and integration-tests - takes >10min even on a fast machine
+    gw scenarioTests    # compiles and scenario-tests - takes ~1min on a decent machine
     
     # if the container has not been built yet, run this:
     pg-sql-run      # downloads + runs PostgreSQL in a Docker container on localhost:5432
-    # if the container has been built already, run this:
+    # if the container has been built already and you want to keep the data, run this:
     pg-sql-start
 
     gw bootRun      # compiles and runs the application on localhost:8080
 
     # the following command should reply with "pong":
-    curl http://localhost:8080/api/ping
+    curl -f http://localhost:8080/api/ping
 
     # the following command should return a JSON array with just all customers:
-    curl \
+    curl -f\
         -H 'current-subject: superuser-alex@hostsharing.net' \
-        http://localhost:8080/api/test/customers
+        http://localhost:8080/api/test/customers \
+    | jq # just if `jq` is installed, to prettyprint the output
 
     # the following command should return a JSON array with just all packages visible for the admin of the customer yyy:
-    curl \
+    curl -f\
         -H 'current-subject: superuser-alex@hostsharing.net' -H 'assumed-roles: rbactest.customer#yyy:ADMIN' \
-        http://localhost:8080/api/test/packages
+        http://localhost:8080/api/test/packages \
+    | jq
 
     # add a new customer
-    curl \
+    curl -f\
         -H 'current-subject: superuser-alex@hostsharing.net' -H "Content-Type: application/json" \
         -d '{ "prefix":"ttt", "reference":80001, "adminUserName":"admin@ttt.example.com" }' \
-        -X POST http://localhost:8080/api/test/customers
+        -X POST http://localhost:8080/api/test/customers \
+    | jq
 
 If you wonder who 'superuser-alex@hostsharing.net' and 'superuser-fran@hostsharing.net' are and where the data comes from:
 Mike and Sven are just example global admin accounts as part of the example data which is automatically inserted in Testcontainers and Development environments.

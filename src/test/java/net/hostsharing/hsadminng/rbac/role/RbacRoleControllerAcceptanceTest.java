@@ -4,17 +4,20 @@ import io.restassured.RestAssured;
 import net.hostsharing.hsadminng.HsadminNgApplication;
 import net.hostsharing.hsadminng.context.Context;
 import net.hostsharing.hsadminng.rbac.subject.RbacSubjectRepository;
+import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = HsadminNgApplication.class
+        classes = {HsadminNgApplication.class, DisableSecurityConfig.class}
 )
+@ActiveProfiles("test")
 class RbacRoleControllerAcceptanceTest {
 
     @LocalServerPort

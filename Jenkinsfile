@@ -76,7 +76,10 @@ pipeline {
             sh '''
                 ./gradlew convertMarkdownToHtml
             '''
-            archiveArtifacts artifacts: 'doc/scenarios/*.html', allowEmptyArchive: true
+            archiveArtifacts artifacts:
+                    'build/doc/scenarios/*.html, ' +
+                    'build/reports/dependency-license/dependencies-without-allowed-license.json',
+                allowEmptyArchive: true
 
             // cleanup workspace
             cleanWs()

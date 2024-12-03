@@ -6,6 +6,7 @@ import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealEntity;
 import net.hostsharing.hsadminng.hs.booking.project.HsBookingProjectRealRepository;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
+import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsBookingItemController.class)
-@Import({StrictMapper.class, JsonObjectMapperConfiguration.class})
+@Import({StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class})
 @RunWith(SpringRunner.class)
 class HsBookingItemControllerRestTest {
 

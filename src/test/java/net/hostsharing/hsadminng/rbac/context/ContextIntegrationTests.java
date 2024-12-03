@@ -1,8 +1,8 @@
 package net.hostsharing.hsadminng.rbac.context;
 
 import net.hostsharing.hsadminng.context.Context;
-import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.mapper.Array;
+import net.hostsharing.hsadminng.mapper.StandardMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
 import org.junit.jupiter.api.Test;
@@ -13,6 +13,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +34,9 @@ class ContextIntegrationTests {
     @Autowired
     private JpaAttempt jpaAttempt;
 
+    @PersistenceContext
+    private EntityManager em;
+
     @Test
     void defineWithoutHttpServletRequestUsesCallStack() {
 
@@ -43,7 +48,7 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
-    void defineWithcurrentSubjectButWithoutAssumedRoles() {
+    void defineWithCurrentSubjectButWithoutAssumedRoles() {
         // when
         context.define("superuser-alex@hostsharing.net");
 
@@ -60,7 +65,7 @@ class ContextIntegrationTests {
     }
 
     @Test
-    void defineWithoutcurrentSubjectButWithAssumedRoles() {
+    void defineWithoutCurrentSubjectButWithAssumedRoles() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define(null, "rbactest.package#yyy00:ADMIN")
@@ -73,7 +78,7 @@ class ContextIntegrationTests {
     }
 
     @Test
-    void defineWithUnknowncurrentSubject() {
+    void defineWithUnknownCurrentSubject() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define("unknown@example.org")
@@ -87,7 +92,7 @@ class ContextIntegrationTests {
 
     @Test
     @Transactional
-    void defineWithcurrentSubjectAndAssumedRoles() {
+    void defineWithCurrentSubjectAndAssumedRoles() {
         // given
         context.define("superuser-alex@hostsharing.net", "rbactest.customer#xxx:OWNER;rbactest.customer#yyy:OWNER");
 
@@ -102,7 +107,7 @@ class ContextIntegrationTests {
     }
 
     @Test
-    public void defineContextWithcurrentSubjectAndAssumeInaccessibleRole() {
+    public void defineContextWithCurrentSubjectAndAssumeInaccessibleRole() {
         // when
         final var result = jpaAttempt.transacted(() ->
                 context.define("customer-admin@xxx.example.com", "rbactest.package#yyy00:ADMIN")
@@ -112,5 +117,53 @@ class ContextIntegrationTests {
         result.assertExceptionWithRootCauseMessage(
                 jakarta.persistence.PersistenceException.class,
                 "ERROR: [403] subject customer-admin@xxx.example.com has no permission to assume role rbactest.package#yyy00:ADMIN");
+    }
+
+    @Test
+    public void hasGlobalAdminRoleIsTrueForGlobalAdminWithoutAssumedRole() {
+
+        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+                    // given
+                    context.define("superuser-alex@hostsharing.net");
+
+                    // when
+                    return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+                }
+        );
+
+        // then
+        assertThat(hsGlobalAdminRole.returnedValue()).isTrue();
+    }
+
+    @Test
+    public void hasGlobalAdminRoleIsTrueForGlobalAdminWithAssumedRole() {
+        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+            // given
+            context.define("superuser-alex@hostsharing.net", "rbactest.package#yyy00:ADMIN");
+
+            // when
+            return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+        });
+
+        // when
+
+        // then
+        assertThat(hsGlobalAdminRole.returnedValue()).isFalse();
+    }
+
+    @Test
+    public void hasGlobalAdminRoleIsFalseForNonGlobalAdminWithoutAssumedRole() {
+
+        final var hsGlobalAdminRole = jpaAttempt.transacted(() -> {
+                    // given
+                    context.define("customer-admin@xxx.example.com");
+
+                    // when
+                    return (boolean) em.createNativeQuery("select rbac.hasGlobalAdminRole()").getSingleResult();
+                }
+        );
+
+        // then
+        assertThat(hsGlobalAdminRole.returnedValue()).isFalse();
     }
 }

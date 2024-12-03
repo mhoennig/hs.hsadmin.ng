@@ -8,6 +8,7 @@ import net.hostsharing.hsadminng.hs.office.partner.HsOfficePartnerEntity;
 import net.hostsharing.hsadminng.mapper.StrictMapper;
 import net.hostsharing.hsadminng.persistence.EntityManagerWrapper;
 import net.hostsharing.hsadminng.rbac.test.JsonBuilder;
+import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import net.hostsharing.hsadminng.test.TestUuidGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -47,7 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(HsOfficeCoopAssetsTransactionController.class)
-@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class })
+@Import({ StrictMapper.class, JsonObjectMapperConfiguration.class, DisableSecurityConfig.class })
+@ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 class HsOfficeCoopAssetsTransactionControllerRestTest {
 

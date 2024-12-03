@@ -12,6 +12,7 @@ import net.hostsharing.hsadminng.hs.hosting.asset.HsHostingAssetRealRepository;
 import net.hostsharing.hsadminng.hs.hosting.asset.validators.Dns;
 import net.hostsharing.hsadminng.rbac.test.ContextBasedTestWithCleanup;
 import net.hostsharing.hsadminng.rbac.test.JpaAttempt;
+import net.hostsharing.hsadminng.test.DisableSecurityConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.ClassOrderer;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -42,8 +44,9 @@ import static org.hamcrest.Matchers.matchesRegex;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        classes = { HsadminNgApplication.class, JpaAttempt.class }
+        classes = { HsadminNgApplication.class, DisableSecurityConfig.class, JpaAttempt.class }
 )
+@ActiveProfiles("test")
 @Transactional
 @TestClassOrder(ClassOrderer.OrderAnnotation.class) // fail early on fetching problems
 class HsBookingItemControllerAcceptanceTest extends ContextBasedTestWithCleanup {

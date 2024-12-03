@@ -38,27 +38,29 @@ class TestPackageRepositoryIntegrationTest extends ContextBasedTest {
     class FindAllByOptionalNameLike {
 
         @Test
-        public void globalAdmin_withoutAssumedRole_canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
+        public void globalAdmin_withoutAssumedRole_canViewAllPackagesDueToBypassoOfRecursiveCteRbacQuery() {
             // given
-            // alex is not just rbac.global-admin but lso the creating user, thus we use fran
+            // alex is not just rbac.global-admin but also the creating user, thus we use fran
             context.define("superuser-fran@hostsharing.net");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
             // then
-            noPackagesAreReturned(result);
+
+            exactlyThesePackagesAreReturned(result,
+                    "xxx00", "xxx01", "xxx02", "yyy00", "yyy01", "yyy02", "zzz00", "zzz01", "zzz02");
         }
 
         @Test
-        public void globalAdmin_withAssumedglobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
-            given:
+        public void globalAdmin_withAssumedGlobalAdminRole__canNotViewAnyPackages_becauseThoseGrantsAreNotAssumed() {
+            // given
             context.define("superuser-alex@hostsharing.net", "rbac.global#global:ADMIN");
 
             // when
             final var result = testPackageRepository.findAllByOptionalNameLike(null);
 
-            then:
+            // then
             noPackagesAreReturned(result);
         }
 
