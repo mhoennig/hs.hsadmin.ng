@@ -884,15 +884,15 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
             final var legacyId = entry.getKey();
             final var assetTransaction = entry.getValue();
             if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.REVERSAL) {
-                connectToRelatedRevertedAssetTx(assetTransaction);
+                connectToRelatedRevertedAssetTx(legacyId, assetTransaction);
             }
             if (assetTransaction.getTransactionType() == HsOfficeCoopAssetsTransactionType.TRANSFER) {
-                connectToRelatedAdoptionAssetTx(assetTransaction);
+                connectToRelatedAdoptionAssetTx(legacyId, assetTransaction);
             }
         });
     }
 
-    private static void connectToRelatedRevertedAssetTx(final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
+    private static void connectToRelatedRevertedAssetTx(final int legacyId, final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
         final var negativeValue = assetTransaction.getAssetValue().negate();
         final var revertedAssetTx = coopAssets.values().stream().filter(a ->
                         a.getTransactionType() != HsOfficeCoopAssetsTransactionType.REVERSAL &&
@@ -905,10 +905,11 @@ public abstract class BaseOfficeDataImport extends CsvDataImport {
         //revertedAssetTx.setAssetReversalTx(assetTransaction);
     }
 
-    private static void connectToRelatedAdoptionAssetTx(final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
+    private static void connectToRelatedAdoptionAssetTx(final int legacyId, final HsOfficeCoopAssetsTransactionEntity assetTransaction) {
         final var negativeValue = assetTransaction.getAssetValue().negate();
         final var adoptionAssetTx = coopAssets.values().stream().filter(a ->
                         a.getTransactionType() == HsOfficeCoopAssetsTransactionType.ADOPTION &&
+                                (!a.getValueDate().equals(LocalDate.of( 2014 , 12 , 31)) || a.getComment().contains(Integer.toString(assetTransaction.getMembership().getMemberNumber()/100))) &&
                                 a.getMembership() != assetTransaction.getMembership() &&
                                 a.getValueDate().equals(assetTransaction.getValueDate()) &&
                                 a.getAssetValue().equals(negativeValue))
